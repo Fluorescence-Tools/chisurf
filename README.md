@@ -1,5 +1,7 @@
 # ChiSurf
 ChiSurf is a software package for the analysis of complex fluorescence data acquired in time-resolved single-molecule and ensemble fluorescence experiments. The main feature of ChiSurf is the joint (global) analysis of multiple datasets.
+![dsDNA and an AV surface][2]
+ 
  
 ## History
 The original of ChiSurfs was to estimate errors of model parameters of fluorescence intensity decays in Förster-resonance energy transfer (FRET) experiments for FRET-driven structural models of protein and other biological macromolecules. It started as a collection of python scripts. With time more features were added, e.g. the analysis of correlation curves, correlation of time-tagged-time resolved (TTTR) data. A graphical user interface makes these scripts and tools available for users without programming experience.
@@ -38,3 +40,5 @@ References
 2. Wahl M, Gregor I, Patting M, Enderlein J. Fast calculation of fluorescence correlation data with asynchronous time-correlated single-photon counting. Opt Express. 2003;11(26):3583-3591. [PubMed]
 3. Sindbert S, Kalinin S, Nguyen H, et al. Accurate distance determination of nucleic acids via Förster resonance energy transfer: implications of dye linker length and rigidity. J Am Chem Soc. 2011;133(8):2463-2480. [PubMed]
 4. Kalinin S, Peulen T, Sindbert S, et al. A toolkit and benchmark study for FRET-restrained high-precision structural modeling. Nat Methods. 2012;9(12):1218-1225. [PubMed]
+
+[2]: /doc/chisurf_gui.png "ChiSurf GUI"
