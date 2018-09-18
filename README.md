@@ -38,8 +38,8 @@ ChiSurf is provided “as is” without warranty of any kind, express or implied
 
 Windows:
 
-[17.03.24](https://drive.google.com/open?id=1XJJDW9ESdGqDUhYOj06Lztajn6se3nDe)
-[16.05.14](https://drive.google.com/open?id=1siQgGgRyaaEVNicz5gICjw95WIRtu93U)
+* [17.03.24](https://drive.google.com/open?id=1XJJDW9ESdGqDUhYOj06Lztajn6se3nDe)
+* [16.05.14](https://drive.google.com/open?id=1siQgGgRyaaEVNicz5gICjw95WIRtu93U)
 
 
 
