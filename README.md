@@ -4,6 +4,7 @@ ChiSurf is a software package for the analysis of complex fluorescence data acqu
 ## History
 The original of ChiSurfs was to estimate errors of model parameters of fluorescence intensity decays in Förster-resonance energy transfer (FRET) experiments for FRET-driven structural models of protein and other biological macromolecules. It started as a collection of python scripts. With time more features were added, e.g. the analysis of correlation curves, correlation of time-tagged-time resolved (TTTR) data. A graphical user interface makes these scripts and tools available for users without programming experience.
 Overall, ChiSurf is highly experimental and its core is still heavily refactored. Consequently, features, which worked in old versions, may be not supported in newer versions, unless users explicitly demand these functions.
+
 ## Features
 ### General features
 * Scripting interface and open API
@@ -26,7 +27,7 @@ Overall, ChiSurf is highly experimental and its core is still heavily refactored
 ## Simulation of fluorescence observables
 * Kappa2 distributions based on residual anisotropies 
 * Simulation of fluorescence quenching in protein by aromatic amino acids [![DOI for citing FPS](https://img.shields.io/badge/DOI-10.1021/acs.jpcb.7b03441.2222-blue.svg)](http://pubs.acs.org/doi/abs/10.1021/acs.jpcb.7b03441)
-*Simulation of FRET rate constant distributions based on accessible volumes4
+* Simulation of FRET rate constant distributions based on accessible volumes
 
 # Download
 By downloading and using ChiSurf, you agree with the following terms:
