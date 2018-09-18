@@ -33,6 +33,7 @@ Overall, ChiSurf is highly experimental and its core is still heavily refactored
 
 # Download
 By downloading and using ChiSurf, you agree with the following terms:
+
 ChiSurf is provided “as is” without warranty of any kind, express or implied. The authors of ChiSurf shall not be, in any event, be held liable for any claim, damages or other liability arising from the use of ChiSurf. As the user, you are not allowed to redistribute any or all of the code, in any manner to other parties. The downloaded code is for your use only. ChiSurf is provided free of charge to both academic and commercial users.
 
 # References
