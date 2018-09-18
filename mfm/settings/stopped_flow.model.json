@@ -1,0 +1,32 @@
+{
+    "1-Lifetime": {
+        "equation": "a1*exp(-x/tau1)",
+        "initial": {
+            "a1": 1.0,
+            "tau1": 4.0
+        },
+        "description": "<html><head /><body><h1>1-Lifetime</h1><p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</p></body></html>"
+    },
+    "2-Lifetimes": {
+        "equation": "a1*exp(-x/tau1)+a2*exp(-x/tau2)",
+        "initial": {
+            "a1": 1.0,
+            "tau1": 2.0,
+            "a2": 1.0,
+            "tau2": 4.0
+        },
+        "description": "<html><head /><body><h1>2-Lifetimes</h1><p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</p></body></html>"
+    },
+    "3-Lifetimes": {
+        "equation": "a1*exp(-x/tau1)+a2*exp(-x/tau2)+a3*exp(-x/tau3)",
+        "initial": {
+            "a1": 1.0,
+            "tau1": 4.0,
+            "a2": 1.0,
+            "tau2": 2.0,
+            "a3": 1.0,
+            "tau3": 1.0
+        },
+        "description": "<html><head /><body><h1>3-Lifetimes</h1><p>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.</p></body></html>"
+    }
+}
