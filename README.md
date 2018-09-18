@@ -36,7 +36,7 @@ ChiSurf is available as a compiled Windows installation file. By downloading and
 
 ChiSurf is provided “as is” without warranty of any kind, express or implied. The authors of ChiSurf shall not be, in any event, be held liable for any claim, damages or other liability arising from the use of ChiSurf. As the user, you are not allowed to redistribute any or all of the code, in any manner to other parties. The downloaded code is for your use only. ChiSurf is provided free of charge to both academic and commercial users.
 
-Windows:
+## Windows
 
 * [17.03.24](https://drive.google.com/open?id=1XJJDW9ESdGqDUhYOj06Lztajn6se3nDe)
 * [16.05.14](https://drive.google.com/open?id=1siQgGgRyaaEVNicz5gICjw95WIRtu93U)
