@@ -1,0 +1,1 @@
+import rescource_rc

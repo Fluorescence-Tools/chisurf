@@ -1,0 +1,41 @@
+{
+  "all_quencher_atoms": true,
+  "attachment_atom": null,
+  "attachment_chain": null,
+  "attachment_residue": null,
+  "auto_update": false,
+  "av_parameter": {
+    "linker_length": 20.0,
+    "radius1": 1.5,
+    "linker_width": 0.5
+  },
+  "dg": 0.5,
+  "kQ": 5.0,
+  "nph": 3000000.0,
+  "output_file": "out",
+  "pdb": null,
+  "quencher": {
+    "HIS": [
+      "CB"
+    ],
+    "PRO": [
+      "CB"
+    ],
+    "TRP": [
+      "CB"
+    ],
+    "TYR": [
+      "CB"
+    ]
+  },
+  "save_avs": true,
+  "slow_fact": 0.10,
+  "critical_distance": 6.5,
+  "slow_radius": 10.0,
+  "sticky_mode": "quencher",
+  "t_max": 2000.0,
+  "t_step": 0.016,
+  "tau0": 4.2,
+  "D": 7.0,
+  "verbose": true
+}

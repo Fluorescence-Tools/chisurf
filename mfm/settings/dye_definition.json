@@ -1,0 +1,89 @@
+{
+    "D3-Alexa488": {
+        "diffusion_coefficient": 15.0,
+        "av_length": 20.0,
+        "av_radius1": 3.5,
+        "av_linker_width": 0.5,
+        "quenching_distance": 8.0,
+
+        "bonds": [
+            [0, 1],
+            [1, 2],
+            [0, 2]
+        ],
+
+        "coordinates": [
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0]
+        ],
+
+        "chains": [
+            {
+                "index": 0,
+                "residues": [
+                    {
+                        "atoms": [
+                            {
+                                "element": "C",
+                                "index": 0,
+                                "name": "DA"
+                            },
+                            {
+                                "element": "C",
+                                "index": 1,
+                                "name": "DB"
+                            },
+                            {
+                                "element": "H",
+                                "index": 2,
+                                "name": "DC"
+                            }
+                        ],
+                        "index": 0,
+                        "resSeq": 1,
+                        "name": "DY3"
+                    }
+                ]
+            }
+        ]
+    },
+
+    "D1-Alexa488": {
+        "diffusion_coefficient": 15.0,
+        "av_length": 20.0,
+        "av_radius1": 3.5,
+        "av_linker_width": 0.5,
+        "quenching_distance": 8.0,
+
+        "coordinates": [
+            [0.0, 0.0, 0.0]
+        ],
+
+        "bonds": [
+        ],
+        "chains": [
+            {
+                "index": 0,
+                "residues": [
+                    {
+                        "atoms": [
+                            {
+                                "element": "C",
+                                "index": 0,
+                                "name": "DA"
+                            }
+                        ],
+                        "index": 0,
+                        "resSeq": 1,
+                        "name": "DY1"
+                    }
+                ]
+            }
+        ]
+    }
+
+
+}
+
+

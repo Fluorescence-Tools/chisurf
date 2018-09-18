@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# Size of Grid
+declare -a size=(1024 10240 102400 1024000 10240000 102400000)
+
+# Size of WorkGroup
+declare -a sizeWorkGroup=(16 32 64 128 256)
+
+# Iteration index
+declare -i i=0
+declare -i j=0
+declare -i k=1
+
+# Number of trials for each case
+declare -i numTrials=10;
+
+# Remove old peformances file
+rm -f performances.txt
+
+# Main loop on array size
+while [ "${size[$i]}" != "" ]
+     do  
+  # Loop over work-group size
+  while [ "${sizeWorkGroup[$j]}" != "" ]
+       do  
+       # Reset trials index and summation
+       k=0;
+       sumSeq=0
+       sumGPU=0
+    # Loop over work-group size
+    while [ $k -le $numTrials ]
+         do  
+	   # Output of execution
+	   output=$(./sumReductionGPU "${size[$i]}" "${sizeWorkGroup[$j]}")
+
+	   # Check Summation value for CPU and GPU
+	   sum_seq_value=$(echo $output | awk '{print $9}')
+	   sum_gpu_value=$(echo $output | awk '{print $14}')
+
+	   if [ $sum_seq_value != $sum_gpu_value ] 
+	   then
+	     echo -e "Error with computing Sum for : Size = ${size[$i]} ; WorkGroup size = ${sizeWorkGroup[$j]}"
+	     exit
+	   else
+	     echo -e "Valid pass : Trial = $k ; Array size = ${size[$i]} ; WorkGroup size = ${sizeWorkGroup[$j]}"
+
+	     # Runtime for sequential
+	     time_final_seq_second=$(echo $output | awk '{print $61}')
+	     time_final_seq_micro=$(echo $output | awk '{print $63}')
+	     time_final_seq_micro=$(echo "scale=6;$time_final_seq_micro*10^-6" | bc)
+
+	     # Sequential runtime for k-nth index
+	     time_final_seq=$time_final_seq_second$time_final_seq_micro
+
+	     # Sum for Sequantial runtime
+	     sumSeq=$(echo "scale=6;$sumSeq+$time_final_seq" | bc)
+	      
+	     # Runtime for gpu
+	     time_final_gpu_second=$(echo $output | awk '{print $48}')
+	     time_final_gpu_micro=$(echo $output | awk '{print $50}')
+	     time_final_gpu_micro=$(echo "scale=6;$time_final_gpu_micro*10^-6" | bc)
+
+	     # GPU runtime for k-nth index
+	     time_final_gpu=$time_final_gpu_second$time_final_gpu_micro
+
+	     # Sum for GPU runtime
+	     sumGPU=$(echo "scale=6;$sumGPU+$time_final_gpu" | bc)
+
+	     # Increment k index
+	     k=$k+1
+           fi
+         done
+      
+       # Compute Average rutimes
+       sumSeq_Average=$(echo "scale=6;$sumSeq/$numTrials" | bc)	 
+       sumGPU_Average=$(echo "scale=6;$sumGPU/$numTrials" | bc)	 
+
+       # Printf performances
+       echo -e "${size[$i]} ${sizeWorkGroup[$j]} $sumSeq_Average  $sumGPU_Average"  >> performances.txt
+
+       # Increment work-group index
+       j=$j+1
+       done
+       
+     echo " " >> performances.txt
+     j=0
+     i=$i+1
+     done
