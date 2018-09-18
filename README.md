@@ -1,6 +1,6 @@
 # ChiSurf
 ChiSurf is a software package for the analysis of complex fluorescence data acquired in time-resolved single-molecule and ensemble fluorescence experiments. The main feature of ChiSurf is the joint (global) analysis of multiple datasets.
-![dsDNA and an AV surface][2]
+![ChiSurf GUI][1]
  
  
 ## History
@@ -35,10 +35,10 @@ Overall, ChiSurf is highly experimental and its core is still heavily refactored
 By downloading and using ChiSurf, you agree with the following terms:
 ChiSurf is provided “as is” without warranty of any kind, express or implied. The authors of ChiSurf shall not be, in any event, be held liable for any claim, damages or other liability arising from the use of ChiSurf. As the user, you are not allowed to redistribute any or all of the code, in any manner to other parties. The downloaded code is for your use only. ChiSurf is provided free of charge to both academic and commercial users.
 
-References
+# References
 1. Peulen T, Opanasyuk O, Seidel C. Combining Graphical and Analytical Methods with Molecular Simulations To Analyze Time-Resolved FRET Measurements of Labeled Macromolecules Accurately. J Phys Chem B. 2017;121(35):8211-8241. [PubMed]
 2. Wahl M, Gregor I, Patting M, Enderlein J. Fast calculation of fluorescence correlation data with asynchronous time-correlated single-photon counting. Opt Express. 2003;11(26):3583-3591. [PubMed]
 3. Sindbert S, Kalinin S, Nguyen H, et al. Accurate distance determination of nucleic acids via Förster resonance energy transfer: implications of dye linker length and rigidity. J Am Chem Soc. 2011;133(8):2463-2480. [PubMed]
 4. Kalinin S, Peulen T, Sindbert S, et al. A toolkit and benchmark study for FRET-restrained high-precision structural modeling. Nat Methods. 2012;9(12):1218-1225. [PubMed]
 
-[2]: /doc/chisurf_gui.png "ChiSurf GUI"
+[1]: /doc/chisurf_gui.png "ChiSurf GUI"
