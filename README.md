@@ -43,7 +43,7 @@ ChiSurf is provided “as is” without warranty of any kind, express or implied
 
 ## MacOS
 
-* [15.05.14](https://drive.google.com/open?id=18uPP7FmM8-3aYJLx15TjPESNV8SDQfQg)
+* [15.05.14](https://drive.google.com/open?id=18uPP7FmM8-3aYJLx15TjPESNV8SDQfQg) (Tested on macOS 10.12, reported problems on 10.13)
 
 
 # References
