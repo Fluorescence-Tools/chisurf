@@ -39,7 +39,7 @@ ChiSurf is provided “as is” without warranty of any kind, express or implied
 ## Windows
 
 * [17.03.24](https://drive.google.com/open?id=1XJJDW9ESdGqDUhYOj06Lztajn6se3nDe)
-* [Legacy](https://drive.google.com/open?id=1GT8i_ZVnUXCIf_GBhk3TaS-T3DRhWHD2)
+* [Legacy (older version)](https://drive.google.com/open?id=1GT8i_ZVnUXCIf_GBhk3TaS-T3DRhWHD2)
 
 ## MacOS
 
