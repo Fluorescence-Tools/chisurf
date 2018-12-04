@@ -1,0 +1,56 @@
+
+QMenuBar::item:pressed
+{
+    border: 1px solid #303334;
+    margin-bottom:-1px;
+    padding-bottom:1px;
+}
+
+QPushButton
+{
+    border-width: 1px;
+    padding: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+QPushButton
+{
+    border-width: 1px;
+    padding: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+QLineEdit
+{
+    border-style: solid;
+    border: 1px solid #1e1e1e;
+    padding: 0px;
+}
+
+/*
+QAbstractSpinBox{
+    color: #37b158;
+    font: bold 9px;
+    border: 2px groove gray
+}
+QAbstractSpinBox::up-button{
+    subcontrol-position: top right;
+    width: 4px; height: 6px;
+    background-color: #b600b6;
+    border: 1px groove gray
+}
+QAbstractSpinBox::down-button{
+    subcontrol-position: bottom right;
+    width: 4px; height: 6px;
+    background-color: #b600b6;
+    border: 1px groove gray
+}
+
+QWidget:disabled
+{
+    background-color: #d8d8d8;
+}
+*/
+
