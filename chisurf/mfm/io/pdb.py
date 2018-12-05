@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import pandas as pd
 import mfm
 import mfm.common as common
 import urllib
@@ -209,10 +208,8 @@ def write_xyz(filename, points, verbose=False):
 
 
 def read_xyz(filename):
-    df = pd.read_csv(filepath_or_buffer=filename, delimiter="\s+", header=None, skiprows=2)
-    x, y, z = df[1], df[2], df[3]
-    xyz = np.vstack([x, y, z]).T
-    return xyz
+    t = np.loadtxt(filename, skiprows=2, usecols=(1, 2, 3), delimiter=" ")
+    return t
 
 
 def write_points(filename, points, verbose=False, mode='xyz', density=None):

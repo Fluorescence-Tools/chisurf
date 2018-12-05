@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import mfm
@@ -903,7 +902,8 @@ class SingleDistanceModelWidget(ModelWidget, SingleDistanceModel):
         #filename = kwargs.get('filename', str(QtGui.QFileDialog.getOpenFileName(self, 'Open File')))
         filename = mfm.widgets.get_filename('Open distance distribution', 'CSV-files (*.csv)')
         self.lineEdit.setText(filename)
-        ar = np.array(pd.read_csv(filename, sep='\t')).T
+        csv = mfm.io.ascii.Csv(filename)
+        ar = csv.data.T
         if verbose:
             print "Opening distribution"
             print "Filename: %s" % filename

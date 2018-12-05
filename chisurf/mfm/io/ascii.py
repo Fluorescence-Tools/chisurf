@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import pandas as pd
+import csv
 
 import mfm
 
@@ -90,9 +90,9 @@ class Csv(object):
         self.skiprows = kwargs.get('skiprows', 9)
         self.verbose = kwargs.get('verbose', mfm.verbose)
         self.mode = kwargs.get('mode', 'csv')
-        self.colspecs = kwargs.get('colspecs', '(16,33), (34,51)')
+        self.colspecs = kwargs.get('colspecs', [15, 17, 17])
 
-        self._data = kwargs.get('data', pd.DataFrame())
+        self._data = kwargs.get('data', None)
         self._filename = kwargs.get('filename', "")
 
     @property
@@ -101,11 +101,6 @@ class Csv(object):
         The currently open filename (after setting this parameter the file is opened)
         """
         return self._filename
-
-    #@filename.setter
-    #def filename(self, v):
-    #    self._filename = v
-    #    self.load(v)
 
     def load(self, filename, **kwargs):
         """
@@ -117,7 +112,7 @@ class Csv(object):
         """
         verbose = kwargs.get('verbose', self.verbose)
         use_header = kwargs.pop('use_header', self.use_header)
-        skiprows = kwargs.get('skiprows', self.skiprows)
+        skiprows = kwargs.pop('skiprows', self.skiprows)
         header = 'infer' if use_header else None
         self._filename = kwargs.get('filename', "")
 
@@ -130,13 +125,28 @@ class Csv(object):
                 print("Skip rows: {}".format(skiprows))
                 print("Use header: {}".format(use_header))
             if self.mode == 'csv':
-                df = pd.read_csv(filename, sep='[\s,;,,]',
-                                 header=header,
-                                 engine='python',
-                                 **kwargs)
+                delimiter = kwargs.pop('delimiter', None)
+                if delimiter is None:
+                    with open(filename, 'rb') as csvfile:
+                        for i in range(skiprows):
+                            csvfile.readline()
+                        dialect = csv.Sniffer().sniff(csvfile.read(2048), delimiters=';,|\t ')
+                        delimiter = dialect.delimiter
+                d = np.genfromtxt(
+                    fname=filename,
+                    delimiter=delimiter,
+                    skip_header=skiprows,
+                    **kwargs
+                )
             else:
-                df = pd.read_fwf(filename, colspecs=colspecs, header=header, **kwargs)
-            self._data = df
+                d = np.genfromtxt(
+                    skip_header=skiprows,
+                    fname=filename,
+                    delimiter=colspecs,
+                    names=header,
+                    **kwargs
+                )
+            self._data = d
         else:
             raise IOError
 
@@ -187,10 +197,6 @@ class Csv(object):
         else:
             return np.array(self._data, dtype=np.float64).T
 
-    #@data.setter
-    #def data(self, df):
-    #    self._data = df
-
     @property
     def header(self):
         """
@@ -201,70 +207,6 @@ class Csv(object):
         else:
             header = range(self._data.shape[1])
         return [str(i) for i in header]
-
-    # def reload_csv(self):
-    #     """
-    #     Reloads the csv as specified by :py:attribute:`.CSV.filename`
-    #     """
-    #     self.load(self.filename)
-    #
-    # This class should only read CSV files. Hence, the code below
-    # should not be part of the class.
-    # @property
-    # def data_x(self):
-    #     """
-    #     The x-values of the loaded file as numpy.array
-    #     """
-    #     if self.x_on:
-    #         try:
-    #             return self.data[self.col_x]
-    #         except IndexError:
-    #             return np.arange(self.data_y.shape[0], dtype=np.float64)
-    #     else:
-    #         return np.arange(self.data_y.shape[0], dtype=np.float64)
-    #
-    # @property
-    # def error_x(self):
-    #     """
-    #     The errors of the x-values of the loaded file as numpy.array
-    #     """
-    #     if self.error_x_on:
-    #         return self.data[self.col_ex]
-    #     else:
-    #         return self._ex
-    #
-    # @error_x.setter
-    # def error_x(self, prop):
-    #     self.error_x_on = False
-    #     self._ex = prop
-    #
-    # @property
-    # def error_y(self):
-    #     """
-    #     The errors of the y-values of the loaded file as numpy.array
-    #     """
-    #     if self.error_y_on:
-    #         return self.data[self.col_y]
-    #     else:
-    #         if self._ey is None:
-    #             return np.ones_like(self.data_y)
-    #         else:
-    #             return self._ey
-    #
-    # @error_y.setter
-    # def error_y(self, prop):
-    #     self.error_y_on = False
-    #     self._ey = prop
-    #
-    # @property
-    # def data_y(self):
-    #     """
-    #     The y-values of the loaded file as numpy.array
-    #     """
-    #     if self.data is not None:
-    #         return self.data[self.col_y]
-    #     else:
-    #         return None
 
     @property
     def n_points(self):

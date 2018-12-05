@@ -2,12 +2,12 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "ChiSurf"
-#define MyAppVersion "17.03.24"
+#define MyAppVersion "18.12.3dev"
 #define MyAppPublisher "Thomas Peulen"
 #define MyAppURL ""
 #define MyAppExeName "chisurf.exe"
-#define DevDir "C:\Users\thoma\PycharmProjects\ChiSurf_current\chisurf"
-#define RunTimeDir "C:\Users\thoma\PycharmProjects\ChiSurf_current\VC++ runtimes\"
+#define DevDir "C:\Users\thoma\PycharmProjects\ChiSurf\chisurf\"
+#define RunTimeDir "C:\Users\thoma\PycharmProjects\ChiSurf\VC++ runtimes\"
 
 [Setup]
 AppId={{F25DCFFA-1234-4643-BC4F-2C3A20495937}
@@ -21,17 +21,16 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\{#MyAppName}
 UsePreviousAppDir=no
 DefaultGroupName={#MyAppName}
-LicenseFile={#DevDir}LICENSE.txt
-InfoBeforeFile={#DevDir}WARNING.txt
-OutputDir={#DevDir}build
+LicenseFile={#DevDir}\..\LICENSE
+OutputDir={#DevDir}\..\build
 OutputBaseFilename=setup_{#MyAppVersion}
-SetupIconFile={#DevDir}mfm\ui\icons\cs_logo.ico
+SetupIconFile={#DevDir}\mfm\ui\icons\cs_logo.ico
 Compression=lzma
 SolidCompression=yes
 CompressionThreads=4
 UninstallLogMode=overwrite
 DirExistsWarning=yes
-UninstallDisplayIcon={app}\chisurf_win.exe
+UninstallDisplayIcon={app}\chisurf.exe
 DisableProgramGroupPage=yes
 
 
@@ -43,13 +42,12 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "{#RunTimeDir}*"; DestDir: {tmp}; Flags: deleteafterinstall
-Source: "{#DevDir}mfm_gui.py"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#DevDir}chisurf.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#DevDir}opencl\*"; DestDir: "{app}\opencl"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#DevDir}__main__.py"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#DevDir}\..\build_tools\chisurf.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#DevDir}mfm\*"; DestDir: "{app}\mfm"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#DevDir}macro\*"; DestDir: "{app}\macro"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#DevDir}tools\*"; DestDir: "{app}\tools"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "C:\Miniconda2\envs\chisurf*"; DestDir: "{app}\Anaconda"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\Miniconda2\envs\chisurf\*"; DestDir: "{app}\Anaconda"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
