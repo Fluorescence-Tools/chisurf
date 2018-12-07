@@ -1,3 +1,7 @@
+[![Linux Build Status](https://travis-ci.org/Fluorescence-Tools/ChiSurf.svg?branch=master)](https://travis-ci.org/Fluorescence-Tools/ChiSurf)
+[![Anaconda-Server Version](https://anaconda.org/tpeulen/chisurf/badges/version.svg)](https://anaconda.org/tpeulen/chisurf)
+
+
 # ChiSurf
 ChiSurf is a software package for the analysis of complex fluorescence data acquired in time-resolved single-molecule 
 and ensemble fluorescence experiments. The main feature of ChiSurf is the joint (global) analysis of multiple datasets.
