@@ -30,4 +30,4 @@ install:
 script:
   # Your test script goes here
   - cd chisurf
-  - python gui.py
+  - python __init__.py
