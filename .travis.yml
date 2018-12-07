@@ -22,7 +22,7 @@ install:
   - conda info -a
 
   # Replace dep1 dep2 ... with your dependencies
-  - conda config --add conda-forge
+  - conda config --add channels conda-forge
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION pyqt pyyaml python-slugify emcee mdtraj ipython pyqtgraph qtconsole qscintilla2 pyopengl numpy numba scipy sympy numexpr pytables matplotlib
   - source activate test-environment
   - python setup.py install
