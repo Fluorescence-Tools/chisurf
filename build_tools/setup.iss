@@ -4,7 +4,7 @@
 #define MyAppName "ChiSurf"
 #define MyAppVersion "18.12.3dev"
 #define MyAppPublisher "Thomas Peulen"
-#define MyAppURL ""
+#define MyAppURL "https://www.github.com/Fluorescence-Tools/Chisurf"
 #define MyAppExeName "chisurf.exe"
 #define DevDir "C:\Users\thoma\PycharmProjects\ChiSurf\chisurf\"
 #define RunTimeDir "C:\Users\thoma\PycharmProjects\ChiSurf\VC++ runtimes\"
@@ -42,7 +42,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "{#RunTimeDir}*"; DestDir: {tmp}; Flags: deleteafterinstall
-Source: "{#DevDir}__main__.py"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#DevDir}gui.py"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#DevDir}\..\build_tools\chisurf.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#DevDir}mfm\*"; DestDir: "{app}\mfm"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#DevDir}macro\*"; DestDir: "{app}\macro"; Flags: ignoreversion recursesubdirs createallsubdirs

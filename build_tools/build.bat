@@ -8,12 +8,12 @@ activate chisurf
 REM https://github.com/conda-forge/numpy-feedstock/issues/84
 REM numpy in conda is built against MKL (600 MB) in size
 REM numpy in conda-forge is built against OpenBLAS (<10MB)
-conda install -y -c conda-forge numpy pyqt pyyaml python-slugify numba matplotlib scipy sympy emcee numexpr pytables pandas mdtraj ipython pyqtgraph qtconsole qscintilla2 pyopengl
+conda install -y pyqt pyyaml python-slugify emcee mdtraj ipython pyqtgraph qtconsole qscintilla2 pyopengl numpy numba scipy sympy numexpr pytables matplotlib
 
 REM Create an Installer with Inno Setup
 "C:\Program Files (x86)\Inno Setup 5\Compil32.exe" /cc setup.iss
 
 deactivate
 
-conda env remove --name chisurf
+conda remove --name chisurf --all
 cd build_tools
