@@ -60,8 +60,7 @@ your use only. ChiSurf is provided free of charge to both academic and commercia
 
 ## MacOS
 
-* [15.05.14](https://drive.google.com/open?id=18uPP7FmM8-3aYJLx15TjPESNV8SDQfQg) (Tested on macOS 10.12, reported 
-problems on 10.13)
+* [17.03.24](https://drive.google.com/open?id=169CTwRLGw0-_3BB69-Soh4QlrveWrEvo)
 
 
 # References
