@@ -62,6 +62,11 @@ your use only. ChiSurf is provided free of charge to both academic and commercia
 
 * [17.03.24](https://drive.google.com/open?id=169CTwRLGw0-_3BB69-Soh4QlrveWrEvo)
 
+# Support
+Please submit feature requests, questions, and bugs in the following group.
+
+[Group](https://groups.google.com/d/forum/chisurf-software)
+
 
 # References
 1. Peulen T, Opanasyuk O, Seidel C. Combining Graphical and Analytical Methods with Molecular Simulations To Analyze 
