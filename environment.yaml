@@ -1,0 +1,26 @@
+name: chisurf_current
+
+channels:
+    - conda-forge
+
+dependencies:
+    - python=3.7
+    - pyyaml
+    - python-slugify
+    - numpy
+    - numba
+    - scipy
+    - sympy
+    - emcee
+    - numexpr
+    - pytables
+    - hdf5
+    - mdtraj
+    - ipython
+    - matplotlib
+    - pyqt>=5.6.0
+    - pyqtgraph
+    - qscintilla2
+    - pyopengl
+    - qtconsole
+    - qsci_editor

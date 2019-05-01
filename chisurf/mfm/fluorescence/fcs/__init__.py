@@ -1,6 +1,0 @@
-"""
-Auu
-"""
-from fcs import *
-
-
