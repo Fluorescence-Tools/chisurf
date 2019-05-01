@@ -1,0 +1,201 @@
+---
+name: ChiSurf
+version: 17.05.08
+n_threads: 4
+verbose: false
+fitting_message: true
+email-contact: thomas.peulen@gmx.de
+experimental_models: false
+updates:
+  check_version_url: http://fret.at/downloads/CURRENT.txt
+  changes: http://fret.at/downloads/CHANGES
+  check_for_updates: true
+fps:
+  vdw_max: 2
+  simulation_grid_resolution: 1
+  linknodes: 3
+  allowed_sphere_radius: 2
+  distance_samples: 100000
+  dynamic:
+    exponential: false
+correlator:
+  max_count_rate: 120
+  time_window: 500
+  count_rate_filter: false
+  nCasc: 25
+  B: 9
+  split: 6
+  weighting: 0
+  fine: 0
+photons:
+  complib: blosc
+  complevel: 9
+  title: spc
+mc_settings:
+  number_of_moving_aa: 1
+  pPsi: 0.3
+  pPhi: 0.7
+  pOmega: 0
+  pChi: 0.01
+  pdbOut: 500
+  ktAv: 1
+  kt: 1.5
+  scale: 0.0025
+  av_number_protein_mc: 100
+  update_rmsd: false
+  do_av_steepest_descent: false
+  cluster_structures: false
+  av_filename: out.xyz
+  append_new_structures: false
+  move_map: 
+  mc_mode: simple
+  n_out: 500
+  n_iter: 10000
+  potentials:
+  - weight: 2
+    name: H-Potential
+  - weight: 1
+    name: Iso-UNRES
+fortune:
+  fortunepath: "./mfm/ui/fortune/"
+  min_length: 0
+  max_length: 300
+  attempts: 1000
+  enabled: true
+fitting:
+  parallel_fit: false
+  global:
+    fit_local_first: false
+  leastsq:
+    ftol: 1.49012e-08
+    xtol: 1.49012e-08
+    gtol: 0
+    maxfev: 0
+    epsfcn: 0
+    factor: 100
+    full_output: true
+  mem:
+    lower_bound: 1.0e-08
+    upper_bound: 10000000
+    maxiter: 150000
+    maxfun: 1500000
+    factr: 10
+    reg_scale: 1
+  sampling:
+    method: emcee
+    steps: 1000
+    thin: 1
+    chi2max: 1000000000
+    n_runs: 10
+fret:
+  forster_radius: 52
+  tau0: 4
+  kappa2: 0.667
+  rda_resolution: 256
+  rda_min: 1
+  rda_max: 256
+  lifetime_bins: 101
+  bin_lifetime: false
+  discriminate: true
+  discriminate_amplitude: 1.0e-10
+  orientation_mode: slow_isotropic
+tcspc_csv:
+  rep_rate: 10
+  dt: 1
+  g_factor: 1
+  polarization: vm
+  is_jordi: false
+  rebin: [1, 1]
+  skiprows: 8
+  use_header: true
+tcspc:
+  shift_bg_with_irf: true
+  default_convolution_mode: per
+  convolution_on_by_default: true
+  autoscale: true
+  n0: 2000000
+  ts: 0
+  rep_rate: 10
+  dt: 1
+  g_factor: 1
+  polarization: vm
+  polarization_options:
+  - vm
+  - vv
+  - vh
+  fit_area: 0.99
+  fit_count_threshold: 5
+  is_jordi: false
+  rebin: [1, 1]
+fcs:
+  weight_type: suren
+database:
+  engine: sqlite://
+  read_file_size_limit: 104857600
+  compression_data_limit: 102400
+  embed_data_limit: 3145728
+  embed_data: false
+parameter:
+  hide_bounds: false
+  hide_link: false
+  fixable: false
+  hide_fix_checkbox: false
+  hide_error: false
+  fixed: false
+  decimals: 3
+  bounds_on: false
+  hide_label: false
+gui:
+  editor:
+    MarginsBackgroundColor: "#cccccc"
+    MarkerBackgroundColor: "#eeeeee"
+    CaretLineBackgroundColor: "#ffe4e4"
+    font_size: 9
+    language: Python
+  style_sheet: style_sheet_night.css
+  show_console: true
+  show_macro_edit: true
+  confirm_close_fit: true
+  confirm_close_program: true
+  RubberBandResize: true
+  RubberBandMove: true
+  fit_windows_size: [250, 250]
+  console:
+    style: 'linux' # options are linux, lightbg, or nocolor
+    init: |
+      %matplotlib inline
+      import pylab as p
+    width: 80
+  fit_models:
+    n_columns: 2
+  plot:
+    enable_grid: true
+    show_data_grid: true
+    show_residual_grid: true
+    show_acorr_grid: true
+    line_width: 1.5
+    hideTitle: true
+    enable_region_selector: true
+    show_legend: false
+    label_axis: false
+    colors:
+      region_selector: "#26a298"
+      region_selector_alpha: 100
+      data: "#ffa629"
+      data_inactive: "#ffa629"
+      irf: "#0040ff"
+      irf_inactive: "#0040ff"
+      model: "#d400cd"
+      model_inactive: "#d400cd"
+      residuals: "#df0101"
+      residuals_inactive: "#df0101"
+      auto_corr: "#ff00ff"
+      auto_corr_inactive: "#ff00ff"
+      inactive_transparency: 0.2
+      active_transparency: 1
+    pyqtgraph:
+      background: "#022700"
+      foreground: "#f2f2f2"
+      antialias: true
+      useOpenGL: false
+      useWeave: true
