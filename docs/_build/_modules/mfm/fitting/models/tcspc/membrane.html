@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.fitting.models.tcspc.membrane &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../../../index.html" />
+    <link rel="up" title="mfm.fitting.models" href="../../models.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for mfm.fitting.models.tcspc.membrane</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">QtCore</span>
+
+<span class="kn">import</span> <span class="nn">mfm</span>
+<span class="kn">from</span> <span class="nn">mfm</span> <span class="kn">import</span> <span class="n">plots</span>
+<span class="kn">from</span> <span class="nn">mfm.fitting</span> <span class="kn">import</span> <span class="n">FittingControllerWidget</span>
+<span class="kn">from</span> <span class="nn">mfm.fitting.models.tcspc</span> <span class="kn">import</span> <span class="n">_membrane</span>
+<span class="kn">from</span> <span class="nn">mfm.fitting.models.tcspc.fret</span> <span class="kn">import</span> <span class="n">FRETModel</span>
+<span class="kn">from</span> <span class="nn">mfm.fitting.models.tcspc.nusiance</span> <span class="kn">import</span> <span class="n">GenericWidget</span><span class="p">,</span> <span class="n">CorrectionsWidget</span>
+<span class="kn">from</span> <span class="nn">mfm.fitting.models.tcspc.tcspc</span> <span class="kn">import</span> <span class="n">LifetimeWidget</span><span class="p">,</span> <span class="n">Lifetime</span>
+<span class="kn">from</span> <span class="nn">mfm.fluorescence.tcspc.convolve</span> <span class="kn">import</span> <span class="n">ConvolveWidget</span>
+<span class="kn">from</span> <span class="nn">mfm.parameter</span> <span class="kn">import</span> <span class="n">ParameterWidget</span><span class="p">,</span> <span class="n">FittingParameter</span>
+
+
+<div class="viewcode-block" id="GridModel"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.membrane.GridModel">[docs]</a><span class="k">class</span> <span class="nc">GridModel</span><span class="p">(</span><span class="n">FRETModel</span><span class="p">):</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ncols</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ncols</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@ncols.setter</span>
+    <span class="k">def</span> <span class="nf">ncols</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ncols</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nrows</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nrows</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@nrows.setter</span>
+    <span class="k">def</span> <span class="nf">nrows</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nrows</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">r1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_r1</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="nd">@r1.setter</span>
+    <span class="k">def</span> <span class="nf">r1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_r1</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">r2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_r2</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="nd">@r2.setter</span>
+    <span class="k">def</span> <span class="nf">r2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_r2</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">d</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="nd">@d.setter</span>
+    <span class="k">def</span> <span class="nf">d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_d</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="nd">@alpha.setter</span>
+    <span class="k">def</span> <span class="nf">alpha</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">vec1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">r1</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">vec2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">/</span> <span class="mf">360.</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mf">2.0</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">r2</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pa</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pa</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pu</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pd</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pa</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@pa.setter</span>
+    <span class="k">def</span> <span class="nf">pa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pa</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pd</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pa</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pu</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pd</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@pd.setter</span>
+    <span class="k">def</span> <span class="nf">pd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pd</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pu</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pu</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pa</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pd</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pu</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@pu.setter</span>
+    <span class="k">def</span> <span class="nf">pu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pu</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rate_spectrum</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">calculate_rates</span><span class="p">()</span>
+        <span class="n">rates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_rates</span><span class="p">()</span>
+        <span class="n">amplitudes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">rates</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">amplitudes</span><span class="p">,</span> <span class="n">rates</span><span class="p">])</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param ncols: number of columns</span>
+<span class="sd">        :param nrows: number of rows</span>
+<span class="sd">        :param r1: distance parameter</span>
+<span class="sd">        :param r2: distance parameter</span>
+<span class="sd">        :param d: distance between the av-points on each grid-point</span>
+<span class="sd">        :param alpha: the angle of the unit-cell in degrees</span>
+<span class="sd">        :param pa: probability of acceptor</span>
+<span class="sd">        :param pd: probability of donor</span>
+<span class="sd">        :param pu: probability of unlabeled</span>
+<span class="sd">        :return:</span>
+
+<span class="sd">        &gt;&gt;&gt; from mfm.fitting.models.tcspc.membrane import GridModel</span>
+<span class="sd">        &gt;&gt;&gt; forster_radius = 50</span>
+<span class="sd">        &gt;&gt;&gt; tau0 = 4.0</span>
+<span class="sd">        &gt;&gt;&gt; n_cols, n_rows = 100, 100</span>
+<span class="sd">        &gt;&gt;&gt; r1, r2 = 50, 70</span>
+<span class="sd">        &gt;&gt;&gt; d = 10</span>
+<span class="sd">        &gt;&gt;&gt; alpha = 80</span>
+<span class="sd">        &gt;&gt;&gt; pa, pd, pu = 0.2, 0.1, 0.7</span>
+<span class="sd">        &gt;&gt;&gt; g = GridModel(n_cols, n_rows, r1, r2, d, alpha, pa, pd, pu, forster_radius, tau0)</span>
+<span class="sd">        &gt;&gt;&gt; g.update_grid()</span>
+<span class="sd">        &gt;&gt;&gt; rates = g.calculate_rates()</span>
+
+<span class="sd">        Look at dependence of angle</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">FRETModel</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_av_primitive</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">[</span><span class="mf">0.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span>
+                <span class="p">[</span><span class="mf">1.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span>
+                <span class="p">[</span><span class="o">-</span><span class="mf">1.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span>
+                <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span>
+                <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span>
+                <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>
+            <span class="p">],</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Model parameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ncols</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ncols&#39;</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;ncols&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nrows</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;nrows&#39;</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;nrows&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="c1"># Shape paramter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_r1</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;r1&#39;</span><span class="p">,</span> <span class="mi">40</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;r1&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_r2</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;r1&#39;</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;r2&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;alpha&#39;</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;alpha&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="c1"># Concentration parameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pa</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pa&#39;</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pa&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pd</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pd&#39;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pd&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pu</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pu&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pu&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="c1"># FRET-rate parameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_forster_radius</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">,</span>
+                                                           <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">]),</span>
+                                                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;R0&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tau0</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tau0&#39;</span><span class="p">,</span>
+                                                 <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;tau0&#39;</span><span class="p">]),</span>
+                                      <span class="n">name</span><span class="o">=</span><span class="s1">&#39;tau0&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_donors</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;donors&#39;</span><span class="p">,</span> <span class="n">Lifetime</span><span class="p">(</span><span class="s1">&#39;D&#39;</span><span class="p">))</span>
+
+        <span class="c1"># Hidden internal parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_donor_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+        <span class="c1"># FRETModel initialization</span>
+        <span class="n">FRETModel</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GridModel.update_grid"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.membrane.GridModel.update_grid">[docs]</a>    <span class="k">def</span> <span class="nf">update_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">n_cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncols</span>
+        <span class="n">n_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nrows</span>
+        <span class="n">n_av</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_av_primitive</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">av</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_av_primitive</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+        <span class="n">vec_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vec1</span>
+        <span class="n">vec_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vec2</span>
+
+        <span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_cols</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_av</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">random_av_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_av</span><span class="p">,</span> <span class="p">(</span><span class="n">n_cols</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">))</span>
+
+        <span class="n">donor_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">acceptor_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nrows</span><span class="p">):</span>
+            <span class="n">ri</span> <span class="o">=</span> <span class="n">vec_1</span> <span class="o">*</span> <span class="n">i</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ncols</span><span class="p">):</span>
+                <span class="n">rj</span> <span class="o">=</span> <span class="n">vec_2</span> <span class="o">*</span> <span class="n">j</span>
+
+                <span class="n">rij</span> <span class="o">=</span> <span class="n">ri</span> <span class="o">+</span> <span class="n">rj</span>
+                <span class="n">grid</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">av</span> <span class="o">+</span> <span class="n">rij</span>
+                <span class="c1"># assign dye types to grid-points</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">ranf</span><span class="p">()</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">pu</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">ranf</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">pd</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pd</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pa</span><span class="p">):</span>
+                        <span class="n">donor_list</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">random_av_points</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]])</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">acceptor_list</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">random_av_points</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_donor_list</span> <span class="o">=</span> <span class="n">donor_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_list</span> <span class="o">=</span> <span class="n">acceptor_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span> <span class="o">=</span> <span class="n">grid</span></div>
+
+<div class="viewcode-block" id="GridModel.calculate_rates"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.membrane.GridModel.calculate_rates">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_rates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_grid</span><span class="p">()</span>
+        <span class="n">r0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forster_radius</span>
+        <span class="n">tau0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau0</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grid</span>
+        <span class="n">donors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_donor_list</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
+        <span class="n">acceptors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_list</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">rates</span> <span class="o">=</span> <span class="n">_membrane</span><span class="o">.</span><span class="n">calculate_rates</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">tau0</span><span class="p">,</span> <span class="n">donors</span><span class="p">,</span> <span class="n">acceptors</span><span class="p">,</span> <span class="n">grid</span><span class="p">)</span>
+            <span class="n">rates</span> <span class="o">=</span> <span class="n">rates</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">rates</span><span class="p">)]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rates</span></div></div>
+
+
+<div class="viewcode-block" id="GridModelWidget"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.membrane.GridModelWidget">[docs]</a><span class="k">class</span> <span class="nc">GridModelWidget</span><span class="p">(</span><span class="n">GridModel</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+
+    <span class="n">plot_classes</span> <span class="o">=</span> <span class="p">[(</span><span class="n">plots</span><span class="o">.</span><span class="n">LinePlot</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;d_scalex&#39;</span><span class="p">:</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+                                      <span class="s1">&#39;d_scaley&#39;</span><span class="p">:</span> <span class="s1">&#39;log&#39;</span><span class="p">,</span>
+                                      <span class="s1">&#39;r_scalex&#39;</span><span class="p">:</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+                                      <span class="s1">&#39;r_scaley&#39;</span><span class="p">:</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+    <span class="p">}),</span>
+                    <span class="p">(</span><span class="n">plots</span><span class="o">.</span><span class="n">SurfacePlot</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="p">]</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;FD(A): Grid-fit&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="c1">## TCSPC-specific</span>
+        <span class="n">convolve</span> <span class="o">=</span> <span class="n">ConvolveWidget</span><span class="p">(</span><span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">hide_curve_convolution</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">donors</span> <span class="o">=</span> <span class="n">LifetimeWidget</span><span class="p">(</span><span class="n">parent</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Donor(0)&#39;</span><span class="p">,</span> <span class="n">short</span><span class="o">=</span><span class="s1">&#39;D&#39;</span><span class="p">)</span>
+        <span class="n">generic</span> <span class="o">=</span> <span class="n">GenericWidget</span><span class="p">(</span><span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">fitting</span> <span class="o">=</span> <span class="n">FittingControllerWidget</span><span class="p">(</span><span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">corrections</span> <span class="o">=</span> <span class="n">CorrectionsWidget</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">GridModel</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span> <span class="n">donors</span><span class="o">=</span><span class="n">donors</span><span class="p">,</span>
+                      <span class="n">generic</span><span class="o">=</span><span class="n">generic</span><span class="p">,</span> <span class="n">corrections</span><span class="o">=</span><span class="n">corrections</span><span class="p">,</span> <span class="n">convolve</span><span class="o">=</span><span class="n">convolve</span><span class="p">)</span>
+
+        <span class="c1">### Model parameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ncols</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ncols&#39;</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;ncols&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nrows</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;nrows&#39;</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;nrows&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="c1"># Shape paramter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_r1</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;r1&#39;</span><span class="p">,</span> <span class="mi">40</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;r1&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_r2</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;r1&#39;</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;r2&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;alpha&#39;</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;alpha&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_d</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="c1"># Concentration parameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pa</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pa&#39;</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pa&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pd</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pd&#39;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pd&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pu</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pu&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;pu&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="c1"># FRET-rate parameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_forster_radius</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">,</span>
+                                                    <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">]),</span>
+                                         <span class="n">name</span><span class="o">=</span><span class="s1">&#39;R0&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tau0</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tau0&#39;</span><span class="p">,</span>
+                                          <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;tau0&#39;</span><span class="p">]),</span>
+                               <span class="n">name</span><span class="o">=</span><span class="s1">&#39;tau0&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="c1"># Setup the layout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QGridLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">setSpacing</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">setMargin</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">setAlignment</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">AlignTop</span><span class="p">)</span>
+
+        <span class="n">v</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addLayout</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">v</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">fitting</span><span class="p">)</span>
+        <span class="n">v</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">convolve</span><span class="p">)</span>
+        <span class="n">v</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">generic</span><span class="p">)</span>
+        <span class="n">v</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">donors</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ncols</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nrows</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_r1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_r2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_d</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pa</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pd</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pu</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_forster_radius</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tau0</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">corrections</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span></div>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

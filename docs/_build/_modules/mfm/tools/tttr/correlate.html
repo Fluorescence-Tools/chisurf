@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.tools.tttr.correlate &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for mfm.tools.tttr.correlate</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">uic</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pyqtgraph</span> <span class="kn">as</span> <span class="nn">pg</span>
+
+<span class="kn">import</span> <span class="nn">mfm</span>
+<span class="kn">from</span> <span class="nn">mfm.experiments</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">mfm.io.widgets</span> <span class="kn">import</span> <span class="n">SpcFileWidget</span>
+
+<span class="n">plot_settings</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">]</span>
+<span class="n">pyqtgraph_settings</span> <span class="o">=</span> <span class="n">plot_settings</span><span class="p">[</span><span class="s2">&quot;pyqtgraph&quot;</span><span class="p">]</span>
+<span class="n">color_scheme</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">colors</span>
+<span class="n">lw</span> <span class="o">=</span> <span class="n">plot_settings</span><span class="p">[</span><span class="s1">&#39;line_width&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="CorrelateTTTR"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.CorrelateTTTR">[docs]</a><span class="k">class</span> <span class="nc">CorrelateTTTR</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;tttr-correlate&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">curve_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lineEdit</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;no-name&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">s</span>
+
+<div class="viewcode-block" id="CorrelateTTTR.onRemoveDataset"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.CorrelateTTTR.onRemoveDataset">[docs]</a>    <span class="k">def</span> <span class="nf">onRemoveDataset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">selected_index</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">row</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cs</span><span class="o">.</span><span class="n">selectedIndexes</span><span class="p">()]</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_curves</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">selected_index</span><span class="p">:</span>
+                <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_curves</span> <span class="o">=</span> <span class="n">l</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cs</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_curves</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="CorrelateTTTR.clear_curves"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.CorrelateTTTR.clear_curves">[docs]</a>    <span class="k">def</span> <span class="nf">clear_curves</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_curves</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">plot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">getPlotItem</span><span class="p">()</span>
+        <span class="n">plot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="CorrelateTTTR.get_data_curves"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.CorrelateTTTR.get_data_curves">[docs]</a>    <span class="k">def</span> <span class="nf">get_data_curves</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_curves</span></div>
+
+<div class="viewcode-block" id="CorrelateTTTR.plot_curves"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.CorrelateTTTR.plot_curves">[docs]</a>    <span class="k">def</span> <span class="nf">plot_curves</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">legend</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">plot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">getPlotItem</span><span class="p">()</span>
+        <span class="n">plot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">legend</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">addLegend</span><span class="p">()</span>
+        <span class="n">plot</span><span class="o">.</span><span class="n">setLogMode</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">plot</span><span class="o">.</span><span class="n">showGrid</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="n">current_curve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cs</span><span class="o">.</span><span class="n">selected_index</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">curve</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_curves</span><span class="p">):</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="n">lw</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">current_curve</span> <span class="k">else</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">lw</span>
+            <span class="n">plot</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">curve</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">curve</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                      <span class="n">pen</span><span class="o">=</span><span class="n">pg</span><span class="o">.</span><span class="n">mkPen</span><span class="p">(</span><span class="n">color_scheme</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">color_scheme</span><span class="p">)][</span><span class="s1">&#39;hex&#39;</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="n">l</span><span class="p">),</span>
+                      <span class="n">name</span><span class="o">=</span><span class="n">curve</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CorrelateTTTR.add_curve"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.CorrelateTTTR.add_curve">[docs]</a>    <span class="k">def</span> <span class="nf">add_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">corr</span><span class="o">.</span><span class="n">correlator</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">setup</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">corr</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">corr</span><span class="o">.</span><span class="n">fileWidget</span><span class="o">.</span><span class="n">sample_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_curves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cs</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_curves</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_curves</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;./mfm/ui/tools/tttr_correlate.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">tttr</span><span class="o">.</span><span class="n">correlate</span><span class="o">.</span><span class="n">FCStttr</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">corr</span> <span class="o">=</span> <span class="n">w</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cs</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">CurveSelector</span><span class="p">(</span><span class="n">get_data_curves</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_data_curves</span><span class="p">,</span> <span class="n">click_close</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout_6</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">correlator</span><span class="o">.</span><span class="n">pushButton_3</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;clicked()&#39;</span><span class="p">),</span> <span class="n">w</span><span class="o">.</span><span class="n">correlator</span><span class="o">.</span><span class="n">correlator_thread</span><span class="o">.</span><span class="n">start</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">correlator</span><span class="o">.</span><span class="n">correlator_thread</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;finished()&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_curve</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cs</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;itemClicked(QListWidgetItem *)&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_curves</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">PlotWidget</span><span class="p">(</span><span class="n">useOpenGL</span><span class="o">=</span><span class="n">pyqtgraph_settings</span><span class="p">[</span><span class="s1">&#39;useOpenGL&#39;</span><span class="p">])</span>
+        <span class="n">plot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">getPlotItem</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout_9</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">legend</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">addLegend</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cs</span><span class="o">.</span><span class="n">onRemoveDataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">onRemoveDataset</span></div>
+
+
+<div class="viewcode-block" id="Correlator"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.Correlator">[docs]</a><span class="k">class</span> <span class="nc">Correlator</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QThread</span><span class="p">):</span>
+
+    <span class="n">procDone</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">pyqtSignal</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">partDone</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">pyqtSignal</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">DataCurve</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">mfm</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">DataCurve</span><span class="p">(</span><span class="n">setup</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+        <span class="n">QtCore</span><span class="o">.</span><span class="n">QThread</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exiting</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dt1</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dt2</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="Correlator.getWeightStream"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.Correlator.getWeightStream">[docs]</a>    <span class="k">def</span> <span class="nf">getWeightStream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tacWeighting</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param tacWeighting: is either a list of integers or a numpy-array. If it&#39;s a list of integers\</span>
+<span class="sd">        the integers correspond to channel-numbers. In this case all photons have an equal weight of one.\</span>
+<span class="sd">        If tacWeighting is a numpy-array it should be of shape [max-routing, number of TAC channels]. The\</span>
+<span class="sd">        array contains np.floats with weights for photons arriving at different TAC-times.</span>
+<span class="sd">        :return: numpy-array with same length as photon-stream, each photon is associated to one weight.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Correlator:getWeightStream&quot;</span><span class="p">)</span>
+        <span class="n">photons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">photon_source</span><span class="o">.</span><span class="n">photons</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">tacWeighting</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;channel-wise selection&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Max-Rout: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">photons</span><span class="o">.</span><span class="n">n_rout</span><span class="p">)</span>
+            <span class="n">wt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">photons</span><span class="o">.</span><span class="n">n_rout</span><span class="p">,</span> <span class="n">photons</span><span class="o">.</span><span class="n">n_tac</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="n">wt</span><span class="p">[</span><span class="n">tacWeighting</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">tacWeighting</span><span class="p">)</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;TAC-weighted&quot;</span><span class="p">)</span>
+            <span class="n">wt</span> <span class="o">=</span> <span class="n">tacWeighting</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fcs</span><span class="o">.</span><span class="n">get_weights</span><span class="p">(</span><span class="n">photons</span><span class="o">.</span><span class="n">rout</span><span class="p">,</span> <span class="n">photons</span><span class="o">.</span><span class="n">tac</span><span class="p">,</span> <span class="n">wt</span><span class="p">,</span> <span class="n">photons</span><span class="o">.</span><span class="n">nPh</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">w</span></div>
+
+<div class="viewcode-block" id="Correlator.run"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.Correlator.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">DataCurve</span><span class="p">()</span>
+
+        <span class="n">w1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getWeightStream</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">ch1</span><span class="p">)</span>
+        <span class="n">w2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getWeightStream</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">ch2</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Correlation running...&quot;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Correlation method: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">method</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Fine-correlation: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">fine</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Nbr. of correlations: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">split</span><span class="p">)</span>
+        <span class="n">photons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">photon_source</span><span class="o">.</span><span class="n">photons</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">photons</span><span class="p">)</span>
+        <span class="n">nGroup</span> <span class="o">=</span> <span class="n">n</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">split</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">partDone</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="n">n</span> <span class="o">%</span> <span class="n">nGroup</span><span class="p">,</span> <span class="n">nGroup</span><span class="p">):</span>
+            <span class="n">nbr</span> <span class="o">=</span> <span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">nGroup</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Correlation Nbr.: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">nbr</span><span class="p">)</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">photons</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">nGroup</span><span class="p">]</span>
+            <span class="n">wi1</span><span class="p">,</span> <span class="n">wi2</span> <span class="o">=</span> <span class="n">w1</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">nGroup</span><span class="p">],</span> <span class="n">w2</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">nGroup</span><span class="p">]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;tp&#39;</span><span class="p">:</span>
+                <span class="n">np1</span><span class="p">,</span> <span class="n">np2</span><span class="p">,</span> <span class="n">dt1</span><span class="p">,</span> <span class="n">dt2</span><span class="p">,</span> <span class="n">tau</span><span class="p">,</span> <span class="n">corr</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fcs</span><span class="o">.</span><span class="n">log_corr</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">mt</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">tac</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">rout</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">cr_filter</span><span class="p">,</span>
+                                                          <span class="n">wi1</span><span class="p">,</span> <span class="n">wi2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">B</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">nCasc</span><span class="p">,</span>
+                                                          <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">fine</span><span class="p">,</span> <span class="n">photons</span><span class="o">.</span><span class="n">n_tac</span><span class="p">)</span>
+                <span class="n">cr</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fcs</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">np1</span><span class="p">,</span> <span class="n">np2</span><span class="p">,</span> <span class="n">dt1</span><span class="p">,</span> <span class="n">dt2</span><span class="p">,</span> <span class="n">tau</span><span class="p">,</span> <span class="n">corr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">B</span><span class="p">)</span>
+                <span class="n">cr</span> <span class="o">/=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">dt</span>
+                <span class="n">dur</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">dt1</span><span class="p">,</span> <span class="n">dt2</span><span class="p">))</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">dt</span> <span class="o">/</span> <span class="mi">1000</span>  <span class="c1"># seconds</span>
+                <span class="n">tau</span> <span class="o">=</span> <span class="n">tau</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+                <span class="n">tau</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">dt</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">cr</span><span class="p">,</span> <span class="n">dur</span><span class="p">,</span> <span class="n">tau</span><span class="p">,</span> <span class="n">corr</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">partDone</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">nbr</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">split</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
+
+        <span class="c1"># Calculate average correlations</span>
+        <span class="n">cors</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">taus</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span>
+            <span class="n">cr</span><span class="p">,</span> <span class="n">dur</span><span class="p">,</span> <span class="n">tau</span><span class="p">,</span> <span class="n">corr</span> <span class="o">=</span> <span class="n">c</span>
+            <span class="n">weight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="p">(</span><span class="n">tau</span><span class="p">,</span> <span class="n">corr</span><span class="p">,</span> <span class="n">dur</span><span class="p">,</span> <span class="n">cr</span><span class="p">)</span>
+            <span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">weight</span><span class="p">)</span>
+            <span class="n">cors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corr</span><span class="p">)</span>
+            <span class="n">taus</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tau</span><span class="p">)</span>
+
+        <span class="n">cor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cors</span><span class="p">)</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+
+        <span class="n">data</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">taus</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">cor</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">ey</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">w</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;correlation done&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">procDone</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exiting</span> <span class="o">=</span> <span class="bp">True</span></div>
+
+<div class="viewcode-block" id="Correlator.weight"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.Correlator.weight">[docs]</a>    <span class="k">def</span> <span class="nf">weight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tau</span><span class="p">,</span> <span class="n">cor</span><span class="p">,</span> <span class="n">dur</span><span class="p">,</span> <span class="n">cr</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        tau-axis in milliseconds</span>
+<span class="sd">        correlation amplitude</span>
+<span class="sd">        dur = duration in seconds</span>
+<span class="sd">        cr = count-rate in kHz</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">weighting</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fcs</span><span class="o">.</span><span class="n">weights</span><span class="p">(</span><span class="n">tau</span><span class="p">,</span> <span class="n">cor</span><span class="p">,</span> <span class="n">dur</span><span class="p">,</span> <span class="n">cr</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">weighting</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fcs</span><span class="o">.</span><span class="n">weights</span><span class="p">(</span><span class="n">tau</span><span class="p">,</span> <span class="n">cor</span><span class="p">,</span> <span class="n">dur</span><span class="p">,</span> <span class="n">cr</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;suren&#39;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="CorrelatorWidget"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.CorrelatorWidget">[docs]</a><span class="k">class</span> <span class="nc">CorrelatorWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">photon_source</span><span class="p">,</span> <span class="n">ch1</span><span class="o">=</span><span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="n">ch2</span><span class="o">=</span><span class="s1">&#39;8&#39;</span><span class="p">,</span> <span class="n">setup</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;mfm/ui/experiments/correlatorWidget.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">nCasc</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;nCasc&#39;</span><span class="p">,</span> <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;nCasc&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">B</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;B&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">split</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;split&#39;</span><span class="p">,</span> <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;split&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weighting</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;weighting&#39;</span><span class="p">,</span> <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;weighting&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fine</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fine&#39;</span><span class="p">,</span> <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fine&#39;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup</span> <span class="o">=</span> <span class="n">setup</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cr</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ch1</span> <span class="o">=</span> <span class="n">ch1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ch2</span> <span class="o">=</span> <span class="n">ch2</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">photon_source</span> <span class="o">=</span> <span class="n">photon_source</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">correlator_thread</span> <span class="o">=</span> <span class="n">Correlator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="c1"># fill widgets</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_3</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fcs</span><span class="o">.</span><span class="n">weightCalculations</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fcs</span><span class="o">.</span><span class="n">correlationMethods</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">progressBar</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="c1"># connect widgets</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pushButton_3</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;clicked()&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">correlator_thread</span><span class="o">.</span><span class="n">start</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">correlator_thread</span><span class="o">.</span><span class="n">partDone</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">updatePBar</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CorrelatorWidget.updatePBar"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.CorrelatorWidget.updatePBar">[docs]</a>    <span class="k">def</span> <span class="nf">updatePBar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">progressBar</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">val</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">correlator_thread</span><span class="o">.</span><span class="n">data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_source</span><span class="o">.</span><span class="n">photons</span><span class="o">.</span><span class="n">mt_clk</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fine</span><span class="p">:</span>
+            <span class="n">dt</span> <span class="o">/=</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_source</span><span class="o">.</span><span class="n">photons</span><span class="o">.</span><span class="n">n_tac</span>
+        <span class="k">return</span> <span class="n">dt</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">weighting</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_3</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">()</span>
+
+    <span class="nd">@weighting.setter</span>
+    <span class="k">def</span> <span class="nf">weighting</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_3</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ch1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_4</span><span class="o">.</span><span class="n">text</span><span class="p">())</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span>
+
+    <span class="nd">@ch1.setter</span>
+    <span class="k">def</span> <span class="nf">ch1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_4</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ch2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_5</span><span class="o">.</span><span class="n">text</span><span class="p">())</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span>
+
+    <span class="nd">@ch2.setter</span>
+    <span class="k">def</span> <span class="nf">ch2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_5</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fine</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span>
+
+    <span class="nd">@fine.setter</span>
+    <span class="k">def</span> <span class="nf">fine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">B</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox_3</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+
+    <span class="nd">@B.setter</span>
+    <span class="k">def</span> <span class="nf">B</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">spinBox_3</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nCasc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox_2</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+
+    <span class="nd">@nCasc.setter</span>
+    <span class="k">def</span> <span class="nf">nCasc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">spinBox_2</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">method</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="o">.</span><span class="n">currentText</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+
+    <span class="nd">@split.setter</span>
+    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CrFilterWidget"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.CrFilterWidget">[docs]</a><span class="k">class</span> <span class="nc">CrFilterWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">photon_source</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;mfm/ui/experiments/fcs-cr-filter.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">photon_source</span> <span class="o">=</span> <span class="n">photon_source</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_window</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;time_window&#39;</span><span class="p">,</span> <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;time_window&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_count_rate</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;max_count_rate&#39;</span><span class="p">,</span> <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;max_count_rate&#39;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sample_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_source</span><span class="o">.</span><span class="n">sample_name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">max_count_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_6</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+
+    <span class="nd">@max_count_rate.setter</span>
+    <span class="k">def</span> <span class="nf">max_count_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_6</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">time_window</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_8</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+
+    <span class="nd">@time_window.setter</span>
+    <span class="k">def</span> <span class="nf">time_window</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_8</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cr_filter_on</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groupBox_2</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">photons</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">photons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_source</span><span class="o">.</span><span class="n">photons</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cr_filter_on</span><span class="p">:</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="n">photons</span><span class="o">.</span><span class="n">mt_clk</span>
+            <span class="n">tw</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_window</span> <span class="o">/</span> <span class="n">dt</span><span class="p">)</span>
+            <span class="n">n_ph_max</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_count_rate</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_window</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Using count-rate filter:&quot;</span><span class="p">)</span>
+                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Window-size [ms]: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_window</span><span class="p">)</span>
+                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;max_count_rate [kHz]: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_count_rate</span><span class="p">)</span>
+                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;n_ph_max in window [#]: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">n_ph_max</span><span class="p">)</span>
+                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Window-size [n(MTCLK)]: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">tw</span><span class="p">)</span>
+                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;---------------------------------&quot;</span><span class="p">)</span>
+
+            <span class="n">mt</span> <span class="o">=</span> <span class="n">photons</span><span class="o">.</span><span class="n">mt</span>
+            <span class="n">n_ph</span> <span class="o">=</span> <span class="n">mt</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_ph</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fcs</span><span class="o">.</span><span class="n">count_rate_filter</span><span class="p">(</span><span class="n">mt</span><span class="p">,</span> <span class="n">tw</span><span class="p">,</span> <span class="n">n_ph_max</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">n_ph</span><span class="p">)</span>
+            <span class="n">photons</span><span class="o">.</span><span class="n">cr_filter</span> <span class="o">=</span> <span class="n">w</span>
+            <span class="k">return</span> <span class="n">photons</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">photons</span></div>
+
+
+<div class="viewcode-block" id="FCStttr"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.FCStttr">[docs]</a><span class="k">class</span> <span class="nc">FCStttr</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;FCS-tttr&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">layout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">layout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">setMargin</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">setSpacing</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fileWidget</span> <span class="o">=</span> <span class="n">SpcFileWidget</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">countrateFilterWidget</span> <span class="o">=</span> <span class="n">CrFilterWidget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileWidget</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">correlator</span> <span class="o">=</span> <span class="n">CorrelatorWidget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">countrateFilterWidget</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fileWidget</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">countrateFilterWidget</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">correlator</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FCStttr.load_data"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.FCStttr.load_data">[docs]</a>    <span class="k">def</span> <span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">correlator</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">setup</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileWidget</span><span class="o">.</span><span class="n">sample_name</span>
+        <span class="k">return</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">d</span><span class="p">)</span></div></div>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

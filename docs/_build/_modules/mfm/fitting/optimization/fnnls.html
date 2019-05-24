@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.fitting.optimization.fnnls &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../../index.html" />
+    <link rel="up" title="mfm.fitting.optimization" href="../optimization.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for mfm.fitting.optimization.fnnls</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+
+<span class="c1">#</span>
+<span class="c1"># ported fnnls.m to fnnls.py</span>
+<span class="c1">#</span>
+<span class="c1"># gjok - 20050816</span>
+<span class="c1">#</span>
+<span class="c1"># TODO: DOESNT WORK!!!!!</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">numpy.linalg.linalg</span> <span class="kn">as</span> <span class="nn">la</span>
+
+
+<div class="viewcode-block" id="any"><a class="viewcode-back" href="../../../../api/mfm.fitting.optimization.html#mfm.fitting.optimization.fnnls.any">[docs]</a><span class="k">def</span> <span class="nf">any</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>     <span class="p">:</span> <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">X</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span></div>
+<div class="viewcode-block" id="find"><a class="viewcode-back" href="../../../../api/mfm.fitting.optimization.html#mfm.fitting.optimization.fnnls.find">[docs]</a><span class="k">def</span> <span class="nf">find</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>    <span class="p">:</span> <span class="k">return</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="norm"><a class="viewcode-back" href="../../../../api/mfm.fitting.optimization.html#mfm.fitting.optimization.fnnls.norm">[docs]</a><span class="k">def</span> <span class="nf">norm</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="p">:</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span></div>
+
+<span class="c1">#</span>
+<span class="c1"># x, w = fnnls(XtX, Xty, tol)</span>
+<span class="c1">#</span>
+<span class="n">eps</span><span class="o">=</span><span class="mf">1e-10</span>
+
+<div class="viewcode-block" id="fnnls"><a class="viewcode-back" href="../../../../api/mfm.fitting.optimization.html#mfm.fitting.optimization.fnnls.fnnls">[docs]</a><span class="k">def</span> <span class="nf">fnnls</span><span class="p">(</span><span class="n">XtX</span><span class="p">,</span> <span class="n">Xty</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    #FNNLS	Non-negative least-squares.</span>
+<span class="sd">    #</span>
+<span class="sd">    # 	Adapted from NNLS of Mathworks, Inc.</span>
+<span class="sd">    #          [x,w] = nnls(X, y)</span>
+<span class="sd">    #</span>
+<span class="sd">    #	x, w = fnnls(XtX,Xty) returns the vector X that solves x = pinv(XtX)</span>
+<span class="sd">        *Xty</span>
+<span class="sd">    #	in a least squares sense, subject to x &gt;= 0.</span>
+<span class="sd">    #	Differently stated it solves the problem min ||y - Xx|| if</span>
+<span class="sd">    #	XtX = X&#39;*X and Xty = X&#39;*y.</span>
+<span class="sd">    #</span>
+<span class="sd">    #	A default tolerance of TOL = MAX(SIZE(XtX)) * NORM(XtX,1) * EPS</span>
+<span class="sd">    #	is used for deciding when elements of x are less than zero.</span>
+<span class="sd">    #	This can be overridden with x = fnnls(XtX,Xty,TOL).</span>
+<span class="sd">    #</span>
+<span class="sd">    #	[x,w] = fnnls(XtX,Xty) also returns dual vector w where</span>
+<span class="sd">    #	w(i) &lt; 0 where x(i) = 0 and w(i) = 0 where x(i) &gt; 0.</span>
+<span class="sd">    #</span>
+<span class="sd">    #	See also NNLS and FNNLSb</span>
+
+<span class="sd">    #	L. Shure 5-8-87</span>
+<span class="sd">    #	Revised, 12-15-88,8-31-89 LS.</span>
+<span class="sd">    #	(Partly) Copyright (c) 1984-94 by The MathWorks, Inc.</span>
+
+<span class="sd">    #	Modified by R. Bro 5-7-96 according to</span>
+<span class="sd">    #       Bro R., de Jong S., Journal of Chemometrics, 1997, 11, 393-401</span>
+<span class="sd">    # 	Corresponds to the FNNLSa algorithm in the paper</span>
+<span class="sd">    #</span>
+<span class="sd">    #	Rasmus bro</span>
+<span class="sd">    #	Chemometrics Group, Food Technology</span>
+<span class="sd">    #	Dept. Dairy and Food Science</span>
+<span class="sd">    #	Royal Vet. &amp; Agricultural</span>
+<span class="sd">    #	DK-1958 Frederiksberg C</span>
+<span class="sd">    #	Denmark</span>
+<span class="sd">    #	rb@...</span>
+<span class="sd">    #	http://newton.foodsci.kvl.dk/users/rasmus.html</span>
+<span class="sd">    #  Reference:</span>
+<span class="sd">    #  Lawson and Hanson, &quot;Solving Least Squares Problems&quot;, Prentice-</span>
+<span class="sd">    Hall, 1974.</span>
+<span class="sd">    #</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># initialize variables</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">XtX</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">XtX</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">tol</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="mf">2.2204e-16</span>
+        <span class="n">tol</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">eps</span> <span class="o">*</span> <span class="n">norm</span><span class="p">(</span><span class="n">XtX</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="nb">max</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+        <span class="c1">#end</span>
+
+    <span class="n">P</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span>
+    <span class="n">P</span><span class="p">[:]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">Z</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+
+    <span class="n">z</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">P</span><span class="p">)</span>
+    <span class="n">ZZ</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span>
+
+    <span class="n">w</span> <span class="o">=</span> <span class="n">Xty</span> <span class="o">-</span> <span class="n">numpy</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">XtX</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># set up iteration criterion</span>
+    <span class="nb">iter</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">itmax</span> <span class="o">=</span> <span class="mi">30</span> <span class="o">*</span> <span class="n">n</span>
+
+    <span class="c1"># outer loop to put variables into set to hold positive coefficients</span>
+    <span class="k">while</span> <span class="nb">any</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="n">ZZ</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">tol</span><span class="p">)</span> <span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="n">ZZ</span><span class="p">]))</span>
+        <span class="n">wt</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="n">ZZ</span><span class="p">])</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">find</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="n">ZZ</span><span class="p">]</span> <span class="o">==</span> <span class="n">wt</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">ZZ</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+        <span class="n">P</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span>
+        <span class="n">Z</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">PP</span> <span class="o">=</span> <span class="n">find</span><span class="p">(</span><span class="n">P</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">ZZ</span> <span class="o">=</span> <span class="n">find</span><span class="p">(</span><span class="n">Z</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">PP</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">:</span>
+            <span class="n">XtyPP</span> <span class="o">=</span> <span class="n">Xty</span><span class="p">[</span><span class="n">PP</span><span class="p">]</span>
+            <span class="n">XtXPP</span> <span class="o">=</span> <span class="n">XtX</span><span class="p">[</span><span class="n">PP</span><span class="p">,</span> <span class="n">PP</span><span class="p">]</span>
+            <span class="n">z</span><span class="p">[</span><span class="n">PP</span><span class="p">]</span> <span class="o">=</span> <span class="n">XtyPP</span> <span class="o">/</span> <span class="n">XtXPP</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="n">XtyPP</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Xty</span><span class="p">[</span><span class="n">PP</span><span class="p">])</span>
+            <span class="n">XtXPP</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">XtX</span><span class="p">[</span><span class="n">PP</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">PP</span><span class="p">)[:,</span><span class="n">numpy</span><span class="o">.</span><span class="n">NewAxis</span><span class="p">]])</span>
+            <span class="n">z</span><span class="p">[</span><span class="n">PP</span><span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">XtyPP</span><span class="p">,</span> <span class="n">la</span><span class="o">.</span><span class="n">generalized_inverse</span><span class="p">(</span><span class="n">XtXPP</span><span class="p">))</span>
+            <span class="c1">#end</span>
+        <span class="n">z</span><span class="p">[</span><span class="n">ZZ</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># inner loop to remove elements from the positive set which no longer belong</span>
+    <span class="k">while</span> <span class="nb">any</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="n">PP</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">tol</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">iter</span> <span class="o">&lt;</span> <span class="n">itmax</span><span class="p">)</span> <span class="p">:</span>
+        <span class="nb">iter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">iztol</span> <span class="o">=</span> <span class="n">find</span><span class="p">(</span><span class="n">z</span> <span class="o">&lt;=</span> <span class="n">tol</span><span class="p">)</span>
+        <span class="n">ip</span> <span class="o">=</span> <span class="n">find</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">iztol</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">QQ</span> <span class="o">=</span> <span class="n">iztol</span><span class="p">[</span><span class="n">ip</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">QQ</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">alpha</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">QQ</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">QQ</span><span class="p">]</span> <span class="o">-</span> <span class="n">z</span><span class="p">[</span><span class="n">QQ</span><span class="p">])</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="n">x_xz</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">QQ</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">QQ</span><span class="p">]</span> <span class="o">-</span> <span class="n">z</span><span class="p">[</span><span class="n">QQ</span><span class="p">])</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="n">x_xz</span><span class="o">.</span><span class="n">_lb</span><span class="p">()</span>
+            <span class="c1">#end</span>
+        <span class="n">x</span> <span class="o">+=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="n">z</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">iabs</span> <span class="o">=</span> <span class="n">find</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">)</span>
+        <span class="n">ip</span> <span class="o">=</span> <span class="n">find</span><span class="p">(</span><span class="n">P</span><span class="p">[</span><span class="n">iabs</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">ij</span> <span class="o">=</span> <span class="n">iabs</span><span class="p">[</span><span class="n">ip</span><span class="p">]</span>
+        <span class="n">Z</span><span class="p">[</span><span class="n">ij</span><span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ij</span><span class="p">)</span>
+        <span class="n">P</span><span class="p">[</span><span class="n">ij</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">PP</span> <span class="o">=</span> <span class="n">find</span><span class="p">(</span><span class="n">P</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">ZZ</span> <span class="o">=</span> <span class="n">find</span><span class="p">(</span><span class="n">Z</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">PP</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="p">:</span>
+            <span class="n">XtyPP</span> <span class="o">=</span> <span class="n">Xty</span><span class="p">[</span><span class="n">PP</span><span class="p">]</span>
+            <span class="n">XtXPP</span> <span class="o">=</span> <span class="n">XtX</span><span class="p">[</span><span class="n">PP</span><span class="p">,</span> <span class="n">PP</span><span class="p">]</span>
+            <span class="n">z</span><span class="p">[</span><span class="n">PP</span><span class="p">]</span> <span class="o">=</span> <span class="n">XtyPP</span> <span class="o">/</span> <span class="n">XtXPP</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="n">XtyPP</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Xty</span><span class="p">[</span><span class="n">PP</span><span class="p">])</span>
+            <span class="n">XtXPP</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">XtX</span><span class="p">[</span><span class="n">PP</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">PP</span><span class="p">)[:,</span><span class="n">numpy</span><span class="o">.</span><span class="n">NewAxis</span><span class="p">]])</span>
+            <span class="n">z</span><span class="p">[</span><span class="n">PP</span><span class="p">]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">XtyPP</span><span class="p">,</span> <span class="n">la</span><span class="o">.</span><span class="n">generalized_inverse</span><span class="p">(</span><span class="n">XtXPP</span><span class="p">))</span>
+            <span class="c1">#endif</span>
+        <span class="n">z</span><span class="p">[</span><span class="n">ZZ</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1">#end while</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">Xty</span> <span class="o">-</span> <span class="n">numpy</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">XtX</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="c1">#end while</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">w</span></div>
+    <span class="c1">#end def</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span> <span class="p">:</span>
+<span class="c1">#</span>
+<span class="c1"># fcs2 [x, w] = fnnls(Xt.X, Xt.y, tol)</span>
+<span class="c1"># to solve min ||y - X.x|| s.t. x &gt;= 0</span>
+<span class="c1">#</span>
+<span class="c1"># matlab:lsqnonneg</span>
+<span class="c1">#   X = [1, 10, 4, 10; 4, 5, 1, 12; 5, 1, 9, 20];</span>
+<span class="c1">#   y = [4; 7; 4]</span>
+<span class="c1">#   x = lsqnonneg(X, y) =&gt; x = [0.9312; 0.3683; 0; 0];</span>
+<span class="c1">#</span>
+
+    <span class="n">X</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">20</span><span class="p">]],</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="bp">False</span> <span class="p">:</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span>
+                         <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span>
+                         <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span>
+                         <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="c1">#end</span>
+
+    <span class="k">if</span> <span class="bp">False</span> <span class="p">:</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span> <span class="p">:</span> <span class="n">X</span><span class="p">[</span><span class="n">n</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">400.0</span><span class="p">,</span> <span class="n">step</span> <span class="o">=</span> <span class="mi">20</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">)</span>
+        <span class="c1">#end</span>
+    <span class="n">Xt</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">fnnls</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Xt</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="n">numpy</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Xt</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;X = &#39;</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;y = &#39;</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;x = &#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="c1">#end if __name__ == &#39;__main__&#39;</span>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

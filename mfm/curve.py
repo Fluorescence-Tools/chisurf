@@ -303,7 +303,7 @@ class DataCurve(Curve, ExperimentalData):
             self._kw['ex'] = csv.data[3]
 
     def set_data(self, filename, x, y, **kwargs):
-        """test doc
+        """test docs
         
         :param filename: 
         :param x: 

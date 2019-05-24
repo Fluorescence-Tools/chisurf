@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.structure &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for mfm.structure</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The structure module contains most functions and classes to handle structural models of proteins. It contains basically</span>
+<span class="sd">two submodules:</span>
+
+<span class="sd">#. :py:mod:`.mfm.structure.structure`</span>
+<span class="sd">#. :py:mod:`.mfm.structure.trajectory`</span>
+<span class="sd">#. :py:mod:`.mfm.potential`</span>
+
+<span class="sd">The module :py:mod:`.mfm.potential` provides a set of potentials. The module :py:mod:`.mfm.structure.structure`</span>
+<span class="sd">provides a set of functions and classes to work with structures and trajectories.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">mfm</span>
+
+
+<div class="viewcode-block" id="Structure"><a class="viewcode-back" href="../../user_documentation/api/structure.html#mfm.structure.Structure">[docs]</a><span class="k">class</span> <span class="nc">Structure</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">ExperimentalData</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    max_atom_residue : int</span>
+<span class="sd">        Maximum atoms per residue. The maximum atoms per residue have to be limited, because of the</span>
+<span class="sd">        residue/atom lookup tables. By default maximum 16 atoms per residue are allowed.</span>
+
+<span class="sd">    xyz : numpy-array</span>
+<span class="sd">        The xyz-attribute is an array of the cartesian coordinates represented by the attribute atom</span>
+
+<span class="sd">    residue_names: list</span>
+<span class="sd">        residue names is a list of the residue-names. Here the residues are represented by the same</span>
+<span class="sd">        name as the initial PDB-file, usually 3-letter amino-acid code. The residue_names attribute</span>
+<span class="sd">        may look like: [&#39;TYR&#39;, &#39;HIS&#39;, &#39;ARG&#39;]</span>
+
+<span class="sd">    n_atoms: int</span>
+<span class="sd">        The number of atoms</span>
+
+<span class="sd">    b_factos: array</span>
+<span class="sd">        An array of the b-factors.</span>
+
+<span class="sd">    radius_gyration: float</span>
+<span class="sd">        The attribute radius_gyration returns the radius of gyration of the structure. The radius of gyration</span>
+<span class="sd">        is given by: rG = (np.sqrt((coord - rM) ** 2).sum(axis=1)).mean()</span>
+<span class="sd">        Here rM are the mean coordinates of the structure.</span>
+
+
+<span class="sd">    :param filename: str</span>
+<span class="sd">        Path to the pdb file on disk</span>
+<span class="sd">    :param make_coarse: bool</span>
+<span class="sd">        Conversion to coarse representation using internal coordinates. Side-chains are</span>
+<span class="sd">        not considered. The Cbeta-atoms is moved to center of mass of the side-chain.</span>
+<span class="sd">    :param verbose: bool</span>
+<span class="sd">        print output to stdout</span>
+<span class="sd">    :param auto_update: bool</span>
+<span class="sd">        update cartesian-coordiantes automatically after change of internal coordinates.</span>
+<span class="sd">        This only applies for coarse-grained coordinates</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    &gt;&gt;&gt; import mfm</span>
+<span class="sd">    &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;, verbose=True)</span>
+<span class="sd">    ======================================</span>
+<span class="sd">    Filename: ../sample_data/structure/HM_1FN5_Naming.pdb</span>
+<span class="sd">    Path: ../sample_data/structure</span>
+<span class="sd">    Number of atoms: 9316</span>
+<span class="sd">    &gt;&gt;&gt; print str(structure)[:324]</span>
+<span class="sd">    ATOM      1    N MET     7      72.739 -17.501   8.879  0.00  0.00             N</span>
+<span class="sd">    ATOM      2   CA MET     7      73.841 -17.042   9.747  0.00  0.00             C</span>
+<span class="sd">    ATOM      3    C MET     7      74.361 -18.178  10.643  0.00  0.00             C</span>
+<span class="sd">    ATOM      4    O MET     7      73.642 -18.708  11.489  0.00  0.00             O</span>
+
+<span class="sd">    Write structure to disk</span>
+
+<span class="sd">    &gt;&gt;&gt; structure.write(&#39;test_out.pdb&#39;)</span>
+
+<span class="sd">    Radius of gyration</span>
+
+<span class="sd">    &gt;&gt;&gt; structure.radius_gyration</span>
+<span class="sd">    50.31556120901161</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_object</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">mfm</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">ExperimentalData</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_atoms</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_residue_dict</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">io</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pdbid</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="c1">####################################################</span>
+        <span class="c1">#              Load ATOM COORDINATES               #</span>
+        <span class="c1">####################################################</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p_object</span><span class="p">,</span> <span class="n">Structure</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">p_object</span><span class="o">.</span><span class="n">atoms</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">p_object</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">p_object</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_atoms</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_atoms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">p_object</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">p_object</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_atoms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">fetch_pdb</span><span class="p">(</span><span class="n">p_object</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pdbid</span> <span class="o">=</span> <span class="n">p_object</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_atoms</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_atoms</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;names&#39;</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb</span><span class="o">.</span><span class="n">keys</span><span class="p">,</span> <span class="s1">&#39;formats&#39;</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb</span><span class="o">.</span><span class="n">formats</span><span class="p">})</span>
+
+    <span class="nd">@atoms.setter</span>
+    <span class="k">def</span> <span class="nf">atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_atoms</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">xyz</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Cartesian coordinates of all atoms</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">]</span>
+
+    <span class="nd">@xyz.setter</span>
+    <span class="k">def</span> <span class="nf">xyz</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">vdw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Van der Waals radii of all atoms</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;radius&#39;</span><span class="p">]</span>
+
+    <span class="nd">@vdw.setter</span>
+    <span class="k">def</span> <span class="nf">vdw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;radius&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">residue_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">res_name</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;res_name&#39;</span><span class="p">]))</span>
+        <span class="n">res_name</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">res_name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">residue_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_residue_dict</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">residue_dict</span> <span class="o">=</span> <span class="n">make_dictionary_of_atoms</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_residue_dict</span> <span class="o">=</span> <span class="n">residue_dict</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_residue_dict</span>
+
+    <span class="nd">@property</span>  <span class="c1"># OK</span>
+    <span class="k">def</span> <span class="nf">n_atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">)</span>
+
+    <span class="nd">@property</span>  <span class="c1"># OK</span>
+    <span class="k">def</span> <span class="nf">n_residues</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residue_ids</span><span class="p">)</span>
+
+    <span class="nd">@property</span>  <span class="c1"># OK</span>
+    <span class="k">def</span> <span class="nf">atom_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;atom_name&#39;</span><span class="p">])</span>
+
+    <span class="nd">@property</span>  <span class="c1"># OK</span>
+    <span class="k">def</span> <span class="nf">residue_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">residue_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;res_id&#39;</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">residue_ids</span>
+
+<div class="viewcode-block" id="Structure.get_atom_index"><a class="viewcode-back" href="../../user_documentation/api/structure.html#mfm.structure.Structure.get_atom_index">[docs]</a>    <span class="k">def</span> <span class="nf">get_atom_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atom_names</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a list of the indeces with a given atom name</span>
+
+<span class="sd">        :param atom_names: list of string of the atom-names</span>
+<span class="sd">        :return: list of integers the indices with a given atom name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">get_atom_index_by_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">,</span> <span class="n">atom_names</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">b_factors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;B-factors of the C-alpha atoms</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sel</span> <span class="o">=</span> <span class="n">get_atom_index_by_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;CA&#39;</span><span class="p">])</span>
+        <span class="n">bfac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="n">sel</span><span class="p">][</span><span class="s1">&#39;bfactor&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">bfac</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">radius_gyration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">coord</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xyz</span>
+        <span class="n">rM</span> <span class="o">=</span> <span class="n">coord</span><span class="p">[:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">rG</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">coord</span> <span class="o">-</span> <span class="n">rM</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">rG</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Structure.write"><a class="viewcode-back" href="../../user_documentation/api/structure.html#mfm.structure.Structure.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write the structure to a filename. By default it uses PDB files</span>
+
+<span class="sd">        :param filename: The filename</span>
+<span class="sd">        :param append_model: bool</span>
+<span class="sd">            If True the structure is appended to the filename as a new model otherwise the file is overwritten</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;filename&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">append_model</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;append_model&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="n">append_coordinates</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;append_coordinates&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">aw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">)</span>
+        <span class="n">aw</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xyz</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">aw</span><span class="p">,</span> <span class="n">append_model</span><span class="o">=</span><span class="n">append_model</span><span class="p">,</span> <span class="n">append_coordinates</span><span class="o">=</span><span class="n">append_coordinates</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Structure.update"><a class="viewcode-back" href="../../api/mfm.structure.html#mfm.structure.Structure.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;No atoms in structure!&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">for</span> <span class="n">at</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[:</span><span class="mi">5</span><span class="p">]:</span>
+                <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">%-6s%5d</span><span class="s2"> </span><span class="si">%4s%1s%3s</span><span class="s2"> </span><span class="si">%1s%4d%1s</span><span class="s2">   </span><span class="si">%8.3f%8.3f%8.3f%6.2f%6.2f</span><span class="s2">          </span><span class="si">%2s%2s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> \
+                     <span class="p">(</span><span class="s2">&quot;ATOM &quot;</span><span class="p">,</span>
+                      <span class="n">at</span><span class="p">[</span><span class="s1">&#39;atom_id&#39;</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;atom_name&#39;</span><span class="p">],</span> <span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;res_name&#39;</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">],</span>
+                      <span class="n">at</span><span class="p">[</span><span class="s1">&#39;res_id&#39;</span><span class="p">],</span> <span class="s2">&quot; &quot;</span><span class="p">,</span>
+                      <span class="n">at</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span>
+                      <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;  &quot;</span><span class="p">,</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;element&#39;</span><span class="p">])</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;....</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="k">return</span> <span class="n">s</span>
+
+    <span class="k">def</span> <span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memo</span><span class="p">):</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">_atoms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_atoms</span><span class="p">)</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">io</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io</span>
+        <span class="k">return</span> <span class="n">new</span></div>
+
+<span class="kn">from</span> <span class="nn">.structure</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">.protein</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">.trajectory</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">.labeled_structure</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

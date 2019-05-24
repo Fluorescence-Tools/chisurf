@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.fitting.models.tcspc.parse &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../../../index.html" />
+    <link rel="up" title="mfm.fitting.models" href="../../models.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for mfm.fitting.models.tcspc.parse</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span>
+
+<span class="kn">import</span> <span class="nn">mfm.fitting.error_estimate</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">ModelWidget</span>
+<span class="kn">from</span> <span class="nn">mfm.fitting.fit</span> <span class="kn">import</span> <span class="n">FittingControllerWidget</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">parse</span>
+<span class="kn">from</span> <span class="nn">mfm.fitting.models.tcspc</span> <span class="kn">import</span> <span class="n">tcspc</span>
+<span class="kn">import</span> <span class="nn">mfm.fitting.models.tcspc.nusiance</span>
+
+
+<div class="viewcode-block" id="ParseDecayModel"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.parse.ParseDecayModel">[docs]</a><span class="k">class</span> <span class="nc">ParseDecayModel</span><span class="p">(</span><span class="n">parse</span><span class="o">.</span><span class="n">ParseModel</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">parse</span><span class="o">.</span><span class="n">ParseModel</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">convolve</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;convolve&#39;</span><span class="p">,</span> <span class="n">tcspc</span><span class="o">.</span><span class="n">Convolve</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;convolve&#39;</span><span class="p">,</span> <span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">corrections</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;corrections&#39;</span><span class="p">,</span>
+                                      <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">nusiance</span><span class="o">.</span><span class="n">Corrections</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;corrections&#39;</span><span class="p">,</span> <span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generic</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;generic&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">nusiance</span><span class="o">.</span><span class="n">Generic</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;generic&#39;</span><span class="p">,</span> <span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
+<div class="viewcode-block" id="ParseDecayModel.update_model"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.parse.ParseDecayModel.update_model">[docs]</a>    <span class="k">def</span> <span class="nf">update_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1">#verbose = kwargs.get(&#39;verbose&#39;, self.verbose)</span>
+        <span class="c1">#scatter = kwargs.get(&#39;scatter&#39;, self.generic.scatter)</span>
+        <span class="n">background</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;background&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic</span><span class="o">.</span><span class="n">background</span><span class="p">)</span>
+        <span class="c1">#lintable = kwargs.get(&#39;lintable&#39;, self.corrections.lintable)</span>
+
+        <span class="n">parse</span><span class="o">.</span><span class="n">ParseModel</span><span class="o">.</span><span class="n">update_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">decay</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y_values</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">irf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">decay</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_y_values</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">)[:</span><span class="bp">self</span><span class="o">.</span><span class="n">_y_values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">decay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">bg</span><span class="o">=</span><span class="n">background</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">xmax</span><span class="p">)</span>
+        <span class="n">decay</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic</span><span class="o">.</span><span class="n">background</span>
+        <span class="n">decay</span><span class="p">[</span><span class="n">decay</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">corrections</span><span class="o">.</span><span class="n">lintable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">decay</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">corrections</span><span class="o">.</span><span class="n">lintable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_y_values</span> <span class="o">=</span> <span class="n">decay</span></div></div>
+
+
+<div class="viewcode-block" id="ParseDecayModelWidget"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.parse.ParseDecayModelWidget">[docs]</a><span class="k">class</span> <span class="nc">ParseDecayModelWidget</span><span class="p">(</span><span class="n">ParseDecayModel</span><span class="p">,</span> <span class="n">ModelWidget</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">ModelWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QIcon</span><span class="p">(</span><span class="s2">&quot;:/icons/icons/TCSPC.ico&quot;</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">convolve</span> <span class="o">=</span> <span class="n">tcspc</span><span class="o">.</span><span class="n">ConvolveWidget</span><span class="p">(</span><span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">show_convolution_mode</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">fit</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">generic</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">nusiance</span><span class="o">.</span><span class="n">GenericWidget</span><span class="p">(</span><span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">error_widget</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">error_estimate</span><span class="o">.</span><span class="n">ErrorWidget</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">package_directory</span><span class="p">,</span> <span class="s1">&#39;settings/tcspc.model.json&#39;</span><span class="p">)</span>
+        <span class="n">pw</span> <span class="o">=</span> <span class="n">parse</span><span class="o">.</span><span class="n">ParseWidget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_file</span><span class="o">=</span><span class="n">fn</span><span class="p">)</span>
+        <span class="n">corrections</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">nusiance</span><span class="o">.</span><span class="n">CorrectionsWidget</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span> <span class="o">=</span> <span class="n">fit</span>
+        <span class="n">ParseDecayModel</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span> <span class="n">parse</span><span class="o">=</span><span class="n">pw</span><span class="p">,</span> <span class="n">convolve</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">convolve</span><span class="p">,</span>
+                                 <span class="n">generic</span><span class="o">=</span><span class="n">generic</span><span class="p">,</span> <span class="n">corrections</span><span class="o">=</span><span class="n">corrections</span><span class="p">)</span>
+        <span class="n">fitting_widget</span> <span class="o">=</span> <span class="n">FittingControllerWidget</span><span class="p">(</span><span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">layout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">setSpacing</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">setMargin</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">setAlignment</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">AlignTop</span><span class="p">)</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">fitting_widget</span><span class="p">)</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">convolve</span><span class="p">)</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">generic</span><span class="p">)</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">error_widget</span><span class="p">)</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">corrections</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="n">layout</span><span class="p">)</span></div>
+
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

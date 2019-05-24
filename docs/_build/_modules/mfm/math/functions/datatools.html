@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.math.functions.datatools &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../../index.html" />
+    <link rel="up" title="mfm.math.functions" href="../functions.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for mfm.math.functions.datatools</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">copy</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+<span class="kn">import</span> <span class="nn">_special</span>
+
+
+<div class="viewcode-block" id="hist2func"><a class="viewcode-back" href="../../../../user_documentation/api/lib.html#mfm.math.functions.datatools.hist2func">[docs]</a><span class="k">def</span> <span class="nf">hist2func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">binEdges</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extrapolation of a histogram to a new x-axis. Here the parameter x can be any</span>
+<span class="sd">    numpy array as return value another array is obtained containing the values</span>
+<span class="sd">    of the histogram at the given x-values. This function may be useful if the spacing</span>
+<span class="sd">    of a histogram has to be changed.</span>
+
+<span class="sd">    :param x: array</span>
+<span class="sd">    :param H: array</span>
+<span class="sd">        Histogram values</span>
+<span class="sd">    :param binEdges: array</span>
+<span class="sd">        The bin edges of the histogram</span>
+<span class="sd">    :return: A list of the same size as the parameter x</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    &gt;&gt;&gt; H = np.array([0,2,1])</span>
+<span class="sd">    &gt;&gt;&gt; binEdges = np.array([0,5,10,15])</span>
+
+<span class="sd">    &gt;&gt;&gt; x = np.linspace(-5, 20, 17)</span>
+<span class="sd">    &gt;&gt;&gt; x</span>
+<span class="sd">    array([ -5.    ,  -3.4375,  -1.875 ,  -0.3125,   1.25  ,   2.8125,</span>
+<span class="sd">             4.375 ,   5.9375,   7.5   ,   9.0625,  10.625 ,  12.1875,</span>
+<span class="sd">            13.75  ,  15.3125,  16.875 ,  18.4375,  20.    ])</span>
+<span class="sd">    &gt;&gt;&gt; y = hist2func(x, H, binEdges)</span>
+<span class="sd">    [0.0, 0.0, 0.0, 0.0, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0.0, 0.0, 0.0, 0.0]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="nb">float</span> <span class="ow">or</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">])</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">re</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">xi</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">flatten</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">xi</span> <span class="o">&gt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">binEdges</span><span class="p">)</span> <span class="ow">or</span> <span class="n">xi</span> <span class="o">&lt;</span> <span class="nb">min</span><span class="p">(</span><span class="n">binEdges</span><span class="p">):</span>
+                <span class="n">re</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sel</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">xi</span><span class="o">&lt;</span><span class="n">binEdges</span><span class="p">)</span>
+                <span class="n">re</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">H</span><span class="p">[</span><span class="n">sel</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">re</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">re</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">re</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;unknon input type&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="overlapping_region"><a class="viewcode-back" href="../../../../user_documentation/api/lib.html#mfm.math.functions.datatools.overlapping_region">[docs]</a><span class="k">def</span> <span class="nf">overlapping_region</span><span class="p">(</span><span class="n">dataset1</span><span class="p">,</span> <span class="n">dataset2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    :param dataset1: tuple</span>
+<span class="sd">        The tuple should consist of the x and y values. Whereas the x and y values have to be a numpy array.</span>
+<span class="sd">    :param dataset2: tuple</span>
+<span class="sd">        The tuple should consist of the x and y values. Whereas the x and y values have to be a numpy array.</span>
+<span class="sd">    :return: Two tuples</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">dataset1</span>
+    <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">dataset2</span>
+
+    <span class="c1"># Sort the arrays in ascending order in x</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span>
+    <span class="n">y1</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y1</span><span class="p">)</span>
+    <span class="n">inds</span> <span class="o">=</span> <span class="n">x1</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">x1</span><span class="p">[</span><span class="n">inds</span><span class="p">]</span>
+    <span class="n">y1</span> <span class="o">=</span> <span class="n">y1</span><span class="p">[</span><span class="n">inds</span><span class="p">]</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span>
+    <span class="n">y1</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y1</span><span class="p">)</span>
+    
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x2</span><span class="p">)</span>
+    <span class="n">y2</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y2</span><span class="p">)</span>
+    <span class="n">inds</span> <span class="o">=</span> <span class="n">x2</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">x2</span><span class="p">[</span><span class="n">inds</span><span class="p">]</span>
+    <span class="n">y2</span> <span class="o">=</span> <span class="n">y2</span><span class="p">[</span><span class="n">inds</span><span class="p">]</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x2</span><span class="p">)</span>
+    <span class="n">y2</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y2</span><span class="p">)</span>
+
+    <span class="c1"># Calculate range for adjustment of spacing</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">x1</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">x2</span><span class="p">)),</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">x1</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">x2</span><span class="p">)))</span>
+    
+    <span class="c1"># mask the irrelevant parts</span>
+    <span class="n">m1l</span> <span class="o">=</span> <span class="n">x1</span><span class="o">.</span><span class="n">data</span> <span class="o">&lt;</span> <span class="n">rng</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">m1u</span> <span class="o">=</span> <span class="n">x1</span><span class="o">.</span><span class="n">data</span> <span class="o">&gt;</span> <span class="n">rng</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">m1</span> <span class="o">=</span> <span class="n">m1l</span> <span class="o">+</span> <span class="n">m1u</span>
+    <span class="n">x1</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">m1</span>
+    <span class="n">y1</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">m1</span>
+    
+    <span class="n">m2l</span> <span class="o">=</span> <span class="n">x2</span><span class="o">.</span><span class="n">data</span> <span class="o">&lt;</span> <span class="n">rng</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">m2u</span> <span class="o">=</span> <span class="n">x2</span><span class="o">.</span><span class="n">data</span> <span class="o">&gt;</span> <span class="n">rng</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">m2</span> <span class="o">=</span> <span class="n">m2l</span> <span class="o">+</span> <span class="n">m2u</span>
+    <span class="n">x2</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">m2</span>
+    <span class="n">y2</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">m2</span>
+    
+    <span class="c1"># create new lists: overlap - o and rest -r</span>
+    <span class="c1"># overlap</span>
+    <span class="n">ox1</span> <span class="o">=</span> <span class="n">x1</span><span class="o">.</span><span class="n">compressed</span><span class="p">()</span>
+    <span class="n">oy1</span> <span class="o">=</span> <span class="n">y1</span><span class="o">.</span><span class="n">compressed</span><span class="p">()</span>
+    <span class="n">ox2</span> <span class="o">=</span> <span class="n">x2</span><span class="o">.</span><span class="n">compressed</span><span class="p">()</span>
+    <span class="n">oy2</span> <span class="o">=</span> <span class="n">y2</span><span class="o">.</span><span class="n">compressed</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="p">(</span><span class="n">ox1</span><span class="p">,</span> <span class="n">oy1</span><span class="p">),</span> <span class="p">(</span><span class="n">ox2</span><span class="p">,</span> <span class="n">oy2</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="align_x_spacing"><a class="viewcode-back" href="../../../../api/mfm.math.functions.html#mfm.math.functions.datatools.align_x_spacing">[docs]</a><span class="k">def</span> <span class="nf">align_x_spacing</span><span class="p">(</span><span class="n">dataset1</span><span class="p">,</span> <span class="n">dataset2</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s1">&#39;linear-close&#39;</span><span class="p">):</span>
+    <span class="p">(</span><span class="n">ox1</span><span class="p">,</span> <span class="n">oy1</span><span class="p">),</span> <span class="p">(</span><span class="n">ox2</span><span class="p">,</span> <span class="n">oy2</span><span class="p">)</span> <span class="o">=</span> <span class="n">dataset1</span><span class="p">,</span> <span class="n">dataset2</span>
+    <span class="c1">#Assume that data is more or less equaliy spaced</span>
+    <span class="c1"># t- template array, r - rescale array</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ox1</span><span class="p">)</span> <span class="o">&lt;</span><span class="nb">len</span><span class="p">(</span><span class="n">ox2</span><span class="p">):</span>
+        <span class="n">tx</span> <span class="o">=</span> <span class="n">ox1</span>
+        <span class="n">ty</span> <span class="o">=</span> <span class="n">oy1</span>
+        <span class="n">rx</span> <span class="o">=</span> <span class="n">ox2</span>
+        <span class="n">ry</span> <span class="o">=</span> <span class="n">oy2</span>
+        <span class="n">cm</span> <span class="o">=</span> <span class="s2">&quot;r2&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">tx</span> <span class="o">=</span> <span class="n">ox2</span>
+        <span class="n">ty</span> <span class="o">=</span> <span class="n">oy2</span>
+        <span class="n">rx</span> <span class="o">=</span> <span class="n">ox1</span>
+        <span class="n">ry</span> <span class="o">=</span> <span class="n">oy1</span>
+        <span class="n">cm</span> <span class="o">=</span> <span class="s2">&quot;r1&quot;</span>
+
+    <span class="c1"># Create of template-arrays as new arrays - n</span>
+    <span class="n">nx</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">tx</span><span class="p">)</span>
+    <span class="n">ny</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">ty</span><span class="p">)</span>
+ 
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;linear-close&#39;</span><span class="p">:</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># counter for tx</span>
+        <span class="n">ry1</span> <span class="o">=</span> <span class="n">ry</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">rx1</span> <span class="o">=</span> <span class="n">rx</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">rxi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rx</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">tx</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>               
+                <span class="k">if</span> <span class="n">rxi</span> <span class="o">&gt;</span> <span class="n">tx</span><span class="p">[</span><span class="n">j</span><span class="p">]:</span>
+                    <span class="n">rx2</span> <span class="o">=</span> <span class="n">rxi</span>
+                    <span class="n">ry2</span> <span class="o">=</span> <span class="n">ry</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">ry2</span><span class="o">-</span><span class="n">ry1</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">rx1</span><span class="o">-</span><span class="n">rx2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="n">ry2</span><span class="o">-</span><span class="n">ry1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">rx1</span><span class="o">-</span><span class="n">rx2</span><span class="p">)</span>
+                        <span class="n">ny</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="o">*</span><span class="n">tx</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">ry1</span> <span class="o">-</span> <span class="n">m</span> <span class="o">*</span> <span class="n">rx1</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">ny</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">ry1</span>
+                    <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">rxi</span> <span class="o">==</span> <span class="n">tx</span><span class="p">[</span><span class="n">j</span><span class="p">]:</span>
+                    <span class="n">ny</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">ry</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ry1</span> <span class="o">=</span> <span class="n">ry</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="n">rx1</span> <span class="o">=</span> <span class="n">rx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ny</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">ry</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span><span class="o">.</span><span class="n">mean_xyz</span><span class="p">()</span>
+                                        
+    <span class="k">if</span> <span class="n">cm</span> <span class="o">==</span> <span class="s2">&quot;r1&quot;</span><span class="p">:</span>
+        <span class="n">rx1</span> <span class="o">=</span> <span class="n">nx</span>
+        <span class="n">ry1</span> <span class="o">=</span> <span class="n">ny</span>
+        <span class="n">rx2</span> <span class="o">=</span> <span class="n">tx</span>
+        <span class="n">ry2</span> <span class="o">=</span> <span class="n">ty</span>
+    <span class="k">elif</span> <span class="n">cm</span> <span class="o">==</span> <span class="s2">&quot;r2&quot;</span><span class="p">:</span>
+        <span class="n">rx2</span> <span class="o">=</span> <span class="n">nx</span>
+        <span class="n">ry2</span> <span class="o">=</span> <span class="n">ny</span>
+        <span class="n">rx1</span> <span class="o">=</span> <span class="n">tx</span>
+        <span class="n">ry1</span> <span class="o">=</span> <span class="n">ty</span>            
+    <span class="k">return</span> <span class="p">((</span><span class="n">rx1</span><span class="p">,</span> <span class="n">ry1</span><span class="p">),</span> <span class="p">(</span><span class="n">rx2</span><span class="p">,</span> <span class="n">ry2</span><span class="p">))</span></div>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Test align_x_spacing&quot;</span><span class="p">)</span>
+    <span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="kn">as</span> <span class="nn">p</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="n">y1</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span>
+    <span class="n">a1</span> <span class="o">=</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">)</span>
+    
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+    <span class="n">y2</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x2</span><span class="p">)</span>
+    <span class="n">a2</span> <span class="o">=</span> <span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span>
+    
+    <span class="p">(</span><span class="n">rx1</span><span class="p">,</span> <span class="n">ry1</span><span class="p">),</span> <span class="p">(</span><span class="n">rx2</span><span class="p">,</span> <span class="n">ry2</span><span class="p">)</span> <span class="o">=</span> <span class="n">align_x_spacing</span><span class="p">(</span><span class="n">a1</span><span class="p">,</span> <span class="n">a2</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rx1</span><span class="p">,</span> <span class="n">ry1</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rx2</span><span class="p">,</span> <span class="n">ry2</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Test overlay&quot;</span><span class="p">)</span>
+    <span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="kn">as</span> <span class="nn">p</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="n">y1</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span>
+    <span class="n">a1</span> <span class="o">=</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">)</span>
+    
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="n">y2</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x2</span><span class="p">)</span>
+    <span class="n">a2</span> <span class="o">=</span> <span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span>
+    
+    <span class="p">(</span><span class="n">rx1</span><span class="p">,</span> <span class="n">ry1</span><span class="p">),</span> <span class="p">(</span><span class="n">rx2</span><span class="p">,</span> <span class="n">ry2</span><span class="p">)</span> <span class="o">=</span> <span class="n">overlapping_region</span><span class="p">(</span><span class="n">a1</span><span class="p">,</span> <span class="n">a2</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">ry1</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">ry2</span><span class="p">)</span>
+
+    <span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rx1</span><span class="p">,</span> <span class="n">ry1</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rx2</span><span class="p">,</span> <span class="n">ry2</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>    
+
+
+<div class="viewcode-block" id="binCount"><a class="viewcode-back" href="../../../../user_documentation/api/lib.html#mfm.math.functions.datatools.binCount">[docs]</a><span class="k">def</span> <span class="nf">binCount</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">binWidth</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">binMin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">binMax</span><span class="o">=</span><span class="mi">4095</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Count number of occurrences of each value in array of non-negative ints.</span>
+
+<span class="sd">    :param data: array_like</span>
+<span class="sd">        1-dimensional input array</span>
+<span class="sd">    :param binWidth:</span>
+<span class="sd">    :param binMin:</span>
+<span class="sd">    :param binMax:</span>
+<span class="sd">    :return: As return values a numpy array with the bins and a array containing the counts is obtained.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_special</span><span class="o">.</span><span class="n">binCount</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">binWidth</span><span class="p">,</span> <span class="n">binMin</span><span class="p">,</span> <span class="n">binMax</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="histogram1D"><a class="viewcode-back" href="../../../../user_documentation/api/lib.html#mfm.math.functions.datatools.histogram1D">[docs]</a><span class="k">def</span> <span class="nf">histogram1D</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">nbPt</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates histogram of pos weighted by weights.</span>
+
+<span class="sd">    :param pos: 2Theta array</span>
+<span class="sd">    :param weights: array with intensities</span>
+<span class="sd">    :param bins: number of output bins</span>
+<span class="sd">    :param pixelSize_in_Pos: size of a pixels in 2theta</span>
+<span class="sd">    :param nthread: maximum number of thread to use. By default: maximum available.</span>
+<span class="sd">        One can also limit this with OMP_NUM_THREADS environment variable</span>
+
+<span class="sd">    :return 2theta, I, weighted histogram, raw histogram</span>
+
+<span class="sd">    https://github.com/kif/pyFAI/blob/master/src/histogram.pyx</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_special</span><span class="o">.</span><span class="n">histogram1D</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">nbPt</span><span class="p">)</span></div>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

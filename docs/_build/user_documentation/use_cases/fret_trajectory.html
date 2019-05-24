@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>FRET-efficiency of Trajectories &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../index.html" />
+    <link rel="up" title="Use cases" href="../use_cases.html" />
+    <link rel="prev" title="Use cases" href="../use_cases.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools.html">Tools</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">FRET-efficiency of Trajectories</a></li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="../use_cases.html" title="Previous Chapter: Use cases"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Use cases</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../../_sources/user_documentation/use_cases/fret_trajectory.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <div class="section" id="fret-efficiency-of-trajectories">
+<h1>FRET-efficiency of Trajectories<a class="headerlink" href="#fret-efficiency-of-trajectories" title="Permalink to this headline">¶</a></h1>
+<p>Based on the example of hGBP1 where a transition between the FRET-major to the FRET-minor state is simulated
+using the known crystal structure 1f5n as intermediate the evolution of the transfer efficiency during the course
+of this transition is calculated. In hGBP1 the amino-acids 18, 254, 344, 496, 525, 540, 577 were labeled. In the
+crystal structure residues are missing and the amino-acid numbers are renumbered according to:  18 -&gt; 12,
+254 -&gt; 241, 344 -&gt; 331, 481 -&gt; 468, 496 -&gt; 483, 525 -&gt; 512, 540 -&gt; 527, 577 -&gt; 564</p>
+<p>First the trajectory is loaded as <a class="reference internal" href="../api/structure.html#mfm.structure.trajectory.TrajectoryFile" title="mfm.structure.trajectory.TrajectoryFile"><code class="xref py py-class docutils literal"><span class="pre">mfm.structure.trajectory.TrajectoryFile</span></code></a> object.
+Next a structure object is obtained from the trajectory. By default the frames of a
+<code class="xref py py-class docutils literal"><span class="pre">mfm.structure.TrajectoryFile</span></code> object are <a class="reference internal" href="../api/structure.html#mfm.structure.Structure" title="mfm.structure.Structure"><code class="xref py py-class docutils literal"><span class="pre">mfm.structure.Structure</span></code></a> objects.
+This behavior is modified by changing the <code class="xref py py-attr docutils literal"><span class="pre">mfm.structure.TrajectoryFile.structure</span></code> attribute.
+The obtained structure object is converted into a <code class="xref py py-class docutils literal"><span class="pre">mfm.structure.LabeledStructure</span></code> object and
+assigned to the trajectory.</p>
+<p>Finally, the <cite>LabeledStructure</cite> is labeled by a donor and acceptor. This is accomplished by assignening dictionaries
+which describe the Accessible volumes. These dictionaries are internally passed to
+<a class="reference internal" href="../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AV" title="mfm.fluorescence.fps.AV"><code class="xref py py-class docutils literal"><span class="pre">mfm.fluorescence.fps.AV</span></code></a>.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">LabeledStructure</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">donor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">338</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">acceptor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">564</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span><span class="o">.</span><span class="n">donor_label</span> <span class="o">=</span> <span class="n">donor_description</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span><span class="o">.</span><span class="n">acceptor_label</span> <span class="o">=</span> <span class="n">acceptor_description</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span><span class="o">.</span><span class="n">donor_lifetime_spectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">structure</span>
+</pre></div>
+</div>
+<p>With the so generated <cite>labelled</cite> structure for instance the transfer efficency over the course of the trajectory
+can be calculated.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">transfer_efficiencies</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">transfer_efficency</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">t</span><span class="p">[:</span><span class="mi">10</span><span class="p">]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pylab</span> <span class="k">as</span> <span class="nn">p</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">transfer_efficiencies</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now these calculations are performed for a whole set of distances</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">fret_pair_names</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;18-344&quot;</span><span class="p">,</span> <span class="s2">&quot;18-540&quot;</span><span class="p">,</span> <span class="s2">&quot;18-577&quot;</span><span class="p">,</span> <span class="s2">&quot;254-344&quot;</span><span class="p">,</span> <span class="s2">&quot;254-540&quot;</span><span class="p">,</span> <span class="s2">&quot;254-577&quot;</span><span class="p">,</span> <span class="s2">&quot;344-481&quot;</span><span class="p">,</span> <span class="s2">&quot;344-496&quot;</span><span class="p">,</span> <span class="s2">&quot;344-525&quot;</span><span class="p">,</span> <span class="s2">&quot;344-540&quot;</span><span class="p">,</span> <span class="s2">&quot;481-525&quot;</span><span class="p">,</span> <span class="s2">&quot;496-540&quot;</span><span class="p">)</span>
+<span class="n">fret_pairs</span> <span class="o">=</span> <span class="p">((</span><span class="mi">12</span><span class="p">,</span> <span class="mi">331</span><span class="p">),</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">527</span><span class="p">),</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">564</span><span class="p">),</span> <span class="p">(</span><span class="mi">241</span><span class="p">,</span> <span class="mi">331</span><span class="p">),</span> <span class="p">(</span><span class="mi">241</span><span class="p">,</span> <span class="mi">527</span><span class="p">),</span> <span class="p">(</span><span class="mi">241</span><span class="p">,</span> <span class="mi">564</span><span class="p">),</span> <span class="p">(</span><span class="mi">331</span><span class="p">,</span> <span class="mi">468</span><span class="p">),</span> <span class="p">(</span><span class="mi">331</span><span class="p">,</span> <span class="mi">483</span><span class="p">),</span> <span class="p">(</span><span class="mi">331</span><span class="p">,</span> <span class="mi">512</span><span class="p">),</span> <span class="p">(</span><span class="mi">331</span><span class="p">,</span> <span class="mi">527</span><span class="p">),</span> <span class="p">(</span><span class="mi">468</span><span class="p">,</span> <span class="mi">512</span><span class="p">),</span> <span class="p">(</span><span class="mi">483</span><span class="p">,</span> <span class="mi">527</span><span class="p">))</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">LabeledStructure</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">pn</span><span class="p">,</span> <span class="n">da</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fret_pair_names</span><span class="p">,</span> <span class="n">fret_pairs</span><span class="p">):</span>
+    <span class="n">d</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">da</span>
+    <span class="n">donor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="n">d</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
+    <span class="n">acceptor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
+    <span class="n">structure</span><span class="o">.</span><span class="n">donor_label</span> <span class="o">=</span> <span class="n">donor_description</span>
+    <span class="n">structure</span><span class="o">.</span><span class="n">acceptor_label</span> <span class="o">=</span> <span class="n">acceptor_description</span>
+    <span class="n">structure</span><span class="o">.</span><span class="n">donor_lifetime_spectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">])</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">structure</span>
+    <span class="n">transfer_efficiencies</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">transfer_efficency</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">t</span><span class="p">]</span>
+    <span class="n">fn</span> <span class="o">=</span> <span class="n">pn</span> <span class="o">+</span> <span class="s1">&#39;.txt&#39;</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">transfer_efficiencies</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

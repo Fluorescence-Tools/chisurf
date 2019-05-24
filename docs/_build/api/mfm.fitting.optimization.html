@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.fitting.optimization package &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">mfm.fitting.optimization package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-mfm.fitting.optimization.fnnls">mfm.fitting.optimization.fnnls module</a></li>
+<li><a class="reference internal" href="#module-mfm.fitting.optimization.leastsqbound">mfm.fitting.optimization.leastsqbound module</a></li>
+<li><a class="reference internal" href="#module-mfm.fitting.optimization.mem">mfm.fitting.optimization.mem module</a></li>
+<li><a class="reference internal" href="#module-mfm.fitting.optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/api/mfm.fitting.optimization.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <div class="section" id="mfm-fitting-optimization-package">
+<h1>mfm.fitting.optimization package<a class="headerlink" href="#mfm-fitting-optimization-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mfm.fitting.optimization.fnnls">
+<span id="mfm-fitting-optimization-fnnls-module"></span><h2>mfm.fitting.optimization.fnnls module<a class="headerlink" href="#module-mfm.fitting.optimization.fnnls" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="mfm.fitting.optimization.fnnls.any">
+<code class="descclassname">mfm.fitting.optimization.fnnls.</code><code class="descname">any</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/optimization/fnnls.html#any"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.optimization.fnnls.any" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.fitting.optimization.fnnls.find">
+<code class="descclassname">mfm.fitting.optimization.fnnls.</code><code class="descname">find</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/optimization/fnnls.html#find"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.optimization.fnnls.find" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.fitting.optimization.fnnls.fnnls">
+<code class="descclassname">mfm.fitting.optimization.fnnls.</code><code class="descname">fnnls</code><span class="sig-paren">(</span><em>XtX</em>, <em>Xty</em>, <em>tol=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/optimization/fnnls.html#fnnls"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.optimization.fnnls.fnnls" title="Permalink to this definition">¶</a></dt>
+<dd><p>#FNNLS      Non-negative least-squares.
+#
+#   Adapted from NNLS of Mathworks, Inc.
+#          [x,w] = nnls(X, y)
+#
+#   x, w = fnnls(XtX,Xty) returns the vector X that solves x = pinv(XtX)</p>
+<blockquote>
+<div><a href="#id1"><span class="problematic" id="id2">*</span></a>Xty</div></blockquote>
+<p>#   in a least squares sense, subject to x &gt;= 0.
+#   Differently stated it solves the problem min ||y - Xx|| if
+#   XtX = X&#8217;<a href="#id3"><span class="problematic" id="id4">*</span></a>X and Xty = X&#8217;<a href="#id5"><span class="problematic" id="id6">*</span></a>y.
+#
+#   A default tolerance of TOL = MAX(SIZE(XtX)) * NORM(XtX,1) * EPS
+#   is used for deciding when elements of x are less than zero.
+#   This can be overridden with x = fnnls(XtX,Xty,TOL).
+#
+#   [x,w] = fnnls(XtX,Xty) also returns dual vector w where
+#   w(i) &lt; 0 where x(i) = 0 and w(i) = 0 where x(i) &gt; 0.
+#
+#   See also NNLS and FNNLSb</p>
+<p>#   L. Shure 5-8-87
+#   Revised, 12-15-88,8-31-89 LS.
+#   (Partly) Copyright (c) 1984-94 by The MathWorks, Inc.</p>
+<p>#   Modified by R. Bro 5-7-96 according to
+#       Bro R., de Jong S., Journal of Chemometrics, 1997, 11, 393-401
+#   Corresponds to the FNNLSa algorithm in the paper
+#
+#   Rasmus bro
+#   Chemometrics Group, Food Technology
+#   Dept. Dairy and Food Science
+#   Royal Vet. &amp; Agricultural
+#   DK-1958 Frederiksberg C
+#   Denmark
+#   rb&#64;...
+#   <a class="reference external" href="http://newton.foodsci.kvl.dk/users/rasmus.html">http://newton.foodsci.kvl.dk/users/rasmus.html</a>
+#  Reference:
+#  Lawson and Hanson, &#8220;Solving Least Squares Problems&#8221;, Prentice-
+Hall, 1974.
+#</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fitting.optimization.fnnls.norm">
+<code class="descclassname">mfm.fitting.optimization.fnnls.</code><code class="descname">norm</code><span class="sig-paren">(</span><em>X</em>, <em>d</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/optimization/fnnls.html#norm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.optimization.fnnls.norm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-mfm.fitting.optimization.leastsqbound">
+<span id="mfm-fitting-optimization-leastsqbound-module"></span><h2>mfm.fitting.optimization.leastsqbound module<a class="headerlink" href="#module-mfm.fitting.optimization.leastsqbound" title="Permalink to this headline">¶</a></h2>
+<p>Constrained multivariate least-squares optimization</p>
+<dl class="function">
+<dt id="mfm.fitting.optimization.leastsqbound.leastsqbound">
+<code class="descclassname">mfm.fitting.optimization.leastsqbound.</code><code class="descname">leastsqbound</code><span class="sig-paren">(</span><em>func</em>, <em>x0</em>, <em>args=()</em>, <em>bounds=None</em>, <em>Dfun=None</em>, <em>full_output=0</em>, <em>col_deriv=0</em>, <em>ftol=1.49012e-08</em>, <em>xtol=1.49012e-08</em>, <em>gtol=0.0</em>, <em>maxfev=0</em>, <em>epsfcn=0.0</em>, <em>factor=100</em>, <em>diag=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/optimization/leastsqbound.html#leastsqbound"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.optimization.leastsqbound.leastsqbound" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bounded minimization of the sum of squares of a set of equations.</p>
+<p>x = arg min(sum(func(y)**2,axis=0))
+y</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>func</strong> : callable</p>
+<p><strong>should take at least one (possibly length N vector) argument and</strong></p>
+<p><strong>returns M floating point numbers.</strong></p>
+<p><strong>x0</strong> : ndarray</p>
+<p><strong>The starting estimate for the minimization.</strong></p>
+<p><strong>args</strong> : tuple</p>
+<p><strong>Any extra arguments to func are placed in this tuple.</strong></p>
+<p><strong>bounds</strong> : list</p>
+<p><strong>``(min, max)`` pairs for each element in ``x``, defining</strong></p>
+<p><strong>the bounds on that parameter. Use None for one of ``min`` or</strong></p>
+<p><strong>``max`` when there is no bound in that direction.</strong></p>
+<p><strong>Dfun</strong> : callable</p>
+<p><strong>A function or method to compute the Jacobian of func with derivatives</strong></p>
+<p><strong>across the rows. If this is None, the Jacobian will be estimated.</strong></p>
+<p><strong>full_output</strong> : bool</p>
+<p><strong>non-zero to return all optional outputs.</strong></p>
+<p><strong>col_deriv</strong> : bool</p>
+<p><strong>non-zero to specify that the Jacobian function computes derivatives</strong></p>
+<p><strong>down the columns (faster, because there is no transpose operation).</strong></p>
+<p><strong>ftol</strong> : float</p>
+<p><strong>Relative error desired in the sum of squares.</strong></p>
+<p><strong>xtol</strong> : float</p>
+<p><strong>Relative error desired in the approximate solution.</strong></p>
+<p><strong>gtol</strong> : float</p>
+<p><strong>Orthogonality desired between the function vector and the columns of</strong></p>
+<p><strong>the Jacobian.</strong></p>
+<p><strong>maxfev</strong> : int</p>
+<p><strong>The maximum number of calls to the function. If zero, then 100*(N+1) is</strong></p>
+<p><strong>the maximum where N is the number of elements in x0.</strong></p>
+<p><strong>epsfcn</strong> : float</p>
+<p><strong>A suitable step length for the forward-difference approximation of the</strong></p>
+<p><strong>Jacobian (for Dfun=None). If epsfcn is less than the machine precision,</strong></p>
+<p><strong>it is assumed that the relative errors in the functions are of the</strong></p>
+<p><strong>order of the machine precision.</strong></p>
+<p><strong>factor</strong> : float</p>
+<p><strong>A parameter determining the initial step bound</strong></p>
+<p><strong>(``factor * || diag * x||``). Should be in interval ``(0.1, 100)``.</strong></p>
+<p><strong>diag</strong> : sequence</p>
+<p><strong>N positive entries that serve as a scale factors for the variables.</strong></p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>x</strong> : ndarray</p>
+<p>The solution (or the result of the last iteration for an unsuccessful</p>
+<p>call).</p>
+<p><strong>cov_x</strong> : ndarray</p>
+<p>Uses the fjac and ipvt optional outputs to construct an</p>
+<p>estimate of the jacobian around the solution. <code class="docutils literal"><span class="pre">None</span></code> if a</p>
+<p>singular matrix encountered (indicates very flat curvature in</p>
+<p>some direction). This matrix must be multiplied by the</p>
+<p>residual standard deviation to get the covariance of the</p>
+<p>parameter estimates &#8211; see curve_fit.</p>
+<p><strong>infodict</strong> : dict</p>
+<p>a dictionary of optional outputs with the key s:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">**-</span> <span class="s1">&#39;nfev&#39;</span><span class="o">**</span> <span class="p">:</span> <span class="n">the</span> <span class="n">number</span> <span class="n">of</span> <span class="n">function</span> <span class="n">calls</span>
+</pre></div>
+</div>
+<p><strong>- &#8216;fvec&#8217;</strong> : the function evaluated at the output</p>
+<p><strong>- &#8216;fjac&#8217;</strong> : A permutation of the R matrix of a QR</p>
+<p>factorization of the final approximate</p>
+<p>Jacobian matrix, stored column wise.</p>
+<p>Together with ipvt, the covariance of the</p>
+<p>estimate can be approximated.</p>
+<p><strong>- &#8216;ipvt&#8217;</strong> : an integer array of length N which defines</p>
+<p>a permutation matrix, p, such that</p>
+<p>fjac*p = q*r, where r is upper triangular</p>
+<p>with diagonal elements of nonincreasing</p>
+<p>magnitude. Column j of p is column ipvt(j)</p>
+<p>of the identity matrix.</p>
+<p><strong>- &#8216;qtf&#8217;</strong> : the vector (transpose(q) * fvec).</p>
+<p><strong>mesg</strong> : str</p>
+<p>A string message giving information about the cause of failure.</p>
+<p><strong>ier</strong> : int</p>
+<p>An integer flag. If it is equal to 1, 2, 3 or 4, the solution was</p>
+<p>found. Otherwise, the solution was not found. In either case, the</p>
+<p class="last">optional output variable &#8216;mesg&#8217; gives more information.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>&#8220;leastsq&#8221; is a wrapper around MINPACK&#8217;s lmdif and lmder algorithms.</p>
+<p>cov_x is a Jacobian approximation to the Hessian of the least squares
+objective function.
+This approximation assumes that the objective function is based on the
+difference between some observed target data (ydata) and a (non-linear)
+function of the parameters <cite>f(xdata, params)</cite></p>
+<p>func(params) = ydata - f(xdata, params)</p>
+<p>so that the objective function is</p>
+<p>min sum((ydata - f(xdata, params))**2, axis=0)
+params</p>
+<p>Contraints on the parameters are enforced using an internal parameter list
+with appropiate transformations such that these internal parameters can be
+optimized without constraints. The transfomation between a given internal
+parameter, p_i, and a external parameter, p_e, are as follows:</p>
+<p>With <code class="docutils literal"><span class="pre">min</span></code> and <code class="docutils literal"><span class="pre">max</span></code> bounds defined</p>
+<p>p_i = arcsin((2 * (p_e - min) / (max - min)) - 1.)
+p_e = min + ((max - min) / 2.) * (sin(p_i) + 1.)</p>
+<p>With only <code class="docutils literal"><span class="pre">max</span></code> defined</p>
+<p>p_i = sqrt((max - p_e + 1.)**2 - 1.)
+p_e = max + 1. - sqrt(p_i**2 + 1.)</p>
+<p>With only <code class="docutils literal"><span class="pre">min</span></code> defined</p>
+<p>p_i = sqrt((p_e - min + 1.)**2 - 1.)
+p_e = min - 1. + sqrt(p_i**2 + 1.)</p>
+<p>These transfomations are used in the MINUIT package, and described in
+detail in the section 1.3.1 of the MINUIT User&#8217;s Guide.</p>
+<p class="rubric">References</p>
+<ul class="simple">
+<li><ol class="first upperalpha" start="6">
+<li>James and M. Winkler. MINUIT User&#8217;s Guide, July 16, 2004.</li>
+</ol>
+</li>
+</ul>
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.fitting.optimization.mem">
+<span id="mfm-fitting-optimization-mem-module"></span><h2>mfm.fitting.optimization.mem module<a class="headerlink" href="#module-mfm.fitting.optimization.mem" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="mfm.fitting.optimization.mem.maxent">
+<code class="descclassname">mfm.fitting.optimization.mem.</code><code class="descname">maxent</code><span class="sig-paren">(</span><em>A</em>, <em>b</em>, <em>nu</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/optimization/mem.html#maxent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.optimization.mem.maxent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-mfm.fitting.optimization">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.fitting.optimization" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="mfm.fitting.optimization.solve_nnls">
+<code class="descclassname">mfm.fitting.optimization.</code><code class="descname">solve_nnls</code><span class="sig-paren">(</span><em>A</em>, <em>b</em>, <em>reg=1e-05</em>, <em>x_max=1000000000000.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/optimization.html#solve_nnls"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.optimization.solve_nnls" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve <span class="math">\(argmin_x || Ax - b ||_2 for x&gt;=0\)</span>. This is a wrapper for a FORTAN non-negative least squares solver (as
+in the SciPy. In addition to that the matrix A is regularized by a Thikonov-regularization. If values bigger
+than x_max are encountered in the solution they are simply replaced by zeros.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>A</strong> &#8211; numpy-array
+Matrix A as shown above.</li>
+<li><strong>b</strong> &#8211; numpy-array
+Right-hand side vector.</li>
+<li><strong>reg</strong> &#8211; float
+Regularization factor</li>
+<li><strong>x_max</strong> &#8211; float</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fitting.optimization.solve_richardson_lucy">
+<code class="descclassname">mfm.fitting.optimization.</code><code class="descname">solve_richardson_lucy</code><span class="sig-paren">(</span><em>A</em>, <em>d</em>, <em>x0=None</em>, <em>max_iter=10</em>, <em>min_value=0.001</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/optimization.html#solve_richardson_lucy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.optimization.solve_richardson_lucy" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>A</strong> &#8211; numpy-array
+The convolution matrix</li>
+<li><strong>d</strong> &#8211; numpy-array
+The measured observable</li>
+<li><strong>x0</strong> &#8211; numpy-array
+The initially assumed solution. If this value is None ones are used.</li>
+<li><strong>max_iter</strong> &#8211; int
+The maximum number of iterations</li>
+<li><strong>min_res_norm</strong> &#8211; float
+TODO The minimum residual norm. (not implemented so far)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a tuple containing the residual norm and the solution vector</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

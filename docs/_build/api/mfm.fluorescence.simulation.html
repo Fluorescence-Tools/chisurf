@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.fluorescence.simulation package &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">mfm.fluorescence.simulation package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-mfm.fluorescence.simulation.dye_diffusion">mfm.fluorescence.simulation.dye_diffusion module</a></li>
+<li><a class="reference internal" href="#module-mfm.fluorescence.simulation.photon">mfm.fluorescence.simulation.photon module</a></li>
+<li><a class="reference internal" href="#module-mfm.fluorescence.simulation">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/api/mfm.fluorescence.simulation.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <div class="section" id="mfm-fluorescence-simulation-package">
+<h1>mfm.fluorescence.simulation package<a class="headerlink" href="#mfm-fluorescence-simulation-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mfm.fluorescence.simulation.dye_diffusion">
+<span id="mfm-fluorescence-simulation-dye-diffusion-module"></span><h2>mfm.fluorescence.simulation.dye_diffusion module<a class="headerlink" href="#module-mfm.fluorescence.simulation.dye_diffusion" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter">
+<em class="property">class </em><code class="descclassname">mfm.fluorescence.simulation.dye_diffusion.</code><code class="descname">DecaySimulationParameter</code><span class="sig-paren">(</span><em>dt_mt=100.0</em>, <em>dt_tac=0.032</em>, <em>n_tac=4096</em>, <em>n_curves=4096</em>, <em>n_photons=10000000.0</em>, <em>decay_mode='photon'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/dye_diffusion.html#DecaySimulationParameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mfm.html#mfm.parameter.AggregatedParameters" title="mfm.parameter.AggregatedParameters"><code class="xref py py-class docutils literal"><span class="pre">mfm.parameter.AggregatedParameters</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter.decay_mode">
+<code class="descname">decay_mode</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter.decay_mode" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter.dt_mt">
+<code class="descname">dt_mt</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter.dt_mt" title="Permalink to this definition">¶</a></dt>
+<dd><p>The length of each macro-time step (this is used to bring the photon stream to a
+micro, macro-time form)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter.dt_tac">
+<code class="descname">dt_tac</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter.dt_tac" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter.n_curves">
+<code class="descname">n_curves</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter.n_curves" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter.n_photons">
+<code class="descname">n_photons</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter.n_photons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter.n_tac">
+<code class="descname">n_tac</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter.n_tac" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter.tac_range">
+<code class="descname">tac_range</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter.tac_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>The tac-range used when making a histogram out of the photon trace</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DyeDecay">
+<em class="property">class </em><code class="descclassname">mfm.fluorescence.simulation.dye_diffusion.</code><code class="descname">DyeDecay</code><span class="sig-paren">(</span><em>decay_parameter</em>, <em>diffusion_simulation</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/dye_diffusion.html#DyeDecay"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DyeDecay" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mfm.html#mfm.curve.Curve" title="mfm.curve.Curve"><code class="xref py py-class docutils literal"><span class="pre">mfm.curve.Curve</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DyeDecay.decays">
+<code class="descname">decays</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.decays" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DyeDecay.get_decay">
+<code class="descname">get_decay</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/dye_diffusion.html#DyeDecay.get_decay"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.get_decay" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DyeDecay.get_histogram">
+<code class="descname">get_histogram</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/dye_diffusion.html#DyeDecay.get_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.get_histogram" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DyeDecay.get_photons">
+<code class="descname">get_photons</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/dye_diffusion.html#DyeDecay.get_photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.get_photons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DyeDecay.photon_trace">
+<code class="descname">photon_trace</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.photon_trace" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DyeDecay.quantum_yield">
+<code class="descname">quantum_yield</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.quantum_yield" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DyeDecay.save_photons">
+<code class="descname">save_photons</code><span class="sig-paren">(</span><em>filename</em>, <em>mode='photons'</em>, <em>group_title='dye_diffusion'</em>, <em>hist_bins=4096</em>, <em>hist_range=(0</em>, <em>50)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/dye_diffusion.html#DyeDecay.save_photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.save_photons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DyeDecay.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/dye_diffusion.html#DyeDecay.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DyeDecay.x_values">
+<code class="descname">x_values</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.x_values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.DyeDecay.y_values">
+<code class="descname">y_values</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.y_values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.FRETDecay">
+<em class="property">class </em><code class="descclassname">mfm.fluorescence.simulation.dye_diffusion.</code><code class="descname">FRETDecay</code><span class="sig-paren">(</span><em>donor_diffusion</em>, <em>acceptor_diffusion</em>, <em>fret_parameter</em>, <em>decay_parameter</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/dye_diffusion.html#FRETDecay"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.FRETDecay" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.fluorescence.simulation.dye_diffusion.DyeDecay" title="mfm.fluorescence.simulation.dye_diffusion.DyeDecay"><code class="xref py py-class docutils literal"><span class="pre">mfm.fluorescence.simulation.dye_diffusion.DyeDecay</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.FRETDecay.acceptor_simulation_shift">
+<code class="descname">acceptor_simulation_shift</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.FRETDecay.acceptor_simulation_shift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.FRETDecay.dRDA">
+<code class="descname">dRDA</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.FRETDecay.dRDA" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.FRETDecay.dipole_center_atom_a">
+<code class="descname">dipole_center_atom_a</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.FRETDecay.dipole_center_atom_a" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.FRETDecay.dipole_center_atom_d">
+<code class="descname">dipole_center_atom_d</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.FRETDecay.dipole_center_atom_d" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.FRETDecay.donor_photons">
+<code class="descname">donor_photons</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.FRETDecay.donor_photons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.FRETDecay.donor_quench">
+<code class="descname">donor_quench</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.FRETDecay.donor_quench" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.FRETDecay.get_donor_decay">
+<code class="descname">get_donor_decay</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/dye_diffusion.html#FRETDecay.get_donor_decay"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.FRETDecay.get_donor_decay" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.FRETDecay.get_donor_photons">
+<code class="descname">get_donor_photons</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/dye_diffusion.html#FRETDecay.get_donor_photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.FRETDecay.get_donor_photons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.FRETDecay.get_histogram">
+<code class="descname">get_histogram</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/dye_diffusion.html#FRETDecay.get_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.FRETDecay.get_histogram" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.FRETDecay.kFRET">
+<code class="descname">kFRET</code><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.FRETDecay.kFRET" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.FRETDecay.plot_fret_trajectory">
+<code class="descname">plot_fret_trajectory</code><span class="sig-paren">(</span><em>show=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/dye_diffusion.html#FRETDecay.plot_fret_trajectory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.FRETDecay.plot_fret_trajectory" title="Permalink to this definition">¶</a></dt>
+<dd><p>This plots the FRET-trajectory of the current DA-pair
+be careful using this inside of PyQT (this is mainly for debugging)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.FRETDecay.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/dye_diffusion.html#FRETDecay.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.FRETDecay.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.simulate_decays">
+<code class="descclassname">mfm.fluorescence.simulation.dye_diffusion.</code><code class="descname">simulate_decays</code><span class="sig-paren">(</span><em>dyes</em>, <em>decay_parameter</em>, <em>simulation_parameter</em>, <em>quenching_parameter</em>, <em>save_decays=True</em>, <em>directory='./'</em>, <em>file_id=''</em>, <em>get_qy=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/dye_diffusion.html#simulate_decays"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.simulate_decays" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function for batch procession of decays (use-case see notebooks: quenching_and_fret.ipynb)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dyes</strong> &#8211; a dictionary of dyes</li>
+<li><strong>decay_parameter</strong> &#8211; a instance of the <cite>DecaySimulationParameter</cite> class</li>
+<li><strong>simulation_parameter</strong> &#8211; a instance of the <cite>DiffusionSimulationParameter</cite> class</li>
+<li><strong>quenching_parameter</strong> &#8211; a instance of the <cite>ProteinQuenching</cite> class</li>
+<li><strong>save_decays</strong> &#8211; bool</li>
+<li><strong>directory</strong> &#8211; string pointing to directory in which the simulation results are saved</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">dictionary containing the simulated decays</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.simulation.dye_diffusion.simulate_fret_decays">
+<code class="descclassname">mfm.fluorescence.simulation.dye_diffusion.</code><code class="descname">simulate_fret_decays</code><span class="sig-paren">(</span><em>donors</em>, <em>acceptors</em>, <em>decay_parameter</em>, <em>simulation_parameter</em>, <em>donor_quenching</em>, <em>acceptor_quenching</em>, <em>fret_parameter</em>, <em>save=True</em>, <em>directory='./'</em>, <em>prefix=''</em>, <em>get_number_of_av_points=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/dye_diffusion.html#simulate_fret_decays"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.dye_diffusion.simulate_fret_decays" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function for batch procession of decays (use-case see notebooks: quenching_and_fret.ipynb)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>donors</strong> &#8211; </li>
+<li><strong>acceptors</strong> &#8211; </li>
+<li><strong>decay_parameter</strong> &#8211; </li>
+<li><strong>simulation_parameter</strong> &#8211; </li>
+<li><strong>donor_quenching</strong> &#8211; </li>
+<li><strong>acceptor_quenching</strong> &#8211; </li>
+<li><strong>fret_parameter</strong> &#8211; </li>
+<li><strong>save</strong> &#8211; </li>
+<li><strong>directory</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.fluorescence.simulation.photon">
+<span id="mfm-fluorescence-simulation-photon-module"></span><h2>mfm.fluorescence.simulation.photon module<a class="headerlink" href="#module-mfm.fluorescence.simulation.photon" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="mfm.fluorescence.simulation.photon.simulate_decay_quench">
+<code class="descclassname">mfm.fluorescence.simulation.photon.</code><code class="descname">simulate_decay_quench</code><span class="sig-paren">(</span><em>n_curves</em>, <em>decay</em>, <em>dt_tac</em>, <em>k_quench</em>, <em>t_step</em>, <em>tau0</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/photon.html#simulate_decay_quench"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.photon.simulate_decay_quench" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>n_curves</strong> &#8211; int
+Number of samples taken from the trajectory</li>
+<li><strong>decay</strong> &#8211; numpy-array
+An array later containing the fluorescence intensity</li>
+<li><strong>dt_tac</strong> &#8211; float
+The time-resolution of the decay</li>
+<li><strong>k_quench</strong> &#8211; array (float32)
+Array of quenching rates (FRET-rates+kQ) for each frame</li>
+<li><strong>t_step</strong> &#8211; float
+Time resolution of the diffusion simulation</li>
+<li><strong>tau0</strong> &#8211; float
+Lifetime of the dye in absence of quenching</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.simulation.photon.simulate_photon_trace_rate">
+<code class="descclassname">mfm.fluorescence.simulation.photon.</code><code class="descname">simulate_photon_trace_rate</code><span class="sig-paren">(</span><em>n_ph</em>, <em>quench</em>, <em>t_step=0.01</em>, <em>tau0=4.1</em>, <em>n_traj=4</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/simulation/photon.html#simulate_photon_trace_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.simulation.photon.simulate_photon_trace_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function generates a stream of photons considering quenching of the excited state
+using a mix of a purely Poissonian process and the know solution of a Poissonian process
+(a exponential decay).</p>
+<p>In a first step a random number in the interval between [0, 1) is generated. Using this
+random number the position on the exponential decay is looked-up. This position corresponds
+to the waiting time of the emission of a photon.</p>
+<p>Given the time between the excitation and the photon emission the quenching trajectory
+is used to determine whether this photon could have been emitted. Starting from the time
+of excitation to the time of emission of the photon for each quenching event is modelled
+as Poissonian process. If the excited state is quenched no photon is emitted.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>n_ph</strong> &#8211; int
+The total number of photons to be simulated</li>
+<li><strong>quench</strong> &#8211; numpy-array (float32)
+The quenching array containing the instantaneous rate of quenching for each
+frame of the dye-trajectory</li>
+<li><strong>t_step</strong> &#8211; float
+The time-step of the simulation</li>
+<li><strong>tau0</strong> &#8211; float
+The lifetime of the dye in absence of quenching</li>
+<li><strong>n_traj</strong> &#8211; int
+The number of photon trajectories to be simulated</li>
+<li><strong>ravel_traj</strong> &#8211; bool
+If True the trajectories are merged/stacked into one big trajectory</li>
+<li><strong>kwargs</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a tuple of two numpy-arrays
+The first element contains the waiting times of the unquenched dye
+The second element contains an array if actually a photon was emitted of the type np.unit8</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.fluorescence.simulation">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.fluorescence.simulation" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

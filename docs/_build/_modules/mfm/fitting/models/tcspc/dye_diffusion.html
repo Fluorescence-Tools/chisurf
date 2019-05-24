@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.fitting.models.tcspc.dye_diffusion &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../../../index.html" />
+    <link rel="up" title="mfm.fitting.models" href="../../models.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for mfm.fitting.models.tcspc.dye_diffusion</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">gc</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">uic</span>
+
+<span class="kn">import</span> <span class="nn">mfm</span>
+<span class="kn">import</span> <span class="nn">mfm.fitting.fit</span>
+<span class="kn">import</span> <span class="nn">mfm.fitting.models.tcspc.nusiance</span>
+<span class="kn">import</span> <span class="nn">mfm.fluorescence.fps</span> <span class="kn">as</span> <span class="nn">fps</span>
+<span class="kn">import</span> <span class="nn">mfm.fluorescence.tcspc.convolve</span>
+<span class="kn">import</span> <span class="nn">mfm.io</span>
+<span class="kn">import</span> <span class="nn">mfm.math</span>
+<span class="kn">import</span> <span class="nn">mfm.structure</span>
+<span class="kn">from</span> <span class="nn">mfm</span> <span class="kn">import</span> <span class="n">plots</span>
+<span class="kn">from</span> <span class="nn">mfm.curve</span> <span class="kn">import</span> <span class="n">Curve</span>
+<span class="kn">from</span> <span class="nn">mfm.fitting.models</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">mfm.fluorescence.fps</span> <span class="kn">import</span> <span class="n">AV</span>
+<span class="kn">from</span> <span class="nn">mfm.fluorescence.fps.dynamic</span> <span class="kn">import</span> <span class="n">DiffusionSimulation</span><span class="p">,</span> <span class="n">Dye</span><span class="p">,</span> <span class="n">DyeWidget</span><span class="p">,</span> <span class="n">Sticking</span><span class="p">,</span> \
+    <span class="n">StickingWidget</span><span class="p">,</span> <span class="n">ProteinQuenching</span><span class="p">,</span> <span class="n">ProteinQuenchingWidget</span>
+<span class="kn">from</span> <span class="nn">mfm.fluorescence.simulation</span> <span class="kn">import</span> <span class="n">photon</span>
+<span class="kn">from</span> <span class="nn">mfm.structure</span> <span class="kn">import</span> <span class="n">Structure</span><span class="p">,</span> <span class="n">get_coordinates_of_residues</span>
+<span class="kn">from</span> <span class="nn">mfm.widgets</span> <span class="kn">import</span> <span class="n">PDBSelector</span>
+
+
+<div class="viewcode-block" id="DyeDecay"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.DyeDecay">[docs]</a><span class="k">class</span> <span class="nc">DyeDecay</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">Curve</span><span class="p">):</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sticky_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sticking_parameter</span><span class="o">.</span><span class="n">sticky_mode</span>
+
+    <span class="nd">@sticky_mode.setter</span>
+    <span class="k">def</span> <span class="nf">sticky_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sticking_parameter</span><span class="o">.</span><span class="n">sticky_mode</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">slow_fact</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sticking_parameter</span><span class="o">.</span><span class="n">slow_fact</span>
+
+    <span class="nd">@slow_fact.setter</span>
+    <span class="k">def</span> <span class="nf">slow_fact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sticking_parameter</span><span class="o">.</span><span class="n">slow_fact</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">slow_radius</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sticking_parameter</span><span class="o">.</span><span class="n">slow_radius</span>
+
+    <span class="nd">@slow_radius.setter</span>
+    <span class="k">def</span> <span class="nf">slow_radius</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sticking_parameter</span><span class="o">.</span><span class="n">slow_radius</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">av_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="o">.</span><span class="n">av_parameter</span>
+
+    <span class="nd">@av_parameter.setter</span>
+    <span class="k">def</span> <span class="nf">av_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="o">.</span><span class="n">av_parameter</span> <span class="o">=</span> <span class="n">d</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">diffusion_coefficient</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="o">.</span><span class="n">diffusion_coefficient</span>
+
+    <span class="nd">@diffusion_coefficient.setter</span>
+    <span class="k">def</span> <span class="nf">diffusion_coefficient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="o">.</span><span class="n">diffusion_coefficient</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tau0</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="o">.</span><span class="n">tau0</span>
+
+    <span class="nd">@tau0.setter</span>
+    <span class="k">def</span> <span class="nf">tau0</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="o">.</span><span class="n">tau0</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_curves</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The number of decay-curves used to calculate a smooth decay (number of samples of the simulation)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_curves</span>
+
+    <span class="nd">@n_curves.setter</span>
+    <span class="k">def</span> <span class="nf">n_curves</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_curves</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">x_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The x-values of the time-resolved fluorescence histogram</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_points</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">dt</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">quantum_yield</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Relative quantum yield of the compared to the unquenched dye</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_values</span>
+        <span class="n">yq</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_values</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau0</span><span class="p">))</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;Quantum yield: </span><span class="si">%.4f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">float</span><span class="p">(</span><span class="n">yq</span> <span class="o">/</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">yq</span> <span class="o">/</span> <span class="n">y</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">diffusion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Diffusion simulation of type :py:class:`.SimulateDiffusion`. If no trajectory is simulated yet it will</span>
+<span class="sd">        be simulated after calling the attribute.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_diffusion</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_diffusion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulate_diffusion_trajectory</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_diffusion</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">slow_center</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sticking_parameter</span><span class="o">.</span><span class="n">sticky_mode</span> <span class="o">==</span> <span class="s1">&#39;quencher&#39;</span><span class="p">:</span>
+            <span class="n">coordinates</span> <span class="o">=</span> <span class="n">get_coordinates_of_residues</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">atoms</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">quencher</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">coordinates</span><span class="p">[</span><span class="n">res_key</span><span class="p">])</span> <span class="k">for</span> <span class="n">res_key</span> <span class="ow">in</span> <span class="n">coordinates</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">coordinates</span><span class="p">[</span><span class="n">res_key</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="n">coordinates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">sticking_parameter</span><span class="o">.</span><span class="n">sticky_mode</span> <span class="o">==</span> <span class="s1">&#39;surface&#39;</span><span class="p">:</span>
+            <span class="n">slow_atoms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;atom_name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;CB&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">coordinates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][</span><span class="n">slow_atoms</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">coordinates</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">av</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The accessible volume used to calculate the decay. If this is not provided or set it is calculated at the</span>
+<span class="sd">        first access using :py:meth:`.calc_av`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_av</span><span class="p">,</span> <span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_av</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_av</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_av</span><span class="o">.</span><span class="n">calc_slow_av</span><span class="p">(</span><span class="n">save</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">save_av</span><span class="p">,</span> <span class="n">slow_centers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">slow_center</span><span class="p">,</span>
+                                  <span class="n">slow_radius</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">slow_radius</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_av</span>
+
+    <span class="nd">@av.setter</span>
+    <span class="k">def</span> <span class="nf">av</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_av</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">photon_trace</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The photon trace of the simulation. If it is `None` (default after initialization) it is calculated using</span>
+<span class="sd">        the method :py:meth:`.calc_photons`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_photon_trace</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">calc_photons</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_photon_trace</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">collisions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Relative number of collided frames (That are frames below the critical distance)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">collided</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">collided</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">structure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the structure used to calculate the donor-decay the structure should be of the type :class:`mfm.structure.structure`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span>
+
+    <span class="nd">@structure.setter</span>
+    <span class="k">def</span> <span class="nf">structure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">decay_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This defines the way the time-resolved fluorescence is calculated. This parameter should be either *photon* or</span>
+<span class="sd">        *curve*. If it is *photon* a Poisson process is simulated if *curve* the quenching rate is integrated to</span>
+<span class="sd">        obtain a smooth curve.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decay_mode</span>
+
+    <span class="nd">@decay_mode.setter</span>
+    <span class="k">def</span> <span class="nf">decay_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_decay_mode</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">attachment_residue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="o">.</span><span class="n">attachment_residue</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">attachment_atom_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="o">.</span><span class="n">attachment_atom_name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">attachment_chain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="o">.</span><span class="n">attachment_chain</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">kQ</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">protein_quenching</span><span class="o">.</span><span class="n">kQ_scale</span>
+
+    <span class="nd">@kQ.setter</span>
+    <span class="k">def</span> <span class="nf">kQ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protein_quenching</span><span class="o">.</span><span class="n">kQ_scale</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">quencher</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">protein_quenching</span><span class="o">.</span><span class="n">quencher</span>
+
+    <span class="nd">@quencher.setter</span>
+    <span class="k">def</span> <span class="nf">quencher</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protein_quenching</span><span class="o">.</span><span class="n">quencher</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_photons</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_photons</span>
+
+    <span class="nd">@n_photons.setter</span>
+    <span class="k">def</span> <span class="nf">n_photons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_photons</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">t_max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_t_max</span>
+
+    <span class="nd">@t_max.setter</span>
+    <span class="k">def</span> <span class="nf">t_max</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_t_max</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">t_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_t_step</span>
+
+    <span class="nd">@t_step.setter</span>
+    <span class="k">def</span> <span class="nf">t_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_t_step</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sticky_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sticking_parameter</span><span class="o">.</span><span class="n">sticky_mode</span>
+
+    <span class="nd">@sticky_mode.setter</span>
+    <span class="k">def</span> <span class="nf">sticky_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sticking_parameter</span><span class="o">.</span><span class="n">sticky_mode</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tau0</span><span class="o">=</span><span class="mf">4.2</span><span class="p">,</span> <span class="n">k_quench_protein</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">n_photons</span><span class="o">=</span><span class="mf">10e6</span><span class="p">,</span>
+                 <span class="n">attachment_residue</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">attachment_atom</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">attachment_chain</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dg</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">sticky_mode</span><span class="o">=</span><span class="s1">&#39;quencher&#39;</span><span class="p">,</span>
+                 <span class="n">save_av</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">diffusion_coefficient</span><span class="o">=</span><span class="mf">7.1</span><span class="p">,</span> <span class="n">slow_fact</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">critical_distance</span><span class="o">=</span><span class="mf">7.0</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="s1">&#39;out&#39;</span><span class="p">,</span>
+                 <span class="n">av_parameter</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;linker_length&#39;</span><span class="p">:</span> <span class="mf">20.0</span><span class="p">,</span> <span class="s1">&#39;linker_width&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;radius1&#39;</span><span class="p">:</span> <span class="mf">3.5</span><span class="p">},</span>
+                 <span class="n">quencher</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;TRP&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;CB&#39;</span><span class="p">],</span> <span class="s1">&#39;TYR&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;CB&#39;</span><span class="p">],</span> <span class="s1">&#39;HIS&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;CB&#39;</span><span class="p">],</span> <span class="s1">&#39;PRO&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;CB&#39;</span><span class="p">]},</span> <span class="n">t_max</span><span class="o">=</span><span class="mf">500.0</span><span class="p">,</span> <span class="n">t_step</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+                 <span class="n">slow_radius</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">decay_mode</span><span class="o">=</span><span class="s1">&#39;curve&#39;</span><span class="p">,</span> <span class="n">n_curves</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+                 <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fit&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">Curve</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">Model</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span> <span class="o">=</span> <span class="n">Dye</span><span class="p">(</span><span class="n">tau0</span><span class="o">=</span><span class="n">tau0</span><span class="p">,</span> <span class="n">diffusion_coefficient</span><span class="o">=</span><span class="n">diffusion_coefficient</span><span class="p">,</span>
+                                          <span class="n">critical_distance</span><span class="o">=</span><span class="n">critical_distance</span><span class="p">,</span>
+                                          <span class="n">av_length</span><span class="o">=</span><span class="n">av_parameter</span><span class="p">[</span><span class="s1">&#39;linker_length&#39;</span><span class="p">],</span>
+                                          <span class="n">av_width</span><span class="o">=</span><span class="n">av_parameter</span><span class="p">[</span><span class="s1">&#39;linker_width&#39;</span><span class="p">],</span>
+                                          <span class="n">av_radius</span><span class="o">=</span><span class="n">av_parameter</span><span class="p">[</span><span class="s1">&#39;radius1&#39;</span><span class="p">],</span>
+                                          <span class="n">attachment_residue</span><span class="o">=</span><span class="n">attachment_residue</span><span class="p">,</span>
+                                          <span class="n">attachment_atom</span><span class="o">=</span><span class="n">attachment_atom</span><span class="p">,</span>
+                                          <span class="n">attachment_chain</span><span class="o">=</span><span class="n">attachment_chain</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sticking_parameter</span> <span class="o">=</span> <span class="n">Sticking</span><span class="p">(</span>
+            <span class="n">slow_radius</span><span class="o">=</span><span class="n">slow_radius</span><span class="p">,</span>
+            <span class="n">slow_fact</span><span class="o">=</span><span class="n">slow_fact</span><span class="p">,</span>
+            <span class="n">sticky_mode</span><span class="o">=</span><span class="s1">&#39;surface&#39;</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">protein_quenching</span> <span class="o">=</span> <span class="n">ProteinQuenching</span><span class="p">(</span>
+            <span class="n">k_quench_protein</span><span class="o">=</span><span class="n">k_quench_protein</span><span class="p">,</span>
+            <span class="n">quenching_amino_acids</span><span class="o">=</span><span class="n">quencher</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">av_parameter</span> <span class="o">=</span> <span class="n">av_parameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">convolve</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;convolve&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">Convolve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generic</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;generic&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">nusiance</span><span class="o">.</span><span class="n">Generic</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">corrections</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;corrections&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">nusiance</span><span class="o">.</span><span class="n">Corrections</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">quencher</span> <span class="o">=</span> <span class="n">quencher</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_curves</span> <span class="o">=</span> <span class="n">n_curves</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_decay_mode</span> <span class="o">=</span> <span class="n">decay_mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_diffusion</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_av</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tau0</span> <span class="o">=</span> <span class="n">tau0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_photons</span> <span class="o">=</span> <span class="n">n_photons</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_photon_trace</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dg</span> <span class="o">=</span> <span class="n">dg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_av</span> <span class="o">=</span> <span class="n">save_av</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_file</span> <span class="o">=</span> <span class="n">output_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_t_max</span> <span class="o">=</span> <span class="n">t_max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_t_step</span> <span class="o">=</span> <span class="n">t_step</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;t_max: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_max</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;t_step: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_step</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;n_photons: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_photons</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;PDB</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;---</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span><span class="o">.</span><span class="n">filename</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">AV</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;--</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_av</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">s</span>
+
+<div class="viewcode-block" id="DyeDecay.calc_av"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.DyeDecay.calc_av">[docs]</a>    <span class="k">def</span> <span class="nf">calc_av</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param kwargs:</span>
+<span class="sd">            verbose (bool)</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="n">attachment_residue</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;attachment_residue&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">attachment_residue</span><span class="p">)</span>
+        <span class="n">attachment_atom</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;attachment_atom&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">attachment_atom_name</span><span class="p">)</span>
+        <span class="n">chain</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;chain&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">attachment_chain</span><span class="p">)</span>
+        <span class="n">save_av</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;save_av&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_av</span><span class="p">)</span>
+        <span class="n">dg</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;dg&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dg</span><span class="p">)</span>
+        <span class="n">structure</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;structure&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span><span class="p">)</span>
+        <span class="n">av_parameter</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;av_parameter&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">av_parameter</span><span class="p">)</span>
+        <span class="n">av</span> <span class="o">=</span> <span class="n">AV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="n">attachment_residue</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="n">attachment_atom</span><span class="p">,</span> <span class="n">chain_identifier</span><span class="o">=</span><span class="n">chain</span><span class="p">,</span>
+                <span class="n">simulation_grid_resolution</span><span class="o">=</span><span class="n">dg</span><span class="p">,</span> <span class="n">save_av</span><span class="o">=</span><span class="n">save_av</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_file</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">av_parameter</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">av</span></div>
+
+<div class="viewcode-block" id="DyeDecay.simulate_diffusion_trajectory"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.DyeDecay.simulate_diffusion_trajectory">[docs]</a>    <span class="k">def</span> <span class="nf">simulate_diffusion_trajectory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param kwargs:</span>
+<span class="sd">            verbose; all_quencher_atoms; quencher; av</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="n">av</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;av&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">av</span><span class="p">)</span>
+        <span class="n">diffusion</span> <span class="o">=</span> <span class="n">DiffusionSimulation</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="n">dye</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="p">,</span>
+                                      <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">quencher_definition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">protein_quenching</span><span class="p">,</span>
+                                      <span class="n">sticking_parameter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sticking_parameter</span><span class="p">)</span>
+        <span class="n">diffusion</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">D</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">diffusion_coefficient</span><span class="p">,</span> <span class="n">slow_fact</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">slow_fact</span><span class="p">,</span> <span class="n">t_max</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">t_max</span><span class="p">,</span> <span class="n">t_step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">t_step</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">diffusion</span></div>
+
+<div class="viewcode-block" id="DyeDecay.calc_photons"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.DyeDecay.calc_photons">[docs]</a>    <span class="k">def</span> <span class="nf">calc_photons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">donor_traj</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">kQ</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        `n_ph`: number of generated photons</span>
+<span class="sd">        `pq`: quenching probability if distance of fluorphore is below the `critical_distance`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span>
+        <span class="n">n_photons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_photons</span>
+        <span class="k">if</span> <span class="n">kQ</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">kQ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kQ</span>
+        <span class="n">tau0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau0</span>
+        <span class="k">if</span> <span class="n">donor_traj</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">donor_traj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span>
+        <span class="n">is_collided</span> <span class="o">=</span> <span class="n">donor_traj</span><span class="o">.</span><span class="n">collided</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Simulating decay:&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;----------------&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Number of excitation photons: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">n_photons</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Number of frames    : </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">is_collided</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Number of collisions: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">is_collided</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Quenching constant kQ[1/ns]: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">kQ</span><span class="p">)</span>
+
+        <span class="n">t_step</span> <span class="o">=</span> <span class="n">donor_traj</span><span class="o">.</span><span class="n">t_step</span>
+        <span class="c1"># dts, phs = photon.simulate_photon_trace_kQ(n_ph=n_photons, collided=is_collided, kQ=kQ, t_step=t_step, tau0=tau0)</span>
+        <span class="c1">#dts, phs = photon.simulate_photon_trace(n_ph=n_photons, collided=is_collided, kQ=kQ, t_step=t_step, tau0=tau0)</span>
+        <span class="n">kq_array</span> <span class="o">=</span> <span class="n">is_collided</span> <span class="o">*</span> <span class="n">kQ</span>
+        <span class="n">dts</span><span class="p">,</span> <span class="n">phs</span> <span class="o">=</span> <span class="n">photon</span><span class="o">.</span><span class="n">simulate_photon_trace_rate</span><span class="p">(</span><span class="n">n_ph</span><span class="o">=</span><span class="n">n_photons</span><span class="p">,</span> <span class="n">quench</span><span class="o">=</span><span class="n">kq_array</span><span class="p">,</span> <span class="n">t_step</span><span class="o">=</span><span class="n">t_step</span><span class="p">,</span> <span class="n">tau0</span><span class="o">=</span><span class="n">tau0</span><span class="p">)</span>
+
+        <span class="n">n_photons</span> <span class="o">=</span> <span class="n">phs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">n_f</span> <span class="o">=</span> <span class="n">phs</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">verbose</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Number of absorbed photons: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n_photons</span><span class="p">))</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Number of fluorescent photons: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n_f</span><span class="p">))</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Quantum yield: </span><span class="si">%.2f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">n_f</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_photons</span><span class="p">))</span>
+        <span class="n">dt2</span> <span class="o">=</span> <span class="n">dts</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">phs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_photon_trace</span> <span class="o">=</span> <span class="n">dt2</span></div>
+
+<div class="viewcode-block" id="DyeDecay.get_histogram"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.DyeDecay.get_histogram">[docs]</a>    <span class="k">def</span> <span class="nf">get_histogram</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns two arrays one is the time axis and one is the photon-counts</span>
+
+<span class="sd">        :param kwargs: Takes *nbins* the number of histogram bins, *range* the histogram range, *decay_mode* the</span>
+<span class="sd">        way the histogram gets generated: either *photon* or *curve*. If this parameter is *photon* the histogram</span>
+<span class="sd">        will be the result of the simulation of a Poisson process. If it is *curve* the sum of smooth curves will be</span>
+<span class="sd">        returned based on several integrated quenched rates.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nbins</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;nbins&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nTAC</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;range&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mf">0.0141</span><span class="p">))</span>
+        <span class="n">decay_mode</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;decay_mode&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay_mode</span><span class="p">)</span>
+        <span class="n">irf</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;irf&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">decay_mode</span> <span class="o">==</span> <span class="s1">&#39;photon&#39;</span><span class="p">:</span>
+            <span class="n">dts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_trace</span>
+            <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">dts</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">r</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtTAC</span><span class="p">))</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">decay_mode</span> <span class="o">==</span> <span class="s1">&#39;curve&#39;</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_values</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_curve_y</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">irf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">irf</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">)[:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span></div>
+
+<div class="viewcode-block" id="DyeDecay.save_histogram"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.DyeDecay.save_histogram">[docs]</a>    <span class="k">def</span> <span class="nf">save_histogram</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;hist.txt&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">nbins</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">50</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Used to save the current histogram to a file.</span>
+
+<span class="sd">        :param filename:</span>
+<span class="sd">        :param verbose:</span>
+<span class="sd">        :param nbins:</span>
+<span class="sd">        :param range:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_histogram</span><span class="p">(</span><span class="n">nbins</span><span class="p">,</span> <span class="nb">range</span><span class="p">)</span>
+        <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ascii</span><span class="o">.</span><span class="n">save_xy</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="s2">&quot;time</span><span class="se">\t</span><span class="s2">count&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DyeDecay.update_decay_curve"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.DyeDecay.update_decay_curve">[docs]</a>    <span class="k">def</span> <span class="nf">update_decay_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_curve_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nTAC</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">photon</span><span class="o">.</span><span class="n">simulate_decay_kQ</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_curves</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_curve_y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtTAC</span><span class="p">,</span>
+                                 <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">collided</span><span class="p">,</span> <span class="n">kQ</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">protein_quenching</span><span class="o">.</span><span class="n">kQ_scale</span><span class="p">,</span> <span class="n">t_step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">t_step</span><span class="p">,</span>
+                                 <span class="n">tau0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tau0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DyeDecay.update_model"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.DyeDecay.update_model">[docs]</a>    <span class="k">def</span> <span class="nf">update_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="n">lintable</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lintable&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">corrections</span><span class="o">.</span><span class="n">lintable</span><span class="p">)</span>
+
+        <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Updating simulation&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">av</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_av</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">av</span><span class="o">.</span><span class="n">calc_slow_av</span><span class="p">(</span><span class="n">save</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">save_av</span><span class="p">,</span> <span class="n">slow_radius</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">slow_radius</span><span class="p">,</span> <span class="n">slow_centers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">slow_center</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">av</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">av</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">slow_fact</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">slow_fact</span><span class="p">,</span> <span class="n">diffusion_coefficient</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">diffusion_coefficient</span><span class="p">,</span>
+                              <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Determining quencher distances.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">critical_distance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">critical_distance</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Simulating decay&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay_mode</span> <span class="o">==</span> <span class="s1">&#39;photon&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">calc_photons</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay_mode</span> <span class="o">==</span> <span class="s1">&#39;curve&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_decay_curve</span><span class="p">()</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_histogram</span><span class="p">()</span>
+        <span class="n">decay</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">)</span>
+
+        <span class="c1"># scale the decay</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">decay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">bg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">generic</span><span class="o">.</span><span class="n">background</span><span class="p">)</span>
+        <span class="n">decay</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generic</span><span class="o">.</span><span class="n">background</span>
+        <span class="n">decay</span><span class="p">[</span><span class="n">decay</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">if</span> <span class="n">lintable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">decay</span> <span class="o">*=</span> <span class="n">lintable</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_y_values</span> <span class="o">=</span> <span class="n">decay</span></div></div>
+
+
+<div class="viewcode-block" id="TransientDecayGenerator"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.TransientDecayGenerator">[docs]</a><span class="k">class</span> <span class="nc">TransientDecayGenerator</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">,</span> <span class="n">DyeDecay</span><span class="p">):</span>
+
+    <span class="n">plot_classes</span> <span class="o">=</span> <span class="p">[(</span><span class="n">plots</span><span class="o">.</span><span class="n">LinePlot</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;d_scalex&#39;</span><span class="p">:</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+                                                  <span class="s1">&#39;d_scaley&#39;</span><span class="p">:</span> <span class="s1">&#39;log&#39;</span><span class="p">,</span>
+                                                  <span class="s1">&#39;r_scalex&#39;</span><span class="p">:</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+                                                  <span class="s1">&#39;r_scaley&#39;</span><span class="p">:</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+                                                  <span class="p">}</span>
+                    <span class="p">),</span>
+                    <span class="p">(</span><span class="n">plots</span><span class="o">.</span><span class="n">SurfacePlot</span><span class="p">,</span> <span class="p">{}),</span>
+                    <span class="p">(</span><span class="n">plots</span><span class="o">.</span><span class="n">MolView</span><span class="p">,</span> <span class="p">{</span>
+                        <span class="s1">&#39;quencher&#39;</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">common</span><span class="o">.</span><span class="n">quencher_names</span>
+                    <span class="p">})</span>
+    <span class="p">]</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Dye-diffusion&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_curves</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox_4</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+
+    <span class="nd">@n_curves.setter</span>
+    <span class="k">def</span> <span class="nf">n_curves</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spinBox_4</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nTAC</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nBins</span>
+
+    <span class="nd">@nTAC.setter</span>
+    <span class="k">def</span> <span class="nf">nTAC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="c1"># TODO remove this option</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dtTAC</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">dt</span>
+
+    <span class="nd">@dtTAC.setter</span>
+    <span class="k">def</span> <span class="nf">dtTAC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">decay_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">radioButton_3</span><span class="o">.</span><span class="n">isChecked</span><span class="p">():</span>
+            <span class="k">return</span> <span class="s1">&#39;photon&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">radioButton_4</span><span class="o">.</span><span class="n">isChecked</span><span class="p">():</span>
+            <span class="k">return</span> <span class="s1">&#39;curve&#39;</span>
+
+    <span class="nd">@decay_mode.setter</span>
+    <span class="k">def</span> <span class="nf">decay_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;photon&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">radioButton_4</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">radioButton_3</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;curve&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">radioButton_3</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">radioButton_4</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">settings_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_2</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+
+    <span class="nd">@settings_file.setter</span>
+    <span class="k">def</span> <span class="nf">settings_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_2</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">all_quencher_atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groupBox_5</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span>
+
+    <span class="nd">@all_quencher_atoms.setter</span>
+    <span class="k">def</span> <span class="nf">all_quencher_atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">groupBox_5</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="ow">not</span> <span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">filename_prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_5</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox_3</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_frames</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nBins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">nbin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fitting_widget</span><span class="o">.</span><span class="n">xmax</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">fitting_widget</span><span class="o">.</span><span class="n">xmin</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">nbin</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_photons</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_11</span><span class="o">.</span><span class="n">value</span><span class="p">()</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">)</span>
+
+    <span class="nd">@n_photons.setter</span>
+    <span class="k">def</span> <span class="nf">n_photons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_11</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span> <span class="o">/</span> <span class="mf">1e6</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">critical_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="o">.</span><span class="n">critical_distance</span>
+
+    <span class="nd">@critical_distance.setter</span>
+    <span class="k">def</span> <span class="nf">critical_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="o">.</span><span class="n">critical_distance</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">t_max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        simulation time in nano-seconds</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_6</span><span class="o">.</span><span class="n">value</span><span class="p">())</span> <span class="o">*</span> <span class="mf">1000.0</span>
+
+    <span class="nd">@t_max.setter</span>
+    <span class="k">def</span> <span class="nf">t_max</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onSimulationTimeChanged</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_6</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">t_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        time-step in picoseconds</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_7</span><span class="o">.</span><span class="n">value</span><span class="p">())</span> <span class="o">/</span> <span class="mf">1000.0</span>
+
+    <span class="nd">@t_step.setter</span>
+    <span class="k">def</span> <span class="nf">t_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onSimulationTimeChanged</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_7</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span> <span class="o">*</span> <span class="mf">1000.0</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">attachment_chain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="o">.</span><span class="n">chain_id</span>
+
+    <span class="nd">@attachment_chain.setter</span>
+    <span class="k">def</span> <span class="nf">attachment_chain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="o">.</span><span class="n">chain_id</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">attachment_residue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="o">.</span><span class="n">residue_id</span>
+
+    <span class="nd">@attachment_residue.setter</span>
+    <span class="k">def</span> <span class="nf">attachment_residue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="o">.</span><span class="n">residue_id</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">attachment_atom_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="o">.</span><span class="n">atom_name</span>
+
+    <span class="nd">@attachment_atom_name.setter</span>
+    <span class="k">def</span> <span class="nf">attachment_atom_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="o">.</span><span class="n">atom_name</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="n">generic</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">nusiance</span><span class="o">.</span><span class="n">GenericWidget</span><span class="p">(</span><span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">convolve</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">ConvolveWidget</span><span class="p">(</span><span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">fit</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">corrections</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">nusiance</span><span class="o">.</span><span class="n">CorrectionsWidget</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">package_directory</span><span class="p">,</span> <span class="s1">&#39;settings/dye_diffusion.json&#39;</span><span class="p">)</span>
+        <span class="n">settings_file</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;dye_diffusion_settings_file&#39;</span><span class="p">,</span> <span class="n">fn</span><span class="p">)</span>
+        <span class="n">settings</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">settings_file</span><span class="p">))</span>
+        <span class="n">DyeDecay</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span> <span class="n">convolve</span><span class="o">=</span><span class="n">convolve</span><span class="p">,</span> <span class="n">generic</span><span class="o">=</span><span class="n">generic</span><span class="p">,</span> <span class="n">corrections</span><span class="o">=</span><span class="n">corrections</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;disable_fit&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
+            <span class="n">fitting_widget</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">FittingControllerWidget</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fitting_widget</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLabel</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">generic</span> <span class="o">=</span> <span class="n">generic</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">convolve</span> <span class="o">=</span> <span class="n">convolve</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fitting_widget</span> <span class="o">=</span> <span class="n">fitting_widget</span>
+
+        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;mfm/ui/fitting/models/tcspc/dye_diffusion3.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span> <span class="o">=</span> <span class="n">PDBSelector</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout_10</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">settings_file</span> <span class="o">=</span> <span class="n">settings_file</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">protein_quenching</span> <span class="o">=</span> <span class="n">ProteinQuenchingWidget</span><span class="p">(</span>
+            <span class="n">k_quench_protein</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;k_quench_protein&#39;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout_11</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protein_quenching</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span> <span class="o">=</span> <span class="n">DyeWidget</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout_14</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">fitting_widget</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">convolve</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">generic</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">corrections</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sticking_parameter</span> <span class="o">=</span> <span class="n">StickingWidget</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout_13</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sticking_parameter</span><span class="p">)</span>
+
+        <span class="c1"># # User-interface</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionLoad_PDB</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onLoadPDB</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionLoad_settings</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onLoadSettings</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionSave_AV</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onSaveAV</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionLoad_settings</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onLoadSettings</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionUpdate_all</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionSave_histogram</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onSaveHist</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionSave_trajectory</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onSaveTrajectory</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_6</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;valueChanged(double)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onSimulationTimeChanged</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_7</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;valueChanged(double)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onSimulationDtChanged</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tmp_dir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">gettempdir</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diff_file</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">av_slow_file</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">av_fast_file</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fitting_widget</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">FittingWidget</span><span class="p">(</span><span class="n">fit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">molview</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plots</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">plots</span><span class="o">.</span><span class="n">MolView</span><span class="p">)][</span><span class="mi">0</span><span class="p">]</span>
+
+<div class="viewcode-block" id="TransientDecayGenerator.onSaveHist"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.TransientDecayGenerator.onSaveHist">[docs]</a>    <span class="k">def</span> <span class="nf">onSaveHist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="ow">or</span> <span class="n">verbose</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getSaveFileName</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;Save File&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_histogram</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.onLoadSettings"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.TransientDecayGenerator.onLoadSettings">[docs]</a>    <span class="k">def</span> <span class="nf">onLoadSettings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;onLoadSettings&quot;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Setting File: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings_file</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.update_3d"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.TransientDecayGenerator.update_3d">[docs]</a>    <span class="k">def</span> <span class="nf">update_3d</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">diff_file</span><span class="p">,</span> <span class="n">av_slow_file</span><span class="p">,</span> <span class="n">av_fast_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">onSaveAV</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tmp_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diff_file</span> <span class="o">=</span> <span class="n">diff_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">av_slow_file</span> <span class="o">=</span> <span class="n">av_slow_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">av_fast_file</span> <span class="o">=</span> <span class="n">av_fast_file</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structure</span><span class="p">,</span> <span class="n">Structure</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">pymolWidget</span><span class="o">.</span><span class="n">openFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">frame</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;cartoon&#39;</span><span class="p">,</span> <span class="n">object_name</span><span class="o">=</span><span class="s1">&#39;protein&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">pymol</span><span class="o">.</span><span class="n">cmd</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="s2">&quot;hide all&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">pymol</span><span class="o">.</span><span class="n">cmd</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="s2">&quot;show surface, protein&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">pymol</span><span class="o">.</span><span class="n">cmd</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="s2">&quot;color gray, protein&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">diff_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">pymolWidget</span><span class="o">.</span><span class="n">openFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diff_file</span><span class="p">,</span> <span class="n">frame</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">object_name</span><span class="o">=</span><span class="s1">&#39;trajectory&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">pymol</span><span class="o">.</span><span class="n">cmd</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="s2">&quot;color green, trajectory&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">pymol</span><span class="o">.</span><span class="n">cmd</span><span class="o">.</span><span class="n">orient</span><span class="p">()</span></div>
+        <span class="c1">#self.molview.highlight_quencher(self.quencher)</span>
+
+<div class="viewcode-block" id="TransientDecayGenerator.update_plots"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.TransientDecayGenerator.update_plots">[docs]</a>    <span class="k">def</span> <span class="nf">update_plots</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Model</span><span class="o">.</span><span class="n">update_plots</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_3d</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.update_model"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.TransientDecayGenerator.update_model">[docs]</a>    <span class="k">def</span> <span class="nf">update_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">DyeDecay</span><span class="o">.</span><span class="n">update_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_16</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quantum_yield</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_15</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">collisions</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.onSaveAV"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.TransientDecayGenerator.onSaveAV">[docs]</a>    <span class="k">def</span> <span class="nf">onSaveAV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Saves the accessible volumes to a directory. If no directory is provided a dialog-window</span>
+<span class="sd">        is opned in which the user chooses the target-directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="ow">or</span> <span class="n">verbose</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Writing AVs to directory&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;-------------------------&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">directory</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">directory</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getExistingDirectory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;Choose directory&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Directory: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">directory</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Filename-Prefix: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename_prefix</span><span class="p">))</span>
+        <span class="n">diff_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename_prefix</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">trajectory_suffix</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Saving trajectory...&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Trajectory filename: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">diff_file</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Saving every </span><span class="si">%i</span><span class="s2"> frame.&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">skip_frame</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">save_trajectory</span><span class="p">(</span><span class="n">diff_file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">skip_frame</span><span class="p">)</span>
+
+        <span class="n">av_slow_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename_prefix</span> <span class="o">+</span> <span class="s1">&#39;_av_slow.xyz&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Saving slow AV...&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Trajectory filename: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">av_slow_file</span><span class="p">)</span>
+        <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb</span><span class="o">.</span><span class="n">write_xyz</span><span class="p">(</span><span class="n">av_slow_file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">av</span><span class="o">.</span><span class="n">points_slow</span><span class="p">)</span>
+
+        <span class="n">av_fast_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename_prefix</span> <span class="o">+</span> <span class="s1">&#39;_av_fast.xyz&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Saving slow AV...&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Trajectory filename: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">av_fast_file</span><span class="p">)</span>
+        <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb</span><span class="o">.</span><span class="n">write_xyz</span><span class="p">(</span><span class="n">av_fast_file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">av</span><span class="o">.</span><span class="n">points_fast</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">diff_file</span><span class="p">,</span> <span class="n">av_slow_file</span><span class="p">,</span> <span class="n">av_fast_file</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.onSimulationDtChanged"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.TransientDecayGenerator.onSimulationDtChanged">[docs]</a>    <span class="k">def</span> <span class="nf">onSimulationDtChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">time_steps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_max</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time_steps</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.onSimulationTimeChanged"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.TransientDecayGenerator.onSimulationTimeChanged">[docs]</a>    <span class="k">def</span> <span class="nf">onSimulationTimeChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">time_steps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_max</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time_steps</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.onLoadPDB"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.TransientDecayGenerator.onLoadPDB">[docs]</a>    <span class="k">def</span> <span class="nf">onLoadPDB</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#pdb_filename = str(QtGui.QFileDialog.getOpenFileName(None, &#39;Open PDB-File&#39;, &#39;&#39;, &#39;PDB-files (*.pdb)&#39;))</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">open_file</span><span class="p">(</span><span class="s1">&#39;Open PDB-File&#39;</span><span class="p">,</span> <span class="s1">&#39;PDB-files (*.pdb)&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="o">.</span><span class="n">atoms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">atoms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tmp_dir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">gettempdir</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_3D</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.onSaveTrajectory"><a class="viewcode-back" href="../../../../../api/mfm.fitting.models.tcspc.html#mfm.fitting.models.tcspc.dye_diffusion.TransientDecayGenerator.onSaveTrajectory">[docs]</a>    <span class="k">def</span> <span class="nf">onSaveTrajectory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getSaveFileName</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="s1">&#39;Open PDB-File&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;H5-FRET-files (*.fret.h5)&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">save_simulation_results</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span></div></div>
+
+
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

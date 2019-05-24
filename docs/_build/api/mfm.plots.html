@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.plots package &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">mfm.plots package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-mfm.plots.MolView">mfm.plots.MolView module</a></li>
+<li><a class="reference internal" href="#module-mfm.plots.distance">mfm.plots.distance module</a></li>
+<li><a class="reference internal" href="#module-mfm.plots.fitinfo">mfm.plots.fitinfo module</a></li>
+<li><a class="reference internal" href="#module-mfm.plots.global_fit">mfm.plots.global_fit module</a></li>
+<li><a class="reference internal" href="#module-mfm.plots.global_tcspc">mfm.plots.global_tcspc module</a></li>
+<li><a class="reference internal" href="#module-mfm.plots.lineplot">mfm.plots.lineplot module</a></li>
+<li><a class="reference internal" href="#module-mfm.plots.parameter_scan">mfm.plots.parameter_scan module</a></li>
+<li><a class="reference internal" href="#module-mfm.plots.plot2d">mfm.plots.plot2d module</a></li>
+<li><a class="reference internal" href="#module-mfm.plots.plotbase">mfm.plots.plotbase module</a></li>
+<li><a class="reference internal" href="#module-mfm.plots.proteinMC">mfm.plots.proteinMC module</a></li>
+<li><a class="reference internal" href="#module-mfm.plots">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/api/mfm.plots.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <div class="section" id="mfm-plots-package">
+<h1>mfm.plots package<a class="headerlink" href="#mfm-plots-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mfm.plots.MolView">
+<span id="mfm-plots-molview-module"></span><h2>mfm.plots.MolView module<a class="headerlink" href="#module-mfm.plots.MolView" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.plots.MolView.ControlWidget">
+<em class="property">class </em><code class="descclassname">mfm.plots.MolView.</code><code class="descname">ControlWidget</code><span class="sig-paren">(</span><em>parent=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="attribute">
+<dt id="mfm.plots.MolView.ControlWidget.current_state">
+<code class="descname">current_state</code><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.current_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.MolView.ControlWidget.first_frame">
+<code class="descname">first_frame</code><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.first_frame" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.MolView.ControlWidget.history">
+<code class="descname">history</code><em class="property"> = ['spectrum count, rainbow_rev, all, byres=1', 'intra_fit all']</em><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.history" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.MolView.ControlWidget.last_frame">
+<code class="descname">last_frame</code><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.last_frame" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.MolView.ControlWidget.n_states">
+<code class="descname">n_states</code><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.n_states" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.ControlWidget.normalOutputWritten">
+<code class="descname">normalOutputWritten</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.normalOutputWritten"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.normalOutputWritten" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append text to the QTextEdit.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.ControlWidget.onCurrentStateChanged">
+<code class="descname">onCurrentStateChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onCurrentStateChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onCurrentStateChanged" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.ControlWidget.onExeCommand">
+<code class="descname">onExeCommand</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onExeCommand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onExeCommand" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.ControlWidget.onFirstState">
+<code class="descname">onFirstState</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onFirstState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onFirstState" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.ControlWidget.onHighlightQuencher">
+<code class="descname">onHighlightQuencher</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onHighlightQuencher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onHighlightQuencher" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.ControlWidget.onIntrafit">
+<code class="descname">onIntrafit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onIntrafit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onIntrafit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.ControlWidget.onLastState">
+<code class="descname">onLastState</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onLastState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onLastState" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.ControlWidget.onNextFrame">
+<code class="descname">onNextFrame</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onNextFrame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onNextFrame" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.ControlWidget.onPlayPymol">
+<code class="descname">onPlayPymol</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onPlayPymol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onPlayPymol" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.ControlWidget.onPreviousFrame">
+<code class="descname">onPreviousFrame</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onPreviousFrame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onPreviousFrame" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.ControlWidget.onReset">
+<code class="descname">onReset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onReset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onReset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.ControlWidget.onStopPymol">
+<code class="descname">onStopPymol</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onStopPymol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onStopPymol" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.ControlWidget.onUpdateSpectrum">
+<code class="descname">onUpdateSpectrum</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onUpdateSpectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onUpdateSpectrum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.MolView.ControlWidget.pymol">
+<code class="descname">pymol</code><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.pymol" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.MolView.ControlWidget.spectrum_type">
+<code class="descname">spectrum_type</code><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.spectrum_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.MolView.ControlWidget.step">
+<code class="descname">step</code><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.step" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.plots.MolView.EmittingStream">
+<em class="property">class </em><code class="descclassname">mfm.plots.MolView.</code><code class="descname">EmittingStream</code><a class="reference internal" href="../_modules/mfm/plots/MolView.html#EmittingStream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.EmittingStream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtCore.QObject</span></code></p>
+<dl class="attribute">
+<dt id="mfm.plots.MolView.EmittingStream.textWritten">
+<code class="descname">textWritten</code><a class="headerlink" href="#mfm.plots.MolView.EmittingStream.textWritten" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.EmittingStream.write">
+<code class="descname">write</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#EmittingStream.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.EmittingStream.write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.plots.MolView.MolQtWidget">
+<em class="property">class </em><code class="descclassname">mfm.plots.MolView.</code><code class="descname">MolQtWidget</code><span class="sig-paren">(</span><em>parent</em>, <em>enableUi=True</em>, <em>File=''</em>, <em>play=False</em>, <em>sequence=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtOpenGL.QGLWidget</span></code></p>
+<p><a class="reference external" href="http://www.mail-archive.com/pymol-users&#64;lists.sourceforge.net/msg09609.html">http://www.mail-archive.com/pymol-users&#64;lists.sourceforge.net/msg09609.html</a>
+maybe later use this...: <a class="reference external" href="http://www.plosone.org/article/info:doi/10.1371/journal.pone.0021931">http://www.plosone.org/article/info:doi/10.1371/journal.pone.0021931</a></p>
+<dl class="method">
+<dt id="mfm.plots.MolView.MolQtWidget.initializeGL">
+<code class="descname">initializeGL</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.initializeGL"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.initializeGL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolQtWidget.mouseMoveEvent">
+<code class="descname">mouseMoveEvent</code><span class="sig-paren">(</span><em>ev</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.mouseMoveEvent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.mouseMoveEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolQtWidget.mousePressEvent">
+<code class="descname">mousePressEvent</code><span class="sig-paren">(</span><em>ev</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.mousePressEvent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.mousePressEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolQtWidget.mouseReleaseEvent">
+<code class="descname">mouseReleaseEvent</code><span class="sig-paren">(</span><em>ev</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.mouseReleaseEvent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.mouseReleaseEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolQtWidget.openFile">
+<code class="descname">openFile</code><span class="sig-paren">(</span><em>File</em>, <em>frame=None</em>, <em>mode=None</em>, <em>verbose=True</em>, <em>object_name=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.openFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.openFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolQtWidget.paintGL">
+<code class="descname">paintGL</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.paintGL"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.paintGL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolQtWidget.redoSizing">
+<code class="descname">redoSizing</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.redoSizing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.redoSizing" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolQtWidget.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.reset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolQtWidget.resizeGL">
+<code class="descname">resizeGL</code><span class="sig-paren">(</span><em>w</em>, <em>h</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.resizeGL"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.resizeGL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolQtWidget.strPDB">
+<code class="descname">strPDB</code><span class="sig-paren">(</span><em>str</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.strPDB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.strPDB" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.plots.MolView.MolView">
+<em class="property">class </em><code class="descclassname">mfm.plots.MolView.</code><code class="descname">MolView</code><span class="sig-paren">(</span><em>fit=None</em>, <em>enableUi=False</em>, <em>mode='cartoon'</em>, <em>sequence=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.plots.plotbase.Plot" title="mfm.plots.plotbase.Plot"><code class="xref py py-class docutils literal"><span class="pre">mfm.plots.plotbase.Plot</span></code></a></p>
+<dl class="method">
+<dt id="mfm.plots.MolView.MolView.append_structure">
+<code class="descname">append_structure</code><span class="sig-paren">(</span><em>structure</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.append_structure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.append_structure" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolView.colorStates">
+<code class="descname">colorStates</code><span class="sig-paren">(</span><em>rgbColors</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.colorStates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.colorStates" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolView.open_file">
+<code class="descname">open_file</code><span class="sig-paren">(</span><em>filename</em>, <em>bfact=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.open_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.open_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolView.open_structure">
+<code class="descname">open_structure</code><span class="sig-paren">(</span><em>structure</em>, <em>bfact=None</em>, <em>mode=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.open_structure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.open_structure" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.MolView.MolView.pymol">
+<code class="descname">pymol</code><a class="headerlink" href="#mfm.plots.MolView.MolView.pymol" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolView.replace_structure">
+<code class="descname">replace_structure</code><span class="sig-paren">(</span><em>structure</em>, <em>bfact</em>, <em>stateNbr=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.replace_structure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.replace_structure" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolView.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.reset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolView.setState">
+<code class="descname">setState</code><span class="sig-paren">(</span><em>nbr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.setState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.setState" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.MolView.MolView.set_bfactor">
+<code class="descname">set_bfactor</code><span class="sig-paren">(</span><em>bfact=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.set_bfactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.set_bfactor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.plots.distance">
+<span id="mfm-plots-distance-module"></span><h2>mfm.plots.distance module<a class="headerlink" href="#module-mfm.plots.distance" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.plots.distance.DistancePlot">
+<em class="property">class </em><code class="descclassname">mfm.plots.distance.</code><code class="descname">DistancePlot</code><span class="sig-paren">(</span><em>fit</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/distance.html#DistancePlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.distance.DistancePlot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.plots.plotbase.Plot" title="mfm.plots.plotbase.Plot"><code class="xref py py-class docutils literal"><span class="pre">mfm.plots.plotbase.Plot</span></code></a></p>
+<p>Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
+and the autocorrelation of the residuals. Now it is also used also for FCS-data.</p>
+<p>In case the model is a <code class="xref py py-class docutils literal"><span class="pre">LifetimeModel</span></code> it takes the irf and displays it:</p>
+<blockquote>
+<div>irf = fit.model.convolve.irf
+irf_y = irf.y</div></blockquote>
+<p>The model data and the weighted residuals are taken directly from the fit:</p>
+<blockquote>
+<div>model_x, model_y = fit[:]
+wres_y = fit.weighted_residuals</div></blockquote>
+<dl class="attribute">
+<dt id="mfm.plots.distance.DistancePlot.name">
+<code class="descname">name</code><em class="property"> = 'p(RDA)'</em><a class="headerlink" href="#mfm.plots.distance.DistancePlot.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.distance.DistancePlot.update_all">
+<code class="descname">update_all</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/distance.html#DistancePlot.update_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.distance.DistancePlot.update_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.plots.fitinfo">
+<span id="mfm-plots-fitinfo-module"></span><h2>mfm.plots.fitinfo module<a class="headerlink" href="#module-mfm.plots.fitinfo" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.plots.fitinfo.FitInfo">
+<em class="property">class </em><code class="descclassname">mfm.plots.fitinfo.</code><code class="descname">FitInfo</code><span class="sig-paren">(</span><em>fit</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/fitinfo.html#FitInfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.fitinfo.FitInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.plots.plotbase.Plot" title="mfm.plots.plotbase.Plot"><code class="xref py py-class docutils literal"><span class="pre">mfm.plots.plotbase.Plot</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.plots.fitinfo.FitInfo.name">
+<code class="descname">name</code><em class="property"> = 'Info'</em><a class="headerlink" href="#mfm.plots.fitinfo.FitInfo.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.fitinfo.FitInfo.update_all">
+<code class="descname">update_all</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/fitinfo.html#FitInfo.update_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.fitinfo.FitInfo.update_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.plots.global_fit">
+<span id="mfm-plots-global-fit-module"></span><h2>mfm.plots.global_fit module<a class="headerlink" href="#module-mfm.plots.global_fit" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.plots.global_fit.GlobalFitPlot">
+<em class="property">class </em><code class="descclassname">mfm.plots.global_fit.</code><code class="descname">GlobalFitPlot</code><span class="sig-paren">(</span><em>fit</em>, <em>logy=False</em>, <em>logx=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/global_fit.html#GlobalFitPlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.global_fit.GlobalFitPlot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.plots.plotbase.Plot" title="mfm.plots.plotbase.Plot"><code class="xref py py-class docutils literal"><span class="pre">mfm.plots.plotbase.Plot</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.plots.global_fit.GlobalFitPlot.name">
+<code class="descname">name</code><em class="property"> = 'Global-Fits'</em><a class="headerlink" href="#mfm.plots.global_fit.GlobalFitPlot.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.global_fit.GlobalFitPlot.update_all">
+<code class="descname">update_all</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/global_fit.html#GlobalFitPlot.update_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.global_fit.GlobalFitPlot.update_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.plots.global_tcspc">
+<span id="mfm-plots-global-tcspc-module"></span><h2>mfm.plots.global_tcspc module<a class="headerlink" href="#module-mfm.plots.global_tcspc" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.plots.global_tcspc.GlobalAnisotropy">
+<em class="property">class </em><code class="descclassname">mfm.plots.global_tcspc.</code><code class="descname">GlobalAnisotropy</code><span class="sig-paren">(</span><em>fit</em>, <em>d_scalex='lin'</em>, <em>d_scaley='lin'</em>, <em>r_scalex='lin'</em>, <em>r_scaley='lin'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/global_tcspc.html#GlobalAnisotropy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.global_tcspc.GlobalAnisotropy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.plots.plotbase.Plot" title="mfm.plots.plotbase.Plot"><code class="xref py py-class docutils literal"><span class="pre">mfm.plots.plotbase.Plot</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.plots.global_tcspc.GlobalAnisotropy.name">
+<code class="descname">name</code><em class="property"> = 'Fit'</em><a class="headerlink" href="#mfm.plots.global_tcspc.GlobalAnisotropy.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.global_tcspc.GlobalAnisotropy.update_all">
+<code class="descname">update_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/global_tcspc.html#GlobalAnisotropy.update_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.global_tcspc.GlobalAnisotropy.update_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.plots.global_tcspc.GlobalEt">
+<em class="property">class </em><code class="descclassname">mfm.plots.global_tcspc.</code><code class="descname">GlobalEt</code><span class="sig-paren">(</span><em>fit</em>, <em>f_scalex='log'</em>, <em>f_scaley='lin'</em>, <em>e_scalex='log'</em>, <em>e_scaley='lin'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/global_tcspc.html#GlobalEt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.global_tcspc.GlobalEt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.plots.plotbase.Plot" title="mfm.plots.plotbase.Plot"><code class="xref py py-class docutils literal"><span class="pre">mfm.plots.plotbase.Plot</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.plots.global_tcspc.GlobalEt.name">
+<code class="descname">name</code><em class="property"> = 'GlobalEt'</em><a class="headerlink" href="#mfm.plots.global_tcspc.GlobalEt.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.global_tcspc.GlobalEt.update_all">
+<code class="descname">update_all</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/global_tcspc.html#GlobalEt.update_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.global_tcspc.GlobalEt.update_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.plots.global_tcspc.LinePlotWidget">
+<em class="property">class </em><code class="descclassname">mfm.plots.global_tcspc.</code><code class="descname">LinePlotWidget</code><span class="sig-paren">(</span><em>parent=None</em>, <em>d_scalex='lin'</em>, <em>d_scaley='log'</em>, <em>r_scalex='lin'</em>, <em>r_scaley='lin'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/global_tcspc.html#LinePlotWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.global_tcspc.LinePlotWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="method">
+<dt id="mfm.plots.global_tcspc.LinePlotWidget.SetLog">
+<code class="descname">SetLog</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/global_tcspc.html#LinePlotWidget.SetLog"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.global_tcspc.LinePlotWidget.SetLog" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.global_tcspc.LinePlotWidget.data_logx">
+<code class="descname">data_logx</code><a class="headerlink" href="#mfm.plots.global_tcspc.LinePlotWidget.data_logx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.global_tcspc.LinePlotWidget.data_logy">
+<code class="descname">data_logy</code><a class="headerlink" href="#mfm.plots.global_tcspc.LinePlotWidget.data_logy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.global_tcspc.LinePlotWidget.res_logx">
+<code class="descname">res_logx</code><a class="headerlink" href="#mfm.plots.global_tcspc.LinePlotWidget.res_logx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.global_tcspc.LinePlotWidget.res_logy">
+<code class="descname">res_logy</code><a class="headerlink" href="#mfm.plots.global_tcspc.LinePlotWidget.res_logy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.plots.lineplot">
+<span id="mfm-plots-lineplot-module"></span><h2>mfm.plots.lineplot module<a class="headerlink" href="#module-mfm.plots.lineplot" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.plots.lineplot.LinePlot">
+<em class="property">class </em><code class="descclassname">mfm.plots.lineplot.</code><code class="descname">LinePlot</code><span class="sig-paren">(</span><em>fit</em>, <em>d_scalex='lin'</em>, <em>d_scaley='lin'</em>, <em>r_scaley='lin'</em>, <em>reference_curve=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/lineplot.html#LinePlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.lineplot.LinePlot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.plots.plotbase.Plot" title="mfm.plots.plotbase.Plot"><code class="xref py py-class docutils literal"><span class="pre">mfm.plots.plotbase.Plot</span></code></a></p>
+<p>Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
+and the autocorrelation of the residuals. Now it is also used also for FCS-data.</p>
+<p>In case the model is a <code class="xref py py-class docutils literal"><span class="pre">LifetimeModel</span></code> it takes the irf and displays it:</p>
+<blockquote>
+<div>irf = fit.model.convolve.irf
+irf_y = irf.y</div></blockquote>
+<p>The model data and the weighted residuals are taken directly from the fit:</p>
+<blockquote>
+<div>model_x, model_y = fit[:]
+wres_y = fit.weighted_residuals</div></blockquote>
+<dl class="attribute">
+<dt id="mfm.plots.lineplot.LinePlot.name">
+<code class="descname">name</code><em class="property"> = 'Fit'</em><a class="headerlink" href="#mfm.plots.lineplot.LinePlot.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.lineplot.LinePlot.update_all">
+<code class="descname">update_all</code><span class="sig-paren">(</span><em>only_fit_range=False</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/lineplot.html#LinePlot.update_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.lineplot.LinePlot.update_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.plots.lineplot.LinePlotControl">
+<em class="property">class </em><code class="descclassname">mfm.plots.lineplot.</code><code class="descname">LinePlotControl</code><span class="sig-paren">(</span><em>parent=None</em>, <em>d_scalex='linear'</em>, <em>d_scaley='log'</em>, <em>r_scaley='linear'</em>, <em>reference_curve=False</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/lineplot.html#LinePlotControl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="method">
+<dt id="mfm.plots.lineplot.LinePlotControl.SetLog">
+<code class="descname">SetLog</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/lineplot.html#LinePlotControl.SetLog"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.SetLog" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.lineplot.LinePlotControl.SetReference">
+<code class="descname">SetReference</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/lineplot.html#LinePlotControl.SetReference"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.SetReference" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.lineplot.LinePlotControl.data_is_log_x">
+<code class="descname">data_is_log_x</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.data_is_log_x" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.lineplot.LinePlotControl.data_is_log_y">
+<code class="descname">data_is_log_y</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.data_is_log_y" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.lineplot.LinePlotControl.data_logx">
+<code class="descname">data_logx</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.data_logx" title="Permalink to this definition">¶</a></dt>
+<dd><p>x-data is plotted logarithmically</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.lineplot.LinePlotControl.data_logy">
+<code class="descname">data_logy</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.data_logy" title="Permalink to this definition">¶</a></dt>
+<dd><p>y-data is plotted logarithmically</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.lineplot.LinePlotControl.res_is_log_y">
+<code class="descname">res_is_log_y</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.res_is_log_y" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.lineplot.LinePlotControl.res_logy">
+<code class="descname">res_logy</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.res_logy" title="Permalink to this definition">¶</a></dt>
+<dd><p>y-residuals is plotted logarithmically</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.lineplot.LinePlotControl.use_reference">
+<code class="descname">use_reference</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.use_reference" title="Permalink to this definition">¶</a></dt>
+<dd><p>If true use a reference curve for plotting</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.lineplot.LinePlotControl.x_shift">
+<code class="descname">x_shift</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.x_shift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.lineplot.LinePlotControl.xmin">
+<code class="descname">xmin</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.xmin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.lineplot.LinePlotControl.y_shift">
+<code class="descname">y_shift</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.y_shift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.lineplot.LinePlotControl.ymin">
+<code class="descname">ymin</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.ymin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.plots.parameter_scan">
+<span id="mfm-plots-parameter-scan-module"></span><h2>mfm.plots.parameter_scan module<a class="headerlink" href="#module-mfm.plots.parameter_scan" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.plots.parameter_scan.ParameterScanPlot">
+<em class="property">class </em><code class="descclassname">mfm.plots.parameter_scan.</code><code class="descname">ParameterScanPlot</code><span class="sig-paren">(</span><em>fit</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/parameter_scan.html#ParameterScanPlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanPlot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.plots.plotbase.Plot" title="mfm.plots.plotbase.Plot"><code class="xref py py-class docutils literal"><span class="pre">mfm.plots.plotbase.Plot</span></code></a></p>
+<p>Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
+and the autocorrelation of the residuals. Now it is also used also for FCS-data.</p>
+<p>In case the model is a <code class="xref py py-class docutils literal"><span class="pre">LifetimeModel</span></code> it takes the irf and displays it:</p>
+<blockquote>
+<div>irf = fit.model.convolve.irf
+irf_y = irf.y</div></blockquote>
+<p>The model data and the weighted residuals are taken directly from the fit:</p>
+<blockquote>
+<div>model_x, model_y = fit[:]
+wres_y = fit.weighted_residuals</div></blockquote>
+<dl class="attribute">
+<dt id="mfm.plots.parameter_scan.ParameterScanPlot.name">
+<code class="descname">name</code><em class="property"> = 'Error-Plot'</em><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanPlot.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.parameter_scan.ParameterScanPlot.update_all">
+<code class="descname">update_all</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/parameter_scan.html#ParameterScanPlot.update_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanPlot.update_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.plots.parameter_scan.ParameterScanWidget">
+<em class="property">class </em><code class="descclassname">mfm.plots.parameter_scan.</code><code class="descname">ParameterScanWidget</code><span class="sig-paren">(</span><em>model</em>, <em>parent</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/parameter_scan.html#ParameterScanWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="attribute">
+<dt id="mfm.plots.parameter_scan.ParameterScanWidget.parameter">
+<code class="descname">parameter</code><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanWidget.parameter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.parameter_scan.ParameterScanWidget.scan_parameter">
+<code class="descname">scan_parameter</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/parameter_scan.html#ParameterScanWidget.scan_parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanWidget.scan_parameter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.parameter_scan.ParameterScanWidget.selected_parameter">
+<code class="descname">selected_parameter</code><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanWidget.selected_parameter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.parameter_scan.ParameterScanWidget.update">
+<code class="descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/parameter_scan.html#ParameterScanWidget.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanWidget.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.plots.plot2d">
+<span id="mfm-plots-plot2d-module"></span><h2>mfm.plots.plot2d module<a class="headerlink" href="#module-mfm.plots.plot2d" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.plots.plot2d.SurfacePlot">
+<em class="property">class </em><code class="descclassname">mfm.plots.plot2d.</code><code class="descname">SurfacePlot</code><span class="sig-paren">(</span><em>fit</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plot2d.html#SurfacePlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.plots.plotbase.Plot" title="mfm.plots.plotbase.Plot"><code class="xref py py-class docutils literal"><span class="pre">mfm.plots.plotbase.Plot</span></code></a></p>
+<dl class="method">
+<dt id="mfm.plots.plot2d.SurfacePlot.changeParameter">
+<code class="descname">changeParameter</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plot2d.html#SurfacePlot.changeParameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlot.changeParameter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlot.mask">
+<code class="descname">mask</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlot.mask" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlot.maskedValues">
+<code class="descname">maskedValues</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlot.maskedValues" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlot.name">
+<code class="descname">name</code><em class="property"> = 'Surface-Plot'</em><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlot.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.plot2d.SurfacePlot.update_all">
+<code class="descname">update_all</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plot2d.html#SurfacePlot.update_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlot.update_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.plot2d.SurfacePlot.update_plots">
+<code class="descname">update_plots</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plot2d.html#SurfacePlot.update_plots"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlot.update_plots" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlot.xmax">
+<code class="descname">xmax</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlot.xmax" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlot.xmin">
+<code class="descname">xmin</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlot.xmin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlot.ymax">
+<code class="descname">ymax</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlot.ymax" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlot.ymin">
+<code class="descname">ymin</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlot.ymin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget">
+<em class="property">class </em><code class="descclassname">mfm.plots.plot2d.</code><code class="descname">SurfacePlotWidget</code><span class="sig-paren">(</span><em>parent=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plot2d.html#SurfacePlotWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="method">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.SetLog">
+<code class="descname">SetLog</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plot2d.html#SurfacePlotWidget.SetLog"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.SetLog" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.bins2X">
+<code class="descname">bins2X</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.bins2X" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.bins2Y">
+<code class="descname">bins2Y</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.bins2Y" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.binsX">
+<code class="descname">binsX</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.binsX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.binsY">
+<code class="descname">binsY</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.binsY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.getMask">
+<code class="descname">getMask</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plot2d.html#SurfacePlotWidget.getMask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.getMask" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.log_x">
+<code class="descname">log_x</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.log_x" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.log_y">
+<code class="descname">log_y</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.log_y" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.normed_hist_x">
+<code class="descname">normed_hist_x</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.normed_hist_x" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.normed_hist_y">
+<code class="descname">normed_hist_y</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.normed_hist_y" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.onAddSelection">
+<code class="descname">onAddSelection</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plot2d.html#SurfacePlotWidget.onAddSelection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.onAddSelection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.onAutoRangeX">
+<code class="descname">onAutoRangeX</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plot2d.html#SurfacePlotWidget.onAutoRangeX"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.onAutoRangeX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.onAutoRangeY">
+<code class="descname">onAutoRangeY</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plot2d.html#SurfacePlotWidget.onAutoRangeY"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.onAutoRangeY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.onClearSelection">
+<code class="descname">onClearSelection</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plot2d.html#SurfacePlotWidget.onClearSelection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.onClearSelection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.onSelectionTableClicked">
+<code class="descname">onSelectionTableClicked</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plot2d.html#SurfacePlotWidget.onSelectionTableClicked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.onSelectionTableClicked" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.p1">
+<code class="descname">p1</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.p1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.p2">
+<code class="descname">p2</code><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.p2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.plot2d.SurfacePlotWidget.update">
+<code class="descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plot2d.html#SurfacePlotWidget.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plot2d.SurfacePlotWidget.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.plots.plotbase">
+<span id="mfm-plots-plotbase-module"></span><h2>mfm.plots.plotbase module<a class="headerlink" href="#module-mfm.plots.plotbase" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.plots.plotbase.Plot">
+<em class="property">class </em><code class="descclassname">mfm.plots.plotbase.</code><code class="descname">Plot</code><span class="sig-paren">(</span><em>fit</em>, <em>parent=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plotbase.html#Plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plotbase.Plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code>, <code class="xref py py-class docutils literal"><span class="pre">ChiSurf.Base</span></code></p>
+<dl class="method">
+<dt id="mfm.plots.plotbase.Plot.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plotbase.html#Plot.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plotbase.Plot.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.plotbase.Plot.update_all">
+<code class="descname">update_all</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plotbase.html#Plot.update_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plotbase.Plot.update_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.plotbase.Plot.update_widget">
+<code class="descname">update_widget</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plotbase.html#Plot.update_widget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plotbase.Plot.update_widget" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.plots.proteinMC">
+<span id="mfm-plots-proteinmc-module"></span><h2>mfm.plots.proteinMC module<a class="headerlink" href="#module-mfm.plots.proteinMC" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.plots.proteinMC.ProteinMCPlot">
+<em class="property">class </em><code class="descclassname">mfm.plots.proteinMC.</code><code class="descname">ProteinMCPlot</code><span class="sig-paren">(</span><em>fit</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/proteinMC.html#ProteinMCPlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.proteinMC.ProteinMCPlot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.plots.plotbase.Plot" title="mfm.plots.plotbase.Plot"><code class="xref py py-class docutils literal"><span class="pre">mfm.plots.plotbase.Plot</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.plots.proteinMC.ProteinMCPlot.name">
+<code class="descname">name</code><em class="property"> = 'Trajectory-Plot'</em><a class="headerlink" href="#mfm.plots.proteinMC.ProteinMCPlot.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.plots.proteinMC.ProteinMCPlot.update_all">
+<code class="descname">update_all</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/proteinMC.html#ProteinMCPlot.update_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.proteinMC.ProteinMCPlot.update_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.plots">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.plots" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

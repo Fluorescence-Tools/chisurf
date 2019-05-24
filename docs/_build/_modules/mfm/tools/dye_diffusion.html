@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.tools.dye_diffusion &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for mfm.tools.dye_diffusion</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">uic</span><span class="p">,</span> <span class="n">QtGui</span>
+<span class="kn">from</span> <span class="nn">guiqwt.plot</span> <span class="kn">import</span> <span class="n">CurveDialog</span>
+<span class="kn">from</span> <span class="nn">guiqwt.builder</span> <span class="kn">import</span> <span class="n">make</span>
+
+<span class="kn">import</span> <span class="nn">mfm</span>
+<span class="kn">from</span> <span class="nn">mfm.fluorescence.simulation.dye_diffusion</span> <span class="kn">import</span> <span class="n">DyeDecay</span>
+<span class="kn">from</span> <span class="nn">mfm.structure</span> <span class="kn">import</span> <span class="n">Structure</span>
+<span class="kn">from</span> <span class="nn">mfm.plots.MolView</span> <span class="kn">import</span> <span class="n">MolQtWidget</span>
+<span class="kn">from</span> <span class="nn">mfm.widgets</span> <span class="kn">import</span> <span class="n">PDBSelector</span>
+
+
+<div class="viewcode-block" id="TransientDecayGenerator"><a class="viewcode-back" href="../../../api/mfm.tools.html#mfm.tools.dye_diffusion.TransientDecayGenerator">[docs]</a><span class="k">class</span> <span class="nc">TransientDecayGenerator</span><span class="p">(</span><span class="n">DyeDecay</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Decay Generator&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_curves</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox_4</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+
+    <span class="nd">@n_curves.setter</span>
+    <span class="k">def</span> <span class="nf">n_curves</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spinBox_4</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nTAC</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox_2</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+
+    <span class="nd">@nTAC.setter</span>
+    <span class="k">def</span> <span class="nf">nTAC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">spinBox_2</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dtTAC</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_18</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+
+    <span class="nd">@dtTAC.setter</span>
+    <span class="k">def</span> <span class="nf">dtTAC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_18</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">decay_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">radioButton_3</span><span class="o">.</span><span class="n">isChecked</span><span class="p">():</span>
+            <span class="k">return</span> <span class="s1">&#39;photon&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">radioButton_4</span><span class="o">.</span><span class="n">isChecked</span><span class="p">():</span>
+            <span class="k">return</span> <span class="s1">&#39;curve&#39;</span>
+
+    <span class="nd">@decay_mode.setter</span>
+    <span class="k">def</span> <span class="nf">decay_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;photon&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">radioButton_4</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">radioButton_3</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;curve&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">radioButton_3</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">radioButton_4</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">settings_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_settings_file</span>
+
+    <span class="nd">@settings_file.setter</span>
+    <span class="k">def</span> <span class="nf">settings_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_2</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">all_quencher_atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">groupBox_5</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span>
+
+    <span class="nd">@all_quencher_atoms.setter</span>
+    <span class="k">def</span> <span class="nf">all_quencher_atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">groupBox_5</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="ow">not</span> <span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">filename_prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_5</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">skip_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox_3</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_frames</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nBins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox_2</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_photons</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_11</span><span class="o">.</span><span class="n">value</span><span class="p">()</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">)</span>
+
+    <span class="nd">@n_photons.setter</span>
+    <span class="k">def</span> <span class="nf">n_photons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_11</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span> <span class="o">/</span> <span class="mf">1e6</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">critical_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="o">.</span><span class="n">critical_distance</span>
+
+    <span class="nd">@critical_distance.setter</span>
+    <span class="k">def</span> <span class="nf">critical_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="o">.</span><span class="n">critical_distance</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">t_max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        simulation time in nano-seconds</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_6</span><span class="o">.</span><span class="n">value</span><span class="p">())</span> <span class="o">*</span> <span class="mf">1000.0</span>
+
+    <span class="nd">@t_max.setter</span>
+    <span class="k">def</span> <span class="nf">t_max</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onSimulationTimeChanged</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_6</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">t_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        time-step in picoseconds</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_7</span><span class="o">.</span><span class="n">value</span><span class="p">())</span> <span class="o">/</span> <span class="mf">1000.0</span>
+
+    <span class="nd">@t_step.setter</span>
+    <span class="k">def</span> <span class="nf">t_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onSimulationTimeChanged</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_7</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span> <span class="o">*</span> <span class="mf">1000.0</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">attachment_chain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="o">.</span><span class="n">chain_id</span>
+
+    <span class="nd">@attachment_chain.setter</span>
+    <span class="k">def</span> <span class="nf">attachment_chain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="o">.</span><span class="n">chain_id</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">attachment_residue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="o">.</span><span class="n">residue_id</span>
+
+    <span class="nd">@attachment_residue.setter</span>
+    <span class="k">def</span> <span class="nf">attachment_residue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="o">.</span><span class="n">residue_id</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">attachment_atom_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="o">.</span><span class="n">atom_name</span>
+
+    <span class="nd">@attachment_atom_name.setter</span>
+    <span class="k">def</span> <span class="nf">attachment_atom_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="o">.</span><span class="n">atom_name</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">package_directory</span><span class="p">,</span> <span class="s1">&#39;settings/dye_diffusion.json&#39;</span><span class="p">)</span>
+        <span class="n">dye_diffusion_settings_file</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;dye_diffusion_settings_file&#39;</span><span class="p">,</span> <span class="n">fn</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="n">settings</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">dye_diffusion_settings_file</span><span class="p">))</span>
+
+        <span class="c1">#def __init__(self, decay_parameter,</span>
+        <span class="c1">#         diffusion_simulation, **kwargs):</span>
+
+        <span class="n">DyeDecay</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">)</span>
+
+        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;mfm/ui/dye_diffusion2.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span> <span class="o">=</span> <span class="n">PDBSelector</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout_10</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_settings_file</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">settings_file</span> <span class="o">=</span> <span class="n">dye_diffusion_settings_file</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">protein_quenching</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">dynamic</span><span class="o">.</span><span class="n">ProteinQuenchingWidget</span><span class="p">(</span>
+            <span class="n">k_quench_protein</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;k_quench_protein&#39;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout_11</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protein_quenching</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">dynamic</span><span class="o">.</span><span class="n">DyeParameterWidget</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout_14</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dye_parameter</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sticking</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">dynamic</span><span class="o">.</span><span class="n">StickingParameterWidget</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout_13</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sticking</span><span class="p">)</span>
+
+        <span class="c1"># # User-interface</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionLoad_PDB</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onLoadPDB</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionLoad_settings</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onLoadSettings</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionSave_AV</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onSaveAV</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionLoad_settings</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onLoadSettings</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionUpdate_all</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionSave_histogram</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onSaveHist</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionSave_trajectory</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onSaveTrajectory</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_6</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;valueChanged(double)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onSimulationTimeChanged</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_7</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;valueChanged(double)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onSimulationDtChanged</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tmp_dir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">gettempdir</span><span class="p">()</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Temporary Directory: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">tmp_dir</span><span class="p">)</span>
+
+        <span class="c1">## Decay-Curve</span>
+        <span class="n">fd</span> <span class="o">=</span> <span class="n">CurveDialog</span><span class="p">(</span><span class="n">edit</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">toolbar</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_decay</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">get_plot</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hist_curve</span> <span class="o">=</span> <span class="n">make</span><span class="o">.</span><span class="n">curve</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unquenched_curve</span> <span class="o">=</span> <span class="n">make</span><span class="o">.</span><span class="n">curve</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_decay</span><span class="o">.</span><span class="n">add_item</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hist_curve</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_decay</span><span class="o">.</span><span class="n">add_item</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">unquenched_curve</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_decay</span><span class="o">.</span><span class="n">set_scales</span><span class="p">(</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span> <span class="s1">&#39;log&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout_2</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+
+        <span class="c1">## Diffusion-Trajectory-Curve</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Trajectory&quot;</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;time [ns]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;|R-&lt;R&gt;|&quot;</span><span class="p">))</span>
+        <span class="n">fd</span> <span class="o">=</span> <span class="n">CurveDialog</span><span class="p">(</span><span class="n">edit</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">toolbar</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_diffusion</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">get_plot</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffusion_curve</span> <span class="o">=</span> <span class="n">make</span><span class="o">.</span><span class="n">curve</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_diffusion</span><span class="o">.</span><span class="n">add_item</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diffusion_curve</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_diffusion</span><span class="o">.</span><span class="n">set_scales</span><span class="p">(</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span> <span class="s1">&#39;lin&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout_6</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+
+        <span class="n">options</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;corr. time [ns]&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;A.Corr.(|R-&lt;R&gt;|)&quot;</span><span class="p">))</span>
+        <span class="n">fd</span> <span class="o">=</span> <span class="n">CurveDialog</span><span class="p">(</span><span class="n">edit</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">toolbar</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_autocorr</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">get_plot</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffusion_autocorrelation</span> <span class="o">=</span> <span class="n">make</span><span class="o">.</span><span class="n">curve</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_autocorr</span><span class="o">.</span><span class="n">add_item</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diffusion_autocorrelation</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_autocorr</span><span class="o">.</span><span class="n">set_scales</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">,</span> <span class="s1">&#39;lin&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout_6</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+
+        <span class="c1">## Protein Structure</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">molview</span> <span class="o">=</span> <span class="n">MolQtWidget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">enableUi</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout_4</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">diff_file</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">av_slow_file</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">av_fast_file</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
+
+<div class="viewcode-block" id="TransientDecayGenerator.onSaveHist"><a class="viewcode-back" href="../../../api/mfm.tools.html#mfm.tools.dye_diffusion.TransientDecayGenerator.onSaveHist">[docs]</a>    <span class="k">def</span> <span class="nf">onSaveHist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="ow">or</span> <span class="n">verbose</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getSaveFileName</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;Save File&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_histogram</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.molview_highlight_quencher"><a class="viewcode-back" href="../../../api/mfm.tools.html#mfm.tools.dye_diffusion.TransientDecayGenerator.molview_highlight_quencher">[docs]</a>    <span class="k">def</span> <span class="nf">molview_highlight_quencher</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">quencher</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quencher</span>
+        <span class="n">pymol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">pymol</span>
+        <span class="k">for</span> <span class="n">res_name</span> <span class="ow">in</span> <span class="n">quencher</span><span class="p">:</span>
+            <span class="n">pymol</span><span class="o">.</span><span class="n">cmd</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="s2">&quot;hide lines, resn </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">res_name</span><span class="p">)</span>
+            <span class="n">pymol</span><span class="o">.</span><span class="n">cmd</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="s2">&quot;show sticks, resn </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">res_name</span><span class="p">)</span>
+            <span class="n">pymol</span><span class="o">.</span><span class="n">cmd</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="s2">&quot;color red, resn </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">res_name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.onLoadSettings"><a class="viewcode-back" href="../../../api/mfm.tools.html#mfm.tools.dye_diffusion.TransientDecayGenerator.onLoadSettings">[docs]</a>    <span class="k">def</span> <span class="nf">onLoadSettings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;onLoadSettings&quot;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Setting File: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings_file</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.update_3D"><a class="viewcode-back" href="../../../api/mfm.tools.html#mfm.tools.dye_diffusion.TransientDecayGenerator.update_3D">[docs]</a>    <span class="k">def</span> <span class="nf">update_3D</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structure</span><span class="p">,</span> <span class="n">Structure</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">openFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">frame</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;cartoon&#39;</span><span class="p">,</span> <span class="n">object_name</span><span class="o">=</span><span class="s1">&#39;protein&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">pymol</span><span class="o">.</span><span class="n">cmd</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="s2">&quot;hide all&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">pymol</span><span class="o">.</span><span class="n">cmd</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="s2">&quot;show surface, protein&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">pymol</span><span class="o">.</span><span class="n">cmd</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="s2">&quot;color gray, protein&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">diff_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">openFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diff_file</span><span class="p">,</span> <span class="n">frame</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">object_name</span><span class="o">=</span><span class="s1">&#39;trajectory&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">pymol</span><span class="o">.</span><span class="n">cmd</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="s2">&quot;color green, trajectory&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">molview</span><span class="o">.</span><span class="n">pymol</span><span class="o">.</span><span class="n">cmd</span><span class="o">.</span><span class="n">orient</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">molview_highlight_quencher</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.update_trajectory_curve"><a class="viewcode-back" href="../../../api/mfm.tools.html#mfm.tools.dye_diffusion.TransientDecayGenerator.update_trajectory_curve">[docs]</a>    <span class="k">def</span> <span class="nf">update_trajectory_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">distance_to_mean</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_max</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffusion_curve</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffusion_autocorrelation</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">autocorr</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_autocorr</span><span class="o">.</span><span class="n">do_autoscale</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_diffusion</span><span class="o">.</span><span class="n">do_autoscale</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.update_decay_histogram"><a class="viewcode-back" href="../../../api/mfm.tools.html#mfm.tools.dye_diffusion.TransientDecayGenerator.update_decay_histogram">[docs]</a>    <span class="k">def</span> <span class="nf">update_decay_histogram</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_histogram</span><span class="p">(</span><span class="n">nbins</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nBins</span><span class="p">)</span>
+        <span class="n">y</span><span class="p">[</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mf">0.001</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.001</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hist_curve</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">yu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau0</span><span class="p">)</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unquenched_curve</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">yu</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_decay</span><span class="o">.</span><span class="n">do_autoscale</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.update_model"><a class="viewcode-back" href="../../../api/mfm.tools.html#mfm.tools.dye_diffusion.TransientDecayGenerator.update_model">[docs]</a>    <span class="k">def</span> <span class="nf">update_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="n">DyeDecay</span><span class="o">.</span><span class="n">update_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_16</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quantum_yield</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_15</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">collisions</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">)</span>
+        <span class="n">diff_file</span><span class="p">,</span> <span class="n">av_slow_file</span><span class="p">,</span> <span class="n">av_fast_file</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">onSaveAV</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tmp_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diff_file</span> <span class="o">=</span> <span class="n">diff_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">av_slow_file</span> <span class="o">=</span> <span class="n">av_slow_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">av_fast_file</span> <span class="o">=</span> <span class="n">av_fast_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_3D</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_decay_histogram</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_trajectory_curve</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.onSaveAV"><a class="viewcode-back" href="../../../api/mfm.tools.html#mfm.tools.dye_diffusion.TransientDecayGenerator.onSaveAV">[docs]</a>    <span class="k">def</span> <span class="nf">onSaveAV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directory</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Saves the accessible volumes to a directory. If no directory is provided a dialog-window</span>
+<span class="sd">        is opned in which the user chooses the target-directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="ow">or</span> <span class="n">verbose</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Writing AVs to directory&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;-------------------------&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">directory</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">directory</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getExistingDirectory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;Choose directory&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Directory: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">directory</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Filename-Prefix: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename_prefix</span><span class="p">))</span>
+        <span class="n">diff_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename_prefix</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">trajectory_suffix</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Saving trajectory...&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Trajectory filename: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">diff_file</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Saving every </span><span class="si">%i</span><span class="s2"> frame.&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">skip_frame</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">save_trajectory</span><span class="p">(</span><span class="n">diff_file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">skip_frame</span><span class="p">)</span>
+
+        <span class="n">av_slow_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename_prefix</span> <span class="o">+</span> <span class="s1">&#39;_av_slow.xyz&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Saving slow AV...&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Trajectory filename: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">av_slow_file</span><span class="p">)</span>
+        <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb</span><span class="o">.</span><span class="n">write_xyz</span><span class="p">(</span><span class="n">av_slow_file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">av</span><span class="o">.</span><span class="n">points_slow</span><span class="p">)</span>
+
+        <span class="n">av_fast_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename_prefix</span> <span class="o">+</span> <span class="s1">&#39;_av_fast.xyz&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Saving slow AV...&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Trajectory filename: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">av_fast_file</span><span class="p">)</span>
+        <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb</span><span class="o">.</span><span class="n">write_xyz</span><span class="p">(</span><span class="n">av_fast_file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">av</span><span class="o">.</span><span class="n">points_fast</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">diff_file</span><span class="p">,</span> <span class="n">av_slow_file</span><span class="p">,</span> <span class="n">av_fast_file</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.onSimulationDtChanged"><a class="viewcode-back" href="../../../api/mfm.tools.html#mfm.tools.dye_diffusion.TransientDecayGenerator.onSimulationDtChanged">[docs]</a>    <span class="k">def</span> <span class="nf">onSimulationDtChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">time_steps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_max</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time_steps</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.onSimulationTimeChanged"><a class="viewcode-back" href="../../../api/mfm.tools.html#mfm.tools.dye_diffusion.TransientDecayGenerator.onSimulationTimeChanged">[docs]</a>    <span class="k">def</span> <span class="nf">onSimulationTimeChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">time_steps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_max</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time_steps</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.onLoadPDB"><a class="viewcode-back" href="../../../api/mfm.tools.html#mfm.tools.dye_diffusion.TransientDecayGenerator.onLoadPDB">[docs]</a>    <span class="k">def</span> <span class="nf">onLoadPDB</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#pdb_filename = str(QtGui.QFileDialog.getOpenFileName(None, &#39;Open PDB-File&#39;, &#39;&#39;, &#39;PDB-files (*.pdb)&#39;))</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">open_file</span><span class="p">(</span><span class="s1">&#39;Open PDB-File&#39;</span><span class="p">,</span> <span class="s1">&#39;PDB-files (*.pdb)&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pdb_selector</span><span class="o">.</span><span class="n">atoms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">atoms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tmp_dir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">gettempdir</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_3D</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TransientDecayGenerator.onSaveTrajectory"><a class="viewcode-back" href="../../../api/mfm.tools.html#mfm.tools.dye_diffusion.TransientDecayGenerator.onSaveTrajectory">[docs]</a>    <span class="k">def</span> <span class="nf">onSaveTrajectory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getSaveFileName</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="s1">&#39;Open PDB-File&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;H5-FRET-files (*.fret.h5)&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">save_simulation_results</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_photons</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span></div></div>
+
+
+
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
