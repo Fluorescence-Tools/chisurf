@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.fluorescence.intensity &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for mfm.fluorescence.intensity</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="nusiance"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.nusiance">[docs]</a><span class="k">def</span> <span class="nf">nusiance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scatter-corrected anisotropy</span>
+
+<span class="sd">    :param Ss: perpenticular signal</span>
+<span class="sd">    :param Sp: parallel signal</span>
+<span class="sd">    :param Bs: perpenticular background</span>
+<span class="sd">    :param Bp: parallel background</span>
+<span class="sd">    :param Gfactor: g-factor</span>
+<span class="sd">    :param l1: Objective mixing correction factor</span>
+<span class="sd">    :param l2: Objective mixing correction factor</span>
+<span class="sd">    :return: Anisotropy</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">m</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="c1"># Anisotropy</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">func_globals</span><span class="p">[</span><span class="s1">&#39;Gfactor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Gfactor&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">func_globals</span><span class="p">[</span><span class="s1">&#39;Bp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Bp&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">func_globals</span><span class="p">[</span><span class="s1">&#39;Bs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Bs&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">func_globals</span><span class="p">[</span><span class="s1">&#39;l1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;l1&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">func_globals</span><span class="p">[</span><span class="s1">&#39;l2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;l2&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="c1"># Intensities</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">func_globals</span><span class="p">[</span><span class="s1">&#39;Bg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Bg&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">func_globals</span><span class="p">[</span><span class="s1">&#39;Br&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Br&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">func_globals</span><span class="p">[</span><span class="s1">&#39;crosstalk&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;crosstalk&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="n">f</span><span class="o">.</span><span class="n">func_globals</span><span class="p">[</span><span class="s1">&#39;phiA&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;phiA&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">func_globals</span><span class="p">[</span><span class="s1">&#39;phiD&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;phiD&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="n">f</span><span class="o">.</span><span class="n">func_globals</span><span class="p">[</span><span class="s1">&#39;R0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;R0&#39;</span><span class="p">,</span> <span class="mf">52.0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">m</span></div>
+
+
+<span class="nd">@nusiance</span>
+<div class="viewcode-block" id="r_scatter"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.r_scatter">[docs]</a><span class="k">def</span> <span class="nf">r_scatter</span><span class="p">(</span><span class="n">Ss</span><span class="p">,</span> <span class="n">Sp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">Fp</span> <span class="o">=</span> <span class="p">(</span><span class="n">Sp</span> <span class="o">-</span> <span class="n">Bp</span><span class="p">)</span> <span class="o">*</span> <span class="n">Gfactor</span>
+    <span class="n">Fs</span> <span class="o">=</span> <span class="n">Ss</span> <span class="o">-</span> <span class="n">Bs</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">Fp</span><span class="o">-</span><span class="n">Fs</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">Fp</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span> <span class="o">-</span> <span class="mf">3.</span> <span class="o">*</span> <span class="n">l2</span><span class="p">)</span> <span class="o">+</span> <span class="n">Fs</span><span class="o">*</span><span class="p">(</span><span class="mf">2.</span> <span class="o">-</span> <span class="mf">3.</span> <span class="o">*</span> <span class="n">l1</span><span class="p">))</span></div>
+
+<span class="nd">@nusiance</span>
+<div class="viewcode-block" id="r_exp"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.r_exp">[docs]</a><span class="k">def</span> <span class="nf">r_exp</span><span class="p">(</span><span class="n">Sp</span><span class="p">,</span> <span class="n">Ss</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">Fp</span> <span class="o">=</span> <span class="n">Sp</span> <span class="o">*</span> <span class="n">Gfactor</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">Fp</span><span class="o">-</span><span class="n">Ss</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">Fp</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="mf">3.</span><span class="o">*</span><span class="n">l2</span><span class="p">)</span> <span class="o">+</span> <span class="n">Ss</span><span class="o">*</span><span class="p">(</span><span class="mf">2.</span><span class="o">-</span><span class="mf">3.</span><span class="o">*</span><span class="n">l1</span><span class="p">))</span></div>
+
+
+<span class="nd">@nusiance</span>
+<div class="viewcode-block" id="sg_sr"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.sg_sr">[docs]</a><span class="k">def</span> <span class="nf">sg_sr</span><span class="p">(</span><span class="n">Sg</span><span class="p">,</span> <span class="n">Sr</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">Sr</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">Sg</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">Sr</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">)</span></div>
+
+
+<span class="nd">@nusiance</span>
+<div class="viewcode-block" id="fg_fr"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.fg_fr">[docs]</a><span class="k">def</span> <span class="nf">fg_fr</span><span class="p">(</span><span class="n">Sg</span><span class="p">,</span> <span class="n">Sr</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">Fg</span> <span class="o">=</span> <span class="n">Sg</span> <span class="o">-</span> <span class="n">Bg</span>
+    <span class="n">Fr</span> <span class="o">=</span> <span class="n">Sr</span> <span class="o">-</span> <span class="n">Br</span> <span class="o">-</span> <span class="n">Fg</span> <span class="o">*</span> <span class="n">crosstalk</span>
+    <span class="k">return</span> <span class="n">Fg</span> <span class="o">/</span> <span class="n">Fr</span></div>
+
+
+<span class="nd">@nusiance</span>
+<div class="viewcode-block" id="proximity_ratio"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.proximity_ratio">[docs]</a><span class="k">def</span> <span class="nf">proximity_ratio</span><span class="p">(</span><span class="n">Sg</span><span class="p">,</span> <span class="n">Sr</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Sr</span><span class="o">/</span><span class="p">(</span><span class="n">Sg</span> <span class="o">+</span> <span class="n">Sr</span><span class="p">)</span></div>
+
+
+<span class="nd">@nusiance</span>
+<div class="viewcode-block" id="apparent_efficiency"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.apparent_efficiency">[docs]</a><span class="k">def</span> <span class="nf">apparent_efficiency</span><span class="p">(</span><span class="n">Sg</span><span class="p">,</span> <span class="n">Sr</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">Fg</span> <span class="o">=</span> <span class="n">Sg</span> <span class="o">-</span> <span class="n">Bg</span>
+    <span class="n">Fr</span> <span class="o">=</span> <span class="n">Sr</span> <span class="o">-</span> <span class="n">Br</span> <span class="o">-</span> <span class="n">Fg</span> <span class="o">*</span> <span class="n">crosstalk</span>
+    <span class="k">return</span> <span class="n">Fr</span><span class="o">/</span><span class="p">(</span><span class="n">Fg</span> <span class="o">+</span> <span class="n">Fr</span><span class="p">)</span></div>
+
+
+<span class="nd">@nusiance</span>
+<div class="viewcode-block" id="fret_efficiency"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.fret_efficiency">[docs]</a><span class="k">def</span> <span class="nf">fret_efficiency</span><span class="p">(</span><span class="n">Sg</span><span class="p">,</span> <span class="n">Sr</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">Fg</span> <span class="o">=</span> <span class="n">Sg</span> <span class="o">-</span> <span class="n">Bg</span>
+    <span class="n">Fa</span> <span class="o">=</span> <span class="p">(</span><span class="n">Sr</span> <span class="o">-</span> <span class="n">Br</span> <span class="o">-</span> <span class="n">Fg</span><span class="o">*</span><span class="n">crosstalk</span><span class="p">)</span> <span class="o">/</span> <span class="n">phiA</span>
+
+    <span class="k">return</span> <span class="n">Fa</span><span class="o">/</span><span class="p">(</span><span class="n">Fg</span><span class="o">/</span><span class="n">Gfactor</span><span class="o">/</span><span class="n">phiD</span> <span class="o">+</span> <span class="n">Fa</span><span class="p">)</span></div>
+
+
+<span class="nd">@nusiance</span>
+<div class="viewcode-block" id="distance"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.distance">[docs]</a><span class="k">def</span> <span class="nf">distance</span><span class="p">(</span><span class="n">Sg</span><span class="p">,</span> <span class="n">Sr</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">Fg</span> <span class="o">=</span> <span class="n">Sg</span> <span class="o">-</span> <span class="n">Bg</span>
+    <span class="n">Fa</span> <span class="o">=</span> <span class="p">(</span><span class="n">Sr</span> <span class="o">-</span> <span class="n">Br</span> <span class="o">-</span> <span class="n">Fg</span><span class="o">*</span><span class="n">crosstalk</span><span class="p">)</span> <span class="o">/</span> <span class="n">phiA</span>
+    <span class="k">return</span> <span class="n">R0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">6.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">Fg</span><span class="o">/</span><span class="n">Gfactor</span><span class="o">/</span><span class="n">phiD</span><span class="o">/</span><span class="n">Fa</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="SrSg_ratio"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.SrSg_ratio">[docs]</a><span class="k">def</span> <span class="nf">SrSg_ratio</span><span class="p">(</span><span class="n">Sg</span><span class="p">,</span> <span class="n">Sr</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Sr</span><span class="o">/</span><span class="n">Sg</span></div>
+
+
+<span class="nd">@nusiance</span>
+<div class="viewcode-block" id="transfer_efficency2fdfa"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.transfer_efficency2fdfa">[docs]</a><span class="k">def</span> <span class="nf">transfer_efficency2fdfa</span><span class="p">(</span><span class="n">E</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This function converts the transfer-efficency E to the donor-acceptor intensity ration FD/FA to</span>
+
+<span class="sd">    :param E: float</span>
+<span class="sd">        The transfer-efficency</span>
+<span class="sd">    :param phiD: float</span>
+<span class="sd">        donor quantum yield</span>
+<span class="sd">    :param phiA: float</span>
+<span class="sd">        acceptor quantum yield</span>
+<span class="sd">    :return: float, the FRET transfer efficency</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fdfa</span> <span class="o">=</span> <span class="n">phiA</span><span class="o">/</span><span class="n">phiD</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">E</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fdfa</span></div>
+
+
+<span class="nd">@nusiance</span>
+<div class="viewcode-block" id="fdfa2transfer_efficency"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.fdfa2transfer_efficency">[docs]</a><span class="k">def</span> <span class="nf">fdfa2transfer_efficency</span><span class="p">(</span><span class="n">fdfa</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This function converts the donor-acceptor intensity ration FD/FA to the transfer-efficency E</span>
+
+<span class="sd">    :param fdfa: float</span>
+<span class="sd">        donor acceptor intensity ratio</span>
+<span class="sd">    :param phiD: float</span>
+<span class="sd">        donor quantum yield</span>
+<span class="sd">    :param phiA: float</span>
+<span class="sd">        acceptor quantum yield</span>
+<span class="sd">    :return: float, the FRET transfer efficency</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">fdfa</span> <span class="o">*</span> <span class="n">phiA</span><span class="o">/</span><span class="n">phiD</span>
+    <span class="n">trans</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">/</span><span class="n">r</span>
+    <span class="k">return</span> <span class="n">trans</span></div>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

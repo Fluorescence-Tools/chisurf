@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.fitting.models package &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">mfm.fitting.models package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-mfm.fitting.models.globalfit">mfm.fitting.models.globalfit module</a></li>
+<li><a class="reference internal" href="#module-mfm.fitting.models.parse">mfm.fitting.models.parse module</a></li>
+<li><a class="reference internal" href="#module-mfm.fitting.models.stopped_flow">mfm.fitting.models.stopped_flow module</a></li>
+<li><a class="reference internal" href="#module-mfm.fitting.models">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/api/mfm.fitting.models.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <div class="section" id="mfm-fitting-models-package">
+<h1>mfm.fitting.models package<a class="headerlink" href="#mfm-fitting-models-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="mfm.fitting.models.fcs.html">mfm.fitting.models.fcs package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.fcs.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.fcs.html#module-mfm.fitting.models.fcs.fcs">mfm.fitting.models.fcs.fcs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.fcs.html#module-mfm.fitting.models.fcs">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mfm.fitting.models.structure.html">mfm.fitting.models.structure package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.structure.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.structure.html#module-mfm.fitting.models.structure.proteinMC">mfm.fitting.models.structure.proteinMC module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.structure.html#module-mfm.fitting.models.structure">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mfm.fitting.models.tcspc.html">mfm.fitting.models.tcspc package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.anisotropy">mfm.fitting.models.tcspc.anisotropy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.dye_diffusion">mfm.fitting.models.tcspc.dye_diffusion module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.et">mfm.fitting.models.tcspc.et module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.fret">mfm.fitting.models.tcspc.fret module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.fret_structure">mfm.fitting.models.tcspc.fret_structure module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.membrane">mfm.fitting.models.tcspc.membrane module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.mix_model">mfm.fitting.models.tcspc.mix_model module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.nusiance">mfm.fitting.models.tcspc.nusiance module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.parse">mfm.fitting.models.tcspc.parse module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.pddem">mfm.fitting.models.tcspc.pddem module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.tcspc">mfm.fitting.models.tcspc.tcspc module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mfm.fitting.models.globalfit">
+<span id="mfm-fitting-models-globalfit-module"></span><h2>mfm.fitting.models.globalfit module<a class="headerlink" href="#module-mfm.fitting.models.globalfit" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel">
+<em class="property">class </em><code class="descclassname">mfm.fitting.models.globalfit.</code><code class="descname">GlobalFitModel</code><span class="sig-paren">(</span><em>fit</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.fitting.models.Model" title="mfm.fitting.models.Model"><code class="xref py py-class docutils literal"><span class="pre">mfm.fitting.models.Model</span></code></a>, <a class="reference internal" href="mfm.html#mfm.curve.Curve" title="mfm.curve.Curve"><code class="xref py py-class docutils literal"><span class="pre">mfm.curve.Curve</span></code></a></p>
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.autofitrange">
+<code class="descname">autofitrange</code><span class="sig-paren">(</span><em>fit</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModel.autofitrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.autofitrange" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.clear_all_links">
+<code class="descname">clear_all_links</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModel.clear_all_links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.clear_all_links" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.clear_listed_links">
+<code class="descname">clear_listed_links</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModel.clear_listed_links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.clear_listed_links" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.clear_local_fits">
+<code class="descname">clear_local_fits</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModel.clear_local_fits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.clear_local_fits" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.finalize">
+<code class="descname">finalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModel.finalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.finalize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.fit_names">
+<code class="descname">fit_names</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.fit_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.global_parameter_linked_all">
+<code class="descname">global_parameter_linked_all</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.global_parameter_linked_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.global_parameters">
+<code class="descname">global_parameters</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.global_parameters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.global_parameters_all">
+<code class="descname">global_parameters_all</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.global_parameters_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.global_parameters_all_names">
+<code class="descname">global_parameters_all_names</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.global_parameters_all_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.global_parameters_bound_all">
+<code class="descname">global_parameters_bound_all</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.global_parameters_bound_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.global_parameters_fixed_all">
+<code class="descname">global_parameters_fixed_all</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.global_parameters_fixed_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.global_parameters_names">
+<code class="descname">global_parameters_names</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.global_parameters_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.global_parameters_values_all">
+<code class="descname">global_parameters_values_all</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.global_parameters_values_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.links">
+<code class="descname">links</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.links" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.n_points">
+<code class="descname">n_points</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.n_points" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.name">
+<code class="descname">name</code><em class="property"> = 'Global fit'</em><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.parameter_dict">
+<code class="descname">parameter_dict</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.parameter_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.parameter_names">
+<code class="descname">parameter_names</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.parameter_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.parameter_names_all">
+<code class="descname">parameter_names_all</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.parameter_names_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.parameters">
+<code class="descname">parameters</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.parameters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.parameters_all">
+<code class="descname">parameters_all</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.parameters_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.remove_local_fit">
+<code class="descname">remove_local_fit</code><span class="sig-paren">(</span><em>nbr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModel.remove_local_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.remove_local_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.setLinks">
+<code class="descname">setLinks</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModel.setLinks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.setLinks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.update">
+<code class="descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModel.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.update_model">
+<code class="descname">update_model</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModel.update_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.update_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModel.weighted_residuals">
+<code class="descname">weighted_residuals</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModel.weighted_residuals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget">
+<em class="property">class </em><code class="descclassname">mfm.fitting.models.globalfit.</code><code class="descname">GlobalFitModelWidget</code><span class="sig-paren">(</span><em>fit</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModelWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.fitting.models.globalfit.GlobalFitModel" title="mfm.fitting.models.globalfit.GlobalFitModel"><code class="xref py py-class docutils literal"><span class="pre">mfm.fitting.models.globalfit.GlobalFitModel</span></code></a>, <a class="reference internal" href="#mfm.fitting.models.ModelWidget" title="mfm.fitting.models.ModelWidget"><code class="xref py py-class docutils literal"><span class="pre">mfm.fitting.models.ModelWidget</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.add_all_fits">
+<code class="descname">add_all_fits</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.add_all_fits" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.clear_listed_links">
+<code class="descname">clear_listed_links</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModelWidget.clear_listed_links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.clear_listed_links" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.clear_on_update">
+<code class="descname">clear_on_update</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.clear_on_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.current_fit_index">
+<code class="descname">current_fit_index</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.current_fit_index" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.current_global_variable_name">
+<code class="descname">current_global_variable_name</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.current_global_variable_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.current_link_formula">
+<code class="descname">current_link_formula</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.current_link_formula" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.current_origin_formula">
+<code class="descname">current_origin_formula</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.current_origin_formula" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.current_origin_link_formula">
+<code class="descname">current_origin_link_formula</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.current_origin_link_formula" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.current_target_formula">
+<code class="descname">current_target_formula</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.current_target_formula" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.current_weight">
+<code class="descname">current_weight</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.current_weight" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.link_all_of_type">
+<code class="descname">link_all_of_type</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.link_all_of_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.links">
+<code class="descname">links</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.links" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.local_fit_first">
+<code class="descname">local_fit_first</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.local_fit_first" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.local_fit_names">
+<code class="descname">local_fit_names</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.local_fit_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.local_fits">
+<code class="descname">local_fits</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.local_fits" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.onAddGlobalVariable">
+<code class="descname">onAddGlobalVariable</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModelWidget.onAddGlobalVariable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.onAddGlobalVariable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.onAddLink">
+<code class="descname">onAddLink</code><span class="sig-paren">(</span><em>links=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModelWidget.onAddLink"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.onAddLink" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.onAddToLocalFitList">
+<code class="descname">onAddToLocalFitList</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModelWidget.onAddToLocalFitList"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.onAddToLocalFitList" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.onClearVariables">
+<code class="descname">onClearVariables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModelWidget.onClearVariables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.onClearVariables" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.onLoadTable">
+<code class="descname">onLoadTable</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModelWidget.onLoadTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.onLoadTable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.onSaveTable">
+<code class="descname">onSaveTable</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModelWidget.onSaveTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.onSaveTable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.on_clear_local_fits">
+<code class="descname">on_clear_local_fits</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModelWidget.on_clear_local_fits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.on_clear_local_fits" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.on_remove_local_fit">
+<code class="descname">on_remove_local_fit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModelWidget.on_remove_local_fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.on_remove_local_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.origin_fit">
+<code class="descname">origin_fit</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.origin_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.origin_fit_number">
+<code class="descname">origin_fit_number</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.origin_fit_number" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.origin_parameter">
+<code class="descname">origin_parameter</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.origin_parameter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.origin_parameter_name">
+<code class="descname">origin_parameter_name</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.origin_parameter_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.plot_classes">
+<code class="descname">plot_classes</code><em class="property"> = [(&lt;class 'mfm.plots.global_fit.GlobalFitPlot'&gt;, {'logx': 'lin', 'logy': 'lin'})]</em><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.plot_classes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.table_GlobalLinksDoubleClicked">
+<code class="descname">table_GlobalLinksDoubleClicked</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModelWidget.table_GlobalLinksDoubleClicked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.table_GlobalLinksDoubleClicked" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.target_fit">
+<code class="descname">target_fit</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.target_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.target_fit_number">
+<code class="descname">target_fit_number</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.target_fit_number" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.target_parameter">
+<code class="descname">target_parameter</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.target_parameter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.target_parameter_name">
+<code class="descname">target_parameter_name</code><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.target_parameter_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.update_link_text">
+<code class="descname">update_link_text</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModelWidget.update_link_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.update_link_text" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.update_parameter_origin">
+<code class="descname">update_parameter_origin</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModelWidget.update_parameter_origin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.update_parameter_origin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.update_parameter_target">
+<code class="descname">update_parameter_target</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModelWidget.update_parameter_target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.update_parameter_target" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.globalfit.GlobalFitModelWidget.update_widgets">
+<code class="descname">update_widgets</code><span class="sig-paren">(</span><em>fit_combo=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/globalfit.html#GlobalFitModelWidget.update_widgets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.globalfit.GlobalFitModelWidget.update_widgets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.fitting.models.parse">
+<span id="mfm-fitting-models-parse-module"></span><h2>mfm.fitting.models.parse module<a class="headerlink" href="#module-mfm.fitting.models.parse" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.fitting.models.parse.GenerateSymbols">
+<em class="property">class </em><code class="descclassname">mfm.fitting.models.parse.</code><code class="descname">GenerateSymbols</code><a class="reference internal" href="../_modules/mfm/fitting/models/parse.html#GenerateSymbols"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.parse.GenerateSymbols" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">collections.defaultdict</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fitting.models.parse.ParseFormula">
+<em class="property">class </em><code class="descclassname">mfm.fitting.models.parse.</code><code class="descname">ParseFormula</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/parse.html#ParseFormula"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.parse.ParseFormula" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mfm.html#mfm.parameter.AggregatedParameters" title="mfm.parameter.AggregatedParameters"><code class="xref py py-class docutils literal"><span class="pre">mfm.parameter.AggregatedParameters</span></code></a></p>
+<dl class="method">
+<dt id="mfm.fitting.models.parse.ParseFormula.find_parameters">
+<code class="descname">find_parameters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/parse.html#ParseFormula.find_parameters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.parse.ParseFormula.find_parameters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.parse.ParseFormula.func">
+<code class="descname">func</code><a class="headerlink" href="#mfm.fitting.models.parse.ParseFormula.func" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.parse.ParseFormula.initial_values">
+<code class="descname">initial_values</code><a class="headerlink" href="#mfm.fitting.models.parse.ParseFormula.initial_values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.parse.ParseFormula.model_file">
+<code class="descname">model_file</code><a class="headerlink" href="#mfm.fitting.models.parse.ParseFormula.model_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.parse.ParseFormula.models">
+<code class="descname">models</code><a class="headerlink" href="#mfm.fitting.models.parse.ParseFormula.models" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.parse.ParseFormula.onLoadModelFile">
+<code class="descname">onLoadModelFile</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/parse.html#ParseFormula.onLoadModelFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.parse.ParseFormula.onLoadModelFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.parse.ParseFormula.var_found">
+<code class="descname">var_found</code><span class="sig-paren">(</span><em>scanner</em>, <em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/parse.html#ParseFormula.var_found"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.parse.ParseFormula.var_found" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fitting.models.parse.ParseModel">
+<em class="property">class </em><code class="descclassname">mfm.fitting.models.parse.</code><code class="descname">ParseModel</code><span class="sig-paren">(</span><em>fit</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/parse.html#ParseModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.parse.ParseModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.fitting.models.ModelCurve" title="mfm.fitting.models.ModelCurve"><code class="xref py py-class docutils literal"><span class="pre">mfm.fitting.models.ModelCurve</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.fitting.models.parse.ParseModel.name">
+<code class="descname">name</code><em class="property"> = 'Parse-Model'</em><a class="headerlink" href="#mfm.fitting.models.parse.ParseModel.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.parse.ParseModel.update_model">
+<code class="descname">update_model</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/parse.html#ParseModel.update_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.parse.ParseModel.update_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fitting.models.parse.ParseModelWidget">
+<em class="property">class </em><code class="descclassname">mfm.fitting.models.parse.</code><code class="descname">ParseModelWidget</code><span class="sig-paren">(</span><em>fit</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/parse.html#ParseModelWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.parse.ParseModelWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.fitting.models.parse.ParseModel" title="mfm.fitting.models.parse.ParseModel"><code class="xref py py-class docutils literal"><span class="pre">mfm.fitting.models.parse.ParseModel</span></code></a>, <a class="reference internal" href="#mfm.fitting.models.ModelWidget" title="mfm.fitting.models.ModelWidget"><code class="xref py py-class docutils literal"><span class="pre">mfm.fitting.models.ModelWidget</span></code></a></p>
+<dl class="method">
+<dt id="mfm.fitting.models.parse.ParseModelWidget.update_model">
+<code class="descname">update_model</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/parse.html#ParseModelWidget.update_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.parse.ParseModelWidget.update_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fitting.models.parse.ParseWidget">
+<em class="property">class </em><code class="descclassname">mfm.fitting.models.parse.</code><code class="descname">ParseWidget</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/parse.html#ParseWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.parse.ParseWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.fitting.models.parse.ParseFormula" title="mfm.fitting.models.parse.ParseFormula"><code class="xref py py-class docutils literal"><span class="pre">mfm.fitting.models.parse.ParseFormula</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="attribute">
+<dt id="mfm.fitting.models.parse.ParseWidget.func">
+<code class="descname">func</code><a class="headerlink" href="#mfm.fitting.models.parse.ParseWidget.func" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.parse.ParseWidget.model_name">
+<code class="descname">model_name</code><a class="headerlink" href="#mfm.fitting.models.parse.ParseWidget.model_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.parse.ParseWidget.models">
+<code class="descname">models</code><a class="headerlink" href="#mfm.fitting.models.parse.ParseWidget.models" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.parse.ParseWidget.name">
+<code class="descname">name</code><em class="property"> = 'Parsing'</em><a class="headerlink" href="#mfm.fitting.models.parse.ParseWidget.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.parse.ParseWidget.onLoadModelFile">
+<code class="descname">onLoadModelFile</code><span class="sig-paren">(</span><em>filename=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/parse.html#ParseWidget.onLoadModelFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.parse.ParseWidget.onLoadModelFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.parse.ParseWidget.onModelChanged">
+<code class="descname">onModelChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/parse.html#ParseWidget.onModelChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.parse.ParseWidget.onModelChanged" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.parse.ParseWidget.onPrettyEquation">
+<code class="descname">onPrettyEquation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/parse.html#ParseWidget.onPrettyEquation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.parse.ParseWidget.onPrettyEquation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.parse.ParseWidget.onUpdateFunc">
+<code class="descname">onUpdateFunc</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/parse.html#ParseWidget.onUpdateFunc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.parse.ParseWidget.onUpdateFunc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.fitting.models.stopped_flow">
+<span id="mfm-fitting-models-stopped-flow-module"></span><h2>mfm.fitting.models.stopped_flow module<a class="headerlink" href="#module-mfm.fitting.models.stopped_flow" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.fitting.models.stopped_flow.ParseStoppedFlowWidget">
+<em class="property">class </em><code class="descclassname">mfm.fitting.models.stopped_flow.</code><code class="descname">ParseStoppedFlowWidget</code><span class="sig-paren">(</span><em>fit</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/stopped_flow.html#ParseStoppedFlowWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ParseStoppedFlowWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.fitting.models.parse.ParseModelWidget" title="mfm.fitting.models.parse.ParseModelWidget"><code class="xref py py-class docutils literal"><span class="pre">mfm.fitting.models.parse.ParseModelWidget</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.fitting.models.stopped_flow.ParseStoppedFlowWidget.plot_classes">
+<code class="descname">plot_classes</code><em class="property"> = [(&lt;class 'mfm.plots.lineplot.LinePlot'&gt;, {'r_scaley': 'lin', 'r_scalex': 'lin', 'd_scaley': 'lin', 'd_scalex': 'lin'}), (&lt;class 'mfm.plots.plot2d.SurfacePlot'&gt;, {})]</em><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ParseStoppedFlowWidget.plot_classes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget">
+<em class="property">class </em><code class="descclassname">mfm.fitting.models.stopped_flow.</code><code class="descname">ReactionWidget</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/stopped_flow.html#ReactionWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code>, <a class="reference internal" href="mfm.math.reaction.html#mfm.math.reaction.continuous.ReactionSystem" title="mfm.math.reaction.continuous.ReactionSystem"><code class="xref py py-class docutils literal"><span class="pre">mfm.math.reaction.continuous.ReactionSystem</span></code></a>, <a class="reference internal" href="#mfm.fitting.models.Model" title="mfm.fitting.models.Model"><code class="xref py py-class docutils literal"><span class="pre">mfm.fitting.models.Model</span></code></a></p>
+<dl class="method">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.add_reaction">
+<code class="descname">add_reaction</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/stopped_flow.html#ReactionWidget.add_reaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.add_reaction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.autoscale">
+<code class="descname">autoscale</code><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.autoscale" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.clear">
+<code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/stopped_flow.html#ReactionWidget.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.clear" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.name">
+<code class="descname">name</code><em class="property"> = 'Reaction-System'</em><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.new_brightness_fixed">
+<code class="descname">new_brightness_fixed</code><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.new_brightness_fixed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.new_concentration_fixed">
+<code class="descname">new_concentration_fixed</code><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.new_concentration_fixed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.onAddSpecies">
+<code class="descname">onAddSpecies</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/stopped_flow.html#ReactionWidget.onAddSpecies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.onAddSpecies" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.onLoadReaction">
+<code class="descname">onLoadReaction</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/stopped_flow.html#ReactionWidget.onLoadReaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.onLoadReaction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.onPlot">
+<code class="descname">onPlot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/stopped_flow.html#ReactionWidget.onPlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.onPlot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.onSaveLabelingFile">
+<code class="descname">onSaveLabelingFile</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/stopped_flow.html#ReactionWidget.onSaveLabelingFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.onSaveLabelingFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.onUpdateReaction">
+<code class="descname">onUpdateReaction</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/stopped_flow.html#ReactionWidget.onUpdateReaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.onUpdateReaction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.plot_classes">
+<code class="descname">plot_classes</code><em class="property"> = [(&lt;class 'mfm.plots.lineplot.LinePlot'&gt;, {'r_scaley': 'lin', 'r_scalex': 'lin', 'd_scaley': 'lin', 'd_scalex': 'lin'})]</em><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.plot_classes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.setParameter">
+<code class="descname">setParameter</code><span class="sig-paren">(</span><em>parameter</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models/stopped_flow.html#ReactionWidget.setParameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.setParameter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.times">
+<code class="descname">times</code><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.times" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.xmax">
+<code class="descname">xmax</code><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.xmax" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.xmin">
+<code class="descname">xmin</code><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.xmin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.stopped_flow.ReactionWidget.y_values">
+<code class="descname">y_values</code><a class="headerlink" href="#mfm.fitting.models.stopped_flow.ReactionWidget.y_values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.fitting.models">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.fitting.models" title="Permalink to this headline">¶</a></h2>
+<p>This module is responsible contains all fitting modules for experimental data</p>
+<p>The <a class="reference internal" href="#module-mfm.fitting.models" title="mfm.fitting.models"><code class="xref py py-mod docutils literal"><span class="pre">models</span></code></a></p>
+<ol class="arabic simple">
+<li><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc" title="mfm.fitting.models.tcspc"><code class="xref py py-mod docutils literal"><span class="pre">models.tcspc</span></code></a></li>
+<li><a class="reference internal" href="mfm.fitting.models.fcs.html#module-mfm.fitting.models.fcs" title="mfm.fitting.models.fcs"><code class="xref py py-mod docutils literal"><span class="pre">models.fcs</span></code></a></li>
+<li><code class="xref py py-mod docutils literal"><span class="pre">models.gloablfit</span></code></li>
+<li><a class="reference internal" href="#module-mfm.fitting.models.parse" title="mfm.fitting.models.parse"><code class="xref py py-mod docutils literal"><span class="pre">models.parse</span></code></a></li>
+<li><code class="xref py py-mod docutils literal"><span class="pre">models.proteinMC</span></code></li>
+<li><a class="reference internal" href="#module-mfm.fitting.models.stopped_flow" title="mfm.fitting.models.stopped_flow"><code class="xref py py-mod docutils literal"><span class="pre">models.stopped_flow</span></code></a></li>
+</ol>
+<dl class="class">
+<dt id="mfm.fitting.models.Model">
+<em class="property">class </em><code class="descclassname">mfm.fitting.models.</code><code class="descname">Model</code><span class="sig-paren">(</span><em>fit</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models.html#Model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.Model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mfm.html#mfm.parameter.AggregatedParameters" title="mfm.parameter.AggregatedParameters"><code class="xref py py-class docutils literal"><span class="pre">mfm.parameter.AggregatedParameters</span></code></a></p>
+<dl class="method">
+<dt id="mfm.fitting.models.Model.finalize">
+<code class="descname">finalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models.html#Model.finalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.Model.finalize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.Model.get_wres">
+<code class="descname">get_wres</code><span class="sig-paren">(</span><em>fit</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models.html#Model.get_wres"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.Model.get_wres" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.Model.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models.html#Model.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.Model.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.Model.n_free">
+<code class="descname">n_free</code><a class="headerlink" href="#mfm.fitting.models.Model.n_free" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.Model.parameters">
+<code class="descname">parameters</code><a class="headerlink" href="#mfm.fitting.models.Model.parameters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.Model.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models.html#Model.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.Model.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.Model.update">
+<code class="descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models.html#Model.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.Model.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.Model.update_model">
+<code class="descname">update_model</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models.html#Model.update_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.Model.update_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.models.Model.weighted_residuals">
+<code class="descname">weighted_residuals</code><a class="headerlink" href="#mfm.fitting.models.Model.weighted_residuals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fitting.models.ModelCurve">
+<em class="property">class </em><code class="descclassname">mfm.fitting.models.</code><code class="descname">ModelCurve</code><span class="sig-paren">(</span><em>fit</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models.html#ModelCurve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.ModelCurve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.fitting.models.Model" title="mfm.fitting.models.Model"><code class="xref py py-class docutils literal"><span class="pre">mfm.fitting.models.Model</span></code></a>, <a class="reference internal" href="mfm.html#mfm.curve.Curve" title="mfm.curve.Curve"><code class="xref py py-class docutils literal"><span class="pre">mfm.curve.Curve</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.fitting.models.ModelCurve.n_points">
+<code class="descname">n_points</code><a class="headerlink" href="#mfm.fitting.models.ModelCurve.n_points" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fitting.models.ModelWidget">
+<em class="property">class </em><code class="descclassname">mfm.fitting.models.</code><code class="descname">ModelWidget</code><span class="sig-paren">(</span><em>fit</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models.html#ModelWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.ModelWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code>, <a class="reference internal" href="#mfm.fitting.models.Model" title="mfm.fitting.models.Model"><code class="xref py py-class docutils literal"><span class="pre">mfm.fitting.models.Model</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.fitting.models.ModelWidget.plot_classes">
+<code class="descname">plot_classes</code><em class="property"> = [(&lt;class 'mfm.plots.lineplot.LinePlot'&gt;, {'r_scaley': 'lin', 'r_scalex': 'lin', 'plot_irf': True, 'x_label': 'x', 'y_label': 'y', 'd_scaley': 'log', 'd_scalex': 'lin'}), (&lt;class 'mfm.plots.fitinfo.FitInfo'&gt;, {}), (&lt;class 'mfm.plots.parameter_scan.ParameterScanPlot'&gt;, {})]</em><a class="headerlink" href="#mfm.fitting.models.ModelWidget.plot_classes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.ModelWidget.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>*_ModelWidget__args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models.html#ModelWidget.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.ModelWidget.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.ModelWidget.update_plots">
+<code class="descname">update_plots</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models.html#ModelWidget.update_plots"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.ModelWidget.update_plots" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.models.ModelWidget.update_widgets">
+<code class="descname">update_widgets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/models.html#ModelWidget.update_widgets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.models.ModelWidget.update_widgets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

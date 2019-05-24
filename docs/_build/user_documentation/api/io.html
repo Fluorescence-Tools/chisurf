@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Input-Output &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Input-Output</a><ul>
+<li><a class="reference internal" href="#csv-files">CSV-Files</a></li>
+<li><a class="reference internal" href="#module-mfm.io.pdb">PDB-Files</a></li>
+<li><a class="reference internal" href="#module-mfm.io.photons">TTTR-Files</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../../_sources/user_documentation/api/io.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <div class="section" id="module-mfm.io">
+<span id="input-output"></span><h1>Input-Output<a class="headerlink" href="#module-mfm.io" title="Permalink to this headline">¶</a></h1>
+<p>The <a class="reference internal" href="#module-mfm.io" title="mfm.io"><code class="xref py py-mod docutils literal"><span class="pre">mfm.io</span></code></a> module contains all classes, functions and modules relevant for file input and outputs.
+In particular three kinds of file-types are handled:</p>
+<ol class="arabic simple">
+<li>Comma-separated files <code class="xref py py-mod docutils literal"><span class="pre">mfm.io.csv_file</span></code></li>
+<li>PDB-file <code class="xref py py-mod docutils literal"><span class="pre">mfm.io.pdb_file</span></code></li>
+<li>TTTR-files containing photon data <a class="reference internal" href="#module-mfm.io.photons" title="mfm.io.photons"><code class="xref py py-mod docutils literal"><span class="pre">mfm.io.photons</span></code></a></li>
+</ol>
+<div class="section" id="csv-files">
+<h2>CSV-Files<a class="headerlink" href="#csv-files" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mfm.io.pdb">
+<span id="pdb-files"></span><h2>PDB-Files<a class="headerlink" href="#module-mfm.io.pdb" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="mfm.io.pdb.assign_element_to_atom_name">
+<code class="descclassname">mfm.io.pdb.</code><code class="descname">assign_element_to_atom_name</code><span class="sig-paren">(</span><em>atom_name</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#assign_element_to_atom_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.assign_element_to_atom_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tries to guess element from atom name if not recognised.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>atom_name</strong> &#8211; string</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">assign_element_to_atom_name</span><span class="p">(</span><span class="s1">&#39;CA&#39;</span><span class="p">)</span>
+<span class="go">C</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.io.pdb.get_atom_index">
+<code class="descclassname">mfm.io.pdb.</code><code class="descname">get_atom_index</code><span class="sig-paren">(</span><em>atoms</em>, <em>chain_identifier</em>, <em>residue_seq_number</em>, <em>atom_name</em>, <em>residue_name</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#get_atom_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.get_atom_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the atom index by the the identifier</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>atoms</strong> &#8211; </li>
+<li><strong>chain_identifier</strong> &#8211; </li>
+<li><strong>residue_seq_number</strong> &#8211; </li>
+<li><strong>atom_name</strong> &#8211; </li>
+<li><strong>residue_name</strong> &#8211; </li>
+<li><strong>kwargs</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.io.pdb.read">
+<code class="descclassname">mfm.io.pdb.</code><code class="descname">read</code><span class="sig-paren">(</span><em>filename</em>, <em>assignCharge=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open pdb_file and read each line into pdb (a list of lines)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> &#8211; </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">numpy structured array containing the PDB info and VdW-radii and charges</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_file</span> <span class="o">=</span> <span class="s1">&#39;./sample_data/model/hgbp1/hGBP1_closed.pdb&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb_file</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span>
+<span class="go">array([ (0, &#39; &#39;, 7, &#39;MET&#39;, 1, &#39;N&#39;, &#39;N&#39;, [72.739, -17.501, 8.879], 0.0, 1.65, 0.0, 14.0067),</span>
+<span class="go">       (1, &#39; &#39;, 7, &#39;MET&#39;, 2, &#39;CA&#39;, &#39;C&#39;, [73.841, -17.042, 9.747], 0.0, 1.76, 0.0, 12.0107),</span>
+<span class="go">       (2, &#39; &#39;, 7, &#39;MET&#39;, 3, &#39;C&#39;, &#39;C&#39;, [74.361, -18.178, 10.643], 0.0, 1.76, 0.0, 12.0107),</span>
+<span class="go">       (3, &#39; &#39;, 7, &#39;MET&#39;, 4, &#39;O&#39;, &#39;O&#39;, [73.642, -18.708, 11.489], 0.0, 1.4, 0.0, 15.9994),</span>
+<span class="go">       (4, &#39; &#39;, 7, &#39;MET&#39;, 5, &#39;CB&#39;, &#39;C&#39;, [73.384, -15.89, 10.649], 0.0, 1.76, 0.0, 12.0107)],</span>
+<span class="go">      dtype=[(&#39;i&#39;, &#39;&lt;i4&#39;), (&#39;chain&#39;, &#39;S1&#39;), (&#39;res_id&#39;, &#39;&lt;i4&#39;), (&#39;res_name&#39;, &#39;S5&#39;), (&#39;atom_id&#39;, &#39;&lt;i4&#39;), (&#39;atom_name&#39;, &#39;S5</span>
+<span class="go">&#39;), (&#39;element&#39;, &#39;S1&#39;), (&#39;coord&#39;, &#39;&lt;f8&#39;, (3,)), (&#39;charge&#39;, &#39;&lt;f8&#39;), (&#39;radius&#39;, &#39;&lt;f8&#39;), (&#39;bfactor&#39;, &#39;&lt;f8&#39;), (&#39;mass&#39;, &#39;&lt;f8&#39;)</span>
+<span class="go">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.io.pdb.write">
+<code class="descclassname">mfm.io.pdb.</code><code class="descname">write</code><span class="sig-paren">(</span><em>filename</em>, <em>atoms=None</em>, <em>append_model=False</em>, <em>append_coordinates=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes a structured numpy array containing the PDB-info to a PDB-file</p>
+<p>If append_model and append_coordinates are False the file is overwritten. Otherwise the atomic-coordinates
+are appended to the existing file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>filename</strong> &#8211; target-filename</li>
+<li><strong>atoms</strong> &#8211; structured numpy array</li>
+<li><strong>append_model</strong> &#8211; bool
+If True the atoms are appended as a new model</li>
+<li><strong>append_coordinates</strong> &#8211; If True the coordinates are appended to the file</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.io.pdb.write_xyz">
+<code class="descclassname">mfm.io.pdb.</code><code class="descname">write_xyz</code><span class="sig-paren">(</span><em>filename</em>, <em>points</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#write_xyz"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.write_xyz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes the points as xyz-format file. The xyz-format file can be opened and displayed for instance
+in PyMol</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>filename</strong> &#8211; string</li>
+<li><strong>points</strong> &#8211; array</li>
+<li><strong>verbose</strong> &#8211; bool</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.io.photons">
+<span id="tttr-files"></span><h2>TTTR-Files<a class="headerlink" href="#module-mfm.io.photons" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.io.photons.Photons">
+<em class="property">class </em><code class="descclassname">mfm.io.photons.</code><code class="descname">Photons</code><span class="sig-paren">(</span><em>p_object</em>, <em>file_type=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/photons.html#Photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.photons.Photons" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>p_object</strong> &#8211; Is either a list of filenames or a single string containing the path to one file. If the first argument
+is n</li>
+<li><strong>file_type</strong> &#8211; The file type of the files passed using the first argument (p_object) is specified using the
+&#8216;file_type&#8217; parameter. This string is either &#8216;hdf&#8217; or &#8216;bh132&#8217;, &#8216;bh630_x48&#8217;, &#8216;ht3&#8217;, &#8216;iss&#8217;. If
+the file type is not an hdf file the files are temporarily converted to hdf-files to guarantee
+a consistent interface.</li>
+<li><strong>kwargs</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">glob</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">directory</span> <span class="o">=</span> <span class="s2">&quot;../sample_data/tttr/spc132/smDNA&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">spc_files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">directory</span><span class="o">+</span><span class="s1">&#39;/*.spc&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">photons</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">photons</span><span class="o">.</span><span class="n">Photons</span><span class="p">(</span><span class="n">spc_files</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;bh132&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">photons</span>
+<span class="go">File-type: bh132</span>
+<span class="go">Filename(s):</span>
+<span class="go">        ./sample_data/tttr/spc132/hGBP1_18D\m000.spc</span>
+<span class="go">        ./sample_data/tttr/spc132/hGBP1_18D\m001.spc</span>
+<span class="go">        ./sample_data/tttr/spc132/hGBP1_18D\m002.spc</span>
+<span class="go">        ./sample_data/tttr/spc132/hGBP1_18D\m003.spc</span>
+<span class="go">nTAC:   4095</span>
+<span class="go">nROUT:  255</span>
+<span class="go">MTCLK [ms]:     1.36000003815e-05</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">photons</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
+<span class="go">File-type: None</span>
+<span class="go">Filename(s):    None</span>
+<span class="go">nTAC:   4095</span>
+<span class="go">nROUT:  255</span>
+<span class="go">MTCLK [ms]:     1.36000003815e-05</span>
+</pre></div>
+</div>
+<dl class="attribute">
+<dt id="mfm.io.photons.Photons.dt">
+<code class="descname">dt</code><a class="headerlink" href="#mfm.io.photons.Photons.dt" title="Permalink to this definition">¶</a></dt>
+<dd><p>The micro-time calibration</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.io.photons.Photons.filenames">
+<code class="descname">filenames</code><a class="headerlink" href="#mfm.io.photons.Photons.filenames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Original filename of the data</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.io.photons.Photons.h5">
+<code class="descname">h5</code><a class="headerlink" href="#mfm.io.photons.Photons.h5" title="Permalink to this definition">¶</a></dt>
+<dd><p>The h5-handle (PyTables)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.io.photons.Photons.measurement_time">
+<code class="descname">measurement_time</code><a class="headerlink" href="#mfm.io.photons.Photons.measurement_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Total measurement time in seconds?</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.io.photons.Photons.mt">
+<code class="descname">mt</code><a class="headerlink" href="#mfm.io.photons.Photons.mt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Array containing the macro-time clock counts of the photons</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.io.photons.Photons.mt_clk">
+<code class="descname">mt_clk</code><a class="headerlink" href="#mfm.io.photons.Photons.mt_clk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Macro-time clock of the data (time between the macrotime events in milli-seconds)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.io.photons.Photons.nPh">
+<code class="descname">nPh</code><a class="headerlink" href="#mfm.io.photons.Photons.nPh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Total number of photons</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.io.photons.Photons.n_rout">
+<code class="descname">n_rout</code><a class="headerlink" href="#mfm.io.photons.Photons.n_rout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of routing channels</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.io.photons.Photons.n_tac">
+<code class="descname">n_tac</code><a class="headerlink" href="#mfm.io.photons.Photons.n_tac" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of TAC channels</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.io.photons.Photons.read_where">
+<code class="descname">read_where</code><span class="sig-paren">(</span><em>selection</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/photons.html#Photons.read_where"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.photons.Photons.read_where" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function uses the pytables selection syntax</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>selection</strong> &#8211; </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.io.photons.Photons.rout">
+<code class="descname">rout</code><a class="headerlink" href="#mfm.io.photons.Photons.rout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Array containing the routing channel of the photons</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.io.photons.Photons.sample_names">
+<code class="descname">sample_names</code><a class="headerlink" href="#mfm.io.photons.Photons.sample_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>The sample names within the opened H5-File</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.io.photons.Photons.tac">
+<code class="descname">tac</code><a class="headerlink" href="#mfm.io.photons.Photons.tac" title="Permalink to this definition">¶</a></dt>
+<dd><p>Array containing the micro-time clock counts (TAC) of the photons</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.io.photons.read_BIDs">
+<code class="descclassname">mfm.io.photons.</code><code class="descname">read_BIDs</code><span class="sig-paren">(</span><em>filenames</em>, <em>stack_files=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/photons.html#read_BIDs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.photons.read_BIDs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads Seidel-BID files and returns a list of numpy arrays. Each numpy array contains the indexes of the photons of
+the burst. These indexes can be used to slice a photon-stream.</p>
+<p>Seidel BID-files only contain the first and the last photon of the Burst and not all photons of
+the burst. Thus, the Seidel BID-files have to be converted to array-type objects containing all
+photons of the burst to be able to use standard Python slicing syntax to select photons.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filenames</strong> &#8211; filename pointing to a Seidel BID-file</li>
+<li><strong>stack</strong> &#8211; bool
+If stack is True the returned list is stacked and the numbering of the bursts is made continuous.
+This is the default behavior.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span><span class="o">,</span> <span class="nn">glob</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">directory</span> <span class="o">=</span> <span class="s2">&quot;./sample_data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\BID&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">directory</span><span class="o">+</span><span class="s1">&#39;/*.bst&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bids</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">photons</span><span class="o">.</span><span class="n">read_BIDs</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bids</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="go">array([20384, 20385, 20386, 20387, 20388, 20389, 20390, 20391, 20392,</span>
+<span class="go">   20393, 20394, 20395, 20396, 20397, 20398, 20399, 20400, 20401,</span>
+<span class="go">   20402, 20403, 20404, 20405, 20406, 20407, 20408, 20409, 20410,</span>
+<span class="go">   20411, 20412, 20413, 20414, 20415, 20416, 20417, 20418, 20419,</span>
+<span class="go">   20420, 20421, 20422, 20423, 20424, 20425, 20426, 20427, 20428,</span>
+<span class="go">   20429, 20430, 20431, 20432, 20433, 20434, 20435, 20436, 20437,</span>
+<span class="go">   20438, 20439, 20440, 20441, 20442, 20443, 20444, 20445, 20446,</span>
+<span class="go">   20447, 20448, 20449, 20450, 20451, 20452, 20453, 20454, 20455,</span>
+<span class="go">   20456, 20457, 20458, 20459, 20460, 20461, 20462, 20463, 20464,</span>
+<span class="go">   20465, 20466, 20467, 20468, 20469, 20470, 20471, 20472, 20473,</span>
+<span class="go">   20474, 20475, 20476, 20477, 20478, 20479, 20480, 20481, 20482,</span>
+<span class="go">   20483, 20484, 20485, 20486, 20487, 20488, 20489, 20490, 20491,</span>
+<span class="go">   20492, 20493, 20494, 20495, 20496, 20497, 20498, 20499, 20500,</span>
+<span class="go">   20501, 20502, 20503, 20504, 20505, 20506, 20507, 20508, 20509,</span>
+<span class="go">   20510, 20511, 20512, 20513, 20514, 20515, 20516, 20517, 20518,</span>
+<span class="go">   20519, 20520, 20521, 20522, 20523, 20524, 20525, 20526, 20527,</span>
+<span class="go">   20528, 20529, 20530, 20531, 20532, 20533, 20534, 20535, 20536,</span>
+<span class="go">   20537, 20538, 20539, 20540, 20541, 20542, 20543, 20544, 20545,</span>
+<span class="go">   20546, 20547, 20548, 20549, 20550, 20551, 20552, 20553, 20554,</span>
+<span class="go">   20555, 20556, 20557, 20558, 20559, 20560, 20561, 20562, 20563,</span>
+<span class="go">   20564, 20565, 20566, 20567, 20568, 20569, 20570, 20571, 20572,</span>
+<span class="go">   20573, 20574, 20575, 20576, 20577, 20578, 20579, 20580, 20581,</span>
+<span class="go">   20582, 20583, 20584, 20585, 20586, 20587, 20588, 20589, 20590,</span>
+<span class="go">   20591, 20592, 20593, 20594, 20595, 20596, 20597, 20598, 20599,</span>
+<span class="go">   20600, 20601, 20602, 20603, 20604, 20605, 20606, 20607, 20608,</span>
+<span class="go">   20609, 20610, 20611, 20612, 20613, 20614, 20615, 20616, 20617,</span>
+<span class="go">   20618, 20619, 20620, 20621, 20622, 20623, 20624, 20625, 20626,</span>
+<span class="go">   20627, 20628, 20629, 20630, 20631, 20632, 20633, 20634, 20635,</span>
+<span class="go">   20636, 20637, 20638, 20639, 20640, 20641, 20642, 20643, 20644,</span>
+<span class="go">   20645, 20646, 20647, 20648, 20649, 20650, 20651, 20652, 20653,</span>
+<span class="go">   20654, 20655], dtype=uint64)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

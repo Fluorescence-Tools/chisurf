@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.fitting package &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">mfm.fitting package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-mfm.fitting.error_estimate">mfm.fitting.error_estimate module</a></li>
+<li><a class="reference internal" href="#module-mfm.fitting.fit">mfm.fitting.fit module</a></li>
+<li><a class="reference internal" href="#module-mfm.fitting">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/api/mfm.fitting.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <div class="section" id="mfm-fitting-package">
+<h1>mfm.fitting package<a class="headerlink" href="#mfm-fitting-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="mfm.fitting.models.html">mfm.fitting.models package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mfm.fitting.models.fcs.html">mfm.fitting.models.fcs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.fcs.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.fcs.html#module-mfm.fitting.models.fcs.fcs">mfm.fitting.models.fcs.fcs module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.fcs.html#module-mfm.fitting.models.fcs">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.fitting.models.structure.html">mfm.fitting.models.structure package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.structure.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.structure.html#module-mfm.fitting.models.structure.proteinMC">mfm.fitting.models.structure.proteinMC module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.structure.html#module-mfm.fitting.models.structure">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.fitting.models.tcspc.html">mfm.fitting.models.tcspc package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.tcspc.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.anisotropy">mfm.fitting.models.tcspc.anisotropy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.dye_diffusion">mfm.fitting.models.tcspc.dye_diffusion module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.et">mfm.fitting.models.tcspc.et module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.fret">mfm.fitting.models.tcspc.fret module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.fret_structure">mfm.fitting.models.tcspc.fret_structure module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.membrane">mfm.fitting.models.tcspc.membrane module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.mix_model">mfm.fitting.models.tcspc.mix_model module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.nusiance">mfm.fitting.models.tcspc.nusiance module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.parse">mfm.fitting.models.tcspc.parse module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.pddem">mfm.fitting.models.tcspc.pddem module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc.tcspc">mfm.fitting.models.tcspc.tcspc module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-mfm.fitting.models.tcspc">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.html#module-mfm.fitting.models.globalfit">mfm.fitting.models.globalfit module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.html#module-mfm.fitting.models.parse">mfm.fitting.models.parse module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.html#module-mfm.fitting.models.stopped_flow">mfm.fitting.models.stopped_flow module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.html#module-mfm.fitting.models">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mfm.fitting.optimization.html">mfm.fitting.optimization package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.optimization.html#module-mfm.fitting.optimization.fnnls">mfm.fitting.optimization.fnnls module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.optimization.html#module-mfm.fitting.optimization.leastsqbound">mfm.fitting.optimization.leastsqbound module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.optimization.html#module-mfm.fitting.optimization.mem">mfm.fitting.optimization.mem module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.optimization.html#module-mfm.fitting.optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mfm.fitting.error_estimate">
+<span id="mfm-fitting-error-estimate-module"></span><h2>mfm.fitting.error_estimate module<a class="headerlink" href="#module-mfm.fitting.error_estimate" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.fitting.error_estimate.ErrorSurface">
+<em class="property">class </em><code class="descclassname">mfm.fitting.error_estimate.</code><code class="descname">ErrorSurface</code><span class="sig-paren">(</span><em>fit</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/error_estimate.html#ErrorSurface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorSurface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mfm.html#mfm.curve.ParameterGroup" title="mfm.curve.ParameterGroup"><code class="xref py py-class docutils literal"><span class="pre">mfm.curve.ParameterGroup</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.fitting.error_estimate.ErrorSurface.methods">
+<code class="descname">methods</code><em class="property"> = ['emcee', 'mcmc']</em><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorSurface.methods" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.error_estimate.ErrorSurface.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/error_estimate.html#ErrorSurface.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorSurface.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.error_estimate.ErrorSurface.set_sampling_parameter">
+<code class="descname">set_sampling_parameter</code><span class="sig-paren">(</span><em>steps</em>, <em>step_size</em>, <em>nprocs</em>, <em>temperature</em>, <em>thin</em>, <em>nwalker</em>, <em>method='emcee'</em>, <em>maxchi2=1000000000000.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/error_estimate.html#ErrorSurface.set_sampling_parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorSurface.set_sampling_parameter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fitting.error_estimate.ErrorWidget">
+<em class="property">class </em><code class="descclassname">mfm.fitting.error_estimate.</code><code class="descname">ErrorWidget</code><span class="sig-paren">(</span><em>fit=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/error_estimate.html#ErrorWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="attribute">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.chi2Max">
+<code class="descname">chi2Max</code><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.chi2Max" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.chi2Min">
+<code class="descname">chi2Min</code><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.chi2Min" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.confLevel">
+<code class="descname">confLevel</code><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.confLevel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.method">
+<code class="descname">method</code><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.method" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.n_steps">
+<code class="descname">n_steps</code><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.n_steps" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.npars">
+<code class="descname">npars</code><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.npars" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.nprocs">
+<code class="descname">nprocs</code><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.nprocs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.nu">
+<code class="descname">nu</code><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.nu" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.nwalker">
+<code class="descname">nwalker</code><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.nwalker" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.onChi2MaxChanged">
+<code class="descname">onChi2MaxChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/error_estimate.html#ErrorWidget.onChi2MaxChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.onChi2MaxChanged" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.onChi2MinChanged">
+<code class="descname">onChi2MinChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/error_estimate.html#ErrorWidget.onChi2MinChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.onChi2MinChanged" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.onChi2Surface_Run">
+<code class="descname">onChi2Surface_Run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/error_estimate.html#ErrorWidget.onChi2Surface_Run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.onChi2Surface_Run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.onClearChi2Surface">
+<code class="descname">onClearChi2Surface</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/error_estimate.html#ErrorWidget.onClearChi2Surface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.onClearChi2Surface" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.onConfLevelChanged">
+<code class="descname">onConfLevelChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/error_estimate.html#ErrorWidget.onConfLevelChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.onConfLevelChanged" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.onFinished">
+<code class="descname">onFinished</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/error_estimate.html#ErrorWidget.onFinished"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.onFinished" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.onSaveChi2Surface">
+<code class="descname">onSaveChi2Surface</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/error_estimate.html#ErrorWidget.onSaveChi2Surface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.onSaveChi2Surface" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.step_size">
+<code class="descname">step_size</code><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.step_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.temperature">
+<code class="descname">temperature</code><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.temperature" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.thinning">
+<code class="descname">thinning</code><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.thinning" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.error_estimate.ErrorWidget.use_maxchi2">
+<code class="descname">use_maxchi2</code><a class="headerlink" href="#mfm.fitting.error_estimate.ErrorWidget.use_maxchi2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fitting.error_estimate.lnprior">
+<code class="descclassname">mfm.fitting.error_estimate.</code><code class="descname">lnprior</code><span class="sig-paren">(</span><em>bounds</em>, <em>parameters</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/error_estimate.html#lnprior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.error_estimate.lnprior" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.fitting.error_estimate.walk_emcee">
+<code class="descclassname">mfm.fitting.error_estimate.</code><code class="descname">walk_emcee</code><span class="sig-paren">(</span><em>fit</em>, <em>steps</em>, <em>thin</em>, <em>nwalkers</em>, <em>chi2max</em>, <em>std</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/error_estimate.html#walk_emcee"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.error_estimate.walk_emcee" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.fitting.error_estimate.walk_mcmc">
+<code class="descclassname">mfm.fitting.error_estimate.</code><code class="descname">walk_mcmc</code><span class="sig-paren">(</span><em>fit</em>, <em>steps</em>, <em>step_size</em>, <em>chi2max</em>, <em>temp</em>, <em>thin</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/error_estimate.html#walk_mcmc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.error_estimate.walk_mcmc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-mfm.fitting.fit">
+<span id="mfm-fitting-fit-module"></span><h2>mfm.fitting.fit module<a class="headerlink" href="#module-mfm.fitting.fit" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.fitting.fit.Fit">
+<em class="property">class </em><code class="descclassname">mfm.fitting.fit.</code><code class="descname">Fit</code><span class="sig-paren">(</span><em>data=None</em>, <em>model_class=&lt;type 'object'&gt;</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ChiSurf.Base</span></code></p>
+<dl class="method">
+<dt id="mfm.fitting.fit.Fit.chi2_scan">
+<code class="descname">chi2_scan</code><span class="sig-paren">(</span><em>parameter_name</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit.chi2_scan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit.chi2_scan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a chi2-scan on a parameter of the fit.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>parameter_name</strong> &#8211; the parameter name</li>
+<li><strong>kwargs</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">an list containing arrays of the chi2 and the parameter-values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.Fit.chi2r">
+<code class="descname">chi2r</code><a class="headerlink" href="#mfm.fitting.fit.Fit.chi2r" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.Fit.covariance_matrix">
+<code class="descname">covariance_matrix</code><a class="headerlink" href="#mfm.fitting.fit.Fit.covariance_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the covariance matrix of the fit given the current
+model parameter values and returns a list of the &#8216;relevant&#8217; used
+parameters.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.Fit.data">
+<code class="descname">data</code><a class="headerlink" href="#mfm.fitting.fit.Fit.data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.Fit.fit_range">
+<code class="descname">fit_range</code><a class="headerlink" href="#mfm.fitting.fit.Fit.fit_range" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.fit.Fit.get_chi2">
+<code class="descname">get_chi2</code><span class="sig-paren">(</span><em>parameter=None</em>, <em>model=None</em>, <em>reduced=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit.get_chi2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit.get_chi2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.fit.Fit.get_wres">
+<code class="descname">get_wres</code><span class="sig-paren">(</span><em>parameter=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit.get_wres"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit.get_wres" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.Fit.grad">
+<code class="descname">grad</code><a class="headerlink" href="#mfm.fitting.fit.Fit.grad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the approximate gradient at the current parameter values
+:return:</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.Fit.model">
+<code class="descname">model</code><a class="headerlink" href="#mfm.fitting.fit.Fit.model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.Fit.name">
+<code class="descname">name</code><a class="headerlink" href="#mfm.fitting.fit.Fit.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.fit.Fit.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.fit.Fit.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>path</em>, <em>name</em>, <em>mode='txt'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.fit.Fit.update">
+<code class="descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.Fit.weighted_residuals">
+<code class="descname">weighted_residuals</code><a class="headerlink" href="#mfm.fitting.fit.Fit.weighted_residuals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.Fit.xmax">
+<code class="descname">xmax</code><a class="headerlink" href="#mfm.fitting.fit.Fit.xmax" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.Fit.xmin">
+<code class="descname">xmin</code><a class="headerlink" href="#mfm.fitting.fit.Fit.xmin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fitting.fit.FitGroup">
+<em class="property">class </em><code class="descclassname">mfm.fitting.fit.</code><code class="descname">FitGroup</code><span class="sig-paren">(</span><em>data</em>, <em>model_class</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FitGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FitGroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">list</span></code>, <a class="reference internal" href="#mfm.fitting.fit.Fit" title="mfm.fitting.fit.Fit"><code class="xref py py-class docutils literal"><span class="pre">mfm.fitting.fit.Fit</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.fitting.fit.FitGroup.chi2r">
+<code class="descname">chi2r</code><a class="headerlink" href="#mfm.fitting.fit.FitGroup.chi2r" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.FitGroup.current_fit">
+<code class="descname">current_fit</code><a class="headerlink" href="#mfm.fitting.fit.FitGroup.current_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.FitGroup.data">
+<code class="descname">data</code><a class="headerlink" href="#mfm.fitting.fit.FitGroup.data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.FitGroup.fit_range">
+<code class="descname">fit_range</code><a class="headerlink" href="#mfm.fitting.fit.FitGroup.fit_range" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.FitGroup.model">
+<code class="descname">model</code><a class="headerlink" href="#mfm.fitting.fit.FitGroup.model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.fit.FitGroup.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FitGroup.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FitGroup.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.fit.FitGroup.update">
+<code class="descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FitGroup.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FitGroup.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.FitGroup.weighted_residuals">
+<code class="descname">weighted_residuals</code><a class="headerlink" href="#mfm.fitting.fit.FitGroup.weighted_residuals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.FitGroup.xmax">
+<code class="descname">xmax</code><a class="headerlink" href="#mfm.fitting.fit.FitGroup.xmax" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.FitGroup.xmin">
+<code class="descname">xmin</code><a class="headerlink" href="#mfm.fitting.fit.FitGroup.xmin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fitting.fit.FitSubWindow">
+<em class="property">class </em><code class="descclassname">mfm.fitting.fit.</code><code class="descname">FitSubWindow</code><span class="sig-paren">(</span><em>fit</em>, <em>control_layout</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FitSubWindow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FitSubWindow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QTabWidget</span></code></p>
+<dl class="method">
+<dt id="mfm.fitting.fit.FitSubWindow.closeEvent">
+<code class="descname">closeEvent</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FitSubWindow.closeEvent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FitSubWindow.closeEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.fit.FitSubWindow.on_change_plot">
+<code class="descname">on_change_plot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FitSubWindow.on_change_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FitSubWindow.on_change_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.fit.FitSubWindow.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>*_FitSubWindow__args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FitSubWindow.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FitSubWindow.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.fit.FitSubWindow.updateStatusBar">
+<code class="descname">updateStatusBar</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FitSubWindow.updateStatusBar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FitSubWindow.updateStatusBar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fitting.fit.FittingControllerWidget">
+<em class="property">class </em><code class="descclassname">mfm.fitting.fit.</code><code class="descname">FittingControllerWidget</code><span class="sig-paren">(</span><em>fit=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FittingControllerWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FittingControllerWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="method">
+<dt id="mfm.fitting.fit.FittingControllerWidget.change_dataset">
+<code class="descname">change_dataset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FittingControllerWidget.change_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FittingControllerWidget.change_dataset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.FittingControllerWidget.current_fit_type">
+<code class="descname">current_fit_type</code><a class="headerlink" href="#mfm.fitting.fit.FittingControllerWidget.current_fit_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.fit.FittingControllerWidget.onAutoFitRange">
+<code class="descname">onAutoFitRange</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FittingControllerWidget.onAutoFitRange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FittingControllerWidget.onAutoFitRange" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.fit.FittingControllerWidget.onDatasetChanged">
+<code class="descname">onDatasetChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FittingControllerWidget.onDatasetChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FittingControllerWidget.onDatasetChanged" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.fit.FittingControllerWidget.onRunFit">
+<code class="descname">onRunFit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FittingControllerWidget.onRunFit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FittingControllerWidget.onRunFit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.FittingControllerWidget.selected_fit">
+<code class="descname">selected_fit</code><a class="headerlink" href="#mfm.fitting.fit.FittingControllerWidget.selected_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.fit.FittingControllerWidget.show_selector">
+<code class="descname">show_selector</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FittingControllerWidget.show_selector"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FittingControllerWidget.show_selector" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fitting.fit.approx_grad">
+<code class="descclassname">mfm.fitting.fit.</code><code class="descname">approx_grad</code><a class="reference internal" href="../_modules/mfm/fitting/fit.html#approx_grad"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.approx_grad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Approximate the derivative of a fit with respect to the parameters
+xk. The return value of the function is an array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>xk</strong> &#8211; values around which gradient is estimated. These values should be an array of length of the</td>
+</tr>
+</tbody>
+</table>
+<p>free fitting parameters
+:param fit: object of type &#8216;Fit&#8217;
+:param epsilon: differential change
+:param args: additional arguments passed to &#8216;Fit.get_wres&#8217;
+:param f0: weighted residuals for the values xk
+:return:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fitting.fit.chi2_max">
+<code class="descclassname">mfm.fitting.fit.</code><code class="descname">chi2_max</code><span class="sig-paren">(</span><em>fit=None</em>, <em>conf_level=0.95</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#chi2_max"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.chi2_max" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the maximum chi2r of a fit given a certain confidence level</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fit</strong> &#8211; </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fitting.fit.covariance_matrix">
+<code class="descclassname">mfm.fitting.fit.</code><code class="descname">covariance_matrix</code><span class="sig-paren">(</span><em>fit</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#covariance_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.covariance_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the covariance matrix</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fit</strong> &#8211; </li>
+<li><strong>kwargs</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fitting.fit.durbin_watson">
+<code class="descclassname">mfm.fitting.fit.</code><code class="descname">durbin_watson</code><span class="sig-paren">(</span><em>residuals</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#durbin_watson"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.durbin_watson" title="Permalink to this definition">¶</a></dt>
+<dd><p>Durbin-Watson parameter (1950,1951)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>residuals</strong> &#8211; array</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fitting.fit.get_chi2">
+<code class="descclassname">mfm.fitting.fit.</code><code class="descname">get_chi2</code><span class="sig-paren">(</span><em>parameter</em>, <em>model</em>, <em>reduced=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#get_chi2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.get_chi2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns either the reduced chi2 or the sum of squares (chi2)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>parameter</strong> &#8211; </li>
+<li><strong>model</strong> &#8211; </li>
+<li><strong>reduced</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fitting.fit.get_errors">
+<code class="descclassname">mfm.fitting.fit.</code><code class="descname">get_errors</code><span class="sig-paren">(</span><em>fit</em>, <em>parameter_name</em>, <em>scan_range=(None</em>, <em>None)</em>, <em>rel_range=0.2</em>, <em>n_steps=30</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#get_errors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.get_errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a chi2-scan for the parameter</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fit</strong> &#8211; the fit of type &#8216;mfm.fitting.Fit&#8217;</li>
+<li><strong>parameter_name</strong> &#8211; the name of the parameter (in the parameter dictionary)</li>
+<li><strong>scan_range</strong> &#8211; the range within the parameter is scanned if not provided &#8216;rel_range&#8217; is used</li>
+<li><strong>rel_range</strong> &#8211; defines +- values for scanning</li>
+<li><strong>n_steps</strong> &#8211; number of steps between +-</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fitting.fit.get_wres">
+<code class="descclassname">mfm.fitting.fit.</code><code class="descname">get_wres</code><span class="sig-paren">(</span><em>parameter</em>, <em>model</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#get_wres"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.get_wres" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the weighted residuals for a list of parameters of a model</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>parameter</strong> &#8211; </li>
+<li><strong>model</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.fitting">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.fitting" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

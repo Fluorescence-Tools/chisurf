@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.math.functions &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <h1>Source code for mfm.math.functions</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">datatools</span>
+<span class="kn">from</span> <span class="nn">numba</span> <span class="kn">import</span> <span class="n">jit</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">exp</span><span class="p">,</span> <span class="n">sqrt</span>
+
+
+<span class="nd">@jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class="viewcode-block" id="i0"><a class="viewcode-back" href="../../../user_documentation/api/lib.html#mfm.math.functions.i0">[docs]</a><span class="k">def</span> <span class="nf">i0</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Modified Bessel-function I0(x) for any real x</span>
+<span class="sd">    (according to numerical recipes function - `bessi0`,</span>
+<span class="sd">    Polynomal approximation Abramowitz and Stegun )</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    .. [1] Abramowitz, M and Stegun, I.A. 1964, Handbook of Mathematical</span>
+<span class="sd">       Functions, Applied Mathematics Series, Volume 55 (Washington:</span>
+<span class="sd">       National Bureal of Standards; reprinted 1968 by Dover Publications,</span>
+<span class="sd">       New York), Chapter 10</span>
+
+<span class="sd">    :param x:</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">axi</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">axi</span> <span class="o">&lt;</span> <span class="mf">3.75</span><span class="p">:</span>
+        <span class="n">yi</span> <span class="o">=</span> <span class="n">axi</span> <span class="o">/</span> <span class="mf">3.75</span>
+        <span class="n">yi</span> <span class="o">*=</span> <span class="n">yi</span>
+        <span class="n">ayi</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span><span class="mf">3.5156299</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="mf">3.0899424</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.2067492</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span>
+                <span class="mf">0.2659732</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.360768e-1</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span>
+                                 <span class="mf">0.45813e-2</span><span class="p">)))))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">yi</span> <span class="o">=</span> <span class="mf">3.75</span> <span class="o">/</span> <span class="n">axi</span>
+        <span class="n">ayi</span> <span class="o">=</span> <span class="p">(</span><span class="n">exp</span><span class="p">(</span><span class="n">axi</span><span class="p">)</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">axi</span><span class="p">))</span> <span class="o">*</span> \
+              <span class="p">(</span><span class="mf">0.39894228</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.1328592e-1</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span>
+                  <span class="mf">0.225319e-2</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span> <span class="o">-</span><span class="mf">0.157565e-2</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span>
+                      <span class="mf">0.916281e-2</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.2057706e-1</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span>
+                          <span class="mf">0.2635537e-1</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.1647633e-1</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span>
+                                               <span class="mf">0.392377e-2</span><span class="p">))))))))</span>
+
+
+    <span class="k">return</span> <span class="n">ayi</span></div>
+
+
+<span class="nd">@jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class="viewcode-block" id="i0_array"><a class="viewcode-back" href="../../../user_documentation/api/lib.html#mfm.math.functions.i0_array">[docs]</a><span class="k">def</span> <span class="nf">i0_array</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Modified Bessel-function I0(x) for any real x</span>
+<span class="sd">    (according to numerical recipes function - `bessi0`,</span>
+<span class="sd">    Polynomal approximation Abramowitz and Stegun )</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    .. [1] Abramowitz, M and Stegun, I.A. 1964, Handbook of Mathematical</span>
+<span class="sd">       Functions, Applied Mathematics Series, Volume 55 (Washington:</span>
+<span class="sd">       National Bureal of Standards; reprinted 1968 by Dover Publications,</span>
+<span class="sd">       New York), Chapter 10</span>
+
+<span class="sd">    :param x:</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="n">ay</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">ax</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ax</span><span class="p">)):</span>
+        <span class="n">axi</span> <span class="o">=</span> <span class="n">ax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">axi</span> <span class="o">&lt;</span> <span class="mf">3.75</span><span class="p">:</span>
+            <span class="n">yi</span> <span class="o">=</span> <span class="n">axi</span> <span class="o">/</span> <span class="mf">3.75</span>
+            <span class="n">yi</span> <span class="o">*=</span> <span class="n">yi</span>
+            <span class="n">ay</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span><span class="mf">3.5156299</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span>
+                <span class="mf">3.0899424</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.2067492</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span>
+                    <span class="mf">0.2659732</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.360768e-1</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span>
+                                     <span class="mf">0.45813e-2</span><span class="p">)))))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">yi</span> <span class="o">=</span> <span class="mf">3.75</span> <span class="o">/</span> <span class="n">axi</span>
+            <span class="n">ay</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">exp</span><span class="p">(</span><span class="n">axi</span><span class="p">)</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">axi</span><span class="p">))</span> <span class="o">*</span> \
+                  <span class="p">(</span><span class="mf">0.39894228</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.1328592e-1</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span>
+                      <span class="mf">0.225319e-2</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span> <span class="o">-</span><span class="mf">0.157565e-2</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span>
+                          <span class="mf">0.916281e-2</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.2057706e-1</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span>
+                              <span class="mf">0.2635537e-1</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.1647633e-1</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">*</span>
+                                                   <span class="mf">0.392377e-2</span><span class="p">))))))))</span>
+    <span class="k">return</span> <span class="n">ay</span></div>
+
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">rdf</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">distributions</span>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

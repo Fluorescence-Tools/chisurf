@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.experiments package &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">mfm.experiments package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-mfm.experiments.fcs">mfm.experiments.fcs module</a></li>
+<li><a class="reference internal" href="#module-mfm.experiments.globalfit">mfm.experiments.globalfit module</a></li>
+<li><a class="reference internal" href="#module-mfm.experiments.modelling">mfm.experiments.modelling module</a></li>
+<li><a class="reference internal" href="#module-mfm.experiments.tcspc">mfm.experiments.tcspc module</a></li>
+<li><a class="reference internal" href="#module-mfm.experiments">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/api/mfm.experiments.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <div class="section" id="mfm-experiments-package">
+<h1>mfm.experiments package<a class="headerlink" href="#mfm-experiments-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mfm.experiments.fcs">
+<span id="mfm-experiments-fcs-module"></span><h2>mfm.experiments.fcs module<a class="headerlink" href="#module-mfm.experiments.fcs" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.experiments.fcs.FCS">
+<em class="property">class </em><code class="descclassname">mfm.experiments.fcs.</code><code class="descname">FCS</code><span class="sig-paren">(</span><em>experiment</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code>, <a class="reference internal" href="#mfm.experiments.Setup" title="mfm.experiments.Setup"><code class="xref py py-class docutils literal"><span class="pre">mfm.experiments.Setup</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.experiments.fcs.FCS.name">
+<code class="descname">name</code><em class="property"> = 'FCS'</em><a class="headerlink" href="#mfm.experiments.fcs.FCS.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.experiments.fcs.FCSCsv">
+<em class="property">class </em><code class="descclassname">mfm.experiments.fcs.</code><code class="descname">FCSCsv</code><span class="sig-paren">(</span><em>experiment</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCSCsv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCSCsv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.experiments.fcs.FCS" title="mfm.experiments.fcs.FCS"><code class="xref py py-class docutils literal"><span class="pre">mfm.experiments.fcs.FCS</span></code></a>, <a class="reference internal" href="mfm.io.html#mfm.io.widgets.CsvWidget" title="mfm.io.widgets.CsvWidget"><code class="xref py py-class docutils literal"><span class="pre">mfm.io.widgets.CsvWidget</span></code></a></p>
+<dl class="method">
+<dt id="mfm.experiments.fcs.FCSCsv.load_data">
+<code class="descname">load_data</code><span class="sig-paren">(</span><em>filename=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCSCsv.load_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCSCsv.load_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.fcs.FCSCsv.name">
+<code class="descname">name</code><em class="property"> = 'CSV'</em><a class="headerlink" href="#mfm.experiments.fcs.FCSCsv.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.experiments.fcs.FCSKristine">
+<em class="property">class </em><code class="descclassname">mfm.experiments.fcs.</code><code class="descname">FCSKristine</code><span class="sig-paren">(</span><em>experiment</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCSKristine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCSKristine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.experiments.fcs.FCS" title="mfm.experiments.fcs.FCS"><code class="xref py py-class docutils literal"><span class="pre">mfm.experiments.fcs.FCS</span></code></a>, <a class="reference internal" href="mfm.io.html#mfm.io.widgets.CsvWidget" title="mfm.io.widgets.CsvWidget"><code class="xref py py-class docutils literal"><span class="pre">mfm.io.widgets.CsvWidget</span></code></a></p>
+<dl class="method">
+<dt id="mfm.experiments.fcs.FCSKristine.load_data">
+<code class="descname">load_data</code><span class="sig-paren">(</span><em>filename=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCSKristine.load_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCSKristine.load_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses eihter the error provided by the correlator (4. column)
+or calculates the error based on the correlation curve,
+the aquisition time and the count-rate.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filename</strong> &#8211; </li>
+<li><strong>kwargs</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.fcs.FCSKristine.name">
+<code class="descname">name</code><em class="property"> = 'Kristine'</em><a class="headerlink" href="#mfm.experiments.fcs.FCSKristine.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.experiments.globalfit">
+<span id="mfm-experiments-globalfit-module"></span><h2>mfm.experiments.globalfit module<a class="headerlink" href="#module-mfm.experiments.globalfit" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.experiments.globalfit.GlobalFitSetup">
+<em class="property">class </em><code class="descclassname">mfm.experiments.globalfit.</code><code class="descname">GlobalFitSetup</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/globalfit.html#GlobalFitSetup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.globalfit.GlobalFitSetup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code>, <a class="reference internal" href="#mfm.experiments.Setup" title="mfm.experiments.Setup"><code class="xref py py-class docutils literal"><span class="pre">mfm.experiments.Setup</span></code></a></p>
+<dl class="method">
+<dt id="mfm.experiments.globalfit.GlobalFitSetup.autofitrange">
+<code class="descname">autofitrange</code><span class="sig-paren">(</span><em>fit</em>, <em>threshold=10.0</em>, <em>area=0.999</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/globalfit.html#GlobalFitSetup.autofitrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.globalfit.GlobalFitSetup.autofitrange" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.globalfit.GlobalFitSetup.load_data">
+<code class="descname">load_data</code><span class="sig-paren">(</span><em>filename=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/globalfit.html#GlobalFitSetup.load_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.globalfit.GlobalFitSetup.load_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.experiments.modelling">
+<span id="mfm-experiments-modelling-module"></span><h2>mfm.experiments.modelling module<a class="headerlink" href="#module-mfm.experiments.modelling" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.experiments.modelling.LoadStructure">
+<em class="property">class </em><code class="descclassname">mfm.experiments.modelling.</code><code class="descname">LoadStructure</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code>, <a class="reference internal" href="#mfm.experiments.Setup" title="mfm.experiments.Setup"><code class="xref py py-class docutils literal"><span class="pre">mfm.experiments.Setup</span></code></a></p>
+<dl class="method">
+<dt id="mfm.experiments.modelling.LoadStructure.autofitrange">
+<code class="descname">autofitrange</code><span class="sig-paren">(</span><em>fit</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructure.autofitrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructure.autofitrange" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.modelling.LoadStructure.load_data">
+<code class="descname">load_data</code><span class="sig-paren">(</span><em>filename=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructure.load_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructure.load_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.experiments.modelling.LoadStructureFolder">
+<em class="property">class </em><code class="descclassname">mfm.experiments.modelling.</code><code class="descname">LoadStructureFolder</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructureFolder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructureFolder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code>, <a class="reference internal" href="#mfm.experiments.Setup" title="mfm.experiments.Setup"><code class="xref py py-class docutils literal"><span class="pre">mfm.experiments.Setup</span></code></a></p>
+<dl class="method">
+<dt id="mfm.experiments.modelling.LoadStructureFolder.autofitrange">
+<code class="descname">autofitrange</code><span class="sig-paren">(</span><em>fit</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructureFolder.autofitrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructureFolder.autofitrange" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.modelling.LoadStructureFolder.load_data">
+<code class="descname">load_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructureFolder.load_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructureFolder.load_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.modelling.LoadStructureFolder.name">
+<code class="descname">name</code><em class="property"> = 'Trajectory'</em><a class="headerlink" href="#mfm.experiments.modelling.LoadStructureFolder.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.experiments.tcspc">
+<span id="mfm-experiments-tcspc-module"></span><h2>mfm.experiments.tcspc module<a class="headerlink" href="#module-mfm.experiments.tcspc" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.experiments.tcspc.CsvTCSPC">
+<em class="property">class </em><code class="descclassname">mfm.experiments.tcspc.</code><code class="descname">CsvTCSPC</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#CsvTCSPC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.experiments.tcspc.CsvTCSPCWidget">
+<em class="property">class </em><code class="descclassname">mfm.experiments.tcspc.</code><code class="descname">CsvTCSPCWidget</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#CsvTCSPCWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPCWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.experiments.tcspc.CsvTCSPC" title="mfm.experiments.tcspc.CsvTCSPC"><code class="xref py py-class docutils literal"><span class="pre">mfm.experiments.tcspc.CsvTCSPC</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.CsvTCSPCWidget.dt">
+<code class="descname">dt</code><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPCWidget.dt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.CsvTCSPCWidget.g_factor">
+<code class="descname">g_factor</code><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPCWidget.g_factor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.CsvTCSPCWidget.is_jordi">
+<code class="descname">is_jordi</code><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPCWidget.is_jordi" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.CsvTCSPCWidget.polarization">
+<code class="descname">polarization</code><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPCWidget.polarization" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.CsvTCSPCWidget.rebin">
+<code class="descname">rebin</code><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPCWidget.rebin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.CsvTCSPCWidget.rep_rate">
+<code class="descname">rep_rate</code><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPCWidget.rep_rate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.experiments.tcspc.TCSPCSetup">
+<em class="property">class </em><code class="descclassname">mfm.experiments.tcspc.</code><code class="descname">TCSPCSetup</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCSetup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.experiments.Setup" title="mfm.experiments.Setup"><code class="xref py py-class docutils literal"><span class="pre">mfm.experiments.Setup</span></code></a></p>
+<dl class="staticmethod">
+<dt id="mfm.experiments.tcspc.TCSPCSetup.autofitrange">
+<em class="property">static </em><code class="descname">autofitrange</code><span class="sig-paren">(</span><em>data</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCSetup.autofitrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetup.autofitrange" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.tcspc.TCSPCSetup.load_data">
+<code class="descname">load_data</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCSetup.load_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetup.load_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.experiments.tcspc.TCSPCSetupSDTWidget">
+<em class="property">class </em><code class="descclassname">mfm.experiments.tcspc.</code><code class="descname">TCSPCSetupSDTWidget</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCSetupSDTWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupSDTWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code>, <a class="reference internal" href="#mfm.experiments.tcspc.TCSPCSetup" title="mfm.experiments.tcspc.TCSPCSetup"><code class="xref py py-class docutils literal"><span class="pre">mfm.experiments.tcspc.TCSPCSetup</span></code></a></p>
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.TCSPCSetupSDTWidget.curve_nbr">
+<code class="descname">curve_nbr</code><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupSDTWidget.curve_nbr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.TCSPCSetupSDTWidget.dt">
+<code class="descname">dt</code><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupSDTWidget.dt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.tcspc.TCSPCSetupSDTWidget.load_data">
+<code class="descname">load_data</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCSetupSDTWidget.load_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupSDTWidget.load_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.TCSPCSetupSDTWidget.rep_rate">
+<code class="descname">rep_rate</code><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupSDTWidget.rep_rate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.experiments.tcspc.TCSPCSetupWidget">
+<em class="property">class </em><code class="descclassname">mfm.experiments.tcspc.</code><code class="descname">TCSPCSetupWidget</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCSetupWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.experiments.tcspc.TCSPCSetup" title="mfm.experiments.tcspc.TCSPCSetup"><code class="xref py py-class docutils literal"><span class="pre">mfm.experiments.tcspc.TCSPCSetup</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.TCSPCSetupWidget.dt">
+<code class="descname">dt</code><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupWidget.dt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.TCSPCSetupWidget.rep_rate">
+<code class="descname">rep_rate</code><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupWidget.rep_rate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.TCSPCSetupWidget.skiprows">
+<code class="descname">skiprows</code><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupWidget.skiprows" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.experiments.tcspc.TcspcSDTWidget">
+<em class="property">class </em><code class="descclassname">mfm.experiments.tcspc.</code><code class="descname">TcspcSDTWidget</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TcspcSDTWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.TcspcSDTWidget.curve">
+<code class="descname">curve</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.curve" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.TcspcSDTWidget.curve_number">
+<code class="descname">curve_number</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.curve_number" title="Permalink to this definition">¶</a></dt>
+<dd><p>The currently selected curves</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.TcspcSDTWidget.filename">
+<code class="descname">filename</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.filename" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.TcspcSDTWidget.n_curves">
+<code class="descname">n_curves</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.n_curves" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.TcspcSDTWidget.name">
+<code class="descname">name</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.tcspc.TcspcSDTWidget.onOpenFile">
+<code class="descname">onOpenFile</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TcspcSDTWidget.onOpenFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.onOpenFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.TcspcSDTWidget.ph_counts">
+<code class="descname">ph_counts</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.ph_counts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.TcspcSDTWidget.rep_rate">
+<code class="descname">rep_rate</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.rep_rate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.TcspcSDTWidget.sdt">
+<code class="descname">sdt</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.sdt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.tcspc.TcspcSDTWidget.times">
+<code class="descname">times</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.times" title="Permalink to this definition">¶</a></dt>
+<dd><p>The time-array in nano-seconds</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.experiments">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.experiments" title="Permalink to this headline">¶</a></h2>
+<p>This module is responsible for all experiments/fits</p>
+<p>The <code class="xref py py-mod docutils literal"><span class="pre">experiments</span></code> module contains the fitting models and the setups (assembled reading routines) for
+different experimental setups. Furthermore, it contains a set of plotting libraries.</p>
+<dl class="class">
+<dt id="mfm.experiments.Experiment">
+<em class="property">class </em><code class="descclassname">mfm.experiments.</code><code class="descname">Experiment</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments.html#Experiment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.Experiment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ChiSurf.Base</span></code></p>
+<p>All information contained within <cite>ChiSurf</cite> is associated to an experiment. Each experiment
+is associated with a list of models and a list of setups. The list of models and the list
+of setups determine the applicable models and loadable data-types respectively.</p>
+<dl class="method">
+<dt id="mfm.experiments.Experiment.add_model">
+<code class="descname">add_model</code><span class="sig-paren">(</span><em>model</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments.html#Experiment.add_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.Experiment.add_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.Experiment.add_models">
+<code class="descname">add_models</code><span class="sig-paren">(</span><em>models</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments.html#Experiment.add_models"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.Experiment.add_models" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.Experiment.add_setup">
+<code class="descname">add_setup</code><span class="sig-paren">(</span><em>setup</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments.html#Experiment.add_setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.Experiment.add_setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.Experiment.add_setups">
+<code class="descname">add_setups</code><span class="sig-paren">(</span><em>setups</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments.html#Experiment.add_setups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.Experiment.add_setups" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.Experiment.get_model_names">
+<code class="descname">get_model_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments.html#Experiment.get_model_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.Experiment.get_model_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.Experiment.get_setup_names">
+<code class="descname">get_setup_names</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments.html#Experiment.get_setup_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.Experiment.get_setup_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.Experiment.get_setups">
+<code class="descname">get_setups</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments.html#Experiment.get_setups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.Experiment.get_setups" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.Experiment.model_names">
+<code class="descname">model_names</code><a class="headerlink" href="#mfm.experiments.Experiment.model_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.Experiment.models">
+<code class="descname">models</code><a class="headerlink" href="#mfm.experiments.Experiment.models" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.Experiment.setup_names">
+<code class="descname">setup_names</code><a class="headerlink" href="#mfm.experiments.Experiment.setup_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.experiments.Experiment.setups">
+<code class="descname">setups</code><a class="headerlink" href="#mfm.experiments.Experiment.setups" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.experiments.Setup">
+<em class="property">class </em><code class="descclassname">mfm.experiments.</code><code class="descname">Setup</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments.html#Setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.Setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ChiSurf.Base</span></code></p>
+<dl class="staticmethod">
+<dt id="mfm.experiments.Setup.autofitrange">
+<em class="property">static </em><code class="descname">autofitrange</code><span class="sig-paren">(</span><em>data</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments.html#Setup.autofitrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.Setup.autofitrange" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.Setup.get_data">
+<code class="descname">get_data</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments.html#Setup.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.Setup.get_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.Setup.load_data">
+<code class="descname">load_data</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments.html#Setup.load_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.Setup.load_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.Setup.load_settings">
+<code class="descname">load_settings</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments.html#Setup.load_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.Setup.load_settings" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.experiments.Setup.save_settings">
+<code class="descname">save_settings</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments.html#Setup.save_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.Setup.save_settings" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

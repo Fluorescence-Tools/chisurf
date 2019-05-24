@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mfm.structure.potential package &mdash; ChiSurf 0.0.5 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+<ul class="simple">
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">mfm.structure.potential package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-mfm.structure.potential.cPotentials">mfm.structure.potential.cPotentials module</a></li>
+<li><a class="reference internal" href="#module-mfm.structure.potential.potentials">mfm.structure.potential.potentials module</a></li>
+<li><a class="reference internal" href="#module-mfm.structure.potential">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/api/mfm.structure.potential.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <div class="section" id="mfm-structure-potential-package">
+<h1>mfm.structure.potential package<a class="headerlink" href="#mfm-structure-potential-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mfm.structure.potential.cPotentials">
+<span id="mfm-structure-potential-cpotentials-module"></span><h2>mfm.structure.potential.cPotentials module<a class="headerlink" href="#module-mfm.structure.potential.cPotentials" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="mfm.structure.potential.cPotentials.asa">
+<code class="descclassname">mfm.structure.potential.cPotentials.</code><code class="descname">asa</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.structure.potential.cPotentials.asa" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns list of accessible surface areas of the atoms, using the probe
+and atom radius to define the surface.</p>
+<p>Routines to calculate the Accessible Surface Area of a set of atoms.
+The algorithm is adapted from the Rose lab&#8217;s chasa.py, which uses</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>xyz</strong> &#8211; </li>
+<li><strong>resLookUp</strong> &#8211; </li>
+<li><strong>caDist</strong> &#8211; </li>
+<li><strong>sphere_points</strong> &#8211; </li>
+<li><strong>probe</strong> &#8211; </li>
+<li><strong>radius</strong> &#8211; </li>
+<li><strong>sum</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>the dot density technique found in:</p>
+<p>Shrake, A., and J. A. Rupley. &#8220;Environment and Exposure to Solvent
+of Protein Atoms. Lysozyme and Insulin.&#8221; JMB (1973) 79:351-371.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.structure.potential.cPotentials.clash_potential">
+<code class="descclassname">mfm.structure.potential.cPotentials.</code><code class="descname">clash_potential</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.structure.potential.cPotentials.clash_potential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clash potential
+with cutoff-potential potential shifted by value at cutoff to smooth the energy
+:param xyz: Cartesian coordinates of the atoms
+:param vdw: van der Waals radii of the atoms
+:param clash_tolerance: clash tolerance
+:return:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.structure.potential.cPotentials.gb">
+<code class="descclassname">mfm.structure.potential.cPotentials.</code><code class="descname">gb</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.structure.potential.cPotentials.gb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generalized Born <a class="reference external" href="http://en.wikipedia.org/wiki/Implicit_solvation">http://en.wikipedia.org/wiki/Implicit_solvation</a>
+with cutoff-potential potential shifted by value at cutoff to smooth the energy
+:param rAtoms: atom-list
+:param epsilon: dielectric constant of proteins: 2-40
+:param epsilon0: dielectric constant of water 80.1
+:param cutoff: cutoff-distance in Angstrom
+:return:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.structure.potential.cPotentials.go">
+<code class="descclassname">mfm.structure.potential.cPotentials.</code><code class="descname">go</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.structure.potential.cPotentials.go" title="Permalink to this definition">¶</a></dt>
+<dd><p>If cutoff is True the LJ-Potential is cutoff and shifted at 2.5 sigma</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>resLookUp</strong> &#8211; </li>
+<li><strong>caDist</strong> &#8211; </li>
+<li><strong>eMatrix</strong> &#8211; </li>
+<li><strong>rmMatrix</strong> &#8211; </li>
+<li><strong>cutoff</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.structure.potential.cPotentials.go_init">
+<code class="descclassname">mfm.structure.potential.cPotentials.</code><code class="descname">go_init</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.structure.potential.cPotentials.go_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>The go-interactions are implemented as truncated LJ-(6,12) potential. The function looks for each
+residue within a radius of nativeCut for neighbors if the residues are within the cutoff. If the
+residues are within the cutoff the value in the returned interaction matrix is set to epsilon
+otherwise the value is set to epsilon*nnFraction (non-native interaction).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.structure.potential.cPotentials.hBondLookUpAll">
+<code class="descclassname">mfm.structure.potential.cPotentials.</code><code class="descname">hBondLookUpAll</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.structure.potential.cPotentials.hBondLookUpAll" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.structure.potential.cPotentials.mj">
+<code class="descclassname">mfm.structure.potential.cPotentials.</code><code class="descname">mj</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.structure.potential.cPotentials.mj" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.structure.potential.cPotentials.spherePoints">
+<code class="descclassname">mfm.structure.potential.cPotentials.</code><code class="descname">spherePoints</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.structure.potential.cPotentials.spherePoints" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-mfm.structure.potential.potentials">
+<span id="mfm-structure-potential-potentials-module"></span><h2>mfm.structure.potential.potentials module<a class="headerlink" href="#module-mfm.structure.potential.potentials" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.structure.potential.potentials.ASA">
+<em class="property">class </em><code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">ASA</code><span class="sig-paren">(</span><em>structure</em>, <em>probe=1.0</em>, <em>n_sphere_point=590</em>, <em>radius=2.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#ASA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.ASA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.ASA.getEnergy">
+<code class="descname">getEnergy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#ASA.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.ASA.getEnergy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.ASA.name">
+<code class="descname">name</code><em class="property"> = 'Asa-Ca'</em><a class="headerlink" href="#mfm.structure.potential.potentials.ASA.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.structure.potential.potentials.AsaWidget">
+<em class="property">class </em><code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">AsaWidget</code><span class="sig-paren">(</span><em>structure</em>, <em>parent</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#AsaWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.AsaWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.structure.potential.potentials.ASA" title="mfm.structure.potential.potentials.ASA"><code class="xref py py-class docutils literal"><span class="pre">mfm.structure.potential.potentials.ASA</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.AsaWidget.setParameterProbe">
+<code class="descname">setParameterProbe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#AsaWidget.setParameterProbe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.AsaWidget.setParameterProbe" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.AsaWidget.setParameterSphere">
+<code class="descname">setParameterSphere</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#AsaWidget.setParameterSphere"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.AsaWidget.setParameterSphere" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.structure.potential.potentials.CEPotential">
+<em class="property">class </em><code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">CEPotential</code><span class="sig-paren">(</span><em>structure</em>, <em>potential='./mfm/structure/potential/database/unres.npy'</em>, <em>ca_cutoff=15.0</em>, <em>scaling_factor=0.593</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#CEPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.CEPotential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p class="rubric">Examples</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.structure</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.structure.potential</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/model/hgbp1/hGBP1_closed.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pce</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">potential</span><span class="o">.</span><span class="n">potentials</span><span class="o">.</span><span class="n">CEPotential</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">ca_cutoff</span><span class="o">=</span><span class="mf">64.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pce</span><span class="o">.</span><span class="n">getEnergy</span><span class="p">()</span>
+<span class="go">-0.15896629131635745</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.CEPotential.getEnergy">
+<code class="descname">getEnergy</code><span class="sig-paren">(</span><em>cutoff=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#CEPotential.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.CEPotential.getEnergy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.CEPotential.getNbrContacts">
+<code class="descname">getNbrContacts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#CEPotential.getNbrContacts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.CEPotential.getNbrContacts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.CEPotential.name">
+<code class="descname">name</code><em class="property"> = 'Iso-UNRES'</em><a class="headerlink" href="#mfm.structure.potential.potentials.CEPotential.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.CEPotential.potential">
+<code class="descname">potential</code><a class="headerlink" href="#mfm.structure.potential.potentials.CEPotential.potential" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.structure.potential.potentials.CEPotentialWidget">
+<em class="property">class </em><code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">CEPotentialWidget</code><span class="sig-paren">(</span><em>structure</em>, <em>parent</em>, <em>potential='./mfm/structure/potential/database/unres.npy'</em>, <em>ca_cutoff=25.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#CEPotentialWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.CEPotentialWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.structure.potential.potentials.CEPotential" title="mfm.structure.potential.potentials.CEPotential"><code class="xref py py-class docutils literal"><span class="pre">mfm.structure.potential.potentials.CEPotential</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.CEPotentialWidget.ca_cutoff">
+<code class="descname">ca_cutoff</code><a class="headerlink" href="#mfm.structure.potential.potentials.CEPotentialWidget.ca_cutoff" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.CEPotentialWidget.onOpenPotentialFile">
+<code class="descname">onOpenPotentialFile</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#CEPotentialWidget.onOpenPotentialFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.CEPotentialWidget.onOpenPotentialFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.CEPotentialWidget.potential">
+<code class="descname">potential</code><a class="headerlink" href="#mfm.structure.potential.potentials.CEPotentialWidget.potential" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.structure.potential.potentials.ClashPotential">
+<em class="property">class </em><code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">ClashPotential</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#ClashPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.ClashPotential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.ClashPotential.getEnergy">
+<code class="descname">getEnergy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#ClashPotential.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.ClashPotential.getEnergy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.ClashPotential.name">
+<code class="descname">name</code><em class="property"> = 'Clash-Potential'</em><a class="headerlink" href="#mfm.structure.potential.potentials.ClashPotential.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.structure.potential.potentials.ClashPotentialWidget">
+<em class="property">class </em><code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">ClashPotentialWidget</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#ClashPotentialWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.ClashPotentialWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.structure.potential.potentials.ClashPotential" title="mfm.structure.potential.potentials.ClashPotential"><code class="xref py py-class docutils literal"><span class="pre">mfm.structure.potential.potentials.ClashPotential</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.ClashPotentialWidget.clash_tolerance">
+<code class="descname">clash_tolerance</code><a class="headerlink" href="#mfm.structure.potential.potentials.ClashPotentialWidget.clash_tolerance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.ClashPotentialWidget.covalent_radius">
+<code class="descname">covalent_radius</code><a class="headerlink" href="#mfm.structure.potential.potentials.ClashPotentialWidget.covalent_radius" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.structure.potential.potentials.Electrostatics">
+<em class="property">class </em><code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">Electrostatics</code><span class="sig-paren">(</span><em>structure</em>, <em>type='gb'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#Electrostatics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.Electrostatics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.Electrostatics.getEnergy">
+<code class="descname">getEnergy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#Electrostatics.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.Electrostatics.getEnergy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.structure.potential.potentials.GoPotential">
+<em class="property">class </em><code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">GoPotential</code><span class="sig-paren">(</span><em>structure</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#GoPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.GoPotential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.GoPotential.getEnergy">
+<code class="descname">getEnergy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#GoPotential.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.GoPotential.getEnergy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.GoPotential.getNbrNative">
+<code class="descname">getNbrNative</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#GoPotential.getNbrNative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.GoPotential.getNbrNative" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.GoPotential.getNbrNonNative">
+<code class="descname">getNbrNonNative</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#GoPotential.getNbrNonNative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.GoPotential.getNbrNonNative" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.GoPotential.setGo">
+<code class="descname">setGo</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#GoPotential.setGo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.GoPotential.setGo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.GoPotential.set_eMatrix">
+<code class="descname">set_eMatrix</code><span class="sig-paren">(</span><em>eMatrix</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#GoPotential.set_eMatrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.GoPotential.set_eMatrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.GoPotential.set_nMatrix">
+<code class="descname">set_nMatrix</code><span class="sig-paren">(</span><em>nMatrix</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#GoPotential.set_nMatrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.GoPotential.set_nMatrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.GoPotential.set_sMatrix">
+<code class="descname">set_sMatrix</code><span class="sig-paren">(</span><em>sMatrix</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#GoPotential.set_sMatrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.GoPotential.set_sMatrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.structure.potential.potentials.GoPotentialWidget">
+<em class="property">class </em><code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">GoPotentialWidget</code><span class="sig-paren">(</span><em>structure</em>, <em>parent</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#GoPotentialWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.GoPotentialWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.structure.potential.potentials.GoPotential" title="mfm.structure.potential.potentials.GoPotential"><code class="xref py py-class docutils literal"><span class="pre">mfm.structure.potential.potentials.GoPotential</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.GoPotentialWidget.cutoff">
+<code class="descname">cutoff</code><a class="headerlink" href="#mfm.structure.potential.potentials.GoPotentialWidget.cutoff" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.GoPotentialWidget.epsilon">
+<code class="descname">epsilon</code><a class="headerlink" href="#mfm.structure.potential.potentials.GoPotentialWidget.epsilon" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.GoPotentialWidget.native_cutoff_on">
+<code class="descname">native_cutoff_on</code><a class="headerlink" href="#mfm.structure.potential.potentials.GoPotentialWidget.native_cutoff_on" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.GoPotentialWidget.nnEFactor">
+<code class="descname">nnEFactor</code><a class="headerlink" href="#mfm.structure.potential.potentials.GoPotentialWidget.nnEFactor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.GoPotentialWidget.non_native_contact_on">
+<code class="descname">non_native_contact_on</code><a class="headerlink" href="#mfm.structure.potential.potentials.GoPotentialWidget.non_native_contact_on" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.structure.potential.potentials.HPotential">
+<em class="property">class </em><code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">HPotential</code><span class="sig-paren">(</span><em>structure</em>, <em>cutoff_ca=8.0</em>, <em>cutoff_hbond=3.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#HPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.HPotential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.HPotential.getEnergy">
+<code class="descname">getEnergy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#HPotential.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.HPotential.getEnergy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.HPotential.getNbrBonds">
+<code class="descname">getNbrBonds</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#HPotential.getNbrBonds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.HPotential.getNbrBonds" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.HPotential.name">
+<code class="descname">name</code><em class="property"> = 'H-Bond'</em><a class="headerlink" href="#mfm.structure.potential.potentials.HPotential.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.HPotential.potential">
+<code class="descname">potential</code><a class="headerlink" href="#mfm.structure.potential.potentials.HPotential.potential" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.structure.potential.potentials.HPotentialWidget">
+<em class="property">class </em><code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">HPotentialWidget</code><span class="sig-paren">(</span><em>structure</em>, <em>parent</em>, <em>cutoff_ca=8.0</em>, <em>cutoff_hbond=3.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#HPotentialWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.HPotentialWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.structure.potential.potentials.HPotential" title="mfm.structure.potential.potentials.HPotential"><code class="xref py py-class docutils literal"><span class="pre">mfm.structure.potential.potentials.HPotential</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.HPotentialWidget.ch">
+<code class="descname">ch</code><a class="headerlink" href="#mfm.structure.potential.potentials.HPotentialWidget.ch" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.HPotentialWidget.cn">
+<code class="descname">cn</code><a class="headerlink" href="#mfm.structure.potential.potentials.HPotentialWidget.cn" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.HPotentialWidget.cutoffCA">
+<code class="descname">cutoffCA</code><a class="headerlink" href="#mfm.structure.potential.potentials.HPotentialWidget.cutoffCA" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.HPotentialWidget.cutoffH">
+<code class="descname">cutoffH</code><a class="headerlink" href="#mfm.structure.potential.potentials.HPotentialWidget.cutoffH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.HPotentialWidget.oh">
+<code class="descname">oh</code><a class="headerlink" href="#mfm.structure.potential.potentials.HPotentialWidget.oh" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.HPotentialWidget.on">
+<code class="descname">on</code><a class="headerlink" href="#mfm.structure.potential.potentials.HPotentialWidget.on" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.HPotentialWidget.onOpenFile">
+<code class="descname">onOpenFile</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#HPotentialWidget.onOpenFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.HPotentialWidget.onOpenFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.HPotentialWidget.updateParameter">
+<code class="descname">updateParameter</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#HPotentialWidget.updateParameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.HPotentialWidget.updateParameter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.structure.potential.potentials.MJPotential">
+<em class="property">class </em><code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">MJPotential</code><span class="sig-paren">(</span><em>structure</em>, <em>filename='./mfm/structure/potential/database/mj.csv'</em>, <em>ca_cutcoff=6.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#MJPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.MJPotential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.MJPotential.getEnergy">
+<code class="descname">getEnergy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#MJPotential.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.MJPotential.getEnergy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.MJPotential.getNbrContacts">
+<code class="descname">getNbrContacts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#MJPotential.getNbrContacts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.MJPotential.getNbrContacts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.MJPotential.name">
+<code class="descname">name</code><em class="property"> = 'Miyazawa-Jernigan'</em><a class="headerlink" href="#mfm.structure.potential.potentials.MJPotential.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.MJPotential.potential">
+<code class="descname">potential</code><a class="headerlink" href="#mfm.structure.potential.potentials.MJPotential.potential" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.structure.potential.potentials.MJPotentialWidget">
+<em class="property">class </em><code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">MJPotentialWidget</code><span class="sig-paren">(</span><em>structure</em>, <em>parent</em>, <em>filename='./mfm/structure/potential/database/mj.csv'</em>, <em>ca_cutoff=6.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#MJPotentialWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.MJPotentialWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.structure.potential.potentials.MJPotential" title="mfm.structure.potential.potentials.MJPotential"><code class="xref py py-class docutils literal"><span class="pre">mfm.structure.potential.potentials.MJPotential</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.MJPotentialWidget.ca_cutoff">
+<code class="descname">ca_cutoff</code><a class="headerlink" href="#mfm.structure.potential.potentials.MJPotentialWidget.ca_cutoff" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.MJPotentialWidget.onOpenFile">
+<code class="descname">onOpenFile</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#MJPotentialWidget.onOpenFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.MJPotentialWidget.onOpenFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.MJPotentialWidget.potential">
+<code class="descname">potential</code><a class="headerlink" href="#mfm.structure.potential.potentials.MJPotentialWidget.potential" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.structure.potential.potentials.RadiusGyration">
+<em class="property">class </em><code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">RadiusGyration</code><span class="sig-paren">(</span><em>structure</em>, <em>parent=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#RadiusGyration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.RadiusGyration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.RadiusGyration.getEnergy">
+<code class="descname">getEnergy</code><span class="sig-paren">(</span><em>c=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#RadiusGyration.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.RadiusGyration.getEnergy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.RadiusGyration.name">
+<code class="descname">name</code><em class="property"> = 'Radius-Gyration'</em><a class="headerlink" href="#mfm.structure.potential.potentials.RadiusGyration.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.structure.potential.potentials.Ramachandran">
+<em class="property">class </em><code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">Ramachandran</code><span class="sig-paren">(</span><em>structure</em>, <em>filename='./mfm/structure/potential/database/rama_ala_pro_gly.npy'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#Ramachandran"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.Ramachandran" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="mfm.structure.potential.potentials.Ramachandran.getEnergy">
+<code class="descname">getEnergy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#Ramachandran.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.Ramachandran.getEnergy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.centroid2">
+<code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">centroid2</code><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#centroid2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.centroid2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the potential energy given the UNRES GBV-Sidechain potential and isotropic conditions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>atom_lookup</strong> : integer array</p>
+<blockquote>
+<div><p>A two dimensional lookup array to find for each residue and atom-type the corresponding
+position within the coordinate array <cite>r</cite>.</p>
+</div></blockquote>
+<p><strong>c_beta_pos</strong> : integer</p>
+<blockquote>
+<div><p>This variable specifies which position in the atom_lookup contains the number of the C-beta
+atom.</p>
+</div></blockquote>
+<p><strong>res_types</strong> : integer array</p>
+<blockquote>
+<div><p>An array containing the residue types of the residues as a one dimensional array. The residue types
+are in the order as in :py:const:mfm.structure.residue_atoms_internal:</p>
+</div></blockquote>
+<p><strong>ca_dist</strong> : double array</p>
+<blockquote>
+<div><p>The array <cite>ca_dist</cite> should contain the pair-wise distances of all C-alpha atoms of the protein</p>
+</div></blockquote>
+<p><strong>r</strong> : double array</p>
+<blockquote>
+<div><p>The two-dimensional array <cite>r</cite> contains all Cartesian coordinates of all atoms.</p>
+</div></blockquote>
+<p><strong>potential</strong> : double array</p>
+<blockquote>
+<div><p>This 3-dimensional array contains pre-calculated potentials of all possible combinations of amino-
+acids. potential[1,2,10] has to contain the potential of the amino-acid (1) and (2) at a distance
+of 10 whereas the actual distance is dependent on the range in which the potential was actually
+calculated. The potential can be calculated with the small program located in:
+mfm.structure.potential.database.make_unres_lookup.py</p>
+</div></blockquote>
+<p><strong>min_dist</strong> : double</p>
+<blockquote>
+<div><p>The minimum distance for which the parameter <cite>potential</cite> was calculated. This parameter has to be
+supplied and depends on the provided pre-calculated potential file.</p>
+</div></blockquote>
+<p><strong>max_dist :double</strong></p>
+<blockquote>
+<div><p>The minimum distance for which the parameter <cite>potential</cite> was calculated (see min_dist)</p>
+</div></blockquote>
+<p><strong>bin_width</strong> : double</p>
+<blockquote>
+<div><p>The spacing between the bin of the distance points in the pre-calculated potential</p>
+</div></blockquote>
+<p><strong>cutoff</strong> : double</p>
+<blockquote class="last">
+<div><p>Distances between the centroids bigger than the cut-off distance will be neglected</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.gb">
+<code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">gb</code><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#gb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.gb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generalized Born <a class="reference external" href="http://en.wikipedia.org/wiki/Implicit_solvation">http://en.wikipedia.org/wiki/Implicit_solvation</a>
+with cutoff-potential potential shifted by value at cutoff to smooth the energy
+:param xyz: atom-list
+:param epsilon: dielectric constant of proteins: 2-40
+:param epsilon0: dielectric constant of water 80.1
+:param cutoff: cutoff-distance in Angstrom
+:return:</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.structure.potential.potentials.go">
+<code class="descclassname">mfm.structure.potential.potentials.</code><code class="descname">go</code><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#go"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.go" title="Permalink to this definition">¶</a></dt>
+<dd><p>If cutoff is True the LJ-Potential is cutoff and shifted at 2.5 sigma</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>resLookUp</strong> &#8211; </li>
+<li><strong>ca_dist</strong> &#8211; </li>
+<li><strong>energy_matrix</strong> &#8211; </li>
+<li><strong>rm_matrix</strong> &#8211; </li>
+<li><strong>cutoff</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.structure.potential">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.structure.potential" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
