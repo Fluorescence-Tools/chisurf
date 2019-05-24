@@ -127,14 +127,11 @@ class Csv(object):
             if self.mode == 'csv':
                 delimiter = kwargs.pop('delimiter', None)
                 if delimiter is None:
-                    with open(filename, 'rb') as csvfile:
+                    with open(filename, 'r') as csvfile:
                         for i in range(skiprows):
-                            csvfile.readline()
-                        try:
+                            for _ in range(skiprows): csvfile.readline()
                             dialect = csv.Sniffer().sniff(csvfile.read(1024), delimiters=';,|\t ')
                             delimiter = dialect.delimiter
-                        except:
-                            delimiter = " "
                 d = np.genfromtxt(
                     fname=filename,
                     delimiter=delimiter,

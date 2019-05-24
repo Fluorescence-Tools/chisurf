@@ -104,7 +104,7 @@ class Model(ParameterGroup):
         s += "Model: %s\n" % str(self.name)
 
         pd = self.parameters_all_dict
-        keylist = pd.keys()
+        keylist = list(pd.keys())
         keylist.sort()
 
         s += "Parameter\tValue\tBounds\tFixed\tLinked\n"

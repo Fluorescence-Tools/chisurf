@@ -24,3 +24,4 @@ dependencies:
     - pyopengl
     - qtconsole
     - qsci_editor
+    - keras
