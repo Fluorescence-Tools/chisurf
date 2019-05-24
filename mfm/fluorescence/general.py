@@ -51,7 +51,7 @@ def interleaved_to_two_columns(ls, sort=False):
         The interleaved spectrum (amplitude, lifetime)
     :return: two arrays (amplitudes), (lifetimes)
     """
-    lt = ls.reshape((ls.shape[0]/2, 2))
+    lt = ls.reshape((ls.shape[0] // 2, 2))
     if sort:
         s = lt[np.argsort(lt[:, 1])]
         y = s[:, 0]

@@ -497,6 +497,11 @@ if __name__ == "__main__":
     import mfm.tools
     mfm.console = mfm.widgets.QIPythonWidget()
 
+    # See: https://github.com/ipython/ipykernel/issues/370
+    # this should be fixed newer
+    def _abort_queues(kernel):
+        pass
+    mfm.console.kernel_manager.kernel._abort_queues = _abort_queues
 
     win = Main(parent=None)
     mfm.console.history_widget = win.plainTextEditHistory

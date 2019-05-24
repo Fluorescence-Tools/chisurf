@@ -251,7 +251,7 @@ References
     if type(args) != type(()):
         args = (args,)
     m = _check_func('leastsq', 'func', func, x0, args, n)[0]
-    if n > m:
+    if n > m[0]:
         raise TypeError('Improper input: N=%s must not exceed M=%s' % (n, m))
 
     # define a wrapped func which accept internal parameters, converts them

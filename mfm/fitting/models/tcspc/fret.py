@@ -240,7 +240,7 @@ class Gaussians(ParameterGroup):
         self._gaussianAmplitudes = []
         self.short = kwargs.get('short', 'G')
 
-        self.is_distance_between_gaussians = False # If this is True than the fitted distance is the distance between two Gaussians
+        self.is_distance_between_gaussians = True # If this is True than the fitted distance is the distance between two Gaussians
 
 
 class GaussianWidget(Gaussians, QtWidgets.QWidget):
