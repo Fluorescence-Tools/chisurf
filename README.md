@@ -55,11 +55,13 @@ your use only. ChiSurf is provided free of charge to both academic and commercia
 
 ## Windows
 
+* [19.07.08](https://github.com/Fluorescence-Tools/ChiSurf/releases/download/Stable/chisurf_19.07.09-windows.exe)
 * [17.03.24](https://drive.google.com/open?id=1XJJDW9ESdGqDUhYOj06Lztajn6se3nDe)
 * [Legacy](https://drive.google.com/open?id=1GT8i_ZVnUXCIf_GBhk3TaS-T3DRhWHD2)
 
 ## MacOS
 
+* [19.07.08](https://github.com/Fluorescence-Tools/ChiSurf/releases/download/Stable/chisurf_19.07.08-macos.dmg)
 * [17.03.24](https://drive.google.com/open?id=169CTwRLGw0-_3BB69-Soh4QlrveWrEvo)
 
 ## Linux
