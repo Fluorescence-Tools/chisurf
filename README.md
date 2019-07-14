@@ -62,6 +62,12 @@ your use only. ChiSurf is provided free of charge to both academic and commercia
 
 * [17.03.24](https://drive.google.com/open?id=169CTwRLGw0-_3BB69-Soh4QlrveWrEvo)
 
+## Linux
+
+Linux users with snap scan simply install ChiSurf using snap.
+
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-white.svg)](https://snapcraft.io/chisurf)
+
 # Support
 Please submit feature requests, questions, and bugs in the following group.
 
