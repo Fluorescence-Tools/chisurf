@@ -9,6 +9,7 @@ parameter_settings = mfm.cs_settings['parameter']
 
 
 class Parameter(mfm.base.Base):
+
     _instances = set()
 
     @property

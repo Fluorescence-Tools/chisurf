@@ -76,7 +76,6 @@ def r2i(coord_i, a1, a2, a3, a4, ai):
     coord_i[ai] = a4['i'], a3['i'], a2['i'], a1['i'], b, a, d
     return ai + 1
 
-
 #@nb.vectorize(['float64[:,:](float64[:,:], int32[:,:], float64[:,:], int32)'])
 @nb.jit('float64[:,:](float64[:,:], int32[:,:], float64[:,:], int32)', nogil=True, nopython=True)
 def atom_dist(aDist, resLookUp, xyz, aID):

@@ -3,6 +3,8 @@ import numpy as np
 import os
 import sys
 import sip
+import slugify
+
 sip.setapi('QDate', 2)
 sip.setapi('QDateTime', 2)
 sip.setapi('QString', 2)
@@ -12,8 +14,8 @@ sip.setapi('QUrl', 2)
 sip.setapi('QVariant', 2)
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication
-import mfm.ui.resource
 
+import mfm.ui.resource
 import tools
 
 
@@ -294,7 +296,7 @@ class Main(QMainWindow):
         cf = self.fit_idx
         for fit in mfm.fits:
             fit_name = fit.name
-            path_name = slugify(unicode(fit_name))
+            path_name = slugify.slugify(str(fit_name))
             p2 = path + '//' + path_name
             os.mkdir(p2)
             self.current_fit = fit
@@ -310,6 +312,8 @@ class Main(QMainWindow):
         mfm.console.run_macro('./macro/save_fit.py')
 
     def __init__(self, *args, **kwargs):
+        import mfm.experiments
+
         QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
         uic.loadUi("mfm/ui/mainwindow.ui", self)
         self.setCentralWidget(self.mdiarea)
