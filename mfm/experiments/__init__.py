@@ -95,6 +95,7 @@ from .fcs import *
 from . import tcspc
 from .globalfit import *
 from . import modelling
+from . import modelling
 
 tcspc_setups = [
     tcspc.TCSPCSetupWidget(name="CSV/PQ/IBH", **mfm.cs_settings['tcspc_csv']),
@@ -105,4 +106,9 @@ tcspc_setups = [
 fcs_setups = [
     fcs.FCSKristine(experiment=fcs),
     fcs.FCSCsv(experiment=fcs)
+]
+
+structure_setups = [
+    modelling.PDBLoad()
+        #.FCSKristine(experiment=fcs)
 ]

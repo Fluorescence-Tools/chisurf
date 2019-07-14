@@ -1,12 +1,9 @@
 ChiSURF
 =======
 
-*Analyze (single-molecule) fluorescence data to generate models.*
-
-ChiSURF (Chi Surface, SUper Resolution FRET or CS) is a software-suite dedicated
-to the analysis of fluorescence data. Its main purpose is the interpretation of
-fluorescence measurements by structural models and the analysis time-resolved
-fluorescence measurements.
+ChiSURF is a software-suite dedicated to the analysis of fluorescence data.
+Its main purpose is the interpretation of fluorescence measurements by structural
+models and the analysis time-resolved fluorescence measurements.
 
 Currently, ChiSURF is capable to analyze TCSPC, FCS and stopped-flow data. Its
 open frame-work and API allows to extend its capabilities relatively easy.
