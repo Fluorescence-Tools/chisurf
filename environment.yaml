@@ -25,3 +25,4 @@ dependencies:
     - qtconsole
     - qsci_editor
     - keras
+    - python-docx
