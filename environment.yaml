@@ -26,3 +26,4 @@ dependencies:
     - qsci_editor
     - keras
     - python-docx
+    - chinet

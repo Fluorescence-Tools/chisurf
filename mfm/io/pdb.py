@@ -10,8 +10,8 @@ keys = ['i', 'chain', 'res_id', 'res_name',
              'coord',
              'charge', 'radius', 'bfactor', 'mass']
 
-formats = ['i4', '|S1', 'i4', '|S5',
-           'i4', '|S5', '|S1',
+formats = ['i4', '|U1', 'i4', '|U5',
+           'i4', '|U5', '|U1',
            '3f8',
            'f8', 'f8', 'f8', 'f8']
 
@@ -26,7 +26,9 @@ def fetch_pdb(id, **kwargs):
     return parse_string_pdb(st, **kwargs)
 
 
-def assign_element_to_atom_name(atom_name):
+def assign_element_to_atom_name(
+        atom_name: str
+):
     """Tries to guess element from atom name if not recognised.
 
     :param atom_name: string
@@ -37,31 +39,32 @@ def assign_element_to_atom_name(atom_name):
     >>> assign_element_to_atom_name('CA')
     C
     """
+    print(atom_name)
+    element = ""
     if atom_name.upper() not in common.atom_weights:
-    # Inorganic elements have their name shifted left by one position
-    #  (is a convention in PDB, but not part of the standard).
-    # isdigit() check on last two characters to avoid mis-assignment of
-    # hydrogens atoms (GLN HE21 for example)
-    # Hs may have digit in [0]
+        # Inorganic elements have their name shifted left by one position
+        #  (is a convention in PDB, but not part of the standard).
+        # isdigit() check on last two characters to avoid mis-assignment of
+        # hydrogens atoms (GLN HE21 for example)
+        # Hs may have digit in [0]
         putative_element = atom_name[1] if atom_name[0].isdigit() else atom_name[0]
-        if putative_element.capitalize() in common.atom_weights:
-            atom_name = putative_element
-        else:
-            atom_name = ""
-    return atom_name
+        print(putative_element)
+        if putative_element.capitalize() in common.atom_weights.keys():
+            element = putative_element
+    return element
 
 
 def parse_string_pdb(string, assignCharge=False, **kwargs):
     rows = string.splitlines()
     verbose = kwargs.get('verbose', mfm.verbose)
-    atoms = np.empty(len(rows), dtype={'names': keys, 'formats': formats})
+    atoms = np.zeros(len(rows), dtype={'names': keys, 'formats': formats})
     ni = 0
     for line in rows:
         if line.startswith('ATOM'):
             atom_name = line[12:16].strip().upper()
             atoms['i'][ni] = ni
             atoms['chain'][ni] = line[21]
-            atoms['res_name'][ni] = line[17:20]#.strip().upper()
+            atoms['res_name'][ni] = line[17:20].strip().upper()
             atoms['atom_name'][ni] = atom_name
             atoms['res_id'][ni] = line[22:26]
             atoms['atom_id'][ni] = line[6:11]
@@ -69,7 +72,7 @@ def parse_string_pdb(string, assignCharge=False, **kwargs):
             atoms['coord'][ni][1] = line[38:46]
             atoms['coord'][ni][2] = line[46:54]
             atoms['bfactor'][ni] = line[60:65]
-            atoms['element'][ni] = assign_element_to_atom_name(atoms['atom_name'][ni])
+            atoms['element'][ni] = assign_element_to_atom_name(atom_name)
             try:
                 if assignCharge:
                     if atoms['res_name'][ni] in common.CHARGE_DICT:
@@ -89,15 +92,16 @@ def parse_string_pdb(string, assignCharge=False, **kwargs):
 def parse_string_pqr(string, **kwargs):
     rows = string.splitlines()
     verbose = kwargs.get('verbose', mfm.verbose)
-    atoms = np.empty(len(rows), dtype={'names': keys, 'formats': formats})
+    atoms = np.zeros(len(rows), dtype={'names': keys, 'formats': formats})
     ni = 0
 
     for line in rows:
         if line[:4] == "ATOM" or line[:6] == "HETATM":
             # Extract x, y, z, r from pqr to xyzr file
+            atom_name = line[12:16].strip().upper()
             atoms['i'][ni] = ni
             atoms['chain'][ni] = line[21]
-            atoms['atom_name'][ni] = line[12:16].strip().upper()
+            atoms['atom_name'][ni] = atom_name.upper()
             atoms['res_name'][ni] = line[17:20].strip().upper()
             atoms['res_id'][ni] = line[21:27]
             atoms['atom_id'][ni] = line[6:11]
@@ -105,7 +109,7 @@ def parse_string_pqr(string, **kwargs):
             atoms['coord'][ni][1] = "%10.5f" % float(line[38:46].strip())
             atoms['coord'][ni][2] = "%10.5f" % float(line[46:54].strip())
             atoms['radius'][ni] = "%10.5f" % float(line[63:70].strip())
-            atoms['element'][ni] = assign_element_to_atom_name(atoms['atom_name'][ni])
+            atoms['element'][ni] = assign_element_to_atom_name(atom_name)
             atoms['charge'][ni] = "%10.5f" % float(line[55:62].strip())
             ni += 1
 
