@@ -366,7 +366,8 @@ class Structure(object):#mfm.curve.ExperimentalData):
 
     """
 
-    def __init__(self, p_object, **kwargs):
+    def __init__(self, p_object, *args, **kwargs):
+        super(Structure, self).__init__(*args, **kwargs)
         self.auto_update = kwargs.get('auto_update', False)
         self._filename = kwargs.get('filename', None)
         self._atoms = None
