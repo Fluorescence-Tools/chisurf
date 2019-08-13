@@ -39,7 +39,6 @@ def assign_element_to_atom_name(
     >>> assign_element_to_atom_name('CA')
     C
     """
-    print(atom_name)
     element = ""
     if atom_name.upper() not in common.atom_weights:
         # Inorganic elements have their name shifted left by one position
@@ -48,7 +47,6 @@ def assign_element_to_atom_name(
         # hydrogens atoms (GLN HE21 for example)
         # Hs may have digit in [0]
         putative_element = atom_name[1] if atom_name[0].isdigit() else atom_name[0]
-        print(putative_element)
         if putative_element.capitalize() in common.atom_weights.keys():
             element = putative_element
     return element
