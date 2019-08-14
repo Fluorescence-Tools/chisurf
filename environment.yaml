@@ -27,3 +27,4 @@ dependencies:
     - keras
     - python-docx
     - chinet
+    - labellib
