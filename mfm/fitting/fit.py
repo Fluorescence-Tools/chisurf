@@ -11,8 +11,14 @@ import emcee
 eps = np.sqrt(np.finfo(float).eps)
 
 
-#### Unused at the moment
-def walk_mcmc(fit, steps, step_size, chi2max, temp, thin):
+def walk_mcmc(
+        fit: mfm.fitting.fit.Fit,
+        steps: int,
+        step_size: float,
+        chi2max: float,
+        temp: float,
+        thin: int
+):
     """
 
     :param fit:
@@ -48,7 +54,13 @@ def walk_mcmc(fit, steps, step_size, chi2max, temp, thin):
     return [lnp, parameter]
 
 
-def sample_emcee(fit, steps, nwalkers, thin=10, std=1e-4, chi2max=np.inf):
+def sample_emcee(
+        fit: mfm.fitting.fit.Fit,
+        steps: int,
+        nwalkers: int,
+        thin: int = 10,
+        std: float = 1e-4,
+        chi2max: float = np.inf):
     """Sample the parameter space by emcee using a number of 'walkers'
 
     :param fit: the fit to be samples
@@ -74,7 +86,11 @@ def sample_emcee(fit, steps, nwalkers, thin=10, std=1e-4, chi2max=np.inf):
     return chi2, sampler.flatchain
 
 
-def sample_fit(fit, filename, **kwargs):
+def sample_fit(
+        fit: mfm.fitting.fit.Fit,
+        filename: str,
+        **kwargs
+):
     method = kwargs.pop('method', 'emcee')
     steps = kwargs.pop('steps', 1000)
     thin = kwargs.pop('thin', 1)
@@ -102,7 +118,13 @@ def sample_fit(fit, filename, **kwargs):
 
 
 #@nb.jit#(nopython=True)
-def approx_grad(xk, fit, epsilon, args=(), f0=None):
+def approx_grad(
+        xk,
+        fit: mfm.fitting.fit.Fit,
+        epsilon: float,
+        args=(),
+        f0=None
+):
     """Approximate the derivative of a fit with respect to the parameters
     xk. The return value of the function is an array.
 
@@ -169,7 +191,9 @@ def covariance_matrix(fit, **kwargs):
 
 
 @nb.jit(nopython=True)
-def durbin_watson(residuals):
+def durbin_watson(
+        residuals: np.array
+):
     """Durbin-Watson parameter (1950,1951)
 
     :param residuals:  array
@@ -183,7 +207,10 @@ def durbin_watson(residuals):
     return nom / max(1, denom)
 
 
-def get_wres(parameter, model):
+def get_wres(
+        parameter,
+        model: mfm.fitting.models.Model
+):
     """Returns the weighted residuals for a list of parameters of a model
 
     :param parameter: a list of the parameter values / or None. If None the model is not updated
@@ -306,7 +333,11 @@ def scan_parameter(fit, parameter_name, scan_range=(None, None), rel_range=0.2, 
 
 class Fit(mfm.base.Base):
 
-    def __init__(self, model_class=object, **kwargs):
+    def __init__(
+            self,
+            model_class: mfm.fitting.models.Model = object,
+            **kwargs
+    ):
         mfm.base.Base.__init__(self, **kwargs)
         self._model = None
         self.results = None
@@ -445,9 +476,14 @@ class Fit(mfm.base.Base):
             model.update_model()
         return model.get_wres(self, **kwargs)
 
-    def save(self, path, name, mode='txt'):
+    def save(
+            self,
+            path: str,
+            name: str,
+            mode: str = 'txt'
+    ):
         filename = os.path.join(path, name)
-        self.model.save(filename+'.json')
+        self.model.save(filename + '.json')
         if mode == 'txt':
             csv = mfm.io.ascii.Csv()
             wr = self.weighted_residuals
