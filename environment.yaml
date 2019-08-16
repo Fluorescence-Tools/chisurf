@@ -26,8 +26,6 @@ dependencies:
     - qscintilla2
     - pyopengl
     - qtconsole
-    - qsci_editor
-    - keras
     - python-docx
     - chinet
     - labellib
