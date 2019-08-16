@@ -423,7 +423,7 @@ class DyeDecay(Model, Curve):
         """
         verbose = verbose or self.verbose
         x, y, = self.get_histogram(nbins, range)
-        mfm.io.ascii.save_xy(filename, x, y, verbose, header="time\tcount")
+        mfm.io.ascii.save_xy(filename, x, y, verbose, header_string="time\tcount")
 
     def update_decay_curve(self):
         self._curve_y = np.zeros(self.nTAC, dtype=np.float64)

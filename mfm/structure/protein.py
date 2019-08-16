@@ -102,7 +102,10 @@ def atom_dist(aDist, resLookUp, xyz, aID):
     return aDist
 
 
-def move_center_of_mass(structure, all_atoms):
+def move_center_of_mass(
+        structure: mfm.structure.Structure,
+        all_atoms
+):
     for i, res in enumerate(structure.residue_ids):
         at_nbr = np.where(all_atoms['res_id'] == res)[0]
         cb_nbr = structure.l_cb[i]
@@ -119,7 +122,9 @@ def move_center_of_mass(structure, all_atoms):
             structure.atoms[cb_nbr] = cb
 
 
-def make_residue_lookup_table(structure):
+def make_residue_lookup_table(
+        structure: mfm.structure.Structure
+):
     l_residue = np.zeros((structure.n_residues, structure.max_atom_residue), dtype=np.int32) - 1
     n = 0
     res_dict = structure.residue_dict
