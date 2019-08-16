@@ -3,7 +3,7 @@
 import sys
 
 import numpy
-from cython.Distutils import build_ext
+from Cython.Distutils import build_ext
 from setuptools import setup, find_packages
 from setuptools.extension import Extension
 
