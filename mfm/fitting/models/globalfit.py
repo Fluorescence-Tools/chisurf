@@ -2,7 +2,6 @@ import pickle
 import threading
 from collections import OrderedDict
 from typing import List
-
 import numpy as np
 from PyQt5 import QtCore, QtWidgets, uic
 
