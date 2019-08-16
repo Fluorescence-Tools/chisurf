@@ -126,7 +126,6 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
             for reaction in reactions:
                 self.add_reaction(**reaction)
             for s in species:
-                print s
                 self.onAddSpecies(**s)
 
     def onPlot(self):

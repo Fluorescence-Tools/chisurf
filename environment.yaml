@@ -1,4 +1,4 @@
-name: chisurf
+name: test
 
 channels:
   - fluorescence-tools
@@ -8,6 +8,7 @@ channels:
 
 dependencies:
     - python=3.7
+    - cython
     - pyyaml
     - python-slugify
     - numpy
