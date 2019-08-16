@@ -30,9 +30,9 @@ __version__ = cs_settings['version']
 __name__ = cs_settings['name']
 working_path = ''
 
+import mfm.fitting
 import mfm.curve
 from mfm.base import *
-import mfm.fitting
 import mfm.structure
 import mfm.fluorescence
 

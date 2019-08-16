@@ -375,7 +375,7 @@ class DataGroup(list, Base):
 
     def append(
             self,
-            dataset: mfm.curve.Data
+            dataset: Data
     ):
         if isinstance(dataset, ExperimentalData):
             list.append(self, dataset)
