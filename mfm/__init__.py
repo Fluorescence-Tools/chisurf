@@ -34,7 +34,7 @@ working_path = ''
 import mfm.fitting
 import mfm.curve
 import mfm.fitting.models
-from mfm.base import *
+import mfm.base
 import mfm.structure
 import mfm.fluorescence
 

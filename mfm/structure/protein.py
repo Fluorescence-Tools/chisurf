@@ -6,9 +6,9 @@ from copy import copy, deepcopy
 import numpy as np
 import numba as nb
 
-import mfm
-import mfm.structure
+import mfm.structure.structure
 import mfm.math.linalg as la
+from mfm.structure.structure import Structure
 
 
 internal_formats = ['i4', 'i4', 'i4', 'i4', 'f8', 'f8', 'f8']
@@ -245,7 +245,7 @@ def calc_internal_coordinates_bb(structure, **kwargs):
     structure._chi_indices = [list(structure.coord_i['i']).index(x) for x in structure.l_cb if x >= 0]
 
 
-class ProteinCentroid(mfm.structure.Structure):
+class ProteinCentroid(Structure):
     """
 
     Examples
@@ -444,7 +444,7 @@ class ProteinCentroid(mfm.structure.Structure):
         self.update_coordinates()
 
 
-class ProteinBead(mfm.structure.Structure):
+class ProteinBead(Structure):
 
     """
     >>> s_aa = mfm.structure.ProteinBead('./sample_data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True)
