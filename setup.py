@@ -1,7 +1,5 @@
 #!/usr/bin/python
-
 import sys
-
 import numpy
 from Cython.Distutils import build_ext
 from setuptools import setup, find_packages
@@ -50,6 +48,7 @@ extensions = [make_extension(extension) for extension in eList]
 long_description = "ChiSurf"
 with open("README.md", "r") as fh:
     long_description = fh.read()
+
 
 setup(
     version="18.9.1",
