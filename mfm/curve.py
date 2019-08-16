@@ -9,7 +9,6 @@ import numpy as np
 import mfm
 import mfm.decorators
 from mfm.base import Base
-import mfm.fitting.fit
 from mfm.math.signal import get_fwhm
 
 

@@ -1,15 +1,13 @@
+from __future__ import annotations
+
 import math
 from collections import OrderedDict
 from copy import copy, deepcopy
-
 import numpy as np
+import numba as nb
 
-try:
-    import numbapro as nb
-except ImportError:
-    import numba as nb
 import mfm
-from mfm.structure import Structure
+import mfm.structure
 import mfm.math.linalg as la
 
 
@@ -103,7 +101,7 @@ def atom_dist(aDist, resLookUp, xyz, aID):
 
 
 def move_center_of_mass(
-        structure: mfm.structure.Structure,
+        structure: mfm.structure.mfm.structure.Structure,
         all_atoms
 ):
     for i, res in enumerate(structure.residue_ids):
@@ -123,7 +121,7 @@ def move_center_of_mass(
 
 
 def make_residue_lookup_table(
-        structure: mfm.structure.Structure
+        structure: mfm.structure.mfm.structure.Structure
 ):
     l_residue = np.zeros((structure.n_residues, structure.max_atom_residue), dtype=np.int32) - 1
     n = 0
@@ -247,7 +245,7 @@ def calc_internal_coordinates_bb(structure, **kwargs):
     structure._chi_indices = [list(structure.coord_i['i']).index(x) for x in structure.l_cb if x >= 0]
 
 
-class ProteinCentroid(Structure):
+class ProteinCentroid(mfm.structure.Structure):
     """
 
     Examples
@@ -350,7 +348,7 @@ class ProteinCentroid(Structure):
         return new
 
     def __init__(self, *args, **kwargs):
-        Structure.__init__(self, *args, **kwargs)
+        mfm.structure.Structure.__init__(self, *args, **kwargs)
         self.auto_update = kwargs.get('auto_update', True)
         self.coord_i = np.zeros(self.atoms.shape[0], dtype={'names': internal_keys, 'formats': internal_formats})
         self.dist_ca = np.zeros((self.n_residues, self.n_residues), dtype=np.float64)
@@ -446,7 +444,7 @@ class ProteinCentroid(Structure):
         self.update_coordinates()
 
 
-class ProteinBead(Structure):
+class ProteinBead(mfm.structure.Structure):
 
     """
     >>> s_aa = mfm.structure.ProteinBead('./sample_data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True)
@@ -459,7 +457,7 @@ class ProteinBead(Structure):
         return self.coord_i
 
     def __init__(self, *args, **kwargs):
-        Structure.__init__(self, *args, **kwargs)
+        mfm.structure.Structure.__init__(self, *args, **kwargs)
         self.coord_i = np.zeros(self.atoms.shape[0], dtype={'names': internal_keys,
                                                             'formats': internal_formats})
 
