@@ -3,6 +3,7 @@ import os
 import tempfile
 from collections import OrderedDict
 from copy import deepcopy
+from typing import List
 
 import mdtraj as md
 import numpy as np
@@ -17,7 +18,11 @@ cartesian_formats = ['i4', '|S1', 'i4', '|S5', 'i4', '|S5', '|S1', '3f8', 'f4int
 clusterCriteria = ['maxclust', 'inconsistent', 'distance']
 
 
-def onRMSF(structures, selectedNbrs, atomName=None, **kwargs):
+def onRMSF(
+        structures,
+        selectedNbrs: List[int],
+        atomName: str = None,
+        **kwargs):
     """Calculates the root mean square deviation with respect to the average structure
     for a given set of structures. The structures do not have to be aligned.
 
@@ -47,7 +52,11 @@ def onRMSF(structures, selectedNbrs, atomName=None, **kwargs):
     return np.sqrt(msf)
 
 
-def rmsd(structure_a, structure_b, atom_indices=None):
+def rmsd(
+        structure_a: mfm.structure.Structure,
+        structure_b: mfm.structure.Structure,
+        atom_indices=None
+):
     """Calculates the root-mean-squared deviation between two structures. In case the indices of the atoms are
     provided only the, respective atoms are used to calculate the RMSD.
 
@@ -81,7 +90,11 @@ def rmsd(structure_a, structure_b, atom_indices=None):
     return float(np.sqrt(1. / a.shape[0] * ((a - b) ** 2).sum()))
 
 
-def super_impose(structure_ref, structure_align, atom_indices=None):
+def super_impose(
+        structure_ref: mfm.structure.Structure,
+        structure_align: mfm.structure.Structure,
+        atom_indices=None
+):
     """Superimpose two structures
 
     :param structure_ref:
@@ -301,7 +314,7 @@ def count_atoms(topology_dict):
     return n_atoms
 
 
-class Structure(object):#mfm.curve.ExperimentalData):
+class Structure(object):
     """
 
     Attributes

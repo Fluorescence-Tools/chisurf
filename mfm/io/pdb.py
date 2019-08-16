@@ -17,12 +17,17 @@ formats = ['i4', '|U1', 'i4', '|U5',
            'f8', 'f8', 'f8', 'f8']
 
 
-def fetch_pdb_string(id):
+def fetch_pdb_string(
+        id: str
+):
     url = 'http://www.rcsb.org/pdb/files/%s.pdb' % id[:4]
     return urllib.urlopen(url).read()
 
 
-def fetch_pdb(id, **kwargs):
+def fetch_pdb(
+        id: str,
+        **kwargs
+):
     st = fetch_pdb_string(id)
     return parse_string_pdb(st, **kwargs)
 
@@ -53,7 +58,11 @@ def assign_element_to_atom_name(
     return element
 
 
-def parse_string_pdb(string, assignCharge=False, **kwargs):
+def parse_string_pdb(
+        string: str,
+        assignCharge: bool = False,
+        **kwargs
+):
     rows = string.splitlines()
     verbose = kwargs.get('verbose', mfm.verbose)
     atoms = np.zeros(len(rows), dtype={'names': keys, 'formats': formats})
@@ -88,7 +97,10 @@ def parse_string_pdb(string, assignCharge=False, **kwargs):
     return atoms
 
 
-def parse_string_pqr(string, **kwargs):
+def parse_string_pqr(
+        string: str,
+        **kwargs
+):
     rows = string.splitlines()
     verbose = kwargs.get('verbose', mfm.verbose)
     atoms = np.zeros(len(rows), dtype={'names': keys, 'formats': formats})
@@ -118,7 +130,11 @@ def parse_string_pqr(string, **kwargs):
     return atoms
 
 
-def read(filename, assignCharge=False, **kwargs):
+def read(
+        filename: str,
+        assignCharge: bool = False,
+        **kwargs
+):
     """ Open pdb_file and read each line into pdb (a list of lines)
 
     :param filename:
@@ -156,7 +172,13 @@ def read(filename, assignCharge=False, **kwargs):
     return atoms
 
 
-def write(filename, atoms=None, append_model=False, append_coordinates=False, **kwargs):
+def write(
+        filename: str,
+        atoms=None,
+        append_model: bool = False,
+        append_coordinates: bool = False,
+        **kwargs
+):
     """ Writes a structured numpy array containing the PDB-info to a PDB-file
 
     If append_model and append_coordinates are False the file is overwritten. Otherwise the atomic-coordinates
@@ -188,7 +210,11 @@ def write(filename, atoms=None, append_model=False, append_coordinates=False, **
     fp.close()
 
 
-def write_xyz(filename, points, verbose=False):
+def write_xyz(
+        filename: str,
+        points: np.array,
+        verbose: bool = False
+):
     """
     Writes the points as xyz-format file. The xyz-format file can be opened and displayed for instance
     in PyMol
@@ -210,12 +236,20 @@ def write_xyz(filename, points, verbose=False):
     fp.close()
 
 
-def read_xyz(filename):
+def read_xyz(
+        filename: str
+):
     t = np.loadtxt(filename, skiprows=2, usecols=(1, 2, 3), delimiter=" ")
     return t
 
 
-def write_points(filename, points, verbose=False, mode='xyz', density=None):
+def write_points(
+        filename: str,
+        points,
+        verbose: bool = False,
+        mode='xyz',
+        density=None
+):
     if mode == 'pdb':
         atoms = np.empty(len(points), dtype={'names': keys, 'formats': formats})
         atoms['coord'] = points
@@ -271,7 +305,12 @@ def get_atom_index(atoms, chain_identifier, residue_seq_number, atom_name, resid
     return attachment_atom_index
 
 
-def open_dx(density, ro, rn, dr):
+def open_dx(
+        density: np.array,
+        ro: np.array,
+        rn: np.array,
+        dr: np.array
+):
     """ Returns a open_dx string compatible with PyMOL
 
     :param density: 3d-grid with values (densities)
@@ -306,7 +345,17 @@ def open_dx(density, ro, rn, dr):
     return s
 
 
-def write_open_dx(filename, density, r0, nx, ny, nz, dx, dy, dz):
+def write_open_dx(
+        filename: str,
+        density: np.array,
+        r0: np.array,
+        nx: int,
+        ny: int,
+        nz: int,
+        dx: float,
+        dy: float,
+        dz: float
+):
     """Writes a density into a dx-file
 
     :param filename: output filename

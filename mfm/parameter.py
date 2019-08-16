@@ -7,6 +7,7 @@ from PyQt5 import QtCore, QtWidgets, uic
 import mfm
 import mfm.base
 import mfm.fitting.models
+import mfm.fitting.fit
 
 parameter_settings = mfm.cs_settings['parameter']
 
@@ -120,6 +121,56 @@ class Parameter(mfm.base.Base):
     def finalize(self):
         if self.controller:
             self.controller.finalize()
+
+
+class ParameterGroup(mfm.base.Base):
+
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.Fit,
+            **kwargs
+    ):
+        super(ParameterGroup, self).__init__(**kwargs)
+        self.fit = fit
+        self._activeRuns = list()
+        self._chi2 = list()
+        self._parameter = list()
+        self.parameter_names = list()
+
+    def clear(self):
+        self._chi2 = list()
+        self._parameter = list()
+
+    def save_txt(
+            self,
+            filename: str,
+            sep: str = '\t'
+    ):
+        fp = open(filename, 'w')
+        s = ""
+        for ph in self.parameter_names:
+            s += ph + sep
+        s += "\n"
+        for l in self.values.T:
+            for p in l:
+                s += "%.5f%s" % (p, sep)
+            s += "\n"
+        fp.write(s)
+        fp.close()
+
+    @property
+    def values(self) -> np.array:
+        try:
+            re = np.vstack(self._parameter)
+            re = np.column_stack((re, self.chi2s))
+            return re.T
+        except ValueError:
+            return np.array([[0], [0]]).T
+
+    @property
+    def chi2s(self) -> np.array:
+        return np.hstack(self._chi2)
+
 
 
 class FittingParameter(Parameter):

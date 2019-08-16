@@ -6,7 +6,14 @@ import numpy as np
 import mfm
 
 
-def save_xy(filename, x, y, verbose=False, fmt="%.3f\t%.3f", header=None):
+def save_xy(
+        filename: str,
+        x: np.array,
+        y: np.array,
+        verbose: bool = False,
+        fmt: str = "%.3f\t%.3f",
+        header_string: str = None
+):
     """
     Saves data x, y to file in format (csv). x and y
     should have the same lenght.
@@ -21,8 +28,8 @@ def save_xy(filename, x, y, verbose=False, fmt="%.3f\t%.3f", header=None):
     if verbose:
         print("Writing histogram to file: %s" % filename)
     fp = open(filename, 'w')
-    if header is not None:
-        fp.write(header)
+    if header_string is not None:
+        fp.write(header_string)
     for p in zip(x, y):
         fp.write(fmt % (p[0], p[1]))
     fp.close()
@@ -103,7 +110,11 @@ class Csv(object):
         """
         return self._filename
 
-    def load(self, filename, **kwargs):
+    def load(
+            self,
+            filename: str,
+            **kwargs
+    ):
         """
         This method loads a filename to the `Csv` object
         :param filename: string specifying the file
