@@ -686,11 +686,11 @@ class FRETrateModel(FRETModel):
 
     @property
     def fret_rate_spectrum(self):
-        fret_rates = mfm.fluorescence.general.distance2fretrate(self.fret_rates.distance,
-                                                                           self.fret_parameters.forster_radius,
-                                                                           self.fret_parameters.tauD0,
-                                                                           self.fret_parameters.kappa2
-                                                                           )
+        fret_rates = mfm.fluorescence.general.distance_to_fret_rate_constant(self.fret_rates.distance,
+                                                                             self.fret_parameters.forster_radius,
+                                                                             self.fret_parameters.tauD0,
+                                                                             self.fret_parameters.kappa2
+                                                                             )
         amplitudes = self.fret_rates.amplitude
         r = np.ravel(np.column_stack((amplitudes, fret_rates)))
         return r

@@ -518,7 +518,14 @@ class EtModelFree(Model, Phasor, LCurve, DistanceDistribution):
         lt_d = d0_lifetime_spectrum
         xd, ld = lt_d.reshape((lt_d.shape[0]/2, 2)).T
 
-        ekFRET = np.exp(mfm.fluorescence.general.distance2rate(rDA, self.kappa2, self.tau0, self.R0))
+        ekFRET = np.exp(
+            mfm.fluorescence.general.distance_to_fret_rate_constant(
+                rDA,
+                self.R0,
+                self.tau0,
+                self.kappa2
+            )
+        )
         ekD = np.exp(1. / ld)
 
         rates = np.log(np.einsum('i,j', ekD, ekFRET))

@@ -122,7 +122,7 @@ class Csv(object):
         :param verbose: The method is verbose if verbose is set to True of the verbose attribute of the instance is
         True.
         """
-        verbose = kwargs.get('verbose', self.verbose)
+        verbose = kwargs.pop('verbose', self.verbose)
         use_header = kwargs.pop('use_header', self.use_header)
         skiprows = kwargs.pop('skiprows', self.skiprows)
         header = 'infer' if use_header else None
