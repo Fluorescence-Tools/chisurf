@@ -1,9 +1,8 @@
 language: python
 python:
   # We don't actually use the Travis Python, but this keeps it organized.
-  - "2.7"
-  #- "3.5"
-  #- "3.6"
+  - "3.7"
+
 install:
   - sudo apt-get update
   # We do this conditionally because it saves us some downloading if the
@@ -21,10 +20,9 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  # Replace dep1 dep2 ... with your dependencies
-  - conda config --add channels conda-forge
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION pyqt pyyaml python-slugify emcee mdtraj ipython pyqtgraph qtconsole qscintilla2 pyopengl numpy numba scipy sympy numexpr pytables matplotlib cython
-  - source activate test-environment
+  - conda config --add channels conda-forge fluorescence-tools tpeulen
+  - conda create -q --file=environment.yaml
+  - source activate chisurf
   - python setup.py install
 
 script:

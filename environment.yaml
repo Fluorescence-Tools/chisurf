@@ -1,7 +1,10 @@
-name: chisurf_current
+name: chisurf
 
 channels:
-    - conda-forge
+  - fluorescence-tools
+  - tpeulen
+  - conda-forge
+  - defaults
 
 dependencies:
     - python=3.7
