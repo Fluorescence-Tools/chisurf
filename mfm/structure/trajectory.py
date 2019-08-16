@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 import os
 import tempfile
@@ -5,8 +7,8 @@ import tempfile
 import mdtraj
 import numpy as np
 
-from mfm import Base
-from mfm.structure import Structure, average
+import mfm.base
+import mfm.structure
 
 
 class Universe(object):
@@ -33,7 +35,7 @@ class Universe(object):
         self.scaling = []
 
     def getEnergy(self, structure=None):
-        if isinstance(structure, Structure):
+        if isinstance(structure, mfm.structure.Structure):
             for p in self.potentials:
                 p.structure = structure
         Es = self.getEnergies()
@@ -41,7 +43,7 @@ class Universe(object):
         return E
 
     def getEnergies(self, structure=None):
-        if isinstance(structure, Structure):
+        if isinstance(structure, mfm.structure.Structure):
             for p in self.potentials:
                 p.structure = structure
 
@@ -50,17 +52,17 @@ class Universe(object):
         return scales * Es
 
 
-class TrajectoryFile(Base, mdtraj.Trajectory):
+class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
 
     """
-    Creates an Trajectory of Structures given a HDF5-File using mdtraj.HDF5TrajectoryFile
+    Creates an Trajectory of mfm.structure.Structures given a HDF5-File using mdtraj.HDF5TrajectoryFile
 
     Parameters
     ----------
 
-    structure : string / Structure
+    structure : string / mfm.structure.Structure
         determines the topology
-        is either a string containing the filename of a PDB-File or an instance of Structure()
+        is either a string containing the filename of a PDB-File or an instance of mfm.structure.Structure()
         Obligatory in write mode, not needed in reading mode
 
     filename_hdf : string
@@ -80,7 +82,7 @@ class TrajectoryFile(Base, mdtraj.Trajectory):
     See Also
     --------
 
-    mfm.Structure
+    mfm.mfm.structure.Structure
 
     Examples
     --------
@@ -88,10 +90,10 @@ class TrajectoryFile(Base, mdtraj.Trajectory):
     Making new h5-Trajectory file
 
 import mfm.structure    >>> import mfm
-    >>> s = mfm.structure.Structure('./sample_data/modelling/trajectory/h5-file/T4L_Topology.pdb', verbose=True, make_coarse=False)
+    >>> s = mfm.structure.mfm.structure.Structure('./sample_data/modelling/trajectory/h5-file/T4L_Topology.pdb', verbose=True, make_coarse=False)
     >>> t = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', s, mode='w')
     >>> t[0]
-    <mfm.structure.structure.Structure at 0x11f34e10>
+    <mfm.structure.structure.mfm.structure.Structure at 0x11f34e10>
     >>> print(t[0])
     ATOM      1    N MET     1     -10.750  14.401  -5.002  0.00  0.00             N
     ATOM      2   H1 MET     1     -11.310  14.080  -4.226  0.00  0.00             H
@@ -105,9 +107,9 @@ import mfm.structure    >>> import mfm
     >>> import mfm
     >>> t = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', mode='r', stride=1)
     >>> print(t[0:3])
-    [<mfm.structure.structure.Structure at 0x1345d5d0>,
-    <mfm.structure.structure.Structure at 0x1345d610>,
-    <mfm.structure.structure.Structure at 0x132d2230>]
+    [<mfm.structure.structure.mfm.structure.Structure at 0x1345d5d0>,
+    <mfm.structure.structure.mfm.structure.Structure at 0x1345d610>,
+    <mfm.structure.structure.mfm.structure.Structure at 0x132d2230>]
 
     Name of the trajectory
 
@@ -171,7 +173,7 @@ import mfm.structure    >>> import mfm
             mdtraj.Trajectory.__init__(self, xyz=p_object.xyz, topology=p_object.topology)
             self._filename = kwargs.get('filename', tempfile.mktemp(".h5"))
 
-        if isinstance(p_object, Structure):
+        if isinstance(p_object, mfm.structure.Structure):
             self._filename = kwargs.get('filename', tempfile.mktemp(".h5"))
             p_object.write(pdb_tmp)
             self._mdtraj = mdtraj.Trajectory.load(pdb_tmp)
@@ -180,7 +182,7 @@ import mfm.structure    >>> import mfm
             structure = p_object
         else:
             self._mdtraj[0].save_pdb(pdb_tmp)
-            structure = Structure(pdb_tmp, verbose=self.verbose)
+            structure = mfm.structure.Structure(pdb_tmp, verbose=self.verbose)
         self.structure = kwargs.get('structure', structure)
 
         if self.center:
@@ -293,9 +295,9 @@ import mfm.structure    >>> import mfm
     @property
     def average(self):
         """
-        The average structure (:py:class:`~mfm.structure.Structure`) of the trajectory
+        The average structure (:py:class:`~mfm.structure.mfm.structure.Structure`) of the trajectory
         """
-        return average(self[:len(self)])
+        return mfm.structure.average(self[:len(self)])
 
     @property
     def values(self):
@@ -327,9 +329,9 @@ import mfm.structure    >>> import mfm
         return np.vstack([rmsd, drmsd, energy, chi2])
 
     def append(self, xyz, update_rmsd=True, energy=np.inf, energy_fret=np.inf, verbose=True):
-        """Append a structure of type :py::class`mfm.Structure` to the trajectory
+        """Append a structure of type :py::class`mfm.mfm.structure.Structure` to the trajectory
 
-        :param structure: Structure
+        :param structure: mfm.structure.Structure
         :param update_rmsd: bool
         :param energy: float
             Energy of the system
@@ -349,7 +351,7 @@ import mfm.structure    >>> import mfm
         <mdtraj.Trajectory with 93 frames, 2495 atoms, 164 residues, without unitcells at 0x11762b70>
         """
         verbose = verbose or self.verbose
-        if isinstance(xyz, Structure):
+        if isinstance(xyz, mfm.structure.Structure):
             xyz = xyz.xyz
 
         xyz = xyz.reshape((1, xyz.shape[0], 3)) / 10.0
@@ -386,9 +388,9 @@ import mfm.structure    >>> import mfm
         >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', mode='r', stride=1)
         >>> for s in t:
         >>>     print(s)
-        [<mfm.structure.structure.Structure object at 0x12FAE330>, <mfm.structure.structure.Structure object at 0x12FAE3B0>, <li
-        b.structure.Structure.Structure object at 0x11852070>, <mfm.structure.structure.Structure object at 0x131052D0>, <mfm.st
-        ructure.Structure.Structure object at 0x13195270>, <mfm.structure.structure.Structure object at 0x13228210>]
+        [<mfm.structure.structure.mfm.structure.Structure object at 0x12FAE330>, <mfm.structure.structure.mfm.structure.Structure object at 0x12FAE3B0>, <li
+        b.structure.mfm.structure.Structure.mfm.structure.Structure object at 0x11852070>, <mfm.structure.structure.mfm.structure.Structure object at 0x131052D0>, <mfm.st
+        ructure.mfm.structure.Structure.mfm.structure.Structure object at 0x13195270>, <mfm.structure.structure.mfm.structure.Structure object at 0x13228210>]
         """
         for i in range(len(self)):
             yield self[i]
@@ -400,7 +402,7 @@ import mfm.structure    >>> import mfm
 
         Returns
         -------
-        next : Structure
+        next : mfm.structure.Structure
             Returns the next structure in the trajectory
 
         Example
@@ -463,4 +465,5 @@ import mfm.structure    >>> import mfm
                 return s
 
             # make a generator instead of a list
-            return [make_structure(i) for i in xrange(start, stop, step)]
+            return [make_structure(i) for i in range(start, stop, step)]
+

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import weakref
 from typing import List
-
+import numpy as np
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets, uic
 
@@ -127,7 +129,7 @@ class ParameterGroup(mfm.base.Base):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: object, #mfm.fitting.fit.Fit, # problem with circular import
             **kwargs
     ):
         super(ParameterGroup, self).__init__(**kwargs)
@@ -178,7 +180,7 @@ class FittingParameter(Parameter):
     def __init__(
             self,
             link=None,
-            model: mfm.fitting.models.Model = None,
+            model: object = None, #mfm.fitting.models.Model = None, # circular import problem
             lb: float = -10000,
             ub: float = 10000,
             fixed: bool = False,

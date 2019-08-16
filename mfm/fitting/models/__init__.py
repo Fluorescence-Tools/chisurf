@@ -12,10 +12,12 @@ The :py:mod:`.models`
 
 
 """
+from __future__ import annotations
+
 from PyQt5 import QtWidgets
 
 import mfm.plots as plots
-from mfm.curve import Curve
+import mfm.curve
 import mfm.parameter
 
 
@@ -115,7 +117,7 @@ class Model(mfm.parameter.ParameterGroup):
         return s
 
 
-class ModelCurve(Model, Curve):
+class ModelCurve(Model, mfm.curve.Curve):
 
     @property
     def n_points(self):

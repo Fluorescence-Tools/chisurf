@@ -1,5 +1,6 @@
-import os
+from __future__ import annotations
 
+import os
 import emcee
 import numba as nb
 import numpy as np

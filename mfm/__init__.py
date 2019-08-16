@@ -1,3 +1,4 @@
+from __future__ import annotations
 from collections import Iterable
 from typing import List
 
@@ -30,8 +31,9 @@ __version__ = cs_settings['version']
 __name__ = cs_settings['name']
 working_path = ''
 
-import mfm.fitting.models
+import mfm.fitting
 import mfm.curve
+import mfm.fitting.models
 from mfm.base import *
 import mfm.structure
 import mfm.fluorescence

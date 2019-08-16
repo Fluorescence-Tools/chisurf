@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pickle
 import threading
 from collections import OrderedDict
@@ -8,6 +10,7 @@ from PyQt5 import QtCore, QtWidgets, uic
 import mfm
 from mfm import plots
 from mfm.curve import Curve
+import mfm.fitting.fit
 from mfm.fitting.models import Model, ModelWidget
 from mfm.parameter import GlobalParameter
 
@@ -179,7 +182,7 @@ class GlobalFitModel(Model, Curve):
 
     def append_fit(
             self,
-            fit: mfm.fitting.Fit
+            fit: mfm.fitting.fit.Fit
     ):
         if not fit in self.fits:
             self.fits.append(fit)
