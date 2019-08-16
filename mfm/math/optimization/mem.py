@@ -62,7 +62,9 @@ def maxent(A, b, nu, **kwargs):
     Q = norm_chi2-0.5*nu*norm_S
 
     if verbose:
-        print 'iter #%d \tchi2 = %.6f  S = %.4f  Q = %.6f' % (norm_chi2, norm_S, Q, dgrad)
+        print(
+            'iter #%d \tchi2 = %.6f  S = %.4f  Q = %.6f' % (norm_chi2, norm_S, Q, dgrad)
+        )
 
     return x
 
