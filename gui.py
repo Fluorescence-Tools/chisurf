@@ -324,8 +324,8 @@ class Main(QMainWindow):
         self.lifetime_calc = mfm.tools.FRETCalculator()
         self.actionCalculator.triggered.connect(self.lifetime_calc.show)
 
-        #self.kappa2_dist = mfm.tools.kappa2dist.Kappa2Dist()
-        #self.connect(self.actionKappa2_Distribution, QtCore.SIGNAL('triggered()'), self.kappa2_dist.show)
+        self.kappa2_dist = mfm.tools.kappa2dist.Kappa2Dist()
+        self.actionKappa2_Distribution.triggered.connect(self.kappa2_dist.show)
 
         #self.decay_generator = mfm.tools.dye_diffusion.TransientDecayGenerator()
         #self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)

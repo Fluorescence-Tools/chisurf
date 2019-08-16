@@ -566,19 +566,20 @@ def get_chi2(parameter, model, reduced=True):
         return chi2
 
 
-def chi2_max(fit=None, conf_level=0.95, **kwargs):
+def chi2_max(
+        chi2_value: float = 1.0,
+        number_of_parameters: int = 1,
+        nu: int = 1,
+        conf_level: float = 0.95
+) -> float:
     """Calculate the maximum chi2r of a fit given a certain confidence level
 
-    :param fit:
-    :return:
+    :param chi2_value: the chi2 value
+    :param number_of_parameters: the number of parameters of the model
+    :param conf_level: the confidence level that is used to calculate the maximum chi2
+    :param nu: the number of free degrees of freedom (number of observations - number of model parameters)
     """
-    try:
-        npars = kwargs.get('npars', len(fit.model.parameter_values))
-        nu = kwargs.get('nu', fit.model.n_points)
-        chi2_min = kwargs.get('chi2_min', fit.chi2r)
-        return chi2_min * (1.0 + float(npars) / nu * fdist.isf(1. - conf_level, npars, nu))
-    except:
-        return np.inf
+    return chi2_value * (1.0 + float(number_of_parameters) / nu * fdist.isf(1. - conf_level, number_of_parameters, nu))
 
 
 def lnprior(parameter_values, fit, **kwargs):
