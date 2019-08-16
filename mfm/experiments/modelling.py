@@ -1,10 +1,9 @@
-from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtWidgets
 
 import mfm
 import mfm.structure.widgets
 from mfm.experiments import Reader
 from mfm.io.widgets import PDBLoad
-import mfm.widgets as widgets
 
 
 class LoadStructure(QtWidgets.QWidget, Reader):

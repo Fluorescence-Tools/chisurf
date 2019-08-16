@@ -3,11 +3,11 @@ import itertools
 import numexpr as ne
 import numpy as np
 import tables
+from mfm.fluorescence.fps.dynamic import DiffusionSimulation
 
 import mfm
 from mfm.curve import Curve
 from mfm.parameter import ParameterGroup, FittingParameter
-from mfm.fluorescence.fps.dynamic import DiffusionSimulation
 
 
 def simulate_decays(dyes, decay_parameter, simulation_parameter, quenching_parameter, save_decays=True,
@@ -320,21 +320,21 @@ class DyeDecay(Curve):
         dts = kwargs.get('photons', self.photon_trace)
 
         if verbose:
-            print "Making histogram"
-            print "================"
-            print "Decay-mode: %s" % decay_mode
+            print("Making histogram")
+            print("================")
+            print("Decay-mode: %s" % decay_mode)
 
         if decay_mode == 'photon':
             if verbose:
-                print tac_range
-                print "range: (%.2f..%.2f)" % tac_range
-                print "dt_tac: %s" % dt_tac
+                print(tac_range)
+                print("range: (%.2f..%.2f)" % tac_range)
+                print("dt_tac: %s" % dt_tac)
             y, x = np.histogram(dts, bins=np.arange(tac_range[0], tac_range[1], dt_tac))
             x = x[:-1]
         else:
             if verbose:
-                print "nbins: %s" % n_tac
-                print "dt_tac: %s" % dt_tac
+                print("nbins: %s" % n_tac)
+                print("dt_tac: %s" % dt_tac)
             x = np.arange(n_tac) * dt_tac
             y = self._decays
 
@@ -404,7 +404,12 @@ class FRETDecay(DyeDecay):
         kappa2 = self.fret_parameter.kappa2
         tau0 = self.fret_parameter.tauD0
         forster_radius = self.fret_parameter.forster_radius
-        kfret = mfm.fluorescence.general.distance2rate(self.dRDA, kappa2, tau0, forster_radius)
+        kfret = mfm.fluorescence.general.distance_to_fret_rate_constant(
+            self.dRDA,
+            forster_radius,
+            tau0,
+            kappa2
+        )
         return kfret
 
     @property

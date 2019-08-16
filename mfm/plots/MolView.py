@@ -2,11 +2,12 @@ __author__ = 'thomas'
 import os
 import sys
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from OpenGL.GL import *
-from PyQt5.QtOpenGL import *
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtCore import Qt
-#import pymol2
+from PyQt5.QtOpenGL import *
+
+# import pymol2
 from mfm.plots.plotbase import Plot
 
 

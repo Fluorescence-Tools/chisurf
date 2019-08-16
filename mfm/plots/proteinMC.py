@@ -1,21 +1,19 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
 #from guiqwt.plot import CurveDialog
 #from guiqwt.builder import make
-import numpy as np
 
-from mfm.plots.plotbase import Plot
-from PyQt5 import Qt, QtCore, QtGui, QtWidgets, uic
 import numpy as np
-import mfm
-from mfm.plots import plotbase
 import pyqtgraph as pg
+from PyQt5 import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
+
+import mfm
+from mfm.plots.plotbase import Plot
+
 pyqtgraph_settings = mfm.cs_settings['gui']['plot']["pyqtgraph"]
 for setting in mfm.cs_settings['gui']['plot']['pyqtgraph']:
     pg.setConfigOption(setting, mfm.cs_settings['gui']['plot']['pyqtgraph'][setting])
 colors = mfm.cs_settings['gui']['plot']['colors']
 color_scheme = mfm.colors
-import matplotlib.colors as mpl_colors
 
 
 class ProteinMCPlot(Plot):

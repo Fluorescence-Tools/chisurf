@@ -1,6 +1,6 @@
-from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtWidgets
 
-from mfm import Base
+from mfm.base import Base
 
 
 class Plot(QtWidgets.QWidget, Base):

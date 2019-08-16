@@ -2,13 +2,13 @@ import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import mfm
+import mfm.fluorescence
+import mfm.fluorescence.general
+import mfm.math
 from mfm import plots
 from mfm.fitting.models import Model
-import mfm.fluorescence
-import mfm.math
 from mfm.math.optimization import solve_nnls, solve_richardson_lucy, maxent
 from .tcspc import LifetimeModel
-import mfm.fluorescence.general
 
 
 class Phasor(object):
@@ -518,7 +518,14 @@ class EtModelFree(Model, Phasor, LCurve, DistanceDistribution):
         lt_d = d0_lifetime_spectrum
         xd, ld = lt_d.reshape((lt_d.shape[0]/2, 2)).T
 
-        ekFRET = np.exp(mfm.fluorescence.general.distance2rate(rDA, self.kappa2, self.tau0, self.R0))
+        ekFRET = np.exp(
+            mfm.fluorescence.general.distance_to_fret_rate_constant(
+                rDA,
+                self.R0,
+                self.tau0,
+                self.kappa2
+            )
+        )
         ekD = np.exp(1. / ld)
 
         rates = np.log(np.einsum('i,j', ekD, ekFRET))

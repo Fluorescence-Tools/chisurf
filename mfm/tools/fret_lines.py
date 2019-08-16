@@ -1,7 +1,7 @@
 import numpy as np
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from guiqwt.plot import CurveDialog
+from PyQt5 import QtWidgets, uic
 from guiqwt.builder import make
+from guiqwt.plot import CurveDialog
 
 import mfm
 import mfm.fitting.models.tcspc as fret_models

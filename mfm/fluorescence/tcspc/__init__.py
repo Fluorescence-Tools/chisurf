@@ -1,5 +1,5 @@
-from .tcspc import *
 from . import convolve
+from .tcspc import *
 
 
 def weights(y):

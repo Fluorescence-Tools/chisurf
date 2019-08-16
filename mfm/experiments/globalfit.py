@@ -1,8 +1,9 @@
-from PyQt5 import QtGui, QtWidgets
 from collections import OrderedDict
 
-from mfm.experiments import Reader
+from PyQt5 import QtWidgets
+
 import mfm
+from mfm.experiments import Reader
 
 
 class GlobalFitSetup(Reader, QtWidgets.QWidget):

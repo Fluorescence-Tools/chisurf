@@ -1,10 +1,14 @@
-name: chisurf_current
+name: chisurf
 
 channels:
-    - conda-forge
+  - fluorescence-tools
+  - tpeulen
+  - conda-forge
+  - defaults
 
 dependencies:
     - python=3.7
+    - cython
     - pyyaml
     - python-slugify
     - numpy
@@ -23,8 +27,6 @@ dependencies:
     - qscintilla2
     - pyopengl
     - qtconsole
-    - qsci_editor
-    - keras
     - python-docx
     - chinet
     - labellib

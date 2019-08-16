@@ -1,7 +1,5 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
-from guiqwt.plot import CurveDialog
-from guiqwt.builder import make
-import numpy as np
+from PyQt5 import QtCore, QtWidgets
+
 from mfm.plots.plotbase import Plot
 
 

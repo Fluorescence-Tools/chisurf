@@ -1,13 +1,15 @@
+import numbers
 import os.path
-from typing import List
 import zlib
 from copy import copy
+from typing import List
+
 import numpy as np
+
 import mfm
+import mfm.decorators
 from mfm.base import Base
 from mfm.math.signal import get_fwhm
-import mfm.decorators
-import numbers
 
 
 class Data(Base):
@@ -375,7 +377,7 @@ class DataGroup(list, Base):
 
     def append(
             self,
-            dataset: mfm.curve.Data
+            dataset: Data
     ):
         if isinstance(dataset, ExperimentalData):
             list.append(self, dataset)
@@ -469,54 +471,4 @@ class ExperimentDataCurveGroup(ExperimentDataGroup, DataCurveGroup):
     def __init__(self, *args, **kwargs):
         ExperimentDataGroup.__init__(self, *args, **kwargs)
         DataCurveGroup.__init__(self, *args, **kwargs)
-
-
-class ParameterGroup(Base):
-
-    def __init__(
-            self,
-            fit: mfm.fitting.fit.Fit,
-            **kwargs
-    ):
-        super(ParameterGroup, self).__init__(**kwargs)
-        self.fit = fit
-        self._activeRuns = list()
-        self._chi2 = list()
-        self._parameter = list()
-        self.parameter_names = list()
-
-    def clear(self):
-        self._chi2 = list()
-        self._parameter = list()
-
-    def save_txt(
-            self,
-            filename: str,
-            sep: str = '\t'
-    ):
-        fp = open(filename, 'w')
-        s = ""
-        for ph in self.parameter_names:
-            s += ph + sep
-        s += "\n"
-        for l in self.values.T:
-            for p in l:
-                s += "%.5f%s" % (p, sep)
-            s += "\n"
-        fp.write(s)
-        fp.close()
-
-    @property
-    def values(self) -> np.array:
-        try:
-            re = np.vstack(self._parameter)
-            re = np.column_stack((re, self.chi2s))
-            return re.T
-        except ValueError:
-            return np.array([[0], [0]]).T
-
-    @property
-    def chi2s(self) -> np.array:
-        return np.hstack(self._chi2)
-
 

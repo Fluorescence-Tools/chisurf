@@ -1,18 +1,16 @@
-import tempfile
-import yaml
-from collections import defaultdict, OrderedDict
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from numpy import *
-import sympy
-#from PyQt5.QtWebKitWidgets import QWebView
-from PyQt5.QtCore import QFile, QFileInfo, QTextStream, QUrl
-from sympy.printing.latex import latex
 import os
+import tempfile
+from collections import defaultdict, OrderedDict
+import sympy
+import yaml
+from PyQt5 import QtCore, QtWidgets, uic
+from PyQt5.QtCore import QFile, QFileInfo, QTextStream, QUrl
+from numpy import *
+from sympy.printing.latex import latex
 
 import mfm
 from mfm.fitting.models import ModelWidget, ModelCurve
 from mfm.parameter import FittingParameter, ParameterGroup
-
 
 try:
     from re import Scanner

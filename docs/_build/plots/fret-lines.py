@@ -1,8 +1,7 @@
 import matplotlib.pyplot as p
-
-import mfm.fitting.models.tcspc as m
 from lib.tools.fret_lines import FRETLineGenerator
 
+import mfm.fitting.models.tcspc as m
 
 R1 = 80
 R2 = 35

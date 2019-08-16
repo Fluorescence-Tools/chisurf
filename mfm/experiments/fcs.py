@@ -1,9 +1,9 @@
-from PyQt5 import QtGui, QtWidgets
 import numpy as np
+from PyQt5 import QtWidgets
 
 import mfm
-from . import Reader
 from mfm.io.widgets import CsvWidget
+from . import Reader
 
 settings = mfm.cs_settings['correlator']
 
@@ -13,8 +13,7 @@ class FCS(Reader, QtWidgets.QWidget):
     name = "FCS"
 
     def __init__(self, experiment, *args, **kwargs):
-        Reader.__init__(self, *args, **kwargs)
-        QtWidgets.QWidget.__init__(self)
+        super(FCS, self).__init__(*args, **kwargs)
         self.experiment = experiment
         self.hide()
         self.parent = kwargs.get('parent', None)
@@ -79,9 +78,7 @@ class FCSCsv(FCS, CsvWidget):
     name = 'CSV'
 
     def __init__(self, experiment, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        FCS.__init__(self, experiment)
-        CsvWidget.__init__(self, **kwargs)
+        super(FCSCsv, self).__init__(experiment, **kwargs)
         self.skiprows = 0
         self.use_header = False
         self.spinBox.setEnabled(False)
@@ -92,12 +89,17 @@ class FCSCsv(FCS, CsvWidget):
         d = mfm.curve.DataCurve(setup=self)
         d.setup = self
 
-        self.load(filename=filename, skiprows=0, use_header=None, verbose=mfm.verbose)
+        CsvWidget.load(
+            self,
+            filename=filename,
+            skiprows=0,
+            use_header=None,
+            verbose=mfm.verbose
+        )
 
         x, y = self.data[0], self.data[1]
         w = self.data[2]
 
         d.set_data(self.filename, x, y, w)
         return d
-
 

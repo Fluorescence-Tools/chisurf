@@ -1,15 +1,16 @@
-import numpy as np
-import os
-import json
-import tempfile
-from progressbar import Bar, ETA, ProgressBar, RotatingMarker, Percentage
 import argparse
+import json
+import os
+import tempfile
+
+import numpy as np
+from progressbar import Bar, ETA, ProgressBar, RotatingMarker, Percentage
 
 import mfm
 from mfm.math.rand import weighted_choice, mc
-from mfm.structure.trajectory import TrajectoryFile, Universe
 from mfm.structure import ProteinCentroid
 from mfm.structure.potential import potentials
+from mfm.structure.trajectory import TrajectoryFile, Universe
 
 verbose = False
 

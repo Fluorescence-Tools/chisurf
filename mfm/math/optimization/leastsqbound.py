@@ -4,8 +4,8 @@ import warnings
 
 from numpy import array, take, eye, triu, transpose, dot
 from numpy import empty_like, sqrt, cos, sin, arcsin
-from scipy.optimize.minpack import _check_func
 from scipy.optimize import _minpack, leastsq
+from scipy.optimize.minpack import _check_func
 
 
 def _internal2external_grad(xi, bounds):

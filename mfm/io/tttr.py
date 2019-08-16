@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import fnmatch
-from collections import OrderedDict
-import tables
 import tempfile
-import numpy as np
+from collections import OrderedDict
+
 import numba as nb
+import numpy as np
+import tables
+
 import mfm
+
 photon_settings = mfm.cs_settings['photons']
 
 

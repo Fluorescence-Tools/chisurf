@@ -1,10 +1,10 @@
-# coding=utf-8
-import numpy as np
+from __future__ import annotations
+
 import os
 import sys
-import sip
 import slugify
-
+import numpy as np
+import sip
 sip.setapi('QDate', 2)
 sip.setapi('QDateTime', 2)
 sip.setapi('QString', 2)
@@ -14,7 +14,6 @@ sip.setapi('QUrl', 2)
 sip.setapi('QVariant', 2)
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication
-
 import mfm.ui.resource
 import tools
 
@@ -325,8 +324,8 @@ class Main(QMainWindow):
         self.lifetime_calc = mfm.tools.FRETCalculator()
         self.actionCalculator.triggered.connect(self.lifetime_calc.show)
 
-        #self.kappa2_dist = mfm.tools.kappa2dist.Kappa2Dist()
-        #self.connect(self.actionKappa2_Distribution, QtCore.SIGNAL('triggered()'), self.kappa2_dist.show)
+        self.kappa2_dist = mfm.tools.kappa2dist.Kappa2Dist()
+        self.actionKappa2_Distribution.triggered.connect(self.kappa2_dist.show)
 
         #self.decay_generator = mfm.tools.dye_diffusion.TransientDecayGenerator()
         #self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)

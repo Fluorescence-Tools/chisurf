@@ -1,8 +1,10 @@
-from PyQt5 import Qt, QtCore, QtGui, QtWidgets, uic
 import numpy as np
+import pyqtgraph as pg
+from PyQt5 import QtWidgets, uic
+
 import mfm
 from mfm.plots import plotbase
-import pyqtgraph as pg
+
 pyqtgraph_settings = mfm.cs_settings['gui']['plot']["pyqtgraph"]
 for setting in mfm.cs_settings['gui']['plot']['pyqtgraph']:
     pg.setConfigOption(setting, mfm.cs_settings['gui']['plot']['pyqtgraph'][setting])

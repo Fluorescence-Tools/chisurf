@@ -10,6 +10,9 @@ The module :py:mod:`.mfm.potential` provides a set of potentials. The module :py
 provides a set of functions and classes to work with structures and trajectories.
 
 """
-from mfm.structure.structure import *
-from mfm.structure.protein import *
+from __future__ import annotations
+
+import mfm.structure.structure
 import mfm.structure.trajectory
+import mfm.structure.protein
+

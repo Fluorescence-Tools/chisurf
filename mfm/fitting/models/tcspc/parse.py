@@ -1,11 +1,12 @@
 import os
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from .. import ModelWidget
-from mfm.fitting.widgets import FittingControllerWidget
-from .. import parse
-from mfm.fitting.models.tcspc import tcspc
 import mfm.fitting.models.tcspc.nusiance
+from mfm.fitting.models.tcspc import tcspc
+from mfm.fitting.widgets import FittingControllerWidget
+from .. import ModelWidget
+from .. import parse
 
 
 class ParseDecayModel(parse.ParseModel):

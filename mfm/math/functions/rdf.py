@@ -1,8 +1,11 @@
+from math import exp, log
+
 import numpy as np
 from numba import jit
-from math import exp, log, sqrt, pi
+
 from . import i0
-from . distributions import normal_distribution
+from .distributions import normal_distribution
+
 eps = 1e-8
 
 

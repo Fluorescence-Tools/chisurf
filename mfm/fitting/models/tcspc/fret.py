@@ -4,15 +4,15 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import mfm
 import mfm.math
 from mfm import plots
-from mfm.fitting.widgets import FittingControllerWidget
 from mfm.fitting.models import ModelWidget
 from mfm.fitting.models.tcspc.nusiance import GenericWidget, CorrectionsWidget
-from mfm.fitting.models.tcspc.tcspc import LifetimeModel
-from mfm.fluorescence import distribution2rates, rates2lifetimes, rda_axis
-from mfm.fluorescence.widgets import AnisotropyWidget
-from mfm.fluorescence.tcspc.convolve import ConvolveWidget
-from mfm.parameter import FittingParameterWidget, FittingParameter, ParameterGroup
 from mfm.fitting.models.tcspc.tcspc import Lifetime, LifetimeWidget, LifetimeModelWidgetBase
+from mfm.fitting.models.tcspc.tcspc import LifetimeModel
+from mfm.fitting.widgets import FittingControllerWidget
+from mfm.fluorescence import distribution2rates, rates2lifetimes, rda_axis
+from mfm.fluorescence.tcspc.convolve import ConvolveWidget
+from mfm.fluorescence.widgets import AnisotropyWidget
+from mfm.parameter import FittingParameter, ParameterGroup
 
 fret_settings = mfm.cs_settings['fret']
 
@@ -686,11 +686,11 @@ class FRETrateModel(FRETModel):
 
     @property
     def fret_rate_spectrum(self):
-        fret_rates = mfm.fluorescence.general.distance2fretrate(self.fret_rates.distance,
-                                                                           self.fret_parameters.forster_radius,
-                                                                           self.fret_parameters.tauD0,
-                                                                           self.fret_parameters.kappa2
-                                                                           )
+        fret_rates = mfm.fluorescence.general.distance_to_fret_rate_constant(self.fret_rates.distance,
+                                                                             self.fret_parameters.forster_radius,
+                                                                             self.fret_parameters.tauD0,
+                                                                             self.fret_parameters.kappa2
+                                                                             )
         amplitudes = self.fret_rates.amplitude
         r = np.ravel(np.column_stack((amplitudes, fret_rates)))
         return r

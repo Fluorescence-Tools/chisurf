@@ -2,8 +2,8 @@
 
 
 """
-import mfm.math.linalg
-import mfm.math.reaction
 import mfm.math.functions
-import mfm.math.signal
+import mfm.math.linalg
 import mfm.math.rand
+import mfm.math.reaction
+import mfm.math.signal

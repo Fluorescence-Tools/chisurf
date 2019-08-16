@@ -1,4 +1,5 @@
 import numpy as np
+
 import mfm
 from mfm.structure import Structure
 

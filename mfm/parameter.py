@@ -1,10 +1,15 @@
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-import mfm
-import pyqtgraph as pg
+from __future__ import annotations
+
 import weakref
 from typing import List
+import numpy as np
+import pyqtgraph as pg
+from PyQt5 import QtCore, QtWidgets, uic
 
+import mfm
 import mfm.base
+import mfm.fitting.models
+import mfm.fitting.fit
 
 parameter_settings = mfm.cs_settings['parameter']
 
@@ -120,12 +125,62 @@ class Parameter(mfm.base.Base):
             self.controller.finalize()
 
 
+class ParameterGroup(mfm.base.Base):
+
+    def __init__(
+            self,
+            fit: object, #mfm.fitting.fit.Fit, # problem with circular import
+            **kwargs
+    ):
+        super(ParameterGroup, self).__init__(**kwargs)
+        self.fit = fit
+        self._activeRuns = list()
+        self._chi2 = list()
+        self._parameter = list()
+        self.parameter_names = list()
+
+    def clear(self):
+        self._chi2 = list()
+        self._parameter = list()
+
+    def save_txt(
+            self,
+            filename: str,
+            sep: str = '\t'
+    ):
+        fp = open(filename, 'w')
+        s = ""
+        for ph in self.parameter_names:
+            s += ph + sep
+        s += "\n"
+        for l in self.values.T:
+            for p in l:
+                s += "%.5f%s" % (p, sep)
+            s += "\n"
+        fp.write(s)
+        fp.close()
+
+    @property
+    def values(self) -> np.array:
+        try:
+            re = np.vstack(self._parameter)
+            re = np.column_stack((re, self.chi2s))
+            return re.T
+        except ValueError:
+            return np.array([[0], [0]]).T
+
+    @property
+    def chi2s(self) -> np.array:
+        return np.hstack(self._chi2)
+
+
+
 class FittingParameter(Parameter):
 
     def __init__(
             self,
             link=None,
-            model: mfm.fitting.models.Model = None,
+            model: object = None, #mfm.fitting.models.Model = None, # circular import problem
             lb: float = -10000,
             ub: float = 10000,
             fixed: bool = False,
@@ -614,7 +669,22 @@ class ParameterGroup(mfm.base.Base):
     def __len__(self):
         return len(self.parameters_all)
 
-    def __init__(self, fit=None, model=None, short='', parameters=list(), *args, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.Fit = None,
+            model: mfm.fitting.models.Model = None,
+            short: str = '',
+            parameters: List[mfm.parameter.FittingParameter] = list(),
+            *args, **kwargs):
+        """
+
+        :param fit: the fit to which the parameter group is associated to
+        :param model: the model to which the parameter group is associated to
+        :param short: a short name for the parameter group
+        :param parameters: a list of the fitting parameters that are grouped by the fitting parameter group
+        :param args:
+        :param kwargs:
+        """
         if mfm.verbose:
             print("---------------")
             print("Class: %s" % self.__class__.name)
@@ -634,7 +704,7 @@ class ParameterGroup(mfm.base.Base):
             if isinstance(p0, ParameterGroup):
                 self.__dict__ = p0.__dict__
 
-    def to_widget(self, *args, **kwargs):
+    def to_widget(self, *args, **kwargs) -> mfm.parameter.ParameterGroupWidget:
         return ParameterGroupWidget(self, *args, **kwargs)
 
 
@@ -642,8 +712,6 @@ class ParameterGroupWidget(ParameterGroup, QtWidgets.QGroupBox):
 
     def __init__(self, parameter_group, *args, **kwargs):
         self.parameter_group = parameter_group
-        ParameterGroup.__init__(self, *args, **kwargs)
-        QtGui.QGroupBox.__init__(self)
         super(ParameterGroupWidget, self).__init__(*args, **kwargs)
         self.setTitle(self.name)
 

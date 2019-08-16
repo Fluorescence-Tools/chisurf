@@ -1,6 +1,7 @@
-import numpy as np
-import numba as nb
 from math import sin, cos, sqrt
+
+import numba as nb
+import numpy as np
 
 
 def cartesian(arrays, out=None):
