@@ -15,10 +15,17 @@ class Base(object):
             return self.__class__.__name__
 
     @name.setter
-    def name(self, v):
+    def name(
+            self,
+            v: str
+    ):
         self._kw['name'] = v
 
-    def save(self, filename, file_type='json'):
+    def save(
+            self,
+            filename: str,
+            file_type: str='json'
+    ):
         if file_type == "yaml":
             txt = self.to_yaml()
         else:
@@ -26,7 +33,11 @@ class Base(object):
         with open(filename, 'w') as fp:
             fp.write(txt)
 
-    def load(self, filename, file_type='json'):
+    def load(
+            self,
+            filename: str,
+            file_type: str = 'json'
+    ):
         if file_type == "json":
             self.from_json(filename=filename)
         else:
@@ -42,13 +53,21 @@ class Base(object):
     def from_dict(self, v):
         self._kw = v
 
-    def to_json(self, indent=4, sort_keys=True):
+    def to_json(
+            self,
+            indent: int = 4,
+            sort_keys: bool = True
+    ):
         return json.dumps(self.to_dict(), indent=indent, sort_keys=sort_keys)
 
     def to_yaml(self):
         return yaml.dump(self.to_dict())
 
-    def from_yaml(self, yaml_string=None, filename=None):
+    def from_yaml(
+            self,
+            yaml_string: str = None,
+            filename: str = None
+    ):
         if filename is not None:
             with open(filename, 'r') as fp:
                 j = yaml.load(fp)
@@ -58,7 +77,11 @@ class Base(object):
             j = dict()
         self.from_dict(j)
 
-    def from_json(self, json_string=None, filename=None):
+    def from_json(
+            self,
+            json_string: str = None,
+            filename: str = None
+    ):
         """Reads the content of a JSON file into the object.
 
         Example
@@ -87,7 +110,11 @@ class Base(object):
             pass
         self.from_dict(j)
 
-    def __setattr__(self, k, v):
+    def __setattr__(
+            self,
+            k: str,
+            v: object
+    ):
         try:
             kw = self.__dict__['_kw']
         except KeyError:
@@ -105,7 +132,10 @@ class Base(object):
         else:
             super(Base, self).__setattr__(k, v)
 
-    def __getattr__(self, key):
+    def __getattr__(
+            self,
+            key: str
+    ):
         return self._kw.get(key, None)
 
     def __str__(self):

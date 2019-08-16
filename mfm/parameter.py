@@ -2,6 +2,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import mfm
 import pyqtgraph as pg
 import weakref
+from typing import List
 
 import mfm.base
 
@@ -13,11 +14,18 @@ class Parameter(mfm.base.Base):
     _instances = set()
 
     @property
-    def decimals(self):
+    def decimals(self) -> float:
+        """
+        The number of decimals that are displayed
+        :return:
+        """
         return self._decimals
 
     @decimals.setter
-    def decimals(self, v):
+    def decimals(
+            self,
+            v: float
+    ):
         self._decimals = v
 
     @property
@@ -43,7 +51,10 @@ class Parameter(mfm.base.Base):
                 dead.add(ref)
         cls._instances -= dead
 
-    def __add__(self, other):
+    def __add__(
+            self,
+            other
+    ):
         if isinstance(other, (int, float)):
             a = self.value + other
         else:
@@ -87,13 +98,16 @@ class Parameter(mfm.base.Base):
         self._value = kwargs.get('value', value)
         self._decimals = kwargs.get('decimals', mfm.cs_settings['parameter']['decimals'])
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         v = mfm.Base.to_dict(self)
         v['value'] = self.value
         v['decimals'] = self.decimals
         return v
 
-    def from_dict(self, v):
+    def from_dict(
+            self,
+            v: dict
+    ):
         mfm.Base.from_dict(self, v)
         self._value = v['value']
         self._decimals = v['decimals']
@@ -108,7 +122,17 @@ class Parameter(mfm.base.Base):
 
 class FittingParameter(Parameter):
 
-    def __init__(self, link=None, model=None, lb=-10000, ub=10000, fixed=False, bounds_on=False, error_estimate=None, **kwargs):
+    def __init__(
+            self,
+            link=None,
+            model: mfm.fitting.models.Model = None,
+            lb: float = -10000,
+            ub: float = 10000,
+            fixed: bool = False,
+            bounds_on: bool = False,
+            error_estimate: bool = None,
+            **kwargs
+    ):
         super(FittingParameter, self).__init__(**kwargs)
         self._link = link
         self.model = model
@@ -152,15 +176,21 @@ class FittingParameter(Parameter):
             return None, None
 
     @bounds.setter
-    def bounds(self, b):
+    def bounds(
+            self,
+            b: List[float]
+    ):
         self._lb, self._ub = b
 
     @property
-    def bounds_on(self):
+    def bounds_on(self) -> bool:
         return self._bounds_on
 
     @bounds_on.setter
-    def bounds_on(self, v):
+    def bounds_on(
+            self,
+            v: bool
+    ):
         self._bounds_on = bool(v)
 
     @property
@@ -189,11 +219,14 @@ class FittingParameter(Parameter):
             self.link.value = value
 
     @property
-    def fixed(self):
+    def fixed(self) -> bool:
         return self._fixed
 
     @fixed.setter
-    def fixed(self, v):
+    def fixed(
+            self,
+            v: bool
+    ):
         self._fixed = v
 
     @property
@@ -201,7 +234,10 @@ class FittingParameter(Parameter):
         return self._link
 
     @link.setter
-    def link(self, link):
+    def link(
+            self,
+            link: mfm.parameter.FittingParameter
+    ):
         if isinstance(link, FittingParameter):
             self._link = link
         elif link is None:
@@ -212,10 +248,10 @@ class FittingParameter(Parameter):
             self._link = None
 
     @property
-    def is_linked(self):
+    def is_linked(self) -> bool:
         return isinstance(self._link, FittingParameter)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         d = Parameter.to_dict(self)
         d['lb'], d['ub'] = self.bounds
         d['fixed'] = self.fixed
@@ -223,7 +259,10 @@ class FittingParameter(Parameter):
         d['error_estimate'] = self.error_estimate
         return d
 
-    def from_dict(self, d):
+    def from_dict(
+            self,
+            d: dict
+    ):
         Parameter.from_dict(self, d)
         self._lb, self._ub = d['lb'], d['ub']
         self._fixed = d['fixed']
@@ -244,7 +283,10 @@ class FittingParameter(Parameter):
             s += "link-value: %s\n" % self.value
         return s
 
-    def make_widget(self, **kwargs):
+    def make_widget(
+            self,
+            **kwargs
+    ) -> mfm.parameter.FittingParameterWidget:
         text = kwargs.get('text', self.name)
         layout = kwargs.get('layout', None)
         update_widget = kwargs.get('update_widget', lambda x: x)

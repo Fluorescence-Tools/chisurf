@@ -1,4 +1,5 @@
 import os.path
+from typing import List
 import zlib
 from copy import copy
 import numpy as np
@@ -72,7 +73,6 @@ class ExperimentalData(Data):
 
     def __init__(self, *args, **kwargs):
         super(ExperimentalData, self).__init__(*args, **kwargs)
-        #Data.__init__(self, *args, **kwargs)
         self.setup = kwargs.get('setup', None)
         self._experiment = kwargs.get('experiment', None)
 
@@ -212,7 +212,6 @@ class Curve(Base):
         return x, y
 
 
-#@mfm.decorators.register()
 class DataCurve(Curve, ExperimentalData):
 
     def __init__(self, *args, **kwargs):
@@ -223,8 +222,6 @@ class DataCurve(Curve, ExperimentalData):
             ey = kwargs.get('ey', np.ones_like(kwargs.get('y', None)))
         kwargs['ex'] = ex
         kwargs['ey'] = ey
-        #print "datacurve:"
-        #print DataCurve.mro()
         super(DataCurve, self).__init__(*args, **kwargs)
         filename = kwargs.pop('filename', '')
 
@@ -290,7 +287,11 @@ class DataCurve(Curve, ExperimentalData):
             with open(filename, 'w') as fp:
                 fp.write(self.to_json())
 
-    def load(self, filename, **kwargs):
+    def load(
+            self,
+            filename: str,
+            **kwargs
+    ):
         mode = kwargs.get('mode', 'txt')
         skiprows = kwargs.get('skiprows', 9)
 
@@ -302,7 +303,13 @@ class DataCurve(Curve, ExperimentalData):
             self._kw['ey'] = csv.data[2]
             self._kw['ex'] = csv.data[3]
 
-    def set_data(self, filename, x, y, **kwargs):
+    def set_data(
+            self,
+            filename: str,
+            x: np.array,
+            y: np.array,
+            **kwargs
+    ):
         """test docs
         
         :param filename: 
@@ -317,29 +324,21 @@ class DataCurve(Curve, ExperimentalData):
         self._kw['x'] = x
         self._kw['y'] = y
 
-    def set_weights(self, w):
+    def set_weights(
+            self,
+            w: np.array
+    ):
         self._kw['weights'] = w
 
-    def __getitem__(self, key):
+    def __getitem__(
+            self,
+            key: str
+    ):
         x, y = Curve.__getitem__(self, key)
         return x, y, self.ey[key]
 
-    #def __sub__(self, v):
-    #    y = np.array(self.y, dtype=np.float64)
-    #    if isinstance(v, Curve):
-    #        y -= v.y
-    #    else:
-    #        y -= v
-    #    y = np.array(y, dtype=np.float64)
-    #    c = copy(self)
-    #    c.y = y
-    #    return c
-
-    #def __repr__(self):
-    #    self.__class__.__repr__()
-
     @property
-    def dt(self):
+    def dt(self) -> np.array:
         """
         The derivative of the x-axis
         """
@@ -349,7 +348,7 @@ class DataCurve(Curve, ExperimentalData):
 class DataGroup(list, Base):
 
     @property
-    def names(self):
+    def names(self) -> List[str]:
         return [d.name for d in self]
 
     @property
@@ -361,17 +360,23 @@ class DataGroup(list, Base):
         self._current_dataset = i
 
     @property
-    def name(self):
+    def name(self) -> str:
         try:
             return self._kw['name']
         except KeyError:
             return self.names[0]
 
     @name.setter
-    def name(self, v):
+    def name(
+            self,
+            v: str
+    ):
         self._name = v
 
-    def append(self, dataset):
+    def append(
+            self,
+            dataset: mfm.curve.Data
+    ):
         if isinstance(dataset, ExperimentalData):
             list.append(self, dataset)
         if isinstance(dataset, list):
@@ -468,8 +473,12 @@ class ExperimentDataCurveGroup(ExperimentDataGroup, DataCurveGroup):
 
 class ParameterGroup(Base):
 
-    def __init__(self, fit, **kwargs):
-        Base.__init__(self, **kwargs)
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.Fit,
+            **kwargs
+    ):
+        super(ParameterGroup, self).__init__(**kwargs)
         self.fit = fit
         self._activeRuns = list()
         self._chi2 = list()
@@ -480,7 +489,11 @@ class ParameterGroup(Base):
         self._chi2 = list()
         self._parameter = list()
 
-    def save_txt(self, filename, sep='\t'):
+    def save_txt(
+            self,
+            filename: str,
+            sep: str = '\t'
+    ):
         fp = open(filename, 'w')
         s = ""
         for ph in self.parameter_names:
@@ -494,7 +507,7 @@ class ParameterGroup(Base):
         fp.close()
 
     @property
-    def values(self):
+    def values(self) -> np.array:
         try:
             re = np.vstack(self._parameter)
             re = np.column_stack((re, self.chi2s))
@@ -503,7 +516,7 @@ class ParameterGroup(Base):
             return np.array([[0], [0]]).T
 
     @property
-    def chi2s(self):
+    def chi2s(self) -> np.array:
         return np.hstack(self._chi2)
 
 
