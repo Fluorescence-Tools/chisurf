@@ -17,5 +17,4 @@ before_install:
 install:
   - python setup.py install
 script:
-  - cd chisurf
-  - python __init__.py
+  - python test/test_import.py
