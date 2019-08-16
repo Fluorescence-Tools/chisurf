@@ -11,7 +11,7 @@ before_install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda create --file=environment.yaml
+  - conda env create -f =environment.yaml
   - source activate chisurf
   - python setup.py install
 install:
