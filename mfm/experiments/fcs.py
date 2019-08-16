@@ -73,7 +73,7 @@ class FCSKristine(mfm.io.ascii.Csv, FCS, QtWidgets.QWidget):
         return d
 
 
-class FCSCsv(CsvWidget, FCS):
+class FCSCsv(FCS, CsvWidget):
 
     name = 'CSV'
 
@@ -89,7 +89,13 @@ class FCSCsv(CsvWidget, FCS):
         d = mfm.curve.DataCurve(setup=self)
         d.setup = self
 
-        self.load(filename=filename, skiprows=0, use_header=None, verbose=mfm.verbose)
+        CsvWidget.load(
+            self,
+            filename=filename,
+            skiprows=0,
+            use_header=None,
+            verbose=mfm.verbose
+        )
 
         x, y = self.data[0], self.data[1]
         w = self.data[2]

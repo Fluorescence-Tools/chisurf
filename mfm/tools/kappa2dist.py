@@ -27,7 +27,7 @@ class Kappa2Dist(QtWidgets.QWidget):
         self.verticalLayout.addWidget(self.kappa2_plot)
         ## Connections
         self.pushButton.clicked.connect(self.onUpdateHist)
-        self.doubleSpinBox_4.valueChanged[double].connect(self.onUpdateRapp)
+        self.doubleSpinBox_4.valueChanged.connect(self.onUpdateRapp)
         self.hide()
 
     def onUpdateHist(self):
