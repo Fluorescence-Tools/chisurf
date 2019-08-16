@@ -1,7 +1,7 @@
 import pickle
 import threading
 from collections import OrderedDict
-
+from typing import List
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
@@ -16,7 +16,10 @@ class GlobalFitModel(Model, Curve):
 
     name = "Global fit"
 
-    def __init__(self, fit):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.Fit
+    ):
         self.fits = []
         self.fit = fit
         self._global_parameters = OrderedDict()
@@ -27,7 +30,10 @@ class GlobalFitModel(Model, Curve):
         Model.__init__(self, fit=fit)
 
     @property
-    def weighted_residuals(self, flatten=True):
+    def weighted_residuals(
+            self,
+            flatten: bool = True
+    ):
         re = list()
         for f in self.fits:
             re.append(f.model.weighted_residuals.flatten())
@@ -154,7 +160,11 @@ class GlobalFitModel(Model, Curve):
         xn = np.arange(0, dn.shape[0], 1)
         return xn, dn, wn
 
-    def get_wres(self, fit, **kwargs):
+    def get_wres(
+            self,
+            fit: mfm.fitting.fit.Fit,
+            **kwargs
+    ):
         try:
             f = fit
             xmin = kwargs.get('xmin', f.xmin)
@@ -167,11 +177,17 @@ class GlobalFitModel(Model, Curve):
             wr = np.array([1.0])
         return wr
 
-    def append_fit(self, fit):
+    def append_fit(
+            self,
+            fit: mfm.fitting.Fit
+    ):
         if not fit in self.fits:
             self.fits.append(fit)
 
-    def append_global_parameter(self, parameter):
+    def append_global_parameter(
+            self,
+            parameter: mfm.parameter.Parameter
+    ):
         variable_name = parameter.name
         if variable_name not in list(self._global_parameters.keys()):
             self._global_parameters[parameter.name] = parameter
@@ -252,7 +268,10 @@ class GlobalFitModel(Model, Curve):
     def _y(self, v):
         pass
 
-    def __getitem__(self, key):
+    def __getitem__(
+            self,
+            key: str
+    ):
         start = key.start
         stop = key.stop
         step = 1 if key.step is None else key.step
@@ -291,9 +310,11 @@ class GlobalFitModelWidget(GlobalFitModel, ModelWidget):
         #,(plots.SurfacePlot, {})
     ]
 
-    def __init__(self, fit):
-        ModelWidget.__init__(self, fit)
-        GlobalFitModel.__init__(self, fit=fit)
+    def __init__(
+            self,
+            fit: mfm.fitting.Fit
+    ):
+        super(GlobalFitModel, self).__init__(fit)
         uic.loadUi("mfm/ui/fitting/models/globalfit_2.ui", self)
 
         self.actionOnAddToLocalFitList.triggered.connect(self.onAddToLocalFitList)
@@ -345,7 +366,10 @@ class GlobalFitModelWidget(GlobalFitModel, ModelWidget):
         return self.checkBox_3.isChecked()
 
     @clear_on_update.setter
-    def clear_on_update(self, v):
+    def clear_on_update(
+            self,
+            v: bool
+    ):
         self.checkBox_3.setChecked(v)
 
     @property
@@ -396,8 +420,11 @@ class GlobalFitModelWidget(GlobalFitModel, ModelWidget):
         for fitIndex in fit_indeces:
             mfm.run("cs.current_fit.model.append_fit(mfm.fits[%s])" % local_fits_idx[fitIndex])
 
-    def append_fit(self, fit):
-        if not fit in self.fits:
+    def append_fit(
+            self,
+            fit: mfm.fitting.Fit
+    ):
+        if fit not in self.fits:
 
             table = self.tableWidget
             table.insertRow(table.rowCount())
@@ -473,7 +500,10 @@ class GlobalFitModelWidget(GlobalFitModel, ModelWidget):
             links.append([en, fitA, pA, fB])
         return links
 
-    def onAddLink(self, links=None):
+    def onAddLink(
+            self,
+            links: List = None
+    ):
         table = self.table_GlobalLinks
         if links is None:
             links = []
@@ -543,7 +573,9 @@ class GlobalFitModelWidget(GlobalFitModel, ModelWidget):
             pn.sort()
             self.comboBox_gfTargetParameter.addItems([p.name for p in ft.model.parameters_all])
 
-    def update_widgets(self, fit_combo=True):
+    def update_widgets(
+            self
+    ):
         self.comboBox.clear()
         self.comboBox.addItems(self.local_fit_names)
 

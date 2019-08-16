@@ -1,4 +1,5 @@
 from collections import Iterable
+from typing import List
 
 #######################################################
 #       OPENCL                                        #
@@ -36,7 +37,9 @@ import mfm.structure
 import mfm.fluorescence
 
 
-def find_fit_idx_of_model(model):
+def find_fit_idx_of_model(
+        model: mfm.fitting.models.Model
+):
     """Returns index of the fit of a model in mfm.fits array
 
     :param model:
@@ -47,7 +50,9 @@ def find_fit_idx_of_model(model):
             return idx
 
 
-def get_data(curve_type='experiment'):
+def get_data(
+        curve_type: str = 'experiment'
+):
     """
     Returns all curves `mfm.curve.DataCurve` except if the curve is names "Global-fit"
     """
@@ -57,7 +62,10 @@ def get_data(curve_type='experiment'):
         return [d for d in data_sets if (isinstance(d, curve.ExperimentalData) or isinstance(d, curve.ExperimentDataGroup)) and d.name != "Global-fit"]
 
 
-def find_objects(search_list, object_type, remove_double=True):
+def find_objects(
+        search_list: List,
+        object_type,
+        remove_double: bool = True):
     """Traverse a list recursively a an return all objects of type `object_type` as
     a list
 
@@ -78,7 +86,11 @@ def find_objects(search_list, object_type, remove_double=True):
         return re
 
 
-def c(t, st, parameters):
+def c(
+        t,
+        st,
+        parameters
+):
     """This function facilitates the connection of qt-events to the mfm-commandline. Whenever the qt-event
     is called the string passed as argument is executed at the mfm-commandline with the provided parameters.
     Here the parameters are either callable functions of strings.
