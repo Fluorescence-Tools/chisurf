@@ -1,11 +1,8 @@
-# coding=utf-8
 import os
 import sys
-
+import slugify
 import numpy as np
 import sip
-import slugify
-
 sip.setapi('QDate', 2)
 sip.setapi('QDateTime', 2)
 sip.setapi('QString', 2)
