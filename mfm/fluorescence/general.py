@@ -1,8 +1,10 @@
-from itertools import tee
+from __future__ import annotations
 
+from itertools import tee
 import numba as nb
 import numexpr as ne
 import numpy as np
+
 import scipy.optimize
 
 rate2lifetime = lambda rate, lifetime: ne.evaluate("1. / (1. / lifetime + rate)")
@@ -146,20 +148,28 @@ def phasor_siw(f, n, omega, times):
 
 
 @nb.jit
-def distance2fretrate(r, forster_radius, tauD0, kappa2=2./3.):
+def distance_to_fret_rate_constant(
+        r,
+        forster_radius: float,
+        tau0: float,
+        kappa2: float = 2./3.
+):
     """ Converts the DA-distance to a FRET-rate
 
     :param r: donor-acceptor distance
     :param forster_radius: Forster-radius
-    :param tauD0: lifetime
+    :param tau0: lifetime
     :param kappa2: orientation factor
     :return:
     """
-    return 3./2. * kappa2 * 1. / tauD0 * (forster_radius / r) ** 6.0
+    return 3. / 2. * kappa2 * 1. / tau0 * (forster_radius / r) ** 6.0
 
 
 @nb.jit
-def distance2transfer(distance, R0):
+def distance_to_fret_efficiency(
+        distance: float,
+        forster_radius: float
+):
     """
 
     .. math::
@@ -167,89 +177,88 @@ def distance2transfer(distance, R0):
         E = 1.0 / (1.0 + (R_{DA} / R_0)^6)
 
     :param distance: DA-distance
-    :param R0: Forster-radius
+    :param forster_radius: Forster-radius
     :return:
     """
-    return 1.0 / (1.0 + (distance / R0) ** 6)
+    return 1.0 / (1.0 + (distance / forster_radius) ** 6)
 
 
 @nb.jit
-def lifetime2transfer(tau, tau0):
+def lifetime_to_fret_efficiency(
+        tau: float,
+        tau0: float
+):
     """
 
     .. math::
 
         E = 1 - tau / tau_0
 
-    :param tau:
-    :param tau0:
+    :param tau: fluorescence lifetime in the presence of FRET
+    :param tau0: fluorescence lifetime in the absence of FRET
     :return:
     """
     return 1 - tau / tau0
 
 
 @nb.jit
-def transfer2distance(E, R0):
+def fret_efficiency_to_distance(
+        fret_efficiency: float,
+        forster_radius: float
+):
     """
-    Converts the transfer-efficency to a distance
+    Converts the transfer-efficiency to a distance
 
     .. math::
 
         R_{DA} = R_0 (1 / E - 1)^{1/6}
 
-    :param E: Transfer-efficency
-    :param R0: Forster-radius
+    :param fret_efficiency: Transfer-efficency
+    :param forster_radius: Forster-radius
     :return:
     """
-    return (1 / E - 1) ** (1.0 / 6.0) * R0
+    return (1 / fret_efficiency - 1) ** (1.0 / 6.0) * forster_radius
 
 
 @nb.jit
-def transfer2lifetime(E, tau0):
+def fret_efficiency_to_lifetime(
+        fret_efficiency: float,
+        tau0: float
+):
     """
 
     .. math::
 
         tau_{DA} = (1 - E) * tau_0
 
-    :param E:
+    :param fret_efficiency:
     :param tau0:
     :return:
     """
-    return (1 - E) * tau0
+    return (1 - fret_efficiency) * tau0
 
 
-@nb.jit
-def distance2rate(distance, kappa2, tau0, R0):
-    """
-    Converts the DA-distance to a FRET-rate
-
-    :param distance: DA-distance
-    :param kappa2: orientation factor
-    :param tau0: radiative lifetime
-    :param R0: Forster-radius
-    :return:
-    """
-    factor = 3./2. * kappa2 / tau0 * R0**6
-    return factor * (1. / distance) ** 6
-
-
-def transfer_space(e_min, e_max, n_steps, R0=52.0):
+def transfer_space(
+        transfer_efficiency_min: float,
+        transfer_efficiency_max: float,
+        n_steps: int,
+        forster_radius: float = 52.0
+):
     """
     Generates distances with equally spaced transfer efficiencies
 
-    :param e_min: float
+    :param transfer_efficiency_min: float
         minimum transfer efficency
-    :param e_max: float
+    :param transfer_efficiency_max: float
         maximum transfer efficency
     :param n_steps: int
         number of distances
-    :param R0: float
+    :param forster_radius: float
         Forster-radius
     :return:
     """
-    es = np.linspace(e_min, e_max, n_steps)
-    rdas = transfer2distance(es, R0)
+    es = np.linspace(transfer_efficiency_min, transfer_efficiency_max, n_steps)
+    rdas = fret_efficiency_to_distance(es, forster_radius)
     return rdas
 
 
@@ -283,7 +292,6 @@ def kappasq(delta, sD2, sA2, beta1=None, beta2=None):
 def calc_transfer_matrix(t, rDA_min=1.0, rDA_max=200.0, n_steps=200.0, kappa2=0.667, space='lin', **kwargs):
     """
     Calculates a matrix converting a distance distribution to an E(t)-decay
-
 
     :param t:
     :param rDA_min:
@@ -320,11 +328,13 @@ def calc_transfer_matrix(t, rDA_min=1.0, rDA_max=200.0, n_steps=200.0, kappa2=0.
             lmax = np.log10(rDA_max)
             r_DA = np.logspace(lmin, lmax, n_steps)
         elif space == 'trans':
-            e_min = distance2transfer(rDA_min, R0)
-            e_max = distance2transfer(rDA_max, R0)
+            e_min = distance_to_fret_efficiency(rDA_min, R0)
+            e_max = distance_to_fret_efficiency(rDA_max, R0)
             r_DA = transfer_space(e_min, e_max, n_steps, R0)
 
-    rates = distance2rate(r_DA, kappa2, tau0, R0)
+    rates = distance_to_fret_rate_constant(
+        r_DA, R0, tau0, kappa2
+    )
     # Use the last bins for D-Only
     rates[-1:-n_donor_bins] = 0.0
     m = np.outer(rates, t)
@@ -444,7 +454,12 @@ def distribution2rates(distribution, tau0, kappa2, R0, remove_negative=False):
         rate_dist = np.maximum(rate_dist, 0)
 
     for i in range(n_dist):
-        rate_dist[i, 1] = distance2rate(rate_dist[i, 1], 0.6667, tau0, R0)
+        rate_dist[i, 1] = distance_to_fret_rate_constant(
+            rate_dist[i, 1],
+            R0,
+            tau0,
+            0.66667
+        )
     return rate_dist
 
     k2 = kappa2.reshape((len(kappa2)/2, 2))
@@ -518,8 +533,12 @@ def gaussian2rates(means, sigmas, amplitudes, tau0=4.0, kappa2=0.667, R0=52.0,
         p[i] = np.exp(-(bins - means[i]) ** 2 / (2 * sigmas[i] ** 2))
         p[i] /= np.sum(p[i])
         p[i] *= amplitudes[i]
-        rates[i] = distance2rate(bins, kappa2, tau0, R0)
-
+        rates[i] = distance_to_fret_rate_constant(
+            bins,
+            R0,
+            tau0,
+            0.66667
+        )
     ls = rates.ravel()
     ps = p.ravel()
 
@@ -584,7 +603,10 @@ rates2lifetimes = rates2lifetimes_new
 
 
 @nb.jit(nopython=True, nogil=True)
-def elte2(e1, e2):
+def elte2(
+        e1: np.array,
+        e2: np.array
+) -> np.array:
     """
     Takes two interleaved spectrum of lifetimes (a11, l11, a12, l12,...) and (a21, l21, a22, l22,...)
     and return a new spectrum of lifetimes of the form (a11*a21, 1/(1/l11+1/l21), a12*a22, 1/(1/l22+1/l22), ...)
@@ -620,7 +642,10 @@ def elte2(e1, e2):
 
 
 @nb.jit(nopython=True, nogil=True)
-def ere2(e1, e2):
+def ere2(
+        e1: np.array,
+        e2: np.array
+) -> np.array:
     """
     Takes two interleaved spectrum of rates (a11, r11, a12, r12,...) and (a21, r21, a22, r22,...)
     and return a new spectrum of lifetimes of the form (a11*a21, r11+r21), a12*a22, r22+r22), ...)
@@ -656,7 +681,9 @@ def ere2(e1, e2):
 
 
 @nb.jit(nopython=True, nogil=True)
-def ilt(e1):
+def ilt(
+        e1: np.array
+) -> np.array:
     """Converts interleaved lifetime to rate spectra and vice versa
 
     :param e1: array-like
@@ -680,7 +707,10 @@ def ilt(e1):
 
 
 @nb.jit(nopython=True, nogil=True)
-def e1tn(e1, n):
+def e1tn(
+        e1: np.array,
+        n: float
+) -> np.array:
     """
     Multiply amplitudes of interleaved rate/lifetime spectrum by float
 
@@ -702,7 +732,10 @@ def e1tn(e1, n):
 
 
 @nb.jit(nopython=True, nogil=True)
-def e1ti2(e1, e2):
+def e1ti2(
+        e1: np.array,
+        e2: np.array
+) -> np.array:
     n1 = e1.shape[0]/2
     n2 = e2.shape[0]/2
     r = np.zeros(n1 * n2 * 2, dtype=np.float64)
@@ -729,7 +762,11 @@ def pairwise(iterable):
 
 
 @nb.jit
-def calculate_fluorescence_decay(lifetime_spectrum, time_axis=None, normalize=True):
+def calculate_fluorescence_decay(
+        lifetime_spectrum: np.array,
+        time_axis: np.array = None,
+        normalize: bool = True
+) -> (np.array, np.array):
     """Converts a interleaved lifetime spectrum into a intensity decay
 
     :param lifetime_spectrum: interleaved lifetime spectrum

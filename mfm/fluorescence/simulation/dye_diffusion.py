@@ -404,7 +404,12 @@ class FRETDecay(DyeDecay):
         kappa2 = self.fret_parameter.kappa2
         tau0 = self.fret_parameter.tauD0
         forster_radius = self.fret_parameter.forster_radius
-        kfret = mfm.fluorescence.general.distance2rate(self.dRDA, kappa2, tau0, forster_radius)
+        kfret = mfm.fluorescence.general.distance_to_fret_rate_constant(
+            self.dRDA,
+            forster_radius,
+            tau0,
+            kappa2
+        )
         return kfret
 
     @property
