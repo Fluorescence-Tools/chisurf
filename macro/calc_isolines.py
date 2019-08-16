@@ -69,7 +69,6 @@ for x1i in np.linspace(0.0, 1.0, 100):
     x3.value = x3i
     model.update()
     eff = model.fret_efficiency
-    print eff
     tauf = model.fluorescence_averaged_lifetime
     values.append([tauf, eff, x1i, x2i, x3i])
 

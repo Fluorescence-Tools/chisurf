@@ -1,15 +1,16 @@
 import json
 import os
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-import numpy as np
 
-import mfm.fitting.widgets
-from mfm.fitting.models import Model
-from mfm import plots
-from mfm.parameter import FittingParameterWidget
-from mfm.math.reaction.continuous import ReactionSystem
+import numpy as np
+from PyQt5 import QtWidgets, uic
 from parse import ParseModelWidget
+
 import mfm
+import mfm.fitting.widgets
+from mfm import plots
+from mfm.fitting.models import Model
+from mfm.math.reaction.continuous import ReactionSystem
+from mfm.parameter import FittingParameterWidget
 
 
 class ParseStoppedFlowWidget(ParseModelWidget):
@@ -125,7 +126,6 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
             for reaction in reactions:
                 self.add_reaction(**reaction)
             for s in species:
-                print s
                 self.onAddSpecies(**s)
 
     def onPlot(self):

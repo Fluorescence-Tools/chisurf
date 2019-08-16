@@ -1,6 +1,8 @@
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtWidgets, uic
 from scipy.stats import f as fdist
+
 import mfm
+import mfm.fitting.fit
 
 
 class FTestWidget(QtWidgets.QWidget):
@@ -53,6 +55,7 @@ class FTestWidget(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         uic.loadUi("mfm/ui/F-Calculator.ui", self)
         self.parent = kwargs.get('parent', None)
+        self._selected_fit = None
 
         # Upper part of F-Calculator
         self.actionN1Changed.triggered.connect(self.onN1Changed)
@@ -72,8 +75,16 @@ class FTestWidget(QtWidgets.QWidget):
         self.toolButton_3.clicked.connect(self.read_n)
 
     def calculate_chi2_max(self):
-        self.chi2_max = mfm.fitting.chi2_max(self._selected_fit, conf_level=self.conf_level_2,
-                                             npars=self.npars, nu=self.dof, chi2_min=self.chi2_min)
+        if self._selected_fit is not None :
+            self.chi2_min = self._selected_fit.chi2r
+        dof = max(1, self.dof)
+        number_of_parameters = max(1, self.npars)
+        self.chi2_max = mfm.fitting.fit.chi2_max(
+            conf_level=self.conf_level_2,
+            number_of_parameters=number_of_parameters,
+            nu=dof,
+            chi2_value=self.chi2_min
+        )
 
     def onChi2_2_Changed(self):
         # recalculate confidence level

@@ -1,10 +1,12 @@
+from math import sqrt
+
 import numba as nb
 import numpy as np
 from numpy import linalg as linalg
+
 import mfm
-from mfm.fluorescence import kappasq, elte2, e1tn
+import mfm.fluorescence
 from mfm.parameter import ParameterGroup, FittingParameter
-from math import sqrt
 
 
 @nb.jit
@@ -35,7 +37,7 @@ def kappasqAllDelta(delta, sD2, sA2, step=0.25, n_bins=31):
         for j in range(m):
             d2 = (n1*np.cos(phi[j])+n2*np.sin(phi[j]))*np.sin(delta)+d1*np.cos(delta)
             beta2 = np.arccos(abs(np.dot(d2, R)))
-            k2[i, j] = kappasq(delta, sD2, sA2, beta1[i], beta2)
+            k2[i, j] = mfm.fluorescence.kappasq(delta, sD2, sA2, beta1[i], beta2)
         y, x = np.histogram(k2[i, :], bins=k2scale)
         k2hist += y*np.sin(beta1[i])
     return k2scale, k2hist, k2
@@ -53,7 +55,7 @@ def kappasq_all(sD2, sA2, n=100, m=100):
             delta = np.arccos(np.dot(d1[j, :], d2[j, :]) / linalg.norm(d1[j, :])/linalg.norm(d2[j, :]))
             beta1 = np.arccos(d1[j, 0]/linalg.norm(d1[j, :]))
             beta2 = np.arccos(d2[j, 0]/linalg.norm(d2[j, :]))
-            k2[i, j] = kappasq(delta, sD2, sA2, beta1, beta2)
+            k2[i, j] = mfm.fluorescence.kappasq(delta, sD2, sA2, beta1, beta2)
         y, x = np.histogram(k2[i, :], bins=k2scale)
         k2hist += y
     return k2scale, k2hist, k2
@@ -393,13 +395,13 @@ class Anisotropy(ParameterGroup):
         a = self.rotation_spectrum
         f = lifetime_spectrum
         if pt == 'VH' or pt == 'VV':
-            d = elte2(a, f)
-            vv = np.hstack([f, e1tn(d, 2)])
-            vh = e1tn(np.hstack([f, e1tn(d, -1)]), self.g)
+            d = mfm.fluorescence.elte2(a, f)
+            vv = np.hstack([f, mfm.fluorescence.e1tn(d, 2)])
+            vh = mfm.fluorescence.e1tn(np.hstack([f, mfm.fluorescence.e1tn(d, -1)]), self.g)
         if self.polarization_type.upper() == 'VH':
-            return np.hstack([e1tn(vv, self.l2), e1tn(vh, 1 - self.l2)])
+            return np.hstack([mfm.fluorescence.e1tn(vv, self.l2), mfm.fluorescence.e1tn(vh, 1 - self.l2)])
         elif self.polarization_type.upper() == 'VV':
-            r = np.hstack([e1tn(vv, 1 - self.l1), e1tn(vh, self.l1)])
+            r = np.hstack([mfm.fluorescence.e1tn(vv, 1 - self.l1), mfm.fluorescence.e1tn(vh, self.l1)])
             return r
         else:
             return f

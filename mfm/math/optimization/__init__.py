@@ -1,9 +1,9 @@
 import numpy as np
 import scipy.optimize
 
+import mfm.math.linalg as la
 import mfm.math.optimization.leastsqbound as leastsqbound
 from mfm.math.optimization import fnnls
-import mfm.math.linalg as la
 
 
 def solve_nnls(A, b, reg=1e-5, x_max=1e12):

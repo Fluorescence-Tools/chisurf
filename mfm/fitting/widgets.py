@@ -1,9 +1,10 @@
-# coding=utf-8
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import os
+
+from PyQt5 import QtWidgets, uic
+
 import mfm
-from mfm import widgets
-from mfm.fitting import sample_fit
+import mfm.widgets
+from mfm.fitting.fit import sample_fit
 
 
 class FittingControllerWidget(QtWidgets.QWidget):

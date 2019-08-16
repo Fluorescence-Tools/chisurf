@@ -1,9 +1,10 @@
+import numpy as np
+from PyQt5 import QtCore, QtWidgets, uic
+from guiqwt.builder import make
+from guiqwt.plot import CurveDialog
+
 import mfm
 from mfm.math.signal import autocorr
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-import numpy as np
-from guiqwt.plot import CurveDialog
-from guiqwt.builder import make
 from mfm.plots.plotbase import Plot
 
 

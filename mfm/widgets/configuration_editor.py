@@ -6,12 +6,14 @@ demonstrates a variety of different parameter types (int, float, list, etc.)
 as well as some customized parameter types
 
 """
-from pyqtgraph.Qt import QtCore, QtGui
+import re
+from collections import OrderedDict
+
+import yaml
+from pyqtgraph.Qt import QtGui
 from pyqtgraph.parametertree import Parameter, ParameterTree
 from pyqtgraph.parametertree.parameterTypes import ListParameter
-import re
-import yaml
-from collections import OrderedDict
+
 import mfm
 
 

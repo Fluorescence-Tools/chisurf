@@ -1,14 +1,15 @@
 """Qt-Widgets used throughout ChiSURF
 
 """
-import os
 import fnmatch
+import numbers
+import os
 import pickle
 import random
 from datetime import datetime
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-import numbers
+
 import pyqtgraph as pg
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 os.environ['PYZMQ_BACKEND'] = 'cython'
 from qtconsole.qtconsoleapp import RichJupyterWidget

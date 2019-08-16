@@ -1,14 +1,12 @@
-from copy import deepcopy
+import copy
 import copy
 import re
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import numpy as np
 import pyqtgraph as pg
+from PyQt5 import QtCore, QtWidgets, uic
 
 import mfm
-from mfm import Base
-from mfm.experiments import settings, Reader
 from mfm.fluorescence.tcspc import weights
 from mfm.io.widgets import SpcFileWidget
 

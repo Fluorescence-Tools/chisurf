@@ -1,11 +1,9 @@
 #!/usr/bin/python
-
 import sys
+import numpy
+from Cython.Distutils import build_ext
 from setuptools import setup, find_packages
 from setuptools.extension import Extension
-from cython.Distutils import build_ext
-import numpy
-
 
 args = sys.argv[1:]
 # We want to always use build_ext --inplace
@@ -51,6 +49,7 @@ long_description = "ChiSurf"
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+
 setup(
     version="18.9.1",
     description="Fluorescence-Fitting",
@@ -77,7 +76,8 @@ setup(
         # If any package contains the listed file types and include them:
         '': ['*.json', '*.yaml', '*.ui', '*.png', '*.svg', '*.css'],
     },
-    install_requires=['numpy'],
+    install_requires=['numpy', 'slugify', 'sip', 'PyQt5', 'emcee', 'numba', 'scipy', 'pyqtgraph', 'sympy', 'PyYAML',
+                      'tables', 'numexpr'],
     ext_modules=extensions,
     cmdclass={
         'build_ext': build_ext

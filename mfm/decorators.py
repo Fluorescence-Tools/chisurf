@@ -1,6 +1,4 @@
 import warnings
-import weakref
-from functools import wraps
 
 
 def deprecated(func):

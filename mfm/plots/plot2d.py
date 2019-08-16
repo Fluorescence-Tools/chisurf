@@ -1,7 +1,7 @@
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import numpy as np
-from guiqwt.plot import CurveDialog, ImageDialog
+from PyQt5 import QtCore, QtWidgets, uic
 from guiqwt.builder import make
+from guiqwt.plot import CurveDialog, ImageDialog
 
 from mfm.parameter import FittingParameterWidget
 from mfm.plots.plotbase import Plot

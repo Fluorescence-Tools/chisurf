@@ -1,6 +1,7 @@
 import copy
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtWidgets, uic
+
 import mfm
 
 filetypes = copy.copy(mfm.io.tttr.filetypes)

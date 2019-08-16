@@ -1,13 +1,13 @@
 import numpy as np
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 import mfm
 from mfm import plots
-from mfm.fitting.widgets import FittingControllerWidget
 from mfm.fitting.models.tcspc import _membrane
 from mfm.fitting.models.tcspc.fret import FRETModel
 from mfm.fitting.models.tcspc.nusiance import GenericWidget, CorrectionsWidget
 from mfm.fitting.models.tcspc.tcspc import LifetimeWidget, Lifetime
+from mfm.fitting.widgets import FittingControllerWidget
 from mfm.fluorescence.tcspc.convolve import ConvolveWidget
 from mfm.parameter import FittingParameterWidget, FittingParameter
 

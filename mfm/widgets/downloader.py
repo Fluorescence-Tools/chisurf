@@ -1,6 +1,8 @@
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import sys
 import urllib
+
+from PyQt5 import QtCore, QtWidgets, uic
+
 import mfm
 
 

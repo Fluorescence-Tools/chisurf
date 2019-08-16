@@ -1,9 +1,10 @@
-from PyQt5 import Qt, QtCore, QtGui, QtWidgets, uic
-import numpy as np
+import pyqtgraph as pg
+from PyQt5 import QtWidgets
+from pyqtgraph.dockarea import DockArea, Dock
+
 import mfm
 from mfm.plots import plotbase
-import pyqtgraph as pg
-from pyqtgraph.dockarea import DockArea, Dock
+
 plot_settings = mfm.cs_settings['gui']['plot']
 pyqtgraph_settings = plot_settings["pyqtgraph"]
 for setting in pyqtgraph_settings:

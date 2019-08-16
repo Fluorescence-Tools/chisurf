@@ -1,12 +1,12 @@
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import numpy as np
-import os
+from PyQt5 import QtWidgets, uic
 
 import mfm
+import mfm.widgets
 from mfm.experiments import Reader
 from mfm.fluorescence.tcspc import weights, fitrange, weights_ps
-from mfm.io.ascii import Csv
 from mfm.io import sdtfile
+from mfm.io.ascii import Csv
 from mfm.io.widgets import CsvWidget
 
 
@@ -187,14 +187,6 @@ class TCSPCReader(Reader):
 
 class TCSPCSetupWidget(TCSPCReader, mfm.io.ascii.Csv, QtWidgets.QWidget):
 
-    # @property
-    # def skiprows(self):
-    #     return self.csvSetup.skiprows
-    #
-    # @skiprows.setter
-    # def skiprows(self, v):
-    #     self.csvSetup.skiprows = v
-
     def read(self, *args, **kwargs):
         filename = kwargs.pop('filename', None)
         if filename is None:
@@ -213,8 +205,6 @@ class TCSPCSetupWidget(TCSPCReader, mfm.io.ascii.Csv, QtWidgets.QWidget):
 
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
-        #self.layout.setMargin(0)
-        #self.layout.setSpacing(0)
         self.layout.addWidget(csvTCSPC)
         self.layout.addWidget(csvSetup)
 

@@ -1,6 +1,7 @@
-import numpy as np
 from math import floor, pow
+
 import numba as nb
+import numpy as np
 
 from mfm import settings
 

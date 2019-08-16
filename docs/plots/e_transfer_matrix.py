@@ -1,5 +1,5 @@
-import numpy as np
 import lib.fluorescence.general as ge
+import numpy as np
 import pylab as p
 
 rda_mean = [50., 50.0]

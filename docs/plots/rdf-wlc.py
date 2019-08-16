@@ -1,7 +1,6 @@
-import lib
-import numpy as np
-import matplotlib.pyplot as p
 import lib.math.functions.rdf as rdf
+import matplotlib.pyplot as p
+import numpy as np
 
 r = np.linspace(0, 0.99, 200)
 

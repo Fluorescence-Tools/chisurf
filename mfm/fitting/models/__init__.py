@@ -12,16 +12,19 @@ The :py:mod:`.models`
 
 
 """
-from PyQt5 import QtGui, QtWidgets
+from __future__ import annotations
+
+from PyQt5 import QtWidgets
+
 import mfm.plots as plots
-from mfm.curve import Curve
-from mfm.parameter import ParameterGroup, FittingParameterWidget
+import mfm.curve
+import mfm.parameter
 
 
-class Model(ParameterGroup):
+class Model(mfm.parameter.ParameterGroup):
 
     def __init__(self, fit,  **kwargs):
-        ParameterGroup.__init__(self, model=self, **kwargs)
+        super(Model, self).__init__(model=self, **kwargs)
         self.fit = fit
         self.flatten_weighted_residuals = True
         self.model_number = kwargs.get('model_number', 0)
@@ -114,7 +117,7 @@ class Model(ParameterGroup):
         return s
 
 
-class ModelCurve(Model, Curve):
+class ModelCurve(Model, mfm.curve.Curve):
 
     @property
     def n_points(self):
@@ -150,7 +153,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
 
     def update_widgets(self):
         #[p.update() for p in self._aggregated_parameters if isinstance(p, AggregatedParameters)]
-        [p.update() for p in self._parameters if isinstance(p, FittingParameterWidget)]
+        [p.update() for p in self._parameters if isinstance(p, mfm.parameter.FittingParameterWidget)]
 
     def update(self, *args, **kwargs):
         QtWidgets.QWidget.update(self, *args)
@@ -165,7 +168,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         Model.__init__(self, fit, *args, **kwargs)
         self.plots = list()
-        self.icon = kwargs.get('icon', QtGui.QIcon(":/icons/document-open.png"))
+        self.icon = kwargs.get('icon', QtWidgets.QIcon(":/icons/document-open.png"))
 
 
 from . import fcs

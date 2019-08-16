@@ -1,13 +1,10 @@
 import numpy as np
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 from mfm import plots
-from mfm.fitting.models.tcspc.fret import FRETrateModelWidget, WormLikeChainModelWidget, FRETModel, \
-    SingleDistanceModelWidget
 from mfm.fluorescence import stack_lifetime_spectra
 from mfm.parameter import FittingParameterWidget
 from mfm.widgets import clear_layout
-from .fret import GaussianModelWidget
 from .tcspc import LifetimeModel
 from .tcspc import LifetimeModelWidgetBase
 

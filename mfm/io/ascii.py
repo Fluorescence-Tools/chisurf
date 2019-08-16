@@ -1,11 +1,19 @@
-import os
-import numpy as np
 import csv
+import os
+
+import numpy as np
 
 import mfm
 
 
-def save_xy(filename, x, y, verbose=False, fmt="%.3f\t%.3f", header=None):
+def save_xy(
+        filename: str,
+        x: np.array,
+        y: np.array,
+        verbose: bool = False,
+        fmt: str = "%.3f\t%.3f",
+        header_string: str = None
+):
     """
     Saves data x, y to file in format (csv). x and y
     should have the same lenght.
@@ -20,8 +28,8 @@ def save_xy(filename, x, y, verbose=False, fmt="%.3f\t%.3f", header=None):
     if verbose:
         print("Writing histogram to file: %s" % filename)
     fp = open(filename, 'w')
-    if header is not None:
-        fp.write(header)
+    if header_string is not None:
+        fp.write(header_string)
     for p in zip(x, y):
         fp.write(fmt % (p[0], p[1]))
     fp.close()
@@ -102,7 +110,11 @@ class Csv(object):
         """
         return self._filename
 
-    def load(self, filename, **kwargs):
+    def load(
+            self,
+            filename: str,
+            **kwargs
+    ):
         """
         This method loads a filename to the `Csv` object
         :param filename: string specifying the file
@@ -110,7 +122,7 @@ class Csv(object):
         :param verbose: The method is verbose if verbose is set to True of the verbose attribute of the instance is
         True.
         """
-        verbose = kwargs.get('verbose', self.verbose)
+        verbose = kwargs.pop('verbose', self.verbose)
         use_header = kwargs.pop('use_header', self.use_header)
         skiprows = kwargs.pop('skiprows', self.skiprows)
         header = 'infer' if use_header else None
@@ -129,8 +141,11 @@ class Csv(object):
                 if delimiter is None:
                     with open(filename, 'r') as csvfile:
                         for i in range(skiprows):
-                            for _ in range(skiprows): csvfile.readline()
-                            dialect = csv.Sniffer().sniff(csvfile.read(1024), delimiters=';,|\t ')
+                            for _ in range(skiprows):
+                                csvfile.readline()
+                            dialect = csv.Sniffer().sniff(
+                                csvfile.read(1024), delimiters=';,|\t '
+                            )
                             delimiter = dialect.delimiter
                 d = np.genfromtxt(
                     fname=filename,

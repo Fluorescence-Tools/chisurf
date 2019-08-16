@@ -1,16 +1,14 @@
+from __future__ import annotations
+
+import math
 from collections import OrderedDict
 from copy import copy, deepcopy
-import math
 import numpy as np
-import mfm.math.linalg as la
+import numba as nb
 
-try:
-    import numbapro as nb
-except ImportError:
-    import numba as nb
-import mfm
-from mfm.structure import Structure
+import mfm.structure.structure
 import mfm.math.linalg as la
+from mfm.structure.structure import Structure
 
 
 internal_formats = ['i4', 'i4', 'i4', 'i4', 'f8', 'f8', 'f8']
@@ -102,7 +100,10 @@ def atom_dist(aDist, resLookUp, xyz, aID):
     return aDist
 
 
-def move_center_of_mass(structure, all_atoms):
+def move_center_of_mass(
+        structure: mfm.structure.mfm.structure.Structure,
+        all_atoms
+):
     for i, res in enumerate(structure.residue_ids):
         at_nbr = np.where(all_atoms['res_id'] == res)[0]
         cb_nbr = structure.l_cb[i]
@@ -119,7 +120,9 @@ def move_center_of_mass(structure, all_atoms):
             structure.atoms[cb_nbr] = cb
 
 
-def make_residue_lookup_table(structure):
+def make_residue_lookup_table(
+        structure: mfm.structure.mfm.structure.Structure
+):
     l_residue = np.zeros((structure.n_residues, structure.max_atom_residue), dtype=np.int32) - 1
     n = 0
     res_dict = structure.residue_dict
@@ -345,7 +348,7 @@ class ProteinCentroid(Structure):
         return new
 
     def __init__(self, *args, **kwargs):
-        Structure.__init__(self, *args, **kwargs)
+        mfm.structure.Structure.__init__(self, *args, **kwargs)
         self.auto_update = kwargs.get('auto_update', True)
         self.coord_i = np.zeros(self.atoms.shape[0], dtype={'names': internal_keys, 'formats': internal_formats})
         self.dist_ca = np.zeros((self.n_residues, self.n_residues), dtype=np.float64)
@@ -454,7 +457,7 @@ class ProteinBead(Structure):
         return self.coord_i
 
     def __init__(self, *args, **kwargs):
-        Structure.__init__(self, *args, **kwargs)
+        mfm.structure.Structure.__init__(self, *args, **kwargs)
         self.coord_i = np.zeros(self.atoms.shape[0], dtype={'names': internal_keys,
                                                             'formats': internal_formats})
 

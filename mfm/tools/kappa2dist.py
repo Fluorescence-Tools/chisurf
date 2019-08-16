@@ -1,10 +1,10 @@
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import numpy as np
-from guiqwt.plot import CurveDialog
+from PyQt5 import QtWidgets, uic
 from guiqwt.builder import make
+from guiqwt.plot import CurveDialog
 
-from ..fluorescence import general as fluorescence
 from mfm.fluorescence.anisotropy import kappasqAllDelta, kappasq_all, s2delta
+from ..fluorescence import general as fluorescence
 
 
 class Kappa2Dist(QtWidgets.QWidget):
@@ -27,7 +27,7 @@ class Kappa2Dist(QtWidgets.QWidget):
         self.verticalLayout.addWidget(self.kappa2_plot)
         ## Connections
         self.pushButton.clicked.connect(self.onUpdateHist)
-        self.doubleSpinBox_4.valueChanged[double].connect(self.onUpdateRapp)
+        self.doubleSpinBox_4.valueChanged.connect(self.onUpdateRapp)
         self.hide()
 
     def onUpdateHist(self):

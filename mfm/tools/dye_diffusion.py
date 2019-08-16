@@ -1,17 +1,17 @@
+import json
 import os
 import tempfile
-import json
-import numpy as np
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from guiqwt.plot import CurveDialog
+import mfm.fluorescence.fps.widgets
+import numpy as np
+from PyQt5 import QtWidgets, uic
 from guiqwt.builder import make
+from guiqwt.plot import CurveDialog
 
 import mfm
-import mfm.fluorescence.fps.widgets
 from mfm.fluorescence.simulation.dye_diffusion import DyeDecay
-from mfm.structure import Structure
 from mfm.plots.MolView import MolQtWidget
+from mfm.structure.structure import Structure
 from mfm.widgets import PDBSelector
 
 
@@ -193,8 +193,8 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
         self.actionSave_histogram.triggered.connect(self.onSaveHist)
         self.actionSave_trajectory.triggered.connect(self.onSaveTrajectory)
 
-        self.doubleSpinBox_6.valueChanged[double].connect(self.onSimulationTimeChanged)
-        self.doubleSpinBox_7.valueChanged[double].connect(self.onSimulationDtChanged)
+        self.doubleSpinBox_6.valueChanged.connect(self.onSimulationTimeChanged)
+        self.doubleSpinBox_7.valueChanged.connect(self.onSimulationDtChanged)
 
         self.tmp_dir = tempfile.gettempdir()
         print("Temporary Directory: %s" % self.tmp_dir)

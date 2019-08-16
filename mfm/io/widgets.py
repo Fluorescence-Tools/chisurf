@@ -1,11 +1,12 @@
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtWidgets, uic
+
 import mfm
 import mfm.structure
 import mfm.structure.structure
-from mfm.io.ascii import Csv
 import mfm.widgets
-from .tttr import filetypes
+from mfm.io.ascii import Csv
 from .photons import Photons
+from .tttr import filetypes
 
 
 class SpcFileWidget(QtWidgets.QWidget):
@@ -274,7 +275,6 @@ class CsvWidget(QtWidgets.QWidget):
     def changeCsvType(self):
         mode = 'csv' if self.radioButton_2.isChecked() else 'fwf'
         mfm.run("cs.current_setup.mode = '%s'" % mode)
-
 
     def load(self, filename=None, **kwargs):
         if filename is None:
