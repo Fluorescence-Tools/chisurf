@@ -19,7 +19,6 @@ install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  - conda config --add channels conda-forge fluorescence-tools tpeulen
   - conda create -q --file=environment.yaml
   - conda activate chisurf
   - python setup.py install
