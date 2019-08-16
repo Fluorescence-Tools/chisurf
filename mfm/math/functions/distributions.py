@@ -1,6 +1,7 @@
+from math import exp
+
 import numpy as np
 from numba import jit
-from math import exp
 
 
 @jit(nopython=True, nogil=True)

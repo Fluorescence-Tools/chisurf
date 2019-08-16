@@ -5,7 +5,7 @@ This module contain a small tool to generate JSON-labeling files
 import json
 from collections import OrderedDict
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtWidgets, uic
 
 import mfm
 import mfm.structure

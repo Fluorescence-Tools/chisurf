@@ -2,24 +2,23 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="96"
-   height="96"
-   id="svg2"
-   version="1.1"
-   inkscape:version="0.48.4 r9939"
-   sodipodi:docname="kitesurf.svg"
-   inkscape:export-filename="/home/thomas/Dropbox/TCSPC/ui/icons/kitesurf.png"
-   inkscape:export-xdpi="94.169556"
-   inkscape:export-ydpi="94.169556">
+        xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:cc="http://creativecommons.org/ns#"
+        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+        xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+        width="96"
+        height="96"
+        id="svg2"
+        version="1.1"
+        inkscape:version="0.48.4 r9939"
+        sodipodi:docname="kitesurf.svg"
+        inkscape:export-filename="/home/thomas/Dropbox/TCSPC/ui/icons/kitesurf.png"
+        inkscape:export-xdpi="94.169556"
+        inkscape:export-ydpi="94.169556">
   <defs
      id="defs4">
     <linearGradient

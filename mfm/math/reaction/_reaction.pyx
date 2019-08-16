@@ -1,10 +1,10 @@
-from numpy.random import uniform, multinomial, exponential
 #from numpy import arange, array, empty,zeros
-import numpy as np
-cimport numpy as np
 import time
-from numpy.random import uniform, multinomial, exponential
 
+cimport
+numpy as np
+import numpy as np
+from numpy.random import multinomial
 
 ##### SSA #########
 # http://pyinsci.blogspot.de/2008/10/fast-gillespies-direct-algorithm-in.html

@@ -3,9 +3,10 @@ Functions related to random numbers
 """
 
 from math import sqrt
+
+import numba as nb
 import numpy as np
 from scipy.stats import norm
-import numba as nb
 
 
 @nb.jit

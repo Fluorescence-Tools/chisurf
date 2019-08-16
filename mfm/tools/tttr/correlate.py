@@ -1,9 +1,9 @@
-from copy import deepcopy
 import copy
+from copy import deepcopy
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import numpy as np
 import pyqtgraph as pg
+from PyQt5 import QtCore, QtWidgets, uic
 
 import mfm
 from mfm.experiments import settings

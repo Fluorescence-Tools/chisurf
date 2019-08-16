@@ -1,4 +1,5 @@
-from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtWidgets
+
 from mfm.base import Base
 
 

@@ -1,7 +1,8 @@
-import numpy as np
-from copy import deepcopy
-from math import exp, ceil, sqrt, log
+from math import exp, ceil, sqrt
+
 import numba as nb
+import numpy as np
+
 import mfm
 
 

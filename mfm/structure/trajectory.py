@@ -1,9 +1,10 @@
-import os
 import copy
+import os
 import tempfile
 
 import mdtraj
 import numpy as np
+
 from mfm import Base
 from mfm.structure import Structure, average
 

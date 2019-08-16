@@ -1,7 +1,8 @@
 import copy
 from math import floor
-import numpy as np
+
 import numba as nb
+import numpy as np
 
 
 def hist2func(x, H, binEdges):

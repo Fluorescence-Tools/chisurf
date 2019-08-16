@@ -1,13 +1,16 @@
+import numbers
 import os.path
-from typing import List
 import zlib
 from copy import copy
+from typing import List
+
 import numpy as np
+
 import mfm
-from mfm.base import Base
-from mfm.math.signal import get_fwhm
 import mfm.decorators
-import numbers
+from mfm.base import Base
+import mfm.fitting.fit
+from mfm.math.signal import get_fwhm
 
 
 class Data(Base):

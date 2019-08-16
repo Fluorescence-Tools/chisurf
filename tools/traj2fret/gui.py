@@ -1,7 +1,8 @@
 # coding=utf-8
 import tempfile
+
 import mdtraj as md
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QApplication
 
 from mfm.io import pdb

@@ -6,14 +6,14 @@
 # This code is in the public domain
 #-------------------------------------------------------------------------
 
-import mfm
 import sys
 
-import sip
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
 from PyQt5.Qsci import QsciScintilla, QsciLexerPython
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+
+import mfm
+
 editor_settings = mfm.cs_settings['gui']['editor']
 
 

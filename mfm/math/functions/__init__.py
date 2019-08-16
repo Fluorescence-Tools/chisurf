@@ -1,7 +1,9 @@
-import mfm.math.functions.datatools
-from numba import jit
-import numpy as np
 from math import exp, sqrt
+
+import numpy as np
+from numba import jit
+
+import mfm.math.functions.datatools
 
 
 @jit(nopython=True)

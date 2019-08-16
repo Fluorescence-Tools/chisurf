@@ -1,5 +1,6 @@
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtWidgets, uic
 from scipy.stats import f as fdist
+
 import mfm
 
 

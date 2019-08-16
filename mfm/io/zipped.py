@@ -1,10 +1,11 @@
 from __future__ import print_function, division, absolute_import
 
-import os
-import io
 import bz2
 import gzip
+import io
+import os
 import zipfile
+
 from mdtraj.utils.six import PY2, StringIO
 
 

@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
 import sys
+
+import numpy
+from cython.Distutils import build_ext
 from setuptools import setup, find_packages
 from setuptools.extension import Extension
-from cython.Distutils import build_ext
-import numpy
-
 
 args = sys.argv[1:]
 # We want to always use build_ext --inplace

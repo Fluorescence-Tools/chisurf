@@ -1,10 +1,10 @@
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import numpy as np
-from guiqwt.plot import CurveDialog
+from PyQt5 import QtWidgets, uic
 from guiqwt.builder import make
+from guiqwt.plot import CurveDialog
 
-from ..fluorescence import general as fluorescence
 from mfm.fluorescence.anisotropy import kappasqAllDelta, kappasq_all, s2delta
+from ..fluorescence import general as fluorescence
 
 
 class Kappa2Dist(QtWidgets.QWidget):

@@ -1,9 +1,9 @@
-from PyQt5 import QtGui, QtWidgets
 import numpy as np
+from PyQt5 import QtWidgets
 
 import mfm
-from . import Reader
 from mfm.io.widgets import CsvWidget
+from . import Reader
 
 settings = mfm.cs_settings['correlator']
 

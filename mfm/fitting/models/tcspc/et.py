@@ -2,13 +2,13 @@ import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import mfm
+import mfm.fluorescence
+import mfm.fluorescence.general
+import mfm.math
 from mfm import plots
 from mfm.fitting.models import Model
-import mfm.fluorescence
-import mfm.math
 from mfm.math.optimization import solve_nnls, solve_richardson_lucy, maxent
 from .tcspc import LifetimeModel
-import mfm.fluorescence.general
 
 
 class Phasor(object):

@@ -1,10 +1,12 @@
+from math import sqrt
+
 import numba as nb
 import numpy as np
 from numpy import linalg as linalg
+
 import mfm
 from mfm.fluorescence import kappasq, elte2, e1tn
 from mfm.parameter import ParameterGroup, FittingParameter
-from math import sqrt
 
 
 @nb.jit

@@ -1,12 +1,11 @@
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import numpy as np
-import os
+from PyQt5 import QtWidgets, uic
 
 import mfm
 from mfm.experiments import Reader
 from mfm.fluorescence.tcspc import weights, fitrange, weights_ps
-from mfm.io.ascii import Csv
 from mfm.io import sdtfile
+from mfm.io.ascii import Csv
 from mfm.io.widgets import CsvWidget
 
 

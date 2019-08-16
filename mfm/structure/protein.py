@@ -1,8 +1,8 @@
+import math
 from collections import OrderedDict
 from copy import copy, deepcopy
-import math
+
 import numpy as np
-import mfm.math.linalg as la
 
 try:
     import numbapro as nb
