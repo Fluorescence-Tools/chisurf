@@ -1,4 +1,4 @@
-name: test
+name: chisurf
 
 channels:
   - fluorescence-tools
