@@ -276,7 +276,6 @@ class CsvWidget(QtWidgets.QWidget):
         mode = 'csv' if self.radioButton_2.isChecked() else 'fwf'
         mfm.run("cs.current_setup.mode = '%s'" % mode)
 
-
     def load(self, filename=None, **kwargs):
         if filename is None:
             filename = mfm.widgets.get_filename('Open CSV-File', 'CSV-file (*.*)')

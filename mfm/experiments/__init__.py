@@ -6,10 +6,10 @@ different experimental setups. Furthermore, it contains a set of plotting librar
 
 
 """
-from mfm import Base
+import mfm.base
 
 
-class Experiment(Base):
+class Experiment(mfm.base.Base):
     """
     All information contained within `ChiSurf` is associated to an experiment. Each experiment
     is associated with a list of models and a list of setups. The list of models and the list
@@ -69,7 +69,7 @@ class Experiment(Base):
         return names
 
 
-class Reader(Base):
+class Reader(mfm.base.Base):
 
     def __init__(self, *args, **kwargs):
         super(Reader, self).__init__(self, *args, **kwargs)

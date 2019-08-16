@@ -2,6 +2,7 @@ import numpy as np
 from PyQt5 import QtWidgets, uic
 
 import mfm
+import mfm.widgets
 from mfm.experiments import Reader
 from mfm.fluorescence.tcspc import weights, fitrange, weights_ps
 from mfm.io import sdtfile
