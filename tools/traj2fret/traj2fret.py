@@ -1,8 +1,9 @@
 import argparse
-import mdtraj as md
-import numpy as np
-import numba as nb
 from math import sqrt
+
+import mdtraj as md
+import numba as nb
+import numpy as np
 
 
 def convert_chain_id_to_numbers(chain_id):

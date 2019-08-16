@@ -3,11 +3,11 @@ import itertools
 import numexpr as ne
 import numpy as np
 import tables
+from mfm.fluorescence.fps.dynamic import DiffusionSimulation
 
 import mfm
 from mfm.curve import Curve
 from mfm.parameter import ParameterGroup, FittingParameter
-from mfm.fluorescence.fps.dynamic import DiffusionSimulation
 
 
 def simulate_decays(dyes, decay_parameter, simulation_parameter, quenching_parameter, save_decays=True,

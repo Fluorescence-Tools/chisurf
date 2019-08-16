@@ -3,11 +3,12 @@ Fluorescence
 
 """
 import mfm
-from .general import *
+from . import anisotropy
 from . import fcs
 from . import intensity
-from . import anisotropy
 from . import tcspc
+from .general import *
+
 #import pda
 
 rda_axis = np.linspace(mfm.cs_settings['fret']['rda_min'],

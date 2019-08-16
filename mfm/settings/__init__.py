@@ -1,6 +1,7 @@
-import os
-import yaml
 import json
+import os
+
+import yaml
 
 package_directory = os.path.dirname(os.path.abspath(__file__))
 settings_file = os.path.join(package_directory, 'chisurf.yaml')

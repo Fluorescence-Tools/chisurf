@@ -12,7 +12,8 @@ The :py:mod:`.models`
 
 
 """
-from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtWidgets
+
 import mfm.plots as plots
 from mfm.curve import Curve
 from mfm.parameter import ParameterGroup, FittingParameterWidget

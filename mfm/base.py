@@ -1,7 +1,7 @@
 import json
+
 import yaml
 from slugify import slugify
-from mfm import verbose
 
 
 class Base(object):

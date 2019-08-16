@@ -1,17 +1,17 @@
+import json
 import os
 import tempfile
-import json
-import numpy as np
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from guiqwt.plot import CurveDialog
+import mfm.fluorescence.fps.widgets
+import numpy as np
+from PyQt5 import QtWidgets, uic
 from guiqwt.builder import make
+from guiqwt.plot import CurveDialog
 
 import mfm
-import mfm.fluorescence.fps.widgets
 from mfm.fluorescence.simulation.dye_diffusion import DyeDecay
-from mfm.structure import Structure
 from mfm.plots.MolView import MolQtWidget
+from mfm.structure import Structure
 from mfm.widgets import PDBSelector
 
 

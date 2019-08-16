@@ -9,10 +9,10 @@ import mfm.math.signal
 from mfm.fitting.models import Model, ModelWidget, ModelCurve
 from mfm.fitting.models.tcspc.nusiance import Generic, GenericWidget, Corrections, CorrectionsWidget
 from mfm.fluorescence.anisotropy import Anisotropy
-from mfm.fluorescence.widgets import AnisotropyWidget
 from mfm.fluorescence.general import species_averaged_lifetime, fluorescence_averaged_lifetime
 from mfm.fluorescence.tcspc.convolve import Convolve, ConvolveWidget
-from mfm.parameter import FittingParameterWidget, FittingParameter, ParameterGroup
+from mfm.fluorescence.widgets import AnisotropyWidget
+from mfm.parameter import FittingParameter, ParameterGroup
 
 
 class Lifetime(ParameterGroup):

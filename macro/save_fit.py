@@ -1,7 +1,8 @@
+import os
+
 from docx import Document
 from docx.shared import Inches
 from slugify import slugify
-import os
 
 fit_control_widget = cs.current_fit_widget
 fs = fit_control_widget.fit

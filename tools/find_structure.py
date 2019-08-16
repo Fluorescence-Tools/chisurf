@@ -1,6 +1,6 @@
 import argparse
+
 import numpy as np
-import mdtraj as md
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 

@@ -1,7 +1,6 @@
 import numpy as np
-from .focus import focus_functions
-import random
 
+from .focus import focus_functions
 
 LOW_PROBABILITY = 1.e-8
 pi = 3.14159265358979

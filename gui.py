@@ -1,7 +1,8 @@
 # coding=utf-8
-import numpy as np
 import os
 import sys
+
+import numpy as np
 import sip
 import slugify
 
@@ -14,7 +15,6 @@ sip.setapi('QUrl', 2)
 sip.setapi('QVariant', 2)
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication
-import mfm
 import mfm.ui.resource
 import tools
 

@@ -3,10 +3,11 @@ import os
 import tempfile
 from collections import OrderedDict
 from copy import deepcopy
+
 import mdtraj as md
 import numpy as np
-import mfm.io.pdb
 
+import mfm.io.pdb
 
 cartesian_keys = ['i', 'chain', 'res_id', 'res_name', 'atom_id', 'atom_name', 'element', 'coord',
                   'charge', 'radius', 'bfactor']

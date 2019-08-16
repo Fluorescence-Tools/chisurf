@@ -1,6 +1,6 @@
-from copy import deepcopy
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import numpy as np
+from PyQt5 import QtCore, QtWidgets, uic
+
 import mfm
 from mfm.curve import Curve
 from mfm.parameter import ParameterGroup, FittingParameter

@@ -1,13 +1,15 @@
 import os
+
+import emcee
+import numba as nb
 import numpy as np
 from scipy.linalg import pinvh
 from scipy.stats import f as fdist
+
 import mfm
 import mfm.base
-from mfm.math.optimization.leastsqbound import leastsqbound
-import numba as nb
-import emcee
 import mfm.fitting.models
+from mfm.math.optimization.leastsqbound import leastsqbound
 
 eps = np.sqrt(np.finfo(float).eps)
 

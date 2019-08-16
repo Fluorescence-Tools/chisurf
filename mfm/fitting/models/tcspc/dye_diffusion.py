@@ -4,7 +4,10 @@ import os
 import tempfile
 
 import numpy as np
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtWidgets, uic
+from mfm.fluorescence.fps.dynamic import DiffusionSimulation, Dye, Sticking, \
+    ProteinQuenching
+from mfm.fluorescence.fps.widgets import ProteinQuenchingWidget, DyeWidget, StickingWidget
 
 import mfm
 import mfm.fitting.fit
@@ -20,9 +23,6 @@ from mfm import plots
 from mfm.curve import Curve
 from mfm.fitting.models import Model
 from mfm.fluorescence.fps import ACV
-from mfm.fluorescence.fps.dynamic import DiffusionSimulation, Dye, Sticking, \
-    ProteinQuenching
-from mfm.fluorescence.fps.widgets import ProteinQuenchingWidget, DyeWidget, StickingWidget
 from mfm.fluorescence.simulation import photon
 from mfm.structure import Structure, get_coordinates_of_residues
 from mfm.widgets import PDBSelector

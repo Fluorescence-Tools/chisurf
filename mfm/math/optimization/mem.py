@@ -1,7 +1,8 @@
-from numpy import dot, log, sqrt
-import mfm
 import numpy as np
-from scipy.optimize import fmin_l_bfgs_b, minimize
+from numpy import dot, log, sqrt
+from scipy.optimize import minimize
+
+import mfm
 
 settings = mfm.cs_settings['fitting']['mem']
 

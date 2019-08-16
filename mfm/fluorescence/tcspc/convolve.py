@@ -1,5 +1,6 @@
-from PyQt5 import QtGui, QtWidgets, uic
 import numpy as np
+from PyQt5 import QtWidgets, uic
+
 import mfm
 from mfm.curve import Curve
 from mfm.parameter import ParameterGroup, FittingParameter

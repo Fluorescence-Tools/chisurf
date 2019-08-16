@@ -1,10 +1,9 @@
 from itertools import tee
+
+import numba as nb
 import numexpr as ne
 import numpy as np
 import scipy.optimize
-import numba as nb
-
-
 
 rate2lifetime = lambda rate, lifetime: ne.evaluate("1. / (1. / lifetime + rate)")
 et = lambda fd0, fda: fda / fd0

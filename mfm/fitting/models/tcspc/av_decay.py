@@ -1,8 +1,7 @@
+import mfm
 from mfm.fitting.models.tcspc.tcspc import DecayModel
 from mfm.fluorescence.fps import DynamicAV
 from mfm.parameter import FittingParameter
-import mfm
-import numpy as np
 
 
 class AVDecayModel(DecayModel):

@@ -1,9 +1,10 @@
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-import mfm
-import pyqtgraph as pg
 import weakref
 from typing import List
 
+import pyqtgraph as pg
+from PyQt5 import QtCore, QtWidgets, uic
+
+import mfm
 import mfm.base
 import mfm.fitting.models
 

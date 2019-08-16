@@ -4,15 +4,15 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import mfm
 import mfm.math
 from mfm import plots
-from mfm.fitting.widgets import FittingControllerWidget
 from mfm.fitting.models import ModelWidget
 from mfm.fitting.models.tcspc.nusiance import GenericWidget, CorrectionsWidget
-from mfm.fitting.models.tcspc.tcspc import LifetimeModel
-from mfm.fluorescence import distribution2rates, rates2lifetimes, rda_axis
-from mfm.fluorescence.widgets import AnisotropyWidget
-from mfm.fluorescence.tcspc.convolve import ConvolveWidget
-from mfm.parameter import FittingParameterWidget, FittingParameter, ParameterGroup
 from mfm.fitting.models.tcspc.tcspc import Lifetime, LifetimeWidget, LifetimeModelWidgetBase
+from mfm.fitting.models.tcspc.tcspc import LifetimeModel
+from mfm.fitting.widgets import FittingControllerWidget
+from mfm.fluorescence import distribution2rates, rates2lifetimes, rda_axis
+from mfm.fluorescence.tcspc.convolve import ConvolveWidget
+from mfm.fluorescence.widgets import AnisotropyWidget
+from mfm.parameter import FittingParameter, ParameterGroup
 
 fret_settings = mfm.cs_settings['fret']
 

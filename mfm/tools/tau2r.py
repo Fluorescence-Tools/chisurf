@@ -1,6 +1,7 @@
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtWidgets, uic
 
-from mfm.fluorescence import lifetime2transfer, transfer2distance, distance2transfer, transfer2lifetime, fretrate2distance, distance2fretrate
+from mfm.fluorescence import lifetime2transfer, transfer2distance, distance2transfer, transfer2lifetime, \
+    fretrate2distance, distance2fretrate
 
 
 class FRETCalculator(QtWidgets.QWidget):

@@ -1,9 +1,10 @@
 import os
-import numpy as np
-import mfm
-import mfm.common as common
 import urllib
 
+import numpy as np
+
+import mfm
+import mfm.common as common
 
 keys = ['i', 'chain', 'res_id', 'res_name',
              'atom_id', 'atom_name', 'element',

@@ -1,6 +1,8 @@
 import tempfile
+
 import numpy as np
 import tables
+
 from mfm.io import tttr
 
 

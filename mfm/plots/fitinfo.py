@@ -1,4 +1,5 @@
-from PyQt5 import Qt, QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtWidgets
+
 import mfm
 from mfm.plots import plotbase
 
