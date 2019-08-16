@@ -14,7 +14,7 @@ sip.setapi('QUrl', 2)
 sip.setapi('QVariant', 2)
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication
-
+import mfm
 import mfm.ui.resource
 import tools
 

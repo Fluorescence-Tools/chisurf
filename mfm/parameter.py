@@ -5,6 +5,7 @@ import weakref
 from typing import List
 
 import mfm.base
+import mfm.fitting.models
 
 parameter_settings = mfm.cs_settings['parameter']
 
@@ -614,7 +615,22 @@ class ParameterGroup(mfm.base.Base):
     def __len__(self):
         return len(self.parameters_all)
 
-    def __init__(self, fit=None, model=None, short='', parameters=list(), *args, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.Fit = None,
+            model: mfm.fitting.models.Model = None,
+            short: str = '',
+            parameters: List[mfm.parameter.FittingParameter] = list(),
+            *args, **kwargs):
+        """
+
+        :param fit: the fit to which the parameter group is associated to
+        :param model: the model to which the parameter group is associated to
+        :param short: a short name for the parameter group
+        :param parameters: a list of the fitting parameters that are grouped by the fitting parameter group
+        :param args:
+        :param kwargs:
+        """
         if mfm.verbose:
             print("---------------")
             print("Class: %s" % self.__class__.name)
@@ -634,7 +650,7 @@ class ParameterGroup(mfm.base.Base):
             if isinstance(p0, ParameterGroup):
                 self.__dict__ = p0.__dict__
 
-    def to_widget(self, *args, **kwargs):
+    def to_widget(self, *args, **kwargs) -> mfm.parameter.ParameterGroupWidget:
         return ParameterGroupWidget(self, *args, **kwargs)
 
 
@@ -642,8 +658,6 @@ class ParameterGroupWidget(ParameterGroup, QtWidgets.QGroupBox):
 
     def __init__(self, parameter_group, *args, **kwargs):
         self.parameter_group = parameter_group
-        ParameterGroup.__init__(self, *args, **kwargs)
-        QtGui.QGroupBox.__init__(self)
         super(ParameterGroupWidget, self).__init__(*args, **kwargs)
         self.setTitle(self.name)
 
