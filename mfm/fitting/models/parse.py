@@ -10,7 +10,7 @@ from sympy.printing.latex import latex
 
 import mfm
 from mfm.fitting.models import ModelWidget, ModelCurve
-from mfm.parameter import FittingParameter, ParameterGroup
+from mfm.parameter import FittingParameter, FittingParameterGroup
 
 try:
     from re import Scanner
@@ -24,10 +24,10 @@ class GenerateSymbols(defaultdict):
         return sympy.Symbol(key)
 
 
-class ParseFormula(ParameterGroup):
+class ParseFormula(FittingParameterGroup):
 
     def __init__(self, **kwargs):
-        ParameterGroup.__init__(self, **kwargs)
+        FittingParameterGroup.__init__(self, **kwargs)
 
         self._keys = list()
         self._model_file = None

@@ -12,12 +12,12 @@ from mfm.fitting.widgets import FittingControllerWidget
 from mfm.fluorescence import distribution2rates, rates2lifetimes, rda_axis
 from mfm.fluorescence.tcspc.convolve import ConvolveWidget
 from mfm.fluorescence.widgets import AnisotropyWidget
-from mfm.parameter import FittingParameter, ParameterGroup
+from mfm.parameter import FittingParameter, FittingParameterGroup
 
 fret_settings = mfm.cs_settings['fret']
 
 
-class FRETParameters(ParameterGroup):
+class FRETParameters(FittingParameterGroup):
 
     name = "FRET-parameters"
 
@@ -82,11 +82,11 @@ class FRETParameters(ParameterGroup):
             self._xDonly,
             self._fret_efficiency
         ]
-        ParameterGroup.__init__(self, parameters=parameters, **kwargs)
+        FittingParameterGroup.__init__(self, parameters=parameters, **kwargs)
         self.name = "FRET-parameters"
 
 
-class OrientationParameter(ParameterGroup):
+class OrientationParameter(FittingParameterGroup):
 
     @property
     def orientation_spectrum(self):
@@ -115,10 +115,10 @@ class OrientationParameter(ParameterGroup):
         p = mfm.fluorescence.general.p_isotropic_orientation_factor(k2s)
         self._k2_slow_iso = mfm.fluorescence.general.two_column_to_interleaved(p, k2s)
 
-        ParameterGroup.__init__(self, *args, **kwargs)
+        FittingParameterGroup.__init__(self, *args, **kwargs)
 
 
-class Gaussians(ParameterGroup):
+class Gaussians(FittingParameterGroup):
 
     name = "gaussians"
 
@@ -229,7 +229,7 @@ class Gaussians(ParameterGroup):
         :param no_donly: bool
             If this is True the donor-only fraction is not displayed/present.
         """
-        ParameterGroup.__init__(self, **kwargs)
+        FittingParameterGroup.__init__(self, **kwargs)
         self._name = kwargs.get('name', 'gaussians')
 
         self.donors = Lifetime(**kwargs)
@@ -325,7 +325,7 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
         self._gb.pop().close()
 
 
-class DiscreteDistance(ParameterGroup):
+class DiscreteDistance(FittingParameterGroup):
 
     name = "discrete_distance"
 
@@ -378,7 +378,7 @@ class DiscreteDistance(ParameterGroup):
         return len(self._amplitudes)
 
     def __init__(self, **kwargs):
-        ParameterGroup.__init__(self, **kwargs)
+        FittingParameterGroup.__init__(self, **kwargs)
         self.name = kwargs.get('name', 'fret_rate')
         self.short = kwargs.get('short', 'G')
 

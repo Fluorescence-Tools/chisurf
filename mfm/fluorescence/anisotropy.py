@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from math import sqrt
 
 import numba as nb
@@ -6,7 +8,7 @@ from numpy import linalg as linalg
 
 import mfm
 import mfm.fluorescence
-from mfm.parameter import ParameterGroup, FittingParameter
+import mfm.parameter
 
 
 @nb.jit
@@ -323,7 +325,7 @@ def calculate_kappa_distance(xyz, aid1, aid2, aia1, aia2):
     return ds, ks
 
 
-class Anisotropy(ParameterGroup):
+class Anisotropy(mfm.parameter.FittingParameterGroup):
 
     @property
     def r0(self):
@@ -417,12 +419,12 @@ class Anisotropy(ParameterGroup):
         fixed = kwargs.get('fixed', False)
         bound_on = kwargs.get('bound_on', False)
 
-        b = FittingParameter(lb=lb, ub=ub,
+        b = mfm.parameter.FittingParameter(lb=lb, ub=ub,
                              value=rho_value,
                              name='b(%i)' % (len(self) + 1),
                              fixed=fixed,
                              bounds_on=bound_on)
-        rho = FittingParameter(lb=lb, ub=ub,
+        rho = mfm.parameter.FittingParameter(lb=lb, ub=ub,
                                value=b_value,
                                name='rho(%i)' % (len(self) + 1),
                                fixed=fixed, bounds_on=bound_on)
@@ -435,14 +437,14 @@ class Anisotropy(ParameterGroup):
 
     def __init__(self, **kwargs):
         kwargs['name'] = 'Anisotropy'
-        ParameterGroup.__init__(self, **kwargs)
+        mfm.parameter.FittingParameterGroup.__init__(self, **kwargs)
         self._rhos = []
         self._bs = []
         self._polarization_type = kwargs.get('polarization', mfm.cs_settings['tcspc']['polarization'])
 
-        self._r0 = FittingParameter(name='r0', value=0.38, fixed=True)
-        self._g = FittingParameter(name='g', value=1.00, fixed=True)
-        self._l1 = FittingParameter(name='l1', value=0.0308, fixed=True)
-        self._l2 = FittingParameter(name='l2', value=0.0368, fixed=True)
+        self._r0 = mfm.parameter.FittingParameter(name='r0', value=0.38, fixed=True)
+        self._g = mfm.parameter.FittingParameter(name='g', value=1.00, fixed=True)
+        self._l1 = mfm.parameter.FittingParameter(name='l1', value=0.0308, fixed=True)
+        self._l2 = mfm.parameter.FittingParameter(name='l2', value=0.0368, fixed=True)
 
 

@@ -12,10 +12,10 @@ from mfm.fluorescence.anisotropy import Anisotropy
 from mfm.fluorescence.general import species_averaged_lifetime, fluorescence_averaged_lifetime
 from mfm.fluorescence.tcspc.convolve import Convolve, ConvolveWidget
 from mfm.fluorescence.widgets import AnisotropyWidget
-from mfm.parameter import FittingParameter, ParameterGroup
+from mfm.parameter import FittingParameter, FittingParameterGroup
 
 
-class Lifetime(ParameterGroup):
+class Lifetime(FittingParameterGroup):
 
     @property
     def absolute_amplitudes(self):
@@ -149,7 +149,7 @@ class Lifetime(ParameterGroup):
         return a, l
 
     def __init__(self, **kwargs):
-        ParameterGroup.__init__(self, **kwargs)
+        FittingParameterGroup.__init__(self, **kwargs)
         self.short = kwargs.get('short', 'L')
         self._lifetime_spectrum = None
         self._abs_amplitudes = kwargs.get('absolute_amplitudes', True)

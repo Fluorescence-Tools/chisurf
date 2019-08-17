@@ -2,12 +2,12 @@
 Fluorescence
 
 """
-import mfm
-from . import anisotropy
-from . import fcs
-from . import intensity
-from . import tcspc
-from .general import *
+import numpy as np
+import mfm.fluorescence.anisotropy
+import mfm.fluorescence.fcs
+import mfm.fluorescence.intensity
+import mfm.fluorescence.tcspc
+import mfm.fluorescence.general
 
 #import pda
 
