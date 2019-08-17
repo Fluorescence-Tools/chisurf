@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import os
 import urllib
-
 import numpy as np
 
 import mfm
@@ -60,7 +61,7 @@ def assign_element_to_atom_name(
 
 def parse_string_pdb(
         string: str,
-        assignCharge: bool = False,
+        assign_charge: bool = False,
         **kwargs
 ):
     rows = string.splitlines()
@@ -82,7 +83,7 @@ def parse_string_pdb(
             atoms['bfactor'][ni] = line[60:65]
             atoms['element'][ni] = assign_element_to_atom_name(atom_name)
             try:
-                if assignCharge:
+                if assign_charge:
                     if atoms['res_name'][ni] in common.CHARGE_DICT:
                         if atoms['atom_name'][ni] == common.TITR_ATOM_COARSE[atoms['res_name'][ni]]:
                             atoms['charge'][ni] = common.CHARGE_DICT[atoms['res_name'][ni]]
@@ -132,7 +133,7 @@ def parse_string_pqr(
 
 def read(
         filename: str,
-        assignCharge: bool = False,
+        assign_charge: bool = False,
         **kwargs
 ):
     """ Open pdb_file and read each line into pdb (a list of lines)
@@ -166,7 +167,7 @@ def read(
             print("Filename: %s" % filename)
             print("Path: %s" % path)
         if filename.endswith('.pdb'):
-            atoms = parse_string_pdb(string, assignCharge, **kwargs)
+            atoms = parse_string_pdb(string, assign_charge, **kwargs)
         elif filename.endswith('.pqr'):
             atoms = parse_string_pqr(string, **kwargs)
     return atoms
@@ -260,7 +261,14 @@ def write_points(
         write_xyz(filename, points, verbose=verbose)
 
 
-def get_atom_index(atoms, chain_identifier, residue_seq_number, atom_name, residue_name, **kwargs):
+def get_atom_index(
+        atoms: np.array,
+        chain_identifier: str,
+        residue_seq_number: int,
+        atom_name: str,
+        residue_name: str,
+        **kwargs
+):
     """
     Get the atom index by the the identifier
 

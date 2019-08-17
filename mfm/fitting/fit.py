@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import List
 
 import os
 import emcee
@@ -480,7 +481,10 @@ def approx_grad(
     return f0, grad
 
 
-def covariance_matrix(fit, **kwargs):
+def covariance_matrix(
+        fit: mfm.fitting.fit.Fit,
+        **kwargs
+):
     """Calculate the covariance matrix
 
     :param fit:
@@ -515,7 +519,6 @@ def covariance_matrix(fit, **kwargs):
     return cov_m, important_parameters
 
 
-
 @nb.jit(nopython=True)
 def durbin_watson(
         residuals: np.array
@@ -534,7 +537,7 @@ def durbin_watson(
 
 
 def get_wres(
-        parameter,
+        parameter: List[float],
         model: mfm.fitting.models.Model
 ):
     """Returns the weighted residuals for a list of parameters of a model
@@ -549,7 +552,11 @@ def get_wres(
     return model.weighted_residuals
 
 
-def get_chi2(parameter, model, reduced=True):
+def get_chi2(
+        parameter: List[float],
+        model: mfm.fitting.models.Model,
+        reduced: bool = True
+) -> float:
     """Returns either the reduced chi2 or the sum of squares (chi2)
 
     :param parameter: a list of the parameter values or None. If None the model is not updated
@@ -582,7 +589,11 @@ def chi2_max(
     return chi2_value * (1.0 + float(number_of_parameters) / nu * fdist.isf(1. - conf_level, number_of_parameters, nu))
 
 
-def lnprior(parameter_values, fit, **kwargs):
+def lnprior(
+        parameter_values: List[float],
+        fit: mfm.fitting.fit.Fit,
+        **kwargs
+) -> float:
     """The probability determined by the prior which is given by the bounds of the model parameters.
     If the model parameters leave the bounds, the ln of the probability is minus infinity otherwise it
     is zero.
@@ -616,7 +627,13 @@ def lnprob(parameter_values, fit, chi2max=np.inf, **kwargs):
         return lnlike + lp
 
 
-def scan_parameter(fit, parameter_name, scan_range=(None, None), rel_range=0.2, n_steps=30):
+def scan_parameter(
+        fit: mfm.fitting.fit.Fit,
+        parameter_name: str,
+        scan_range=(None, None),
+        rel_range: float = 0.2,
+        n_steps: int = 30
+):
     """Performs a chi2-scan for the parameter
 
     :param fit: the fit of type 'mfm.fitting.Fit'

@@ -1,12 +1,17 @@
-import tempfile
+from __future__ import annotations
+from typing import List
 
+import tempfile
 import numpy as np
 import tables
 
 from mfm.io import tttr
 
 
-def read_BIDs(filenames, stack_files=True):
+def read_BIDs(
+        filenames: List[str],
+        stack_files: bool = True
+) -> np.array:
     """
     Reads Seidel-BID files and returns a list of numpy arrays. Each numpy array contains the indexes of the photons of
     the burst. These indexes can be used to slice a photon-stream.
@@ -123,7 +128,12 @@ class Photons(object):
     MTCLK [ms]:     1.36000003815e-05
     """
 
-    def __init__(self, p_object, file_type=None, **kwargs):
+    def __init__(
+            self,
+            p_object,
+            file_type: str = None,
+            **kwargs
+    ):
         self._tempfile = None
         if p_object is not None or isinstance(p_object, tables.file.File):
             if isinstance(p_object, str):
@@ -176,14 +186,14 @@ class Photons(object):
         return self._photon_array
 
     @property
-    def dt(self):
+    def dt(self) -> float:
         """
         The micro-time calibration
         """
         return self.mt_clk / self.n_tac
 
     @property
-    def filenames(self):
+    def filenames(self) -> List[str]:
         """
         Original filename of the data
         """
@@ -197,7 +207,7 @@ class Photons(object):
         return self._h5
 
     @property
-    def measurement_time(self):
+    def measurement_time(self) -> float:
         """
         Total measurement time in seconds?
         """
@@ -226,7 +236,7 @@ class Photons(object):
         return self.rout.shape[0]
 
     @property
-    def rout(self):
+    def rout(self) -> np.array:
         """
         Array containing the routing channel of the photons
         """

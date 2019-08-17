@@ -6,7 +6,6 @@ from numba import jit
 from . import i0
 from .distributions import normal_distribution
 
-eps = 1e-8
 
 
 @jit(nopython=True)

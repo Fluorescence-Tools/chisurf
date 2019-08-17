@@ -3,7 +3,7 @@ import re
 
 def clean(
         s: str
-):
+) -> str:
     """ Remove special characters to clean up string and make it compatible
     with a Python variable names
 

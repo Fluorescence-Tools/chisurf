@@ -3,13 +3,6 @@ from collections import Iterable
 from typing import List
 
 #######################################################
-#       OPENCL                                        #
-#######################################################
-#import pyopencl.array
-#cl_platform = pyopencl.get_platforms()[0]
-#cl_device = cl_platform.get_devices()[0]
-
-#######################################################
 #        LIST OF FITS, DATA, EXPERIMENTS              #
 #######################################################
 fits = []
@@ -30,7 +23,9 @@ verbose = cs_settings['verbose']
 __version__ = cs_settings['version']
 __name__ = cs_settings['name']
 working_path = ''
+eps = 1e-8
 
+import mfm.parameter
 import mfm.fitting
 import mfm.curve
 import mfm.fitting.models
@@ -90,8 +85,8 @@ def find_objects(
 
 def c(
         t,
-        st,
-        parameters
+        st: str,
+        parameters: List[mfm.parameter.Parameter]
 ):
     """This function facilitates the connection of qt-events to the mfm-commandline. Whenever the qt-event
     is called the string passed as argument is executed at the mfm-commandline with the provided parameters.

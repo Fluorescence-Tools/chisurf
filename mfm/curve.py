@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numbers
 import os.path
 import zlib
@@ -7,7 +9,9 @@ from typing import List
 import numpy as np
 
 import mfm
+import mfm.io
 import mfm.decorators
+import mfm.experiments
 from mfm.base import Base
 from mfm.math.signal import get_fwhm
 
@@ -22,33 +26,42 @@ class Data(Base):
         self._max_file_size = mfm.cs_settings['database']['read_file_size_limit']
 
     @property
-    def data(self):
+    def data(self) -> mfm.curve.Data:
         return self._data
 
     @data.setter
-    def data(self, v):
+    def data(
+            self,
+            v: mfm.curve.Data
+    ):
         self._data = v
 
     @property
-    def name(self):
+    def name(self) -> str:
         try:
             return self._kw['name']
         except KeyError:
             return self.filename
 
     @name.setter
-    def name(self, v):
+    def name(
+            self,
+            v: str
+    ):
         self._kw['name'] = v
 
     @property
-    def filename(self):
+    def filename(self) -> str:
         try:
             return os.path.normpath(self._filename)
         except AttributeError:
             return 'No file'
 
     @filename.setter
-    def filename(self, v):
+    def filename(
+            self,
+            v: str
+    ):
         self._filename = os.path.normpath(v)
         file_size = os.path.getsize(self._filename)
         if file_size < self._max_file_size and self._embed_data:
@@ -79,7 +92,7 @@ class ExperimentalData(Data):
         self._experiment = kwargs.get('experiment', None)
 
     @property
-    def experiment(self):
+    def experiment(self) -> mfm.experiments.Experiment:
         if self._experiment is None:
             if self.setup is None:
                 return None
@@ -89,7 +102,10 @@ class ExperimentalData(Data):
             return self._experiment
 
     @experiment.setter
-    def experiment(self, v):
+    def experiment(
+            self,
+            v: mfm.experiments.Experiment
+    ):
         self._experiment = v
 
     def to_dict(self):
@@ -101,11 +117,11 @@ class ExperimentalData(Data):
 class Curve(Base):
 
     @property
-    def fwhm(self):
+    def fwhm(self) -> float:
         return get_fwhm(self)[0]
 
     @property
-    def cdf(self):
+    def cdf(self) -> mfm.curve.Curve:
         """Cumulative sum of function
         """
         y = self.y
@@ -114,13 +130,16 @@ class Curve(Base):
         c = self.__class__(x=x, y=ys)
         return c
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         d = Base.to_dict(self)
         d['x'] = list(self.x)
         d['y'] = list(self.y)
         return d
 
-    def from_dict(self, v):
+    def from_dict(
+            self,
+            v: dict
+    ):
         v['y'] = np.array(v['y'], dtype=np.float64)
         v['x'] = np.array(v['x'], dtype=np.float64)
         Base.from_dict(self, v)
@@ -138,7 +157,11 @@ class Curve(Base):
         #Base.__init__(self, *args, **kwargs)
         super(Curve, self).__init__(*args, **kwargs)
 
-    def norm(self, mode="max", c=None):
+    def norm(
+            self,
+            mode: str = "max",
+            c: mfm.curve.Curve = None
+    ):
         factor = 1.0
         if not isinstance(c, Curve):
             if mode == "sum":
@@ -266,7 +289,7 @@ class DataCurve(Curve, ExperimentalData):
             s += "This cuve does not 'own' data..."
         return s
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         d = Curve.to_dict(self)
         d.update(ExperimentalData.to_dict(self))
         d['ex'] = list(self.ex)
@@ -275,12 +298,19 @@ class DataCurve(Curve, ExperimentalData):
         d['experiment'] = self.experiment.to_dict()
         return d
 
-    def from_dict(self, v):
+    def from_dict(
+            self,
+            v: dict
+    ):
         Curve.from_dict(self, v)
         self._kw['ex'] = np.array(v['ex'], dtype=np.float64)
         self._kw['ey'] = np.array(v['ey'], dtype=np.float64)
 
-    def save(self, filename=None, mode='json'):
+    def save(
+            self,
+            filename: str = None,
+            mode: str = 'json'
+    ):
         if filename is None:
             filename = os.path.join(self.name + '_data.txt')
         if mode == 'txt':
@@ -398,35 +428,39 @@ class DataGroup(list, Base):
 class DataCurveGroup(DataGroup):
 
     @property
-    def x(self):
+    def x(self) -> np.array:
         return self.current_dataset.x
 
     @x.setter
-    def x(self, v):
+    def x(self,
+          v: np.array):
         self.current_dataset.x = v
 
     @property
-    def y(self):
+    def y(self) -> np.array:
         return self.current_dataset.y
 
     @y.setter
-    def y(self, v):
+    def y(self,
+          v: np.array):
         self.current_dataset.y = v
 
     @property
-    def ex(self):
+    def ex(self) -> np.array:
         return self.current_dataset.ex
 
     @ex.setter
-    def ex(self, v):
+    def ex(self,
+           v: np.array):
         self.current_dataset.ex = v
 
     @property
-    def ey(self):
+    def ey(self) -> np.array:
         return self.current_dataset.ey
 
     @ey.setter
-    def ey(self, v):
+    def ey(self,
+           v: np.array):
         self.current_dataset.ey = v
 
     def __str__(self):
