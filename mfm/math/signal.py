@@ -1,5 +1,7 @@
-import numpy as np
+from __future__ import annotations
+from typing import Tuple
 
+import numpy as np
 import mfm
 
 windowTypes = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
@@ -120,7 +122,10 @@ def xcorr_fft(c, d, axis=0, normalize=True, fast=False):
         return acf
 
 
-def get_fwhm(curve, **kwargs):
+def get_fwhm(
+        curve: mfm.curve.Curve,
+        **kwargs
+) -> Tuple:
     """Calculates the FWHM using a linear-search from both sides of the curve
 
     :param curve:

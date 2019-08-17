@@ -324,7 +324,10 @@ class FittingParameter(Parameter):
         self._bounds_on = d['bounds_on']
         self._error_estimate = d['error_estimate']
 
-    def scan(self, fit, **kwargs):
+    def scan(
+            self,
+            fit: mfm.fitting.fit.Fit,
+            **kwargs):
         fit.chi2_scan(self.name, **kwargs)
 
     def __str__(self):

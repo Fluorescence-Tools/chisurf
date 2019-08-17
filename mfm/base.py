@@ -1,5 +1,6 @@
-import json
+from __future__ import annotations
 
+import json
 import yaml
 from slugify import slugify
 
@@ -50,7 +51,10 @@ class Base(object):
             self._kw = dict()
             return self._kw
 
-    def from_dict(self, v):
+    def from_dict(
+            self,
+            v: dict
+    ):
         self._kw = v
 
     def to_json(

@@ -10,16 +10,19 @@ from mfm.fitting.fit import sample_fit
 class FittingControllerWidget(QtWidgets.QWidget):
 
     @property
-    def selected_fit(self):
+    def selected_fit(self) -> int:
         return int(self.comboBox.currentIndex())
         #return int(self.spinBox.value())
 
     @selected_fit.setter
-    def selected_fit(self, v):
+    def selected_fit(
+            self,
+            v: int
+    ):
         self.comboBox.setCurrentIndex(int(v))
 
     @property
-    def current_fit_type(self):
+    def current_fit_type(self) -> str:
         return str(self.comboBox.currentText())
 
     def change_dataset(self):
@@ -35,9 +38,11 @@ class FittingControllerWidget(QtWidgets.QWidget):
 
     def __init__(self, fit=None, **kwargs):
         QtWidgets.QWidget.__init__(self)
-        self.curve_select = widgets.CurveSelector(parent=None, fit=self,
-                                                  change_event=self.change_dataset,
-                                                  setup=fit.data.setup.__class__)
+        self.curve_select = mfm.widgets.CurveSelector(
+            parent=None, fit=self,
+            change_event=self.change_dataset,
+            setup=fit.data.setup.__class__
+        )
         uic.loadUi("mfm/ui/fittingWidget.ui", self)
 
         self.curve_select.hide()
