@@ -26,6 +26,7 @@ working_path = ''
 eps = 1e-8
 
 import mfm.parameter
+import mfm.experiments
 import mfm.fitting
 import mfm.curve
 import mfm.fitting.models

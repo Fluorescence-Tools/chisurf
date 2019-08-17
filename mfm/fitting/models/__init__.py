@@ -21,7 +21,7 @@ import mfm.curve
 import mfm.parameter
 
 
-class Model(mfm.parameter.ParameterGroup):
+class Model(mfm.parameter.FittingParameterGroup):
 
     def __init__(self, fit,  **kwargs):
         super(Model, self).__init__(model=self, **kwargs)

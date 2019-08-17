@@ -3,11 +3,11 @@ from PyQt5 import QtWidgets, uic
 
 import mfm
 from mfm.curve import Curve
-from mfm.parameter import ParameterGroup, FittingParameter
+from mfm.parameter import FittingParameterGroup, FittingParameter
 from mfm.widgets.widgets import CurveSelector
 
 
-class Convolve(ParameterGroup):
+class Convolve(FittingParameterGroup):
 
     @property
     def dt(self):
@@ -187,7 +187,7 @@ class Convolve(ParameterGroup):
     def __init__(self, fit, **kwargs):
         kwargs['name'] = 'Convolution'
         kwargs['fit'] = fit
-        ParameterGroup.__init__(self, **kwargs)
+        FittingParameterGroup.__init__(self, **kwargs)
 
         self._data = None
         try:

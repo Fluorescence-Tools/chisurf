@@ -3,13 +3,13 @@ from PyQt5 import QtCore, QtWidgets, uic
 
 import mfm
 from mfm.curve import Curve
-from mfm.parameter import ParameterGroup, FittingParameter
+from mfm.parameter import FittingParameterGroup, FittingParameter
 from mfm.widgets import CurveSelector
 
 __author__ = 'Thomas'
 
 
-class Generic(ParameterGroup):
+class Generic(FittingParameterGroup):
 
     @property
     def n_ph_bg(self):
@@ -88,7 +88,7 @@ class Generic(ParameterGroup):
 
     def __init__(self, **kwargs):
         kwargs['name'] = 'Nuisance'
-        ParameterGroup.__init__(self, **kwargs)
+        FittingParameterGroup.__init__(self, **kwargs)
 
         self._background_curve = None
         self._sc = FittingParameter(value=0.0, name='sc', model=self.model)
@@ -176,7 +176,7 @@ class GenericWidget(Generic, QtWidgets.QWidget):
         l.addLayout(a, 3, 1, 1, 1)
 
 
-class Corrections(ParameterGroup):
+class Corrections(FittingParameterGroup):
 
     @property
     def lintable(self):
@@ -263,7 +263,7 @@ class Corrections(ParameterGroup):
     def __init__(self, fit, **kwargs):
         kwargs['fit'] = fit
         kwargs['name'] = 'Corrections'
-        ParameterGroup.__init__(self, **kwargs)
+        FittingParameterGroup.__init__(self, **kwargs)
 
         self._lintable = None
         self._curve = None

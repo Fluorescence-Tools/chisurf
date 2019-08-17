@@ -6,6 +6,7 @@ different experimental setups. Furthermore, it contains a set of plotting librar
 
 
 """
+from __future__ import annotations
 import mfm.base
 
 
@@ -91,10 +92,9 @@ class Reader(mfm.base.Base):
         return data
 
 
-from .fcs import *
+from . import fcs
 from . import tcspc
-from .globalfit import *
-from . import modelling
+from . import globalfit
 from . import modelling
 
 tcspc_setups = [

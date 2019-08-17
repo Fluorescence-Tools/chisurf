@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 from PyQt5 import QtWidgets, uic
 

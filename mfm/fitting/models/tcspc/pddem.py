@@ -8,12 +8,12 @@ from mfm.fitting.models.tcspc.nusiance import GenericWidget, CorrectionsWidget
 from mfm.fluorescence import tcspc, distribution2rates
 from mfm.fluorescence.tcspc.convolve import ConvolveWidget
 from mfm.fluorescence.widgets import AnisotropyWidget
-from mfm.parameter import ParameterGroup, FittingParameter
+from mfm.parameter import FittingParameterGroup, FittingParameter
 from .tcspc import LifetimeWidget, LifetimeModel, Lifetime
 from .. import ModelWidget
 
 
-class PDDEM(ParameterGroup):
+class PDDEM(FittingParameterGroup):
 
     name = "PDDEM"
 
@@ -114,7 +114,7 @@ class PDDEM(ParameterGroup):
         return np.array([self.fAB, self.fBA], dtype=np.float64)
 
     def __init__(self, **kwargs):
-        ParameterGroup.__init__(self, **kwargs)
+        FittingParameterGroup.__init__(self, **kwargs)
 
         self._fAB = FittingParameter(name='AtB', value=1.0, model=self.model, decimals=2, fixed=True)
         self._fBA = FittingParameter(name='BtA', value=0.0, model=self.model, decimals=2, fixed=True)
