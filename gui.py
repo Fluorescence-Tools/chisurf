@@ -5,6 +5,7 @@ import sys
 import slugify
 import numpy as np
 import sip
+
 sip.setapi('QDate', 2)
 sip.setapi('QDateTime', 2)
 sip.setapi('QString', 2)
@@ -14,8 +15,6 @@ sip.setapi('QUrl', 2)
 sip.setapi('QVariant', 2)
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication
-import mfm.ui.resource
-import tools
 
 
 class Main(QMainWindow):
@@ -167,8 +166,8 @@ class Main(QMainWindow):
 
         for data_set in datasets:
             if data_set.experiment is datasets[0].experiment:
-                if not isinstance(data_set, mfm.curve.DataGroup):
-                    data_set = mfm.curve.ExperimentDataCurveGroup(data_set)
+                if not isinstance(data_set, mfm.experiments.DataGroup):
+                    data_set = mfm.experiments.ExperimentDataCurveGroup(data_set)
                 fit = mfm.fitting.FitGroup(data=data_set, model_class=model_class)
                 mfm.fits.append(fit)
                 fit.model.find_parameters()
@@ -241,11 +240,11 @@ class Main(QMainWindow):
         """
         #selected_data = mfm.data_sets[dataset_numbers]
         selected_data = [mfm.data_sets[i] for i in dataset_numbers]
-        if isinstance(selected_data[0], mfm.curve.DataCurve):
+        if isinstance(selected_data[0], mfm.experiments.DataCurve):
             # TODO: check for double names!!!
-            dg = mfm.curve.ExperimentDataCurveGroup(selected_data, name="Data-Group")
+            dg = mfm.experiments.ExperimentDataCurveGroup(selected_data, name="Data-Group")
         else:
-            dg = mfm.curve.ExperimentDataGroup(selected_data, name="Data-Group")
+            dg = mfm.experiments.ExperimentDataGroup(selected_data, name="Data-Group")
         dn = list()
         for d in mfm.data_sets:
             if d not in dg:
@@ -260,8 +259,8 @@ class Main(QMainWindow):
             dataset = setup.get_data(**kwargs)
 
         dataset_group = dataset if \
-            isinstance(dataset, mfm.curve.ExperimentDataGroup) else \
-            mfm.curve.ExperimentDataCurveGroup(dataset)
+            isinstance(dataset, mfm.experiments.ExperimentDataGroup) else \
+            mfm.experiments.ExperimentDataCurveGroup(dataset)
         if len(dataset_group) == 1:
             mfm.data_sets.append(dataset_group[0])
         else:
@@ -481,7 +480,7 @@ class Main(QMainWindow):
         mfm.experiment.append(fcs)
 
         global_fit = mfm.experiments.Experiment('Global')
-        global_setup = mfm.experiments.GlobalFitSetup(name='Global-Fit', experiment=global_fit)
+        global_setup = mfm.experiments.globalfit.GlobalFitSetup(name='Global-Fit', experiment=global_fit)
         global_fit.add_model(mfm.fitting.models.GlobalFitModelWidget)
         global_fit.add_setup(global_setup)
         mfm.experiment.append(global_fit)
@@ -498,6 +497,9 @@ if __name__ == "__main__":
     import mfm
     import mfm.widgets
     import mfm.tools
+    import mfm.ui.resource
+    import tools
+
     mfm.console = mfm.widgets.QIPythonWidget()
 
     # See: https://github.com/ipython/ipykernel/issues/370

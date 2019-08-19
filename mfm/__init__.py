@@ -25,27 +25,14 @@ __name__ = cs_settings['name']
 working_path = ''
 eps = 1e-8
 
+import mfm.base
 import mfm.parameter
+import mfm.curve
 import mfm.experiments
 import mfm.fitting
-import mfm.curve
-import mfm.fitting.models
-import mfm.base
 import mfm.structure
 import mfm.fluorescence
 
-
-def find_fit_idx_of_model(
-        model: mfm.fitting.models.Model
-):
-    """Returns index of the fit of a model in mfm.fits array
-
-    :param model:
-    :return:
-    """
-    for idx, f in enumerate(fits):
-        if f.model == model:
-            return idx
 
 
 def get_data(
@@ -55,9 +42,11 @@ def get_data(
     Returns all curves `mfm.curve.DataCurve` except if the curve is names "Global-fit"
     """
     if curve_type == 'all':
-        return [d for d in data_sets if isinstance(d, curve.ExperimentalData) or isinstance(d, curve.ExperimentDataGroup)]
+        return [d for d in data_sets if isinstance(d, mfm.experiments.ExperimentalData) or isinstance(d,
+                                                                                                      mfm.experiments.ExperimentDataGroup)]
     elif curve_type == 'experiment':
-        return [d for d in data_sets if (isinstance(d, curve.ExperimentalData) or isinstance(d, curve.ExperimentDataGroup)) and d.name != "Global-fit"]
+        return [d for d in data_sets if (isinstance(d, mfm.experiments.ExperimentalData) or isinstance(d,
+                                                                                                       mfm.experiments.ExperimentDataGroup)) and d.name != "Global-fit"]
 
 
 def find_objects(

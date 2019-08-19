@@ -6,13 +6,13 @@ import mfm.math
 from mfm import plots
 from mfm.fitting.models import ModelWidget
 from mfm.fitting.models.tcspc.nusiance import GenericWidget, CorrectionsWidget
-from mfm.fitting.models.tcspc.tcspc import Lifetime, LifetimeWidget, LifetimeModelWidgetBase
+from mfm.fitting.models.tcspc.tcspc import Lifetime, LifetimeWidget, LifetimeModelWidgetBase, ConvolveWidget
 from mfm.fitting.models.tcspc.tcspc import LifetimeModel
 from mfm.fitting.widgets import FittingControllerWidget
-from mfm.fluorescence import distribution2rates, rates2lifetimes, rda_axis
-from mfm.fluorescence.tcspc.convolve import ConvolveWidget
+from mfm.fluorescence.general import distribution2rates, rates2lifetimes
+from mfm.fluorescence import rda_axis
 from mfm.fluorescence.widgets import AnisotropyWidget
-from mfm.parameter import FittingParameter, FittingParameterGroup
+from mfm.fitting import FittingParameter, FittingParameterGroup
 
 fret_settings = mfm.cs_settings['fret']
 

@@ -19,9 +19,10 @@ from PyQt5 import QtWidgets
 import mfm.plots as plots
 import mfm.curve
 import mfm.parameter
+import mfm.fitting
 
 
-class Model(mfm.parameter.FittingParameterGroup):
+class Model(mfm.fitting.FittingParameterGroup):
 
     def __init__(self, fit,  **kwargs):
         super(Model, self).__init__(model=self, **kwargs)
@@ -176,4 +177,16 @@ from . import tcspc
 from . import parse
 from .globalfit import *
 
+
+def find_fit_idx_of_model(
+        model: mfm.fitting.models.Model
+):
+    """Returns index of the fit of a model in mfm.fits array
+
+    :param model:
+    :return:
+    """
+    for idx, f in enumerate(mfm.fits):
+        if f.model == model:
+            return idx
 

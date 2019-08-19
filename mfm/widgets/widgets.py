@@ -11,6 +11,8 @@ from datetime import datetime
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
+import mfm.experiments
+
 os.environ['PYZMQ_BACKEND'] = 'cython'
 from qtconsole.qtconsoleapp import RichJupyterWidget
 from qtconsole.inprocess import QtInProcessKernelManager
@@ -505,7 +507,7 @@ class CurveSelector(QtWidgets.QTreeWidget):
         self.update()
 
     def onUnGroupDatasets(self):
-        dg = mfm.curve.ExperimentDataGroup(self.selected_datasets)[0]
+        dg = mfm.experiments.ExperimentDataGroup(self.selected_datasets)[0]
         dn = list()
         for i, d in enumerate(mfm.data_sets):
             if d is not dg:
@@ -543,7 +545,7 @@ class CurveSelector(QtWidgets.QTreeWidget):
             item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 
             # If group of curves
-            if isinstance(d, mfm.curve.ExperimentDataGroup):
+            if isinstance(d, mfm.experiments.ExperimentDataGroup):
                 for di in d:
                     fn = di.name
                     widget_name = os.path.basename(fn)

@@ -6,9 +6,11 @@ import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets, uic
 
 import mfm
-from mfm.experiments import settings
+import mfm.experiments
+import mfm.settings
 from mfm.io.widgets import SpcFileWidget
 
+settings = mfm.settings.cs_settings['correlator']
 plot_settings = mfm.cs_settings['gui']['plot']
 pyqtgraph_settings = plot_settings["pyqtgraph"]
 lw = plot_settings['line_width']
@@ -99,10 +101,10 @@ class Correlator(QtCore.QThread):
 
     @property
     def data(self):
-        if isinstance(self._data, mfm.curve.DataCurve):
+        if isinstance(self._data, mfm.experiments.DataCurve):
             return self._data
         else:
-            return mfm.curve.DataCurve(setup=self)
+            return mfm.experiments.DataCurve(setup=self)
 
     def __init__(self, parent):
         QtCore.QThread.__init__(self, parent)
@@ -135,7 +137,7 @@ class Correlator(QtCore.QThread):
         return w
 
     def run(self):
-        data = mfm.curve.DataCurve()
+        data = mfm.experiments.DataCurve()
 
         w1 = self.getWeightStream(self.p.ch1)
         w2 = self.getWeightStream(self.p.ch2)

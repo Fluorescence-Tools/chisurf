@@ -12,7 +12,7 @@ from mfm import plots
 from mfm.curve import Curve
 import mfm.fitting.fit
 from mfm.fitting.models import Model, ModelWidget
-from mfm.parameter import GlobalParameter
+from mfm.fitting import GlobalFittingParameter
 
 
 class GlobalFitModel(Model, Curve):
@@ -207,7 +207,7 @@ class GlobalFitModel(Model, Curve):
                 continue
             try:
                 origin_parameter = f[origin_fit][origin_name]
-                target_parameter = GlobalParameter(f, g, formula)
+                target_parameter = GlobalFittingParameter(f, g, formula)
 
                 origin_parameter.link = target_parameter
                 print("f[%s][%s] linked to %s" % (origin_fit, origin_parameter.name, target_parameter.name))

@@ -4,6 +4,7 @@ import numpy as np
 from PyQt5 import QtWidgets, uic
 
 import mfm
+import mfm.experiments
 import mfm.widgets
 from mfm.experiments import Reader
 from mfm.fluorescence.tcspc import weights, fitrange, weights_ps
@@ -180,10 +181,10 @@ class TCSPCReader(Reader):
                 name = '{} {:d}_{:d}'.format(fn, i, n_data_sets)
             else:
                 name = filename
-            data = mfm.curve.DataCurve(x=x, y=yi, ex=ex, ey=1./eyi, setup=self, name=name, **kwargs)
+            data = mfm.experiments.DataCurve(x=x, y=yi, ex=ex, ey=1. / eyi, setup=self, name=name, **kwargs)
             data.filename = filename
             data_curves.append(data)
-        data_group = mfm.curve.DataCurveGroup(data_curves, filename)
+        data_group = mfm.experiments.DataCurveGroup(data_curves, filename)
         return data_group
 
 
@@ -282,7 +283,7 @@ class TcspcSDTWidget(QtWidgets.QWidget):
     def curve(self):
         y = self.ph_counts
         w = weights(y)
-        d = mfm.curve.DataCurve(setup=self, x=self.times, y=y, ey=1./w, name=self.name)
+        d = mfm.experiments.DataCurve(setup=self, x=self.times, y=y, ey=1. / w, name=self.name)
         return d
 
     def onOpenFile(self, **kwargs):
@@ -380,7 +381,7 @@ class TCSPCSetupDummy(TCSPCReader):
         y = np.exp(-x/self.lifetime) * self.p0
         ey = 1./weights(y)
 
-        d = mfm.curve.DataCurve(x=x, y=y, ey=ey, setup=self, name="TCSPC-Dummy")
+        d = mfm.experiments.DataCurve(x=x, y=y, ey=ey, setup=self, name="TCSPC-Dummy")
         d.setup = self
 
         return d

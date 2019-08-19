@@ -2,6 +2,7 @@ import numpy as np
 from PyQt5 import QtWidgets
 
 import mfm
+import mfm.experiments
 from mfm.io.widgets import CsvWidget
 from . import Reader
 
@@ -43,7 +44,7 @@ class FCSKristine(mfm.io.ascii.Csv, FCS, QtWidgets.QWidget):
         :param kwargs:
         :return:
         """
-        d = mfm.curve.DataCurve(setup=self)
+        d = mfm.experiments.DataCurve(setup=self)
         d.setup = self
         filename = kwargs.get('filename', None)
         if filename is None:
@@ -86,7 +87,7 @@ class FCSCsv(FCS, CsvWidget):
         self.groupBox.hide()
 
     def read(self, filename=None, **kwargs):
-        d = mfm.curve.DataCurve(setup=self)
+        d = mfm.experiments.DataCurve(setup=self)
         d.setup = self
 
         CsvWidget.load(
