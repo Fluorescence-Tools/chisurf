@@ -1,14 +1,11 @@
 from __future__ import annotations
-import weakref
-from typing import List
+from typing import Tuple
+
 from PyQt5 import QtWidgets, QtCore, uic
 import pyqtgraph as pg
 
-#import mfm.fitting.fit
-#from mfm.fitting.widgets import FittingControllerWidget, FitSubWindow
 import mfm
 import mfm.parameter
-import mfm.fitting.models
 
 parameter_settings = mfm.cs_settings['parameter']
 
@@ -62,7 +59,7 @@ class FittingParameter(mfm.parameter.Parameter):
         self._error_estimate = v
 
     @property
-    def bounds(self):
+    def bounds(self) -> Tuple[float, float]:
         if self.bounds_on:
             return self._lb, self._ub
         else:
@@ -71,7 +68,7 @@ class FittingParameter(mfm.parameter.Parameter):
     @bounds.setter
     def bounds(
             self,
-            b: List[float]
+            b: Tuple[float, float]
     ):
         self._lb, self._ub = b
 

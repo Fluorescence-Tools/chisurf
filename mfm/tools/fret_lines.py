@@ -5,7 +5,9 @@ from guiqwt.plot import CurveDialog
 
 import mfm
 import mfm.experiments
+import mfm.fitting.models.tcspc
 import mfm.fitting.models.tcspc as fret_models
+import mfm.fitting.models.tcspc.lifetime
 from mfm.fitting.models.tcspc.fret import WormLikeChainModelWidget
 
 
@@ -109,7 +111,7 @@ class FRETLineGenerator(object):
         self._data_points.y = np.zeros_like(self._data_points.x)
         self.fit.data = self._data_points
 
-        self._model = kwargs.get('model', mfm.fitting.models.tcspc.tcspc.LifetimeModel(fit=self.fit, dt=self._dt, do_convolution=False))
+        self._model = kwargs.get('model', mfm.fitting.models.tcspc.lifetime.LifetimeModel(fit=self.fit, dt=self._dt, do_convolution=False))
         self.transfer_efficiencies = np.zeros(self.n_points)
         self.fluorescence_averaged_lifetimes = np.zeros(self.n_points)
 

@@ -3,10 +3,9 @@ from PyQt5 import QtCore, QtWidgets
 
 import mfm
 from mfm import plots
-from mfm.fitting.models.tcspc import _membrane
+from mfm.fitting.models.tcspc import _membrane, Lifetime, LifetimeWidget, ConvolveWidget
 from mfm.fitting.models.tcspc.fret import FRETModel
 from mfm.fitting.models.tcspc.nusiance import GenericWidget, CorrectionsWidget
-from mfm.fitting.models.tcspc.tcspc import LifetimeWidget, Lifetime, ConvolveWidget
 from mfm.fitting.widgets import FittingControllerWidget
 from mfm.parameter import FittingParameterWidget, FittingParameter
 

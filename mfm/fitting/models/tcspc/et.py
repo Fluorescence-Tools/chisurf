@@ -8,7 +8,7 @@ import mfm.math
 from mfm import plots
 from mfm.fitting.models import Model
 from mfm.math.optimization import solve_nnls, solve_richardson_lucy, maxent
-from .tcspc import LifetimeModel
+from mfm.fitting.models.tcspc import LifetimeModel
 
 
 class Phasor(object):

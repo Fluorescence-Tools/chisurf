@@ -3,18 +3,16 @@ import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import mfm.fitting.models.tcspc.nusiance
-import mfm.fitting.models.tcspc.tcspc
-from mfm.fitting.models.tcspc import tcspc
+from mfm.fitting.models import ModelWidget
+from mfm.fitting.models import parse
 from mfm.fitting.widgets import FittingControllerWidget
-from .. import ModelWidget
-from .. import parse
 
 
 class ParseDecayModel(parse.ParseModel):
 
     def __init__(self, fit, **kwargs):
         parse.ParseModel.__init__(self, fit, **kwargs)
-        self.convolve = kwargs.get('convolve', mfm.fitting.models.tcspc.tcspc.Convolve(name='convolve', fit=fit, **kwargs))
+        self.convolve = kwargs.get('convolve', mfm.fitting.models.tcspc.nusiance.Convolve(name='convolve', fit=fit, **kwargs))
         self.corrections = kwargs.get('corrections',
                                       mfm.fitting.models.tcspc.nusiance.Corrections(name='corrections', fit=fit, model=self, **kwargs))
         self.generic = kwargs.get('generic', mfm.fitting.models.tcspc.nusiance.Generic(name='generic', fit=fit, **kwargs))
@@ -43,7 +41,7 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
     def __init__(self, fit, **kwargs):
         ModelWidget.__init__(self, icon=QtGui.QIcon(":/icons/icons/TCSPC.ico"))
 
-        self.convolve = mfm.fitting.models.tcspc.tcspc.ConvolveWidget(fit=fit, model=self, show_convolution_mode=False, dt=fit.data.dt, **kwargs)
+        self.convolve = mfm.fitting.models.tcspc.nusiance.ConvolveWidget(fit=fit, model=self, show_convolution_mode=False, dt=fit.data.dt, **kwargs)
         generic = mfm.fitting.models.tcspc.nusiance.GenericWidget(fit=fit, parent=self, model=self, **kwargs)
         #error_widget = mfm.fitting.error_estimate.ErrorWidget(fit, **kwargs)
 

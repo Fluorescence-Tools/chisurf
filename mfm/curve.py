@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import numbers
-import os.path
-import zlib
 from copy import copy
 
 import numpy as np
@@ -12,74 +10,6 @@ import mfm.io
 import mfm.decorators
 from mfm.base import Base
 from mfm.math.signal import get_fwhm
-
-
-class Data(Base):
-
-    def __init__(self, *args, **kwargs):
-        Base.__init__(self, *args, **kwargs)
-        self._filename = kwargs.get('filename', None)
-        self._data = kwargs.get('data', None)
-        self._embed_data = mfm.cs_settings['database']['embed_data']
-        self._max_file_size = mfm.cs_settings['database']['read_file_size_limit']
-
-    @property
-    def data(self) -> mfm.curve.Data:
-        return self._data
-
-    @data.setter
-    def data(
-            self,
-            v: mfm.curve.Data
-    ):
-        self._data = v
-
-    @property
-    def name(self) -> str:
-        try:
-            return self._kw['name']
-        except KeyError:
-            return self.filename
-
-    @name.setter
-    def name(
-            self,
-            v: str
-    ):
-        self._kw['name'] = v
-
-    @property
-    def filename(self) -> str:
-        try:
-            return os.path.normpath(self._filename)
-        except AttributeError:
-            return 'No file'
-
-    @filename.setter
-    def filename(
-            self,
-            v: str
-    ):
-        self._filename = os.path.normpath(v)
-        file_size = os.path.getsize(self._filename)
-        if file_size < self._max_file_size and self._embed_data:
-            data = open(self._filename).read()
-            if len(data) > mfm.cs_settings['database']['compression_data_limit']:
-                data = zlib.compress(data)
-            if len(data) < mfm.cs_settings['database']['embed_data_limit']:
-                self._data = data
-            else:
-                self._data = None
-        else:
-            self._data = None
-        if mfm.verbose:
-            print("Filename: %s" % self._filename)
-            print("File size [byte]: %s" % file_size)
-
-    def __str__(self):
-        s = Base.__str__(self)
-        s += "filename: %s\n" % self.filename
-        return s
 
 
 class Curve(Base):

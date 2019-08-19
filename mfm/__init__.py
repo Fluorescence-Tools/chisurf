@@ -34,21 +34,6 @@ import mfm.structure
 import mfm.fluorescence
 
 
-
-def get_data(
-        curve_type: str = 'experiment'
-):
-    """
-    Returns all curves `mfm.curve.DataCurve` except if the curve is names "Global-fit"
-    """
-    if curve_type == 'all':
-        return [d for d in data_sets if isinstance(d, mfm.experiments.ExperimentalData) or isinstance(d,
-                                                                                                      mfm.experiments.ExperimentDataGroup)]
-    elif curve_type == 'experiment':
-        return [d for d in data_sets if (isinstance(d, mfm.experiments.ExperimentalData) or isinstance(d,
-                                                                                                       mfm.experiments.ExperimentDataGroup)) and d.name != "Global-fit"]
-
-
 def find_objects(
         search_list: List,
         object_type,
