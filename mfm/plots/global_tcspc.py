@@ -184,7 +184,7 @@ class GlobalAnisotropy(Plot):
                 if len(idx) > 0:
                     self.model_curve_vv.set_data(model_x[idx],  model_y[idx])
             except ValueError:
-                print("No model/no fitted model to plot")
+                print("No models/no fitted models to plot")
             try:
                 wres_y = fit.vv.weighted_residuals
                 self.residual_curve_vv.set_data(model_x, wres_y)
@@ -214,7 +214,7 @@ class GlobalAnisotropy(Plot):
                 if len(idx) > 0:
                     self.model_curve_vh.set_data(model_x[idx],  model_y[idx])
             except ValueError:
-                print("No model/no fitted model to plot")
+                print("No models/no fitted models to plot")
             try:
                 wres_y = fit.vv.weighted_residuals
                 self.residual_curve_vh.set_data(model_x, wres_y)

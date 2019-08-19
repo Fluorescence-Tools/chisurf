@@ -12,7 +12,7 @@ import mfm.settings
 from mfm.io.widgets import SpcFileWidget
 
 settings = mfm.settings.cs_settings['correlator']
-plot_settings = mfm.cs_settings['gui']['plot']
+plot_settings = mfm.settings.cs_settings['gui']['plot']
 pyqtgraph_settings = plot_settings["pyqtgraph"]
 lw = plot_settings['line_width']
 

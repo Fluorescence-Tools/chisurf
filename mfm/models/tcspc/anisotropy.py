@@ -122,7 +122,7 @@ class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
         mfm.fitting.parameter.FittingParameterGroup.__init__(self, **kwargs)
         self._rhos = []
         self._bs = []
-        self._polarization_type = kwargs.get('polarization', mfm.cs_settings['tcspc']['polarization'])
+        self._polarization_type = kwargs.get('polarization', mfm.settings.cs_settings['tcspc']['polarization'])
 
         self._r0 = mfm.fitting.parameter.FittingParameter(name='r0', value=0.38, fixed=True)
         self._g = mfm.fitting.parameter.FittingParameter(name='g', value=1.00, fixed=True)

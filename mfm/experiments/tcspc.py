@@ -89,9 +89,9 @@ class TCSPCReader(Reader):
         super(TCSPCReader, self).__init__(self, *args, **kwargs)
         self.csvSetup = kwargs.pop('csvSetup', Csv(*args, **kwargs))
         #self.skiprows = kwargs.pop('skiprows', 7)
-        #self.dt = kwargs.get('dt', mfm.cs_settings['tcspc']['dt'])
-        #self.rep_rate = kwargs.get('rep_rate', mfm.cs_settings['tcspc']['rep_rate'])
-        #self.g_factor = kwargs.get('g_factor', mfm.cs_settings['tcspc']['g_factor'])
+        #self.dt = kwargs.get('dt', mfm.settings.cs_settings['tcspc']['dt'])
+        #self.rep_rate = kwargs.get('rep_rate', mfm.settings.cs_settings['tcspc']['rep_rate'])
+        #self.g_factor = kwargs.get('g_factor', mfm.settings.cs_settings['tcspc']['g_factor'])
         #self.polarization = 'vm'
         #self.rebin = kwargs.get('rebin', (1, 1))
         #self.is_jordi = kwargs.get('is_jordi', False)
@@ -100,8 +100,8 @@ class TCSPCReader(Reader):
 
     @staticmethod
     def autofitrange(data, **kwargs):
-        area = kwargs.get('area', mfm.cs_settings['tcspc']['fit_area'])
-        threshold = kwargs.get('threshold', mfm.cs_settings['tcspc']['fit_count_threshold'])
+        area = kwargs.get('area', mfm.settings.cs_settings['tcspc']['fit_area'])
+        threshold = kwargs.get('threshold', mfm.settings.cs_settings['tcspc']['fit_count_threshold'])
         return fitrange(data.y, threshold, area)
 
     def read(self, *args, **kwargs):

@@ -219,8 +219,8 @@ class Data(Base):
         Base.__init__(self, *args, **kwargs)
         self._filename = kwargs.get('filename', None)
         self._data = kwargs.get('data', None)
-        self._embed_data = mfm.cs_settings['database']['embed_data']
-        self._max_file_size = mfm.cs_settings['database']['read_file_size_limit']
+        self._embed_data = mfm.settings.cs_settings['database']['embed_data']
+        self._max_file_size = mfm.settings.cs_settings['database']['read_file_size_limit']
 
     @property
     def data(self) -> mfm.curve.Data:
@@ -263,9 +263,9 @@ class Data(Base):
         file_size = os.path.getsize(self._filename)
         if file_size < self._max_file_size and self._embed_data:
             data = open(self._filename).read()
-            if len(data) > mfm.cs_settings['database']['compression_data_limit']:
+            if len(data) > mfm.settings.cs_settings['database']['compression_data_limit']:
                 data = zlib.compress(data)
-            if len(data) < mfm.cs_settings['database']['embed_data_limit']:
+            if len(data) < mfm.settings.cs_settings['database']['embed_data_limit']:
                 self._data = data
             else:
                 self._data = None

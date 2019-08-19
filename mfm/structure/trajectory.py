@@ -138,7 +138,7 @@ import mfm.structure    >>> import mfm
         ----------
 
         pdb_model : int
-            the model number of the pdb (optional argument). By default the first model in the PDB-File is used.
+            the models number of the pdb (optional argument). By default the first models in the PDB-File is used.
 
         """
         #  TODO: Improve initialization this is all very cumbersome

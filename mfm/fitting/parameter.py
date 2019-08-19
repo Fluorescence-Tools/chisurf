@@ -16,7 +16,7 @@ class FittingParameter(mfm.parameter.Parameter):
     def __init__(
             self,
             link=None,
-            model: mfm.fitting.model.model.Model = None,
+            model: mfm.models.model.Model = None,
             lb: float = -10000,
             ub: float = 10000,
             fixed: bool = False,
@@ -583,7 +583,7 @@ class FittingParameterGroupWidget(FittingParameterGroup, QtWidgets.QGroupBox):
         super(FittingParameterGroupWidget, self).__init__(*args, **kwargs)
         self.setTitle(self.name)
 
-        self.n_col = kwargs.get('n_cols', mfm.cs_settings['gui']['fit_models']['n_columns'])
+        self.n_col = kwargs.get('n_cols', mfm.settings.cs_settings['gui']['fit_models']['n_columns'])
         self.n_row = 0
         l = QtWidgets.QGridLayout()
         l.setSpacing(0)

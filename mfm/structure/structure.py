@@ -447,7 +447,7 @@ def get_coordinates_of_residues(atoms, quencher, verbose=False):
     --------
 
     >>> import mfm
-    >>> pdb_file = './sample_data/model/hgbp1/hGBP1_closed.pdb'
+    >>> pdb_file = models
     >>> pdb = mfm.io.pdb_file.read(pdb_file, verbose=True)
     Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb
     ======================================
@@ -489,7 +489,7 @@ def get_atom_index_of_residue_types(pdb, res_types, verbose=False):
     --------
 
     >>> import mfm
-    >>> pdb_file = './sample_data/model/hgbp1/hGBP1_closed.pdb'
+    >>> pdb_file = models
     >>> pdb = mfm.io.PDB.read(pdb_file, verbose=True)
     Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb
     ======================================

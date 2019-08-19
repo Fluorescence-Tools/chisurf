@@ -3,9 +3,9 @@ from PyQt5 import QtCore, QtWidgets
 
 import mfm
 from mfm import plots
-from mfm.fitting.model.tcspc import _membrane, Lifetime, LifetimeWidget, ConvolveWidget
-from mfm.fitting.model.tcspc.fret import FRETModel
-from mfm.fitting.model.tcspc.nusiance import GenericWidget, CorrectionsWidget
+from mfm.models import _membrane, Lifetime, LifetimeWidget, ConvolveWidget
+from mfm.models import FRETModel
+from mfm.models import GenericWidget, CorrectionsWidget
 from mfm.fitting.widgets import FittingControllerWidget
 from mfm.parameter import FittingParameterWidget, FittingParameter
 
@@ -113,7 +113,7 @@ class GridModel(FRETModel):
         :param pu: probability of unlabeled
         :return:
 
-        >>> from mfm.fitting.model.tcspc.membrane import GridModel
+        >>> from mfm.fitting.models.tcspc.membrane import GridModel
         >>> forster_radius = 50
         >>> tau0 = 4.0
         >>> n_cols, n_rows = 100, 100
@@ -158,10 +158,10 @@ class GridModel(FRETModel):
 
         # FRET-rate parameter
         self._forster_radius = FittingParameter(kwargs.get('forster_radius',
-                                                           mfm.cs_settings['fret']['forster_radius']),
+                                                           mfm.settings.cs_settings['fret']['forster_radius']),
                                                 name='R0', fixed=True)
         self._tau0 = FittingParameter(kwargs.get('tau0',
-                                                 mfm.cs_settings['fret']['tau0']),
+                                                 mfm.settings.cs_settings['fret']['tau0']),
                                       name='tau0', fixed=True)
         self._donors = kwargs.get('donors', Lifetime('D'))
 
@@ -257,10 +257,10 @@ class GridModelWidget(GridModel, QtWidgets.QWidget):
         self._pu = FittingParameterWidget(value=kwargs.get('pu', 0.0), name='pu', fixed=True)
         # FRET-rate parameter
         self._forster_radius = FittingParameterWidget(value=kwargs.get('forster_radius',
-                                                                       mfm.cs_settings['fret']['forster_radius']),
+                                                                       mfm.settings.cs_settings['fret']['forster_radius']),
                                                       name='R0', fixed=True)
         self._tau0 = FittingParameterWidget(value=kwargs.get('tau0',
-                                                             mfm.cs_settings['fret']['tau0']),
+                                                             mfm.settings.cs_settings['fret']['tau0']),
                                             name='tau0', fixed=True)
 
         # Setup the layout

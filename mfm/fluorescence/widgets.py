@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 
 import mfm
-from mfm.fitting.model.tcspc.anisotropy import Anisotropy
+from mfm.models import Anisotropy
 
 
 class AnisotropyWidget(Anisotropy, QtWidgets.QWidget):
@@ -29,16 +29,16 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QWidget):
         self.radioButtonVM = QtWidgets.QRadioButton("VM")
         self.radioButtonVM.setToolTip("Excitation: Vertical\nDetection: Magic-Angle")
         self.radioButtonVM.setChecked(True)
-        self.radioButtonVM.clicked.connect(lambda: mfm.run("cs.current_fit.model.anisotropy.polarization_type = 'vm'"))
+        self.radioButtonVM.clicked.connect(lambda: mfm.run("cs.current_fit.models.anisotropy.polarization_type = 'vm'"))
         self.radioButtonVM.clicked.connect(self.hide_roation_parameters)
 
         self.radioButtonVV = QtWidgets.QRadioButton("VV")
         self.radioButtonVV.setToolTip("Excitation: Vertical\nDetection: Vertical")
-        self.radioButtonVV.clicked.connect(lambda: mfm.run("cs.current_fit.model.anisotropy.polarization_type = 'vv'"))
+        self.radioButtonVV.clicked.connect(lambda: mfm.run("cs.current_fit.models.anisotropy.polarization_type = 'vv'"))
 
         self.radioButtonVH = QtWidgets.QRadioButton("VH")
         self.radioButtonVH.setToolTip("Excitation: Vertical\nDetection: Horizontal")
-        self.radioButtonVH.clicked.connect(lambda: mfm.run("cs.current_fit.model.anisotropy.polarization_type = 'vh'"))
+        self.radioButtonVH.clicked.connect(lambda: mfm.run("cs.current_fit.models.anisotropy.polarization_type = 'vh'"))
 
         l = QtWidgets.QHBoxLayout()
         l.setSpacing(0)
@@ -93,13 +93,13 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QWidget):
 
     def onAddRotation(self):
         t = "for f in cs.current_fit:\n" \
-            "   f.model.anisotropy.add_rotation()"
+            "   f.models.anisotropy.add_rotation()"
         mfm.run(t)
         mfm.run("cs.current_fit.update()")
 
     def onRemoveRotation(self):
         t = "for f in cs.current_fit:\n" \
-            "   f.model.anisotropy.remove_rotation()"
+            "   f.models.anisotropy.remove_rotation()"
         mfm.run(t)
         mfm.run("cs.current_fit.update()")
 

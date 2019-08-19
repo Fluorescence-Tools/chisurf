@@ -114,7 +114,7 @@ Transient-Quenching 2-state:
     quenched by two global FRET-rates. Additionally a donor-fraction is fitted and
     a fraction of higher order FRET-states. <li>fd0 = (ad1 * exp(-x/td1) + (1-ad1)
     * exp(-x/td2))</li><li>e1 = (af1 * exp(-x*kf1) + (1-af1) * exp(-x*kf2))</li><li>e2
-    = exp(-x*kf3)</li><li>aDO = (1 - aDA + aDAA)</li>The overall fitting model is
+    = exp(-x*kf3)</li><li>aDO = (1 - aDA + aDAA)</li>The overall fitting models is
     given by:<strong><p>f(t) = fd0*aDo + aDA * e1 * fd0 + aDAA * e1 * fd0</p></strong>The
     amplitudes are named by -a-. However, they are pre-factors of the exponential
     and thus species amplitudes. They nameing is only due to limitations of the program

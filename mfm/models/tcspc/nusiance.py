@@ -281,7 +281,7 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
     def __init__(self, fit, **kwargs):
         super(CorrectionsWidget, self).__init__(fit=fit, threshold=0.9, reverse=False, enabled=False)
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi("mfm/ui/fitting/model/tcspc/tcspcCorrections.ui", self)
+        uic.loadUi("mfm/ui/fitting/models/tcspc/tcspcCorrections.ui", self)
         self.groupBox.setChecked(False)
         self.comboBox.addItems(mfm.math.signal.windowTypes)
         if kwargs.get('hide_corrections', False):
@@ -298,33 +298,33 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         self.actionSelect_lintable.triggered.connect(self.lin_select.show)
 
         self.checkBox_3.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.model.corrections.correct_pile_up = %s\n" % self.checkBox_3.isChecked())
+            "cs.current_fit.models.corrections.correct_pile_up = %s\n" % self.checkBox_3.isChecked())
         )
 
         self.checkBox_2.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.model.corrections.reverse = %s" % self.checkBox_2.isChecked())
+            "cs.current_fit.models.corrections.reverse = %s" % self.checkBox_2.isChecked())
         )
 
         self.checkBox.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.model.corrections.correct_dnl = %s" % self.checkBox.isChecked())
+            "cs.current_fit.models.corrections.correct_dnl = %s" % self.checkBox.isChecked())
         )
 
         self.comboBox.currentIndexChanged.connect(lambda: mfm.run(
-            "cs.current_fit.model.corrections.window_function = '%s'" % self.comboBox.currentText())
+            "cs.current_fit.models.corrections.window_function = '%s'" % self.comboBox.currentText())
         )
 
     def onChangeLin(self):
         idx = self.lin_select.selected_curve_index
-        t = "lin_table = cs.current_fit.model.corrections.lin_select.datasets[%s]\n" \
+        t = "lin_table = cs.current_fit.models.corrections.lin_select.datasets[%s]\n" \
             "for f in cs.current_fit[cs.current_fit._selected_fit:]:\n" \
-            "   f.model.corrections.lintable = mfm.curve.DataCurve(x=lin_table.x, y=lin_table.y)\n" \
-            "   f.model.corrections.correct_dnl = True\n" % idx
+            "   f.models.corrections.lintable = mfm.curve.DataCurve(x=lin_table.x, y=lin_table.y)\n" \
+            "   f.models.corrections.correct_dnl = True\n" % idx
         mfm.run(t)
 
         lin_name = self.lin_select.curve_name
         t = "for f in cs.current_fit[cs.current_fit._selected_fit:]:\n" \
-            "   f.model.corrections.lineEdit.setText('%s')\n" \
-            "   f.model.corrections.checkBox.setChecked(True)\n" % lin_name
+            "   f.models.corrections.lineEdit.setText('%s')\n" \
+            "   f.models.corrections.checkBox.setChecked(True)\n" % lin_name
         mfm.run(t)
 
         mfm.run("cs.current_fit.update()")
@@ -526,9 +526,9 @@ class Convolve(FittingParameterGroup):
             data = kwargs.get('data', None)
         self.data = data
 
-        self._n0 = FittingParameter(value=mfm.cs_settings['tcspc']['n0'],
+        self._n0 = FittingParameter(value=mfm.settings.cs_settings['tcspc']['n0'],
                                     name='n0',
-                                    fixed=mfm.cs_settings['tcspc']['autoscale'],
+                                    fixed=mfm.settings.cs_settings['tcspc']['autoscale'],
                                     decimals=2)
         self._dt = FittingParameter(value=dt, name='dt', fixed=True, digits=4)
         self._rep = FittingParameter(value=rep_rate, name='rep', fixed=True)
@@ -536,8 +536,8 @@ class Convolve(FittingParameterGroup):
         self._stop = FittingParameter(value=stop, name='stop', fixed=True)
         self._lb = FittingParameter(value=0.0, name='lb')
         self._ts = FittingParameter(value=0.0, name='ts')
-        self._do_convolution = mfm.cs_settings['tcspc']['convolution_on_by_default']
-        self.mode = mfm.cs_settings['tcspc']['default_convolution_mode']
+        self._do_convolution = mfm.settings.cs_settings['tcspc']['convolution_on_by_default']
+        self.mode = mfm.settings.cs_settings['tcspc']['default_convolution_mode']
         self.n_photons_irf = 1.0
         self.__irf = kwargs.get('irf', None)
         if self.__irf is not None:
@@ -549,7 +549,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
     def __init__(self, fit, **kwargs):
         Convolve.__init__(self, fit, **kwargs)
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/fitting/model/tcspc/convolveWidget.ui', self)
+        uic.loadUi('mfm/ui/fitting/models/tcspc/convolveWidget.ui', self)
 
         hide_curve_convolution = kwargs.get('hide_curve_convolution', True)
         if hide_curve_convolution:
@@ -591,18 +591,18 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
     def onConvolutionModeChanged(self):
         t = "for f in cs.current_fit:\n" \
-            "   f.model.convolve.mode = '%s'\n" % self.gui_mode
+            "   f.models.convolve.mode = '%s'\n" % self.gui_mode
         mfm.run(t)
         mfm.run("cs.current_fit.update()")
 
     def onDoConvolutionChanged(self):
-        mfm.run("cs.current_fit.model.convolve.do_convolution = %s" % self.groupBox.isChecked())
+        mfm.run("cs.current_fit.models.convolve.do_convolution = %s" % self.groupBox.isChecked())
 
     def change_irf(self):
         idx = self.irf_select.selected_curve_index
-        t = "irf = cs.current_fit.model.convolve.irf_select.datasets[%s]\n" \
+        t = "irf = cs.current_fit.models.convolve.irf_select.datasets[%s]\n" \
             "for f in cs.current_fit[cs.current_fit._selected_fit:]:\n" \
-            "   f.model.convolve._irf = mfm.curve.DataCurve(x=irf.x, y=irf.y)\n" % idx
+            "   f.models.convolve._irf = mfm.curve.DataCurve(x=irf.x, y=irf.y)\n" % idx
         t += "cs.current_fit.update()"
         mfm.run(t)
         self.fwhm = self._irf.fwhm

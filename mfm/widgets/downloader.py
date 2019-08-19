@@ -15,7 +15,7 @@ class UpdateDialog(QtWidgets.QWidget):
         self.filedownloadthread = None
         self.download_file = None
 
-        request = urllib.Request(mfm.cs_settings['updates']['check_version_url'])
+        request = urllib.Request(mfm.settings.cs_settings['updates']['check_version_url'])
         request.add_header('Pragma', 'no-cache')
         try:
             content = urllib.build_opener().open(request)
@@ -28,14 +28,14 @@ class UpdateDialog(QtWidgets.QWidget):
             print("Problems getting update.")
         #online = urllib.urlopen().readlines()
 
-        installed_version = mfm.cs_settings['version']
+        installed_version = mfm.settings.cs_settings['version']
         self.lineEdit.setText(installed_version)
-        changes = urllib.urlopen(mfm.cs_settings['updates']['changes']).read()
+        changes = urllib.urlopen(mfm.settings.cs_settings['updates']['changes']).read()
         self.textEdit.setText(changes)
         self.actionDownloadUpdate.triggered.connect(self.start_download)
 
         if online_version is not None:
-            if mfm.cs_settings['updates']['check_for_updates'] and installed_version < online_version:
+            if mfm.settings.cs_settings['updates']['check_for_updates'] and installed_version < online_version:
                 self.show()
 
     def start_download(self):

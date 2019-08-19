@@ -3,14 +3,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import mfm
 from mfm import plots
-from mfm.fitting.model.tcspc.fret import GaussianWidget, Gaussians
-from mfm.fitting.model.tcspc.nusiance import GenericWidget, CorrectionsWidget
+from mfm.models import GaussianWidget, Gaussians
+from mfm.models import GenericWidget, CorrectionsWidget
 from mfm.fluorescence import tcspc
 from mfm.fluorescence.general import distribution2rates
 from mfm.fluorescence.widgets import AnisotropyWidget
 from mfm.fitting import FittingParameterGroup, FittingParameter
-from mfm.fitting.model.tcspc import Lifetime, LifetimeWidget, LifetimeModel, ConvolveWidget
-from mfm.fitting.model import ModelWidget
+from mfm.models import Lifetime, LifetimeWidget, LifetimeModel, ConvolveWidget
+from mfm.models import ModelWidget
 
 
 class PDDEM(FittingParameterGroup):
@@ -134,7 +134,7 @@ class PDDEMWidget(QtWidgets.QWidget, PDDEM):
     def __init__(self, **kwargs):
         QtWidgets.QWidget.__init__(self)
         PDDEM.__init__(self, **kwargs)
-        uic.loadUi('mfm/ui/fitting/model/tcspc/pddem.ui', self)
+        uic.loadUi('mfm/ui/fitting/models/tcspc/pddem.ui', self)
 
         l = QtWidgets.QHBoxLayout()
         self._fAB = self._fAB.make_widget(layout=l, text='A>B')
@@ -201,9 +201,9 @@ class PDDEMModel(LifetimeModel):
             tmp[0::2] *= p[i]
             decays.append(tmp)
         lt = np.concatenate(decays)
-        if mfm.cs_settings['fret']['bin_lifetime']:
-            n_lifetimes = mfm.cs_settings['fret']['lifetime_bins']
-            discriminate_amplitude = mfm.cs_settings['fret']['discriminate_amplitude']
+        if mfm.settings.cs_settings['fret']['bin_lifetime']:
+            n_lifetimes = mfm.settings.cs_settings['fret']['lifetime_bins']
+            discriminate_amplitude = mfm.settings.cs_settings['fret']['discriminate_amplitude']
             return mfm.fluorescence.tcspc.bin_lifetime_spectrum(lt, n_lifetimes=n_lifetimes,
                                                                 discriminate=False,
                                                                 discriminator=discriminate_amplitude

@@ -159,12 +159,12 @@ class LinePlot(plotbase.Plot):
     Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
     and the autocorrelation of the residuals. Now it is also used also for FCS-data.
 
-    In case the model is a :py:class:`~experiment.model.tcspc.LifetimeModel` it takes the irf and displays it:
+    In case the models is a :py:class:`~experiment.models.tcspc.LifetimeModel` it takes the irf and displays it:
 
-        irf = fit.model.convolve.irf
+        irf = fit.models.convolve.irf
         irf_y = irf.y
 
-    The model data and the weighted residuals are taken directly from the fit:
+    The models data and the weighted residuals are taken directly from the fit:
 
         model_x, model_y = fit[:]
         wres_y = fit.weighted_residuals
@@ -185,7 +185,7 @@ class LinePlot(plotbase.Plot):
 
         area = DockArea()
         self.layout.addWidget(area)
-        hide_title = mfm.cs_settings['gui']['plot']['hideTitle']
+        hide_title = mfm.settings.cs_settings['gui']['plot']['hideTitle']
         d1 = Dock("res", size=(500, 80), hideTitle=hide_title)
         d2 = Dock("a.corr.", size=(500, 80), hideTitle=hide_title)
         d3 = Dock("Fit", size=(500, 400), hideTitle=hide_title)
@@ -214,9 +214,9 @@ class LinePlot(plotbase.Plot):
         # Labels
         self.text = pg.TextItem(text='', border='w', fill=(0, 0, 255, 100), anchor=(0, 0))
         self.data_plot.addItem(self.text)
-        colors = mfm.cs_settings['gui']['plot']['colors']
+        colors = mfm.settings.cs_settings['gui']['plot']['colors']
         # Fitting-region selector
-        if mfm.cs_settings['gui']['plot']['enable_region_selector']:
+        if mfm.settings.cs_settings['gui']['plot']['enable_region_selector']:
             ca = list(mpl_colors.hex2color(colors["region_selector"]))
             co = [ca[0] * 255, ca[1] * 255, ca[2] * 255, colors["region_selector_alpha"]]
             region = pg.LinearRegionItem(brush=co)
@@ -237,37 +237,37 @@ class LinePlot(plotbase.Plot):
                 #mfm.run("cs.current_fit.fit_range = %i, %i" % (lb_i, ub_i - 1))
                 mfm.run("cs.current_fit.fit_range = (%s, %s)" % (lb_i - 1, ub_i))
                 #self.fit.fit_range = (lb_i - 1, ub_i)
-                #self.fit.model.update_model()
+                #self.fit.models.update_model()
                 self.update_all(only_fit_range=True)
 
             region.sigRegionChangeFinished.connect(update_region)
             #proxy = pg.SignalProxy(region.sigRegionChanged, rateLimit=60, slot=update_region)
 
         # Grid
-        if mfm.cs_settings['gui']['plot']['enable_grid']:
-            if mfm.cs_settings['gui']['plot']['show_data_grid']:
+        if mfm.settings.cs_settings['gui']['plot']['enable_grid']:
+            if mfm.settings.cs_settings['gui']['plot']['show_data_grid']:
                 data_plot.showGrid(True, True, 0.5)
-            if mfm.cs_settings['gui']['plot']['show_residual_grid']:
+            if mfm.settings.cs_settings['gui']['plot']['show_residual_grid']:
                 residuals_plot.showGrid(True, True, 1.0)
-            if mfm.cs_settings['gui']['plot']['show_acorr_grid']:
+            if mfm.settings.cs_settings['gui']['plot']['show_acorr_grid']:
                 auto_corr_plot.showGrid(True, True, 1.0)
 
         # Labels
         self.residuals_plot = residuals_plot
         self.auto_corr_plot = auto_corr_plot
 
-        if mfm.cs_settings['gui']['plot']['label_axis']:
+        if mfm.settings.cs_settings['gui']['plot']['label_axis']:
             residuals_plot.setLabel('left', "w.res.")
             auto_corr_plot.setLabel('left', "a.corr.")
             data_plot.setLabel('left', kwargs.get('y_label', 'y'))
             data_plot.setLabel('bottom', kwargs.get('x_label', 'x'))
 
         # Plotted lines
-        lw = mfm.cs_settings['gui']['plot']['line_width']
+        lw = mfm.settings.cs_settings['gui']['plot']['line_width']
         if self.plot_irf:
             self.irf_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['irf'], width=lw), name='IRF')
         self.data_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['data'], width=lw), name='Data')
-        self.fit_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['model'], width=lw), name='Model')
+        self.fit_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['models'], width=lw), name='Model')
         p1.setXLink(p3)
         p2.setXLink(p3)
 
@@ -375,8 +375,8 @@ class LinePlot(plotbase.Plot):
         self.residuals_plot.clear()
         self.auto_corr_plot.clear()
 
-        colors = mfm.cs_settings['gui']['plot']['colors']
-        lw = mfm.cs_settings['gui']['plot']['line_width']
+        colors = mfm.settings.cs_settings['gui']['plot']['colors']
+        lw = mfm.settings.cs_settings['gui']['plot']['line_width']
 
         for i, w in enumerate(wres_y):
             self.residuals_plot.plot(x=model_x,

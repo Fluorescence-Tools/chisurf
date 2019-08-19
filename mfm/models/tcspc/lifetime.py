@@ -5,10 +5,10 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 import mfm
 from mfm.fitting import FittingParameterGroup, FittingParameter
-from mfm.fitting.model import Model, ModelWidget
-from mfm.fitting.model.model import ModelCurve
-from mfm.fitting.model.tcspc.nusiance import Generic, Corrections, Convolve, CorrectionsWidget, GenericWidget, ConvolveWidget
-from mfm.fitting.model.tcspc.anisotropy import Anisotropy
+from mfm.models import Model, ModelWidget
+from mfm.models import ModelCurve
+from mfm.models import Generic, Corrections, Convolve, CorrectionsWidget, GenericWidget, ConvolveWidget
+from mfm.models import Anisotropy
 from mfm.fluorescence.general import species_averaged_lifetime, fluorescence_averaged_lifetime
 from mfm.fluorescence.widgets import AnisotropyWidget
 
@@ -171,7 +171,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         def linkcall():
             for key in self.parameter_dict:
                 v = target.parameters_all_dict[key].value
-                mfm.run("cs.current_fit.model.parameters_all_dict['%s'].value = %s" % (key, v))
+                mfm.run("cs.current_fit.models.parameters_all_dict['%s'].value = %s" % (key, v))
             mfm.run("cs.current_fit.update()")
         return linkcall
 
@@ -279,24 +279,24 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
     def onNormalizeAmplitudes(self):
         norm_amp = self.normalize_amplitude.isChecked()
-        mfm.run("cs.current_fit.model.lifetimes.normalize_amplitudes = %s" % norm_amp)
+        mfm.run("cs.current_fit.models.lifetimes.normalize_amplitudes = %s" % norm_amp)
         mfm.run("cs.current_fit.update()")
 
     def onAbsoluteAmplitudes(self):
         abs_amp = self.absolute_amplitude.isChecked()
-        mfm.run("cs.current_fit.model.lifetimes.absolute_amplitudes = %s" % abs_amp)
+        mfm.run("cs.current_fit.models.lifetimes.absolute_amplitudes = %s" % abs_amp)
         mfm.run("cs.current_fit.update()")
 
     def onAddLifetime(self):
         t = "for f in cs.current_fit:\n" \
-            "   f.model.%s.append()\n" \
-            "   f.model.update()" % self.name
+            "   f.models.%s.append()\n" \
+            "   f.models.update()" % self.name
         mfm.run(t)
 
     def onRemoveLifetime(self):
         t = "for f in cs.current_fit:\n" \
-            "   f.model.%s.pop()\n" \
-            "   f.model.update()" % self.name
+            "   f.models.%s.pop()\n" \
+            "   f.models.update()" % self.name
         mfm.run(t)
 
     def append(self, *args, **kwargs):
@@ -369,7 +369,7 @@ class LifetimeModel(ModelCurve):
         lifetime_spectrum = kwargs.get('lifetime_spectrum', self.lifetime_spectrum)
         scatter = kwargs.get('scatter', self.generic.scatter)
         background = kwargs.get('background', self.generic.background)
-        shift_bg_with_irf = kwargs.get('shift_bg_with_irf', mfm.cs_settings['tcspc']['shift_bg_with_irf'])
+        shift_bg_with_irf = kwargs.get('shift_bg_with_irf', mfm.settings.cs_settings['tcspc']['shift_bg_with_irf'])
         lt = self.anisotropy.get_decay(lifetime_spectrum)
         decay = self.convolve.convolve(lt, verbose=verbose, scatter=scatter)
 
@@ -445,7 +445,7 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
 
 class DecayModel(ModelCurve):
 
-    name = "Fluorescence decay model"
+    name = "Fluorescence decay models"
 
     def __init__(self, fit, **kwargs):
         ModelCurve.__init__(self, fit, **kwargs)
@@ -474,7 +474,7 @@ class DecayModel(ModelCurve):
         verbose = kwargs.get('verbose', mfm.verbose)
         scatter = kwargs.get('scatter', self.generic.scatter)
         background = kwargs.get('background', self.generic.background)
-        shift_bg_with_irf = kwargs.get('shift_bg_with_irf', mfm.cs_settings['tcspc']['shift_bg_with_irf'])
+        shift_bg_with_irf = kwargs.get('shift_bg_with_irf', mfm.settings.cs_settings['tcspc']['shift_bg_with_irf'])
         decay = self.decay
         convolved_decay = self.convolve.convolve(decay, verbose=verbose, scatter=scatter, mode='full')
 

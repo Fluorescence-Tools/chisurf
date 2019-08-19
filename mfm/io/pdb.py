@@ -146,7 +146,7 @@ def read(
     --------
 
     >>> import mfm
-    >>> pdb_file = './sample_data/model/hgbp1/hGBP1_closed.pdb'
+    >>> pdb_file = models'
     >>> pdb = mfm.io.pdb_file.read(pdb_file, verbose=True)
     >>> pdb[:5]
     array([ (0, ' ', 7, 'MET', 1, 'N', 'N', [72.739, -17.501, 8.879], 0.0, 1.65, 0.0, 14.0067),
@@ -189,7 +189,7 @@ def write(
     :param filename: target-filename
     :param atoms: structured numpy array
     :param append_model: bool
-        If True the atoms are appended as a new model
+        If True the atoms are appended as a new models
     :param append_coordinates:
         If True the coordinates are appended to the file
 
