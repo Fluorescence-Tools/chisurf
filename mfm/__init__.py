@@ -2,13 +2,22 @@ from __future__ import annotations
 from collections import Iterable
 from typing import List
 
+import mfm.base
+import mfm.io
+import mfm.parameter
+import mfm.curve
+import mfm.experiments
+import mfm.settings
+#from mfm.settings import cs_settings, colors
+
+
 #######################################################
 #        LIST OF FITS, DATA, EXPERIMENTS              #
 #######################################################
 fits = []
 fit_windows = []
 experiment = []
-data_sets = []
+imported_datasets = []
 run = None   # This is replaced during initialization to execute commands via a command line interface
 cs = None    # The current instance of ChiSurf
 console = None
@@ -17,21 +26,16 @@ console = None
 #######################################################
 #        SETTINGS  & CONSTANTS                        #
 #######################################################
-from mfm.settings import cs_settings, colors
 
-verbose = cs_settings['verbose']
-__version__ = cs_settings['version']
-__name__ = cs_settings['name']
+verbose = mfm.settings.cs_settings['verbose']
+__version__ = mfm.settings.cs_settings['version']
+__name__ = mfm.settings.cs_settings['name']
 working_path = ''
 eps = 1e-8
 
-import mfm.base
-import mfm.parameter
-import mfm.curve
-import mfm.experiments
-import mfm.fitting
-import mfm.structure
-import mfm.fluorescence
+#import mfm.fitting
+#import mfm.structure
+#import mfm.fluorescence
 
 
 def find_objects(

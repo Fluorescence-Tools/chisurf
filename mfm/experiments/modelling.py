@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets
 
 import mfm
 import mfm.structure.widgets
-from mfm.experiments import Reader
+from mfm.experiments.reader import Reader
 from mfm.io.widgets import PDBLoad
 
 

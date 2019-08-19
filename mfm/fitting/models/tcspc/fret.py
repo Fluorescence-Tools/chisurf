@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import mfm
 import mfm.math
 import mfm.plots as plots
-from mfm.fitting.models import ModelWidget
+from mfm.fitting.models.model import ModelWidget
 from mfm.fitting.models.tcspc.nusiance import GenericWidget, CorrectionsWidget, ConvolveWidget
 from mfm.fitting.models.tcspc.lifetime import Lifetime, LifetimeWidget, LifetimeModel, LifetimeModelWidgetBase
 from mfm.fluorescence.general import distribution2rates, rates2lifetimes

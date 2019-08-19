@@ -9,7 +9,7 @@ import tables
 
 import mfm
 
-photon_settings = mfm.cs_settings['photons']
+#photon_settings = mfm.cs_settings['photons']
 
 
 class Photon(tables.IsDescription):
@@ -364,11 +364,11 @@ def make_hdf(**kwargs):
     :param kwargs:
     :return: hdf-file handle (pytables)
     """
-    title = kwargs.get('title', str(photon_settings['title']))
+    title = kwargs.get('title', str(mfm.cs_settings['photons']['title']))
     filename = kwargs.get('filename', tempfile.mktemp(".photons.h5"))
     verbose = kwargs.get('verbose', mfm.verbose)
-    complib = kwargs.get('complib', str(photon_settings['complib']))
-    complevel = kwargs.get('complevel', int(photon_settings['complevel']))
+    complib = kwargs.get('complib', str(mfm.cs_settings['photons']['complib']))
+    complevel = kwargs.get('complevel', int(mfm.cs_settings['photons']['complevel']))
     if verbose:
         print("-------------------------------------------")
         print("Make Photon HDF-File")

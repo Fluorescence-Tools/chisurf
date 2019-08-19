@@ -7,6 +7,7 @@ from PyQt5 import QtCore, QtWidgets, uic
 
 import mfm
 import mfm.experiments
+import mfm.experiments.data
 import mfm.settings
 from mfm.io.widgets import SpcFileWidget
 
@@ -101,10 +102,10 @@ class Correlator(QtCore.QThread):
 
     @property
     def data(self):
-        if isinstance(self._data, mfm.experiments.DataCurve):
+        if isinstance(self._data, mfm.experiments.data.DataCurve):
             return self._data
         else:
-            return mfm.experiments.DataCurve(setup=self)
+            return mfm.experiments.data.DataCurve(setup=self)
 
     def __init__(self, parent):
         QtCore.QThread.__init__(self, parent)
@@ -137,7 +138,7 @@ class Correlator(QtCore.QThread):
         return w
 
     def run(self):
-        data = mfm.experiments.DataCurve()
+        data = mfm.experiments.data.DataCurve()
 
         w1 = self.getWeightStream(self.p.ch1)
         w2 = self.getWeightStream(self.p.ch2)

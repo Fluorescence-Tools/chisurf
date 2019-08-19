@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import weakref
-from typing import List
-from PyQt5 import QtWidgets
 
 import mfm
 import mfm.base
 
-parameter_settings = mfm.cs_settings['parameter']
+#parameter_settings = mfm.cs_settings['parameter']
 
 
 class Parameter(mfm.base.Base):

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import mfm
 # import mix_model
-from mfm.fitting.models import ModelCurve
+from mfm.fitting.models.model import ModelCurve
 #from mfm.fitting.models.tcspc import Lifetime, LifetimeModel
 #from mfm.fitting.models.tcspc.anisotropy import Anisotropy
 #from mfm.fitting.models.tcspc.lifetime import Lifetime, LifetimeWidget, LifetimeModel, LifetimeModelWidgetBase, \

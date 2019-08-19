@@ -10,7 +10,7 @@ from mfm.fluorescence.general import distribution2rates
 from mfm.fluorescence.widgets import AnisotropyWidget
 from mfm.fitting import FittingParameterGroup, FittingParameter
 from mfm.fitting.models.tcspc import Lifetime, LifetimeWidget, LifetimeModel, ConvolveWidget
-from .. import ModelWidget
+from mfm.fitting.models import ModelWidget
 
 
 class PDDEM(FittingParameterGroup):

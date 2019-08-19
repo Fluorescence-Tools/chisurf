@@ -2,6 +2,7 @@ from PyQt5 import QtWidgets, uic
 
 import mfm
 import mfm.experiments
+import mfm.experiments.data
 import mfm.structure
 import mfm.structure.structure
 import mfm.widgets
@@ -305,7 +306,7 @@ class CSVFileWidget(QtWidgets.QWidget):
         :param filename:
         :return: Curve-object
         """
-        d = mfm.experiments.DataCurve(setup=None)
+        d = mfm.experiments.data.DataCurve(setup=None)
         if filename is not None:
             self.csvWidget.load(filename)
             d.filename = filename

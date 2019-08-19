@@ -1,10 +1,12 @@
-from collections import OrderedDict
+from __future__ import annotations
 
+from collections import OrderedDict
 from PyQt5 import QtWidgets
 
 import mfm
 import mfm.experiments
-from mfm.experiments import Reader
+import mfm.experiments.data
+from mfm.experiments.reader import Reader
 
 
 class GlobalFitSetup(Reader, QtWidgets.QWidget):
@@ -21,7 +23,7 @@ class GlobalFitSetup(Reader, QtWidgets.QWidget):
         return 0, 0
 
     def read(self, filename=None, **kwargs):
-        d = mfm.experiments.DataCurve(setup=self, name="Global-fit")
+        d = mfm.experiments.data.DataCurve(setup=self, name="Global-fit")
         return d
 
     def __str__(self):

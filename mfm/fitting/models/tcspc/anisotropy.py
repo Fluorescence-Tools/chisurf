@@ -2,11 +2,12 @@ import numpy as np
 
 import mfm
 import mfm.fitting
+import mfm.fitting.parameter
 
 __author__ = 'Thomas'
 
 
-class Anisotropy(mfm.fitting.FittingParameterGroup):
+class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
 
     @property
     def r0(self):
@@ -100,15 +101,15 @@ class Anisotropy(mfm.fitting.FittingParameterGroup):
         fixed = kwargs.get('fixed', False)
         bound_on = kwargs.get('bound_on', False)
 
-        b = mfm.fitting.FittingParameter(lb=lb, ub=ub,
-                             value=rho_value,
-                             name='b(%i)' % (len(self) + 1),
-                             fixed=fixed,
-                             bounds_on=bound_on)
-        rho = mfm.fitting.FittingParameter(lb=lb, ub=ub,
-                               value=b_value,
-                               name='rho(%i)' % (len(self) + 1),
-                               fixed=fixed, bounds_on=bound_on)
+        b = mfm.fitting.parameter.FittingParameter(lb=lb, ub=ub,
+                                                   value=rho_value,
+                                                   name='b(%i)' % (len(self) + 1),
+                                                   fixed=fixed,
+                                                   bounds_on=bound_on)
+        rho = mfm.fitting.parameter.FittingParameter(lb=lb, ub=ub,
+                                                     value=b_value,
+                                                     name='rho(%i)' % (len(self) + 1),
+                                                     fixed=fixed, bounds_on=bound_on)
         self._rhos.append(rho)
         self._bs.append(b)
 
@@ -118,12 +119,12 @@ class Anisotropy(mfm.fitting.FittingParameterGroup):
 
     def __init__(self, **kwargs):
         kwargs['name'] = 'Anisotropy'
-        mfm.fitting.FittingParameterGroup.__init__(self, **kwargs)
+        mfm.fitting.parameter.FittingParameterGroup.__init__(self, **kwargs)
         self._rhos = []
         self._bs = []
         self._polarization_type = kwargs.get('polarization', mfm.cs_settings['tcspc']['polarization'])
 
-        self._r0 = mfm.fitting.FittingParameter(name='r0', value=0.38, fixed=True)
-        self._g = mfm.fitting.FittingParameter(name='g', value=1.00, fixed=True)
-        self._l1 = mfm.fitting.FittingParameter(name='l1', value=0.0308, fixed=True)
-        self._l2 = mfm.fitting.FittingParameter(name='l2', value=0.0368, fixed=True)
+        self._r0 = mfm.fitting.parameter.FittingParameter(name='r0', value=0.38, fixed=True)
+        self._g = mfm.fitting.parameter.FittingParameter(name='g', value=1.00, fixed=True)
+        self._l1 = mfm.fitting.parameter.FittingParameter(name='l1', value=0.0308, fixed=True)
+        self._l2 = mfm.fitting.parameter.FittingParameter(name='l2', value=0.0368, fixed=True)
