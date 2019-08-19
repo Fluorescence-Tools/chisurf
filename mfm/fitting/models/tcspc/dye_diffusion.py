@@ -12,6 +12,7 @@ from mfm.fluorescence.fps.widgets import ProteinQuenchingWidget, DyeWidget, Stic
 import mfm
 import mfm.fitting.fit
 import mfm.fitting.models.tcspc.nusiance
+import mfm.fitting.models.tcspc.tcspc
 import mfm.fitting.widgets
 import mfm.fluorescence.fps as fps
 import mfm.fluorescence.tcspc.convolve
@@ -283,7 +284,7 @@ class DyeDecay(Model, Curve):
         )
 
         self.av_parameter = av_parameter
-        self.convolve = kwargs.get('convolve', mfm.fluorescence.tcspc.convolve.Convolve(self.fit))
+        self.convolve = kwargs.get('convolve', mfm.fitting.models.tcspc.tcspc.Convolve(self.fit))
         self.generic = kwargs.get('generic', mfm.fitting.models.tcspc.nusiance.Generic())
         self.corrections = kwargs.get('corrections', mfm.fitting.models.tcspc.nusiance.Corrections(model=self, **kwargs))
 
@@ -624,7 +625,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
     def __init__(self, fit, **kwargs):
         self.verbose = kwargs.get('verbose', mfm.verbose)
         generic = mfm.fitting.models.tcspc.nusiance.GenericWidget(fit=fit, parent=self, model=self, **kwargs)
-        convolve = mfm.fluorescence.tcspc.convolve.ConvolveWidget(fit=fit, model=self, dt=fit.data.dt, **kwargs)
+        convolve = mfm.fitting.models.tcspc.tcspc.ConvolveWidget(fit=fit, model=self, dt=fit.data.dt, **kwargs)
         corrections = mfm.fitting.models.tcspc.nusiance.CorrectionsWidget(fit, model=self, **kwargs)
 
         fn = os.path.join(mfm.package_directory, 'settings/dye_diffusion.json')

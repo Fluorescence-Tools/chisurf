@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 
 import mfm
-from mfm.fluorescence.anisotropy import Anisotropy
+from mfm.fitting.models.tcspc.anisotropy import Anisotropy
 
 
 class AnisotropyWidget(Anisotropy, QtWidgets.QWidget):

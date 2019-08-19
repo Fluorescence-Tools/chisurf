@@ -7,7 +7,7 @@ from mfm.fluorescence.fps.dynamic import DiffusionSimulation
 
 import mfm
 from mfm.curve import Curve
-from mfm.parameter import FittingParameterGroup, FittingParameter
+from mfm.fitting import FittingParameterGroup, FittingParameter
 
 
 def simulate_decays(dyes, decay_parameter, simulation_parameter, quenching_parameter, save_decays=True,

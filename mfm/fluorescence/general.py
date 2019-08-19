@@ -33,7 +33,7 @@ def p_isotropic_orientation_factor(k2, normalize=True):
     return r
 
 
-def fretrate2distance(fretrate, forster_radius, tau0, kappa2=2./3.):
+def fretrate_to_distance(fretrate, forster_radius, tau0, kappa2=2. / 3.):
     """Calculate the distance given a FRET-rate
 
     :param fretrate: FRET-rate

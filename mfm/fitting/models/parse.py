@@ -7,16 +7,11 @@ from PyQt5 import QtCore, QtWidgets, uic
 from PyQt5.QtCore import QFile, QFileInfo, QTextStream, QUrl
 from numpy import *
 from sympy.printing.latex import latex
+from re import Scanner
 
 import mfm
 from mfm.fitting.models import ModelWidget, ModelCurve
-from mfm.parameter import FittingParameter, FittingParameterGroup
-
-try:
-    from re import Scanner
-except ImportError:
-    import sre
-    from sre import Scanner
+from mfm.fitting import FittingParameter, FittingParameterGroup
 
 
 class GenerateSymbols(defaultdict):

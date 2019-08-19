@@ -4,6 +4,7 @@ from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
 
 import mfm
+import mfm.experiments
 import mfm.fitting.models.tcspc as fret_models
 from mfm.fitting.models.tcspc.fret import WormLikeChainModelWidget
 
@@ -103,7 +104,7 @@ class FRETLineGenerator(object):
         self._dt = kwargs.get('dt', 0.1)
 
         self.fit = mfm.Fit()
-        self._data_points = mfm.curve.DataCurve(setup=None)
+        self._data_points = mfm.experiments.DataCurve(setup=None)
         self._data_points.x = np.linspace(0.0, self._t_max, self._n_points)
         self._data_points.y = np.zeros_like(self._data_points.x)
         self.fit.data = self._data_points
