@@ -1,5 +1,5 @@
 import mfm
-from mfm.fitting.models.tcspc.lifetime import DecayModel
+from mfm.fitting.model.tcspc.lifetime import DecayModel
 from mfm.fluorescence.fps import DynamicAV
 from mfm.parameter import FittingParameter
 
@@ -19,7 +19,7 @@ class AVDecayModel(DecayModel):
         >>> irf.x *= 0.0141
         >>> data_set = mfm.curve.ExperimentDataCurveGroup(data_set)
         >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
-        >>> from mfm.fitting.models.tcspc.av_decay import AVDecayModel
+        >>> from mfm.fitting.model.tcspc.av_decay import AVDecayModel
         >>> model_kw={'structure': structure, 'residue_seq_number': 577, 'atom_name': 'CB'}
         >>> fit = mfm.fitting.FitGroup(data=data_set, model_class=AVDecayModel, model_kw=model_kw)
         >>> fit.model.convolve._irf = irf

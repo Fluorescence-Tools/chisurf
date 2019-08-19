@@ -4,9 +4,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import mfm
 import mfm.math
 import mfm.plots as plots
-from mfm.fitting.models.model import ModelWidget
-from mfm.fitting.models.tcspc.nusiance import GenericWidget, CorrectionsWidget, ConvolveWidget
-from mfm.fitting.models.tcspc.lifetime import Lifetime, LifetimeWidget, LifetimeModel, LifetimeModelWidgetBase
+from mfm.fitting.model.model import ModelWidget
+from mfm.fitting.model.tcspc.nusiance import GenericWidget, CorrectionsWidget, ConvolveWidget
+from mfm.fitting.model.tcspc.lifetime import Lifetime, LifetimeWidget, LifetimeModel, LifetimeModelWidgetBase
 from mfm.fluorescence.general import distribution2rates, rates2lifetimes
 from mfm.fluorescence import rda_axis
 from mfm.fluorescence.widgets import AnisotropyWidget
@@ -881,7 +881,7 @@ class SingleDistanceModelWidget(ModelWidget, SingleDistanceModel):
 
         self._donly = self._donly.make_widget()
 
-        uic.loadUi('mfm/ui/fitting/models/tcspc/load_distance_distibution.ui', self)
+        uic.loadUi('mfm/ui/fitting/model/tcspc/load_distance_distibution.ui', self)
         self.icon = QtGui.QIcon(":/icons/icons/TCSPC.ico")
         self.actionOpen_distirbution.triggered.connect(self.load_distance_distribution)
 

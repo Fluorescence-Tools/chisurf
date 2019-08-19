@@ -5,10 +5,8 @@ from PyQt5 import QtWidgets
 import mfm
 from mfm.plots import plotbase
 
-pyqtgraph_settings = mfm.cs_settings['gui']['plot']["pyqtgraph"]
-for setting in mfm.cs_settings['gui']['plot']['pyqtgraph']:
-    pg.setConfigOption(setting, mfm.cs_settings['gui']['plot']['pyqtgraph'][setting])
-color_scheme = mfm.colors
+pyqtgraph_settings = mfm.settings.cs_settings['gui']['plot']["pyqtgraph"]
+color_scheme = mfm.settings.colors
 
 
 class ResidualPlot(plotbase.Plot):

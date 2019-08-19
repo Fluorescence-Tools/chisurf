@@ -1,19 +1,19 @@
 """
-This module contains all time-resolved fluorescence models (TCSPC)
+This module contains all time-resolved fluorescence model (TCSPC)
 
-.. automodule:: models.tcspc
+.. automodule:: model.tcspc
    :members:
 """
 from __future__ import annotations
 
 import mfm
 # import mix_model
-from mfm.fitting.models.model import ModelCurve
-#from mfm.fitting.models.tcspc import Lifetime, LifetimeModel
-#from mfm.fitting.models.tcspc.anisotropy import Anisotropy
-#from mfm.fitting.models.tcspc.lifetime import Lifetime, LifetimeWidget, LifetimeModel, LifetimeModelWidgetBase, \
+from mfm.fitting.model.model import ModelCurve
+#from mfm.fitting.model.tcspc import Lifetime, LifetimeModel
+#from mfm.fitting.model.tcspc.anisotropy import Anisotropy
+#from mfm.fitting.model.tcspc.lifetime import Lifetime, LifetimeWidget, LifetimeModel, LifetimeModelWidgetBase, \
 #    LifetimeModelWidget
-#from mfm.fitting.models.tcspc.nusiance import Generic, Corrections, CorrectionsWidget, GenericWidget, Convolve, \
+#from mfm.fitting.model.tcspc.nusiance import Generic, Corrections, CorrectionsWidget, GenericWidget, Convolve, \
 #    ConvolveWidget
 from . import lifetime
 from . import fret
@@ -24,7 +24,7 @@ from . import pddem
 # import et
 # import membrane
 # import fret_structure
-from mfm.fitting.models import ModelCurve
+from mfm.fitting.model import ModelCurve
 
 models = [
     lifetime.LifetimeModelWidget,

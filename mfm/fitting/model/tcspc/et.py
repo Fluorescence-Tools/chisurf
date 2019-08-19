@@ -6,9 +6,9 @@ import mfm.fluorescence
 import mfm.fluorescence.general
 import mfm.math
 from mfm import plots
-from mfm.fitting.models import Model
+from mfm.fitting.model import Model
 from mfm.math.optimization import solve_nnls, solve_richardson_lucy, maxent
-from mfm.fitting.models.tcspc import LifetimeModel
+from mfm.fitting.model.tcspc import LifetimeModel
 
 
 class Phasor(object):
@@ -108,7 +108,7 @@ class PhasorWidget(Phasor, QtWidgets.QWidget):
     def __init__(self, **kwargs):
         QtWidgets.QWidget.__init__(self)
         Phasor.__init__(self, **kwargs)
-        uic.loadUi('mfm/ui/fitting/models/tcspc/phasor_widget.ui', self)
+        uic.loadUi('mfm/ui/fitting/model/tcspc/phasor_widget.ui', self)
         #self.connect(self.actionUpdate_phasor, QtCore.SIGNAL('triggered()'), self.onUpdatePhasor)
         #self.connect(self.actionUpdate_phasor, QtCore.SIGNAL('triggered()'), self.onUpdatePhasor)
 
@@ -294,7 +294,7 @@ class DistanceDistribution(object):
 class EtModelFree(Model, Phasor, LCurve, DistanceDistribution):
     """
     This model deconvolutes the distance distribution given the two fits of the type
-    :py:class:`~.mfm.models.tcspc.tcspc.LifetimeModel`.
+    :py:class:`~.mfm.model.tcspc.tcspc.LifetimeModel`.
     """
 
     name = "Et-Model free"
@@ -572,7 +572,7 @@ class EtModelFreeWidget(EtModelFree, QtWidgets.QWidget):
         self.icon = QtGui.QIcon(":/icons/icons/TCSPC.ico")
 
         EtModelFree.__init__(self, fit)
-        uic.loadUi('mfm/ui/fitting/models/tcspc/et_model_free.ui', self)
+        uic.loadUi('mfm/ui/fitting/model/tcspc/et_model_free.ui', self)
         phasor = PhasorWidget()
         self.verticalLayout_2.addWidget(phasor)
         self.fits = []

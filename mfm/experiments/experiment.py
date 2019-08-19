@@ -6,8 +6,8 @@ import mfm.base
 class Experiment(mfm.base.Base):
     """
     All information contained within `ChiSurf` is associated to an experiment. Each experiment
-    is associated with a list of models and a list of setups. The list of models and the list
-    of setups determine the applicable models and loadable data-types respectively.
+    is associated with a list of model and a list of setups. The list of model and the list
+    of setups determine the applicable model and loadable data-types respectively.
     """
 
     @property

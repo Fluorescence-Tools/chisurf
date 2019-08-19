@@ -9,11 +9,9 @@ from pyqtgraph.dockarea import DockArea, Dock
 import mfm
 from mfm.plots.plotbase import Plot
 
-pyqtgraph_settings = mfm.cs_settings['gui']['plot']["pyqtgraph"]
-for setting in mfm.cs_settings['gui']['plot']['pyqtgraph']:
-    pg.setConfigOption(setting, mfm.cs_settings['gui']['plot']['pyqtgraph'][setting])
-colors = mfm.cs_settings['gui']['plot']['colors']
-color_scheme = mfm.colors
+pyqtgraph_settings = mfm.settings.cs_settings['gui']['plot']["pyqtgraph"]
+colors = mfm.settings.cs_settings['gui']['plot']['colors']
+color_scheme = mfm.settings.colors
 
 
 class ProteinMCPlot(Plot):

@@ -447,7 +447,7 @@ class Main(QMainWindow):
 
         ##########################################################
         #    Connect changes in User-interface to actions like:  #
-        #    Loading dataset, changing setups, models, etc.     #
+        #    Loading dataset, changing setups, model, etc.     #
         ##########################################################
         self.actionSetupChanged.triggered.connect(self.onSetupChanged)
         self.actionExperimentChanged.triggered.connect(self.onExperimentChanged)
@@ -471,17 +471,17 @@ class Main(QMainWindow):
         ##########################################################
         tcspc = mfm.experiments.experiment.Experiment('TCSPC')
         tcspc.add_setups(mfm.experiments.tcspc_setups)
-        tcspc.add_models(mfm.fitting.models.tcspc.models)
+        tcspc.add_models(mfm.fitting.model.tcspc.models)
         mfm.experiment.append(tcspc)
 
         fcs = mfm.experiments.experiment.Experiment('FCS')
         fcs.add_setups(mfm.experiments.fcs_setups)
-        fcs.add_models(mfm.fitting.models.fcs.models)
+        fcs.add_models(mfm.fitting.model.fcs.models)
         mfm.experiment.append(fcs)
 
         global_fit = mfm.experiments.experiment.Experiment('Global')
         global_setup = mfm.experiments.globalfit.GlobalFitSetup(name='Global-Fit', experiment=global_fit)
-        global_fit.add_model(mfm.fitting.models.GlobalFitModelWidget)
+        global_fit.add_model(mfm.fitting.model.GlobalFitModelWidget)
         global_fit.add_setup(global_setup)
         mfm.experiment.append(global_fit)
 

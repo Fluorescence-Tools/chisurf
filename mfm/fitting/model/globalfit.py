@@ -11,8 +11,8 @@ import mfm
 from mfm import plots
 from mfm.curve import Curve
 import mfm.fitting.fit
-from mfm.fitting.models import Model
-from mfm.fitting.models.model import ModelWidget
+from mfm.fitting.model import Model
+from mfm.fitting.model.model import ModelWidget
 from mfm.fitting.parameter import GlobalFittingParameter
 
 
@@ -319,7 +319,7 @@ class GlobalFitModelWidget(GlobalFitModel, ModelWidget):
             fit: mfm.fitting.Fit
     ):
         super(GlobalFitModel, self).__init__(fit)
-        uic.loadUi("mfm/ui/fitting/models/globalfit_2.ui", self)
+        uic.loadUi("mfm/ui/fitting/model/globalfit_2.ui", self)
 
         self.actionOnAddToLocalFitList.triggered.connect(self.onAddToLocalFitList)
         self.actionOn_clear_local_fits.triggered.connect(self.onClearLocalFits)

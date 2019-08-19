@@ -1,16 +1,14 @@
 import numpy as np
 import pyqtgraph as pg
 from PyQt5 import QtWidgets, uic
+import matplotlib.colors as mpl_colors
 
 import mfm
 from mfm.plots import plotbase
-
-pyqtgraph_settings = mfm.cs_settings['gui']['plot']["pyqtgraph"]
-for setting in mfm.cs_settings['gui']['plot']['pyqtgraph']:
-    pg.setConfigOption(setting, mfm.cs_settings['gui']['plot']['pyqtgraph'][setting])
 from pyqtgraph.dockarea import *
-color_scheme = mfm.colors
-import matplotlib.colors as mpl_colors
+
+pyqtgraph_settings = mfm.settings.cs_settings['gui']['plot']["pyqtgraph"]
+color_scheme = mfm.settings.colors
 
 
 class LinePlotControl(QtWidgets.QWidget):

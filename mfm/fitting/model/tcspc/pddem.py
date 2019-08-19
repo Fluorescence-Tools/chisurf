@@ -3,14 +3,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import mfm
 from mfm import plots
-from mfm.fitting.models.tcspc.fret import GaussianWidget, Gaussians
-from mfm.fitting.models.tcspc.nusiance import GenericWidget, CorrectionsWidget
+from mfm.fitting.model.tcspc.fret import GaussianWidget, Gaussians
+from mfm.fitting.model.tcspc.nusiance import GenericWidget, CorrectionsWidget
 from mfm.fluorescence import tcspc
 from mfm.fluorescence.general import distribution2rates
 from mfm.fluorescence.widgets import AnisotropyWidget
 from mfm.fitting import FittingParameterGroup, FittingParameter
-from mfm.fitting.models.tcspc import Lifetime, LifetimeWidget, LifetimeModel, ConvolveWidget
-from mfm.fitting.models import ModelWidget
+from mfm.fitting.model.tcspc import Lifetime, LifetimeWidget, LifetimeModel, ConvolveWidget
+from mfm.fitting.model import ModelWidget
 
 
 class PDDEM(FittingParameterGroup):
@@ -134,7 +134,7 @@ class PDDEMWidget(QtWidgets.QWidget, PDDEM):
     def __init__(self, **kwargs):
         QtWidgets.QWidget.__init__(self)
         PDDEM.__init__(self, **kwargs)
-        uic.loadUi('mfm/ui/fitting/models/tcspc/pddem.ui', self)
+        uic.loadUi('mfm/ui/fitting/model/tcspc/pddem.ui', self)
 
         l = QtWidgets.QHBoxLayout()
         self._fAB = self._fAB.make_widget(layout=l, text='A>B')
