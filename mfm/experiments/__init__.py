@@ -15,8 +15,9 @@ import numpy as np
 
 import mfm
 import mfm.base
-from mfm.base import Base
-from mfm.curve import Data, Curve
+from mfm import data_sets
+from mfm.base import Base, Data
+from mfm.curve import Curve
 
 
 class Experiment(mfm.base.Base):
@@ -421,3 +422,20 @@ class ExperimentDataCurveGroup(ExperimentDataGroup, DataCurveGroup):
     def __init__(self, *args, **kwargs):
         ExperimentDataGroup.__init__(self, *args, **kwargs)
         DataCurveGroup.__init__(self, *args, **kwargs)
+
+
+def get_data(
+        curve_type: str = 'experiment'
+):
+    """
+    Returns all curves `mfm.curve.DataCurve` except if the curve is names "Global-fit"
+    """
+    if curve_type == 'all':
+        return [d for d in data_sets
+                if isinstance(d, mfm.experiments.ExperimentalData) or
+                isinstance(d, mfm.experiments.ExperimentDataGroup)
+                ]
+    elif curve_type == 'experiment':
+        return [
+            d for d in data_sets if (isinstance(d, mfm.experiments.ExperimentalData) or
+                                     isinstance(d, mfm.experiments.ExperimentDataGroup)) and d.name != "Global-fit"]

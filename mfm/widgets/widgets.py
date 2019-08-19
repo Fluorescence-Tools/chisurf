@@ -11,6 +11,7 @@ from datetime import datetime
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
+import mfm.curve
 import mfm.experiments
 
 os.environ['PYZMQ_BACKEND'] = 'cython'
@@ -605,7 +606,7 @@ class CurveSelector(QtWidgets.QTreeWidget):
         # http://python.6.x6.nabble.com/Drag-and-drop-editing-in-QListWidget-or-QListView-td1792540.html
         self.drag_item = None
         self.drag_row = None
-        self.get_data_curves = kwargs.get('get_data_curves', mfm.get_data)
+        self.get_data_curves = kwargs.get('get_data_curves', mfm.experiments.get_data)
         self.change_event = kwargs.get('change_event', self.change_event)
         self.curve_type = kwargs.get('curve_types', 'experiment')
         self.click_close = kwargs.get('click_close', True)

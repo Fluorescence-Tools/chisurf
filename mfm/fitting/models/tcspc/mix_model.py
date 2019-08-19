@@ -5,8 +5,7 @@ from mfm import plots
 from mfm.fluorescence import stack_lifetime_spectra
 from mfm.parameter import FittingParameterWidget
 from mfm.widgets import clear_layout
-from .tcspc import LifetimeModel
-from .tcspc import LifetimeModelWidgetBase
+from mfm.fitting.models.tcspc import LifetimeModel, LifetimeModelWidgetBase
 
 
 class LifetimeMixModel(LifetimeModel):

@@ -4,21 +4,30 @@ This module contains all time-resolved fluorescence models (TCSPC)
 .. automodule:: models.tcspc
    :members:
 """
+from __future__ import annotations
+
 import mfm
 # import mix_model
+from mfm.fitting.models import ModelCurve
+#from mfm.fitting.models.tcspc import Lifetime, LifetimeModel
+#from mfm.fitting.models.tcspc.anisotropy import Anisotropy
+#from mfm.fitting.models.tcspc.lifetime import Lifetime, LifetimeWidget, LifetimeModel, LifetimeModelWidgetBase, \
+#    LifetimeModelWidget
+#from mfm.fitting.models.tcspc.nusiance import Generic, Corrections, CorrectionsWidget, GenericWidget, Convolve, \
+#    ConvolveWidget
+from . import lifetime
 from . import fret
-from . import nusiance
+# from . import nusiance
 from . import parse
 from . import pddem
 # import dye_diffusion
-from . import tcspc
 # import et
 # import membrane
 # import fret_structure
-from .. import ModelCurve
+from mfm.fitting.models import ModelCurve
 
 models = [
-    tcspc.LifetimeModelWidget,
+    lifetime.LifetimeModelWidget,
     fret.FRETrateModelWidget,
     fret.GaussianModelWidget,
     pddem.PDDEMModelWidget,
@@ -36,3 +45,4 @@ testing = [
 ]
 
 models += testing if mfm.cs_settings['experimental_models'] else []
+
