@@ -144,7 +144,7 @@ class Main(QMainWindow):
         #mfm.run("cs.current_dataset = %s" % self.curve_selector.selected_curve_index)
         self.comboBox_Model.clear()
         ds = self.current_dataset
-        if mfm.data_sets:
+        if mfm.imported_datasets:
             model_names = ds.experiment.get_model_names()
             self.comboBox_Model.addItems(model_names)
 
@@ -166,8 +166,8 @@ class Main(QMainWindow):
 
         for data_set in datasets:
             if data_set.experiment is datasets[0].experiment:
-                if not isinstance(data_set, mfm.experiments.DataGroup):
-                    data_set = mfm.experiments.ExperimentDataCurveGroup(data_set)
+                if not isinstance(data_set, mfm.experiments.data.DataGroup):
+                    data_set = mfm.experiments.data.ExperimentDataCurveGroup(data_set)
                 fit = mfm.fitting.FitGroup(data=data_set, model_class=model_class)
                 mfm.fits.append(fit)
                 fit.model.find_parameters()
@@ -239,18 +239,18 @@ class Main(QMainWindow):
         :return: 
         """
         #selected_data = mfm.data_sets[dataset_numbers]
-        selected_data = [mfm.data_sets[i] for i in dataset_numbers]
-        if isinstance(selected_data[0], mfm.experiments.DataCurve):
+        selected_data = [mfm.imported_datasets[i] for i in dataset_numbers]
+        if isinstance(selected_data[0], mfm.experiments.data.DataCurve):
             # TODO: check for double names!!!
-            dg = mfm.experiments.ExperimentDataCurveGroup(selected_data, name="Data-Group")
+            dg = mfm.experiments.data.ExperimentDataCurveGroup(selected_data, name="Data-Group")
         else:
-            dg = mfm.experiments.ExperimentDataGroup(selected_data, name="Data-Group")
+            dg = mfm.experiments.data.ExperimentDataGroup(selected_data, name="Data-Group")
         dn = list()
-        for d in mfm.data_sets:
+        for d in mfm.imported_datasets:
             if d not in dg:
                 dn.append(d)
         dn.append(dg)
-        mfm.data_sets = dn
+        mfm.imported_datasets = dn
 
     def add_dataset(self, **kwargs):
         setup = kwargs.get('setup', self.current_setup)
@@ -259,19 +259,19 @@ class Main(QMainWindow):
             dataset = setup.get_data(**kwargs)
 
         dataset_group = dataset if \
-            isinstance(dataset, mfm.experiments.ExperimentDataGroup) else \
-            mfm.experiments.ExperimentDataCurveGroup(dataset)
+            isinstance(dataset, mfm.experiments.data.ExperimentDataGroup) else \
+            mfm.experiments.data.ExperimentDataCurveGroup(dataset)
         if len(dataset_group) == 1:
-            mfm.data_sets.append(dataset_group[0])
+            mfm.imported_datasets.append(dataset_group[0])
         else:
-            mfm.data_sets.append(dataset_group)
+            mfm.imported_datasets.append(dataset_group)
         self.dataset_selector.update()
 
     def remove_dataset(self, idx):
         idx = [idx] if not isinstance(idx, list) else idx
 
         l = list()
-        for i, d in enumerate(mfm.data_sets):
+        for i, d in enumerate(mfm.imported_datasets):
             if d.name == 'Global-fit':
                 l.append(d)
                 continue
@@ -287,7 +287,7 @@ class Main(QMainWindow):
                         fw.append(fit_window)
                 mfm.fit_windows = fw
 
-        mfm.data_sets = l
+        mfm.imported_datasets = l
 
     def save_fits(self, **kwargs):
         path = kwargs.get('path', mfm.widgets.get_directory(**kwargs))
@@ -469,17 +469,17 @@ class Main(QMainWindow):
         #      Initialize Experiments and Setups                 #
         #      (Commented widgets don't work at the moment       #
         ##########################################################
-        tcspc = mfm.experiments.Experiment('TCSPC')
+        tcspc = mfm.experiments.experiment.Experiment('TCSPC')
         tcspc.add_setups(mfm.experiments.tcspc_setups)
         tcspc.add_models(mfm.fitting.models.tcspc.models)
         mfm.experiment.append(tcspc)
 
-        fcs = mfm.experiments.Experiment('FCS')
+        fcs = mfm.experiments.experiment.Experiment('FCS')
         fcs.add_setups(mfm.experiments.fcs_setups)
         fcs.add_models(mfm.fitting.models.fcs.models)
         mfm.experiment.append(fcs)
 
-        global_fit = mfm.experiments.Experiment('Global')
+        global_fit = mfm.experiments.experiment.Experiment('Global')
         global_setup = mfm.experiments.globalfit.GlobalFitSetup(name='Global-Fit', experiment=global_fit)
         global_fit.add_model(mfm.fitting.models.GlobalFitModelWidget)
         global_fit.add_setup(global_setup)

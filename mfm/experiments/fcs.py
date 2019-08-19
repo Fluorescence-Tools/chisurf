@@ -3,10 +3,11 @@ from PyQt5 import QtWidgets
 
 import mfm
 import mfm.experiments
+import mfm.experiments.data
 from mfm.io.widgets import CsvWidget
-from . import Reader
+from mfm.experiments.reader import Reader
 
-settings = mfm.cs_settings['correlator']
+#settings = mfm.cs_settings['correlator']
 
 
 class FCS(Reader, QtWidgets.QWidget):
@@ -44,7 +45,7 @@ class FCSKristine(mfm.io.ascii.Csv, FCS, QtWidgets.QWidget):
         :param kwargs:
         :return:
         """
-        d = mfm.experiments.DataCurve(setup=self)
+        d = mfm.experiments.data.DataCurve(setup=self)
         d.setup = self
         filename = kwargs.get('filename', None)
         if filename is None:
@@ -87,7 +88,7 @@ class FCSCsv(FCS, CsvWidget):
         self.groupBox.hide()
 
     def read(self, filename=None, **kwargs):
-        d = mfm.experiments.DataCurve(setup=self)
+        d = mfm.experiments.data.DataCurve(setup=self)
         d.setup = self
 
         CsvWidget.load(

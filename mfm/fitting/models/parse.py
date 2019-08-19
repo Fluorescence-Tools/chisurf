@@ -10,7 +10,8 @@ from sympy.printing.latex import latex
 from re import Scanner
 
 import mfm
-from mfm.fitting.models import ModelWidget, ModelCurve
+from mfm.fitting.models import ModelWidget
+from mfm.fitting.models.model import ModelCurve
 from mfm.fitting import FittingParameter, FittingParameterGroup
 
 

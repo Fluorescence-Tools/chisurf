@@ -5,8 +5,9 @@ from PyQt5 import QtWidgets, uic
 
 import mfm
 import mfm.experiments
+import mfm.experiments.data
 import mfm.widgets
-from mfm.experiments import Reader
+from mfm.experiments.reader import Reader
 from mfm.fluorescence.tcspc import weights, fitrange, weights_ps
 from mfm.io import sdtfile
 from mfm.io.ascii import Csv
@@ -181,10 +182,10 @@ class TCSPCReader(Reader):
                 name = '{} {:d}_{:d}'.format(fn, i, n_data_sets)
             else:
                 name = filename
-            data = mfm.experiments.DataCurve(x=x, y=yi, ex=ex, ey=1. / eyi, setup=self, name=name, **kwargs)
+            data = mfm.experiments.data.DataCurve(x=x, y=yi, ex=ex, ey=1. / eyi, setup=self, name=name, **kwargs)
             data.filename = filename
             data_curves.append(data)
-        data_group = mfm.experiments.DataCurveGroup(data_curves, filename)
+        data_group = mfm.experiments.data.DataCurveGroup(data_curves, filename)
         return data_group
 
 
@@ -283,7 +284,7 @@ class TcspcSDTWidget(QtWidgets.QWidget):
     def curve(self):
         y = self.ph_counts
         w = weights(y)
-        d = mfm.experiments.DataCurve(setup=self, x=self.times, y=y, ey=1. / w, name=self.name)
+        d = mfm.experiments.data.DataCurve(setup=self, x=self.times, y=y, ey=1. / w, name=self.name)
         return d
 
     def onOpenFile(self, **kwargs):
@@ -381,7 +382,7 @@ class TCSPCSetupDummy(TCSPCReader):
         y = np.exp(-x/self.lifetime) * self.p0
         ey = 1./weights(y)
 
-        d = mfm.experiments.DataCurve(x=x, y=y, ey=ey, setup=self, name="TCSPC-Dummy")
+        d = mfm.experiments.data.DataCurve(x=x, y=y, ey=ey, setup=self, name="TCSPC-Dummy")
         d.setup = self
 
         return d

@@ -7,13 +7,15 @@ import numba as nb
 import numpy as np
 import scipy.linalg
 import scipy.stats
-from PyQt5 import QtCore, QtWidgets, uic
 
 
 import mfm
 import mfm.base
 import mfm.experiments
+import mfm.experiments.data
 import mfm.fitting.models
+import mfm.fitting.models.model
+import mfm.fitting.parameter
 from mfm.math.optimization.leastsqbound import leastsqbound
 
 eps = np.sqrt(np.finfo(float).eps)
@@ -23,7 +25,7 @@ class Fit(mfm.base.Base):
 
     def __init__(
             self,
-            model_class: mfm.fitting.models.Model = object,
+            model_class: mfm.fitting.models.model.Model = object,
             **kwargs
     ):
         mfm.base.Base.__init__(self, **kwargs)
@@ -32,7 +34,7 @@ class Fit(mfm.base.Base):
 
         self._data = kwargs.get(
             'data',
-            mfm.experiments.DataCurve(x=np.arange(10), y=np.arange(10))
+            mfm.experiments.data.DataCurve(x=np.arange(10), y=np.arange(10))
         )
         self.plots = list()
         self._xmin, self._xmax = kwargs.get('xmin', 0), kwargs.get('xmax', 0)
@@ -85,7 +87,7 @@ class Fit(mfm.base.Base):
 
     @model.setter
     def model(self, model_class):
-        if issubclass(model_class, mfm.fitting.models.Model):
+        if issubclass(model_class, mfm.fitting.models.model.Model):
             kw = self._model_kw
             self._model = model_class(self, **kw)
 
@@ -186,7 +188,7 @@ class Fit(mfm.base.Base):
                     fp.write(str(self))
 
     def run(self, **kwargs):
-        self.model.find_parameters(parameter_type=mfm.fitting.FittingParameter)
+        self.model.find_parameters(parameter_type=mfm.fitting.parameter.FittingParameter)
         fitting_options = mfm.cs_settings['fitting']['leastsq']
         self.model.find_parameters()
         self.results = leastsqbound(get_wres,
@@ -541,7 +543,7 @@ def durbin_watson(
 
 def get_wres(
         parameter: List[float],
-        model: mfm.fitting.models.Model
+        model: mfm.fitting.models.model.Model
 ):
     """Returns the weighted residuals for a list of parameters of a model
 
@@ -557,7 +559,7 @@ def get_wres(
 
 def get_chi2(
         parameter: List[float],
-        model: mfm.fitting.models.Model,
+        model: mfm.fitting.models.model.Model,
         reduced: bool = True
 ) -> float:
     """Returns either the reduced chi2 or the sum of squares (chi2)

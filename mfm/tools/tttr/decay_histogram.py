@@ -8,6 +8,7 @@ from PyQt5 import QtCore, QtWidgets, uic
 
 import mfm
 import mfm.experiments
+import mfm.experiments.data
 from mfm.fluorescence.tcspc import weights
 from mfm.io.widgets import SpcFileWidget
 
@@ -104,7 +105,7 @@ class TCSPCSetupTTTRWidget(QtWidgets.QWidget):
         self.layout.addWidget(self.tcspcTTTR)
 
     def load_data(self, **kwargs):
-        d = mfm.experiments.DataCurve()
+        d = mfm.experiments.data.DataCurve()
         self.tcspcTTTR.makeHist()
         d.filename = self.tcspcTTTR.spcFileWidget.sample_name
         d.name = self.tcspcTTTR.spcFileWidget.sample_name + "_" + str(self.tcspcTTTR.chs)
@@ -208,7 +209,7 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
         routCh = re.findall(ex, self.histSelection)
         self.chs = [int(ch.split('==')[1]) for ch in routCh]
         self.tcspcTTTRWidget.lineEdit_3.setText("%s" % self.chs)
-        curve = mfm.experiments.DataCurve(setup=self)
+        curve = mfm.experiments.data.DataCurve(setup=self)
         curve.x = self.x
         curve.y = self.y
         self.histDone.emit(self.nROUT, self.nTAC, self.chs, curve)

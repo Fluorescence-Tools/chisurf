@@ -11,8 +11,9 @@ import mfm
 from mfm import plots
 from mfm.curve import Curve
 import mfm.fitting.fit
-from mfm.fitting.models import Model, ModelWidget
-from mfm.fitting import GlobalFittingParameter
+from mfm.fitting.models import Model
+from mfm.fitting.models.model import ModelWidget
+from mfm.fitting.parameter import GlobalFittingParameter
 
 
 class GlobalFitModel(Model, Curve):

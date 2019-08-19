@@ -13,6 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import mfm.curve
 import mfm.experiments
+import mfm.experiments.data
 
 os.environ['PYZMQ_BACKEND'] = 'cython'
 from qtconsole.qtconsoleapp import RichJupyterWidget
@@ -508,14 +509,14 @@ class CurveSelector(QtWidgets.QTreeWidget):
         self.update()
 
     def onUnGroupDatasets(self):
-        dg = mfm.experiments.ExperimentDataGroup(self.selected_datasets)[0]
+        dg = mfm.experiments.data.ExperimentDataGroup(self.selected_datasets)[0]
         dn = list()
-        for i, d in enumerate(mfm.data_sets):
+        for i, d in enumerate(mfm.imported_datasets):
             if d is not dg:
                 dn.append(d)
             else:
                 dn += dg
-        mfm.data_sets = dn
+        mfm.imported_datasets = dn
         self.update()
 
     def contextMenuEvent(self, event):
@@ -546,7 +547,7 @@ class CurveSelector(QtWidgets.QTreeWidget):
             item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 
             # If group of curves
-            if isinstance(d, mfm.experiments.ExperimentDataGroup):
+            if isinstance(d, mfm.experiments.data.ExperimentDataGroup):
                 for di in d:
                     fn = di.name
                     widget_name = os.path.basename(fn)
