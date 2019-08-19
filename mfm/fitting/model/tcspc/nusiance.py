@@ -281,7 +281,7 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
     def __init__(self, fit, **kwargs):
         super(CorrectionsWidget, self).__init__(fit=fit, threshold=0.9, reverse=False, enabled=False)
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi("mfm/ui/fitting/models/tcspc/tcspcCorrections.ui", self)
+        uic.loadUi("mfm/ui/fitting/model/tcspc/tcspcCorrections.ui", self)
         self.groupBox.setChecked(False)
         self.comboBox.addItems(mfm.math.signal.windowTypes)
         if kwargs.get('hide_corrections', False):
@@ -549,7 +549,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
     def __init__(self, fit, **kwargs):
         Convolve.__init__(self, fit, **kwargs)
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/fitting/models/tcspc/convolveWidget.ui', self)
+        uic.loadUi('mfm/ui/fitting/model/tcspc/convolveWidget.ui', self)
 
         hide_curve_convolution = kwargs.get('hide_curve_convolution', True)
         if hide_curve_convolution:

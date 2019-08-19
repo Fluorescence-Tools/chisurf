@@ -8,6 +8,11 @@ import mfm.parameter
 import mfm.curve
 import mfm.experiments
 import mfm.settings
+
+import mfm.fitting
+#import mfm.structure
+#import mfm.fluorescence
+
 #from mfm.settings import cs_settings, colors
 
 
@@ -33,9 +38,6 @@ __name__ = mfm.settings.cs_settings['name']
 working_path = ''
 eps = 1e-8
 
-#import mfm.fitting
-#import mfm.structure
-#import mfm.fluorescence
 
 
 def find_objects(

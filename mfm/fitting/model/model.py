@@ -1,9 +1,10 @@
-import numpy
+from __future__ import annotations
+
+import numpy as np
 from PyQt5 import QtWidgets
 
 import mfm.curve
-import mfm.fitting
-import mfm.parameter
+import mfm.fitting.parameter
 from mfm import plots as plots
 from mfm.curve import Curve
 
@@ -140,7 +141,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
 
     def update_widgets(self):
         #[p.update() for p in self._aggregated_parameters if isinstance(p, AggregatedParameters)]
-        [p.update() for p in self._parameters if isinstance(p, mfm.parameter.FittingParameterWidget)]
+        [p.update() for p in self._parameters if isinstance(p, mfm.fitting.parameter.FittingParameterWidget)]
 
     def update(self, *args, **kwargs):
         QtWidgets.QWidget.update(self, *args)

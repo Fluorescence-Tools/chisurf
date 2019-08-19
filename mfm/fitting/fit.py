@@ -13,8 +13,8 @@ import mfm
 import mfm.base
 import mfm.experiments
 import mfm.experiments.data
-import mfm.fitting.models
-import mfm.fitting.models.model
+import mfm.fitting.model
+import mfm.fitting.model.model
 import mfm.fitting.parameter
 from mfm.math.optimization.leastsqbound import leastsqbound
 
@@ -25,7 +25,7 @@ class Fit(mfm.base.Base):
 
     def __init__(
             self,
-            model_class: mfm.fitting.models.model.Model = object,
+            model_class: mfm.fitting.model.model.Model = object,
             **kwargs
     ):
         mfm.base.Base.__init__(self, **kwargs)
@@ -87,7 +87,7 @@ class Fit(mfm.base.Base):
 
     @model.setter
     def model(self, model_class):
-        if issubclass(model_class, mfm.fitting.models.model.Model):
+        if issubclass(model_class, mfm.fitting.model.model.Model):
             kw = self._model_kw
             self._model = model_class(self, **kw)
 
@@ -324,7 +324,7 @@ class FitGroup(list, Fit):
         list.__init__(self, self._fits)
         Fit.__init__(self, data=data, **kwargs)
 
-        self.global_model = mfm.fitting.models.GlobalFitModel(self)
+        self.global_model = mfm.fitting.model.GlobalFitModel(self)
         self.global_model.fits = self._fits
 
     def __str__(self):
@@ -543,7 +543,7 @@ def durbin_watson(
 
 def get_wres(
         parameter: List[float],
-        model: mfm.fitting.models.model.Model
+        model: mfm.fitting.model.model.Model
 ):
     """Returns the weighted residuals for a list of parameters of a model
 
@@ -559,7 +559,7 @@ def get_wres(
 
 def get_chi2(
         parameter: List[float],
-        model: mfm.fitting.models.model.Model,
+        model: mfm.fitting.model.model.Model,
         reduced: bool = True
 ) -> float:
     """Returns either the reduced chi2 or the sum of squares (chi2)

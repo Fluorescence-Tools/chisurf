@@ -559,7 +559,7 @@ def sequence(structure_obj):
 
     :param structure_obj: Structure
     """
-    # Check to see if there are multiple models.  If there are, only look
+    # Check to see if there are multiple model.  If there are, only look
     # at the first model.
     p = structure_obj.atoms
     atoms = [a for a in p if a['atom_name'] == "CA "]

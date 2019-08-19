@@ -1,7 +1,7 @@
 """
 This module is responsible for all experiments/fits
 
-The :py:mod:`experiments` module contains the fitting models and the setups (assembled reading routines) for
+The :py:mod:`experiments` module contains the fitting model and the setups (assembled reading routines) for
 different experimental setups. Furthermore, it contains a set of plotting libraries.
 
 

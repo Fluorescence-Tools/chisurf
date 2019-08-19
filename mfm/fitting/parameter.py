@@ -1,15 +1,14 @@
 from __future__ import annotations
-from typing import Tuple
+from typing import Tuple, List
 
 import pyqtgraph as pg
 from PyQt5 import QtWidgets, uic, QtCore
 
 import mfm
 import mfm.base
-import mfm.fitting.models.model
 import mfm.parameter
 
-parameter_settings = mfm.cs_settings['parameter']
+parameter_settings = mfm.settings.cs_settings['parameter']
 
 
 class FittingParameter(mfm.parameter.Parameter):
@@ -17,7 +16,7 @@ class FittingParameter(mfm.parameter.Parameter):
     def __init__(
             self,
             link=None,
-            model: mfm.fitting.models.model.Model = None,
+            model: mfm.fitting.model.model.Model = None,
             lb: float = -10000,
             ub: float = 10000,
             fixed: bool = False,
@@ -513,7 +512,7 @@ class FittingParameterGroup(mfm.base.Base):
 
         ap = list()
         for o in set(ag):
-            if not isinstance(o, mfm.fitting.models.model.Model):
+            if not isinstance(o, mfm.fitting.model.model.Model):
                 o.find_parameters()
                 self.__dict__[o.name] = o
                 ap += o._parameters
@@ -541,7 +540,7 @@ class FittingParameterGroup(mfm.base.Base):
     def __init__(
             self,
             fit: mfm.fitting.Fit = None,
-            model: mfm.fitting.models.model.Model = None,
+            model: mfm.fitting.model.model.Model = None,
             short: str = '',
             parameters: List[mfm.parameter.Parameter] = list(),
             *args, **kwargs):

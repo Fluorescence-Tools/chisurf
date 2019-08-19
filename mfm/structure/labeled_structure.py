@@ -144,7 +144,7 @@ import mfm.structure    >>> structure_closed = mfm.structure.Structure('./sample
 
     This method can be used together with trajectories. Use the limiting states to define filters. For the protein
     hGBP1 two limiting states are known, with the fraction 0.66 (state-1) and 0.33 (state-2). Using corase-grained
-    models of these limiting states fluorescence decays are calculated and the filters are determined.
+    model of these limiting states fluorescence decays are calculated and the filters are determined.
 
 import mfm.structure    >>> structure_1 = mfm.structure.Structure('./sample_data/modelling/trajectory/h5-file/steps/0_major.pdb')
     >>> structure_2 = mfm.structure.Structure('./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb')

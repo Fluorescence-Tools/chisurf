@@ -3,7 +3,7 @@ from PyQt5 import QtGui
 
 import mfm
 from mfm import plots
-from mfm.fitting.models.parse import ParseModelWidget
+from mfm.fitting.model.parse import ParseModelWidget
 
 
 class ParseFCSWidget(ParseModelWidget):
@@ -24,7 +24,7 @@ class ParseFCSWidget(ParseModelWidget):
 
     def __init__(self, fit, **kwargs):
         self.icon = QtGui.QIcon(":/icons/icons/FCS.png")
-        fn = os.path.join(mfm.package_directory, 'settings/models.yaml')
+        fn = os.path.join(mfm.package_directory, 'settings/model.yaml')
         ParseModelWidget.__init__(self, fit, model_file=fn, **kwargs)
 
 

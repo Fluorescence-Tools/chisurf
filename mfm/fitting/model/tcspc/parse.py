@@ -2,9 +2,9 @@ import os
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-import mfm.fitting.models.tcspc.nusiance
-from mfm.fitting.models import ModelWidget
-from mfm.fitting.models import parse
+import mfm.fitting.model.tcspc.nusiance
+from mfm.fitting.model import ModelWidget
+from mfm.fitting.model import parse
 from mfm.fitting.widgets import FittingControllerWidget
 
 
@@ -12,10 +12,10 @@ class ParseDecayModel(parse.ParseModel):
 
     def __init__(self, fit, **kwargs):
         parse.ParseModel.__init__(self, fit, **kwargs)
-        self.convolve = kwargs.get('convolve', mfm.fitting.models.tcspc.nusiance.Convolve(name='convolve', fit=fit, **kwargs))
+        self.convolve = kwargs.get('convolve', mfm.fitting.model.tcspc.nusiance.Convolve(name='convolve', fit=fit, **kwargs))
         self.corrections = kwargs.get('corrections',
-                                      mfm.fitting.models.tcspc.nusiance.Corrections(name='corrections', fit=fit, model=self, **kwargs))
-        self.generic = kwargs.get('generic', mfm.fitting.models.tcspc.nusiance.Generic(name='generic', fit=fit, **kwargs))
+                                      mfm.fitting.model.tcspc.nusiance.Corrections(name='corrections', fit=fit, model=self, **kwargs))
+        self.generic = kwargs.get('generic', mfm.fitting.model.tcspc.nusiance.Generic(name='generic', fit=fit, **kwargs))
 
     def update_model(self, **kwargs):
         #verbose = kwargs.get('verbose', self.verbose)
@@ -41,13 +41,13 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
     def __init__(self, fit, **kwargs):
         ModelWidget.__init__(self, icon=QtGui.QIcon(":/icons/icons/TCSPC.ico"))
 
-        self.convolve = mfm.fitting.models.tcspc.nusiance.ConvolveWidget(fit=fit, model=self, show_convolution_mode=False, dt=fit.data.dt, **kwargs)
-        generic = mfm.fitting.models.tcspc.nusiance.GenericWidget(fit=fit, parent=self, model=self, **kwargs)
+        self.convolve = mfm.fitting.model.tcspc.nusiance.ConvolveWidget(fit=fit, model=self, show_convolution_mode=False, dt=fit.data.dt, **kwargs)
+        generic = mfm.fitting.model.tcspc.nusiance.GenericWidget(fit=fit, parent=self, model=self, **kwargs)
         #error_widget = mfm.fitting.error_estimate.ErrorWidget(fit, **kwargs)
 
         fn = os.path.join(mfm.package_directory, 'settings/tcspc.model.json')
         pw = parse.ParseFormulaWidget(self, model_file=fn)
-        corrections = mfm.fitting.models.tcspc.nusiance.CorrectionsWidget(fit, model=self, **kwargs)
+        corrections = mfm.fitting.model.tcspc.nusiance.CorrectionsWidget(fit, model=self, **kwargs)
 
         self.fit = fit
         ParseDecayModel.__init__(self, fit=fit, parse=pw, convolve=self.convolve,

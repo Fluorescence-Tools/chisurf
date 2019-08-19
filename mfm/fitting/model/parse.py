@@ -10,8 +10,8 @@ from sympy.printing.latex import latex
 from re import Scanner
 
 import mfm
-from mfm.fitting.models import ModelWidget
-from mfm.fitting.models.model import ModelCurve
+from mfm.fitting.model import ModelWidget
+from mfm.fitting.model.model import ModelCurve
 from mfm.fitting import FittingParameter, FittingParameterGroup
 
 
@@ -31,7 +31,7 @@ class ParseFormula(FittingParameterGroup):
         self._count = 0
         self._func = "x*0"
 
-        self.model_file = kwargs.get('model_file', os.path.join(mfm.package_directory, 'settings/models.yaml'))
+        self.model_file = kwargs.get('model_file', os.path.join(mfm.package_directory, 'settings/model.yaml'))
         self.model_name = kwargs.get('model_name', self.models.keys()[0])
         self.code = self._func
 
@@ -146,7 +146,7 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
 
     def __init__(self, **kwargs):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/models/parseWidget.ui', self)
+        uic.loadUi('mfm/ui/model/parseWidget.ui', self)
         ParseFormula.__init__(self, **kwargs)
         self.n_columns = kwargs.get('n_columns', mfm.cs_settings['gui']['fit_models']['n_columns'])
 

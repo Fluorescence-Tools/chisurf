@@ -1,5 +1,5 @@
 """
-The structure module contains most functions and classes to handle structural models of proteins. It contains basically
+The structure module contains most functions and classes to handle structural model of proteins. It contains basically
 two submodules:
 
 #. :py:mod:`.mfm.structure.structure`
