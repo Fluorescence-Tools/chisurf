@@ -4,16 +4,16 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 import mfm
 import mfm.math
 import mfm.plots as plots
-from mfm.fitting.model.model import ModelWidget
-from mfm.fitting.model.tcspc.nusiance import GenericWidget, CorrectionsWidget, ConvolveWidget
-from mfm.fitting.model.tcspc.lifetime import Lifetime, LifetimeWidget, LifetimeModel, LifetimeModelWidgetBase
+from mfm.models import ModelWidget
+from mfm.models import GenericWidget, CorrectionsWidget, ConvolveWidget
+from mfm.models import Lifetime, LifetimeWidget, LifetimeModel, LifetimeModelWidgetBase
 from mfm.fluorescence.general import distribution2rates, rates2lifetimes
 from mfm.fluorescence import rda_axis
 from mfm.fluorescence.widgets import AnisotropyWidget
 from mfm.fitting import FittingParameter, FittingParameterGroup
 from mfm.fitting.widgets import FittingControllerWidget
 
-fret_settings = mfm.cs_settings['fret']
+fret_settings = mfm.settings.cs_settings['fret']
 
 
 class FRETParameters(FittingParameterGroup):
@@ -50,10 +50,10 @@ class FRETParameters(FittingParameterGroup):
 
     def __init__(self, **kwargs):
         forster_radius = kwargs.pop('forster_radius', fret_settings['forster_radius'])
-        #kappa2 = kwargs.pop('kappa2', mfm.cs_settings['fret']['kappa2'])
-        t0 = kwargs.pop('tau0', mfm.cs_settings['fret']['tau0'])
+        #kappa2 = kwargs.pop('kappa2', mfm.settings.cs_settings['fret']['kappa2'])
+        t0 = kwargs.pop('tau0', mfm.settings.cs_settings['fret']['tau0'])
         xDOnly = kwargs.pop('x(D0)', 0.0)
-        model = kwargs.get('model', None)
+        model = kwargs.get('models', None)
 
         self._tauD0 = FittingParameter(name='t0', label='&tau;<sub>0</sub>',
                                        value=t0, fixed=True, model=model)
@@ -63,7 +63,7 @@ class FRETParameters(FittingParameterGroup):
         #                                value=kappa2, fixed=True,
         #                                lb=0.0, ub=4.0,
         #                                bounds_on=False,
-        #                                model=model)
+        #                                models=models)
         self._xDonly = FittingParameter(name='xDOnly', label='x<sup>(D,0)</sup>',
                                         value=xDOnly, fixed=False,
                                         lb=0.0, ub=1.0, bounds_on=False,
@@ -286,14 +286,14 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
 
     def onAddGaussian(self):
         t = "for f in cs.current_fit:\n" \
-            "   f.model.%s.append()\n" \
-            "   f.model.update()" % self.name
+            "   f.models.%s.append()\n" \
+            "   f.models.update()" % self.name
         mfm.run(t)
 
     def onRemoveGaussian(self):
         t = "for f in cs.current_fit:\n" \
-            "   f.model.%s.pop()\n" \
-            "   f.model.update()" % self.name
+            "   f.models.%s.pop()\n" \
+            "   f.models.update()" % self.name
         mfm.run(t)
 
     def append(self, *args, **kwargs):
@@ -431,14 +431,14 @@ class DiscreteDistanceWidget(DiscreteDistance, QtWidgets.QWidget):
     def onAddFRETrate(self):
         t = """
 for f in cs.current_fit:
-    f.model.%s.append()
+    f.models.%s.append()
             """ % self.name
         mfm.run(t)
 
     def onRemoveFRETrate(self):
         t = """
 for f in cs.current_fit:
-    f.model.%s.pop()
+    f.models.%s.pop()
             """ % self.name
         mfm.run(t)
 
@@ -495,7 +495,7 @@ class FRETModel(LifetimeModel):
     @property
     def fret_rate_spectrum(self):
         """
-        The FRET-rate spectrum. This takes the distance distribution of the model and calculated the resulting
+        The FRET-rate spectrum. This takes the distance distribution of the models and calculated the resulting
         FRET-rate spectrum (excluding the donor-offset).
         """
         tauD0 = self.fret_parameters.tauD0
@@ -511,10 +511,10 @@ class FRETModel(LifetimeModel):
     def lifetime_spectrum(self):
         xDOnly = self.fret_parameters.xDOnly
         lt = rates2lifetimes(self.fret_rate_spectrum, self.donors.rate_spectrum, xDOnly)
-        if mfm.cs_settings['fret']['bin_lifetime']:
-            n_lifetimes = mfm.cs_settings['fret']['lifetime_bins']
-            discriminate = mfm.cs_settings['fret']['discriminate']
-            discriminate_amplitude = mfm.cs_settings['fret']['discriminate_amplitude']
+        if mfm.settings.cs_settings['fret']['bin_lifetime']:
+            n_lifetimes = mfm.settings.cs_settings['fret']['lifetime_bins']
+            discriminate = mfm.settings.cs_settings['fret']['discriminate']
+            discriminate_amplitude = mfm.settings.cs_settings['fret']['discriminate_amplitude']
             return mfm.fluorescence.tcspc.bin_lifetime_spectrum(lt, n_lifetimes=n_lifetimes,
                                                                 discriminate=discriminate,
                                                                 discriminator=discriminate_amplitude
@@ -601,7 +601,7 @@ class FRETModel(LifetimeModel):
 
     def __init__(self, fit, **kwargs):
         LifetimeModel.__init__(self, fit, **kwargs)
-        self.orientation_parameter = OrientationParameter(orientation_mode=mfm.cs_settings['fret']['orientation_mode'])
+        self.orientation_parameter = OrientationParameter(orientation_mode=mfm.settings.cs_settings['fret']['orientation_mode'])
         self.fret_parameters = kwargs.get(
             'fret_parameters',
             FRETParameters(
@@ -618,8 +618,8 @@ class FRETModel(LifetimeModel):
 
 class GaussianModel(FRETModel):
     """
-    This fit model is uses multiple Gaussian/normal distributions to fit the FRET-decay. Here the donor lifetime-
-    spectrum as well as the distances may be fitted. In this model it is assumed that each donor-species is fitted
+    This fit models is uses multiple Gaussian/normal distributions to fit the FRET-decay. Here the donor lifetime-
+    spectrum as well as the distances may be fitted. In this models it is assumed that each donor-species is fitted
     by the same FRET-rate distribution.
 
     References
@@ -881,7 +881,7 @@ class SingleDistanceModelWidget(ModelWidget, SingleDistanceModel):
 
         self._donly = self._donly.make_widget()
 
-        uic.loadUi('mfm/ui/fitting/model/tcspc/load_distance_distibution.ui', self)
+        uic.loadUi('mfm/ui/fitting/models/tcspc/load_distance_distibution.ui', self)
         self.icon = QtGui.QIcon(":/icons/icons/TCSPC.ico")
         self.actionOpen_distirbution.triggered.connect(self.load_distance_distribution)
 

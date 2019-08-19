@@ -1,7 +1,7 @@
 """
 This module is responsible for all experiments/fits
 
-The :py:mod:`experiments` module contains the fitting model and the setups (assembled reading routines) for
+The :py:mod:`experiments` module contains the fitting models and the setups (assembled reading routines) for
 different experimental setups. Furthermore, it contains a set of plotting libraries.
 
 
@@ -37,22 +37,3 @@ def get_data(
                                    and d.name != "Global-fit"]
 
 
-"""
-# This needs to move to the QtApplication or it needs to be
-# independent as new Widgets can only be created once a QApplication has been created
-tcspc_setups = [
-    tcspc.TCSPCSetupWidget(name="CSV/PQ/IBH", **mfm.cs_settings['tcspc_csv']),
-    tcspc.TCSPCSetupSDTWidget(),
-    tcspc.TCSPCSetupDummyWidget()
-]
-
-fcs_setups = [
-    fcs.FCSKristine(experiment=fcs),
-    fcs.FCSCsv(experiment=fcs)
-]
-
-structure_setups = [
-    modelling.PDBLoad()
-        #.FCSKristine(experiment=fcs)
-]
-"""

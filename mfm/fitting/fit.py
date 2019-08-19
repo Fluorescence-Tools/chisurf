@@ -13,8 +13,8 @@ import mfm
 import mfm.base
 import mfm.experiments
 import mfm.experiments.data
-import mfm.fitting.model
-import mfm.fitting.model.model
+import mfm.models
+import mfm.models.model
 import mfm.fitting.parameter
 from mfm.math.optimization.leastsqbound import leastsqbound
 
@@ -25,7 +25,7 @@ class Fit(mfm.base.Base):
 
     def __init__(
             self,
-            model_class: mfm.fitting.model.model.Model = object,
+            model_class: mfm.models.model.Model = object,
             **kwargs
     ):
         mfm.base.Base.__init__(self, **kwargs)
@@ -87,7 +87,7 @@ class Fit(mfm.base.Base):
 
     @model.setter
     def model(self, model_class):
-        if issubclass(model_class, mfm.fitting.model.model.Model):
+        if issubclass(model_class, mfm.models.model.Model):
             kw = self._model_kw
             self._model = model_class(self, **kw)
 
@@ -141,7 +141,7 @@ class Fit(mfm.base.Base):
     @property
     def covariance_matrix(self):
         """Returns the covariance matrix of the fit given the current
-        model parameter values and returns a list of the 'relevant' used
+        models parameter values and returns a list of the 'relevant' used
         parameters.
 
         :return:
@@ -150,7 +150,7 @@ class Fit(mfm.base.Base):
 
     @property
     def n_free(self):
-        """The number of free parameters of the model
+        """The number of free parameters of the models
         """
         return self.model.n_free
 
@@ -160,7 +160,7 @@ class Fit(mfm.base.Base):
         return get_chi2(parameter, model, reduced)
 
     def get_wres(self, parameter=None, **kwargs):
-        model = kwargs.get('model', self.model)
+        model = kwargs.get('models', self.model)
         if parameter is not None:
             model.parameter_values = parameter
             model.update_model()
@@ -189,7 +189,7 @@ class Fit(mfm.base.Base):
 
     def run(self, **kwargs):
         self.model.find_parameters(parameter_type=mfm.fitting.parameter.FittingParameter)
-        fitting_options = mfm.cs_settings['fitting']['leastsq']
+        fitting_options = mfm.settings.cs_settings['fitting']['leastsq']
         self.model.find_parameters()
         self.results = leastsqbound(get_wres,
                                     self.model.parameter_values,
@@ -295,13 +295,13 @@ class FitGroup(list, Fit):
             p.update_all()
 
     def run(self, **kwargs):
-        if kwargs.get('local_first', mfm.cs_settings['fitting']['global']['fit_local_first']):
+        if kwargs.get('local_first', mfm.settings.cs_settings['fitting']['global']['fit_local_first']):
             for f in self:
                 f.run(**kwargs)
         for f in self:
             f.model.find_parameters()
         self.global_model.find_parameters()
-        fitting_options = mfm.cs_settings['fitting']['leastsq']
+        fitting_options = mfm.settings.cs_settings['fitting']['leastsq']
         bounds = [pi.bounds for pi in self.global_model.parameters]
         self.results = leastsqbound(get_wres,
                                     self.global_model.parameter_values,
@@ -324,7 +324,7 @@ class FitGroup(list, Fit):
         list.__init__(self, self._fits)
         Fit.__init__(self, data=data, **kwargs)
 
-        self.global_model = mfm.fitting.model.GlobalFitModel(self)
+        self.global_model = mfm.models.GlobalFitModel(self)
         self.global_model.fits = self._fits
 
     def __str__(self):
@@ -436,8 +436,8 @@ def sample_fit(
         #try:
         chi2, para = sample_emcee(fit, steps=steps, nwalkers=n_walkers, thin=thin, chi2max=chi2max, **kwargs)
         #except ValueError:
-        #    fit.model.parameter_values = pv
-        #    fit.model.update()
+        #    fit.models.parameter_values = pv
+        #    fit.models.update()
         mask = np.where(np.isfinite(chi2))
         scan = np.vstack([chi2[mask], para[mask].T])
         header = "chi2\t"
@@ -502,8 +502,8 @@ def covariance_matrix(
 
     fi_v, partial_derivatives = approx_grad(xk, fit, epsilon)
 
-    # find parameters which do not change the model
-    # use only parameters which change the model
+    # find parameters which do not change the models
+    # use only parameters which change the models
     important_parameters = list()
     for k, pd_k in enumerate(partial_derivatives):
         if (pd_k**2).sum() > 0.0:
@@ -543,11 +543,11 @@ def durbin_watson(
 
 def get_wres(
         parameter: List[float],
-        model: mfm.fitting.model.model.Model
+        model: mfm.models.model.Model
 ):
-    """Returns the weighted residuals for a list of parameters of a model
+    """Returns the weighted residuals for a list of parameters of a models
 
-    :param parameter: a list of the parameter values / or None. If None the model is not updated
+    :param parameter: a list of the parameter values / or None. If None the models is not updated
     :param model:
     :return:
     """
@@ -559,12 +559,12 @@ def get_wres(
 
 def get_chi2(
         parameter: List[float],
-        model: mfm.fitting.model.model.Model,
+        model: mfm.models.model.Model,
         reduced: bool = True
 ) -> float:
     """Returns either the reduced chi2 or the sum of squares (chi2)
 
-    :param parameter: a list of the parameter values or None. If None the model is not updated
+    :param parameter: a list of the parameter values or None. If None the models is not updated
     :param model:
     :param reduced:
     :return:
@@ -587,9 +587,9 @@ def chi2_max(
     """Calculate the maximum chi2r of a fit given a certain confidence level
 
     :param chi2_value: the chi2 value
-    :param number_of_parameters: the number of parameters of the model
+    :param number_of_parameters: the number of parameters of the models
     :param conf_level: the confidence level that is used to calculate the maximum chi2
-    :param nu: the number of free degrees of freedom (number of observations - number of model parameters)
+    :param nu: the number of free degrees of freedom (number of observations - number of models parameters)
     """
     return chi2_value * (1.0 + float(number_of_parameters) / nu * scipy.stats.f.isf(1. - conf_level, number_of_parameters, nu))
 
@@ -599,8 +599,8 @@ def lnprior(
         fit: mfm.fitting.fit.Fit,
         **kwargs
 ) -> float:
-    """The probability determined by the prior which is given by the bounds of the model parameters.
-    If the model parameters leave the bounds, the ln of the probability is minus infinity otherwise it
+    """The probability determined by the prior which is given by the bounds of the models parameters.
+    If the models parameters leave the bounds, the ln of the probability is minus infinity otherwise it
     is zero.
     """
     bounds = kwargs.get('bounds', fit.model.parameter_bounds)

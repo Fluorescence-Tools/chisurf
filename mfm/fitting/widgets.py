@@ -85,16 +85,16 @@ class FittingControllerWidget(QtWidgets.QWidget):
         self.onAutoFitRange()
 
     def onDatasetChanged(self):
-        mfm.run("cs.current_fit.model.hide()")
+        mfm.run("cs.current_fit.models.hide()")
         mfm.run("cs.current_fit.current_fit = %i" % self.selected_fit)
         mfm.run("cs.current_fit.update()")
-        mfm.run("cs.current_fit.model.show()")
+        mfm.run("cs.current_fit.models.show()")
         #name = self.fit.data.name
         #self.lineEdit.setText(name)
 
     def onErrorEstimate(self):
         filename = mfm.widgets.save_file('Error estimate', '*.er4')
-        kw = mfm.cs_settings['fitting']['sampling']
+        kw = mfm.settings.cs_settings['fitting']['sampling']
         sample_fit(self.fit, filename, **kw)
 
     def onRunFit(self):
@@ -126,7 +126,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         self.tw.currentChanged.connect(self.on_change_plot)
 
         l.addWidget(self.tw)
-        self.close_confirm = kwargs.get('close_confirm', mfm.cs_settings['gui']['confirm_close_fit'])
+        self.close_confirm = kwargs.get('close_confirm', mfm.settings.cs_settings['gui']['confirm_close_fit'])
         self.fit = fit
         self.fit_widget = kwargs.get('fit_widget')
 

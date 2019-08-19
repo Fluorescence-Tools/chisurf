@@ -46,9 +46,9 @@ import mfm.structure    >>> structure = mfm.structure.Structure('./sample_data/m
     >>> rs = av_fret_rate_spectrum(structure, donor_description, acceptor_description)
 
     """
-    forster_radius = kwargs.get('forster_radius', mfm.cs_settings['fret']['forster_radius'])
-    kappa2 = kwargs.get('forster_radius', mfm.cs_settings['fret']['kappa2'])
-    tau0 = kwargs.get('tau0', mfm.cs_settings['fret']['tau0'])
+    forster_radius = kwargs.get('forster_radius', mfm.settings.cs_settings['fret']['forster_radius'])
+    kappa2 = kwargs.get('forster_radius', mfm.settings.cs_settings['fret']['kappa2'])
+    tau0 = kwargs.get('tau0', mfm.settings.cs_settings['fret']['tau0'])
     interleave = kwargs.get('interleave', True)
 
     p_rda, rda = av_distance_distribution(structure, donor_av_parameter=donor_av_parameter, acceptor_av_parameter=acceptor_av_parameter, **kwargs)
@@ -144,7 +144,7 @@ import mfm.structure    >>> structure_closed = mfm.structure.Structure('./sample
 
     This method can be used together with trajectories. Use the limiting states to define filters. For the protein
     hGBP1 two limiting states are known, with the fraction 0.66 (state-1) and 0.33 (state-2). Using corase-grained
-    model of these limiting states fluorescence decays are calculated and the filters are determined.
+    models of these limiting states fluorescence decays are calculated and the filters are determined.
 
 import mfm.structure    >>> structure_1 = mfm.structure.Structure('./sample_data/modelling/trajectory/h5-file/steps/0_major.pdb')
     >>> structure_2 = mfm.structure.Structure('./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb')
@@ -316,7 +316,7 @@ class LabeledStructure(Structure):
         self._ds = np.array([1.0, 4.0], dtype=np.float64)
         self._donor_av = None
         self._acceptor_av = None
-        self.forster_radius = kwargs.get('forster_radius', mfm.cs_settings['fret']['forster_radius'])
-        self.tau0 = kwargs.get('tau0', mfm.cs_settings['fret']['tau0'])
-        self.kappa2 = kwargs.get('kappa2', mfm.cs_settings['fret']['kappa2'])
+        self.forster_radius = kwargs.get('forster_radius', mfm.settings.cs_settings['fret']['forster_radius'])
+        self.tau0 = kwargs.get('tau0', mfm.settings.cs_settings['fret']['tau0'])
+        self.kappa2 = kwargs.get('kappa2', mfm.settings.cs_settings['fret']['kappa2'])
 

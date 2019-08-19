@@ -5,8 +5,6 @@ import weakref
 import mfm
 import mfm.base
 
-#parameter_settings = mfm.cs_settings['parameter']
-
 
 class Parameter(mfm.base.Base):
 
@@ -92,13 +90,12 @@ class Parameter(mfm.base.Base):
         self._instances.add(weakref.ref(self))
         super(Parameter, self).__init__(*args, **kwargs)
         self._link = kwargs.get('link', None)
-        self.model = kwargs.get('model', None)
         value = args[0] if len(args) > 0 else 1.0
         self._value = kwargs.get('value', value)
-        self._decimals = kwargs.get('decimals', mfm.cs_settings['parameter']['decimals'])
+        self._decimals = kwargs.get('decimals', mfm.settings.cs_settings['parameter']['decimals'])
 
     def to_dict(self) -> dict:
-        v = mfm.Base.to_dict(self)
+        v = mfm.base.Base.to_dict(self)
         v['value'] = self.value
         v['decimals'] = self.decimals
         return v

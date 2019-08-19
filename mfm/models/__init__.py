@@ -15,6 +15,7 @@ The :py:mod:`.model`
 from __future__ import annotations
 
 from . import model
+from . import parse
 from . import fcs
 #from . import tcspc
 #from . import parse

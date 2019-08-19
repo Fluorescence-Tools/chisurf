@@ -1,5 +1,5 @@
 import mfm
-from mfm.fitting.model.tcspc.lifetime import DecayModel
+from mfm.models import DecayModel
 from mfm.fluorescence.fps import DynamicAV
 from mfm.parameter import FittingParameter
 

@@ -80,7 +80,10 @@ class QIPythonWidget(RichJupyterWidget):
             guisupport.get_app_qt4().exit()
 
         self.exit_requested.connect(stop)
-        self.width = kwargs.get('width', mfm.cs_settings['gui']['console']['width'])
+        self.width = kwargs.get(
+            'width',
+            mfm.settings.cs_settings['gui']['console']['width']
+        )
         self._macro = ""
         self.recording = False
 
@@ -93,7 +96,9 @@ class QIPythonWidget(RichJupyterWidget):
         except:
             print("no new path created")
         self.session_file = os.path.join(path, filename)
-        self.set_default_style(mfm.cs_settings['gui']['console']['style'])
+        self.set_default_style(
+            mfm.settings.cs_settings['gui']['console']['style']
+        )
 
     def pushVariables(self, variableDict):
         """ Given a dictionary containing name / value pairs, push those variables to the IPython console widget """
@@ -109,7 +114,7 @@ class QIPythonWidget(RichJupyterWidget):
 
     def executeCommand(self, command):
         """ Execute a command in the frame of the console widget """
-        self._execute(command, mfm.cs_settings['show_commands'])
+        self._execute(command, mfm.settings.cs_settings['show_commands'])
 
 
 def widgets_in_layout(layout):
@@ -370,8 +375,8 @@ class MyMessageBox(QtWidgets.QMessageBox):
             self.setWindowTitle(label)
         if info is not None:
             self.setDetailedText(info)
-        if mfm.cs_settings['fortune']:
-            fortune = get_fortune(**mfm.cs_settings['fortune'])
+        if mfm.settings.cs_settings['fortune']:
+            fortune = get_fortune(**mfm.settings.cs_settings['fortune'])
             self.setInformativeText(fortune)
             self.exec_()
             self.setMinimumWidth(450)

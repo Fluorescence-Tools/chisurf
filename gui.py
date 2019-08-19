@@ -91,7 +91,7 @@ class Main(QMainWindow):
         return str(self.comboBox_Model.currentText())
 
     def closeEvent(self, event):
-        if mfm.cs_settings['gui']['confirm_close_program']:
+        if mfm.settings.cs_settings['gui']['confirm_close_program']:
             reply = QtWidgets.QMessageBox.question(self,
                                                'Message',
                                                "Are you sure to quit?",
@@ -194,8 +194,8 @@ class Main(QMainWindow):
         self.onSetupChanged()
 
     def onLoadFitResults(self, **kwargs):
-        filename = mfm.widgets.get_filename(file_type="*.json", description="Load results into fit-model", **kwargs)
-        mfm.run("mfm.fits[%s].model.load('%s')" % (self.fit_idx, filename))
+        filename = mfm.widgets.get_filename(file_type="*.json", description="Load results into fit-models", **kwargs)
+        mfm.run("mfm.fits[%s].models.load('%s')" % (self.fit_idx, filename))
         mfm.run("mfm.fits[%s].update()" % (self.fit_idx))
 
     def onSetupChanged(self):
@@ -403,8 +403,8 @@ class Main(QMainWindow):
         #      Push variables to console and add it to           #
         #      user interface                                    #
         ##########################################################
-        self.dockWidgetScriptEdit.setVisible(mfm.cs_settings['gui']['show_macro_edit'])
-        self.dockWidget_console.setVisible(mfm.cs_settings['gui']['show_console'])
+        self.dockWidgetScriptEdit.setVisible(mfm.settings.cs_settings['gui']['show_macro_edit'])
+        self.dockWidget_console.setVisible(mfm.settings.cs_settings['gui']['show_console'])
 
         self.verticalLayout_4.addWidget(mfm.console)
         mfm.console.pushVariables({'cs': self})
@@ -415,7 +415,7 @@ class Main(QMainWindow):
         mfm.console.pushVariables({'QtCore': QtCore})
         mfm.console.pushVariables({'QtGui': QtGui})
         mfm.run = mfm.console.execute
-        mfm.run(str(mfm.cs_settings['gui']['console']['init']))
+        mfm.run(str(mfm.settings.cs_settings['gui']['console']['init']))
 
         ##########################################################
         #      Record and run recorded macros                    #
@@ -447,7 +447,7 @@ class Main(QMainWindow):
 
         ##########################################################
         #    Connect changes in User-interface to actions like:  #
-        #    Loading dataset, changing setups, model, etc.     #
+        #    Loading dataset, changing setups, models, etc.     #
         ##########################################################
         self.actionSetupChanged.triggered.connect(self.onSetupChanged)
         self.actionExperimentChanged.triggered.connect(self.onExperimentChanged)
@@ -469,19 +469,36 @@ class Main(QMainWindow):
         #      Initialize Experiments and Setups                 #
         #      (Commented widgets don't work at the moment       #
         ##########################################################
+        # This needs to move to the QtApplication or it needs to be
+        # independent as new Widgets can only be created once a QApplication has been created
+        tcspc_setups = [
+            mfm.experiments.tcspc.TCSPCSetupWidget(name="CSV/PQ/IBH", **mfm.settings.cs_settings['tcspc_csv']),
+            mfm.experiments.tcspc.TCSPCSetupSDTWidget(),
+            mfm.experiments.tcspc.TCSPCSetupDummyWidget()
+        ]
+
+        fcs_setups = [
+            mfm.experiments.fcs.FCSKristine(experiment=mfm.experiments.fcs),
+            mfm.experiments.fcs.FCSCsv(experiment=mfm.experiments.fcs)
+        ]
+
+        structure_setups = [
+            mfm.experiments.modelling.PDBLoad()
+        ]
+
         tcspc = mfm.experiments.experiment.Experiment('TCSPC')
-        tcspc.add_setups(mfm.experiments.tcspc_setups)
-        tcspc.add_models(mfm.fitting.model.tcspc.models)
+        tcspc.add_setups(tcspc_setups)
+        #tcspc.add_models(mfm.fitting.model.tcspc.models)
         mfm.experiment.append(tcspc)
 
         fcs = mfm.experiments.experiment.Experiment('FCS')
-        fcs.add_setups(mfm.experiments.fcs_setups)
-        fcs.add_models(mfm.fitting.model.fcs.models)
+        fcs.add_setups(fcs_setups)
+        #fcs.add_models(mfm.fitting.model.fcs.models)
         mfm.experiment.append(fcs)
 
         global_fit = mfm.experiments.experiment.Experiment('Global')
         global_setup = mfm.experiments.globalfit.GlobalFitSetup(name='Global-Fit', experiment=global_fit)
-        global_fit.add_model(mfm.fitting.model.GlobalFitModelWidget)
+        #global_fit.add_model(mfm.fitting.model.GlobalFitModelWidget)
         global_fit.add_setup(global_setup)
         mfm.experiment.append(global_fit)
 

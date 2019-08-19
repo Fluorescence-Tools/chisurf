@@ -8,7 +8,7 @@ from parse import ParseModelWidget
 import mfm
 import mfm.fitting.widgets
 from mfm import plots
-from mfm.fitting.model import Model
+from mfm.models import Model
 from mfm.math.reaction.continuous import ReactionSystem
 from mfm.parameter import FittingParameterWidget
 
@@ -24,7 +24,7 @@ class ParseStoppedFlowWidget(ParseModelWidget):
     ]
 
     def __init__(self, fit):
-        fn = os.path.join(mfm.package_directory, 'settings/stopped_flow.model.json')
+        fn = os.path.join(mfm.package_directory, 'settings/stopped_flow.models.json')
         ParseModelWidget.__init__(self, fit, model_file=fn)
 
 
@@ -104,7 +104,7 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
         ReactionSystem.__init__(self, **kwargs)
         parameter = kwargs.get('parameter', None)
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/model/reaction.ui', self)
+        uic.loadUi('mfm/ui/models/reaction.ui', self)
         self.actionPlot.triggered.connect(self.onPlot)
         self.actionIntegrate.triggered.connect(self.calc)
         self.actionLoad_reaction.triggered.connect(self.onLoadReaction)

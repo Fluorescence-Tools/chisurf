@@ -30,7 +30,7 @@ class ProteinMCWorker(object):
         self.exiting = False
         self._config_filename = None
         self.u1 = Universe()
-        self.settings = kwargs.get('settings', mfm.cs_settings['mc_settings'])
+        self.settings = kwargs.get('settings', mfm.settings.cs_settings['mc_settings'])
         self.update_rmsd = kwargs.get('update_rmsd', False)
         self.structure = structure
         self.output_traj = TrajectoryFile(self.structure, mode='w', filename=self.output_traj_file)

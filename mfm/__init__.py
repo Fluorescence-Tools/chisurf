@@ -9,6 +9,7 @@ import mfm.curve
 import mfm.experiments
 import mfm.settings
 
+import mfm.models
 import mfm.fitting
 #import mfm.structure
 #import mfm.fluorescence
@@ -75,8 +76,8 @@ def c(
 
     Example
     -------
-    >>> mfm.c(self.checkBox.stateChanged, "cs.current_fit.model.update_rmsd=%s", self.checkBox.isChecked)
-    >>> cs.current_fit.model.update_rmsd=True
+    >>> mfm.c(self.checkBox.stateChanged, models", self.checkBox.isChecked)
+    >>> cs.current_fit.models.update_rmsd=True
 
     :param t: The signal of the qt-widget
     :param st: The string passed to the mfm-commandline

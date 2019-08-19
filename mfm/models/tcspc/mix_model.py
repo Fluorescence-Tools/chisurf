@@ -5,7 +5,7 @@ from mfm import plots
 from mfm.fluorescence import stack_lifetime_spectra
 from mfm.parameter import FittingParameterWidget
 from mfm.widgets import clear_layout
-from mfm.fitting.model.tcspc import LifetimeModel, LifetimeModelWidgetBase
+from mfm.models import LifetimeModel, LifetimeModelWidgetBase
 
 
 class LifetimeMixModel(LifetimeModel):
@@ -99,7 +99,7 @@ class LifetimeMixModel(LifetimeModel):
         self._fractions = list()
 
     def __str__(self):
-        s = "Mix-model\n"
+        s = "Mix-models\n"
         s += "========\n\n"
         for m, x in zip(self.models, self.fractions):
             s += "\nFraction: %.3f\n\n" % x

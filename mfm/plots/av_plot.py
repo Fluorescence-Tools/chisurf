@@ -21,12 +21,12 @@ class AvPlot(plotbase.Plot):
     Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
     and the autocorrelation of the residuals. Now it is also used also for FCS-data.
 
-    In case the model is a :py:class:`~experiment.model.tcspc.LifetimeModel` it takes the irf and displays it:
+    In case the models is a :py:class:`~experiment.models.tcspc.LifetimeModel` it takes the irf and displays it:
 
-        irf = fit.model.convolve.irf
+        irf = fit.models.convolve.irf
         irf_y = irf.y
 
-    The model data and the weighted residuals are taken directly from the fit:
+    The models data and the weighted residuals are taken directly from the fit:
 
         model_x, model_y = fit[:]
         wres_y = fit.weighted_residuals
@@ -45,7 +45,7 @@ class AvPlot(plotbase.Plot):
         area = DockArea()
         self.layout.addWidget(area)
 
-        hide_title = mfm.cs_settings['gui']['plot']['hideTitle']
+        hide_title = mfm.settings.cs_settings['gui']['plot']['hideTitle']
         d1 = Dock("quenching", size=(300, 300), hideTitle=hide_title)
         d2 = Dock("diffusion", size=(300, 300), hideTitle=hide_title)
         d3 = Dock("equilibrium", size=(300, 300), hideTitle=hide_title)

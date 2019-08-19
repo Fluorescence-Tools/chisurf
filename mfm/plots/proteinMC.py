@@ -27,7 +27,7 @@ class ProteinMCPlot(Plot):
         self.layout = QtWidgets.QVBoxLayout(self)
         area = DockArea()
         self.layout.addWidget(area)
-        hide_title = mfm.cs_settings['gui']['plot']['hideTitle']
+        hide_title = mfm.settings.cs_settings['gui']['plot']['hideTitle']
         d1 = Dock("RMSD")
         d2 = Dock("dRMSD")
         d3 = Dock("Energy")
@@ -54,11 +54,11 @@ class ProteinMCPlot(Plot):
         self.energy_plot = p3.getPlotItem()
         self.fret_plot = p4.getPlotItem()
 
-        lw = mfm.cs_settings['gui']['plot']['line_width']
+        lw = mfm.settings.cs_settings['gui']['plot']['line_width']
         self.rmsd_curve = self.rmsd_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['irf'], width=lw), name='rmsd')
         self.drmsd_curve = self.drmsd_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['data'], width=lw), name='drmsd')
-        self.energy_curve = self.energy_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['model'], width=lw), name='energy')
-        self.fret_curve = self.fret_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['model'], width=lw), name='fret')
+        self.energy_curve = self.energy_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['models'], width=lw), name='energy')
+        self.fret_curve = self.fret_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['models'], width=lw), name='fret')
 
     def update_all(self, *args, **kwargs):
 
@@ -83,8 +83,8 @@ class ProteinMCPlot(Plot):
 #         Plot.__init__(self, fit)
 #         self.layout = QtGui.QVBoxLayout(self)
 #
-#         self.trajectory = fit.model
-#         self.source = fit.model
+#         self.trajectory = fit.models
+#         self.source = fit.models
 #
 #         # RMSD - Curves
 #         top_left = QtGui.QFrame(self)

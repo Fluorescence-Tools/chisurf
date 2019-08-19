@@ -1,4 +1,5 @@
-import os
+from __future__ import annotations
+
 import tempfile
 from collections import defaultdict, OrderedDict
 import sympy
@@ -10,9 +11,8 @@ from sympy.printing.latex import latex
 from re import Scanner
 
 import mfm
-from mfm.fitting.model import ModelWidget
-from mfm.fitting.model.model import ModelCurve
-from mfm.fitting import FittingParameter, FittingParameterGroup
+from mfm.models.model import ModelWidget, ModelCurve
+from mfm.fitting.parameter import FittingParameter, FittingParameterGroup
 
 
 class GenerateSymbols(defaultdict):
@@ -31,7 +31,7 @@ class ParseFormula(FittingParameterGroup):
         self._count = 0
         self._func = "x*0"
 
-        self.model_file = kwargs.get('model_file', os.path.join(mfm.package_directory, 'settings/model.yaml'))
+        self.model_file = kwargs.get('model_file', os.path.join(mfm.package_directory, 'settings/models.yaml'))
         self.model_name = kwargs.get('model_name', self.models.keys()[0])
         self.code = self._func
 
@@ -146,9 +146,9 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
 
     def __init__(self, **kwargs):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/model/parseWidget.ui', self)
+        uic.loadUi('mfm/ui/models/parseWidget.ui', self)
         ParseFormula.__init__(self, **kwargs)
-        self.n_columns = kwargs.get('n_columns', mfm.cs_settings['gui']['fit_models']['n_columns'])
+        self.n_columns = kwargs.get('n_columns', mfm.settings.cs_settings['gui']['fit_models']['n_columns'])
 
         #self.webview = QWebView()
         #self.verticalLayout_4.addWidget(self.webview)
@@ -227,20 +227,20 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
 
     def onUpdateFunc(self):
         function_str = str(self.plainTextEdit.toPlainText())
-        mfm.run("cs.current_fit.model.parse.func = '%s'" % function_str)
+        mfm.run("cs.current_fit.models.parse.func = '%s'" % function_str)
         mfm.run("cs.current_fit.update()")
         self.onUpdateEquation()
 
     def onModelChanged(self):
-        mfm.run("cs.current_fit.model.parse.model_name = '%s'" % self.model_name)
-        mfm.run("cs.current_fit.model.parse.func = '%s'" % self.models[self.model_name]['equation'])
+        mfm.run("cs.current_fit.models.parse.model_name = '%s'" % self.model_name)
+        mfm.run("cs.current_fit.models.parse.func = '%s'" % self.models[self.model_name]['equation'])
         mfm.run("cs.current_fit.update()")
         self.onUpdateEquation()
 
     def onLoadModelFile(self, filename=None):
         if filename is None:
-            filename = mfm.widgets.get_filename('Open model-file', 'link file (*.yaml)')
-        mfm.run("cs.current_fit.model.parse.load_model_file(%s)" % filename)
+            filename = mfm.widgets.get_filename('Open models-file', 'link file (*.yaml)')
+        mfm.run("cs.current_fit.models.parse.load_model_file(%s)" % filename)
 
 
 class ParseModelWidget(ParseModel, ModelWidget):

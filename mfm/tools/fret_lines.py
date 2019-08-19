@@ -6,10 +6,10 @@ from guiqwt.plot import CurveDialog
 import mfm
 import mfm.experiments
 import mfm.experiments.data
-import mfm.fitting.model.tcspc
-import mfm.fitting.model.tcspc as fret_models
-import mfm.fitting.model.tcspc.lifetime
-from mfm.fitting.model.tcspc.fret import WormLikeChainModelWidget
+import mfm.models.tcspc
+import mfm.models.tcspc as fret_models
+import mfm.models.tcspc.lifetime
+from mfm.models import WormLikeChainModelWidget
 
 
 class FRETLineGenerator(object):
@@ -112,7 +112,7 @@ class FRETLineGenerator(object):
         self._data_points.y = np.zeros_like(self._data_points.x)
         self.fit.data = self._data_points
 
-        self._model = kwargs.get('model', mfm.fitting.model.tcspc.lifetime.LifetimeModel(fit=self.fit, dt=self._dt, do_convolution=False))
+        self._model = kwargs.get('model', mfm.models.tcspc.lifetime.LifetimeModel(fit=self.fit, dt=self._dt, do_convolution=False))
         self.transfer_efficiencies = np.zeros(self.n_points)
         self.fluorescence_averaged_lifetimes = np.zeros(self.n_points)
 
@@ -617,14 +617,14 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
 
     name = "FRET-Line Generator"
 
-    models = [(mfm.fitting.model.tcspc.fret.GaussianModelWidget, {'hide_corrections': True,
+    models = [(mfm.models.tcspc.fret.GaussianModelWidget, {'hide_corrections': True,
                                                           'hide_fit': True,
                                                           'hide_generic': True,
                                                           'hide_convolve': True,
                                                           'hide_rotation': True,
                                                           'hide_error': True,
-                                                                  'hide_donor': True
-                                                                  }),
+                                                           'hide_donor': True
+                                                           }),
               (WormLikeChainModelWidget, {'hide_corrections': True,
                                                           'hide_fit': True,
                                                           'hide_generic': True,
@@ -633,7 +633,7 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
                                                           'hide_error': True,
                                                           'hide_donor': True
                                                          }),
-              (mfm.fitting.model.tcspc.mix_model.LifetimeMixModelWidget, {'hide_corrections': True,
+              (mfm.models.tcspc.mix_model.LifetimeMixModelWidget, {'hide_corrections': True,
                                                           'hide_fit': True,
                                                           'hide_generic': True,
                                                           'hide_convolve': True,
@@ -641,16 +641,16 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
                                                           'hide_error': True,
                                                           'hide_donor': True,
                                                                            'enable_mix_model_donor': True
-                                                                          }),
-              (mfm.fitting.model.tcspc.fret.FRETrateModelWidget, {'hide_corrections': True,
+                                                                   }),
+              (mfm.models.tcspc.fret.FRETrateModelWidget, {'hide_corrections': True,
                                                           'hide_fit': True,
                                                           'hide_generic': True,
                                                           'hide_convolve': True,
                                                           'hide_rotation': True,
                                                           'hide_error': True,
-                                                                  'hide_donor': True,
-                                                                  'enable_mix_model_donor': True
-                                                                  }),
+                                                           'hide_donor': True,
+                                                           'enable_mix_model_donor': True
+                                                           }),
               ]
 
     @property

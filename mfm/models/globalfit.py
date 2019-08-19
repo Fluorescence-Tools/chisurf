@@ -11,8 +11,8 @@ import mfm
 from mfm import plots
 from mfm.curve import Curve
 import mfm.fitting.fit
-from mfm.fitting.model import Model
-from mfm.fitting.model.model import ModelWidget
+from mfm.models import Model
+from mfm.models import ModelWidget
 from mfm.fitting.parameter import GlobalFittingParameter
 
 
@@ -288,7 +288,7 @@ class GlobalFitModel(Model, Curve):
             f.model.update()
 
     def update_model(self):
-        if mfm.cs_settings['fitting']['parallel_fit']:
+        if mfm.settings.cs_settings['fitting']['parallel_fit']:
             threads = [threading.Thread(target=f.model.update_model) for f in self.fits]
             for thread in threads:
                 thread.start()
@@ -319,7 +319,7 @@ class GlobalFitModelWidget(GlobalFitModel, ModelWidget):
             fit: mfm.fitting.Fit
     ):
         super(GlobalFitModel, self).__init__(fit)
-        uic.loadUi("mfm/ui/fitting/model/globalfit_2.ui", self)
+        uic.loadUi("mfm/ui/fitting/models/globalfit_2.ui", self)
 
         self.actionOnAddToLocalFitList.triggered.connect(self.onAddToLocalFitList)
         self.actionOn_clear_local_fits.triggered.connect(self.onClearLocalFits)
@@ -391,10 +391,10 @@ class GlobalFitModelWidget(GlobalFitModel, ModelWidget):
     def onRemoveLocalFit(self):
         row = self.tableWidget.currentRow()
         self.tableWidget.removeRow(row)
-        mfm.run("cs.current_fit.model.remove_local_fit(%s)" % row)
+        mfm.run("cs.current_fit.models.remove_local_fit(%s)" % row)
 
     def onClearLocalFits(self):
-        mfm.run("cs.current_fit.model.clear_local_fits()")
+        mfm.run("cs.current_fit.models.clear_local_fits()")
         self.tableWidget.setRowCount(0)
 
     def onTableGlobalLinksDoubleClicked(self):
@@ -404,7 +404,7 @@ class GlobalFitModelWidget(GlobalFitModel, ModelWidget):
     def onAddGlobalVariable(self):
         variable_name = self.current_global_variable_name
         if len(variable_name) > 0 and variable_name not in list(self._global_parameters.keys()):
-            mfm.run("cs.current_fit.model.append_global_parameter(mfm.parameter.FittingParameterWidget(name='%s'))" % self.current_global_variable_name)
+            mfm.run("cs.current_fit.models.append_global_parameter(mfm.parameter.FittingParameterWidget(name='%s'))" % self.current_global_variable_name)
             l = self.verticalLayout
             l.addWidget(self._global_parameters.values()[-1])
         else:
@@ -422,7 +422,7 @@ class GlobalFitModelWidget(GlobalFitModel, ModelWidget):
         local_fits_idx = self.local_fit_idx
         fit_indeces = range(len(local_fits)) if self.add_all_fits else [self.current_fit_index]
         for fitIndex in fit_indeces:
-            mfm.run("cs.current_fit.model.append_fit(mfm.fits[%s])" % local_fits_idx[fitIndex])
+            mfm.run("cs.current_fit.models.append_fit(mfm.fits[%s])" % local_fits_idx[fitIndex])
 
     def append_fit(
             self,
