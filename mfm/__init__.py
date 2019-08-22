@@ -38,7 +38,7 @@ __version__ = mfm.settings.cs_settings['version']
 __name__ = mfm.settings.cs_settings['name']
 working_path = ''
 eps = 1e-8
-
+cs = None
 
 
 def find_objects(

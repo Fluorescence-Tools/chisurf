@@ -600,12 +600,13 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
     def change_irf(self):
         idx = self.irf_select.selected_curve_index
-        t = "irf = cs.current_fit.models.convolve.irf_select.datasets[%s]\n" \
+        # TODO: replace by inspections of real functions
+        t = "irf = cs.current_fit.model.convolve.irf_select.datasets[%s]\n" \
             "for f in cs.current_fit[cs.current_fit._selected_fit:]:\n" \
-            "   f.models.convolve._irf = mfm.curve.DataCurve(x=irf.x, y=irf.y)\n" % idx
+            "   f.model.convolve._irf = mfm.experiments.data.DataCurve(x=irf.x, y=irf.y)\n" % idx
         t += "cs.current_fit.update()"
         mfm.run(t)
-        self.fwhm = self._irf.fwhm
+        #self.fwhm = self._irf.fwhm
         current_fit = mfm.cs.current_fit
         for f in current_fit[current_fit._selected_fit:]:
             f.model.convolve.lineEdit.setText(self.irf_select.curve_name)
