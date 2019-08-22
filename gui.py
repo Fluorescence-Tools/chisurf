@@ -168,15 +168,15 @@ class Main(QMainWindow):
             if data_set.experiment is datasets[0].experiment:
                 if not isinstance(data_set, mfm.experiments.data.DataGroup):
                     data_set = mfm.experiments.data.ExperimentDataCurveGroup(data_set)
-                fit = mfm.fitting.FitGroup(data=data_set, model_class=model_class)
+                fit = mfm.fitting.fit.FitGroup(data=data_set, model_class=model_class)
                 mfm.fits.append(fit)
                 fit.model.find_parameters()
-                fit_control_widget = mfm.fitting.FittingControllerWidget(fit)
+                fit_control_widget = mfm.fitting.widgets.FittingControllerWidget(fit)
 
                 self.modelLayout.addWidget(fit_control_widget)
                 for f in fit:
                     self.modelLayout.addWidget(f.model)
-                fit_window = mfm.fitting.FitSubWindow(fit,
+                fit_window = mfm.fitting.widgets.FitSubWindow(fit,
                                                       control_layout=self.plotOptionsLayout,
                                                       fit_widget=fit_control_widget)
                 fit_window = self.mdiarea.addSubWindow(fit_window)
@@ -471,28 +471,37 @@ class Main(QMainWindow):
         ##########################################################
         # This needs to move to the QtApplication or it needs to be
         # independent as new Widgets can only be created once a QApplication has been created
-        tcspc_setups = [
-            mfm.experiments.tcspc.TCSPCSetupWidget(name="CSV/PQ/IBH", **mfm.settings.cs_settings['tcspc_csv']),
-            mfm.experiments.tcspc.TCSPCSetupSDTWidget(),
-            mfm.experiments.tcspc.TCSPCSetupDummyWidget()
-        ]
-
-        fcs_setups = [
-            mfm.experiments.fcs.FCSKristine(experiment=mfm.experiments.fcs),
-            mfm.experiments.fcs.FCSCsv(experiment=mfm.experiments.fcs)
-        ]
 
         structure_setups = [
             mfm.experiments.modelling.PDBLoad()
         ]
 
         tcspc = mfm.experiments.experiment.Experiment('TCSPC')
-        tcspc.add_setups(tcspc_setups)
-        #tcspc.add_models(mfm.fitting.model.tcspc.models)
+        tcspc.add_setups(
+            [
+                mfm.experiments.tcspc.TCSPCSetupWidget(name="CSV/PQ/IBH", **mfm.settings.cs_settings['tcspc_csv']),
+                mfm.experiments.tcspc.TCSPCSetupSDTWidget(),
+                mfm.experiments.tcspc.TCSPCSetupDummyWidget()
+            ]
+        )
+        tcspc.add_models(
+            models=[
+                mfm.models.tcspc.lifetime.LifetimeModelWidget,
+                mfm.models.tcspc.fret.FRETrateModelWidget,
+                mfm.models.tcspc.fret.GaussianModelWidget,
+                mfm.models.tcspc.pddem.PDDEMModelWidget,
+                mfm.models.tcspc.fret.WormLikeChainModelWidget
+            ]
+        )
         mfm.experiment.append(tcspc)
 
         fcs = mfm.experiments.experiment.Experiment('FCS')
-        fcs.add_setups(fcs_setups)
+        fcs.add_setups(
+            [
+                mfm.experiments.fcs.FCSKristine(experiment=mfm.experiments.fcs),
+                mfm.experiments.fcs.FCSCsv(experiment=mfm.experiments.fcs)
+            ]
+        )
         #fcs.add_models(mfm.fitting.model.fcs.models)
         mfm.experiment.append(fcs)
 

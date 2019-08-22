@@ -54,7 +54,7 @@ class HistogramTTTR(QtWidgets.QWidget):
         current_curve = self.cs.selected_curve_index
         for i, curve in enumerate(self._curves):
             l = lw * 0.5 if i != current_curve else 1.5 * lw
-            color = mfm.colors[i % len(mfm.colors)]['hex']
+            color = mfm.settings.colors[i % len(mfm.settings.colors)]['hex']
             plot.plot(x=curve.x, y=curve.y,
                       pen=pg.mkPen(color, width=l),
                       name=curve.name)

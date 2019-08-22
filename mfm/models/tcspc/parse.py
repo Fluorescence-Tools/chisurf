@@ -3,7 +3,7 @@ import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import mfm.models.tcspc.nusiance
-from mfm.models import ModelWidget
+from mfm.models.model import ModelWidget
 from mfm.models import parse
 from mfm.fitting.widgets import FittingControllerWidget
 

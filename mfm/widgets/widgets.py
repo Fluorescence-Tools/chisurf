@@ -612,7 +612,15 @@ class CurveSelector(QtWidgets.QTreeWidget):
         # http://python.6.x6.nabble.com/Drag-and-drop-editing-in-QListWidget-or-QListView-td1792540.html
         self.drag_item = None
         self.drag_row = None
-        self.get_data_curves = kwargs.get('get_data_curves', mfm.experiments.get_data)
+
+        def get_data_curves(**kwargs):
+            return mfm.experiments.get_data(
+                data_set=mfm.imported_datasets,
+                **kwargs
+            )
+
+        self.get_data_curves = get_data_curves
+
         self.change_event = kwargs.get('change_event', self.change_event)
         self.curve_type = kwargs.get('curve_types', 'experiment')
         self.click_close = kwargs.get('click_close', True)

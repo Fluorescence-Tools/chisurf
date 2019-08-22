@@ -127,7 +127,7 @@ class FittingParameter(mfm.parameter.Parameter):
     @link.setter
     def link(
             self,
-            link: mfm.fitting.FittingParameter
+            link: mfm.fitting.parameter.FittingParameter
     ):
         if isinstance(link, FittingParameter):
             self._link = link
@@ -512,7 +512,7 @@ class FittingParameterGroup(mfm.base.Base):
 
         ap = list()
         for o in set(ag):
-            if not isinstance(o, mfm.fitting.model.model.Model):
+            if not isinstance(o, mfm.models.model.Model):
                 o.find_parameters()
                 self.__dict__[o.name] = o
                 ap += o._parameters
@@ -539,8 +539,8 @@ class FittingParameterGroup(mfm.base.Base):
 
     def __init__(
             self,
-            fit: mfm.fitting.Fit = None,
-            model: mfm.fitting.model.model.Model = None,
+            fit: mfm.fitting.fit.Fit = None,
+            model: mfm.models.model.Model = None,
             short: str = '',
             parameters: List[mfm.parameter.Parameter] = list(),
             *args, **kwargs):

@@ -41,7 +41,7 @@ class ResidualPlot(plotbase.Plot):
         self.layout.addWidget(p)
 
         for i, f in enumerate(fit):
-            color = mfm.colors[i % len(mfm.colors)]['hex']
+            color = mfm.settings.colors[i % len(mfm.settings.colors)]['hex']
             c = pg.PlotCurveItem(pen=pg.mkPen(color, width=lw), name=f.data.name)
             p.addItem(c)
             c.setPos(0, i*6)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 
 import mfm.curve
 import mfm.fitting.parameter
@@ -156,4 +156,4 @@ class ModelWidget(Model, QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         Model.__init__(self, fit, *args, **kwargs)
         self.plots = list()
-        self.icon = kwargs.get('icon', QtWidgets.QIcon(":/icons/document-open.png"))
+        self.icon = kwargs.get('icon', QtGui.QIcon(":/icons/document-open.png"))
