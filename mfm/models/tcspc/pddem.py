@@ -3,14 +3,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import mfm
 from mfm import plots
-from mfm.models import GaussianWidget, Gaussians
-from mfm.models import GenericWidget, CorrectionsWidget
+from mfm.models.tcspc.fret import GaussianWidget, Gaussians
+from mfm.models.tcspc.nusiance import GenericWidget, CorrectionsWidget
 from mfm.fluorescence import tcspc
 from mfm.fluorescence.general import distribution2rates
 from mfm.fluorescence.widgets import AnisotropyWidget
-from mfm.fitting import FittingParameterGroup, FittingParameter
-from mfm.models import Lifetime, LifetimeWidget, LifetimeModel, ConvolveWidget
-from mfm.models import ModelWidget
+from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
+from mfm.models.tcspc.lifetime import Lifetime, LifetimeWidget, LifetimeModel, ConvolveWidget
+from mfm.models.model import ModelWidget
 
 
 class PDDEM(FittingParameterGroup):

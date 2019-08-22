@@ -13,8 +13,6 @@ import mfm
 import mfm.base
 import mfm.experiments
 import mfm.experiments.data
-import mfm.models
-import mfm.models.model
 import mfm.fitting.parameter
 from mfm.math.optimization.leastsqbound import leastsqbound
 
@@ -324,7 +322,7 @@ class FitGroup(list, Fit):
         list.__init__(self, self._fits)
         Fit.__init__(self, data=data, **kwargs)
 
-        self.global_model = mfm.models.GlobalFitModel(self)
+        self.global_model = mfm.models.globalfit.GlobalFitModel(self)
         self.global_model.fits = self._fits
 
     def __str__(self):

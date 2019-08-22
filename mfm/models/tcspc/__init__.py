@@ -23,17 +23,8 @@ from . import pddem
 # import et
 # import membrane
 # import fret_structure
-from mfm.models import ModelCurve
+from mfm.models.model import ModelCurve
 
-models = [
-    lifetime.LifetimeModelWidget,
-    fret.FRETrateModelWidget,
-    fret.GaussianModelWidget,
-    pddem.PDDEMModelWidget,
-    fret.WormLikeChainModelWidget,
-    ModelCurve
-    #mix_model.LifetimeMixModelWidget,
-]
 
 testing = [
     #fret_structure.FRETStructureWidget,
@@ -43,5 +34,5 @@ testing = [
     parse.ParseDecayModelWidget
 ]
 
-models += testing if mfm.settings.cs_settings['experimental_models'] else []
+#models += testing if mfm.settings.cs_settings['experimental_models'] else []
 

@@ -3,7 +3,7 @@ from PyQt5 import QtCore, QtWidgets, uic
 
 import mfm
 from mfm.curve import Curve
-from mfm.fitting import FittingParameterGroup, FittingParameter
+from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
 from mfm.widgets import CurveSelector
 
 

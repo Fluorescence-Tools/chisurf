@@ -4,11 +4,10 @@ import numpy as np
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 import mfm
-from mfm.fitting import FittingParameterGroup, FittingParameter
-from mfm.models import Model, ModelWidget
-from mfm.models import ModelCurve
-from mfm.models import Generic, Corrections, Convolve, CorrectionsWidget, GenericWidget, ConvolveWidget
-from mfm.models import Anisotropy
+from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
+from mfm.models.model import Model, ModelWidget, ModelCurve
+from mfm.models.tcspc.nusiance import Generic, Corrections, Convolve, CorrectionsWidget, GenericWidget, ConvolveWidget
+from mfm.models.tcspc.anisotropy import Anisotropy
 from mfm.fluorescence.general import species_averaged_lifetime, fluorescence_averaged_lifetime
 from mfm.fluorescence.widgets import AnisotropyWidget
 

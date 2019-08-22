@@ -11,7 +11,7 @@ import mfm.fluorescence.general
 
 #import pda
 
-#rda_axis = np.linspace(mfm.settings.cs_settings['fret']['rda_min'],
-#                       mfm.settings.cs_settings['fret']['rda_max'],
-#                       mfm.settings.cs_settings['fret']['rda_resolution'], dtype=np.float64)
+rda_axis = np.linspace(mfm.settings.cs_settings['fret']['rda_min'],
+                       mfm.settings.cs_settings['fret']['rda_max'],
+                       mfm.settings.cs_settings['fret']['rda_resolution'], dtype=np.float64)
 

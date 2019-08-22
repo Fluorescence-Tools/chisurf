@@ -199,7 +199,7 @@ class CsvWidget(QtWidgets.QWidget):
         self.verbose = kwargs.get('verbose', mfm.verbose)
 
     @property
-    def col_ex(self):
+    def col_ex(self) -> int:
         return self.comboBox_3.currentIndex()
 
     @col_ex.setter
@@ -213,13 +213,15 @@ class CsvWidget(QtWidgets.QWidget):
         mfm.run("cs.current_setup.error_x_on = %s" % set_errx_on)
         mfm.run("cs.current_setup.error_y_on = %s" % set_erry_on)
 
-
     @property
-    def x_on(self):
+    def x_on(self) -> bool:
         return self.checkBox.isChecked()
 
     @x_on.setter
-    def x_on(self, v):
+    def x_on(
+            self,
+            v: bool
+    ):
         self.checkBox.setChecked(bool(v))
 
     @property

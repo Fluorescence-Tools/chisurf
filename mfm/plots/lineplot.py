@@ -267,7 +267,7 @@ class LinePlot(plotbase.Plot):
         if self.plot_irf:
             self.irf_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['irf'], width=lw), name='IRF')
         self.data_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['data'], width=lw), name='Data')
-        self.fit_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['models'], width=lw), name='Model')
+        self.fit_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['model'], width=lw), name='Model')
         p1.setXLink(p3)
         p2.setXLink(p3)
 

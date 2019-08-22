@@ -11,27 +11,25 @@ import mfm
 from mfm import plots
 from mfm.curve import Curve
 import mfm.fitting.fit
-from mfm.models import Model
-from mfm.models import ModelWidget
+from . import model
 from mfm.fitting.parameter import GlobalFittingParameter
 
 
-class GlobalFitModel(Model, Curve):
+class GlobalFitModel(model.Model, Curve):
 
     name = "Global fit"
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit
+            fit: mfm.fitting.fit.Fit,
+            **kwargs
     ):
         self.fits = []
         self.fit = fit
         self._global_parameters = OrderedDict()
         self.parameters_calculated = list()
         self._links = list()
-
-        Curve.__init__(self)
-        Model.__init__(self, fit=fit)
+        super(GlobalFitModel, self).__init__(fit, **kwargs)
 
     @property
     def weighted_residuals(
@@ -274,7 +272,7 @@ class GlobalFitModel(Model, Curve):
 
     def __getitem__(
             self,
-            key: str
+            key
     ):
         start = key.start
         stop = key.stop
@@ -283,7 +281,7 @@ class GlobalFitModel(Model, Curve):
         return x, y
 
     def update(self):
-        Model.update(self)
+        model.Model.update(self)
         for f in self.fits:
             f.model.update()
 
@@ -299,14 +297,13 @@ class GlobalFitModel(Model, Curve):
                 f.model.update_model()
 
     def finalize(self):
-        Model.finalize(self)
+        model.Model.finalize(self)
         for fit in self.fits:
             #fit.finalize()
             fit.model.finalize()
 
 
-class GlobalFitModelWidget(GlobalFitModel, ModelWidget):
-
+class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     plot_classes = [#(plots.GlobalFitPlot, {'logy': 'lin',
                     #                       'logx': 'lin'}),
@@ -316,7 +313,7 @@ class GlobalFitModelWidget(GlobalFitModel, ModelWidget):
 
     def __init__(
             self,
-            fit: mfm.fitting.Fit
+            fit: mfm.fitting.fit.Fit
     ):
         super(GlobalFitModel, self).__init__(fit)
         uic.loadUi("mfm/ui/fitting/models/globalfit_2.ui", self)

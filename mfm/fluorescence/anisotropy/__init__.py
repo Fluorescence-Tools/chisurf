@@ -1,7 +1,5 @@
 from __future__  import annotations
 
-from __future__ import annotations
-
 from math import sqrt
 
 import numba as nb
