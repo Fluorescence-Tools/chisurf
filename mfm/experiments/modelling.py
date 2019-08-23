@@ -4,15 +4,15 @@ from PyQt5 import QtWidgets
 
 import mfm
 import mfm.structure.widgets
-from mfm.experiments.reader import Reader
+from mfm.experiments.reader import ExperimentReader
 from mfm.io.widgets import PDBLoad
 
 
-class LoadStructure(QtWidgets.QWidget, Reader):
+class LoadStructure(QtWidgets.QWidget, ExperimentReader):
 
     def __init__(self, *args, **kwargs):
         QtWidgets.QWidget.__init__(self)
-        Reader.__init__(self, *args, **kwargs)
+        ExperimentReader.__init__(self, *args, **kwargs)
 
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
@@ -31,13 +31,13 @@ class LoadStructure(QtWidgets.QWidget, Reader):
         return None, None
 
 
-class LoadStructureFolder(QtWidgets.QWidget, Reader):
+class LoadStructureFolder(QtWidgets.QWidget, ExperimentReader):
 
     name = 'Trajectory'
 
     def __init__(self, *args, **kwargs):
         QtWidgets.QWidget.__init__(self)
-        Reader.__init__(self, *args, **kwargs)
+        ExperimentReader.__init__(self, *args, **kwargs)
         self.parent = kwargs.get('parent', None)
 
         layout = QtWidgets.QVBoxLayout(self)

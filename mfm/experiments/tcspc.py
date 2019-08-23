@@ -9,7 +9,7 @@ import mfm
 import mfm.experiments
 import mfm.experiments.data
 import mfm.widgets
-from mfm.experiments.reader import Reader
+from mfm.experiments.reader import ExperimentReader
 from mfm.fluorescence.tcspc import weights, fitrange, weights_ps
 from mfm.io import sdtfile
 from mfm.io.ascii import Csv
@@ -18,14 +18,23 @@ from mfm.io.widgets import CsvWidget
 
 class CsvTCSPC(object):
 
-    def __init__(self, **kwargs):
-        self.dt = kwargs.get('dt', 1.0)
-        self.rep_rate = kwargs.get('rep_rate', 1.0)
-        self.is_jordi = kwargs.get('is_jordi', False)
-        self.polarization = kwargs.get('mode', 'vm')
-        #self.g_factor = kwargs.get('g_factor', 1.0)
-        self.rebin = kwargs.get('rebin', (1, 1))
-        self.matrix_columns = kwargs.get('matrix_columns', [0, 1])
+    def __init__(
+            self,
+            dt: float = 1.0,
+            rep_rate: float = 1.0,
+            is_jordi: bool = False,
+            mode: str = 'vm',
+            g_factor: float = 1.0,
+            rebin: Tuple[int, int] = (1, 1),
+            matrix_columns: Tuple[int, int] = (0, 1)
+    ):
+        self.dt = dt
+        self.excitation_repetition_rate = rep_rate
+        self.is_jordi = is_jordi
+        self.polarization = mode
+        self.g_factor = g_factor
+        self.rebin = rebin
+        self.matrix_columns = matrix_columns
 
 
 class CsvTCSPCWidget(CsvTCSPC, QtWidgets.QWidget):
@@ -85,7 +94,7 @@ class CsvTCSPCWidget(CsvTCSPC, QtWidgets.QWidget):
         mfm.run("cs.current_setup.dt = %s" % dt)
 
 
-class TCSPCReader(Reader):
+class TCSPCReader(ExperimentReader):
 
     def __init__(self, *args, **kwargs):
         super(TCSPCReader, self).__init__(self, *args, **kwargs)
@@ -252,15 +261,21 @@ class TcspcSDTWidget(QtWidgets.QWidget):
         return int(self.comboBox.currentIndex())
 
     @curve_number.setter
-    def curve_number(self, v):
+    def curve_number(
+            self,
+            v: int
+    ):
         self.comboBox.setCurrentIndex(int(v))
 
     @property
-    def filename(self):
+    def filename(self) -> str:
         return str(self.lineEdit.text())
 
     @filename.setter
-    def filename(self, v):
+    def filename(
+            self,
+            v: str
+    ):
         self._sdt = sdtfile.SdtFile(v)
         # refresh GUI
         self.comboBox.clear()
@@ -276,7 +291,7 @@ class TcspcSDTWidget(QtWidgets.QWidget):
         return self._sdt
 
     @property
-    def times(self):
+    def times(self) -> np.array:
         """
         The time-array in nano-seconds
         """
@@ -284,12 +299,12 @@ class TcspcSDTWidget(QtWidgets.QWidget):
         return np.array(x, dtype=np.float64)
 
     @property
-    def ph_counts(self):
+    def ph_counts(self) -> np.array:
         y = self._sdt.data[self.curve_number][0]
         return np.array(y, dtype=np.float64)
 
     @property
-    def rep_rate(self):
+    def rep_rate(self) -> float:
         return 1. / (self._sdt.measure_info[self.curve_number]['rep_t'] * 1e-3)[0]
 
     @rep_rate.setter
@@ -297,7 +312,7 @@ class TcspcSDTWidget(QtWidgets.QWidget):
         pass
 
     @property
-    def curve(self):
+    def curve(self) -> mfm.experiments.data.DataCurve:
         y = self.ph_counts
         w = weights(y)
         d = mfm.experiments.data.DataCurve(setup=self, x=self.times, y=y, ey=1. / w, name=self.name)

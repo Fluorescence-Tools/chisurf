@@ -11,9 +11,14 @@ import mfm.experiments.experiment
 
 class ExperimentalData(Data):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            *args,
+            setup = None,
+            **kwargs
+    ):
         super(ExperimentalData, self).__init__(*args, **kwargs)
-        self.setup = kwargs.get('setup', None)
+        self.setup = setup
         self._experiment = kwargs.get('experiment', None)
 
     @property
@@ -41,7 +46,11 @@ class ExperimentalData(Data):
 
 class DataCurve(Curve, ExperimentalData):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
         try:
             ex, ey = args[2], args[3]
         except IndexError:
