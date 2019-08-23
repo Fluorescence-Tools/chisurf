@@ -8,7 +8,7 @@ import tables
 from mfm.io import tttr
 
 
-def read_BIDs(
+def read_burst_ids(
         filenames: List[str],
         stack_files: bool = True
 ) -> np.array:
