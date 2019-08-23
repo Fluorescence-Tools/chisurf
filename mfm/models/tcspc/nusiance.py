@@ -1,11 +1,15 @@
+from __future__ import annotations
+from typing import List
+
+import inspect
 import numpy as np
 from PyQt5 import QtCore, QtWidgets, uic
 
 import mfm
+import mfm.cmd
 from mfm.curve import Curve
 from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
 from mfm.widgets import CurveSelector
-
 
 
 class Generic(FittingParameterGroup):
@@ -600,19 +604,19 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
     def change_irf(self):
         idx = self.irf_select.selected_curve_index
-        # TODO: replace by inspections of real functions
-        t = "irf = cs.current_fit.model.convolve.irf_select.datasets[%s]\n" \
-            "for f in cs.current_fit[cs.current_fit._selected_fit:]:\n" \
-            "   f.model.convolve._irf = mfm.experiments.data.DataCurve(x=irf.x, y=irf.y)\n" % idx
-        t += "cs.current_fit.update()"
-        mfm.run(t)
-        #self.fwhm = self._irf.fwhm
+        mfm.run(
+            mfm.cmd.change_irf(
+                idx,
+                mfm.cs
+            )
+        )
+        self.fwhm = self._irf.fwhm
         current_fit = mfm.cs.current_fit
         for f in current_fit[current_fit._selected_fit:]:
             f.model.convolve.lineEdit.setText(self.irf_select.curve_name)
 
     @property
-    def fwhm(self):
+    def fwhm(self) -> float:
         return self._irf.fwhm
 
     @fwhm.setter
