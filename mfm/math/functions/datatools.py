@@ -5,7 +5,7 @@ import numba as nb
 import numpy as np
 
 
-def hist2func(
+def histogram_rebin(
         bin_edges: np.array,
         counts: np.array,
         new_bin_edges: np.array
@@ -34,7 +34,7 @@ def hist2func(
     array([ -5.    ,  -3.4375,  -1.875 ,  -0.3125,   1.25  ,   2.8125,
              4.375 ,   5.9375,   7.5   ,   9.0625,  10.625 ,  12.1875,
             13.75  ,  15.3125,  16.875 ,  18.4375,  20.    ])
-    >>> y = hist2func(bin_edges, counts, new_bin_edges)
+    >>> y = histogram_rebin(bin_edges, counts, new_bin_edges)
     [0.0, 0.0, 0.0, 0.0, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0.0, 0.0, 0.0, 0.0]
     """
     re = []

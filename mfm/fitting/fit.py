@@ -16,7 +16,6 @@ import mfm.experiments.data
 import mfm.fitting.parameter
 from mfm.math.optimization.leastsqbound import leastsqbound
 
-eps = np.sqrt(np.finfo(float).eps)
 
 
 class Fit(mfm.base.Base):

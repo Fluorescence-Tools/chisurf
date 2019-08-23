@@ -2,6 +2,8 @@ from __future__ import annotations
 from collections import Iterable
 from typing import List
 
+import numpy as np
+
 import mfm.base
 import mfm.io
 import mfm.parameter
@@ -11,7 +13,8 @@ import mfm.settings
 
 import mfm.models
 import mfm.fitting
-#import mfm.structure
+import mfm.structure
+
 #import mfm.fluorescence
 
 #from mfm.settings import cs_settings, colors
@@ -37,7 +40,7 @@ verbose = mfm.settings.cs_settings['verbose']
 __version__ = mfm.settings.cs_settings['version']
 __name__ = mfm.settings.cs_settings['name']
 working_path = ''
-eps = 1e-8
+eps = np.sqrt(np.finfo(float).eps)
 cs = None
 
 

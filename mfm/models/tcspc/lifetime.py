@@ -7,9 +7,8 @@ import mfm
 from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
 from mfm.models.model import Model, ModelWidget, ModelCurve
 from mfm.models.tcspc.nusiance import Generic, Corrections, Convolve, CorrectionsWidget, GenericWidget, ConvolveWidget
-from mfm.models.tcspc.anisotropy import Anisotropy
+from mfm.models.tcspc.anisotropy import Anisotropy, AnisotropyWidget
 from mfm.fluorescence.general import species_averaged_lifetime, fluorescence_averaged_lifetime
-from mfm.fluorescence.widgets import AnisotropyWidget
 
 
 class Lifetime(FittingParameterGroup):

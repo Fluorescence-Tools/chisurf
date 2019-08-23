@@ -1,4 +1,3 @@
-#from .plot2d import *
 from .MolView import *
 from .av_plot import AvPlot
 from .distribution import DistributionPlot

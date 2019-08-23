@@ -252,7 +252,7 @@ class Photons(object):
     @property
     def mt(self):
         """
-        Array containing the macro-time clock counts of the photons
+        Array containing the macros-time clock counts of the photons
         """
         return self.photon_array['MT']
 

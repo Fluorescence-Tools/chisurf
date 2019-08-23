@@ -31,7 +31,7 @@ class Base(object):
     def save(
             self,
             filename: str,
-            file_type: str='json'
+            file_type: str = 'json'
     ):
         if file_type == "yaml":
             txt = self.to_yaml()

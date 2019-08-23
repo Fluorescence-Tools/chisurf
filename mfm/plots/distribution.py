@@ -6,7 +6,7 @@ import mfm
 from mfm.plots import plotbase
 
 plot_settings = mfm.settings.cs_settings['gui']['plot']
-pyqtgraph_settings = plot_settings["pyqtgraph"]
+pyqtgraph_settings = mfm.settings.pyqtgraph_settings
 colors = plot_settings['colors']
 color_scheme = mfm.settings.colors
 lw = plot_settings['line_width']
