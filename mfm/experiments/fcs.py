@@ -7,12 +7,12 @@ import mfm
 import mfm.experiments
 import mfm.experiments.data
 from mfm.io.widgets import CsvWidget
-from mfm.experiments.reader import Reader
+from mfm.experiments.reader import ExperimentReader
 
 #settings = mfm.settings.cs_settings['correlator']
 
 
-class FCS(Reader, QtWidgets.QWidget):
+class FCS(ExperimentReader, QtWidgets.QWidget):
 
     name = "FCS"
 

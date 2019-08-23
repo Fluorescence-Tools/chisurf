@@ -6,14 +6,14 @@ from PyQt5 import QtWidgets
 import mfm
 import mfm.experiments
 import mfm.experiments.data
-from mfm.experiments.reader import Reader
+from mfm.experiments.reader import ExperimentReader
 
 
-class GlobalFitSetup(Reader, QtWidgets.QWidget):
+class GlobalFitSetup(ExperimentReader, QtWidgets.QWidget):
 
     def __init__(self, *args, **kwargs):
         QtWidgets.QWidget.__init__(self)
-        Reader.__init__(self, *args, **kwargs)
+        ExperimentReader.__init__(self, *args, **kwargs)
         self.hide()
 
         self.parameterWidgets = []

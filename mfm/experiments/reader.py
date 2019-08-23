@@ -6,10 +6,10 @@ import mfm.curve
 from mfm.experiments.data import ExperimentalData, ExperimentDataGroup
 
 
-class Reader(mfm.base.Base):
+class ExperimentReader(mfm.base.Base):
 
     def __init__(self, *args, **kwargs):
-        super(Reader, self).__init__(self, *args, **kwargs)
+        super(ExperimentReader, self).__init__(self, *args, **kwargs)
 
     @staticmethod
     def autofitrange(
