@@ -5,14 +5,6 @@ import sys
 import slugify
 import numpy as np
 import sip
-
-sip.setapi('QDate', 2)
-sip.setapi('QDateTime', 2)
-sip.setapi('QString', 2)
-sip.setapi('QTextStream', 2)
-sip.setapi('QTime', 2)
-sip.setapi('QUrl', 2)
-sip.setapi('QVariant', 2)
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication
 
@@ -93,10 +85,10 @@ class Main(QMainWindow):
     def closeEvent(self, event):
         if mfm.settings.cs_settings['gui']['confirm_close_program']:
             reply = QtWidgets.QMessageBox.question(self,
-                                               'Message',
-                                               "Are you sure to quit?",
-                                               QtWidgets.QMessageBox.Yes,
-                                               QtWidgets.QMessageBox.No)
+                                                   'Message',
+                                                   "Are you sure to quit?",
+                                                   QtWidgets.QMessageBox.Yes,
+                                                   QtWidgets.QMessageBox.No)
             if reply == QtWidgets.QMessageBox.Yes:
                 event.accept()
             else:
@@ -269,7 +261,6 @@ class Main(QMainWindow):
 
     def remove_dataset(self, idx):
         idx = [idx] if not isinstance(idx, list) else idx
-
         l = list()
         for i, d in enumerate(mfm.imported_datasets):
             if d.name == 'Global-fit':
@@ -286,7 +277,6 @@ class Main(QMainWindow):
                     else:
                         fw.append(fit_window)
                 mfm.fit_windows = fw
-
         mfm.imported_datasets = l
 
     def save_fits(self, **kwargs):
@@ -410,7 +400,6 @@ class Main(QMainWindow):
         mfm.console.pushVariables({'cs': self})
         mfm.console.pushVariables({'mfm': mfm})
         mfm.console.pushVariables({'np': np})
-        #mfm.console.pushVariables({'cl': mfm.pyopencl})
         mfm.console.pushVariables({'os': os})
         mfm.console.pushVariables({'QtCore': QtCore})
         mfm.console.pushVariables({'QtGui': QtGui})
@@ -527,12 +516,6 @@ if __name__ == "__main__":
     import tools
 
     mfm.console = mfm.widgets.QIPythonWidget()
-
-    # See: https://github.com/ipython/ipykernel/issues/370
-    # this should be fixed newer
-    def _abort_queues(kernel):
-        pass
-    mfm.console.kernel_manager.kernel._abort_queues = _abort_queues
 
     win = Main(parent=None)
     mfm.console.history_widget = win.plainTextEditHistory
