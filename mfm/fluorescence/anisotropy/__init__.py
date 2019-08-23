@@ -5,6 +5,8 @@ from math import sqrt
 import numpy as np
 import numba as nb
 
+from . import kappa2
+
 
 def scale_acceptor(donor, acceptor, transfer_efficency):
     s_d = sum(donor)

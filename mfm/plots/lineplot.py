@@ -4,6 +4,7 @@ from PyQt5 import QtWidgets, uic
 import matplotlib.colors as mpl_colors
 
 import mfm
+import mfm.math
 from mfm.plots import plotbase
 from pyqtgraph.dockarea import *
 

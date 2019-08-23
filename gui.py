@@ -520,8 +520,9 @@ if __name__ == "__main__":
     mfm.console.history_widget = win.plainTextEditHistory
     mfm.cs = win
 
-    style_sheet = open(mfm.settings.style_sheet_file, 'r').read()
-    app.setStyleSheet(style_sheet)
+    with open(mfm.settings.style_sheet_file, 'r') as fp:
+        style_sheet = fp.read()
+        app.setStyleSheet(style_sheet)
 
     win.show()
     sys.exit(app.exec_())
