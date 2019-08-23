@@ -4,7 +4,6 @@ import os
 import sys
 import slugify
 import numpy as np
-import sip
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication
 

@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import List, Tuple
+
 import math
 
 import numpy as np
@@ -14,41 +17,45 @@ from mfm.fluorescence.general import species_averaged_lifetime, fluorescence_ave
 class Lifetime(FittingParameterGroup):
 
     @property
-    def absolute_amplitudes(self):
+    def absolute_amplitudes(self) -> bool:
         return self._abs_amplitudes
 
     @absolute_amplitudes.setter
-    def absolute_amplitudes(self, v):
+    def absolute_amplitudes(
+            self,
+            v: bool
+    ):
         self._abs_amplitudes = v
 
     @property
-    def normalize_amplitudes(self):
+    def normalize_amplitudes(self) -> bool:
         return self._normalize_amplitudes
 
     @normalize_amplitudes.setter
-    def normalize_amplitudes(self, v):
+    def normalize_amplitudes(
+            self,
+            v: bool
+    ):
         self._normalize_amplitudes = v
 
     @property
-    def species_averaged_lifetime(self):
-        decay = np.empty(2 * len(self), dtype=np.float64)
+    def species_averaged_lifetime(self) -> float:
         a = self.amplitudes
         a /= a.sum()
-        decay[0::2] = a
-        decay[1::2] = self.lifetimes
-        return species_averaged_lifetime(decay)
+        return species_averaged_lifetime(
+            mfm.fluorescence.general.two_column_to_interleaved(a, self.lifetimes)
+        )
 
     @property
-    def fluorescence_averaged_lifetime(self):
-        decay = np.empty(2 * len(self), dtype=np.float64)
+    def fluorescence_averaged_lifetime(self) -> float:
         a = self.amplitudes
         a /= a.sum()
-        decay[0::2] = a
-        decay[1::2] = self.lifetimes
-        return fluorescence_averaged_lifetime(decay)
+        return fluorescence_averaged_lifetime(
+            mfm.fluorescence.general.two_column_to_interleaved(a, self.lifetimes)
+        )
 
     @property
-    def amplitudes(self):
+    def amplitudes(self) -> np.array:
         vs = np.array([x.value for x in self._amplitudes])
         if self.absolute_amplitudes:
             vs = np.sqrt(vs**2)
@@ -57,47 +64,58 @@ class Lifetime(FittingParameterGroup):
         return vs
 
     @amplitudes.setter
-    def amplitudes(self, vs):
+    def amplitudes(
+            self,
+            vs: List[float]
+    ):
         for i, v in enumerate(vs):
             self._amplitudes[i].value = v
 
     @property
-    def lifetimes(self):
+    def lifetimes(self) -> np.array:
         vs = np.array([math.sqrt(x.value ** 2) for x in self._lifetimes])
         for i, v in enumerate(vs):
             self._lifetimes[i].value = v
         return vs
 
     @lifetimes.setter
-    def lifetimes(self, vs):
+    def lifetimes(
+            self,
+            vs: List[float]
+    ):
         for i, v in enumerate(vs):
             self._lifetimes[i].value = v
 
     @property
-    def lifetime_spectrum(self):
+    def lifetime_spectrum(self) -> np.array:
         if self._link is None:
             if self._lifetime_spectrum is None:
-                decay = np.empty(2 * len(self), dtype=np.float64)
-                decay[0::2] = self.amplitudes
-                decay[1::2] = self.lifetimes
-                return decay
+                return mfm.fluorescence.general.two_column_to_interleaved(
+                    self.amplitudes,
+                    self.lifetimes
+                )
             else:
                 return self._lifetime_spectrum
         else:
             return self._link.lifetime_spectrum
 
     @lifetime_spectrum.setter
-    def lifetime_spectrum(self, v):
+    def lifetime_spectrum(
+            self,
+            v: np.array
+    ):
         self._lifetime_spectrum = v
         for p in self.parameters_all:
             p.fixed = True
 
     @property
-    def rate_spectrum(self):
-        return mfm.fluorescence.general.ilt(self.lifetime_spectrum)
+    def rate_spectrum(self) -> np.array:
+        return mfm.fluorescence.general.invert_interleaved(
+            self.lifetime_spectrum
+        )
 
     @property
-    def n(self):
+    def n(self) -> int:
         return len(self._amplitudes)
 
     @property
@@ -139,7 +157,7 @@ class Lifetime(FittingParameterGroup):
         self._amplitudes.append(a)
         self._lifetimes.append(t)
 
-    def pop(self):
+    def pop(self) -> Tuple[float, float]:
         a = self._amplitudes.pop()
         l = self._lifetimes.pop()
         return a, l
