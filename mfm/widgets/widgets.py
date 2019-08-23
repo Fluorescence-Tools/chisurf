@@ -93,8 +93,7 @@ class QIPythonWidget(RichJupyterWidget):
         self.history_widget = kwargs.get('history_widget', None)
 
         self.kernel_manager = kernel_manager = QtInProcessKernelManager()
-        kernel_manager.start_kernel(show_banner=False)
-        kernel_manager.kernel.gui = 'qt4'
+        kernel_manager.start_kernel()
         self.kernel_client = kernel_client = kernel_manager.client()
         kernel_client.start_channels()
 
@@ -114,11 +113,9 @@ class QIPythonWidget(RichJupyterWidget):
         # save nevertheless every inputs into a session file
         filename = datetime.now().strftime('session_%H_%M_%d_%m_%Y.py')
         home = os.path.expanduser("~")
-        path = os.path.abspath(os.path.join(home, './chisurf'))
-        try:
+        path = os.path.abspath(os.path.join(home, './.chisurf'))
+        if not os.path.isdir(path):
             os.makedirs(path)
-        except:
-            print("no new path created")
         self.session_file = os.path.join(path, filename)
         self.set_default_style(
             mfm.settings.cs_settings['gui']['console']['style']

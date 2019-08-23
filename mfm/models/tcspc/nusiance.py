@@ -74,41 +74,52 @@ class Generic(FittingParameterGroup):
             self._background_curve = v
 
     @property
-    def t_bg(self):
+    def t_bg(self) -> float:
         """Measurement time of background-measurement
         """
         return self._tmeas_bg.value
 
     @t_bg.setter
-    def t_bg(self, v):
+    def t_bg(
+            self,
+            v: float
+    ):
         self._tmeas_bg.value = v
 
     @property
-    def t_exp(self):
+    def t_exp(self) -> float:
         """Measurement time of experiment
         """
         return self._tmeas_exp.value
 
     @t_exp.setter
-    def t_exp(self, v):
+    def t_exp(
+            self,
+            v: float
+    ):
         self._tmeas_exp.value = v
 
-    def __init__(self, **kwargs):
+    def __init__(
+            self,
+            background_curve: mfm.experiments.data.DataCurve = None,
+            **kwargs
+    ):
         kwargs['name'] = 'Nuisance'
         FittingParameterGroup.__init__(self, **kwargs)
 
-        self._background_curve = None
+        self._background_curve = background_curve
         self._sc = FittingParameter(value=0.0, name='sc', model=self.model)
         self._bg = FittingParameter(value=0.0, name='bg', model=self.model)
         self._tmeas_bg = FittingParameter(value=1.0, name='tBg', lb=0.001, ub=10000000, fixed=True)
         self._tmeas_exp = FittingParameter(value=1.0, name='tMeas', lb=0.001, ub=10000000, fixed=True)
 
-        self.background_curve = kwargs.get('background_curve', None)
-
 
 class GenericWidget(Generic, QtWidgets.QWidget):
 
-    def change_bg_curve(self, background_index=None):
+    def change_bg_curve(
+            self,
+            background_index: int = None
+    ):
         if isinstance(background_index, int):
             self.background_select.selected_curve_index = background_index
         self._background_curve = self.background_select.selected_dataset
@@ -121,8 +132,7 @@ class GenericWidget(Generic, QtWidgets.QWidget):
         self.lineedit_nphFl.setText("%i" % self.n_ph_fl)
 
     def __init__(self, **kwargs):
-        Generic.__init__(self, **kwargs)
-        QtWidgets.QWidget.__init__(self)
+        super(GenericWidget, self).__init__(**kwargs)
 
         self.parent = kwargs.get('parent', None)
         if kwargs.get('hide_generic', False):
@@ -408,23 +418,26 @@ class Convolve(FittingParameterGroup):
         self._rep.value = float(v)
 
     @property
-    def do_convolution(self):
+    def do_convolution(self) -> bool:
         return self._do_convolution
 
     @do_convolution.setter
-    def do_convolution(self, v):
+    def do_convolution(
+            self,
+            v: bool
+    ):
         self._do_convolution = bool(v)
 
     @property
-    def n0(self):
+    def n0(self) -> float:
         return self._n0.value
 
     @n0.setter
-    def n0(self, v):
+    def n0(self, v: float):
         self._n0.value = v
 
     @property
-    def irf(self):
+    def irf(self) -> mfm.curve.Curve:
         irf = self._irf
         if isinstance(irf, Curve):
             irf = self._irf
@@ -443,7 +456,10 @@ class Convolve(FittingParameterGroup):
         return self.__irf
 
     @_irf.setter
-    def _irf(self, v):
+    def _irf(
+            self,
+            v: mfm.curve.Curve
+    ):
         self.n_photons_irf = v.normalize(mode="sum")
         self.__irf = v
         try:
@@ -464,7 +480,7 @@ class Convolve(FittingParameterGroup):
             self.n0 = 1000.
 
     @property
-    def data(self):
+    def data(self) -> mfm.experiments.data.DataCurve:
         if self._data is None:
             try:
                 return self.fit.data
@@ -474,10 +490,17 @@ class Convolve(FittingParameterGroup):
             return self._data
 
     @data.setter
-    def data(self, v):
+    def data(
+            self,
+            v: mfm.experiments.data.DataCurve
+    ):
         self._data = v
 
-    def scale(self, decay, **kwargs):
+    def scale(
+            self,
+            decay: mfm.experiments.data.DataCurve,
+            **kwargs
+    ):
         start = kwargs.get('start', min(0, self.start))
         stop = kwargs.get('stop', min(self.stop, len(decay)))
         bg = kwargs.get('bg', 0.0)
@@ -492,7 +515,11 @@ class Convolve(FittingParameterGroup):
 
         return decay
 
-    def convolve(self, data, **kwargs):
+    def convolve(
+            self,
+            data: mfm.experiments.data.DataCurve,
+            **kwargs
+    ):
         verbose = kwargs.get('verbose', mfm.verbose)
         mode = kwargs.get('mode', self.mode)
         dt = kwargs.get('dt', self.dt)
@@ -533,10 +560,14 @@ class Convolve(FittingParameterGroup):
 
         return decay
 
-    def __init__(self, fit, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.Fit,
+            **kwargs
+    ):
         kwargs['name'] = 'Convolution'
         kwargs['fit'] = fit
-        FittingParameterGroup.__init__(self, **kwargs)
+        super(Convolve, self).__init__(**kwargs)
 
         self._data = None
         try:
@@ -572,12 +603,21 @@ class Convolve(FittingParameterGroup):
 
 class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
-    def __init__(self, fit, **kwargs):
-        Convolve.__init__(self, fit, **kwargs)
-        QtWidgets.QWidget.__init__(self)
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.Fit,
+            hide_curve_convolution: bool = True,
+            **kwargs
+    ):
+        """
+
+        :param fit:
+        :param hide_curve_convolution:
+        :param kwargs:
+        """
+        super(ConvolveWidget, self).__init__(fit, **kwargs)
         uic.loadUi('mfm/ui/fitting/models/tcspc/convolveWidget.ui', self)
 
-        hide_curve_convolution = kwargs.get('hide_curve_convolution', True)
         if hide_curve_convolution:
             self.radioButton_3.setVisible(not hide_curve_convolution)
 
@@ -642,12 +682,12 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         return self._irf.fwhm
 
     @fwhm.setter
-    def fwhm(self, v):
+    def fwhm(
+            self,
+            v: float
+    ):
         self._fwhm = v
-        if isinstance(v, float):
-            self.lineEdit_2.setText("%.3f" % v)
-        else:
-            self.lineEdit_2.setText(None)
+        self.lineEdit_2.setText("%.3f" % v)
 
     @property
     def gui_mode(self):
