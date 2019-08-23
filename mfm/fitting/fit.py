@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List
+from typing import List, Tuple
 
 import os
 import emcee
@@ -17,7 +17,6 @@ import mfm.fitting.parameter
 from mfm.math.optimization.leastsqbound import leastsqbound
 
 
-
 class Fit(mfm.base.Base):
 
     def __init__(
@@ -25,7 +24,7 @@ class Fit(mfm.base.Base):
             model_class: mfm.models.model.Model = object,
             **kwargs
     ):
-        mfm.base.Base.__init__(self, **kwargs)
+        super(Fit, self).__init__(**kwargs)
         self._model = None
         self.results = None
 
@@ -52,34 +51,43 @@ class Fit(mfm.base.Base):
         return s
 
     @property
-    def xmin(self):
+    def xmin(self) -> int:
         return self._xmin
 
     @xmin.setter
-    def xmin(self, v):
+    def xmin(
+            self,
+            v: int
+    ):
         self._xmin = max(0, v)
 
     @property
-    def xmax(self):
+    def xmax(self) -> int:
         return self._xmax
 
     @xmax.setter
-    def xmax(self, v):
+    def xmax(
+            self,
+            v: int
+    ):
         try:
             self._xmax = min(len(self.data.y) - 1, v)
         except AttributeError:
             self._xmax = v
 
     @property
-    def data(self):
+    def data(self) -> mfm.experiments.data.DataCurve:
         return self._data
 
     @data.setter
-    def data(self, v):
+    def data(
+            self,
+            v: mfm.experiments.data.DataCurve
+    ):
         self._data = v
 
     @property
-    def model(self):
+    def model(self) -> mfm.models.model.Model:
         return self._model
 
     @model.setter
@@ -89,24 +97,28 @@ class Fit(mfm.base.Base):
             self._model = model_class(self, **kw)
 
     @property
-    def weighted_residuals(self):
+    def weighted_residuals(self) -> np.array:
         return self.model.weighted_residuals
 
     @property
-    def chi2(self):
+    def chi2(self) -> float:
         """Unreduced Chi2
         """
-        return get_chi2(self.model.parameter_values, model=self.model, reduced=False)
+        return get_chi2(
+            self.model.parameter_values,
+            model=self.model,
+            reduced=False
+        )
 
     @property
-    def chi2r(self):
+    def chi2r(self) -> float:
         """Reduced Chi2
         """
         pv = self.model.parameter_values
         return get_chi2(None, model=self.model)
 
     @property
-    def name(self):
+    def name(self) -> str:
         try:
             return self._kw['name']
         except KeyError:
@@ -116,11 +128,14 @@ class Fit(mfm.base.Base):
                 return "no name"
 
     @name.setter
-    def name(self, n):
-        self._name = n
+    def name(
+            self,
+            name: str
+    ):
+        self._name = name
 
     @property
-    def fit_range(self):
+    def fit_range(self) -> Tuple[int, int]:
         return self.xmin, self.xmax
 
     @fit_range.setter
@@ -132,7 +147,11 @@ class Fit(mfm.base.Base):
         """Get the approximate gradient at the current parameter values
         :return:
         """
-        f0, grad = approx_grad(self.model.parameter_values, self, eps)
+        f0, grad = approx_grad(
+            self.model.parameter_values,
+            self,
+            mfm.eps
+        )
         return grad
 
     @property
@@ -146,12 +165,17 @@ class Fit(mfm.base.Base):
         return covariance_matrix(self)
 
     @property
-    def n_free(self):
+    def n_free(self) -> int:
         """The number of free parameters of the models
         """
         return self.model.n_free
 
-    def get_chi2(self, parameter=None, model=None, reduced=True):
+    def get_chi2(
+            self,
+            parameter=None,
+            model=None,
+            reduced=True
+    ) -> float:
         if model is None:
             model = self.model
         return get_chi2(parameter, model, reduced)
@@ -253,35 +277,44 @@ class FitGroup(list, Fit):
         return [self.selected_fit.weighted_residuals]
 
     @property
-    def chi2r(self):
+    def chi2r(self) -> float:
         return self.selected_fit.chi2r
 
     @property
-    def fit_range(self):
+    def fit_range(self) -> Tuple[int, int]:
         return self.xmin, self.xmax
 
     @fit_range.setter
-    def fit_range(self, v):
+    def fit_range(
+            self,
+            v: Tuple[int, int]
+    ):
         for f in self:
             f.xmin, f.xmax = v
         self.xmin, self.xmax = v
 
     @property
-    def xmin(self):
+    def xmin(self) -> int:
         return self.selected_fit.xmin
 
     @xmin.setter
-    def xmin(self, v):
+    def xmin(
+            self,
+            v: int
+    ):
         for f in self:
             f.xmin = v
         self._xmin = v
 
     @property
-    def xmax(self):
+    def xmax(self) -> int:
         return self.selected_fit.xmax
 
     @xmax.setter
-    def xmax(self, v):
+    def xmax(
+            self,
+            v: int
+    ):
         for f in self:
             f.xmax = v
         self._xmax = v
@@ -308,14 +341,17 @@ class FitGroup(list, Fit):
         self.update()
         self.global_model.finalize()
 
-    def __init__(self, data, model_class, **kwargs):
-
+    def __init__(
+            self,
+            data: mfm.experiments.data.DataGroup,
+            model_class,
+            **kwargs
+    ):
         self._selected_fit = 0
         self._fits = list()
         for d in data:
             model_kw = kwargs.get('model_kw', {})
             fit = Fit(model_class=model_class, data=d, model_kw=model_kw)
-            #fit = Fit(model_class=model_class, model_kw=model_kw)
             self._fits.append(fit)
 
         list.__init__(self, self._fits)
@@ -524,7 +560,7 @@ def covariance_matrix(
 @nb.jit(nopython=True)
 def durbin_watson(
         residuals: np.array
-):
+) -> float:
     """Durbin-Watson parameter (1950,1951)
 
     :param residuals:  array
@@ -532,10 +568,10 @@ def durbin_watson(
     """
     n_res = len(residuals)
     nom = 0.0
-    denom = np.sum(residuals ** 2)
+    denomminator = float(np.sum(residuals ** 2))
     for i in range(1, n_res):
         nom += (residuals[i] - residuals[i - 1]) ** 2
-    return nom / max(1, denom)
+    return nom / max(1.0, denomminator)
 
 
 def get_wres(
@@ -612,7 +648,12 @@ def lnprior(
     return 0.0
 
 
-def lnprob(parameter_values, fit, chi2max=np.inf, **kwargs):
+def lnprob(
+        parameter_values,
+        fit: Fit,
+        chi2max=np.inf,
+        **kwargs
+) -> float:
     """
 
     :param parameter_values:

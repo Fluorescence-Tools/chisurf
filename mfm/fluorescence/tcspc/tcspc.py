@@ -10,7 +10,14 @@ import mfm.math
 
 
 @nb.jit(nopython=True, nogil=True)
-def get_scale_bg(fit, data, data_weight, bg, start, stop):
+def get_scale_bg(
+        fit: np.array,
+        data: np.array,
+        data_weight: np.array,
+        bg: float,
+        start: int,
+        stop: int
+):
     """This function calculates a scaling factor for a given
     experimental histogram and model function. The scaling-factor
     scales the model function that the weighted photon counts

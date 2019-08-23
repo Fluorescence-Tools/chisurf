@@ -54,6 +54,8 @@ def interleaved_to_two_columns(
     Converts an interleaved spectrum to two column-data
     :param ls: numpy array
         The interleaved spectrum (amplitude, lifetime)
+    :param sort: bool
+        if True sort by the size of the lifetimes
     :return: two arrays (amplitudes), (lifetimes)
     """
     lt = ls.reshape((ls.shape[0] // 2, 2))
@@ -171,7 +173,7 @@ def distance_to_fret_rate_constant(
         forster_radius: float,
         tau0: float,
         kappa2: float = 2./3.
-):
+) -> float:
     """ Converts the DA-distance to a FRET-rate
 
     :param r: donor-acceptor distance
@@ -187,7 +189,7 @@ def distance_to_fret_rate_constant(
 def distance_to_fret_efficiency(
         distance: float,
         forster_radius: float
-):
+) -> float:
     """
 
     .. math::
@@ -205,7 +207,7 @@ def distance_to_fret_efficiency(
 def lifetime_to_fret_efficiency(
         tau: float,
         tau0: float
-):
+) -> float:
     """
 
     .. math::
@@ -223,7 +225,7 @@ def lifetime_to_fret_efficiency(
 def fret_efficiency_to_distance(
         fret_efficiency: float,
         forster_radius: float
-):
+) -> float:
     """
     Converts the transfer-efficiency to a distance
 
@@ -242,7 +244,7 @@ def fret_efficiency_to_distance(
 def fret_efficiency_to_lifetime(
         fret_efficiency: float,
         tau0: float
-):
+) -> float:
     """
 
     .. math::

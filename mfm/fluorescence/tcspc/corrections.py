@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import numba as nb
 import numpy as np
 
 import mfm
+import mfm.math
 
 
 def compute_linearization_table(
@@ -39,7 +42,14 @@ def compute_linearization_table(
 
 
 @nb.jit(nopython=True, nogil=True)
-def pile_up(data, model, rep_rate, dead_time, measurement_time, verbose=False):
+def correct_model_for_pile_up(
+        data,
+        model,
+        rep_rate,
+        dead_time,
+        measurement_time,
+        verbose: bool = False
+) -> None:
     """
     Add pile up effect to model function.
     Attention: This changes the scaling of the model function.
@@ -54,6 +64,7 @@ def pile_up(data, model, rep_rate, dead_time, measurement_time, verbose=False):
         The array containing the experimental decay
     :param model: numpy-array
         The array containing the model function
+    :param verbose:
 
     References
     ----------
