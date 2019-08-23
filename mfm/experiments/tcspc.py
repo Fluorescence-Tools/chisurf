@@ -1,7 +1,9 @@
 from __future__ import annotations
+from typing import Tuple
 
 import numpy as np
 from PyQt5 import QtWidgets, uic
+import os
 
 import mfm
 import mfm.experiments
@@ -99,12 +101,19 @@ class TCSPCReader(Reader):
         self.use_header = True
 
     @staticmethod
-    def autofitrange(data, **kwargs):
+    def autofitrange(
+            data,
+            **kwargs
+    ) -> Tuple[float, float]:
         area = kwargs.get('area', mfm.settings.cs_settings['tcspc']['fit_area'])
         threshold = kwargs.get('threshold', mfm.settings.cs_settings['tcspc']['fit_count_threshold'])
         return fitrange(data.y, threshold, area)
 
-    def read(self, *args, **kwargs):
+    def read(
+            self,
+            *args,
+            **kwargs
+    ) -> mfm.experiments.data.DataCurveGroup:
         filename = kwargs.pop('filename', None)
         skiprows = kwargs.get('skiprows', self.skiprows)
 
@@ -191,12 +200,19 @@ class TCSPCReader(Reader):
 
 class TCSPCSetupWidget(TCSPCReader, mfm.io.ascii.Csv, QtWidgets.QWidget):
 
-    def read(self, *args, **kwargs):
+    def read(
+            self,
+            *args,
+            **kwargs
+    ) -> mfm.experiments.data.DataCurveGroup:
         filename = kwargs.pop('filename', None)
         if filename is None:
             filename = mfm.widgets.get_filename(description='CSV-TCSPC file', file_type='All files (*.*)', working_path=None)
-        kwargs['filename'] = filename
-        return TCSPCReader.read(self, *args, **kwargs)
+        if os.path.isfile(filename):
+            kwargs['filename'] = filename
+            return TCSPCReader.read(self, *args, **kwargs)
+        else:
+            return None
 
     def __init__(self, *args, **kwargs):
         super(TCSPCSetupWidget, self).__init__()

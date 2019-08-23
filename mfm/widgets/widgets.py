@@ -1,6 +1,10 @@
 """Qt-Widgets used throughout ChiSURF
 
 """
+from __future__ import annotations
+from typing import List
+
+import inspect
 import fnmatch
 import numbers
 import os
@@ -35,22 +39,32 @@ class QIPythonWidget(RichJupyterWidget):
     def stop_recording(self):
         self.recording = False
 
-    def run_macro(self, filename=None):
+    def run_macro(
+            self,
+            filename: str = None
+    ):
         if filename is None:
             filename = mfm.widgets.get_filename("Python macro", file_type="Python file (*.py)")
         with open(filename, mode='r') as fp:
             text = fp.read()
             self.execute(text, hidden=False)
 
-    def save_macro(self, filename=None):
+    def save_macro(
+            self,
+            filename: str = None
+    ):
         self.stop_recording()
         if filename is None:
             filename = mfm.widgets.save_file("Python macro", file_type="Python file (*.py)")
         with open(filename, mode='w') as fp:
             fp.write(self._macro)
 
-    def execute(self, *args, **kwargs):
-        hidden = kwargs.get('hidden', False)
+    def execute(
+            self,
+            *args,
+            hidden: bool = False,
+            **kwargs
+    ):
         if not hidden:
             try:
                 new_text = args[0] + '\n'
@@ -63,6 +77,16 @@ class QIPythonWidget(RichJupyterWidget):
             except IndexError:
                 pass
         RichJupyterWidget.execute(self, *args, **kwargs)
+
+    def execute_function(self, fn, *args, **kwargs):
+        """ Gets the function string executes the function on the command line
+
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        t = inspect.getsource(fn)
+        self.execute(t)
 
     def __init__(self, *args, **kwargs):
         RichJupyterWidget.__init__(self, *args, **kwargs)
@@ -143,7 +167,13 @@ def hide_items_in_layout(layout):
             item.widget().hide()
 
 
-def get_fortune(fortunepath='./mfm/ui/fortune/', min_length=0, max_length=100, attempts=1000, **kwargs):
+def get_fortune(
+        fortunepath: str = './mfm/ui/fortune/',
+        min_length: int = 0,
+        max_length: int = 100,
+        attempts: int = 1000,
+        **kwargs
+):
     fortune_files = [os.path.splitext(pdat)[0] for pdat in os.listdir(fortunepath) if pdat.endswith(".pdat")]
     attempt = 0
     while True:
@@ -166,7 +196,7 @@ def get_fortune(fortunepath='./mfm/ui/fortune/', min_length=0, max_length=100, a
 class AVProperties(QtWidgets.QWidget):
 
     def __init__(self, av_type="AV1"):
-        QtWidgets.QWidget.__init__(self)
+        super(AVProperties, self).__init__()
         uic.loadUi('./mfm/ui/av_property.ui', self)
         self._av_type = av_type
         self.av_type = av_type
@@ -206,15 +236,21 @@ class AVProperties(QtWidgets.QWidget):
         return float(self.doubleSpinBox_2.value())
 
     @linker_width.setter
-    def linker_width(self, v):
+    def linker_width(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_2.setValue(v)
 
     @property
-    def radius_1(self):
+    def radius_1(self) -> float:
         return float(self.doubleSpinBox_3.value())
 
     @radius_1.setter
-    def radius_1(self, v):
+    def radius_1(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_3.setValue(v)
 
     @property
@@ -222,47 +258,65 @@ class AVProperties(QtWidgets.QWidget):
         return float(self.doubleSpinBox_4.value())
 
     @radius_2.setter
-    def radius_2(self, v):
+    def radius_2(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_4.setValue(v)
 
     @property
-    def radius_3(self):
+    def radius_3(self) -> float:
         return float(self.doubleSpinBox_5.value())
 
     @radius_3.setter
-    def radius_3(self, v):
+    def radius_3(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_5.setValue(v)
 
     @property
-    def resolution(self):
+    def resolution(self) -> float:
         return float(self.doubleSpinBox_6.value())
 
     @resolution.setter
-    def resolution(self, v):
+    def resolution(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_6.setValue(v)
 
     @property
-    def initial_linker_sphere(self):
+    def initial_linker_sphere(self) -> float:
         return float(self.doubleSpinBox_7.value())
 
     @initial_linker_sphere.setter
-    def initial_linker_sphere(self, v):
+    def initial_linker_sphere(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_7.setValue(v)
 
     @property
-    def initial_linker_sphere_min(self):
+    def initial_linker_sphere_min(self) -> float:
         return float(self.doubleSpinBox_8.value())
 
     @initial_linker_sphere_min.setter
-    def initial_linker_sphere_min(self, v):
+    def initial_linker_sphere_min(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_8.setValue(v)
 
     @property
-    def initial_linker_sphere_max(self):
+    def initial_linker_sphere_max(self) -> float:
         return float(self.doubleSpinBox_9.value())
 
     @initial_linker_sphere_max.setter
-    def initial_linker_sphere_max(self, v):
+    def initial_linker_sphere_max(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_9.setValue(v)
 
 
