@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import List
 
 import weakref
 
@@ -11,7 +12,7 @@ class Parameter(mfm.base.Base):
     _instances = set()
 
     @property
-    def decimals(self) -> float:
+    def decimals(self) -> int:
         """
         The number of decimals that are displayed
         :return:
@@ -21,12 +22,12 @@ class Parameter(mfm.base.Base):
     @decimals.setter
     def decimals(
             self,
-            v: float
+            v: int
     ):
         self._decimals = v
 
     @property
-    def value(self):
+    def value(self) -> float:
         v = self._value
         if callable(v):
             return v()
@@ -34,11 +35,14 @@ class Parameter(mfm.base.Base):
             return v
 
     @value.setter
-    def value(self, value):
+    def value(
+            self,
+            value: float
+    ):
         self._value = float(value)
 
     @classmethod
-    def getinstances(cls):
+    def getinstances(cls) -> List[Parameter]:
         dead = set()
         for ref in cls._instances:
             obj = ref()
@@ -51,28 +55,28 @@ class Parameter(mfm.base.Base):
     def __add__(
             self,
             other
-    ):
+    ) -> Parameter:
         if isinstance(other, (int, float)):
             a = self.value + other
         else:
             a = self.value + other.value
         return Parameter(value=a)
 
-    def __mul__(self, other):
+    def __mul__(self, other) -> Parameter:
         if isinstance(other, (int, float)):
             a = self.value * other
         else:
             a = self.value * other.value
         return Parameter(value=a)
 
-    def __sub__(self, other):
+    def __sub__(self, other) -> Parameter:
         if isinstance(other, (int, float)):
             a = self.value - other
         else:
             a = self.value - other.value
         return Parameter(value=a)
 
-    def __div__(self, other):
+    def __div__(self, other) -> Parameter:
         if isinstance(other, (int, float)):
             a = self.value / other
         else:
@@ -82,16 +86,19 @@ class Parameter(mfm.base.Base):
     def __float__(self):
         return float(self.value)
 
-    def __invert__(self):
+    def __invert__(self) -> Parameter:
         return Parameter(value=float(1.0 / self.value))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self,
+                 value: float = 1.0,
+                 link=None,
+                 *args, **kwargs
+                 ):
         self.controller = None
         self._instances.add(weakref.ref(self))
         super(Parameter, self).__init__(*args, **kwargs)
-        self._link = kwargs.get('link', None)
-        value = args[0] if len(args) > 0 else 1.0
-        self._value = kwargs.get('value', value)
+        self._link = link
+        self._value = value
         self._decimals = kwargs.get('decimals', mfm.settings.cs_settings['parameter']['decimals'])
 
     def to_dict(self) -> dict:
