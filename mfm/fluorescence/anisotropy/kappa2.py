@@ -3,6 +3,7 @@ import numpy as np
 from numpy import linalg as linalg
 
 import mfm
+import mfm.fluorescence.general
 
 
 @nb.jit
@@ -33,7 +34,7 @@ def kappasqAllDelta(delta, sD2, sA2, step=0.25, n_bins=31):
         for j in range(m):
             d2 = (n1*np.cos(phi[j])+n2*np.sin(phi[j]))*np.sin(delta)+d1*np.cos(delta)
             beta2 = np.arccos(abs(np.dot(d2, R)))
-            k2[i, j] = mfm.fluorescence.kappasq(delta, sD2, sA2, beta1[i], beta2)
+            k2[i, j] = mfm.fluorescence.general.kappasq(delta, sD2, sA2, beta1[i], beta2)
         y, x = np.histogram(k2[i, :], bins=k2scale)
         k2hist += y*np.sin(beta1[i])
     return k2scale, k2hist, k2
@@ -51,7 +52,7 @@ def kappasq_all(sD2, sA2, n=100, m=100):
             delta = np.arccos(np.dot(d1[j, :], d2[j, :]) / linalg.norm(d1[j, :])/linalg.norm(d2[j, :]))
             beta1 = np.arccos(d1[j, 0]/linalg.norm(d1[j, :]))
             beta2 = np.arccos(d2[j, 0]/linalg.norm(d2[j, :]))
-            k2[i, j] = mfm.fluorescence.kappasq(delta, sD2, sA2, beta1, beta2)
+            k2[i, j] = mfm.fluorescence.general.kappasq(delta, sD2, sA2, beta1, beta2)
         y, x = np.histogram(k2[i, :], bins=k2scale)
         k2hist += y
     return k2scale, k2hist, k2

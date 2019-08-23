@@ -5,12 +5,6 @@
     background-color: #636363;
 }
 
-QToolBar::handle
-{
-     spacing: 3px; /* spacing between items in the tool bar */
-     background: url(:/icons/handle.png);
-}
-
 QToolTip
 {
      border: 1px solid black;
@@ -86,6 +80,7 @@ QWidget:focus
 {
     /*border: 2px solid QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #ffa02f, stop: 1 #d7801a);*/
 }
+*/
 
 QLineEdit
 {

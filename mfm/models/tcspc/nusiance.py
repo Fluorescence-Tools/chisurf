@@ -114,7 +114,7 @@ class Generic(FittingParameterGroup):
         self._tmeas_exp = FittingParameter(value=1.0, name='tMeas', lb=0.001, ub=10000000, fixed=True)
 
 
-class GenericWidget(Generic, QtWidgets.QWidget):
+class GenericWidget(QtWidgets.QWidget, Generic):
 
     def change_bg_curve(
             self,
@@ -615,7 +615,8 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         :param hide_curve_convolution:
         :param kwargs:
         """
-        super(ConvolveWidget, self).__init__(fit, **kwargs)
+        Convolve.__init__(self, fit, **kwargs)
+        QtWidgets.QWidget.__init__(self)
         uic.loadUi('mfm/ui/fitting/models/tcspc/convolveWidget.ui', self)
 
         if hide_curve_convolution:
@@ -666,12 +667,20 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
     def change_irf(self):
         idx = self.irf_select.selected_curve_index
+        """
         mfm.run(
             mfm.cmd.change_irf(
                 idx,
                 mfm.cs
             )
         )
+        """
+        t = "irf = cs.current_fit.model.convolve.irf_select.datasets[%s]\n" \
+            "for f in cs.current_fit[cs.current_fit._selected_fit:]:\n" \
+            "   f.model.convolve._irf = mfm.experiments.data.DataCurve(x=irf.x, y=irf.y)\n" % idx
+        t += "cs.current_fit.update()"
+        mfm.run(t)
+
         self.fwhm = self._irf.fwhm
         current_fit = mfm.cs.current_fit
         for f in current_fit[current_fit._selected_fit:]:
