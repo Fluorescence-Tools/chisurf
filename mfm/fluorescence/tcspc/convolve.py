@@ -1,10 +1,18 @@
-from math import exp, ceil
+from __future__ import annotations
 
+from math import exp, ceil
 import numba as nb
+import numpy as np
 
 
 @nb.jit(nopython=True, nogil=True)
-def fconv(decay, lifetime_spectrum, irf, stop, t):
+def fconv(
+        decay: np.array,
+        lifetime_spectrum: np.array,
+        irf: np.array,
+        stop: int,
+        t: np.array
+):
     """
     :param decay: numpy-array
         the content of this array is overwritten by the y-values after convolution
@@ -35,7 +43,17 @@ def fconv(decay, lifetime_spectrum, irf, stop, t):
 
 
 @nb.jit(nopython=True, nogil=True)
-def fconv_per_cs(decay, lifetime_spectrum, irf, start, stop, n_points, period, dt, conv_stop):
+def fconv_per_cs(
+        decay: np.array,
+        lifetime_spectrum: np.array,
+        irf: np.array,
+        start: int,
+        stop: int,
+        n_points: int,
+        period: float,
+        dt: float,
+        conv_stop: int
+):
     """
 
     :param decay: array of doubles
@@ -99,7 +117,16 @@ def fconv_per_cs(decay, lifetime_spectrum, irf, start, stop, n_points, period, d
 
 
 @nb.jit(nopython=True, nogil=True)
-def fconv_per(decay, lifetime_spectrum, irf, start, stop, n_points, period, dt):
+def fconv_per(
+        decay: np.array,
+        lifetime_spectrum: np.array,
+        irf: np.array,
+        start: int,
+        stop: int,
+        n_points: int,
+        period: float,
+        dt: float
+):
     dt_half = dt * 0.5
     decay *= 0.0
 
@@ -131,7 +158,16 @@ def fconv_per(decay, lifetime_spectrum, irf, start, stop, n_points, period, dt):
 
 
 @nb.jit(nopython=True, nogil=True)
-def fconv_per_dt(decay, lifetime_spectrum, irf, start, stop, n_points, period, time):
+def fconv_per_dt(
+        decay,
+        lifetime_spectrum,
+        irf,
+        start,
+        stop,
+        n_points,
+        period,
+        time
+):
     # TODO: in future adaptive time-axis with increasing bin size
     x = lifetime_spectrum
     n_exp = x.shape[0]/2

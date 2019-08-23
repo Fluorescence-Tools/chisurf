@@ -283,7 +283,7 @@ class Corrections(FittingParameterGroup):
         dead_time = kwargs.get('dead_time', self.dead_time)
         meas_time = kwargs.get('meas_time', self.measurement_time)
         if self.correct_pile_up:
-            mfm.fluorescence.tcspc.corrections.pile_up(data, decay, rep_rate, dead_time, meas_time, verbose=self.verbose)
+            mfm.fluorescence.tcspc.corrections.correct_model_for_pile_up(data, decay, rep_rate, dead_time, meas_time, verbose=self.verbose)
 
     def linearize(
             self,

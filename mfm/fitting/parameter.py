@@ -403,18 +403,21 @@ for f in cs.current_fit:
 class GlobalFittingParameter(FittingParameter):
 
     @property
-    def value(self):
+    def value(self) -> float:
         g = self.g
         f = self.f
         r = eval(self.formula)
         return r.value
 
     @value.setter
-    def value(self, v):
+    def value(
+            self,
+            v: float
+    ):
         pass
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.formula
 
     @name.setter

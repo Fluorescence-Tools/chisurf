@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import List
 
 import weakref
+import numpy as np
 
 import mfm
 import mfm.base
@@ -123,7 +124,6 @@ class Parameter(mfm.base.Base):
             self.controller.finalize()
 
 
-"""
 class ParameterGroup(mfm.base.Base):
 
     def __init__(
@@ -171,6 +171,5 @@ class ParameterGroup(mfm.base.Base):
     @property
     def chi2s(self) -> np.array:
         return np.hstack(self._chi2)
-"""
 
 

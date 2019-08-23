@@ -56,7 +56,7 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
         #    p.finalize()
 
     @property
-    def weighted_residuals(self):
+    def weighted_residuals(self) -> np.array:
         return self.get_wres(self.fit)
 
     @property
@@ -68,7 +68,11 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
         }
         return out
 
-    def get_wres(self, fit, **kwargs):
+    def get_wres(
+            self,
+            fit: mfm.fitting.fit.Fit,
+            **kwargs
+    ) -> np.array:
         f = fit
         xmin = kwargs.get('xmin', f.xmin)
         xmax = kwargs.get('xmax', f.xmax)
@@ -84,11 +88,6 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
     def update(self):
         #self.find_parameters()
         self.update_model()
-
-    def load(self, filename):
-        with open(filename, 'r') as fp:
-            txt = fp.read()
-            self.from_json(txt)
 
     def __str__(self):
         s = ""
@@ -108,7 +107,7 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
 class ModelCurve(Model, mfm.curve.Curve):
 
     @property
-    def n_points(self):
+    def n_points(self) -> int:
         return self.fit.xmax - self.fit.xmin
 
     def __init__(self, fit, *args, **kwargs):
