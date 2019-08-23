@@ -1,10 +1,9 @@
-from __future__  import annotations
+from __future__ import annotations
 from typing import Tuple
 
 from math import sqrt
-
-import numba as nb
 import numpy as np
+import numba as nb
 
 
 def scale_acceptor(donor, acceptor, transfer_efficency):
@@ -179,7 +178,10 @@ def kappa(
     >>> acceptor_dipole = np.array([[0.0, 0.5, 0.0], [0.0, 0.5, 1.0]], dtype=np.float64)
     >>> kappa(donor_dipole, acceptor_dipole)
     """
-    return kappa2_distance(donor_dipole[0], donor_dipole[1], acceptor_dipole[0], acceptor_dipole[1])
+    return kappa2_distance(
+        donor_dipole[0], donor_dipole[1],
+        acceptor_dipole[0], acceptor_dipole[1]
+    )
 
 
 def calculate_kappa_distance(xyz, aid1, aid2, aia1, aia2):
@@ -200,12 +202,14 @@ def calculate_kappa_distance(xyz, aid1, aid2, aia1, aia2):
 
     for i_frame in range(n_frames):
         try:
-            d, k = kappa2_distance(xyz[i_frame, aid1], xyz[i_frame, aid2], xyz[i_frame, aia1], xyz[i_frame, aia2])
+            d, k = kappa2_distance(
+                xyz[i_frame, aid1], xyz[i_frame, aid2],
+                xyz[i_frame, aia1], xyz[i_frame, aia2]
+            )
             ks[i_frame] = k
             ds[i_frame] = d
         except:
-            pass
-            #print "Frame skipped, calculation error"
+            print("Frame ", i_frame, "skipped, calculation error")
 
     return ds, ks
 

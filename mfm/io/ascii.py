@@ -25,6 +25,7 @@ def save_xy(
     :param x: array
     :param y: array
     :param verbose: bool
+    :param header_string:
     :param fmt:
     """
     if verbose:

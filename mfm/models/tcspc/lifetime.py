@@ -375,10 +375,12 @@ class LifetimeModel(ModelCurve):
         Model.finalize(self)
         self.lifetimes.update()
 
-    def decay(self, time):
-        x, l = self.lifetime_spectrum.reshape((self.lifetime_spectrum.shape[0]/2), 2).T
-        f = np.array([np.dot(x, np.exp(- t / l)) for t in time])
-        return f
+    def decay(
+            self,
+            time: np.array
+    ):
+        amplitudes, lifetimes = mfm.fluorescence.general.interleaved_to_two_columns(self.lifetime_spectrum)
+        return np.array([np.dot(amplitudes, np.exp(- t / lifetimes)) for t in time])
 
     def update_model(self, **kwargs):
         verbose = kwargs.get('verbose', mfm.verbose)
