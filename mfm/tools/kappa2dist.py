@@ -3,7 +3,8 @@ from PyQt5 import QtWidgets, uic
 from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
 
-from mfm.fluorescence.anisotropy import kappasqAllDelta, kappasq_all, s2delta
+from mfm.fluorescence.anisotropy import s2delta
+from mfm.fluorescence.anisotropy.kappa2 import kappasqAllDelta, kappasq_all
 from ..fluorescence import general as fluorescence
 
 

@@ -66,14 +66,14 @@ def pq_photons(b, invert_tac=True):
 
 @nb.jit
 def bh132_photons(b, invert_tac=True):
-    """Get the macro-time, micro-time and the routing channel number of a BH132-file contained in a
+    """Get the macros-time, micro-time and the routing channel number of a BH132-file contained in a
     binary numpy-array of 8-bit chars.
 
     :param b: numpy-array
         a numpy array of chars containing the binary information of a
         BH132-file
     :return: list
-        a list containing the number of photons, numpy-array of macro-time (64-bit unsigned integers),
+        a list containing the number of photons, numpy-array of macros-time (64-bit unsigned integers),
         numpy-array of TAC-values (32-bit unsigned integers), numpy-array of channel numbers (8-bit unsigned integers)
     """
     length = (b.shape[0] - 4) / 4

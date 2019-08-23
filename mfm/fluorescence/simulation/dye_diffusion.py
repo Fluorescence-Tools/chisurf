@@ -162,8 +162,8 @@ class DecaySimulationParameter(FittingParameterGroup):
 
     @property
     def dt_mt(self):
-        """The length of each macro-time step (this is used to bring the photon stream to a
-        micro, macro-time form)
+        """The length of each macros-time step (this is used to bring the photon stream to a
+        micro, macros-time form)
         """
         return self._dt_mt.value
 

@@ -11,7 +11,7 @@ from mfm.models.tcspc.nusiance import GenericWidget, CorrectionsWidget, Convolve
 from mfm.models.tcspc.lifetime import Lifetime, LifetimeWidget, LifetimeModel, LifetimeModelWidgetBase
 from mfm.fluorescence.general import distribution2rates, rates2lifetimes
 from mfm.fluorescence import rda_axis
-from mfm.fluorescence.widgets import AnisotropyWidget
+from mfm.models.tcspc.anisotropy import AnisotropyWidget
 from mfm.fitting.parameter import FittingParameter, FittingParameterGroup
 from mfm.fitting.widgets import FittingControllerWidget
 

@@ -6,8 +6,7 @@ from mfm.base import Base
 class Plot(QtWidgets.QWidget, Base):
 
     def __init__(self, fit, parent=None):
-        Base.__init__(self)
-        QtWidgets.QWidget.__init__(self, parent)
+        super(Plot, self).__init__()
         self.parent = parent
         self.fit = fit
         self.pltControl = QtWidgets.QWidget()

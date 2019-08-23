@@ -7,14 +7,21 @@ import mfm
 from mfm.plots import plotbase
 from pyqtgraph.dockarea import *
 
-pyqtgraph_settings = mfm.settings.cs_settings['gui']['plot']["pyqtgraph"]
+pyqtgraph_settings = mfm.settings.pyqtgraph_settings
 color_scheme = mfm.settings.colors
 
 
 class LinePlotControl(QtWidgets.QWidget):
 
-    def __init__(self, parent=None, d_scalex='linear', d_scaley='log', r_scaley='linear',
-                 reference_curve=False, *args, **kwargs):
+    def __init__(
+            self,
+            parent=None,
+            d_scalex: str = 'linear',
+            d_scaley: str = 'log',
+            r_scaley: str = 'linear',
+            reference_curve: bool = False,
+            *args, **kwargs
+    ):
         QtWidgets.QWidget.__init__(self)
         uic.loadUi('mfm/ui/plots/linePlotWidget.ui', self)
         self.parent = parent

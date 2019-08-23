@@ -7,7 +7,7 @@ from matplotlib import cm
 import mfm
 from mfm.plots import plotbase
 
-pyqtgraph_settings = mfm.settings.cs_settings['gui']['plot']["pyqtgraph"]
+from mfm.settings import pyqtgraph_settings
 
 
 class AvPlotControl(QtWidgets.QWidget):

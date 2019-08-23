@@ -322,8 +322,8 @@ def onRMSF(
 
 
 def rmsd(
-        structure_a: mfm.structure.Structure,
-        structure_b: mfm.structure.Structure,
+        structure_a: mfm.structure.structure.Structure,
+        structure_b: mfm.structure.structure.Structure,
         atom_indices=None
 ):
     """Calculates the root-mean-squared deviation between two structures. In case the indices of the atoms are
@@ -360,8 +360,8 @@ def rmsd(
 
 
 def super_impose(
-        structure_ref: mfm.structure.Structure,
-        structure_align: mfm.structure.Structure,
+        structure_ref: mfm.structure.structure.Structure,
+        structure_align: mfm.structure.structure.Structure,
         atom_indices=None
 ):
     """Superimpose two structures
@@ -583,7 +583,12 @@ def count_atoms(topology_dict):
     return n_atoms
 
 
-def average(structures, weights=None, write=True, filename=None):
+def average(
+        structures: List[mfm.structure.structure.Structure],
+        weights=None,
+        write=True,
+        filename=None
+):
     """
     Calculates weighted average of a list of structures.
     saves to filename if write is True

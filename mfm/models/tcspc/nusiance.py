@@ -7,6 +7,10 @@ from PyQt5 import QtCore, QtWidgets, uic
 
 import mfm
 import mfm.cmd
+import mfm.fluorescence.tcspc.convolve
+import mfm.fluorescence.tcspc.corrections
+import mfm.math
+import mfm.fluorescence
 from mfm.curve import Curve
 from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
 from mfm.widgets import CurveSelector
@@ -218,12 +222,16 @@ class Corrections(FittingParameterGroup):
     def reverse(self, v):
         self._reverse = v
 
-    def calc_lintable(self, y, **kwargs):
+    def calc_lintable(
+            self,
+            y,
+            **kwargs
+    ):
         window_function = kwargs.get('window_function', self.window_function)
         window_length = kwargs.get('window_length', self.window_length)
         xmin = kwargs.get('xmin', self.fit.xmin)
         xmax = kwargs.get('xmax', self.fit.xmax)
-        return mfm.fluorescence.tcspc.dnl_table(y, window_length, window_function, xmin, xmax)
+        return mfm.fluorescence.tcspc.corrections.compute_linearization_table(y, window_length, window_function, xmin, xmax)
 
     @property
     def measurement_time(self):
@@ -234,30 +242,44 @@ class Corrections(FittingParameterGroup):
         self.fit.model.generic.t_exp = v
 
     @property
-    def rep_rate(self):
+    def rep_rate(self) -> float:
         return self.fit.model.convolve.rep_rate
 
     @rep_rate.setter
-    def rep_rate(self, v):
+    def rep_rate(
+            self,
+            v: float
+    ):
         self.fit.model.convolve.rep_rate = v
 
     @property
-    def dead_time(self):
+    def dead_time(self) -> float:
         return self._dead_time.value
 
     @dead_time.setter
-    def dead_time(self, v):
+    def dead_time(
+            self,
+            v: float
+    ):
         self._dead_time.value = v
 
-    def pileup(self, decay, **kwargs):
+    def pileup(
+            self,
+            decay: np.array,
+            **kwargs
+    ):
         data = kwargs.get('data', self.fit.data.y)
         rep_rate = kwargs.get('rep_rate', self.rep_rate)
         dead_time = kwargs.get('dead_time', self.dead_time)
         meas_time = kwargs.get('meas_time', self.measurement_time)
         if self.correct_pile_up:
-            mfm.fluorescence.tcspc.pile_up(data, decay, rep_rate, dead_time, meas_time, verbose=self.verbose)
+            mfm.fluorescence.tcspc.corrections.pile_up(data, decay, rep_rate, dead_time, meas_time, verbose=self.verbose)
 
-    def linearize(self, decay, **kwargs):
+    def linearize(
+            self,
+            decay: np.array,
+            **kwargs
+    ):
         lintable = kwargs.get('lintable', self.lintable)
         if lintable is not None and self.correct_dnl:
             return decay * lintable
@@ -287,7 +309,7 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         uic.loadUi("mfm/ui/fitting/models/tcspc/tcspcCorrections.ui", self)
         self.groupBox.setChecked(False)
-        self.comboBox.addItems(mfm.math.signal.windowTypes)
+        self.comboBox.addItems(mfm.math.signal.window_function_types)
         if kwargs.get('hide_corrections', False):
             self.hide()
 
@@ -422,7 +444,7 @@ class Convolve(FittingParameterGroup):
 
     @_irf.setter
     def _irf(self, v):
-        self.n_photons_irf = v.norm(mode="sum")
+        self.n_photons_irf = v.normalize(mode="sum")
         self.__irf = v
         try:
             # Approximate n0 the initial number of donor molecules in the
@@ -487,13 +509,13 @@ class Convolve(FittingParameterGroup):
 
         if mode == "per":
             period = 1000. / rep_rate
-            mfm.fluorescence.tcspc.fconv_per_cs(decay, data, irf_y, start, stop, n_points, period, dt, n_points)
+            mfm.fluorescence.tcspc.convolve.fconv_per_cs(decay, data, irf_y, start, stop, n_points, period, dt, n_points)
             # TODO: in future non linear time-axis (better suited for exponentially decaying data)
             # time = fit.data._x
             # mfm.fluorescence.tcspc.fconv_per_dt(decay, lifetime_spectrum, irf_y, start, stop, n_points, period, time)
         elif mode == "exp":
             t = self.data.x
-            mfm.fluorescence.tcspc.fconv(decay, data, irf_y, stop, t)
+            mfm.fluorescence.tcspc.convolve.fconv(decay, data, irf_y, stop, t)
         elif mode == "full":
             decay = np.convolve(data, irf_y, mode="full")[:n_points]
 

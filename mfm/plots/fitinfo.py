@@ -8,7 +8,11 @@ class FitInfo(plotbase.Plot):
 
     name = "Info"
 
-    def __init__(self, fit, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            **kwargs
+    ):
         mfm.plots.Plot.__init__(self, fit)
         self.pltControl = QtWidgets.QWidget()
         self.layout = QtWidgets.QVBoxLayout(self)

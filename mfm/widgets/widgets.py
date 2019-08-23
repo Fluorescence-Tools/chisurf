@@ -44,7 +44,7 @@ class QIPythonWidget(RichJupyterWidget):
             filename: str = None
     ):
         if filename is None:
-            filename = mfm.widgets.get_filename("Python macro", file_type="Python file (*.py)")
+            filename = mfm.widgets.get_filename("Python macros", file_type="Python file (*.py)")
         with open(filename, mode='r') as fp:
             text = fp.read()
             self.execute(text, hidden=False)
@@ -55,7 +55,7 @@ class QIPythonWidget(RichJupyterWidget):
     ):
         self.stop_recording()
         if filename is None:
-            filename = mfm.widgets.save_file("Python macro", file_type="Python file (*.py)")
+            filename = mfm.widgets.save_file("Python macros", file_type="Python file (*.py)")
         with open(filename, mode='w') as fp:
             fp.write(self._macro)
 

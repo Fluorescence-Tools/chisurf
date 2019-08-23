@@ -52,26 +52,25 @@ class Curve(Base):
             raise ValueError("length of x (%s) and y (%s) differ" % (len(self._x), len(self._y)))
         kwargs['x'] = np.copy(kwargs.get('x', x))
         kwargs['y'] = np.copy(kwargs.get('y', y))
-        #Base.__init__(self, *args, **kwargs)
         super(Curve, self).__init__(*args, **kwargs)
 
-    def norm(
+    def normalize(
             self,
             mode: str = "max",
-            c: mfm.curve.Curve = None
+            curve: mfm.curve.Curve = None
     ):
         factor = 1.0
-        if not isinstance(c, Curve):
+        if not isinstance(curve, Curve):
             if mode == "sum":
                 factor = sum(self.y)
             elif mode == "max":
                 factor = max(self.y)
         else:
             if mode == "sum":
-                factor = sum(self.y) * sum(c.y)
+                factor = sum(self.y) * sum(curve.y)
             elif mode == "max":
                 if max(self.y) != 0:
-                    factor = max(self.y) * max(c.y)
+                    factor = max(self.y) * max(curve.y)
         self.y /= factor
         return factor
 

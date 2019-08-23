@@ -37,7 +37,7 @@ class FittingControllerWidget(QtWidgets.QWidget):
         self.curve_select.update()
 
     def __init__(self, fit=None, **kwargs):
-        QtWidgets.QWidget.__init__(self)
+        super(FittingControllerWidget, self).__init__()
         self.curve_select = mfm.widgets.CurveSelector(
             parent=None, fit=self,
             change_event=self.change_dataset,

@@ -3,7 +3,7 @@ from PyQt5 import QtCore, QtWidgets, uic
 from guiqwt.builder import make
 from guiqwt.plot import CurveDialog, ImageDialog
 
-from mfm.parameter import FittingParameterWidget
+from mfm.fitting.parameter import FittingParameterWidget
 from mfm.plots.plotbase import Plot
 
 

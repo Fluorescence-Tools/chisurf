@@ -108,11 +108,11 @@ class CodeEditor(QWidget):
 
     def run_macro(self):
         self.save_text()
-        print("running macro %s" % self.filename)
+        print("running macros %s" % self.filename)
         mfm.console.run_macro(filename=self.filename)
 
     def save_text(self):
-        print("saving macro")
+        print("saving macros")
         if self.filename is None or self.filename == '':
             self.filename = mfm.widgets.save_file(file_type='Python script (*.py)')
         with open(self.filename, 'w') as fp:

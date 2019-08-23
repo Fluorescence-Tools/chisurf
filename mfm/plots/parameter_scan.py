@@ -7,7 +7,7 @@ import mfm
 from mfm.plots import plotbase
 
 plot_settings = mfm.settings.cs_settings['gui']['plot']
-pyqtgraph_settings = plot_settings["pyqtgraph"]
+pyqtgraph_settings = mfm.settings.pyqtgraph_settings
 colors = plot_settings['colors']
 color_scheme = mfm.settings.colors
 lw = plot_settings['line_width']
@@ -15,7 +15,7 @@ lw = plot_settings['line_width']
 
 class ParameterScanWidget(QtWidgets.QWidget):
     def __init__(self, model, parent):
-        QtWidgets.QWidget.__init__(self)
+        super(ParameterScanWidget, self).__init__()
         uic.loadUi('mfm/ui/plots/parameter_scan.ui', self)
         self.model = model
         self.parent = parent
@@ -88,7 +88,7 @@ class ParameterScanPlot(plotbase.Plot):
     name = "Parameter scan"
 
     def __init__(self, fit, **kwargs):
-        mfm.plots.Plot.__init__(self, fit)
+        super(ParameterScanPlot, self).__init__(fit)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.data_x, self.data_y = None, None
         self.pltControl = ParameterScanWidget(fit.model, self)

@@ -118,7 +118,7 @@ class Main(QMainWindow):
             subwindow.current_plt_ctrl.show()
 
     def onRunMacro(self):
-        filename = mfm.widgets.get_filename("Python macro", file_type="Python file (*.py)")
+        filename = mfm.widgets.get_filename("Python macros", file_type="Python file (*.py)")
         mfm.run("mfm.console.run_macro(filename='%s')" % filename)
 
     def onTileWindows(self):
@@ -297,7 +297,7 @@ class Main(QMainWindow):
             mfm.working_path = mfm.widgets.get_directory(**kwargs)
         else:
             mfm.working_path = directory
-        mfm.console.run_macro('./macro/save_fit.py')
+        mfm.console.run_macro('./macros/save_fit.py')
 
     def __init__(self, *args, **kwargs):
         import mfm.experiments
