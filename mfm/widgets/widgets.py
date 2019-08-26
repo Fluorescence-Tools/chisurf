@@ -16,8 +16,8 @@ import pyqtgraph as pg
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import mfm.curve
-import mfm.experiments
-import mfm.experiments.data
+#import mfm.experiments
+#import mfm.experiments.data
 
 os.environ['PYZMQ_BACKEND'] = 'cython'
 from qtconsole.qtconsoleapp import RichJupyterWidget
