@@ -261,7 +261,6 @@ class FittingParameterWidget(QtWidgets.QWidget):
         decimals = kwargs.pop('decimals', parameter_settings['decimals'])
 
         super(FittingParameterWidget, self).__init__(**kwargs)
-        QtWidgets.QWidget.__init__(self)
         uic.loadUi('mfm/ui/variable_widget.ui', self)
         self.fitting_parameter = fitting_parameter
         self.widget_value = pg.SpinBox(dec=True, decimals=decimals)
