@@ -7,7 +7,8 @@ import mfm.fluorescence.general
 import mfm.math
 from mfm import plots
 from mfm.models import Model
-from mfm.math.optimization import solve_nnls, solve_richardson_lucy, maxent
+from mfm.math.optimization import solve_richardson_lucy, maxent
+from mfm.math.optimization.nnls import solve_nnls
 from mfm.models import LifetimeModel
 
 

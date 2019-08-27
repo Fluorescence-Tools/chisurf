@@ -20,6 +20,7 @@ import mfm.fluorescence.fps as fps
 import mfm.fluorescence.tcspc.convolve
 import mfm.io
 import mfm.math
+import mfm.models.tcspc.widgets
 import mfm.structure
 import mfm.structure.structure
 from mfm import plots
@@ -626,9 +627,9 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
 
     def __init__(self, fit, **kwargs):
         self.verbose = kwargs.get('verbose', mfm.verbose)
-        generic = mfm.models.tcspc.nusiance.GenericWidget(fit=fit, parent=self, model=self, **kwargs)
-        convolve = mfm.models.tcspc.nusiance.ConvolveWidget(fit=fit, model=self, dt=fit.data.dt, **kwargs)
-        corrections = mfm.models.tcspc.nusiance.CorrectionsWidget(fit, model=self, **kwargs)
+        generic = mfm.models.tcspc.widgets.GenericWidget(fit=fit, parent=self, model=self, **kwargs)
+        convolve = mfm.models.tcspc.widgets.ConvolveWidget(fit=fit, model=self, dt=fit.data.dt, **kwargs)
+        corrections = mfm.models.tcspc.widgets.CorrectionsWidget(fit, model=self, **kwargs)
 
         fn = os.path.join(mfm.package_directory, 'settings/dye_diffusion.json')
         settings_file = kwargs.get('dye_diffusion_settings_file', fn)

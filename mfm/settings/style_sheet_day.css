@@ -1,11 +1,9 @@
 *{
-    padding: 1px;
-    margin: 0px;
-    spacing: 0px;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 QPushButton
 {
     border-width: 1px;
-    padding: 1px;
 }
