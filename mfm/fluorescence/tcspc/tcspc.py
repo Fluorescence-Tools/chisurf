@@ -50,7 +50,7 @@ def bin_lifetime_spectrum(
         n_lifetimes: int,
         discriminate: bool,
         discriminator=None
-):
+) -> np.array:
     """Takes a interleaved lifetime spectrum
 
     :param lifetime_spectrum: interleaved lifetime spectrum
