@@ -667,24 +667,9 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
     def change_irf(self):
         idx = self.irf_select.selected_curve_index
-        """
-        mfm.run(
-            mfm.cmd.change_irf(
-                idx,
-                mfm.cs
-            )
-        )
-        """
-        t = "irf = cs.current_fit.model.convolve.irf_select.datasets[%s]\n" \
-            "for f in cs.current_fit[cs.current_fit._selected_fit:]:\n" \
-            "   f.model.convolve._irf = mfm.experiments.data.DataCurve(x=irf.x, y=irf.y)\n" % idx
-        t += "cs.current_fit.update()"
-        mfm.run(t)
-
+        name = self.irf_select.curve_name
+        mfm.run("mfm.cmd.change_irf(%s, '%s')" % (idx, name))
         self.fwhm = self._irf.fwhm
-        current_fit = mfm.cs.current_fit
-        for f in current_fit[current_fit._selected_fit:]:
-            f.model.convolve.lineEdit.setText(self.irf_select.curve_name)
 
     @property
     def fwhm(self) -> float:

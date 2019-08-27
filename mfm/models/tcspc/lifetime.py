@@ -119,11 +119,14 @@ class Lifetime(FittingParameterGroup):
         return len(self._amplitudes)
 
     @property
-    def link(self):
+    def link(self) -> mfm.fitting.parameter.FittingParameter:
         return self._link
 
     @link.setter
-    def link(self, v):
+    def link(
+            self,
+            v: mfm.fitting.parameter.FittingParameter
+    ):
         if isinstance(v, Lifetime) or v is None:
             self._link = v
 
@@ -184,6 +187,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         Lifetime.update(self)
 
     def read_values(self, target):
+
         def linkcall():
             for key in self.parameter_dict:
                 v = target.parameters_all_dict[key].value
@@ -230,23 +234,16 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         Lifetime.__init__(self, **kwargs)
 
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setAlignment(QtCore.Qt.AlignTop)
-        self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.gb = QtWidgets.QGroupBox()
         self.gb.setTitle(title)
         self.lh = QtWidgets.QVBoxLayout()
-        self.lh.setSpacing(0)
-        self.lh.setContentsMargins(0, 0, 0, 0)
         self.gb.setLayout(self.lh)
         self.layout.addWidget(self.gb)
         self._amp_widgets = list()
         self._lifetime_widgets = list()
 
         lh = QtWidgets.QHBoxLayout()
-        lh.setSpacing(0)
-        lh.setContentsMargins(0, 0, 0, 0)
 
         addDonor = QtWidgets.QPushButton()
         addDonor.setText("add")
@@ -294,32 +291,30 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         self.append()
 
     def onNormalizeAmplitudes(self):
-        norm_amp = self.normalize_amplitude.isChecked()
-        mfm.run("cs.current_fit.models.lifetimes.normalize_amplitudes = %s" % norm_amp)
-        mfm.run("cs.current_fit.update()")
+        mfm.run(
+            "mfm.cmd.normalize_lifetime_amplitudes(%s)",
+            self.normalize_amplitude.isChecked()
+        )
 
     def onAbsoluteAmplitudes(self):
-        abs_amp = self.absolute_amplitude.isChecked()
-        mfm.run("cs.current_fit.models.lifetimes.absolute_amplitudes = %s" % abs_amp)
-        mfm.run("cs.current_fit.update()")
+        mfm.run(
+            "mfm.cmd.absolute_amplitudes(%s)",
+            self.absolute_amplitude.isChecked()
+        )
 
     def onAddLifetime(self):
-        t = "for f in cs.current_fit:\n" \
-            "   f.models.%s.append()\n" \
-            "   f.models.update()" % self.name
-        mfm.run(t)
+        mfm.run(
+            "mfm.cmd.add_lifetime('%s')" % self.name
+        )
 
     def onRemoveLifetime(self):
-        t = "for f in cs.current_fit:\n" \
-            "   f.models.%s.pop()\n" \
-            "   f.models.update()" % self.name
-        mfm.run(t)
+        mfm.run(
+            "mfm.cmd.remove_lifetime('%s')" % self.name
+        )
 
     def append(self, *args, **kwargs):
         Lifetime.append(self, *args, **kwargs)
         l = QtWidgets.QHBoxLayout()
-        l.setSpacing(0)
-        l.setContentsMargins(0, 0, 0, 0)
         a = self._amplitudes[-1].make_widget(layout=l)
         t = self._lifetimes[-1].make_widget(layout=l)
         self._amp_widgets.append(a)
@@ -354,31 +349,31 @@ class LifetimeModel(ModelCurve):
         self.convolve = kwargs.get('convolve', Convolve(name='convolve', fit=fit, **kwargs))
 
     @property
-    def species_averaged_lifetime(self):
+    def species_averaged_lifetime(self) -> float:
         return species_averaged_lifetime(self.lifetime_spectrum)
 
     @property
-    def var_lifetime(self):
+    def var_lifetime(self) -> float:
         lx = self.species_averaged_lifetime
         lf = self.fluorescence_averaged_lifetime
         return lx*(lf-lx)
 
     @property
-    def fluorescence_averaged_lifetime(self):
+    def fluorescence_averaged_lifetime(self) -> float:
         return fluorescence_averaged_lifetime(self.lifetime_spectrum, self.species_averaged_lifetime)
 
     @property
-    def lifetime_spectrum(self):
+    def lifetime_spectrum(self) -> np.array:
         return self.lifetimes.lifetime_spectrum
 
-    def finalize(self):
+    def finalize(self) -> None:
         Model.finalize(self)
         self.lifetimes.update()
 
     def decay(
             self,
             time: np.array
-    ):
+    ) -> np.array:
         amplitudes, lifetimes = mfm.fluorescence.general.interleaved_to_two_columns(self.lifetime_spectrum)
         return np.array([np.dot(amplitudes, np.exp(- t / lifetimes)) for t in time])
 
@@ -413,7 +408,12 @@ class LifetimeModel(ModelCurve):
 
 class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
 
-    def __init__(self, fit, icon=None, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            icon=None,
+            **kwargs
+    ):
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
         ModelWidget.__init__(self, fit=fit, icon=icon)
@@ -426,8 +426,6 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
 
         LifetimeModel.__init__(self, fit)
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
         layout.setAlignment(QtCore.Qt.AlignTop)
 
         ## add widgets
@@ -436,8 +434,6 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
             layout.addWidget(generic)
 
         self.layout_parameter = QtWidgets.QVBoxLayout()
-        self.layout_parameter.setContentsMargins(0, 0, 0, 0)
-        self.layout_parameter.setSpacing(0)
 
         layout.addLayout(self.layout_parameter)
         if not hide_nuisances:
@@ -465,28 +461,32 @@ class DecayModel(ModelCurve):
 
     name = "Fluorescence decay models"
 
-    def __init__(self, fit, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            **kwargs
+    ):
         ModelCurve.__init__(self, fit, **kwargs)
         self.generic = kwargs.get('generic', Generic(name='generic', fit=fit, **kwargs))
         self.corrections = kwargs.get('corrections', Corrections(name='corrections', fit=fit, **kwargs))
         self.convolve = kwargs.get('convolve', Convolve(name='convolve', fit=fit, **kwargs))
-        self._decay = None
+        self._y = None
 
     @property
-    def species_averaged_lifetime(self):
+    def species_averaged_lifetime(self) -> float:
         return species_averaged_lifetime([self.times, self.decay], is_lifetime_spectrum=False)
 
     @property
-    def fluorescence_averaged_lifetime(self):
+    def fluorescence_averaged_lifetime(self) -> float:
         return fluorescence_averaged_lifetime([self.times, self.decay], is_lifetime_spectrum=False)
 
     @property
-    def times(self):
+    def times(self) -> np.array:
         return self.fit.data.x
 
     @property
     def decay(self):
-        return self._decay
+        return self._y
 
     def update_model(self, **kwargs):
         verbose = kwargs.get('verbose', mfm.verbose)
