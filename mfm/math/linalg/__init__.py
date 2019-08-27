@@ -265,7 +265,12 @@ def laplace3d_1(c, b=None, dg=1.0):
     return l
 
 
-def solve_richardson_lucy(p, u, d, max_iter):
+def solve_richardson_lucy(
+        p: np.array,
+        u: np.array,
+        d: np.array,
+        max_iter: int
+) -> np.array:
     """
 
     :param p:
