@@ -457,7 +457,6 @@ QMdiSubWindow {
     background: #26292c
 }
 
-/*
 QMdiSubWindow:title{
     text-align: left; !* align the text to the left *!
     background-color: #404040;
@@ -465,4 +464,27 @@ QMdiSubWindow:title{
     border: 3px solid #000000;
     border-radius: 4px;
 }
-*/
+
+QAbstractSpinBox{
+    color: #37b158;
+    font: bold 9px;
+    border: 2px groove gray
+}
+QAbstractSpinBox::up-button{
+    subcontrol-position: top right;
+    width: 4px; height: 6px;
+    background-color: #b600b6;
+    border: 1px groove gray
+}
+QAbstractSpinBox::down-button{
+    subcontrol-position: bottom right;
+    width: 4px; height: 6px;
+    background-color: #b600b6;
+    border: 1px groove gray
+}
+
+QWidget:disabled
+{
+    background-color: #d8d8d8;
+}
+

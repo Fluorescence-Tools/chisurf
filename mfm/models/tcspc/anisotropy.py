@@ -2,6 +2,7 @@ import numpy as np
 from PyQt5 import QtWidgets, QtCore
 
 import mfm
+import mfm.fluorescence
 import mfm.fitting
 import mfm.fitting.parameter
 
@@ -9,48 +10,59 @@ import mfm.fitting.parameter
 class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
 
     @property
-    def r0(self):
+    def r0(self) -> float:
         return self._r0.value
 
     @r0.setter
-    def r0(self, v):
+    def r0(
+            self,
+            v: mfm.fitting.parameter.FittingParameter
+    ):
         self._r0.value = v
 
     @property
-    def l1(self):
+    def l1(self) -> mfm.fitting.parameter.FittingParameter:
         return self._l1.value
 
     @l1.setter
-    def l1(self, v):
+    def l1(
+            self,
+            v: mfm.fitting.parameter.FittingParameter
+    ):
         self._r0.value = v
 
     @property
-    def l2(self):
+    def l2(self) -> mfm.fitting.parameter.FittingParameter:
         return self._l2.value
 
     @l2.setter
-    def l2(self, v):
+    def l2(
+            self,
+            v: mfm.fitting.parameter.FittingParameter
+    ):
         self._l2.value = v
 
     @property
-    def g(self):
+    def g(self) -> mfm.fitting.parameter.FittingParameter:
         return self._g.value
 
     @g.setter
-    def g(self, v):
+    def g(
+            self,
+            v: mfm.fitting.parameter.FittingParameter
+    ):
         self._g.value = v
 
     @property
-    def rho(self):
+    def rho(self) -> np.array:
         r = np.array([rho.value for rho in self._rhos], dtype=np.float64)
-        r *= r
-        r = np.sqrt(r)
+        r = np.sqrt(r**2)
         for i, v in enumerate(r):
             self._rhos[i].value = v
         return r
 
     @property
-    def b(self):
+    def b(self) -> np.array:
         a = np.sqrt(np.array([g.value for g in self._bs]) ** 2)
         a /= a.sum()
         a *= self.r0
@@ -59,32 +71,38 @@ class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
         return a
 
     @property
-    def rotation_spectrum(self):
+    def rotation_spectrum(self) -> np.array:
         rot = np.empty(2 * len(self), dtype=np.float64)
         rot[0::2] = self.b
         rot[1::2] = self.rho
         return rot
 
     @property
-    def polarization_type(self):
+    def polarization_type(self) -> str:
         return self._polarization_type
 
     @polarization_type.setter
-    def polarization_type(self, v):
+    def polarization_type(
+            self,
+            v: str
+    ):
         self._polarization_type = v
 
-    def get_decay(self, lifetime_spectrum):
+    def get_decay(
+            self,
+            lifetime_spectrum: np.array
+    ):
         pt = self.polarization_type.upper()
         a = self.rotation_spectrum
         f = lifetime_spectrum
         if pt == 'VH' or pt == 'VV':
             d = mfm.fluorescence.general.elte2(a, f)
-            vv = np.hstack([f, mfm.fluorescence.generale1tn(d, 2)])
-            vh = mfm.fluorescence.e1tn(np.hstack([f, mfm.fluorescence.e1tn(d, -1)]), self.g)
+            vv = np.hstack([f, mfm.fluorescence.general.e1tn(d, 2)])
+            vh = mfm.fluorescence.general.e1tn(np.hstack([f, mfm.fluorescence.e1tn(d, -1)]), self.g)
         if self.polarization_type.upper() == 'VH':
-            return np.hstack([mfm.fluorescence.e1tn(vv, self.l2), mfm.fluorescence.e1tn(vh, 1 - self.l2)])
+            return np.hstack([mfm.fluorescence.general.e1tn(vv, self.l2), mfm.fluorescence.general.e1tn(vh, 1 - self.l2)])
         elif self.polarization_type.upper() == 'VV':
-            r = np.hstack([mfm.fluorescence.e1tn(vv, 1 - self.l1), mfm.fluorescence.e1tn(vh, self.l1)])
+            r = np.hstack([mfm.fluorescence.general.e1tn(vv, 1 - self.l1), mfm.fluorescence.general.e1tn(vh, self.l1)])
             return r
         else:
             return f
@@ -112,7 +130,7 @@ class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
         self._rhos.append(rho)
         self._bs.append(b)
 
-    def remove_rotation(self):
+    def remove_rotation(self) -> None:
         self._rhos.pop().close()
         self._bs.pop().close()
 

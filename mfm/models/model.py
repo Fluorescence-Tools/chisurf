@@ -50,7 +50,7 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
         for a in self.aggregated_parameters:
             if a is not self:
                 a.finalize()
-        for pa in mfm.parameter.FittingParameter.getinstances():
+        for pa in mfm.fitting.parameter.FittingParameter.getinstances():
             pa.finalize()
         #for p in self.parameters_all:
         #    p.finalize()
