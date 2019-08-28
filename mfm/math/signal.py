@@ -11,7 +11,7 @@ def window(
         data: np.array,
         window_len: int,
         window_function_type: str = 'bartlett'
-):
+) -> np.array:
     """
     smooth the data using a window with requested size.
 
@@ -60,7 +60,12 @@ def window(
     return y[window_len-1:-window_len+1]
 
 
-def autocorr(x, axis=0, fast=False, normalize=True):
+def autocorr(
+        x: np.array,
+        axis: int = 0,
+        fast: bool = False,
+        normalize: bool = True
+) -> np.array:
     """
     Estimate the autocorrelation function of a time series using the FFT.
 
@@ -101,7 +106,13 @@ def autocorr(x, axis=0, fast=False, normalize=True):
         return acf
 
 
-def xcorr_fft(c, d, axis=0, normalize=True, fast=False):
+def xcorr_fft(
+        c: np.array,
+        d: np.array,
+        axis: int = 0,
+        normalize: bool = True,
+        fast: bool = False
+) -> np.array:
     """
 
     :param a:
@@ -128,7 +139,7 @@ def xcorr_fft(c, d, axis=0, normalize=True, fast=False):
 def get_fwhm(
         curve: mfm.curve.Curve,
         **kwargs
-) -> Tuple:
+) -> Tuple[float, Tuple[int, int], Tuple[float, float]]:
     """Calculates the FWHM using a linear-search from both sides of the curve
 
     :param curve:
