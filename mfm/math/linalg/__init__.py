@@ -1,10 +1,16 @@
+from __future__ import annotations
+from typing import List
+
 from math import sin, cos, sqrt
 
 import numba as nb
 import numpy as np
 
 
-def cartesian(arrays, out=None):
+def cartesian(
+        arrays: List[np.array],
+        out=None
+):
     """Generate a cartesian product of input arrays.
 
     :param arrays: list of arrays
@@ -17,7 +23,7 @@ def cartesian(arrays, out=None):
     Examples
     --------
 
-    >>> cartesian(([1, 2, 3], [4, 5], [6, 7]))
+    >>> cartesian([[1, 2, 3], [4, 5], [6, 7]])
     array([[1, 4, 6],
            [1, 4, 7],
            [1, 5, 6],
@@ -50,7 +56,10 @@ def cartesian(arrays, out=None):
 
 
 @nb.jit
-def angle(a, b, c):
+def angle(
+        a: np.array,
+        b: np.array,
+        c: np.array):
     """
     The angle between three vectors
 
@@ -79,7 +88,10 @@ def angle(a, b, c):
 
 
 @nb.jit
-def sq_dist3(u, v):
+def sq_dist3(
+        u: np.array,
+        v: np.array
+):
     r = (u[0]-v[0])**2
     r += (u[1] - v[1]) ** 2
     r += (u[2] - v[2]) ** 2
@@ -87,7 +99,10 @@ def sq_dist3(u, v):
 
 
 @nb.jit
-def cross3(a, b):
+def cross3(
+        a: np.array,
+        b: np.array
+):
     o = np.empty(3, dtype=np.float64)
     o[0] = a[1]*b[2]-a[2]*b[1]
     o[1] = a[2]*b[0]-a[0]*b[2]
@@ -96,7 +111,9 @@ def cross3(a, b):
 
 
 @nb.jit
-def norm3(a):
+def norm3(
+        a: np.array
+):
     """The length of a 3D-vector
 
     :param a:
@@ -106,7 +123,10 @@ def norm3(a):
 
 
 @nb.jit
-def dot3(a, b):
+def dot3(
+        a: np.array,
+        b: np.array
+):
     """Dot product of 2 3D-vectors
 
     :param a:
@@ -121,7 +141,10 @@ def dot3(a, b):
 
 
 @nb.jit()
-def add3(a, b):
+def add3(
+        a: np.array,
+        b: np.array
+):
     """Adds two 3D vectors
 
     :param a:
@@ -136,7 +159,10 @@ def add3(a, b):
 
 
 @nb.jit()
-def sub3(a, b):
+def sub3(
+        a: np.array,
+        b: np.array
+):
     o = np.empty(3, dtype=np.float64)
     o[0] = a[0]-b[0]
     o[1] = a[1]-b[1]
@@ -145,7 +171,10 @@ def sub3(a, b):
 
 
 @nb.jit()
-def dist3(a, b):
+def dist3(
+        a: np.array,
+        b: np.array
+):
     d2 = (a[0] - b[0])**2
     d2 += (a[1] - b[1]) ** 2
     d2 += (a[2] - b[2]) ** 2
@@ -153,7 +182,12 @@ def dist3(a, b):
 
 
 @nb.jit()
-def dihedral(v1, v2, v3, v4):
+def dihedral(
+        v1: np.array,
+        v2: np.array,
+        v3: np.array,
+        v4: np.array
+):
     """Dihedral angle between four-vectors
 
     Given the coordinates of the four points, obtain the vectors b1, b2, and b3 by vector subtraction.

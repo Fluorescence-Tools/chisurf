@@ -159,14 +159,14 @@ def fconv_per(
 
 @nb.jit(nopython=True, nogil=True)
 def fconv_per_dt(
-        decay,
-        lifetime_spectrum,
-        irf,
-        start,
-        stop,
-        n_points,
-        period,
-        time
+        decay: np.array,
+        lifetime_spectrum: np.array,
+        irf: np.array,
+        start: int,
+        stop: int,
+        n_points: int,
+        period: float,
+        time: np.array
 ):
     # TODO: in future adaptive time-axis with increasing bin size
     x = lifetime_spectrum
