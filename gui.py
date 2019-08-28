@@ -158,8 +158,10 @@ class Main(QMainWindow):
             self.comboBox_Model.addItems(model_names)
 
     def onAddFit(self):
-        idxs = [r.row() for r in self.dataset_selector.selectedIndexes()]
-        mfm.run("mfm.cmd.add_fit(model_name='%s', dataset_indices=%s)" % (self.current_model_name, idxs))
+        mfm.run(
+            "mfm.cmd.add_fit(model_name='%s', dataset_indices=%s)" %
+            (self.current_model_name, [r.row() for r in self.dataset_selector.selectedIndexes()])
+        )
 
     def onExperimentChanged(self):
         experiment_name = self.comboBox_experimentSelect.currentText()
@@ -173,8 +175,7 @@ class Main(QMainWindow):
 
     def onLoadFitResults(self, **kwargs):
         filename = mfm.widgets.get_filename(file_type="*.json", description="Load results into fit-models", **kwargs)
-        mfm.run("mfm.fits[%s].models.load('%s')" % (self.fit_idx, filename))
-        mfm.run("mfm.fits[%s].update()" % (self.fit_idx))
+        mfm.run("mfm.cmd.load_fit_result(%s, %s)" % (self.fit_idx, filename))
 
     def onSetupChanged(self):
         mfm.widgets.hide_items_in_layout(self.verticalLayout_5)
@@ -206,24 +207,6 @@ class Main(QMainWindow):
         mfm.widgets.hide_items_in_layout(self.plotOptionsLayout)
         sub_window.close()
 
-    def group_datasets(
-            self,
-            dataset_indices: List[int]
-    ):
-        #selected_data = mfm.data_sets[dataset_numbers]
-        selected_data = [mfm.imported_datasets[i] for i in dataset_indices]
-        if isinstance(selected_data[0], mfm.experiments.data.DataCurve):
-            # TODO: check for double names!!!
-            dg = mfm.experiments.data.ExperimentDataCurveGroup(selected_data, name="Data-Group")
-        else:
-            dg = mfm.experiments.data.ExperimentDataGroup(selected_data, name="Data-Group")
-        dn = list()
-        for d in mfm.imported_datasets:
-            if d not in dg:
-                dn.append(d)
-        dn.append(dg)
-        mfm.imported_datasets = dn
-
     def add_dataset(
             self,
             **kwargs
@@ -241,29 +224,6 @@ class Main(QMainWindow):
         else:
             mfm.imported_datasets.append(dataset_group)
         self.dataset_selector.update()
-
-    @staticmethod
-    def remove_datasets(
-            dataset_indices: List[int]
-    ):
-        dataset_indices = [dataset_indices] if not isinstance(dataset_indices, list) else dataset_indices
-        l = list()
-        for i, d in enumerate(mfm.imported_datasets):
-            if d.name == 'Global-fit':
-                l.append(d)
-                continue
-            if i not in dataset_indices:
-                l.append(d)
-            else:
-                fw = list()
-                for fit_window in mfm.fit_windows:
-                    if fit_window.fit.data is d:
-                        fit_window.close_confirm = False
-                        fit_window.close()
-                    else:
-                        fw.append(fit_window)
-                mfm.fit_windows = fw
-        mfm.imported_datasets = l
 
     def save_fits(self, **kwargs):
         path = kwargs.get('path', mfm.widgets.get_directory(**kwargs))

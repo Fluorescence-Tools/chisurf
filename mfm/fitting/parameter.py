@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Tuple, List
 import deprecation
 
-from PyQt5 import QtWidgets
 import numpy as np
 
 import mfm
@@ -235,7 +234,6 @@ class GlobalFittingParameter(FittingParameter):
         pass
 
     def __init__(self, f, g, formula, **kwargs):
-        #FittingParameter.__init__(self, **kwargs)
         args = [f, g, formula]
         super(GlobalFittingParameter, self).__init__(*args, **kwargs)
         self.f, self.g = f, g
@@ -329,7 +327,9 @@ class FittingParameterGroup(mfm.base.Base):
         self._aggregated_parameters = None
         self._parameters = None
 
-        ag = mfm.find_objects(self.__dict__.values(), FittingParameterGroup)
+        ag = mfm.base.find_objects(
+            self.__dict__.values(), FittingParameterGroup
+        )
         self._aggregated_parameters = ag
 
         ap = list()
@@ -339,7 +339,9 @@ class FittingParameterGroup(mfm.base.Base):
                 self.__dict__[o.name] = o
                 ap += o._parameters
 
-        mp = mfm.find_objects(self.__dict__.values(), parameter_type)
+        mp = mfm.base.find_objects(
+            self.__dict__.values(), parameter_type
+        )
         self._parameters = list(set(mp + ap))
 
     def append_parameter(
@@ -396,27 +398,13 @@ class FittingParameterGroup(mfm.base.Base):
             if isinstance(p0, FittingParameterGroup):
                 self.__dict__ = p0.__dict__
 
-    def to_widget(self, *args, **kwargs) -> FittingParameterGroupWidget:
-        return FittingParameterGroupWidget(self, *args, **kwargs)
+    @deprecation.deprecated(
+        deprecated_in="19.08.23",
+        removed_in="20.01.01",
+        current_version="19.08.23",
+        details="use the mfm.fitting.widget.make_fitting_parameter_group_widget function instead"
+    )
+    def to_widget(self, *args, **kwargs) -> mfm.fitting.widgets.FittingParameterGroupWidget:
+        return mfm.fitting.widgets.FittingParameterGroupWidget(self, *args, **kwargs)
 
 
-class FittingParameterGroupWidget(FittingParameterGroup, QtWidgets.QGroupBox):
-
-    def __init__(
-            self,
-            parameter_group,
-            n_col: int = None,
-            *args, **kwargs):
-        self.parameter_group = parameter_group
-        super(FittingParameterGroupWidget, self).__init__(*args, **kwargs)
-        self.setTitle(self.name)
-        self.n_col = n_col if isinstance(n_col, int) else mfm.settings.cs_settings['gui']['fit_models']['n_columns']
-        self.n_row = 0
-        l = QtWidgets.QGridLayout()
-        self.setLayout(l)
-
-        for i, p in enumerate(parameter_group.parameters_all):
-            pw = p.make_widget()
-            col = i % self.n_col
-            row = i // self.n_col
-            l.addWidget(pw, row, col)

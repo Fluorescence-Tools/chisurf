@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import re
+from typing import ValuesView
+
 import yaml
 from slugify import slugify
 
@@ -213,3 +215,26 @@ def clean_string(
     s = re.sub('^[^a-zA-Z_]+', '', s)
     return s
 
+
+def find_objects(
+        search_list: ValuesView,
+        object_type,
+        remove_double: bool = True):
+    """Traverse a list recursively a an return all objects of type `object_type` as
+    a list
+
+    :param search_list: list
+    :param object_type: an object type
+    :param remove_double: boolean
+    :return: list of objects with certain object type
+    """
+    re = []
+    for value in search_list:
+        if isinstance(value, object_type):
+            re.append(value)
+        elif isinstance(value, list):
+            re += find_objects(value, object_type)
+    if remove_double:
+        return list(set(re))
+    else:
+        return re

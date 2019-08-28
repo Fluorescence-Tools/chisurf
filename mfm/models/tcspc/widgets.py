@@ -28,18 +28,18 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             self.radioButton_3.setVisible(not hide_curve_convolution)
 
         l = QtWidgets.QHBoxLayout()
-        mfm.fitting.widgets.make_fitting_widget(self._dt, layout=l, fixed=True, hide_bounds=True)
-        mfm.fitting.widgets.make_fitting_widget(self._n0, layout=l, fixed=True, hide_bounds=True)
+        mfm.fitting.widgets.make_fitting_parameter_widget(self._dt, layout=l, fixed=True, hide_bounds=True)
+        mfm.fitting.widgets.make_fitting_parameter_widget(self._n0, layout=l, fixed=True, hide_bounds=True)
         self.verticalLayout_2.addLayout(l)
 
         l = QtWidgets.QHBoxLayout()
-        mfm.fitting.widgets.make_fitting_widget(self._start, layout=l)
-        mfm.fitting.widgets.make_fitting_widget(self._stop, layout=l)
+        mfm.fitting.widgets.make_fitting_parameter_widget(self._start, layout=l)
+        mfm.fitting.widgets.make_fitting_parameter_widget(self._stop, layout=l)
         self.verticalLayout_2.addLayout(l)
 
         l = QtWidgets.QHBoxLayout()
-        mfm.fitting.widgets.make_fitting_widget(self._lb, layout=l)
-        mfm.fitting.widgets.make_fitting_widget(self._ts, layout=l)
+        mfm.fitting.widgets.make_fitting_parameter_widget(self._lb, layout=l)
+        mfm.fitting.widgets.make_fitting_parameter_widget(self._ts, layout=l)
         self.verticalLayout_2.addLayout(l)
 
         self._rep.make_widget(layout=self.horizontalLayout_3, text='r[MHz]')
@@ -103,8 +103,8 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         if kwargs.get('hide_corrections', False):
             self.hide()
 
-        mfm.fitting.widgets.make_fitting_widget(self._dead_time, layout=self.horizontalLayout_2, text='t<sub>dead</sub>[ns]')
-        mfm.fitting.widgets.make_fitting_widget(self._window_length, layout=self.horizontalLayout_2, text='t<sub>dead</sub>[ns]')
+        mfm.fitting.widgets.make_fitting_parameter_widget(self._dead_time, layout=self.horizontalLayout_2, text='t<sub>dead</sub>[ns]')
+        mfm.fitting.widgets.make_fitting_parameter_widget(self._window_length, layout=self.horizontalLayout_2, text='t<sub>dead</sub>[ns]')
 
         self.lin_select = CurveSelector(parent=None,
                                         change_event=self.onChangeLin,
@@ -288,13 +288,13 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QWidget):
         self.gb.setLayout(self.lh)
 
         l = QtWidgets.QHBoxLayout()
-        mfm.fitting.widgets.make_fitting_widget(self._r0, text='r0', layout=l, fixed=True)
-        mfm.fitting.widgets.make_fitting_widget(self._g, text='r0', layout=l, fixed=True)
+        mfm.fitting.widgets.make_fitting_parameter_widget(self._r0, text='r0', layout=l, fixed=True)
+        mfm.fitting.widgets.make_fitting_parameter_widget(self._g, text='r0', layout=l, fixed=True)
         self.lh.addLayout(l)
 
         l = QtWidgets.QHBoxLayout()
-        mfm.fitting.widgets.make_fitting_widget(self._l1, text='r0', layout=l, fixed=True, decimals=4)
-        mfm.fitting.widgets.make_fitting_widget(self._l2, text='r0', layout=l, fixed=True, decimals=4)
+        mfm.fitting.widgets.make_fitting_parameter_widget(self._l1, text='r0', layout=l, fixed=True, decimals=4)
+        mfm.fitting.widgets.make_fitting_parameter_widget(self._l2, text='r0', layout=l, fixed=True, decimals=4)
         self.lh.addLayout(l)
 
         self.lh.addLayout(l)

@@ -552,7 +552,7 @@ class CurveSelector(QtWidgets.QTreeWidget):
 
     def onRemoveDataset(self):
         dataset_idx = [selected_index.row() for selected_index in self.selectedIndexes()]
-        mfm.console.execute('cs.remove_datasets(%s)' % dataset_idx)
+        mfm.console.execute('mfm.cmd.remove_datasets(%s)' % dataset_idx)
         self.update()
 
     def onSaveDataset(self):
@@ -561,7 +561,7 @@ class CurveSelector(QtWidgets.QTreeWidget):
 
     def onGroupDatasets(self):
         dg = self.selected_dataset_idx
-        mfm.run("cs.group_datasets(%s)" % dg)
+        mfm.run("mfm.cmd.group_datasets(%s)" % dg)
         self.update()
 
     def onUnGroupDatasets(self):

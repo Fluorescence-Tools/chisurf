@@ -127,8 +127,6 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
         uic.loadUi('mfm/ui/experiments/tcspcTTTRWidget.ui', self.tcspcTTTRWidget)
         self.spcFileWidget = SpcFileWidget(self)
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
         layout.addWidget(self.spcFileWidget)
         layout.addWidget(self.tcspcTTTRWidget)
 
