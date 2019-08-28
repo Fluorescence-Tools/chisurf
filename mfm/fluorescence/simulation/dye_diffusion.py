@@ -7,7 +7,7 @@ from mfm.fluorescence.fps.dynamic import DiffusionSimulation
 
 import mfm
 from mfm.curve import Curve
-from mfm.parameter import ParameterGroup, FittingParameter
+from mfm.fitting import FittingParameterGroup, FittingParameter
 
 
 def simulate_decays(dyes, decay_parameter, simulation_parameter, quenching_parameter, save_decays=True,
@@ -118,7 +118,7 @@ def simulate_fret_decays(donors, acceptors, decay_parameter, simulation_paramete
         return fret_decays, distances, n_donor, n_acceptor
 
 
-class DecaySimulationParameter(ParameterGroup):
+class DecaySimulationParameter(FittingParameterGroup):
 
     @property
     def dt_tac(self):
@@ -162,8 +162,8 @@ class DecaySimulationParameter(ParameterGroup):
 
     @property
     def dt_mt(self):
-        """The length of each macro-time step (this is used to bring the photon stream to a
-        micro, macro-time form)
+        """The length of each macros-time step (this is used to bring the photon stream to a
+        micro, macros-time form)
         """
         return self._dt_mt.value
 
@@ -183,7 +183,7 @@ class DecaySimulationParameter(ParameterGroup):
 
     def __init__(self, dt_mt=100.0, dt_tac=0.032, n_tac=4096, n_curves=4096, n_photons=10e6,
                  decay_mode='photon', **kwargs):
-        ParameterGroup.__init__(self, **kwargs)
+        FittingParameterGroup.__init__(self, **kwargs)
         self._dt_mt = FittingParameter(value=dt_mt, name='dtMT[ns]')
         self._dt_tac = FittingParameter(value=dt_tac, name='dtTAC[ns]')
         self._n_tac = FittingParameter(value=n_tac, name='nTAC')

@@ -1,6 +1,10 @@
 """Qt-Widgets used throughout ChiSURF
 
 """
+from __future__ import annotations
+from typing import List
+
+import inspect
 import fnmatch
 import numbers
 import os
@@ -10,6 +14,10 @@ from datetime import datetime
 
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
+
+import mfm.curve
+#import mfm.experiments
+#import mfm.experiments.data
 
 os.environ['PYZMQ_BACKEND'] = 'cython'
 from qtconsole.qtconsoleapp import RichJupyterWidget
@@ -31,22 +39,32 @@ class QIPythonWidget(RichJupyterWidget):
     def stop_recording(self):
         self.recording = False
 
-    def run_macro(self, filename=None):
+    def run_macro(
+            self,
+            filename: str = None
+    ):
         if filename is None:
-            filename = mfm.widgets.get_filename("Python macro", file_type="Python file (*.py)")
+            filename = mfm.widgets.get_filename("Python macros", file_type="Python file (*.py)")
         with open(filename, mode='r') as fp:
             text = fp.read()
             self.execute(text, hidden=False)
 
-    def save_macro(self, filename=None):
+    def save_macro(
+            self,
+            filename: str = None
+    ):
         self.stop_recording()
         if filename is None:
-            filename = mfm.widgets.save_file("Python macro", file_type="Python file (*.py)")
+            filename = mfm.widgets.save_file("Python macros", file_type="Python file (*.py)")
         with open(filename, mode='w') as fp:
             fp.write(self._macro)
 
-    def execute(self, *args, **kwargs):
-        hidden = kwargs.get('hidden', False)
+    def execute(
+            self,
+            *args,
+            hidden: bool = False,
+            **kwargs
+    ):
         if not hidden:
             try:
                 new_text = args[0] + '\n'
@@ -60,13 +78,22 @@ class QIPythonWidget(RichJupyterWidget):
                 pass
         RichJupyterWidget.execute(self, *args, **kwargs)
 
+    def execute_function(self, fn, *args, **kwargs):
+        """ Gets the function string executes the function on the command line
+
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        t = inspect.getsource(fn)
+        self.execute(t)
+
     def __init__(self, *args, **kwargs):
         RichJupyterWidget.__init__(self, *args, **kwargs)
         self.history_widget = kwargs.get('history_widget', None)
 
         self.kernel_manager = kernel_manager = QtInProcessKernelManager()
-        kernel_manager.start_kernel(show_banner=False)
-        kernel_manager.kernel.gui = 'qt4'
+        kernel_manager.start_kernel()
         self.kernel_client = kernel_client = kernel_manager.client()
         kernel_client.start_channels()
 
@@ -76,20 +103,23 @@ class QIPythonWidget(RichJupyterWidget):
             guisupport.get_app_qt4().exit()
 
         self.exit_requested.connect(stop)
-        self.width = kwargs.get('width', mfm.cs_settings['gui']['console']['width'])
+        self.width = kwargs.get(
+            'width',
+            mfm.settings.cs_settings['gui']['console']['width']
+        )
         self._macro = ""
         self.recording = False
 
         # save nevertheless every inputs into a session file
         filename = datetime.now().strftime('session_%H_%M_%d_%m_%Y.py')
         home = os.path.expanduser("~")
-        path = os.path.abspath(os.path.join(home, './chisurf'))
-        try:
+        path = os.path.abspath(os.path.join(home, './.chisurf'))
+        if not os.path.isdir(path):
             os.makedirs(path)
-        except:
-            print("no new path created")
         self.session_file = os.path.join(path, filename)
-        self.set_default_style(mfm.cs_settings['gui']['console']['style'])
+        self.set_default_style(
+            mfm.settings.cs_settings['gui']['console']['style']
+        )
 
     def pushVariables(self, variableDict):
         """ Given a dictionary containing name / value pairs, push those variables to the IPython console widget """
@@ -105,7 +135,7 @@ class QIPythonWidget(RichJupyterWidget):
 
     def executeCommand(self, command):
         """ Execute a command in the frame of the console widget """
-        self._execute(command, mfm.cs_settings['show_commands'])
+        self._execute(command, mfm.settings.cs_settings['show_commands'])
 
 
 def widgets_in_layout(layout):
@@ -134,7 +164,13 @@ def hide_items_in_layout(layout):
             item.widget().hide()
 
 
-def get_fortune(fortunepath='./mfm/ui/fortune/', min_length=0, max_length=100, attempts=1000, **kwargs):
+def get_fortune(
+        fortunepath: str = './mfm/ui/fortune/',
+        min_length: int = 0,
+        max_length: int = 100,
+        attempts: int = 1000,
+        **kwargs
+):
     fortune_files = [os.path.splitext(pdat)[0] for pdat in os.listdir(fortunepath) if pdat.endswith(".pdat")]
     attempt = 0
     while True:
@@ -157,7 +193,7 @@ def get_fortune(fortunepath='./mfm/ui/fortune/', min_length=0, max_length=100, a
 class AVProperties(QtWidgets.QWidget):
 
     def __init__(self, av_type="AV1"):
-        QtWidgets.QWidget.__init__(self)
+        super(AVProperties, self).__init__()
         uic.loadUi('./mfm/ui/av_property.ui', self)
         self._av_type = av_type
         self.av_type = av_type
@@ -197,15 +233,21 @@ class AVProperties(QtWidgets.QWidget):
         return float(self.doubleSpinBox_2.value())
 
     @linker_width.setter
-    def linker_width(self, v):
+    def linker_width(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_2.setValue(v)
 
     @property
-    def radius_1(self):
+    def radius_1(self) -> float:
         return float(self.doubleSpinBox_3.value())
 
     @radius_1.setter
-    def radius_1(self, v):
+    def radius_1(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_3.setValue(v)
 
     @property
@@ -213,47 +255,65 @@ class AVProperties(QtWidgets.QWidget):
         return float(self.doubleSpinBox_4.value())
 
     @radius_2.setter
-    def radius_2(self, v):
+    def radius_2(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_4.setValue(v)
 
     @property
-    def radius_3(self):
+    def radius_3(self) -> float:
         return float(self.doubleSpinBox_5.value())
 
     @radius_3.setter
-    def radius_3(self, v):
+    def radius_3(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_5.setValue(v)
 
     @property
-    def resolution(self):
+    def resolution(self) -> float:
         return float(self.doubleSpinBox_6.value())
 
     @resolution.setter
-    def resolution(self, v):
+    def resolution(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_6.setValue(v)
 
     @property
-    def initial_linker_sphere(self):
+    def initial_linker_sphere(self) -> float:
         return float(self.doubleSpinBox_7.value())
 
     @initial_linker_sphere.setter
-    def initial_linker_sphere(self, v):
+    def initial_linker_sphere(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_7.setValue(v)
 
     @property
-    def initial_linker_sphere_min(self):
+    def initial_linker_sphere_min(self) -> float:
         return float(self.doubleSpinBox_8.value())
 
     @initial_linker_sphere_min.setter
-    def initial_linker_sphere_min(self, v):
+    def initial_linker_sphere_min(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_8.setValue(v)
 
     @property
-    def initial_linker_sphere_max(self):
+    def initial_linker_sphere_max(self) -> float:
         return float(self.doubleSpinBox_9.value())
 
     @initial_linker_sphere_max.setter
-    def initial_linker_sphere_max(self, v):
+    def initial_linker_sphere_max(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_9.setValue(v)
 
 
@@ -366,8 +426,8 @@ class MyMessageBox(QtWidgets.QMessageBox):
             self.setWindowTitle(label)
         if info is not None:
             self.setDetailedText(info)
-        if mfm.cs_settings['fortune']:
-            fortune = get_fortune(**mfm.cs_settings['fortune'])
+        if mfm.settings.cs_settings['fortune']:
+            fortune = get_fortune(**mfm.settings.cs_settings['fortune'])
             self.setInformativeText(fortune)
             self.exec_()
             self.setMinimumWidth(450)
@@ -492,7 +552,7 @@ class CurveSelector(QtWidgets.QTreeWidget):
 
     def onRemoveDataset(self):
         dataset_idx = [selected_index.row() for selected_index in self.selectedIndexes()]
-        mfm.console.execute('cs.remove_dataset(%s)' % dataset_idx)
+        mfm.console.execute('cs.remove_datasets(%s)' % dataset_idx)
         self.update()
 
     def onSaveDataset(self):
@@ -505,14 +565,14 @@ class CurveSelector(QtWidgets.QTreeWidget):
         self.update()
 
     def onUnGroupDatasets(self):
-        dg = mfm.curve.ExperimentDataGroup(self.selected_datasets)[0]
+        dg = mfm.experiments.data.ExperimentDataGroup(self.selected_datasets)[0]
         dn = list()
-        for i, d in enumerate(mfm.data_sets):
+        for i, d in enumerate(mfm.imported_datasets):
             if d is not dg:
                 dn.append(d)
             else:
                 dn += dg
-        mfm.data_sets = dn
+        mfm.imported_datasets = dn
         self.update()
 
     def contextMenuEvent(self, event):
@@ -543,7 +603,7 @@ class CurveSelector(QtWidgets.QTreeWidget):
             item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 
             # If group of curves
-            if isinstance(d, mfm.curve.ExperimentDataGroup):
+            if isinstance(d, mfm.experiments.data.ExperimentDataGroup):
                 for di in d:
                     fn = di.name
                     widget_name = os.path.basename(fn)
@@ -603,7 +663,15 @@ class CurveSelector(QtWidgets.QTreeWidget):
         # http://python.6.x6.nabble.com/Drag-and-drop-editing-in-QListWidget-or-QListView-td1792540.html
         self.drag_item = None
         self.drag_row = None
-        self.get_data_curves = kwargs.get('get_data_curves', mfm.get_data)
+
+        def get_data_curves(**kwargs):
+            return mfm.experiments.get_data(
+                data_set=mfm.imported_datasets,
+                **kwargs
+            )
+
+        self.get_data_curves = get_data_curves
+
         self.change_event = kwargs.get('change_event', self.change_event)
         self.curve_type = kwargs.get('curve_types', 'experiment')
         self.click_close = kwargs.get('click_close', True)

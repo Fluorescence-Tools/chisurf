@@ -1,6 +1,7 @@
-import os
-import urllib
+from __future__ import annotations
 
+import os
+import urllib.request
 import numpy as np
 
 import mfm
@@ -18,17 +19,17 @@ formats = ['i4', '|U1', 'i4', '|U5',
 
 
 def fetch_pdb_string(
-        id: str
+        pdb_id: str
 ):
-    url = 'http://www.rcsb.org/pdb/files/%s.pdb' % id[:4]
-    return urllib.urlopen(url).read()
+    url = 'http://www.rcsb.org/pdb/files/%s.pdb' % pdb_id[:4]
+    return urllib.request.urlopen(url).read()
 
 
 def fetch_pdb(
-        id: str,
+        pdb_id: str,
         **kwargs
 ):
-    st = fetch_pdb_string(id)
+    st = fetch_pdb_string(pdb_id)
     return parse_string_pdb(st, **kwargs)
 
 
@@ -60,7 +61,7 @@ def assign_element_to_atom_name(
 
 def parse_string_pdb(
         string: str,
-        assignCharge: bool = False,
+        assign_charge: bool = False,
         **kwargs
 ):
     rows = string.splitlines()
@@ -82,7 +83,7 @@ def parse_string_pdb(
             atoms['bfactor'][ni] = line[60:65]
             atoms['element'][ni] = assign_element_to_atom_name(atom_name)
             try:
-                if assignCharge:
+                if assign_charge:
                     if atoms['res_name'][ni] in common.CHARGE_DICT:
                         if atoms['atom_name'][ni] == common.TITR_ATOM_COARSE[atoms['res_name'][ni]]:
                             atoms['charge'][ni] = common.CHARGE_DICT[atoms['res_name'][ni]]
@@ -132,12 +133,13 @@ def parse_string_pqr(
 
 def read(
         filename: str,
-        assignCharge: bool = False,
+        assign_charge: bool = False,
         **kwargs
 ):
     """ Open pdb_file and read each line into pdb (a list of lines)
 
     :param filename:
+    :param assign_charge:
     :return:
         numpy structured array containing the PDB info and VdW-radii and charges
 
@@ -145,7 +147,7 @@ def read(
     --------
 
     >>> import mfm
-    >>> pdb_file = './sample_data/model/hgbp1/hGBP1_closed.pdb'
+    >>> pdb_file = models'
     >>> pdb = mfm.io.pdb_file.read(pdb_file, verbose=True)
     >>> pdb[:5]
     array([ (0, ' ', 7, 'MET', 1, 'N', 'N', [72.739, -17.501, 8.879], 0.0, 1.65, 0.0, 14.0067),
@@ -166,7 +168,7 @@ def read(
             print("Filename: %s" % filename)
             print("Path: %s" % path)
         if filename.endswith('.pdb'):
-            atoms = parse_string_pdb(string, assignCharge, **kwargs)
+            atoms = parse_string_pdb(string, assign_charge, **kwargs)
         elif filename.endswith('.pqr'):
             atoms = parse_string_pqr(string, **kwargs)
     return atoms
@@ -177,7 +179,7 @@ def write(
         atoms=None,
         append_model: bool = False,
         append_coordinates: bool = False,
-        **kwargs
+        verbose: bool = False
 ):
     """ Writes a structured numpy array containing the PDB-info to a PDB-file
 
@@ -188,26 +190,27 @@ def write(
     :param filename: target-filename
     :param atoms: structured numpy array
     :param append_model: bool
-        If True the atoms are appended as a new model
+        If True the atoms are appended as a new models
     :param append_coordinates:
         If True the coordinates are appended to the file
 
     """
     mode = 'a+' if append_model or append_coordinates else 'w+'
-    fp = open(filename, mode)
-
-    # http://cupnet.net/pdb_format/
-    al = ["%-6s%5d %4s%1s%3s %1s%4d%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n" %
-          ("ATOM ", at['atom_id'], at['atom_name'], " ", at['res_name'], at['chain'], at['res_id'], " ",
-           at['coord'][0], at['coord'][1], at['coord'][2], 0.0, at['bfactor'], at['element'], "  ")
-          for at in atoms
-    ]
-    if append_model:
-        fp.write('MODEL')
-    fp.write("".join(al))
-    if append_model:
-        fp.write('ENDMDL')
-    fp.close()
+    if verbose:
+        print("Writing to file: ", filename)
+    with open(filename, mode) as fp:
+        # http://cupnet.net/pdb_format/
+        al = [
+            "%-6s%5d %4s%1s%3s %1s%4d%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n" %
+            ("ATOM ", at['atom_id'], at['atom_name'], " ", at['res_name'], at['chain'], at['res_id'], " ",
+             at['coord'][0], at['coord'][1], at['coord'][2], 0.0, at['bfactor'], at['element'], "  ")
+            for at in atoms
+        ]
+        if append_model:
+            fp.write('MODEL')
+        fp.write("".join(al))
+        if append_model:
+            fp.write('ENDMDL')
 
 
 def write_xyz(
@@ -250,6 +253,15 @@ def write_points(
         mode='xyz',
         density=None
 ):
+    """
+
+    :param filename:
+    :param points:
+    :param verbose:
+    :param mode:
+    :param density:
+    :return:
+    """
     if mode == 'pdb':
         atoms = np.empty(len(points), dtype={'names': keys, 'formats': formats})
         atoms['coord'] = points
@@ -260,7 +272,14 @@ def write_points(
         write_xyz(filename, points, verbose=verbose)
 
 
-def get_atom_index(atoms, chain_identifier, residue_seq_number, atom_name, residue_name, **kwargs):
+def get_atom_index(
+        atoms: np.array,
+        chain_identifier: str,
+        residue_seq_number: int,
+        atom_name: str,
+        residue_name: str,
+        **kwargs
+):
     """
     Get the atom index by the the identifier
 
@@ -310,7 +329,7 @@ def open_dx(
         ro: np.array,
         rn: np.array,
         dr: np.array
-):
+) -> str:
     """ Returns a open_dx string compatible with PyMOL
 
     :param density: 3d-grid with values (densities)
@@ -355,14 +374,19 @@ def write_open_dx(
         dx: float,
         dy: float,
         dz: float
-):
+) -> None:
     """Writes a density into a dx-file
 
     :param filename: output filename
     :param density: 3d-grid with values (densities)
-    :param ro: origin (x, y, z)
-    :param rx, ry, rz: number of grid-points in x, y, z
-    :param dx, dy, dz: grid-size (dx, dy, dz)
+    :param density:
+    :param r0: origin (x, y, z)
+    :param nx:
+    :param ny:
+    :param nz:
+    :param dx:
+    :param dy:
+    :param dz:
 
     :return:
     """

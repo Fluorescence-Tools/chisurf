@@ -1,13 +1,17 @@
-import json
+from __future__ import annotations
 
+import json
+import re
 import yaml
 from slugify import slugify
+
+import mfm
 
 
 class Base(object):
 
     @property
-    def name(self):
+    def name(self) -> str:
         try:
             name = self._kw['name']
             return name() if callable(name) else name
@@ -24,8 +28,8 @@ class Base(object):
     def save(
             self,
             filename: str,
-            file_type: str='json'
-    ):
+            file_type: str = 'json'
+    ) -> None:
         if file_type == "yaml":
             txt = self.to_yaml()
         else:
@@ -37,37 +41,44 @@ class Base(object):
             self,
             filename: str,
             file_type: str = 'json'
-    ):
+    ) -> None:
         if file_type == "json":
             self.from_json(filename=filename)
         else:
             self.from_yaml(filename=filename)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         try:
             return self._kw
         except AttributeError:
             self._kw = dict()
             return self._kw
 
-    def from_dict(self, v):
+    def from_dict(
+            self,
+            v: dict
+    ) -> None:
         self._kw = v
 
     def to_json(
             self,
             indent: int = 4,
             sort_keys: bool = True
-    ):
-        return json.dumps(self.to_dict(), indent=indent, sort_keys=sort_keys)
+    ) -> str:
+        return json.dumps(
+            self.to_dict(),
+            indent=indent,
+            sort_keys=sort_keys
+        )
 
-    def to_yaml(self):
+    def to_yaml(self) -> str:
         return yaml.dump(self.to_dict())
 
     def from_yaml(
             self,
             yaml_string: str = None,
             filename: str = None
-    ):
+    ) -> None:
         if filename is not None:
             with open(filename, 'r') as fp:
                 j = yaml.load(fp)
@@ -81,7 +92,7 @@ class Base(object):
             self,
             json_string: str = None,
             filename: str = None
-    ):
+    ) -> None:
         """Reads the content of a JSON file into the object.
 
         Example
@@ -186,4 +197,19 @@ class Base(object):
         d['verbose'] = d.get('verbose', False)
         self._kw = dict()
         self._kw = d
+
+
+def clean_string(
+        s: str
+) -> str:
+    """ Remove special characters to clean up string and make it compatible
+    with a Python variable names
+
+    :param s:
+    :return:
+    """
+    s = re.sub('[^0-9a-zA-Z_]', '', s)
+    # Remove leading characters until we find a letter or underscore
+    s = re.sub('^[^a-zA-Z_]+', '', s)
+    return s
 

@@ -202,7 +202,7 @@ class ReactionSystem(object):
 
         Example
         =======
-        >>> from mfm.fitting.models.stopped_flow import ReactionSystem
+        >>> from mfm.fitting.model.stopped_flow import ReactionSystem
         >>> rs = ReactionSystem()
         >>> rs.add_reaction(educts=[0], products=[1], educt_stoichiometry=[1], product_stoichometry=[1], rate=2)
         >>> rs.add_reaction(educts=[1], products=[0], educt_stoichiometry=[1], product_stoichometry=[1], rate=1)
@@ -231,7 +231,7 @@ class ReactionSystem(object):
 
         Example
         =======
-        >>> from mfm.fitting.models.stopped_flow import ReactionSystem
+        >>> from mfm.fitting.model.stopped_flow import ReactionSystem
         >>> rs = ReactionSystem()
         >>> rs.add_reaction(educts=[0], products=[1], educt_stoichiometry=[1], product_stoichometry=[1], rate=2)
         >>> rs.add_reaction(educts=[1], products=[0], educt_stoichiometry=[1], product_stoichometry=[1], rate=1)
@@ -296,7 +296,7 @@ class ReactionSystem(object):
 
         Example
         =======
-        >>> from mfm.fitting.models.stopped_flow import ReactionSystem
+        >>> from mfm.fitting.model.stopped_flow import ReactionSystem
         >>> rs = ReactionSystem()
         >>> rs.add_reaction(educts=[0], products=[1], educt_stoichiometry=[1], product_stoichometry=[1], rate=2)
         >>> rs.add_reaction(educts=[1], products=[0], educt_stoichiometry=[1], product_stoichometry=[1], rate=1)

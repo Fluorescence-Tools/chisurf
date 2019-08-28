@@ -1,9 +1,10 @@
 import numpy as np
 from PyQt5 import QtWidgets, uic
-from guiqwt.builder import make
-from guiqwt.plot import CurveDialog
+import pyqtgraph as pg
+import pyqtgraph.dockarea
 
-from mfm.fluorescence.anisotropy import kappasqAllDelta, kappasq_all, s2delta
+from mfm.fluorescence.anisotropy import s2delta
+from mfm.fluorescence.anisotropy.kappa2 import kappasqAllDelta, kappasq_all
 from ..fluorescence import general as fluorescence
 
 
@@ -16,15 +17,17 @@ class Kappa2Dist(QtWidgets.QWidget):
         self.k2 = list()
         uic.loadUi('./mfm/ui/tools/kappa2_dist.ui', self)
         self.kappa2 = kappa2
-        ## Plot
-        win = CurveDialog(edit=True, toolbar=True)
-        plot = win.get_plot()
-        plot.do_autoscale(True)
-        self.kappa2_curve = make.curve([],  [], color="r", linewidth=2)
-        #self.kappa2_curve = make.histogram([], color='#ff00ff')
-        plot.add_item(self.kappa2_curve)
-        self.kappa2_plot = plot
-        self.verticalLayout.addWidget(self.kappa2_plot)
+
+        ## pyqtgraph
+        area = pyqtgraph.dockarea.DockArea()
+        self.verticalLayout.addWidget(area)
+        d1 = pyqtgraph.dockarea.Dock("res", size=(500, 80), hideTitle=True)
+        p1 = pg.PlotWidget()
+        d1.addWidget(p1)
+        area.addDock(d1, 'top')
+        self.kappa2_plot = p1.getPlotItem()
+        self.kappa2_curve = self.kappa2_plot.plot(x=[0.0], y=[0.0], name='kappa2')
+
         ## Connections
         self.pushButton.clicked.connect(self.onUpdateHist)
         self.doubleSpinBox_4.valueChanged.connect(self.onUpdateRapp)
@@ -40,8 +43,8 @@ class Kappa2Dist(QtWidgets.QWidget):
             pass
         self.k2scale = x
         self.k2hist = k2hist
-        self.kappa2_curve.set_data(x[1:], k2hist)
-        self.kappa2_plot.do_autoscale()
+        self.kappa2_curve.setData(x=x[1:], y=k2hist)
+
         self.onUpdateRapp()
 
     def onUpdateRapp(self):

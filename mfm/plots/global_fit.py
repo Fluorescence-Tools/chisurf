@@ -7,7 +7,7 @@ class GlobalFitPlot(Plot):
     name = "Global-Fits"
 
     def __init__(self, fit, logy=False, logx=False):
-        Plot.__init__(self, fit)
+        super(GlobalFitPlot, self).__init__(fit)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.pltControl = QtWidgets.QWidget()
         self.fit = fit

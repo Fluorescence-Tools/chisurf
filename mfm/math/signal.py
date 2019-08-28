@@ -1,12 +1,17 @@
-import numpy as np
+from __future__ import annotations
+from typing import Tuple
 
+import numpy as np
 import mfm
 
-windowTypes = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
+window_function_types = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
 
 
-
-def window(data, window_len, window='bartlett'):
+def window(
+        data: np.array,
+        window_len: int,
+        window_function_type: str = 'bartlett'
+):
     """
     smooth the data using a window with requested size.
 
@@ -22,7 +27,7 @@ def window(data, window_len, window='bartlett'):
 
     :param data: 1D numpy-array (data)
     :param window_len: the dimension of the smoothing window; should be an odd integer
-    :param window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'\
+    :param window_function_type: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'\
                    flat window will produce a moving average smoothing.
     :return: 1D numpy-array (smoothed data)
 
@@ -38,18 +43,18 @@ def window(data, window_len, window='bartlett'):
     if data.size < window_len:
         raise ValueError("Input vector needs to be bigger than window size.")
 
-    if window_len<3:
+    if window_len < 3:
         return data
 
-    if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+    if not window_function_type in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
 
     s = np.r_[2 * data[0] - data[window_len:1:-1], data, 2 * data[-1] - data[-1:-window_len:-1]]
 
-    if window == 'flat': # moving average
-        w = np.ones(window_len,'d')
+    if window_function_type == 'flat': # moving average
+        w = np.ones(window_len, 'd')
     else:
-        w = eval('np.' + window + '(window_len)')
+        w = eval('np.' + window_function_type + '(window_len)')
 
     y = np.convolve(w / w.sum(), s, mode='same')
     return y[window_len-1:-window_len+1]
@@ -120,7 +125,10 @@ def xcorr_fft(c, d, axis=0, normalize=True, fast=False):
         return acf
 
 
-def get_fwhm(curve, **kwargs):
+def get_fwhm(
+        curve: mfm.curve.Curve,
+        **kwargs
+) -> Tuple:
     """Calculates the FWHM using a linear-search from both sides of the curve
 
     :param curve:

@@ -1,7 +1,10 @@
 from PyQt5 import QtWidgets, uic
 
 import mfm.fluorescence
-
+import mfm.fluorescence.general
+from  mfm.fluorescence.general import distance_to_fret_rate_constant, \
+    distance_to_fret_efficiency, fret_efficiency_to_lifetime, \
+    lifetime_to_fret_efficiency, fretrate_to_distance, fret_efficiency_to_distance
 
 class FRETCalculator(QtWidgets.QWidget):
 
@@ -23,44 +26,44 @@ class FRETCalculator(QtWidgets.QWidget):
 
     def onRChanged(self):
         self.blockSignals(True)
-        self.kFRET = mfm.fluorescence.distance_to_fret_rate_constant(self.R, self.R0, self.tau0, 2. / 3.)
-        self.E = mfm.fluorescence.distance_to_fret_efficiency(self.R, self.R0)
-        self.tau = mfm.fluorescence.fret_efficiency_to_lifetime(self.E, self.tau0)
+        self.kFRET = distance_to_fret_rate_constant(self.R, self.R0, self.tau0, 2. / 3.)
+        self.E = distance_to_fret_efficiency(self.R, self.R0)
+        self.tau = fret_efficiency_to_lifetime(self.E, self.tau0)
         self.blockSignals(False)
 
     def onkFRETChanged(self):
         self.blockSignals(True)
-        self.R = mfm.fluorescence.fretrate2distance(self.kFRET, self.R0, self.tau0)
-        self.E = mfm.fluorescence.distance_to_fret_efficiency(self.R, self.R0)
-        self.tau = mfm.fluorescence.fret_efficiency_to_lifetime(self.E, self.tau0)
+        self.R = fretrate_to_distance(self.kFRET, self.R0, self.tau0)
+        self.E = distance_to_fret_efficiency(self.R, self.R0)
+        self.tau = fret_efficiency_to_lifetime(self.E, self.tau0)
         self.blockSignals(False)
 
     def onTauChanged(self):
         self.blockSignals(True)
-        self.E = mfm.fluorescence.lifetime_to_fret_efficiency(self.tau, self.tau0)
-        self.R = mfm.fluorescence.fretrate2distance(self.kFRET, self.R0, self.tau0)
-        self.kFRET = mfm.fluorescence.distance_to_fret_rate_constant(self.R, self.R0, self.tau0)
+        self.E = lifetime_to_fret_efficiency(self.tau, self.tau0)
+        self.R = fretrate_to_distance(self.kFRET, self.R0, self.tau0)
+        self.kFRET = distance_to_fret_rate_constant(self.R, self.R0, self.tau0)
         self.blockSignals(False)
 
     def onEChanged(self):
         self.blockSignals(True)
-        self.R = mfm.fluorescence.fret_efficiency_to_distance(self.E, self.R0)
-        self.kFRET = mfm.fluorescence.distance_to_fret_rate_constant(self.R, self.R0, self.tau0)
-        self.tau = mfm.fluorescence.fret_efficiency_to_lifetime(self.E, self.tau0)
+        self.R = fret_efficiency_to_distance(self.E, self.R0)
+        self.kFRET = distance_to_fret_rate_constant(self.R, self.R0, self.tau0)
+        self.tau = fret_efficiency_to_lifetime(self.E, self.tau0)
         self.blockSignals(False)
 
     def onTau0Changed(self):
         self.blockSignals(True)
-        self.E = mfm.fluorescence.distance_to_fret_efficiency(self.R, self.R0)
-        self.tau = mfm.fluorescence.fret_efficiency_to_lifetime(self.E, self.tau0)
-        self.kFRET = mfm.fluorescence.distance_to_fret_rate_constant(self.R, self.R0, self.tau0)
+        self.E = distance_to_fret_efficiency(self.R, self.R0)
+        self.tau = fret_efficiency_to_lifetime(self.E, self.tau0)
+        self.kFRET = distance_to_fret_rate_constant(self.R, self.R0, self.tau0)
         self.blockSignals(False)
 
     def onR0Changed(self):
         self.blockSignals(True)
-        self.E = mfm.fluorescence.distance_to_fret_efficiency(self.R, self.R0)
-        self.tau = mfm.fluorescence.fret_efficiency_to_lifetime(self.E, self.tau0)
-        self.kFRET = mfm.fluorescence.distance_to_fret_rate_constant(self.R, self.R0, self.tau0)
+        self.E = distance_to_fret_efficiency(self.R, self.R0)
+        self.tau = fret_efficiency_to_lifetime(self.E, self.tau0)
+        self.kFRET = distance_to_fret_rate_constant(self.R, self.R0, self.tau0)
         self.blockSignals(False)
 
 

@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import *
 
 import mfm
 
-editor_settings = mfm.cs_settings['gui']['editor']
+#editor_settings = mfm.settings.cs_settings['gui']['editor']
 
 
 class SimplePythonEditor(QsciScintilla):
@@ -27,7 +27,9 @@ class SimplePythonEditor(QsciScintilla):
         font = QFont()
         font.setFamily('Courier')
         font.setFixedPitch(True)
-        font.setPointSize(editor_settings['font_size'])
+        font.setPointSize(
+            mfm.settings.cs_settings['gui']['editor']['font_size']
+        )
         self.setFont(font)
         self.setMarginsFont(font)
 
@@ -36,7 +38,11 @@ class SimplePythonEditor(QsciScintilla):
         self.setMarginsFont(font)
         self.setMarginWidth(0, fontmetrics.width("0000") + 6)
         self.setMarginLineNumbers(0, True)
-        self.setMarginsBackgroundColor(QColor(editor_settings['MarginsBackgroundColor']))
+        self.setMarginsBackgroundColor(
+            QColor(
+                mfm.settings.cs_settings['gui']['editor']['MarginsBackgroundColor']
+            )
+        )
 
         # Clickable margin 1 for showing markers
         self.setMarginSensitivity(1, True)
@@ -45,7 +51,7 @@ class SimplePythonEditor(QsciScintilla):
 #            self.on_margin_clicked)
         self.markerDefine(QsciScintilla.RightArrow,
             self.ARROW_MARKER_NUM)
-        self.setMarkerBackgroundColor(QColor(editor_settings['MarkerBackgroundColor']),
+        self.setMarkerBackgroundColor(QColor(mfm.settings.cs_settings['gui']['editor']['MarkerBackgroundColor']),
             self.ARROW_MARKER_NUM)
 
         # Brace matching: enable for a brace immediately before or after
@@ -55,7 +61,7 @@ class SimplePythonEditor(QsciScintilla):
 
         # Current line visible with special background color
         self.setCaretLineVisible(True)
-        self.setCaretLineBackgroundColor(QColor(editor_settings['CaretLineBackgroundColor']))
+        self.setCaretLineBackgroundColor(QColor(mfm.settings.cs_settings['gui']['editor']['CaretLineBackgroundColor']))
 
         # Set Python lexer
         # Set style for Python comments (style number 1) to a fixed-width
@@ -102,11 +108,11 @@ class CodeEditor(QWidget):
 
     def run_macro(self):
         self.save_text()
-        print("running macro %s" % self.filename)
+        print("running macros %s" % self.filename)
         mfm.console.run_macro(filename=self.filename)
 
     def save_text(self):
-        print("saving macro")
+        print("saving macros")
         if self.filename is None or self.filename == '':
             self.filename = mfm.widgets.save_file(file_type='Python script (*.py)')
         with open(self.filename, 'w') as fp:

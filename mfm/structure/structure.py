@@ -322,8 +322,8 @@ def onRMSF(
 
 
 def rmsd(
-        structure_a: mfm.structure.Structure,
-        structure_b: mfm.structure.Structure,
+        structure_a: mfm.structure.structure.Structure,
+        structure_b: mfm.structure.structure.Structure,
         atom_indices=None
 ):
     """Calculates the root-mean-squared deviation between two structures. In case the indices of the atoms are
@@ -360,8 +360,8 @@ def rmsd(
 
 
 def super_impose(
-        structure_ref: mfm.structure.Structure,
-        structure_align: mfm.structure.Structure,
+        structure_ref: mfm.structure.structure.Structure,
+        structure_align: mfm.structure.structure.Structure,
         atom_indices=None
 ):
     """Superimpose two structures
@@ -447,7 +447,7 @@ def get_coordinates_of_residues(atoms, quencher, verbose=False):
     --------
 
     >>> import mfm
-    >>> pdb_file = './sample_data/model/hgbp1/hGBP1_closed.pdb'
+    >>> pdb_file = models
     >>> pdb = mfm.io.pdb_file.read(pdb_file, verbose=True)
     Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb
     ======================================
@@ -489,7 +489,7 @@ def get_atom_index_of_residue_types(pdb, res_types, verbose=False):
     --------
 
     >>> import mfm
-    >>> pdb_file = './sample_data/model/hgbp1/hGBP1_closed.pdb'
+    >>> pdb_file = models
     >>> pdb = mfm.io.PDB.read(pdb_file, verbose=True)
     Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb
     ======================================
@@ -559,7 +559,7 @@ def sequence(structure_obj):
 
     :param structure_obj: Structure
     """
-    # Check to see if there are multiple models.  If there are, only look
+    # Check to see if there are multiple model.  If there are, only look
     # at the first model.
     p = structure_obj.atoms
     atoms = [a for a in p if a['atom_name'] == "CA "]
@@ -583,7 +583,12 @@ def count_atoms(topology_dict):
     return n_atoms
 
 
-def average(structures, weights=None, write=True, filename=None):
+def average(
+        structures: List[mfm.structure.structure.Structure],
+        weights=None,
+        write=True,
+        filename=None
+):
     """
     Calculates weighted average of a list of structures.
     saves to filename if write is True

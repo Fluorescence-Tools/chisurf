@@ -5,56 +5,55 @@ import numba as nb
 import numpy as np
 
 
-def hist2func(x, H, binEdges):
+def histogram_rebin(
+        bin_edges: np.array,
+        counts: np.array,
+        new_bin_edges: np.array
+):
     """
     Extrapolation of a histogram to a new x-axis. Here the parameter x can be any
     numpy array as return value another array is obtained containing the values
     of the histogram at the given x-values. This function may be useful if the spacing
     of a histogram has to be changed.
 
-    :param x: array
-    :param H: array
+    :param new_bin_edges: array
+    :param counts: array
         Histogram values
-    :param binEdges: array
+    :param bin_edges: array
         The bin edges of the histogram
     :return: A list of the same size as the parameter x
 
     Examples
     --------
 
-    >>> H = np.array([0,2,1])
-    >>> binEdges = np.array([0,5,10,15])
+    >>> counts = np.array([0,2,1])
+    >>> bin_edges = np.array([0,5,10,15])
 
-    >>> x = np.linspace(-5, 20, 17)
-    >>> x
+    >>> new_bin_edges = np.linspace(-5, 20, 17)
+    >>> new_bin_edges
     array([ -5.    ,  -3.4375,  -1.875 ,  -0.3125,   1.25  ,   2.8125,
              4.375 ,   5.9375,   7.5   ,   9.0625,  10.625 ,  12.1875,
             13.75  ,  15.3125,  16.875 ,  18.4375,  20.    ])
-    >>> y = hist2func(x, H, binEdges)
+    >>> y = histogram_rebin(bin_edges, counts, new_bin_edges)
     [0.0, 0.0, 0.0, 0.0, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0.0, 0.0, 0.0, 0.0]
     """
-
-    if type(x) == float or np.float:
-        x = np.array([x])
-    if type(x) == list:
-        x = np.array(x).flatten()
     re = []
-    if type(x) == np.ndarray:
-        for xi in x.flatten():
-            if xi > max(binEdges) or xi < min(binEdges):
-                re.append(0.0)
-            else:
-                sel = np.where(xi<binEdges)
-                re.append(H[sel[0][0]-1])
-        if len(re) == 1:
-            return re[0]
+    for xi in new_bin_edges.flatten():
+        if xi > max(bin_edges) or xi < min(bin_edges):
+            re.append(0.0)
         else:
-            return re
+            sel = np.where(xi < bin_edges)
+            re.append(counts[sel[0][0] - 1])
+    if len(re) == 1:
+        return re[0]
     else:
-        raise TypeError('unknon input type')
+        return re
 
 
-def overlapping_region(dataset1, dataset2):
+def overlapping_region(
+        dataset1,
+        dataset2
+):
     """
 
     :param dataset1: tuple
