@@ -4,6 +4,8 @@ import numpy as np
 from PyQt5 import QtWidgets
 
 import mfm
+import mfm.widgets
+import mfm.fluorescence
 import mfm.experiments
 import mfm.experiments.data
 from mfm.io.widgets import CsvWidget

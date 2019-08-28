@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TypeVar
+from typing import TypeVar, Tuple
 
 import numbers
 from copy import copy
@@ -12,7 +12,7 @@ import mfm.decorators
 from mfm.base import Base
 from mfm.math.signal import get_fwhm
 
-A = TypeVar('A', mfm.curve.Curve, float)
+T = TypeVar('T', bound='Curve')
 
 
 class Curve(Base):
@@ -22,7 +22,7 @@ class Curve(Base):
         return get_fwhm(self)[0]
 
     @property
-    def cdf(self) -> mfm.curve.Curve:
+    def cdf(self) -> Curve:
         """Cumulative sum of function
         """
         return self.__class__(
@@ -78,8 +78,8 @@ class Curve(Base):
 
     def __add__(
             self,
-            c: A
-    ):
+            c: T
+    ) -> Curve:
         y = copy(np.array(self.y, dtype=np.float64))
         if isinstance(c, numbers.Real):
             y += c
@@ -90,8 +90,8 @@ class Curve(Base):
 
     def __sub__(
             self,
-            c: A
-    ):
+            c: T
+    ) -> Curve:
         y = copy(np.array(self.y, dtype=np.float64))
         if isinstance(c, numbers.Real):
             y -= c
@@ -102,8 +102,8 @@ class Curve(Base):
 
     def __mul__(
             self,
-            c: A
-    ):
+            c: T
+    ) -> Curve:
         y = copy(np.array(self.y, dtype=np.float64))
         if isinstance(c, numbers.Real):
             y *= c
@@ -114,8 +114,8 @@ class Curve(Base):
 
     def __div__(
             self,
-            c: A
-    ):
+            c: T
+    ) -> Curve:
         y = copy(np.array(self.y, dtype=np.float64))
         if isinstance(c, numbers.Real):
             y /= c
@@ -126,8 +126,8 @@ class Curve(Base):
 
     def __lshift__(
             self,
-            c: A
-    ):
+            c: T
+    ) -> Curve:
         if isinstance(c, numbers.Real):
             ts = -c
             tsi = int(np.floor(ts))
@@ -142,10 +142,10 @@ class Curve(Base):
         else:
             return self
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.y)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> Tuple[float, float]:
         x = self.x.__getitem__(key)
         y = self.y.__getitem__(key)
         return x, y

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import List
 
 import os
 import sys
@@ -15,15 +16,20 @@ class Main(QMainWindow):
         return self.dataset_selector.selected_dataset
 
     @current_dataset.setter
-    def current_dataset(self, v):
-        self.dataset_selector.selected_curve_index = v
+    def current_dataset(
+            self,
+            dataset_index: int
+    ):
+        self.dataset_selector.selected_curve_index = dataset_index
 
     @property
     def current_model_class(self):
-        return self.current_dataset.experiment.model_classes[self.comboBox_Model.currentIndex()]
+        return self.current_dataset.experiment.model_classes[
+            self.comboBox_Model.currentIndex()
+        ]
 
     @property
-    def fit_idx(self):
+    def fit_idx(self) -> int:
         subwindow = self.mdiarea.currentSubWindow()
         if subwindow is not None:
             for fit_idx, f in enumerate(mfm.fits):
@@ -33,11 +39,14 @@ class Main(QMainWindow):
             return None
 
     @property
-    def current_experiment_idx(self):
+    def current_experiment_idx(self) -> int:
         return self.comboBox_experimentSelect.currentIndex()
 
     @current_experiment_idx.setter
-    def current_experiment_idx(self, v):
+    def current_experiment_idx(
+            self,
+            v: int
+    ):
         self.comboBox_experimentSelect.setCurrentIndex(v)
 
     @property
@@ -45,7 +54,10 @@ class Main(QMainWindow):
         return mfm.experiment[self.current_experiment_idx]
 
     @current_experiment.setter
-    def current_experiment(self, name):
+    def current_experiment(
+            self,
+            name: str
+    ) -> None:
         p = self.comboBox_experimentSelect.currentIndex()
         n = p
         for n, e in enumerate(mfm.experiment):
@@ -55,11 +67,14 @@ class Main(QMainWindow):
             self.current_experiment_idx = n
 
     @property
-    def current_setup_idx(self):
+    def current_setup_idx(self) -> int:
         return self.comboBox_setupSelect.currentIndex()
 
     @current_setup_idx.setter
-    def current_setup_idx(self, v):
+    def current_setup_idx(
+            self,
+            v: int
+    ):
         self.comboBox_setupSelect.setCurrentIndex(v)
 
     @property
@@ -67,7 +82,10 @@ class Main(QMainWindow):
         return self.current_experiment.setups[self.current_experiment_idx]
 
     @current_setup.setter
-    def current_setup(self, name):
+    def current_setup(
+            self,
+            name: str
+    ):
         i = self.current_setup_idx
         j = i
         setups = self.current_experiment.get_setups()
@@ -78,7 +96,7 @@ class Main(QMainWindow):
             self.current_setup_idx = j
 
     @property
-    def current_model_name(self):
+    def current_model_name(self) -> str:
         return str(self.comboBox_Model.currentText())
 
     def closeEvent(self, event):
@@ -141,38 +159,7 @@ class Main(QMainWindow):
 
     def onAddFit(self):
         idxs = [r.row() for r in self.dataset_selector.selectedIndexes()]
-        mfm.run("cs.add_fit(model_name='%s', dataset_idx=%s)" % (self.current_model_name, idxs))
-
-    def add_fit(self, **kwargs):
-        dataset_idx = kwargs.get('dataset_idx', [self.dataset_selector.selected_curve_index])
-        datasets = [self.dataset_selector.datasets[i] for i in dataset_idx]
-        model_name = kwargs.get('model_name', self.current_model_name)
-
-        model_names = datasets[0].experiment.model_names
-        model_class = datasets[0].experiment.model_classes[0]
-        for model_idx, mn in enumerate(model_names):
-            if mn == model_name:
-                model_class = datasets[0].experiment.model_classes[model_idx]
-                break
-
-        for data_set in datasets:
-            if data_set.experiment is datasets[0].experiment:
-                if not isinstance(data_set, mfm.experiments.data.DataGroup):
-                    data_set = mfm.experiments.data.ExperimentDataCurveGroup(data_set)
-                fit = mfm.fitting.fit.FitGroup(data=data_set, model_class=model_class)
-                mfm.fits.append(fit)
-                fit.model.find_parameters()
-                fit_control_widget = mfm.fitting.widgets.FittingControllerWidget(fit)
-
-                self.modelLayout.addWidget(fit_control_widget)
-                for f in fit:
-                    self.modelLayout.addWidget(f.model)
-                fit_window = mfm.fitting.widgets.FitSubWindow(fit,
-                                                      control_layout=self.plotOptionsLayout,
-                                                      fit_widget=fit_control_widget)
-                fit_window = self.mdiarea.addSubWindow(fit_window)
-                mfm.fit_windows.append(fit_window)
-                fit_window.show()
+        mfm.run("mfm.cmd.add_fit(model_name='%s', dataset_indices=%s)" % (self.current_model_name, idxs))
 
     def onExperimentChanged(self):
         experiment_name = self.comboBox_experimentSelect.currentText()
@@ -203,15 +190,10 @@ class Main(QMainWindow):
         mfm.fits = []
         mfm.fit_windows = []
 
-    def close_fit(self, idx=None):
-        """
-        
-        :param idx: 
-        :return:
-        
-        >>> print(1)
-        1
-        """
+    def close_fit(
+            self,
+            idx: int = None
+    ):
         if idx is None:
             sub_window = self.mdiarea.currentSubWindow()
             for i, w in enumerate(mfm.fit_windows):
@@ -224,13 +206,12 @@ class Main(QMainWindow):
         mfm.widgets.hide_items_in_layout(self.plotOptionsLayout)
         sub_window.close()
 
-    def group_datasets(self, dataset_numbers):
-        """
-        :param dataset_numbers: list of datasets
-        :return: 
-        """
+    def group_datasets(
+            self,
+            dataset_indices: List[int]
+    ):
         #selected_data = mfm.data_sets[dataset_numbers]
-        selected_data = [mfm.imported_datasets[i] for i in dataset_numbers]
+        selected_data = [mfm.imported_datasets[i] for i in dataset_indices]
         if isinstance(selected_data[0], mfm.experiments.data.DataCurve):
             # TODO: check for double names!!!
             dg = mfm.experiments.data.ExperimentDataCurveGroup(selected_data, name="Data-Group")
@@ -243,7 +224,10 @@ class Main(QMainWindow):
         dn.append(dg)
         mfm.imported_datasets = dn
 
-    def add_dataset(self, **kwargs):
+    def add_dataset(
+            self,
+            **kwargs
+    ):
         setup = kwargs.get('setup', self.current_setup)
         dataset = kwargs.pop('dataset', None)
         if dataset is None:
@@ -258,14 +242,17 @@ class Main(QMainWindow):
             mfm.imported_datasets.append(dataset_group)
         self.dataset_selector.update()
 
-    def remove_dataset(self, idx):
-        idx = [idx] if not isinstance(idx, list) else idx
+    @staticmethod
+    def remove_datasets(
+            dataset_indices: List[int]
+    ):
+        dataset_indices = [dataset_indices] if not isinstance(dataset_indices, list) else dataset_indices
         l = list()
         for i, d in enumerate(mfm.imported_datasets):
             if d.name == 'Global-fit':
                 l.append(d)
                 continue
-            if i not in idx:
+            if i not in dataset_indices:
                 l.append(d)
             else:
                 fw = list()
@@ -419,7 +406,7 @@ class Main(QMainWindow):
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetAnalysis)
         self.tabifyDockWidget(self.dockWidgetAnalysis, self.dockWidgetPlot)
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetFits)
-        #self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
+        self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
         self.editor = mfm.widgets.CodeEditor()
         self.verticalLayout_10.addWidget(self.editor)
 
@@ -490,7 +477,11 @@ class Main(QMainWindow):
                 mfm.experiments.fcs.FCSCsv(experiment=mfm.experiments.fcs)
             ]
         )
-        #fcs.add_models(mfm.fitting.model.fcs.models)
+        fcs.add_models(
+            models=[
+                mfm.models.fcs.ParseFCSWidget
+            ]
+        )
         mfm.experiment.append(fcs)
 
         global_fit = mfm.experiments.experiment.Experiment('Global')

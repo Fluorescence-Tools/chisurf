@@ -26,13 +26,19 @@ class Experiment(mfm.base.Base):
     def model_names(self):
         return self.get_model_names()
 
-    def __init__(self, name, *args, **kwargs):
+    def __init__(
+            self,
+            name: str,
+            *args, **kwargs):
         super(Experiment, self).__init__(name, *args, **kwargs)
         self.name = name
         self.model_classes = list()
         self._setups = list()
 
-    def add_model(self, model):
+    def add_model(
+            self,
+            model
+    ):
         self.model_classes.append(model)
 
     def add_models(self, models):
