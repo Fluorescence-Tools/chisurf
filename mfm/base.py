@@ -4,7 +4,6 @@ import json
 import os.path
 import re
 import zlib
-
 import yaml
 from slugify import slugify
 
@@ -14,7 +13,7 @@ import mfm
 class Base(object):
 
     @property
-    def name(self):
+    def name(self) -> str:
         try:
             name = self._kw['name']
             return name() if callable(name) else name
@@ -32,7 +31,7 @@ class Base(object):
             self,
             filename: str,
             file_type: str = 'json'
-    ):
+    ) -> None:
         if file_type == "yaml":
             txt = self.to_yaml()
         else:
@@ -44,13 +43,13 @@ class Base(object):
             self,
             filename: str,
             file_type: str = 'json'
-    ):
+    ) -> None:
         if file_type == "json":
             self.from_json(filename=filename)
         else:
             self.from_yaml(filename=filename)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         try:
             return self._kw
         except AttributeError:
@@ -60,24 +59,28 @@ class Base(object):
     def from_dict(
             self,
             v: dict
-    ):
+    ) -> None:
         self._kw = v
 
     def to_json(
             self,
             indent: int = 4,
             sort_keys: bool = True
-    ):
-        return json.dumps(self.to_dict(), indent=indent, sort_keys=sort_keys)
+    ) -> str:
+        return json.dumps(
+            self.to_dict(),
+            indent=indent,
+            sort_keys=sort_keys
+        )
 
-    def to_yaml(self):
+    def to_yaml(self) -> str:
         return yaml.dump(self.to_dict())
 
     def from_yaml(
             self,
             yaml_string: str = None,
             filename: str = None
-    ):
+    ) -> None:
         if filename is not None:
             with open(filename, 'r') as fp:
                 j = yaml.load(fp)
@@ -91,7 +94,7 @@ class Base(object):
             self,
             json_string: str = None,
             filename: str = None
-    ):
+    ) -> None:
         """Reads the content of a JSON file into the object.
 
         Example
@@ -198,21 +201,6 @@ class Base(object):
         self._kw = d
 
 
-def clean_string(
-        s: str
-) -> str:
-    """ Remove special characters to clean up string and make it compatible
-    with a Python variable names
-
-    :param s:
-    :return:
-    """
-    s = re.sub('[^0-9a-zA-Z_]', '', s)
-    # Remove leading characters until we find a letter or underscore
-    s = re.sub('^[^a-zA-Z_]+', '', s)
-    return s
-
-
 class Data(Base):
 
     def __init__(self, *args, **kwargs):
@@ -223,13 +211,13 @@ class Data(Base):
         self._max_file_size = mfm.settings.cs_settings['database']['read_file_size_limit']
 
     @property
-    def data(self) -> mfm.curve.Data:
+    def data(self) -> mfm.experiments.data.Data:
         return self._data
 
     @data.setter
     def data(
             self,
-            v: mfm.curve.Data
+            v: mfm.experiments.data.Data
     ):
         self._data = v
 
@@ -258,7 +246,7 @@ class Data(Base):
     def filename(
             self,
             v: str
-    ):
+    ) -> None:
         self._filename = os.path.normpath(v)
         file_size = os.path.getsize(self._filename)
         if file_size < self._max_file_size and self._embed_data:
@@ -279,3 +267,19 @@ class Data(Base):
         s = Base.__str__(self)
         s += "filename: %s\n" % self.filename
         return s
+
+
+def clean_string(
+        s: str
+) -> str:
+    """ Remove special characters to clean up string and make it compatible
+    with a Python variable names
+
+    :param s:
+    :return:
+    """
+    s = re.sub('[^0-9a-zA-Z_]', '', s)
+    # Remove leading characters until we find a letter or underscore
+    s = re.sub('^[^a-zA-Z_]+', '', s)
+    return s
+

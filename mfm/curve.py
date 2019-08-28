@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import TypeVar
 
 import numbers
 from copy import copy
@@ -11,6 +12,8 @@ import mfm.decorators
 from mfm.base import Base
 from mfm.math.signal import get_fwhm
 
+A = TypeVar('A', mfm.curve.Curve, float)
+
 
 class Curve(Base):
 
@@ -22,11 +25,10 @@ class Curve(Base):
     def cdf(self) -> mfm.curve.Curve:
         """Cumulative sum of function
         """
-        y = self.y
-        ys = np.cumsum(y)
-        x = self.x
-        c = self.__class__(x=x, y=ys)
-        return c
+        return self.__class__(
+            x=self.x,
+            y=np.cumsum(self.y)
+        )
 
     def to_dict(self) -> dict:
         d = Base.to_dict(self)
@@ -74,7 +76,10 @@ class Curve(Base):
         self.y /= factor
         return factor
 
-    def __add__(self, c):
+    def __add__(
+            self,
+            c: A
+    ):
         y = copy(np.array(self.y, dtype=np.float64))
         if isinstance(c, numbers.Real):
             y += c
@@ -83,7 +88,10 @@ class Curve(Base):
         x = copy(self.x)
         return self.__class__(x=x, y=y)
 
-    def __sub__(self, c):
+    def __sub__(
+            self,
+            c: A
+    ):
         y = copy(np.array(self.y, dtype=np.float64))
         if isinstance(c, numbers.Real):
             y -= c
@@ -92,7 +100,10 @@ class Curve(Base):
         x = copy(self.x)
         return self.__class__(x=x, y=y)
 
-    def __mul__(self, c):
+    def __mul__(
+            self,
+            c: A
+    ):
         y = copy(np.array(self.y, dtype=np.float64))
         if isinstance(c, numbers.Real):
             y *= c
@@ -101,7 +112,10 @@ class Curve(Base):
         x = copy(self.x)
         return self.__class__(x=x, y=y)
 
-    def __div__(self, c):
+    def __div__(
+            self,
+            c: A
+    ):
         y = copy(np.array(self.y, dtype=np.float64))
         if isinstance(c, numbers.Real):
             y /= c
@@ -110,7 +124,10 @@ class Curve(Base):
         x = copy(self.x)
         return self.__class__(x=x, y=y)
 
-    def __lshift__(self, c):
+    def __lshift__(
+            self,
+            c: A
+    ):
         if isinstance(c, numbers.Real):
             ts = -c
             tsi = int(np.floor(ts))
@@ -132,5 +149,4 @@ class Curve(Base):
         x = self.x.__getitem__(key)
         y = self.y.__getitem__(key)
         return x, y
-
 

@@ -8,14 +8,6 @@ import numba as nb
 from . import kappa2
 
 
-def scale_acceptor(donor, acceptor, transfer_efficency):
-    s_d = sum(donor)
-    s_a = sum(acceptor)
-    scaling_factor = 1. / ((s_a / transfer_efficency - s_a) / s_d)
-    scaled_acceptor = acceptor * scaling_factor
-    return donor, scaled_acceptor
-
-
 def vm_rt_to_vv_vh(t, vm, rs, g_factor=1.0, l1=0.0, l2=0.0):
     """Get the VV, VH decay from an VM decay given an anisotropy spectrum
 
@@ -37,25 +29,6 @@ def vm_rt_to_vv_vh(t, vm, rs, g_factor=1.0, l1=0.0, l2=0.0):
     vv_j = vv * (1. - l1) + vh * l1
     vh_j = vv * l2 + vh * (1. - l2)
     return vv_j, vh_j
-
-
-def da_a0_to_ad(t, da, ac_s, transfer_efficency=0.5):
-    """Convolves the donor decay in presence of FRET directly with the acceptor only decay to give the
-     FRET-sensitized decay ad
-
-    :param da:
-    :param ac_s: acceptor lifetime spectrum
-    :return:
-    """
-    a0 = np.zeros_like(da)
-    for i in range(len(ac_s) // 2):
-        a = ac_s[i]
-        tau = ac_s[i + 1]
-        a0 += a * np.exp(-t / tau)
-    ad = np.convolve(da, a0, mode='full')[:len(da)]
-    ds = da.sum()
-
-    return ad
 
 
 def s2delta(r_0, s2donor, s2acceptor, r_inf_AD):

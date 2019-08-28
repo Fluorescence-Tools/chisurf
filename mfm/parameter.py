@@ -1,11 +1,13 @@
 from __future__ import annotations
-from typing import List
+from typing import List, TypeVar
 
 import weakref
 import numpy as np
 
 import mfm
 import mfm.base
+
+A = TypeVar('A', mfm.parameter.Parameter, float)
 
 
 class Parameter(mfm.base.Base):
@@ -55,7 +57,7 @@ class Parameter(mfm.base.Base):
 
     def __add__(
             self,
-            other
+            other: A
     ) -> Parameter:
         if isinstance(other, (int, float)):
             a = self.value + other
@@ -63,21 +65,30 @@ class Parameter(mfm.base.Base):
             a = self.value + other.value
         return Parameter(value=a)
 
-    def __mul__(self, other) -> Parameter:
+    def __mul__(
+            self,
+            other: A
+    ) -> Parameter:
         if isinstance(other, (int, float)):
             a = self.value * other
         else:
             a = self.value * other.value
         return Parameter(value=a)
 
-    def __sub__(self, other) -> Parameter:
+    def __sub__(
+            self,
+            other: A
+    ) -> Parameter:
         if isinstance(other, (int, float)):
             a = self.value - other
         else:
             a = self.value - other.value
         return Parameter(value=a)
 
-    def __div__(self, other) -> Parameter:
+    def __div__(
+            self,
+            other: A
+    ) -> Parameter:
         if isinstance(other, (int, float)):
             a = self.value / other
         else:
@@ -92,7 +103,7 @@ class Parameter(mfm.base.Base):
 
     def __init__(self,
                  value: float = 1.0,
-                 link=None,
+                 link: Parameter = None,
                  *args, **kwargs
                  ):
         self.controller = None
