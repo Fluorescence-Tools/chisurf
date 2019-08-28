@@ -8,7 +8,6 @@ import numpy as np
 import scipy.linalg
 import scipy.stats
 
-
 import mfm
 import mfm.base
 import mfm.experiments
@@ -139,11 +138,14 @@ class Fit(mfm.base.Base):
         return self.xmin, self.xmax
 
     @fit_range.setter
-    def fit_range(self, v):
+    def fit_range(
+            self,
+            v: Tuple[int, int]
+    ):
         self.xmin, self.xmax = v
 
     @property
-    def grad(self):
+    def grad(self) -> np.array:
         """Get the approximate gradient at the current parameter values
         :return:
         """
@@ -249,12 +251,15 @@ class Fit(mfm.base.Base):
 class FitGroup(list, Fit):
 
     @property
-    def selected_fit(self):
-        return self[self._selected_fit]
+    def selected_fit(self) -> Fit:
+        return self[self._selected_fit_index]
 
     @selected_fit.setter
-    def selected_fit(self, v):
-        self._selected_fit = v
+    def selected_fit(
+            self,
+            v: int
+    ):
+        self._selected_fit_index = v
 
     @property
     def data(self):
@@ -319,7 +324,7 @@ class FitGroup(list, Fit):
             f.xmax = v
         self._xmax = v
 
-    def update(self):
+    def update(self) -> None:
         self.global_model.update()
         for p in self.plots:
             p.update_all()
@@ -347,7 +352,7 @@ class FitGroup(list, Fit):
             model_class,
             **kwargs
     ):
-        self._selected_fit = 0
+        self._selected_fit_index = 0
         self._fits = list()
         for d in data:
             model_kw = kwargs.get('model_kw', {})
@@ -368,11 +373,11 @@ class FitGroup(list, Fit):
         return s
 
     def next(self):
-        if self._selected_fit > len(self._fits):
+        if self._selected_fit_index > len(self._fits):
             raise StopIteration
         else:
-            self._selected_fit += 1
-            return self._fits[self._selected_fit - 1]
+            self._selected_fit_index += 1
+            return self._fits[self._selected_fit_index - 1]
 
 
 def walk_mcmc(
@@ -488,7 +493,7 @@ def approx_grad(
         epsilon: float,
         args=(),
         f0=None
-):
+) -> Tuple[float, np.array]:
     """Approximate the derivative of a fit with respect to the parameters
     xk. The return value of the function is an array.
 
@@ -522,12 +527,13 @@ def approx_grad(
 def covariance_matrix(
         fit: mfm.fitting.fit.Fit,
         **kwargs
-):
+) -> Tuple[np.array, List[int]]:
     """Calculate the covariance matrix
 
     :param fit:
     :param kwargs:
-    :return:
+    :return: the covariance matrix and a list of of parameter indices which are "important", i.e.,
+    have a partial derivative deviating from zero.
     """
     model = fit.model
     epsilon = kwargs.get('epsilon', mfm.eps)
@@ -577,7 +583,7 @@ def durbin_watson(
 def get_wres(
         parameter: List[float],
         model: mfm.models.model.Model
-):
+) -> np.array:
     """Returns the weighted residuals for a list of parameters of a models
 
     :param parameter: a list of the parameter values / or None. If None the models is not updated

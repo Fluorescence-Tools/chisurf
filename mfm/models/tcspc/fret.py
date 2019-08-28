@@ -474,8 +474,8 @@ for f in cs.current_fit:
         px = FittingParameter(name='x(%s,%i)' % (self.short, n_rates + 1), value=x,
                               model=self.model, decimals=3,
                               bounds_on=False, text='x', update_function=self.update)
-        m = pm.make_widget(layout=l)
-        x = px.make_widget(layout=l)
+        m = mfm.fitting.widgets.make_fitting_widget(pm, layout=l)
+        x = mfm.fitting.widgets.make_fitting_widget(px, layout=l)
 
         gb.setLayout(l)
         row = n_rates / 2

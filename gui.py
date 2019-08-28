@@ -283,7 +283,7 @@ class Main(QMainWindow):
             mfm.working_path = mfm.widgets.get_directory(**kwargs)
         else:
             mfm.working_path = directory
-        mfm.console.run_macro('./macros/save_fit.py')
+        mfm.console.run('mfm.cmd.save_fit()')
 
     def __init__(self, *args, **kwargs):
         import mfm.experiments
