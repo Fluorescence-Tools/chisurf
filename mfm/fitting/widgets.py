@@ -7,6 +7,7 @@ from PyQt5 import QtWidgets, uic, QtCore
 import mfm
 import mfm.widgets
 from mfm.fitting.fit import sample_fit
+
 parameter_settings = mfm.settings.cs_settings['parameter']
 
 
@@ -171,7 +172,6 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
                 event.ignore()
         else:
             event.accept()
-
 
 
 class FittingParameterWidget(QtWidgets.QWidget):
@@ -378,7 +378,29 @@ for f in cs.current_fit:
         self.blockSignals(False)
 
 
-def make_fitting_widget(
+class FittingParameterGroupWidget(QtWidgets.QGroupBox):
+
+    def __init__(
+            self,
+            parameter_group,
+            n_col: int = None,
+            *args, **kwargs):
+        self.parameter_group = parameter_group
+        super(FittingParameterGroupWidget, self).__init__(*args, **kwargs)
+        self.setTitle(parameter_group.name)
+        self.n_col = n_col if isinstance(n_col, int) else mfm.settings.cs_settings['gui']['fit_models']['n_columns']
+        self.n_row = 0
+        l = QtWidgets.QGridLayout()
+        self.setLayout(l)
+
+        for i, p in enumerate(parameter_group.parameters_all):
+            pw = p.make_widget()
+            col = i % self.n_col
+            row = i // self.n_col
+            l.addWidget(pw, row, col)
+
+
+def make_fitting_parameter_widget(
         fitting_parameter,
         **kwargs
 ) -> FittingParameterWidget:
@@ -394,3 +416,12 @@ def make_fitting_widget(
     widget = FittingParameterWidget(fitting_parameter, **kw)
     fitting_parameter.controller = widget
     return widget
+
+
+def make_fitting_parameter_group_widget(
+        fitting_parameter_group: mfm.fitting.parameter.FittingParameterGroup,
+        *args,
+        **kwargs
+):
+    return FittingParameterGroupWidget(fitting_parameter_group, *args, **kwargs)
+

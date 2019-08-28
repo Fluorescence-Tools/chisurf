@@ -382,8 +382,6 @@ class FCStttr(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
         self.parent = parent
         self.layout = layout
-        #self.layout.setMargin(0)
-        #self.layout.setSpacing(0)
         self.fileWidget = SpcFileWidget(self)
         self.countrateFilterWidget = CrFilterWidget(self, self.fileWidget)
         self.correlator = CorrelatorWidget(self, self.countrateFilterWidget)

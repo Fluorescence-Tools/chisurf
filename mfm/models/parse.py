@@ -252,8 +252,6 @@ class ParseModelWidget(ParseModel, ModelWidget):
         #self.update()
 
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
         self.layout.addWidget(self.parse)
 

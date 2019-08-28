@@ -14,8 +14,6 @@ import mfm
 import mfm.experiments.data
 
 
-
-
 def add_fit(
         dataset_indices: List[int] = None,
         model_name: str = None,
@@ -189,3 +187,54 @@ def save_fit():
         cs.current_fit.save(target_dir, 'fit')
 
 
+def load_fit_result(
+        fit_index: int,
+        filename: str
+) -> bool:
+    if os.path.isfile(filename):
+        mfm.fits[fit_index].model.load(filename)
+        mfm.fits[fit_index].update()
+        return True
+    else:
+        return False
+
+
+def group_datasets(
+        dataset_indices: List[int]
+):
+    #selected_data = mfm.data_sets[dataset_numbers]
+    selected_data = [mfm.imported_datasets[i] for i in dataset_indices]
+    if isinstance(selected_data[0], mfm.experiments.data.DataCurve):
+        # TODO: check for double names!!!
+        dg = mfm.experiments.data.ExperimentDataCurveGroup(selected_data, name="Data-Group")
+    else:
+        dg = mfm.experiments.data.ExperimentDataGroup(selected_data, name="Data-Group")
+    dn = list()
+    for d in mfm.imported_datasets:
+        if d not in dg:
+            dn.append(d)
+    dn.append(dg)
+    mfm.imported_datasets = dn
+
+
+def remove_datasets(
+        dataset_indices: List[int]
+):
+    dataset_indices = [dataset_indices] if not isinstance(dataset_indices, list) else dataset_indices
+    l = list()
+    for i, d in enumerate(mfm.imported_datasets):
+        if d.name == 'Global-fit':
+            l.append(d)
+            continue
+        if i not in dataset_indices:
+            l.append(d)
+        else:
+            fw = list()
+            for fit_window in mfm.fit_windows:
+                if fit_window.fit.data is d:
+                    fit_window.close_confirm = False
+                    fit_window.close()
+                else:
+                    fw.append(fit_window)
+            mfm.fit_windows = fw
+    mfm.imported_datasets = l
