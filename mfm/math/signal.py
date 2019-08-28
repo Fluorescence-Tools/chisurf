@@ -43,7 +43,7 @@ def window(
     if data.size < window_len:
         raise ValueError("Input vector needs to be bigger than window size.")
 
-    if window_len<3:
+    if window_len < 3:
         return data
 
     if not window_function_type in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
@@ -52,7 +52,7 @@ def window(
     s = np.r_[2 * data[0] - data[window_len:1:-1], data, 2 * data[-1] - data[-1:-window_len:-1]]
 
     if window_function_type == 'flat': # moving average
-        w = np.ones(window_len,'d')
+        w = np.ones(window_len, 'd')
     else:
         w = eval('np.' + window_function_type + '(window_len)')
 

@@ -7,7 +7,7 @@ import numpy as np
 import mfm
 import mfm.base
 
-A = TypeVar('A', mfm.parameter.Parameter, float)
+T = TypeVar('T', bound='Parameter')
 
 
 class Parameter(mfm.base.Base):
@@ -57,7 +57,7 @@ class Parameter(mfm.base.Base):
 
     def __add__(
             self,
-            other: A
+            other: T
     ) -> Parameter:
         if isinstance(other, (int, float)):
             a = self.value + other
@@ -67,7 +67,7 @@ class Parameter(mfm.base.Base):
 
     def __mul__(
             self,
-            other: A
+            other: T
     ) -> Parameter:
         if isinstance(other, (int, float)):
             a = self.value * other
@@ -77,7 +77,7 @@ class Parameter(mfm.base.Base):
 
     def __sub__(
             self,
-            other: A
+            other: T
     ) -> Parameter:
         if isinstance(other, (int, float)):
             a = self.value - other
@@ -87,7 +87,7 @@ class Parameter(mfm.base.Base):
 
     def __div__(
             self,
-            other: A
+            other: T
     ) -> Parameter:
         if isinstance(other, (int, float)):
             a = self.value / other

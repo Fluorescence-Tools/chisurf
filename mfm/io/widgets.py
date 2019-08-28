@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+
+import os
 from PyQt5 import QtWidgets, uic
 
 import mfm
@@ -17,6 +21,7 @@ class SpcFileWidget(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         uic.loadUi('mfm/ui/io/spcSampleSelectWidget.ui', self)
         self.parent = parent
+        self.filenames = list()
         self.filetypes = filetypes
 
         self.actionSample_changed.triggered.connect(self.onSampleChanged)
@@ -24,18 +29,21 @@ class SpcFileWidget(QtWidgets.QWidget):
         #self.connect(self.comboBox_2, QtCore.SIGNAL("currentIndexChanged(int)"), self.onFileTypeChanged)
 
     @property
-    def sample_name(self):
+    def sample_name(self) -> str:
         try:
             return self.filename
         except AttributeError:
             return "--"
 
     @property
-    def dt(self):
+    def dt(self) -> float:
         return float(self.doubleSpinBox.value())
 
     @dt.setter
-    def dt(self, v):
+    def dt(
+            self,
+            v: float
+    ):
         self.doubleSpinBox.setValue(v)
 
     def onSampleChanged(self):
@@ -120,7 +128,7 @@ class SpcFileWidget(QtWidgets.QWidget):
     def filename(self):
         try:
             return self.filenames[0]
-        except AttributeError:
+        except:
             return "--"
 
     def onLoadSample(self):
@@ -128,14 +136,13 @@ class SpcFileWidget(QtWidgets.QWidget):
             filename = mfm.widgets.get_filename('Open Photon-HDF', 'Photon-HDF (*.photon.h5)')
             filenames = [filename]
             self.lineEdit_2.setText(filename)
-        """
         elif self.fileType in ("ht3"):
             filename = mfm.widgets.open_file('Open Photon-HDF', 'Photon-HDF (*.ht3)')
             filenames = [filename]
         else:
             directory = mfm.widgets.get_directory()
             filenames = [directory + '/' + s for s in os.listdir(directory)]
-        """
+
         self.filenames = filenames
         self._photons = Photons(filenames, self.fileType)
         self.samples = self._photons.samples
@@ -225,19 +232,27 @@ class CsvWidget(QtWidgets.QWidget):
         self.checkBox.setChecked(bool(v))
 
     @property
-    def col_x(self):
+    def col_x(self) -> int:
         return self.comboBox.currentIndex()
 
     @col_x.setter
-    def col_x(self, v):
+    def col_x(
+            self,
+            v: int
+    ):
+        # TODO
         pass
 
     @property
-    def col_y(self):
+    def col_y(self) -> int:
         return self.comboBox_2.currentIndex()
 
     @col_y.setter
-    def col_y(self, v):
+    def col_y(
+            self,
+            v: int
+    ):
+        # TODO
         pass
 
     @property
@@ -268,11 +283,14 @@ class CsvWidget(QtWidgets.QWidget):
         mfm.run("cs.current_setup.colspecs = '%s'" % colspecs)
 
     @property
-    def filename(self):
+    def filename(self) -> str:
         return str(self.lineEdit_8.text())
 
     @filename.setter
-    def filename(self, v):
+    def filename(
+            self,
+            v: str
+    ):
         Csv.filename.fset(self, v)
         self.lineEdit_8.setText(v)
 

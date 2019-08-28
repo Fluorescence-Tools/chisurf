@@ -6,9 +6,11 @@ import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets, uic
 
 import mfm
+import mfm.fluorescence
 import mfm.experiments
 import mfm.experiments.data
 import mfm.settings
+import mfm.widgets
 from mfm.io.widgets import SpcFileWidget
 
 settings = mfm.settings.cs_settings['correlator']

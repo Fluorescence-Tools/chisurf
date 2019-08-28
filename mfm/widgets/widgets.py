@@ -552,7 +552,7 @@ class CurveSelector(QtWidgets.QTreeWidget):
 
     def onRemoveDataset(self):
         dataset_idx = [selected_index.row() for selected_index in self.selectedIndexes()]
-        mfm.console.execute('cs.remove_dataset(%s)' % dataset_idx)
+        mfm.console.execute('cs.remove_datasets(%s)' % dataset_idx)
         self.update()
 
     def onSaveDataset(self):
