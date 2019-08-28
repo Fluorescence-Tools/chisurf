@@ -2,12 +2,23 @@ from __future__ import annotations
 from collections import Iterable
 from typing import List
 
-#######################################################
-#       OPENCL                                        #
-#######################################################
-#import pyopencl.array
-#cl_platform = pyopencl.get_platforms()[0]
-#cl_device = cl_platform.get_devices()[0]
+import numpy as np
+
+import mfm.base
+import mfm.io
+import mfm.parameter
+import mfm.curve
+import mfm.experiments
+import mfm.settings
+
+import mfm.models
+import mfm.fitting
+import mfm.structure
+
+#import mfm.fluorescence
+
+#from mfm.settings import cs_settings, colors
+
 
 #######################################################
 #        LIST OF FITS, DATA, EXPERIMENTS              #
@@ -15,7 +26,7 @@ from typing import List
 fits = []
 fit_windows = []
 experiment = []
-data_sets = []
+imported_datasets = []
 run = None   # This is replaced during initialization to execute commands via a command line interface
 cs = None    # The current instance of ChiSurf
 console = None
@@ -24,44 +35,13 @@ console = None
 #######################################################
 #        SETTINGS  & CONSTANTS                        #
 #######################################################
-from mfm.settings import cs_settings, colors
 
-verbose = cs_settings['verbose']
-__version__ = cs_settings['version']
-__name__ = cs_settings['name']
+verbose = mfm.settings.cs_settings['verbose']
+__version__ = mfm.settings.cs_settings['version']
+__name__ = mfm.settings.cs_settings['name']
 working_path = ''
-
-import mfm.fitting
-import mfm.curve
-import mfm.fitting.models
-import mfm.base
-import mfm.structure
-import mfm.fluorescence
-
-
-def find_fit_idx_of_model(
-        model: mfm.fitting.models.Model
-):
-    """Returns index of the fit of a model in mfm.fits array
-
-    :param model:
-    :return:
-    """
-    for idx, f in enumerate(fits):
-        if f.model == model:
-            return idx
-
-
-def get_data(
-        curve_type: str = 'experiment'
-):
-    """
-    Returns all curves `mfm.curve.DataCurve` except if the curve is names "Global-fit"
-    """
-    if curve_type == 'all':
-        return [d for d in data_sets if isinstance(d, curve.ExperimentalData) or isinstance(d, curve.ExperimentDataGroup)]
-    elif curve_type == 'experiment':
-        return [d for d in data_sets if (isinstance(d, curve.ExperimentalData) or isinstance(d, curve.ExperimentDataGroup)) and d.name != "Global-fit"]
+eps = np.sqrt(np.finfo(float).eps)
+cs = None
 
 
 def find_objects(
@@ -90,8 +70,8 @@ def find_objects(
 
 def c(
         t,
-        st,
-        parameters
+        st: str,
+        parameters: List[mfm.parameter.Parameter]
 ):
     """This function facilitates the connection of qt-events to the mfm-commandline. Whenever the qt-event
     is called the string passed as argument is executed at the mfm-commandline with the provided parameters.
@@ -99,8 +79,8 @@ def c(
 
     Example
     -------
-    >>> mfm.c(self.checkBox.stateChanged, "cs.current_fit.model.update_rmsd=%s", self.checkBox.isChecked)
-    >>> cs.current_fit.model.update_rmsd=True
+    >>> mfm.c(self.checkBox.stateChanged, models", self.checkBox.isChecked)
+    >>> cs.current_fit.models.update_rmsd=True
 
     :param t: The signal of the qt-widget
     :param st: The string passed to the mfm-commandline

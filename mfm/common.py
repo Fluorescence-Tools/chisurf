@@ -5,7 +5,10 @@ Common data for all scripts in the SuRF-toolbox. In the common
 library all kinds of constants are defined. For instance colors
 in plots but also constants as the Avogadros number.
 """
+import numpy as np
+
 from mfm.settings import structure_data
+
 
 quencher = structure_data['Quencher']
 quencher_names = quencher.keys()

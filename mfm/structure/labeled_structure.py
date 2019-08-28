@@ -46,9 +46,9 @@ import mfm.structure    >>> structure = mfm.structure.Structure('./sample_data/m
     >>> rs = av_fret_rate_spectrum(structure, donor_description, acceptor_description)
 
     """
-    forster_radius = kwargs.get('forster_radius', mfm.cs_settings['fret']['forster_radius'])
-    kappa2 = kwargs.get('forster_radius', mfm.cs_settings['fret']['kappa2'])
-    tau0 = kwargs.get('tau0', mfm.cs_settings['fret']['tau0'])
+    forster_radius = kwargs.get('forster_radius', mfm.settings.cs_settings['fret']['forster_radius'])
+    kappa2 = kwargs.get('forster_radius', mfm.settings.cs_settings['fret']['kappa2'])
+    tau0 = kwargs.get('tau0', mfm.settings.cs_settings['fret']['tau0'])
     interleave = kwargs.get('interleave', True)
 
     p_rda, rda = av_distance_distribution(structure, donor_av_parameter=donor_av_parameter, acceptor_av_parameter=acceptor_av_parameter, **kwargs)
@@ -316,7 +316,7 @@ class LabeledStructure(Structure):
         self._ds = np.array([1.0, 4.0], dtype=np.float64)
         self._donor_av = None
         self._acceptor_av = None
-        self.forster_radius = kwargs.get('forster_radius', mfm.cs_settings['fret']['forster_radius'])
-        self.tau0 = kwargs.get('tau0', mfm.cs_settings['fret']['tau0'])
-        self.kappa2 = kwargs.get('kappa2', mfm.cs_settings['fret']['kappa2'])
+        self.forster_radius = kwargs.get('forster_radius', mfm.settings.cs_settings['fret']['forster_radius'])
+        self.tau0 = kwargs.get('tau0', mfm.settings.cs_settings['fret']['tau0'])
+        self.kappa2 = kwargs.get('kappa2', mfm.settings.cs_settings['fret']['kappa2'])
 

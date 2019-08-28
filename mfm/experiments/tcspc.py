@@ -1,9 +1,15 @@
+from __future__ import annotations
+from typing import Tuple
+
 import numpy as np
 from PyQt5 import QtWidgets, uic
+import os
 
 import mfm
+import mfm.experiments
+import mfm.experiments.data
 import mfm.widgets
-from mfm.experiments import Reader
+from mfm.experiments.reader import ExperimentReader
 from mfm.fluorescence.tcspc import weights, fitrange, weights_ps
 from mfm.io import sdtfile
 from mfm.io.ascii import Csv
@@ -12,14 +18,23 @@ from mfm.io.widgets import CsvWidget
 
 class CsvTCSPC(object):
 
-    def __init__(self, **kwargs):
-        self.dt = kwargs.get('dt', 1.0)
-        self.rep_rate = kwargs.get('rep_rate', 1.0)
-        self.is_jordi = kwargs.get('is_jordi', False)
-        self.polarization = kwargs.get('mode', 'vm')
-        #self.g_factor = kwargs.get('g_factor', 1.0)
-        self.rebin = kwargs.get('rebin', (1, 1))
-        self.matrix_columns = kwargs.get('matrix_columns', [0, 1])
+    def __init__(
+            self,
+            dt: float = 1.0,
+            rep_rate: float = 1.0,
+            is_jordi: bool = False,
+            mode: str = 'vm',
+            g_factor: float = 1.0,
+            rebin: Tuple[int, int] = (1, 1),
+            matrix_columns: Tuple[int, int] = (0, 1)
+    ):
+        self.dt = dt
+        self.excitation_repetition_rate = rep_rate
+        self.is_jordi = is_jordi
+        self.polarization = mode
+        self.g_factor = g_factor
+        self.rebin = rebin
+        self.matrix_columns = matrix_columns
 
 
 class CsvTCSPCWidget(CsvTCSPC, QtWidgets.QWidget):
@@ -79,28 +94,35 @@ class CsvTCSPCWidget(CsvTCSPC, QtWidgets.QWidget):
         mfm.run("cs.current_setup.dt = %s" % dt)
 
 
-class TCSPCReader(Reader):
+class TCSPCReader(ExperimentReader):
 
     def __init__(self, *args, **kwargs):
         super(TCSPCReader, self).__init__(self, *args, **kwargs)
         self.csvSetup = kwargs.pop('csvSetup', Csv(*args, **kwargs))
-        #self.skiprows = kwargs.pop('skiprows', 7)
-        #self.dt = kwargs.get('dt', mfm.cs_settings['tcspc']['dt'])
-        #self.rep_rate = kwargs.get('rep_rate', mfm.cs_settings['tcspc']['rep_rate'])
-        #self.g_factor = kwargs.get('g_factor', mfm.cs_settings['tcspc']['g_factor'])
-        #self.polarization = 'vm'
-        #self.rebin = kwargs.get('rebin', (1, 1))
-        #self.is_jordi = kwargs.get('is_jordi', False)
+        self.skiprows = kwargs.pop('skiprows', 7)
+        self.dt = kwargs.get('dt', mfm.settings.cs_settings['tcspc']['dt'])
+        self.rep_rate = kwargs.get('rep_rate', mfm.settings.cs_settings['tcspc']['rep_rate'])
+        self.g_factor = kwargs.get('g_factor', mfm.settings.cs_settings['tcspc']['g_factor'])
+        self.polarization = 'vm'
+        self.rebin = kwargs.get('rebin', (1, 1))
+        self.is_jordi = kwargs.get('is_jordi', False)
         self.matrix_columns = kwargs.get('matrix_columns', None)
-        #self.use_header = True
+        self.use_header = True
 
     @staticmethod
-    def autofitrange(data, **kwargs):
-        area = kwargs.get('area', mfm.cs_settings['tcspc']['fit_area'])
-        threshold = kwargs.get('threshold', mfm.cs_settings['tcspc']['fit_count_threshold'])
+    def autofitrange(
+            data,
+            **kwargs
+    ) -> Tuple[float, float]:
+        area = kwargs.get('area', mfm.settings.cs_settings['tcspc']['fit_area'])
+        threshold = kwargs.get('threshold', mfm.settings.cs_settings['tcspc']['fit_count_threshold'])
         return fitrange(data.y, threshold, area)
 
-    def read(self, *args, **kwargs):
+    def read(
+            self,
+            *args,
+            **kwargs
+    ) -> mfm.experiments.data.DataCurveGroup:
         filename = kwargs.pop('filename', None)
         skiprows = kwargs.get('skiprows', self.skiprows)
 
@@ -178,21 +200,28 @@ class TCSPCReader(Reader):
                 name = '{} {:d}_{:d}'.format(fn, i, n_data_sets)
             else:
                 name = filename
-            data = mfm.curve.DataCurve(x=x, y=yi, ex=ex, ey=1./eyi, setup=self, name=name, **kwargs)
+            data = mfm.experiments.data.DataCurve(x=x, y=yi, ex=ex, ey=1. / eyi, setup=self, name=name, **kwargs)
             data.filename = filename
             data_curves.append(data)
-        data_group = mfm.curve.DataCurveGroup(data_curves, filename)
+        data_group = mfm.experiments.data.DataCurveGroup(data_curves, filename)
         return data_group
 
 
 class TCSPCSetupWidget(TCSPCReader, mfm.io.ascii.Csv, QtWidgets.QWidget):
 
-    def read(self, *args, **kwargs):
+    def read(
+            self,
+            *args,
+            **kwargs
+    ) -> mfm.experiments.data.DataCurveGroup:
         filename = kwargs.pop('filename', None)
         if filename is None:
             filename = mfm.widgets.get_filename(description='CSV-TCSPC file', file_type='All files (*.*)', working_path=None)
-        kwargs['filename'] = filename
-        return TCSPCReader.read(self, *args, **kwargs)
+        if os.path.isfile(filename):
+            kwargs['filename'] = filename
+            return TCSPCReader.read(self, *args, **kwargs)
+        else:
+            return None
 
     def __init__(self, *args, **kwargs):
         super(TCSPCSetupWidget, self).__init__()
@@ -232,15 +261,21 @@ class TcspcSDTWidget(QtWidgets.QWidget):
         return int(self.comboBox.currentIndex())
 
     @curve_number.setter
-    def curve_number(self, v):
+    def curve_number(
+            self,
+            v: int
+    ):
         self.comboBox.setCurrentIndex(int(v))
 
     @property
-    def filename(self):
+    def filename(self) -> str:
         return str(self.lineEdit.text())
 
     @filename.setter
-    def filename(self, v):
+    def filename(
+            self,
+            v: str
+    ):
         self._sdt = sdtfile.SdtFile(v)
         # refresh GUI
         self.comboBox.clear()
@@ -256,7 +291,7 @@ class TcspcSDTWidget(QtWidgets.QWidget):
         return self._sdt
 
     @property
-    def times(self):
+    def times(self) -> np.array:
         """
         The time-array in nano-seconds
         """
@@ -264,12 +299,12 @@ class TcspcSDTWidget(QtWidgets.QWidget):
         return np.array(x, dtype=np.float64)
 
     @property
-    def ph_counts(self):
+    def ph_counts(self) -> np.array:
         y = self._sdt.data[self.curve_number][0]
         return np.array(y, dtype=np.float64)
 
     @property
-    def rep_rate(self):
+    def rep_rate(self) -> float:
         return 1. / (self._sdt.measure_info[self.curve_number]['rep_t'] * 1e-3)[0]
 
     @rep_rate.setter
@@ -277,10 +312,10 @@ class TcspcSDTWidget(QtWidgets.QWidget):
         pass
 
     @property
-    def curve(self):
+    def curve(self) -> mfm.experiments.data.DataCurve:
         y = self.ph_counts
         w = weights(y)
-        d = mfm.curve.DataCurve(setup=self, x=self.times, y=y, ey=1./w, name=self.name)
+        d = mfm.experiments.data.DataCurve(setup=self, x=self.times, y=y, ey=1. / w, name=self.name)
         return d
 
     def onOpenFile(self, **kwargs):
@@ -378,7 +413,7 @@ class TCSPCSetupDummy(TCSPCReader):
         y = np.exp(-x/self.lifetime) * self.p0
         ey = 1./weights(y)
 
-        d = mfm.curve.DataCurve(x=x, y=y, ey=ey, setup=self, name="TCSPC-Dummy")
+        d = mfm.experiments.data.DataCurve(x=x, y=y, ey=ey, setup=self, name="TCSPC-Dummy")
         d.setup = self
 
         return d

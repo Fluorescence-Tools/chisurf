@@ -77,7 +77,7 @@ setup(
         '': ['*.json', '*.yaml', '*.ui', '*.png', '*.svg', '*.css'],
     },
     install_requires=['numpy', 'slugify', 'sip', 'PyQt5', 'emcee', 'numba', 'scipy', 'pyqtgraph', 'sympy', 'PyYAML',
-                      'tables', 'numexpr'],
+                      'tables', 'numexpr', 'matplotlib'],
     ext_modules=extensions,
     cmdclass={
         'build_ext': build_ext

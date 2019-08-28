@@ -1,6 +1,8 @@
+from __future__ import annotations
+from typing import List
+
 import csv
 import os
-
 import numpy as np
 
 import mfm
@@ -13,7 +15,7 @@ def save_xy(
         verbose: bool = False,
         fmt: str = "%.3f\t%.3f",
         header_string: str = None
-):
+) -> None:
     """
     Saves data x, y to file in format (csv). x and y
     should have the same lenght.
@@ -23,6 +25,7 @@ def save_xy(
     :param x: array
     :param y: array
     :param verbose: bool
+    :param header_string:
     :param fmt:
     """
     if verbose:
@@ -104,7 +107,7 @@ class Csv(object):
         self._filename = kwargs.get('filename', "")
 
     @property
-    def filename(self):
+    def filename(self) -> str:
         """
         The currently open filename (after setting this parameter the file is opened)
         """
@@ -165,7 +168,14 @@ class Csv(object):
         else:
             raise IOError
 
-    def save(self, data, filename, delimiter='\t', mode='txt', header=''):
+    def save(
+            self,
+            data,
+            filename: str,
+            delimiter: str = '\t',
+            mode: str = 'txt',
+            header: str = ''
+    ):
         if self.verbose:
             s = """Saving
             ------
@@ -189,21 +199,21 @@ class Csv(object):
             np.save(filename, d.T)
 
     @property
-    def n_cols(self):
+    def n_cols(self) -> int:
         """
         The number of columns
         """
         return self._data.shape[1]
 
     @property
-    def n_rows(self):
+    def n_rows(self) -> int:
         """
         The number of rows
         """
         return self._data.shape[0]
 
     @property
-    def data(self):
+    def data(self) -> np.array:
         """
         Numpy array of the data
         """
@@ -213,7 +223,7 @@ class Csv(object):
             return np.array(self._data, dtype=np.float64).T
 
     @property
-    def header(self):
+    def header(self) -> List[str]:
         """
         A list of the column headers
         """
@@ -224,7 +234,7 @@ class Csv(object):
         return [str(i) for i in header]
 
     @property
-    def n_points(self):
+    def n_points(self) -> int:
         """
         The number of data points corresponds to the number of rows :py:attribute`.CSV.n_rows`
         """

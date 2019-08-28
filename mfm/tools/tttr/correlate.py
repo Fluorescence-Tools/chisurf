@@ -6,10 +6,15 @@ import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets, uic
 
 import mfm
-from mfm.experiments import settings
+import mfm.fluorescence
+import mfm.experiments
+import mfm.experiments.data
+import mfm.settings
+import mfm.widgets
 from mfm.io.widgets import SpcFileWidget
 
-plot_settings = mfm.cs_settings['gui']['plot']
+settings = mfm.settings.cs_settings['correlator']
+plot_settings = mfm.settings.cs_settings['gui']['plot']
 pyqtgraph_settings = plot_settings["pyqtgraph"]
 lw = plot_settings['line_width']
 
@@ -56,7 +61,7 @@ class CorrelateTTTR(QtWidgets.QWidget):
         current_curve = self.cs.selected_curve_index
         for i, curve in enumerate(self._curves):
             l = lw * 0.5 if i != current_curve else 1.5 * lw
-            color = mfm.colors[i % len(mfm.colors)]['hex']
+            color = mfm.settings.colors[i % len(mfm.settings.colors)]['hex']
             plot.plot(x=curve.x, y=curve.y,
                       pen=pg.mkPen(color, width=l),
                       name=curve.name)
@@ -99,10 +104,10 @@ class Correlator(QtCore.QThread):
 
     @property
     def data(self):
-        if isinstance(self._data, mfm.curve.DataCurve):
+        if isinstance(self._data, mfm.experiments.data.DataCurve):
             return self._data
         else:
-            return mfm.curve.DataCurve(setup=self)
+            return mfm.experiments.data.DataCurve(setup=self)
 
     def __init__(self, parent):
         QtCore.QThread.__init__(self, parent)
@@ -135,7 +140,7 @@ class Correlator(QtCore.QThread):
         return w
 
     def run(self):
-        data = mfm.curve.DataCurve()
+        data = mfm.experiments.data.DataCurve()
 
         w1 = self.getWeightStream(self.p.ch1)
         w2 = self.getWeightStream(self.p.ch2)

@@ -9,7 +9,7 @@ import tables
 
 import mfm
 
-photon_settings = mfm.cs_settings['photons']
+#photon_settings = mfm.settings.cs_settings['photons']
 
 
 class Photon(tables.IsDescription):
@@ -66,14 +66,14 @@ def pq_photons(b, invert_tac=True):
 
 @nb.jit
 def bh132_photons(b, invert_tac=True):
-    """Get the macro-time, micro-time and the routing channel number of a BH132-file contained in a
+    """Get the macros-time, micro-time and the routing channel number of a BH132-file contained in a
     binary numpy-array of 8-bit chars.
 
     :param b: numpy-array
         a numpy array of chars containing the binary information of a
         BH132-file
     :return: list
-        a list containing the number of photons, numpy-array of macro-time (64-bit unsigned integers),
+        a list containing the number of photons, numpy-array of macros-time (64-bit unsigned integers),
         numpy-array of TAC-values (32-bit unsigned integers), numpy-array of channel numbers (8-bit unsigned integers)
     """
     length = (b.shape[0] - 4) / 4
@@ -364,11 +364,11 @@ def make_hdf(**kwargs):
     :param kwargs:
     :return: hdf-file handle (pytables)
     """
-    title = kwargs.get('title', str(photon_settings['title']))
+    title = kwargs.get('title', str(mfm.settings.cs_settings['photons']['title']))
     filename = kwargs.get('filename', tempfile.mktemp(".photons.h5"))
     verbose = kwargs.get('verbose', mfm.verbose)
-    complib = kwargs.get('complib', str(photon_settings['complib']))
-    complevel = kwargs.get('complevel', int(photon_settings['complevel']))
+    complib = kwargs.get('complib', str(mfm.settings.cs_settings['photons']['complib']))
+    complevel = kwargs.get('complevel', int(mfm.settings.cs_settings['photons']['complevel']))
     if verbose:
         print("-------------------------------------------")
         print("Make Photon HDF-File")

@@ -2,6 +2,7 @@ import json
 import os
 
 import yaml
+import pyqtgraph as pg
 
 package_directory = os.path.dirname(os.path.abspath(__file__))
 settings_file = os.path.join(package_directory, 'chisurf.yaml')
@@ -15,3 +16,7 @@ working_path = ''
 
 style_sheet_file = os.path.join(package_directory, cs_settings['gui']['style_sheet'])
 structure_data = json.load(open(os.path.join(package_directory, 'structure.json')))
+
+pyqtgraph_settings = cs_settings['gui']['plot']["pyqtgraph"]
+for setting in pyqtgraph_settings:
+    pg.setConfigOption(setting, cs_settings['gui']['plot']['pyqtgraph'][setting])

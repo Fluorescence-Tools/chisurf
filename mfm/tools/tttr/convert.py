@@ -3,6 +3,7 @@ import copy
 from PyQt5 import QtWidgets, uic
 
 import mfm
+import mfm.widgets
 
 filetypes = copy.copy(mfm.io.tttr.filetypes)
 filetypes.pop('hdf')

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Tuple
 
 from itertools import tee
 import numba as nb
@@ -33,7 +34,7 @@ def p_isotropic_orientation_factor(k2, normalize=True):
     return r
 
 
-def fretrate2distance(fretrate, forster_radius, tau0, kappa2=2./3.):
+def fretrate_to_distance(fretrate, forster_radius, tau0, kappa2=2. / 3.):
     """Calculate the distance given a FRET-rate
 
     :param fretrate: FRET-rate
@@ -45,11 +46,16 @@ def fretrate2distance(fretrate, forster_radius, tau0, kappa2=2./3.):
     return forster_radius * (fretrate * tau0/kappa2 * 2./3.)**(-1./6)
 
 
-def interleaved_to_two_columns(ls, sort=False):
+def interleaved_to_two_columns(
+        ls: np.array,
+        sort: bool = False
+) -> Tuple[np.array, np.array]:
     """
     Converts an interleaved spectrum to two column-data
     :param ls: numpy array
         The interleaved spectrum (amplitude, lifetime)
+    :param sort: bool
+        if True sort by the size of the lifetimes
     :return: two arrays (amplitudes), (lifetimes)
     """
     lt = ls.reshape((ls.shape[0] // 2, 2))
@@ -62,7 +68,10 @@ def interleaved_to_two_columns(ls, sort=False):
         return lt[:, 0], lt[:, 1]
 
 
-def two_column_to_interleaved(x, t):
+def two_column_to_interleaved(
+        x: np.array,
+        t: np.array
+) -> np.array:
     """
     Converts two column lifetime spectra to interleaved lifetime spectra
     :param ls: The
@@ -72,12 +81,18 @@ def two_column_to_interleaved(x, t):
     return c
 
 
-def species_averaged_lifetime(fluorescence, normalize=True, is_lifetime_spectrum=True):
+def species_averaged_lifetime(
+        fluorescence,
+        normalize: bool = True,
+        is_lifetime_spectrum: bool = True
+) -> float:
     """
     Calculates the species averaged lifetime given a lifetime spectrum
 
     :param fluorescence: either a inter-leaved lifetime-spectrum (if is_lifetime_spectrum is True) or a 
         fluorescence decay (times, fluorescence intensity)
+    :param normalize:
+    :param is_lifetime_spectrum:
     :return:
     """
     if is_lifetime_spectrum:
@@ -85,7 +100,7 @@ def species_averaged_lifetime(fluorescence, normalize=True, is_lifetime_spectrum
         if normalize:
             x /= x.sum()
         tau_x = np.dot(x, t)
-        return tau_x
+        return float(tau_x)
     else:
         time_axis = fluorescence[0]
         intensity = fluorescence[1]
@@ -95,7 +110,12 @@ def species_averaged_lifetime(fluorescence, normalize=True, is_lifetime_spectrum
         return np.sum(i2) * dt
 
 
-def fluorescence_averaged_lifetime(fluorescence, taux=None, normalize=True, is_lifetime_spectrum=True):
+def fluorescence_averaged_lifetime(
+        fluorescence,
+        taux: float = None,
+        normalize: bool = True,
+        is_lifetime_spectrum: bool = True
+) -> float:
     """
 
     :param fluorescence: interleaved lifetime spectrum
@@ -153,7 +173,7 @@ def distance_to_fret_rate_constant(
         forster_radius: float,
         tau0: float,
         kappa2: float = 2./3.
-):
+) -> float:
     """ Converts the DA-distance to a FRET-rate
 
     :param r: donor-acceptor distance
@@ -169,7 +189,7 @@ def distance_to_fret_rate_constant(
 def distance_to_fret_efficiency(
         distance: float,
         forster_radius: float
-):
+) -> float:
     """
 
     .. math::
@@ -187,7 +207,7 @@ def distance_to_fret_efficiency(
 def lifetime_to_fret_efficiency(
         tau: float,
         tau0: float
-):
+) -> float:
     """
 
     .. math::
@@ -205,7 +225,7 @@ def lifetime_to_fret_efficiency(
 def fret_efficiency_to_distance(
         fret_efficiency: float,
         forster_radius: float
-):
+) -> float:
     """
     Converts the transfer-efficiency to a distance
 
@@ -224,7 +244,7 @@ def fret_efficiency_to_distance(
 def fret_efficiency_to_lifetime(
         fret_efficiency: float,
         tau0: float
-):
+) -> float:
     """
 
     .. math::
@@ -597,7 +617,7 @@ def rates2lifetimes_new(fret_rate_spectrum, donor_rate_spectrum, x_donly=0.0):
     scaled_fret = e1tn(rate_spectrum, 1. - x_donly)
     scaled_donor = e1tn(donor_rate_spectrum, x_donly)
     rs = np.append(scaled_fret, scaled_donor)
-    return ilt(rs)
+    return invert_interleaved(rs)
 
 rates2lifetimes = rates2lifetimes_new
 
@@ -681,12 +701,12 @@ def ere2(
 
 
 @nb.jit(nopython=True, nogil=True)
-def ilt(
-        e1: np.array
+def invert_interleaved(
+        interleaved_spectrum: np.array
 ) -> np.array:
     """Converts interleaved lifetime to rate spectra and vice versa
 
-    :param e1: array-like
+    :param interleaved_spectrum: array-like
         Lifetime/rate spectrum
 
     Examples
@@ -694,15 +714,15 @@ def ilt(
 
     >>> import numpy as np
     >>> e1 = np.array([1,2,3,4])
-    >>> ilt(e1)
+    >>> invert_interleaved(e1)
     array([ 1.  ,  0.5 ,  3.  ,  0.25])
     """
-    n1 = e1.shape[0]/2
+    n1 = interleaved_spectrum.shape[0] / 2
     r = np.empty(n1*2, dtype=np.float64)
 
     for i in range(n1):
-        r[i * 2 + 0] = e1[i * 2 + 0]
-        r[i * 2 + 1] = 1. / (e1[i * 2 + 1])
+        r[i * 2 + 0] = interleaved_spectrum[i * 2 + 0]
+        r[i * 2 + 1] = 1. / (interleaved_spectrum[i * 2 + 1])
     return r
 
 

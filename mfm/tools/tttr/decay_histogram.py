@@ -7,10 +7,12 @@ import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets, uic
 
 import mfm
+import mfm.experiments
+import mfm.experiments.data
 from mfm.fluorescence.tcspc import weights
 from mfm.io.widgets import SpcFileWidget
 
-plot_settings = mfm.cs_settings['gui']['plot']
+plot_settings = mfm.settings.cs_settings['gui']['plot']
 pyqtgraph_settings = plot_settings["pyqtgraph"]
 lw = plot_settings['line_width']
 
@@ -52,7 +54,7 @@ class HistogramTTTR(QtWidgets.QWidget):
         current_curve = self.cs.selected_curve_index
         for i, curve in enumerate(self._curves):
             l = lw * 0.5 if i != current_curve else 1.5 * lw
-            color = mfm.colors[i % len(mfm.colors)]['hex']
+            color = mfm.settings.colors[i % len(mfm.settings.colors)]['hex']
             plot.plot(x=curve.x, y=curve.y,
                       pen=pg.mkPen(color, width=l),
                       name=curve.name)
@@ -103,7 +105,7 @@ class TCSPCSetupTTTRWidget(QtWidgets.QWidget):
         self.layout.addWidget(self.tcspcTTTR)
 
     def load_data(self, **kwargs):
-        d = mfm.curve.DataCurve()
+        d = mfm.experiments.data.DataCurve()
         self.tcspcTTTR.makeHist()
         d.filename = self.tcspcTTTR.spcFileWidget.sample_name
         d.name = self.tcspcTTTR.spcFileWidget.sample_name + "_" + str(self.tcspcTTTR.chs)
@@ -207,7 +209,7 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
         routCh = re.findall(ex, self.histSelection)
         self.chs = [int(ch.split('==')[1]) for ch in routCh]
         self.tcspcTTTRWidget.lineEdit_3.setText("%s" % self.chs)
-        curve = mfm.curve.DataCurve(setup=self)
+        curve = mfm.experiments.data.DataCurve(setup=self)
         curve.x = self.x
         curve.y = self.y
         self.histDone.emit(self.nROUT, self.nTAC, self.chs, curve)

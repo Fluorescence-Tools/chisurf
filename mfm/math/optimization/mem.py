@@ -4,7 +4,7 @@ from scipy.optimize import minimize
 
 import mfm
 
-settings = mfm.cs_settings['fitting']['mem']
+settings = mfm.settings.cs_settings['fitting']['mem']
 
 lower_bound = settings['lower_bound']
 upper_bound = settings['upper_bound']

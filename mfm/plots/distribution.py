@@ -5,12 +5,10 @@ from pyqtgraph.dockarea import DockArea, Dock
 import mfm
 from mfm.plots import plotbase
 
-plot_settings = mfm.cs_settings['gui']['plot']
-pyqtgraph_settings = plot_settings["pyqtgraph"]
-for setting in pyqtgraph_settings:
-    pg.setConfigOption(setting, pyqtgraph_settings[setting])
+plot_settings = mfm.settings.cs_settings['gui']['plot']
+pyqtgraph_settings = mfm.settings.pyqtgraph_settings
 colors = plot_settings['colors']
-color_scheme = mfm.colors
+color_scheme = mfm.settings.colors
 lw = plot_settings['line_width']
 
 

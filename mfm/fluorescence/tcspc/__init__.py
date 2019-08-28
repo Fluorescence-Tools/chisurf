@@ -1,8 +1,14 @@
-from . import convolve
+from __future__ import annotations
+from typing import Tuple
+
+import numpy as np
+
 from .tcspc import *
 
 
-def weights(y):
+def weights(
+        y: np.array
+) -> np.array:
     """
     Calculated the weights used in TCSPC. Poissonian noise (sqrt of counts)
     :param y: numpy-array
@@ -16,7 +22,11 @@ def weights(y):
     return w
 
 
-def weights_ps(p, s, fs):
+def weights_ps(
+        p: np.array,
+        s: np.array,
+        fs: float
+) -> np.array:
     """Calculated the weights used in TCSPC. weight = 1/err(P+fs*S)
 
     :param p: parallel decay
@@ -31,7 +41,11 @@ def weights_ps(p, s, fs):
     return w
 
 
-def fitrange(y, threshold=10.0, area=0.999):
+def fitrange(
+        y,
+        threshold: float = 10.0,
+        area: float = 0.999
+) -> Tuple[float, float]:
     """
     Determines the fitting range based on the total number of photons to be fitted (fitting area).
 
