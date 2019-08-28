@@ -17,7 +17,7 @@ def get_scale_bg(
         bg: float,
         start: int,
         stop: int
-):
+) -> float:
     """This function calculates a scaling factor for a given
     experimental histogram and model function. The scaling-factor
     scales the model function that the weighted photon counts
@@ -75,7 +75,7 @@ def rescale_w_bg(
         bg: float,
         start: int,
         stop: int
-):
+) -> float:
     scale = 0.0
     sumnom = 0.0
     sumdenom = 0.0

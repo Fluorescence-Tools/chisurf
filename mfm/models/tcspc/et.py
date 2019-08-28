@@ -6,122 +6,12 @@ import mfm.fluorescence
 import mfm.fluorescence.general
 import mfm.math
 from mfm import plots
+from mfm.fluorescence.tcspc.phasor import Phasor
+from mfm.fluorescence.tcspc.widgets import PhasorWidget
 from mfm.models import Model
 from mfm.math.optimization import solve_richardson_lucy, maxent
 from mfm.math.optimization.nnls import solve_nnls
 from mfm.models import LifetimeModel
-
-
-class Phasor(object):
-
-    @property
-    def phasor_siwD0(self):
-        """Phasor plot si(w)
-        The phasor approach to fluorescence lifetime page 236
-        :return:
-        """
-        return mfm.fluorescence.general.phasor_siw(self.fd0, self.phasor_n, self.phasor_omega, self.times)
-
-    @property
-    def phasor_giwD0(self):
-        """Phasor plot gi(w)
-        The phasor approach to fluorescence lifetime page 236
-        :return:
-        """
-        return mfm.fluorescence.general.phasor_giw(self.fd0, self.phasor_n, self.phasor_omega, self.times)
-
-    @property
-    def phasor_siwDA(self):
-        """Phasor plot si(w)
-        The phasor approach to fluorescence lifetime page 236
-        :return:
-        """
-        return mfm.fluorescence.general.phasor_siw(self.fda, self.phasor_n, self.phasor_omega, self.times)
-
-    @property
-    def phasor_giwDA(self):
-        """Phasor plot gi(w)
-        The phasor approach to fluorescence lifetime page 236
-        :return:
-        """
-        return mfm.fluorescence.general.phasor_giw(self.fda, self.phasor_n, self.phasor_omega, self.times)
-
-    @property
-    def phasor_siwE(self):
-        """Phasor plot si(w)
-        The phasor approach to fluorescence lifetime page 236
-        :return:
-        """
-        return mfm.fluorescence.general.phasor_siw(self.et, self.phasor_n, self.phasor_omega, self.times)
-
-    @property
-    def phasor_giwE(self):
-        """Phasor plot gi(w)
-        The phasor approach to fluorescence lifetime page 236
-        :return:
-        """
-        return mfm.fluorescence.general.phasor_giw(self.et, self.phasor_n, self.phasor_omega, self.times)
-
-    def set_fd0_fda_et(self, fd0, fda, et):
-        self.fd0 = fd0
-        self.fda = fda
-        self.et = et
-
-    def __init__(self, **kwargs):
-        self._phasor_n = kwargs.get('phasor_n', 1.0)
-        self._phasor_omega = kwargs.get('phasor_omega', 31.25)
-
-
-class PhasorWidget(Phasor, QtWidgets.QWidget):
-
-    @property
-    def phasor_omega(self):
-        return float(self.doubleSpinBox_12.value()) / 1000.0 * np.pi * 2.0
-
-    @phasor_omega.setter
-    def phasor_omega(self, v):
-        self.doubleSpinBox_12.setValue(v)
-
-    @property
-    def phasor_n(self):
-        return int(self.spinBox_5.value())
-
-    @phasor_n.setter
-    def phasor_n(self, v):
-        self.spinBox_5.setValue(v)
-
-    @property
-    def phasor_omega(self):
-        return self._phasor_omega / 1000.0 * np.pi * 2.0
-
-    @phasor_omega.setter
-    def phasor_omega(self, v):
-        self._phasor_omega = v
-
-    @property
-    def phasor_n(self):
-        return self._phasor_n
-
-    @phasor_n.setter
-    def phasor_n(self, v):
-        self._phasor_n = float(v)
-
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        Phasor.__init__(self, **kwargs)
-        uic.loadUi('mfm/ui/fitting/models/tcspc/phasor_widget.ui', self)
-        #self.connect(self.actionUpdate_phasor, QtCore.SIGNAL('triggered()'), self.onUpdatePhasor)
-        #self.connect(self.actionUpdate_phasor, QtCore.SIGNAL('triggered()'), self.onUpdatePhasor)
-
-    def onUpdatePhasor(self):
-        self.lineEdit.setText(str(self.phasor_siwD0))
-        self.lineEdit_3.setText(str(self.phasor_giwD0))
-
-        self.lineEdit_4.setText(str(self.phasor_siwDA))
-        self.lineEdit_5.setText(str(self.phasor_giwDA))
-
-        self.lineEdit_6.setText(str(self.phasor_siwE))
-        self.lineEdit_7.setText(str(self.phasor_giwE))
 
 
 class LCurve(object):

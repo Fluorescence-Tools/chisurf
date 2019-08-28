@@ -13,7 +13,7 @@ def compute_linearization_table(
         window_function_type: str,
         x_min: int,
         x_max: int
-):
+) -> np.array:
     """
     This function calculates a liberalization table for differential non-linearities given a measurement of
     uncorrelated light. The linearization table is smoothed to reduce the noise contained in the liberalization
