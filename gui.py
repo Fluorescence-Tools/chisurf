@@ -1,9 +1,7 @@
 from __future__ import annotations
-from typing import List
 
 import os
 import sys
-import slugify
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication
@@ -224,7 +222,7 @@ class Main(QMainWindow):
         self.lifetime_calc = mfm.tools.FRETCalculator()
         self.actionCalculator.triggered.connect(self.lifetime_calc.show)
 
-        self.kappa2_dist = mfm.tools.kappa2dist.Kappa2Dist()
+        self.kappa2_dist = mfm.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
         self.actionKappa2_Distribution.triggered.connect(self.kappa2_dist.show)
 
         ##########################################################
