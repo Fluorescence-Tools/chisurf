@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 from PyQt5 import QtWidgets, uic
 import pyqtgraph as pg
@@ -5,7 +7,7 @@ import pyqtgraph.dockarea
 
 from mfm.fluorescence.anisotropy import s2delta
 from mfm.fluorescence.anisotropy.kappa2 import kappasqAllDelta, kappasq_all
-from ..fluorescence import general as fluorescence
+from mfm.fluorescence import general as fluorescence
 
 
 class Kappa2Dist(QtWidgets.QWidget):
@@ -15,7 +17,13 @@ class Kappa2Dist(QtWidgets.QWidget):
     def __init__(self, kappa2=0.667):
         QtWidgets.QWidget.__init__(self)
         self.k2 = list()
-        uic.loadUi('./mfm/ui/tools/kappa2_dist.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                'kappa2_dist.ui'
+            ),
+            self
+        )
         self.kappa2 = kappa2
 
         ## pyqtgraph

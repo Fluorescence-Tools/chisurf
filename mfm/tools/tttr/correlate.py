@@ -1,5 +1,6 @@
 import copy
 from copy import deepcopy
+import os
 
 import numpy as np
 import pyqtgraph as pg
@@ -316,9 +317,15 @@ class CorrelatorWidget(QtWidgets.QWidget):
 
 class CrFilterWidget(QtWidgets.QWidget):
 
-    def __init__(self, parent, photon_source, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/experiments/fcs-cr-filter.ui', self)
+    def __init__(self, parent, photon_source, *args, **kwargs):
+        super(CrFilterWidget, self).__init__(*args, **kwargs)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                'fcs-cr-filter.ui'
+            ),
+            self
+        )
         self.photon_source = photon_source
         self.parent = parent
 
