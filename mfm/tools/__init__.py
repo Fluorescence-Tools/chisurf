@@ -16,7 +16,7 @@ from .f_calculator import FTestWidget
 # from mfm.tools.modelling.potential_enery import PotentialEnergyWidget
 # from . import fret_lines
 import mfm.tools.kappa2dist
-#import mfm.tools.dye_diffusion
+import mfm.tools.dye_diffusion
 
 from mfm.tools.tttr.convert import TTTRConvert
 from mfm.tools.tttr.correlate import CorrelateTTTR

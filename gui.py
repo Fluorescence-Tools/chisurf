@@ -7,8 +7,8 @@ import slugify
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication
-
 import mfm.cmd
+
 
 class Main(QMainWindow):
 
@@ -207,12 +207,15 @@ class Main(QMainWindow):
             mfm.working_path = directory
         mfm.console.run('mfm.cmd.save_fit()')
 
-    def __init__(self, *args, **kwargs):
-        import mfm.experiments
+    def init_widgets(self):
+        self.decay_generator = mfm.tools.dye_diffusion.TransientDecayGenerator()
+        self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
 
-        QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
-        uic.loadUi("mfm/ui/mainwindow.ui", self)
-        self.setCentralWidget(self.mdiarea)
+        #self.fret_lines = mfm.tools.fret_lines.FRETLineGeneratorWidget()
+        #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.fret_lines.show)
+
+        #self.decay_fret_generator = mfm.fluorescence.dye_diffusion.TransientFRETDecayGenerator()
+
 
         ##########################################################
         #      Fluorescence widgets                              #
@@ -223,14 +226,6 @@ class Main(QMainWindow):
 
         self.kappa2_dist = mfm.tools.kappa2dist.Kappa2Dist()
         self.actionKappa2_Distribution.triggered.connect(self.kappa2_dist.show)
-
-        #self.decay_generator = mfm.tools.dye_diffusion.TransientDecayGenerator()
-        #self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
-
-        #self.fret_lines = mfm.tools.fret_lines.FRETLineGeneratorWidget()
-        #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.fret_lines.show)
-
-        #self.decay_fret_generator = mfm.fluorescence.dye_diffusion.TransientFRETDecayGenerator()
 
         ##########################################################
         #      TTTR-widgets                                      #
@@ -279,6 +274,15 @@ class Main(QMainWindow):
 
         self.f_test = mfm.tools.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
+
+    def __init__(self, *args, **kwargs):
+        import mfm.experiments
+
+        QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
+        uic.loadUi("mfm/ui/mainwindow.ui", self)
+        self.setCentralWidget(self.mdiarea)
+
+        self.init_widgets()
 
         self.configuration = mfm.widgets.CodeEditor(
             filename=mfm.settings.settings_file,

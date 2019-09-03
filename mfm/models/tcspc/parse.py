@@ -56,8 +56,6 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
         fitting_widget = FittingControllerWidget(fit=fit, **kwargs)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(QtCore.Qt.AlignTop)
         layout.addWidget(fitting_widget)
         layout.addWidget(self.convolve)

@@ -126,8 +126,6 @@ class CodeEditor(QWidget):
         can_load = kwargs.pop('can_load', True)
         QWidget.__init__(self, *args, **kwargs)
         layout = QVBoxLayout()
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
 
         self.filename = None
         self.setLayout(layout)
@@ -136,8 +134,6 @@ class CodeEditor(QWidget):
 
         layout.addWidget(self.editor)
         h_layout = QHBoxLayout()
-        h_layout.setSpacing(0)
-        h_layout.setContentsMargins(0, 0, 0, 0)
 
         load_button = QPushButton('load')
         save_button = QPushButton('save')
