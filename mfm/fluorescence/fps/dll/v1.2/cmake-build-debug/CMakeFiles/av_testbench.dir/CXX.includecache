@@ -1,0 +1,42 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+C:/Users/peulen/OneDrive/Programming/ChiSurf/mfm/fluorescence/fps/dll/v1.2/av_routines.cpp
+math.h
+-
+malloc.h
+-
+windows.h
+-
+fpsnative.h
+C:/Users/peulen/OneDrive/Programming/ChiSurf/mfm/fluorescence/fps/dll/v1.2/fpsnative.h
+mtrandom.h
+C:/Users/peulen/OneDrive/Programming/ChiSurf/mfm/fluorescence/fps/dll/v1.2/mtrandom.h
+
+C:/Users/peulen/OneDrive/Programming/ChiSurf/mfm/fluorescence/fps/dll/v1.2/av_testbench.cpp
+math.h
+-
+iostream
+-
+msectim.h
+C:/Users/peulen/OneDrive/Programming/ChiSurf/mfm/fluorescence/fps/dll/v1.2/msectim.h
+
+C:/Users/peulen/OneDrive/Programming/ChiSurf/mfm/fluorescence/fps/dll/v1.2/fpsnative.h
+intrin.h
+-
+
+C:/Users/peulen/OneDrive/Programming/ChiSurf/mfm/fluorescence/fps/dll/v1.2/msectim.h
+sys/timeb.h
+-
+sys/timeb.h
+-
+
+C:/Users/peulen/OneDrive/Programming/ChiSurf/mfm/fluorescence/fps/dll/v1.2/mtrandom.h
+math.h
+-
+

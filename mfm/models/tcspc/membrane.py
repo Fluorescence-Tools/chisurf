@@ -265,9 +265,6 @@ class GridModelWidget(GridModel, QtWidgets.QWidget):
 
         # Setup the layout
         self.layout = QtWidgets.QGridLayout(self)
-        self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setAlignment(QtCore.Qt.AlignTop)
 
         v = QtWidgets.QVBoxLayout()
         self.layout.addLayout(v, 0, 0, 1, 2)

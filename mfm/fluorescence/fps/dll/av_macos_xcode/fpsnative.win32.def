@@ -1,0 +1,9 @@
+LIBRARY fpsnative.win32.dll
+
+EXPORTS
+
+calculate1R
+calculate3R
+rdamean
+rdameanE
+testnative

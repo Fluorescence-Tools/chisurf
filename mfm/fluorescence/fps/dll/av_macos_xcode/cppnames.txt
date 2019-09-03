@@ -1,0 +1,10 @@
+x64
+
+0000000000003580 T _Z10testnativev
+0000000000000c20 T _Z11calculate1RdddidPdS_S_S_iddiPh
+0000000000001d80 T _Z11calculate3RdddddidPdS_S_S_iddiPh
+0000000000002f70 T _Z7rdameanP7vector3iS0_iii
+0000000000003250 T _Z8rdameanEP7vector3iS0_iiid
+
+
+
