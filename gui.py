@@ -208,8 +208,8 @@ class Main(QMainWindow):
         mfm.console.run('mfm.cmd.save_fit()')
 
     def init_widgets(self):
-        self.decay_generator = mfm.tools.dye_diffusion.TransientDecayGenerator()
-        self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
+        #self.decay_generator = mfm.tools.dye_diffusion.TransientDecayGenerator()
+        #self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
 
         #self.fret_lines = mfm.tools.fret_lines.FRETLineGeneratorWidget()
         #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.fret_lines.show)
@@ -242,8 +242,8 @@ class Main(QMainWindow):
         ##########################################################
         #      TTTR-widgets                                      #
         ##########################################################
-        #self.hdf2pdb = mfm.tools.MDConverter()
-        #self.actionTrajectory_converter.triggered.connect(self.hdf2pdb.show)
+        self.hdf2pdb = mfm.tools.modelling.trajectory.MDConverter()
+        self.actionTrajectory_converter.triggered.connect(self.hdf2pdb.show)
 
         #self.trajectory_rot_trans = mfm.tools.RotateTranslateTrajectoryWidget()
         #self.actionRotate_Translate_trajectory.triggered.connect(self.trajectory_rot_trans.show)

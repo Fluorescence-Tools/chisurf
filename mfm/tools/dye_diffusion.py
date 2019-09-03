@@ -161,10 +161,8 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
         self.verbose = kwargs.get('verbose', mfm.verbose)
         settings = json.load(open(dye_diffusion_settings_file))
 
-        #def __init__(self, decay_parameter,
-        #         diffusion_simulation, **kwargs):
-
-        DyeDecay.__init__(self, **settings)
+        print(settings)
+        super(TransientDecayGenerator, self).__init__(**settings)
 
         QtWidgets.QWidget.__init__(self)
         uic.loadUi('mfm/ui/dye_diffusion2.ui', self)

@@ -36,7 +36,7 @@ class BasicAV(object):
     """
 
     def __init__(self, structure, *args, **kwargs):
-        super(BasicAV, *args, **kwargs).__init__()
+        super(BasicAV, self).__init__(*args, **kwargs)
 
         self.dg = kwargs.get('simulation_grid_resolution', mfm.settings['fps']['simulation_grid_resolution'])
         self.allowed_sphere_radius = kwargs.get('allowed_sphere_radius', mfm.settings['fps']['allowed_sphere_radius'])
