@@ -2,7 +2,7 @@ import numpy as np
 from scipy.cluster import hierarchy as hclust
 from scipy.cluster.hierarchy import fcluster
 
-from mfm.structure import rmsd, average, find_best
+from mfm.structure.structure import rmsd, average, find_best
 
 
 def findSmallestCluster(clusters):

@@ -25,4 +25,6 @@ from .f_calculator import FTestWidget
 from .pdb2labeling import PDB2Label
 from .tau2r import *
 #from mfm.tools.modelling.trajectory import AlignTrajectoryWidget, JoinTrajectoriesWidget, SaveTopology RotateTranslateTrajectoryWidget, MDConverter, RemoveClashedFrames
+import mfm.tools.modelling
+
 

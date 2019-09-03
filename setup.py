@@ -37,14 +37,10 @@ eList = [
     [
         './mfm/fluorescence/fps/_fps.pyx',
         './mfm/fluorescence/fps/mt19937cok.cpp'
+    ],
+    [
+        './mfm/structure/potential/cPotentials.pyx'
     ]
-    #[
-    #    './chisurf//mfm/math/reaction/_reaction.pyx'
-    #],
-    #[
-    #    './chisurf/mfm/fluorescence/pda/_sgsr.pyx',
-    #    './chisurf/mfm/fluorescence/pda/sgsr_misc.cpp'
-    #]
 ]
 
 extensions = [make_extension(extension) for extension in eList]
