@@ -4,6 +4,7 @@ import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import mfm
+import mfm.fluorescence.anisotropy.kappa2
 import mfm.math
 import mfm.plots as plots
 from mfm.models.model import ModelWidget
@@ -121,7 +122,7 @@ class OrientationParameter(FittingParameterGroup):
 
         # slow isotropic
         k2s = np.linspace(0.01, 4, 50)
-        p = mfm.fluorescence.general.p_isotropic_orientation_factor(k2s)
+        p = mfm.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(k2s)
         self._k2_slow_iso = mfm.fluorescence.general.two_column_to_interleaved(p, k2s)
 
         FittingParameterGroup.__init__(self, *args, **kwargs)

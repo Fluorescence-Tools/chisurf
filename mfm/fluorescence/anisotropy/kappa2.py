@@ -9,8 +9,13 @@ import mfm
 import mfm.fluorescence.general
 
 
-@nb.jit
-def kappasqAllDelta(delta, sD2, sA2, step=0.25, n_bins=31):
+def kappasqAllDelta(
+        delta: float,
+        sD2: float,
+        sA2: float,
+        step: float = 0.25,
+        n_bins: int = 31
+):
     """
     :param delta:
     :param sD2:
@@ -37,14 +42,26 @@ def kappasqAllDelta(delta, sD2, sA2, step=0.25, n_bins=31):
         for j in range(m):
             d2 = (n1*np.cos(phi[j])+n2*np.sin(phi[j]))*np.sin(delta)+d1*np.cos(delta)
             beta2 = np.arccos(abs(np.dot(d2, R)))
-            k2[i, j] = mfm.fluorescence.general.kappasq(delta, sD2, sA2, beta1[i], beta2)
+            k2[i, j] = kappasq(delta, sD2, sA2, beta1[i], beta2)
         y, x = np.histogram(k2[i, :], bins=k2scale)
         k2hist += y*np.sin(beta1[i])
     return k2scale, k2hist, k2
 
 
-@nb.jit
-def kappasq_all(sD2, sA2, n=100, m=100):
+def kappasq_all(
+        sD2: float,
+        sA2: float,
+        n: int = 100,
+        m: int = 100
+) -> Tuple[np.array, np.array, np.array]:
+    """
+
+    :param sD2:
+    :param sA2:
+    :param n:
+    :param m:
+    :return:
+    """
     k2 = np.zeros((n, m))
     k2scale = np.arange(0, 4, 0.05)
     k2hist = np.zeros(len(k2scale) - 1)
@@ -55,7 +72,7 @@ def kappasq_all(sD2, sA2, n=100, m=100):
             delta = np.arccos(np.dot(d1[j, :], d2[j, :]) / linalg.norm(d1[j, :])/linalg.norm(d2[j, :]))
             beta1 = np.arccos(d1[j, 0]/linalg.norm(d1[j, :]))
             beta2 = np.arccos(d2[j, 0]/linalg.norm(d2[j, :]))
-            k2[i, j] = mfm.fluorescence.general.kappasq(delta, sD2, sA2, beta1, beta2)
+            k2[i, j] = kappasq(delta, sD2, sA2, beta1, beta2)
         y, x = np.histogram(k2[i, :], bins=k2scale)
         k2hist += y
     return k2scale, k2hist, k2
@@ -173,7 +190,12 @@ def kappa(
     )
 
 
-def s2delta(r_0, s2donor, s2acceptor, r_inf_AD):
+def s2delta(
+        r_0,
+        s2donor,
+        s2acceptor,
+        r_inf_AD
+):
     """calculate delta given residual anisotropies
 
     :param r_0:
@@ -189,7 +211,13 @@ def s2delta(r_0, s2donor, s2acceptor, r_inf_AD):
     return delta
 
 
-def calculate_kappa_distance(xyz, aid1, aid2, aia1, aia2):
+def calculate_kappa_distance(
+        xyz: np.array,
+        aid1: int,
+        aid2: int,
+        aia1: int,
+        aia2: int
+):
     """Calculates the orientation factor kappa2 and the distance of a trajectory given the atom-indices of the
     donor and the acceptor.
 
@@ -217,3 +245,58 @@ def calculate_kappa_distance(xyz, aid1, aid2, aia1, aia2):
             print("Frame ", i_frame, "skipped, calculation error")
 
     return ds, ks
+
+
+def kappasq(
+        delta: float,
+        sD2: float,
+        sA2: float,
+        beta1: float = None,
+        beta2: float = None
+) -> float:
+    """
+    Calculates the kappa2 distribution given the order parameter sD2 and sA2
+
+    :param delta:
+    :param sD2: order parameter of donor s2D = - sqrt(r_inf_D/r0)
+    :param sA2: order parameter of acceptor s2A = sqrt(r_inf_A/r0)
+    :param beta1:
+    :param beta2:
+    """
+    if beta1 is None or beta2 is None:
+        beta1 = 0
+        beta2 = delta
+
+    s2delta = (3.0 * np.cos(delta) * np.cos(delta) - 1.0) / 2.0
+    s2beta1 = (3.0 * np.cos(beta1) * np.cos(beta1) - 1.0) / 2.0
+    s2beta2 = (3.0 * np.cos(beta2) * np.cos(beta2) - 1.0) / 2.0
+    k2 = 2.0 / 3.0 * (1 + sD2 * s2beta1 + sA2 * s2beta2 +
+                      sD2 * sA2 * (s2delta +
+                                   6 * s2beta1 * s2beta2 +
+                                   1 + 2 * s2beta1 +
+                                   2 * s2beta2 -
+                                   9 * np.cos(beta1) *
+                                   np.cos(beta2) * np.cos(delta)))
+    return k2
+
+
+def p_isotropic_orientation_factor(k2, normalize=True):
+    """Calculates an the probability of a given kappa2 according to
+    an isotropic orientation factor distribution
+    http://www.fretresearch.org/kappasquaredchapter.pdf
+
+    :param k2: kappa squared
+    :param normalize: if True (
+    :return:
+    """
+    ks = np.sqrt(k2)
+    s3 = np.sqrt(3.)
+    r = np.zeros_like(k2)
+    for i, k in enumerate(ks):
+        if 0 <= k <= 1:
+            r[i] = 0.5 / (s3 * k) * np.log(2 + s3)
+        elif 1 <= k <= 2:
+            r[i] = 0.5 / (s3 * k) * np.log((2 + s3) / (k + np.sqrt(k**2 - 1.0)))
+    if normalize:
+        r /= max(1.0, r.sum())
+    return r

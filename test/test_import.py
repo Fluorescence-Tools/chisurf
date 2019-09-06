@@ -10,7 +10,7 @@ utils.set_search_paths(TOPDIR)
 
 class Tests(unittest.TestCase):
 
-    def test_mfm(self):
+    def test_mfm_import(self):
         import mfm
 
 

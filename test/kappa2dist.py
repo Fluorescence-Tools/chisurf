@@ -25,6 +25,36 @@ class Kappa2Distribution(unittest.TestCase):
         """
         self.form = mfm.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
 
+    def test_defaults(self):
+        self.assertEqual(self.form.doubleSpinBox_2.value(), 0.380)
+        self.assertEqual(self.form.doubleSpinBox.value(), 0.050)
+        self.assertEqual(self.form.doubleSpinBox_5.value(), 0.100)
+        self.assertEqual(self.form.doubleSpinBox_3.value(), 1.500000)
+        self.assertEqual(self.form.spinBox.value(), 131)
+        self.assertEqual(self.form.doubleSpinBox_7.value(), 0.005)
+
+    def test_calculation_1(self):
+        okWidget = self.form.pushButton
+        QTest.mouseClick(okWidget, Qt.LeftButton)
+
+        self.assertAlmostEqual(self.form.doubleSpinBox_10.value(), 0.7545, places=2)
+        self.assertAlmostEqual(self.form.doubleSpinBox_9.value(), 0.1907, places=2)
+        self.assertAlmostEqual(self.form.doubleSpinBox_6.value(), 1.0164, places=2)
+        self.assertAlmostEqual(self.form.doubleSpinBox_8.value(), 0.0424, places=2)
+
+    def test_calculation_2(self):
+        check_box = self.form.checkBox
+        check_box.setCheckState(True)
+
+        okWidget = self.form.pushButton
+        QTest.mouseClick(okWidget, Qt.LeftButton)
+
+        self.assertAlmostEqual(self.form.doubleSpinBox_10.value(), 0.6605, places=2)
+        self.assertAlmostEqual(self.form.doubleSpinBox_9.value(), 0.1398, places=2)
+        self.assertAlmostEqual(self.form.doubleSpinBox_6.value(), 0.9951, places=2)
+        self.assertAlmostEqual(self.form.doubleSpinBox_8.value(), 0.0363, places=2)
+
+    """
     def setFormToZero(self):
         '''Set all ingredients to zero in preparation for setting just one
         to a nonzero value.
@@ -33,24 +63,6 @@ class Kappa2Distribution(unittest.TestCase):
         self.form.ui.tripleSecSpinBox.setValue(0)
         self.form.ui.limeJuiceLineEdit.setText("0.0")
         self.form.ui.iceHorizontalSlider.setValue(0)
-
-    def test_defaults(self):
-        '''Test the GUI in its default state'''
-        self.assertEqual(self.form.ui.tequilaScrollBar.value(), 8)
-        self.assertEqual(self.form.ui.tripleSecSpinBox.value(), 4)
-        self.assertEqual(self.form.ui.limeJuiceLineEdit.text(), "12.0")
-        self.assertEqual(self.form.ui.iceHorizontalSlider.value(), 12)
-        self.assertEqual(self.form.ui.speedButtonGroup.checkedButton().text(), "&Karate Chop")
-
-        # Class is in the default state even without pressing OK
-        self.assertEqual(self.form.jiggers, 36.0)
-        self.assertEqual(self.form.speedName, "&Karate Chop")
-
-        # Push OK with the left mouse button
-        okWidget = self.form.ui.buttonBox.button(self.form.ui.buttonBox.Ok)
-        QTest.mouseClick(okWidget, Qt.LeftButton)
-        self.assertEqual(self.form.jiggers, 36.0)
-        self.assertEqual(self.form.speedName, "&Karate Chop")
 
     def test_tequilaScrollBar(self):
         '''Test the tequila scroll bar'''
@@ -114,30 +126,13 @@ class Kappa2Distribution(unittest.TestCase):
         self.setFormToZero()
         self.assertAlmostEqual(self.form.liters, 0.0)
         self.form.ui.iceHorizontalSlider.setValue(1)
-        self.assertAlmostEqual(self.form.liters, 0.0444)
-        self.form.ui.iceHorizontalSlider.setValue(2)
-        self.assertAlmostEqual(self.form.liters, 0.0444 * 2)
 
     def test_blenderSpeedButtons(self):
         '''Test the blender speed buttons'''
         self.form.ui.speedButton1.click()
         self.assertEqual(self.form.speedName, "&Mix")
         self.form.ui.speedButton2.click()
-        self.assertEqual(self.form.speedName, "&Whip")
-        self.form.ui.speedButton3.click()
-        self.assertEqual(self.form.speedName, "&Puree")
-        self.form.ui.speedButton4.click()
-        self.assertEqual(self.form.speedName, "&Chop")
-        self.form.ui.speedButton5.click()
-        self.assertEqual(self.form.speedName, "&Karate Chop")
-        self.form.ui.speedButton6.click()
-        self.assertEqual(self.form.speedName, "&Beat")
-        self.form.ui.speedButton7.click()
-        self.assertEqual(self.form.speedName, "&Smash")
-        self.form.ui.speedButton8.click()
-        self.assertEqual(self.form.speedName, "&Liquefy")
-        self.form.ui.speedButton9.click()
-        self.assertEqual(self.form.speedName, "&Vaporize")
+    """
 
 
 if __name__ == "__main__":
