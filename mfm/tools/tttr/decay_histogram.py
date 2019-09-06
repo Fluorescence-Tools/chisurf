@@ -97,8 +97,6 @@ class TCSPCSetupTTTRWidget(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self, **kwargs)
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
-        #self.layout.setMargin(0)
-        #self.layout.setSpacing(0)
 
         self.tcspcTTTR = TcspcTTTRWidget(self)
         self.rep_rate = self.tcspcTTTR.rep_rate

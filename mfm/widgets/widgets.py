@@ -780,8 +780,6 @@ def get_directory(**kwargs):
         return directory, filenames
 
 
-
-
 def make_widget_from_yaml(d, name=''):
     """
     >>> import numbers
@@ -800,8 +798,6 @@ def make_widget_from_yaml(d, name=''):
         g = QtWidgets.QGroupBox()
         g.setTitle(str(name))
         layout = QtWidgets.QFormLayout()
-        layout.setMargin(0)
-        layout.setSpacing(1)
         g.setLayout(layout)
 
         for row, key in enumerate(d):

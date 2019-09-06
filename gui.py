@@ -1,12 +1,11 @@
 from __future__ import annotations
-from typing import List
 
 import os
 import sys
-import slugify
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication
+import mfm.cmd
 
 
 class Main(QMainWindow):
@@ -191,53 +190,14 @@ class Main(QMainWindow):
         mfm.fits = []
         mfm.fit_windows = []
 
-    def close_fit(
-            self,
-            idx: int = None
-    ):
-        if idx is None:
-            sub_window = self.mdiarea.currentSubWindow()
-            for i, w in enumerate(mfm.fit_windows):
-                if w is sub_window:
-                    idx = i
-        mfm.fits.pop(idx)
-        sub_window = mfm.fit_windows.pop(idx)
-        sub_window.close_confirm = False
-        mfm.widgets.hide_items_in_layout(self.modelLayout)
-        mfm.widgets.hide_items_in_layout(self.plotOptionsLayout)
-        sub_window.close()
+    def onAddDataset(self):
+        mfm.cmd.add_dataset(self.current_setup)
 
-    def add_dataset(
-            self,
-            **kwargs
-    ):
-        setup = kwargs.get('setup', self.current_setup)
-        dataset = kwargs.pop('dataset', None)
-        if dataset is None:
-            dataset = setup.get_data(**kwargs)
-
-        dataset_group = dataset if \
-            isinstance(dataset, mfm.experiments.data.ExperimentDataGroup) else \
-            mfm.experiments.data.ExperimentDataCurveGroup(dataset)
-        if len(dataset_group) == 1:
-            mfm.imported_datasets.append(dataset_group[0])
-        else:
-            mfm.imported_datasets.append(dataset_group)
-        self.dataset_selector.update()
-
-    def save_fits(self, **kwargs):
+    def onSaveFits(self, **kwargs):
         path = kwargs.get('path', mfm.widgets.get_directory(**kwargs))
-        cf = self.fit_idx
-        for fit in mfm.fits:
-            fit_name = fit.name
-            path_name = slugify.slugify(str(fit_name))
-            p2 = path + '//' + path_name
-            os.mkdir(p2)
-            self.current_fit = fit
-            self.save_fit(directory=p2)
-        self.current_fit = mfm.fits[cf]
+        mfm.cmd.save_fits(path)
 
-    def save_fit(self, **kwargs):
+    def onSaveFit(self, **kwargs):
         directory = kwargs.pop('directory', None)
         if directory is None:
             mfm.working_path = mfm.widgets.get_directory(**kwargs)
@@ -245,12 +205,15 @@ class Main(QMainWindow):
             mfm.working_path = directory
         mfm.console.run('mfm.cmd.save_fit()')
 
-    def __init__(self, *args, **kwargs):
-        import mfm.experiments
+    def init_widgets(self):
+        #self.decay_generator = mfm.tools.dye_diffusion.TransientDecayGenerator()
+        #self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
 
-        QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
-        uic.loadUi("mfm/ui/mainwindow.ui", self)
-        self.setCentralWidget(self.mdiarea)
+        #self.fret_lines = mfm.tools.fret_lines.FRETLineGeneratorWidget()
+        #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.fret_lines.show)
+
+        #self.decay_fret_generator = mfm.fluorescence.dye_diffusion.TransientFRETDecayGenerator()
+
 
         ##########################################################
         #      Fluorescence widgets                              #
@@ -259,16 +222,8 @@ class Main(QMainWindow):
         self.lifetime_calc = mfm.tools.FRETCalculator()
         self.actionCalculator.triggered.connect(self.lifetime_calc.show)
 
-        self.kappa2_dist = mfm.tools.kappa2dist.Kappa2Dist()
+        self.kappa2_dist = mfm.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
         self.actionKappa2_Distribution.triggered.connect(self.kappa2_dist.show)
-
-        #self.decay_generator = mfm.tools.dye_diffusion.TransientDecayGenerator()
-        #self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
-
-        #self.fret_lines = mfm.tools.fret_lines.FRETLineGeneratorWidget()
-        #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.fret_lines.show)
-
-        #self.decay_fret_generator = mfm.fluorescence.dye_diffusion.TransientFRETDecayGenerator()
 
         ##########################################################
         #      TTTR-widgets                                      #
@@ -285,8 +240,8 @@ class Main(QMainWindow):
         ##########################################################
         #      TTTR-widgets                                      #
         ##########################################################
-        #self.hdf2pdb = mfm.tools.MDConverter()
-        #self.actionTrajectory_converter.triggered.connect(self.hdf2pdb.show)
+        self.hdf2pdb = mfm.tools.modelling.trajectory.MDConverter()
+        self.actionTrajectory_converter.triggered.connect(self.hdf2pdb.show)
 
         #self.trajectory_rot_trans = mfm.tools.RotateTranslateTrajectoryWidget()
         #self.actionRotate_Translate_trajectory.triggered.connect(self.trajectory_rot_trans.show)
@@ -317,6 +272,15 @@ class Main(QMainWindow):
 
         self.f_test = mfm.tools.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
+
+    def __init__(self, *args, **kwargs):
+        import mfm.experiments
+
+        QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
+        uic.loadUi("mfm/ui/mainwindow.ui", self)
+        self.setCentralWidget(self.mdiarea)
+
+        self.init_widgets()
 
         self.configuration = mfm.widgets.CodeEditor(
             filename=mfm.settings.settings_file,
@@ -388,11 +352,11 @@ class Main(QMainWindow):
         self.actionExperimentChanged.triggered.connect(self.onExperimentChanged)
         self.actionChange_current_dataset.triggered.connect(self.onCurrentDatasetChanged)
         self.actionAdd_fit.triggered.connect(self.onAddFit)
-        self.actionSaveAllFits.triggered.connect(self.save_fits)
-        self.actionSaveCurrentFit.triggered.connect(self.save_fit)
-        self.actionClose_Fit.triggered.connect(self.close_fit)
+        self.actionSaveAllFits.triggered.connect(self.onSaveFits)
+        self.actionSaveCurrentFit.triggered.connect(self.onSaveFit)
+        self.actionClose_Fit.triggered.connect(mfm.cmd.close_fit)
         self.actionClose_all_fits.triggered.connect(self.onCloseAllFits)
-        self.actionLoad_Data.triggered.connect(self.add_dataset)
+        self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
         self.dataset_selector = mfm.widgets.CurveSelector(click_close=False, curve_types='all',
@@ -400,6 +364,7 @@ class Main(QMainWindow):
                                                           drag_enabled=True)
         self.verticalLayout_8.addWidget(self.dataset_selector)
 
+    def init_setups(self):
         ##########################################################
         #      Initialize Experiments and Setups                 #
         #      (Commented widgets don't work at the moment       #
@@ -454,7 +419,8 @@ class Main(QMainWindow):
         self.comboBox_experimentSelect.addItems(self.experiment_names)
 
         self.current_fit = None
-        self.add_dataset(experiment=global_fit, setup=global_setup)  # Add Global-Dataset by default
+        mfm.cmd.add_dataset(setup=global_setup)
+        #self.onAddDataset(experiment=global_fit, setup=global_setup)  # Add Global-Dataset by default
 
 
 if __name__ == "__main__":
@@ -470,6 +436,7 @@ if __name__ == "__main__":
     win = Main(parent=None)
     mfm.console.history_widget = win.plainTextEditHistory
     mfm.cs = win
+    win.init_setups()
 
     with open(mfm.settings.style_sheet_file, 'r') as fp:
         style_sheet = fp.read()

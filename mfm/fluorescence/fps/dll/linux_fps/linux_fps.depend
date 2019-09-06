@@ -1,0 +1,20 @@
+# depslib dependency file v1.0
+1490456074 source:c:\users\peulen\onedrive\programming\chisurf\mfm\fluorescence\fps\dll\linux_fps\av_routines.cpp
+	<math.h>
+	"mtrandom.h"
+	<malloc.h>
+
+1397510168 c:\users\peulen\onedrive\programming\chisurf\mfm\fluorescence\fps\dll\linux_fps\mtrandom.h
+	<math.h>
+
+1397510162 source:c:\users\peulen\onedrive\programming\chisurf\mfm\fluorescence\fps\dll\linux_fps\msectim.cpp
+	"msectim.h"
+
+1397510164 c:\users\peulen\onedrive\programming\chisurf\mfm\fluorescence\fps\dll\linux_fps\msectim.h
+	<sys\timeb.h>
+	<sys/timeb.h>
+
+1397510166 source:c:\users\peulen\onedrive\programming\chisurf\mfm\fluorescence\fps\dll\linux_fps\mt19937cok.cpp
+	"mtrandom.h"
+	<time.h>
+

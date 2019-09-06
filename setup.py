@@ -30,17 +30,17 @@ def make_extension(ext):
 
 # and build up the set of Extension objects
 eList = [
-    #[
-    #    './chisurf//mfm/fluorescence/simulation/_simulation.pyx',
-    #    './chisurf//mfm/math/rand/mt19937cok.cpp'
-    #],
-    #[
-    #    './chisurf//mfm/math/reaction/_reaction.pyx'
-    #],
-    #[
-    #    './chisurf/mfm/fluorescence/pda/_sgsr.pyx',
-    #    './chisurf/mfm/fluorescence/pda/sgsr_misc.cpp'
-    #]
+    [
+       './mfm/fluorescence/simulation/_simulation.pyx',
+       './mfm/math/rand/mt19937cok.cpp'
+    ],
+    [
+        './mfm/fluorescence/fps/_fps.pyx',
+        './mfm/fluorescence/fps/mt19937cok.cpp'
+    ],
+    [
+        './mfm/structure/potential/cPotentials.pyx'
+    ]
 ]
 
 extensions = [make_extension(extension) for extension in eList]
@@ -77,7 +77,7 @@ setup(
         '': ['*.json', '*.yaml', '*.ui', '*.png', '*.svg', '*.css'],
     },
     install_requires=['numpy', 'slugify', 'sip', 'PyQt5', 'emcee', 'numba', 'scipy', 'pyqtgraph', 'sympy', 'PyYAML',
-                      'tables', 'numexpr', 'matplotlib', 'python-docx', 'deprecation'],
+                      'tables', 'numexpr', 'matplotlib', 'python-docx', 'deprecation', 'pyopencl'],
     ext_modules=extensions,
     cmdclass={
         'build_ext': build_ext

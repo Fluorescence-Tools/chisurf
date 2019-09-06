@@ -31,3 +31,4 @@ dependencies:
     - chinet
     - labellib
     - deprecation
+    - pyopencl

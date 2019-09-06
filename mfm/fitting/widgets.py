@@ -162,11 +162,11 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
     def closeEvent(self, event):
         if self.close_confirm:
             reply = QtWidgets.QMessageBox.question(self, 'Message',
-                                               "Are you sure to close this fit?:\n%s" % self.fit.name,
-                                               QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+                                                   "Are you sure to close this fit?:\n%s" % self.fit.name,
+                                                   QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
 
             if reply == QtWidgets.QMessageBox.Yes:
-                mfm.console.execute('cs.close_fit()')
+                mfm.console.execute('mfm.cmd.close_fit()')
             else:
                 event.ignore()
         else:
