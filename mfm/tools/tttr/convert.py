@@ -1,3 +1,4 @@
+import os
 import copy
 
 from PyQt5 import QtWidgets, uic
@@ -31,7 +32,13 @@ class TTTRConvert(QtWidgets.QWidget):
 
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('./mfm/ui/tools/tttr_convert.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "tttr_convert.ui"
+            ),
+            self
+        )
 
         self.comboBox.addItems(filetypes.keys())
         self.hide()

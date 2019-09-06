@@ -2,18 +2,18 @@ from __future__ import annotations
 from typing import List, Tuple
 
 import os
-import emcee
-import numba as nb
 import numpy as np
 import scipy.linalg
 import scipy.stats
-
 
 import mfm
 import mfm.base
 import mfm.experiments
 import mfm.experiments.data
 import mfm.fitting.parameter
+import mfm.fitting.sample
+import mfm.fitting.support_plane
+
 from mfm.math.optimization.leastsqbound import leastsqbound
 
 
@@ -30,7 +30,10 @@ class Fit(mfm.base.Base):
 
         self._data = kwargs.get(
             'data',
-            mfm.experiments.data.DataCurve(x=np.arange(10), y=np.arange(10))
+            mfm.experiments.data.DataCurve(
+                x=np.arange(10),
+                y=np.arange(10)
+            )
         )
         self.plots = list()
         self._xmin, self._xmax = kwargs.get('xmin', 0), kwargs.get('xmax', 0)
@@ -114,8 +117,10 @@ class Fit(mfm.base.Base):
     def chi2r(self) -> float:
         """Reduced Chi2
         """
-        pv = self.model.parameter_values
-        return get_chi2(None, model=self.model)
+        return get_chi2(
+            [],
+            model=self.model
+        )
 
     @property
     def name(self) -> str:
@@ -139,11 +144,14 @@ class Fit(mfm.base.Base):
         return self.xmin, self.xmax
 
     @fit_range.setter
-    def fit_range(self, v):
+    def fit_range(
+            self,
+            v: Tuple[int, int]
+    ):
         self.xmin, self.xmax = v
 
     @property
-    def grad(self):
+    def grad(self) -> np.array:
         """Get the approximate gradient at the current parameter values
         :return:
         """
@@ -242,19 +250,22 @@ class Fit(mfm.base.Base):
         parameter = self.model.parameters_all_dict[parameter_name]
         rel_range = max(parameter.error_estimate * 3.0 / parameter.value, 0.25)
         kwargs['rel_range'] = kwargs.get('rel_range', (rel_range, rel_range))
-        parameter.parameter_scan = mfm.fitting.fit.scan_parameter(self, parameter_name, **kwargs)
+        parameter.parameter_scan = mfm.fitting.support_plane.scan_parameter(self, parameter_name, **kwargs)
         return parameter.parameter_scan
 
 
 class FitGroup(list, Fit):
 
     @property
-    def selected_fit(self):
-        return self[self._selected_fit]
+    def selected_fit(self) -> Fit:
+        return self[self._selected_fit_index]
 
     @selected_fit.setter
-    def selected_fit(self, v):
-        self._selected_fit = v
+    def selected_fit(
+            self,
+            v: int
+    ):
+        self._selected_fit_index = v
 
     @property
     def data(self):
@@ -319,7 +330,7 @@ class FitGroup(list, Fit):
             f.xmax = v
         self._xmax = v
 
-    def update(self):
+    def update(self) -> None:
         self.global_model.update()
         for p in self.plots:
             p.update_all()
@@ -347,7 +358,7 @@ class FitGroup(list, Fit):
             model_class,
             **kwargs
     ):
-        self._selected_fit = 0
+        self._selected_fit_index = 0
         self._fits = list()
         for d in data:
             model_kw = kwargs.get('model_kw', {})
@@ -368,86 +379,11 @@ class FitGroup(list, Fit):
         return s
 
     def next(self):
-        if self._selected_fit > len(self._fits):
+        if self._selected_fit_index > len(self._fits):
             raise StopIteration
         else:
-            self._selected_fit += 1
-            return self._fits[self._selected_fit - 1]
-
-
-def walk_mcmc(
-        fit: Fit,
-        steps: int,
-        step_size: float,
-        chi2max: float,
-        temp: float,
-        thin: int
-):
-    """
-
-    :param fit:
-    :param steps:
-    :param step_size:
-    :param chi2max:
-    :param temp:
-    :param thin:
-    :return:
-    """
-    dim = fit.model.n_free
-    state_initial = fit.model.parameter_values
-    n_samples = steps // thin
-    # initialize arrays
-    lnp = np.empty(n_samples)
-    parameter = np.zeros((n_samples, dim))
-    n_accepted = 0
-    state_prev = np.copy(state_initial)
-    lnp_prev = np.array(fit.lnprob(state_initial))
-    while n_accepted < n_samples:
-        state_next = state_prev + np.random.normal(0.0, step_size, dim) * state_initial
-        lnp_next = fit.lnprob(state_next, chi2max)
-        if not np.isfinite(lnp_next):
-            continue
-        if (-lnp_next + lnp_prev)/temp > np.log(np.random.rand()):
-            # save results
-            parameter[n_accepted] = state_next
-            lnp[n_accepted] = lnp_next
-            # switch previous and next
-            np.copyto(state_prev, state_next)
-            np.copyto(lnp_prev, lnp_next)
-            n_accepted += 1
-    return [lnp, parameter]
-
-
-def sample_emcee(
-        fit: Fit,
-        steps: int,
-        nwalkers: int,
-        thin: int = 10,
-        std: float = 1e-4,
-        chi2max: float = np.inf):
-    """Sample the parameter space by emcee using a number of 'walkers'
-
-    :param fit: the fit to be samples
-    :param steps: the number of steps of each walker
-    :param thin: an integer (only every ith step is saved)
-    :param nwalkers: the number of walkers
-    :param chi2max: maximum allowed chi2
-    :param std: the standard deviation of the parameters used to randomize the initial set of the walkers
-    :return: a list containing the chi2 and the parameter values
-    """
-    model = fit.model
-    ndim = fit.n_free # Number of free parameters to be sampled (number of dimensions)
-    kw = {
-        'parameters': fit.model.parameters,
-        'bounds': fit.model.parameter_bounds,
-        'chi2max': chi2max
-    }
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=[fit], kwargs=kw)
-    std = np.array(fit.model.parameter_values) * std
-    pos = [fit.model.parameter_values + std * np.random.randn(ndim) for i in range(nwalkers)]
-    sampler.run_mcmc(pos, steps, thin=thin)
-    chi2 = -2. * sampler.flatlnprobability / float(model.n_points - model.n_free - 1.0)
-    return chi2, sampler.flatchain
+            self._selected_fit_index += 1
+            return self._fits[self._selected_fit_index - 1]
 
 
 def sample_fit(
@@ -467,7 +403,7 @@ def sample_fit(
         #if method == 'emcee':
         n_walkers = int(fit.n_free * 2)
         #try:
-        chi2, para = sample_emcee(fit, steps=steps, nwalkers=n_walkers, thin=thin, chi2max=chi2max, **kwargs)
+        chi2, para = mfm.fitting.fit.sample.sample_emcee(fit, steps=steps, nwalkers=n_walkers, thin=thin, chi2max=chi2max, **kwargs)
         #except ValueError:
         #    fit.models.parameter_values = pv
         #    fit.models.update()
@@ -488,7 +424,7 @@ def approx_grad(
         epsilon: float,
         args=(),
         f0=None
-):
+) -> Tuple[float, np.array]:
     """Approximate the derivative of a fit with respect to the parameters
     xk. The return value of the function is an array.
 
@@ -522,12 +458,13 @@ def approx_grad(
 def covariance_matrix(
         fit: mfm.fitting.fit.Fit,
         **kwargs
-):
+) -> Tuple[np.array, List[int]]:
     """Calculate the covariance matrix
 
     :param fit:
     :param kwargs:
-    :return:
+    :return: the covariance matrix and a list of of parameter indices which are "important", i.e.,
+    have a partial derivative deviating from zero.
     """
     model = fit.model
     epsilon = kwargs.get('epsilon', mfm.eps)
@@ -557,34 +494,17 @@ def covariance_matrix(
     return cov_m, important_parameters
 
 
-@nb.jit(nopython=True)
-def durbin_watson(
-        residuals: np.array
-) -> float:
-    """Durbin-Watson parameter (1950,1951)
-
-    :param residuals:  array
-    :return:
-    """
-    n_res = len(residuals)
-    nom = 0.0
-    denomminator = float(np.sum(residuals ** 2))
-    for i in range(1, n_res):
-        nom += (residuals[i] - residuals[i - 1]) ** 2
-    return nom / max(1.0, denomminator)
-
-
 def get_wres(
         parameter: List[float],
         model: mfm.models.model.Model
-):
+) -> np.array:
     """Returns the weighted residuals for a list of parameters of a models
 
     :param parameter: a list of the parameter values / or None. If None the models is not updated
     :param model:
     :return:
     """
-    if parameter is not None:
+    if len(parameter) > 0:
         model.parameter_values = parameter
         model.update_model()
     return model.weighted_residuals
@@ -609,22 +529,6 @@ def get_chi2(
         return chi2r
     else:
         return chi2
-
-
-def chi2_max(
-        chi2_value: float = 1.0,
-        number_of_parameters: int = 1,
-        nu: int = 1,
-        conf_level: float = 0.95
-) -> float:
-    """Calculate the maximum chi2r of a fit given a certain confidence level
-
-    :param chi2_value: the chi2 value
-    :param number_of_parameters: the number of parameters of the models
-    :param conf_level: the confidence level that is used to calculate the maximum chi2
-    :param nu: the number of free degrees of freedom (number of observations - number of models parameters)
-    """
-    return chi2_value * (1.0 + float(number_of_parameters) / nu * scipy.stats.f.isf(1. - conf_level, number_of_parameters, nu))
 
 
 def lnprior(
@@ -669,51 +573,4 @@ def lnprob(
         lnlike = -0.5 * chi2 if chi2 < chi2max else -np.inf
         return lnlike + lp
 
-
-def scan_parameter(
-        fit: mfm.fitting.fit.Fit,
-        parameter_name: str,
-        scan_range=(None, None),
-        rel_range: float = 0.2,
-        n_steps: int = 30
-):
-    """Performs a chi2-scan for the parameter
-
-    :param fit: the fit of type 'mfm.fitting.Fit'
-    :param parameter_name: the name of the parameter (in the parameter dictionary)
-    :param scan_range: the range within the parameter is scanned if not provided 'rel_range' is used
-    :param rel_range: defines +- values for scanning
-    :param n_steps: number of steps between +-
-    :return:
-    """
-    # Store initial values before varying the parameter
-    initial_parameter_values = fit.model.parameter_values
-
-    varied_parameter = fit.model.parameters_all_dict[parameter_name]
-    is_fixed = varied_parameter.fixed
-
-    varied_parameter.fixed = True
-    chi2r_array = np.zeros(n_steps, dtype=float)
-
-    # Determine range within the parameter is varied
-    parameter_value = varied_parameter.value
-    p_min, p_max = scan_range
-    if p_min is None or p_max is None:
-        p_min = parameter_value * (1. - rel_range[0])
-        p_max = parameter_value * (1. + rel_range[1])
-    parameter_array = np.linspace(p_min, p_max, n_steps)
-
-    for i, p in enumerate(parameter_array):
-        varied_parameter.fixed = is_fixed
-        fit.model.parameter_values = initial_parameter_values
-        varied_parameter.fixed = True
-        varied_parameter.value = p
-        fit.run()
-        chi2r_array[i] = fit.chi2r
-
-    varied_parameter.fixed = is_fixed
-    fit.model.parameter_values = initial_parameter_values
-    fit.update()
-
-    return parameter_array, chi2r_array
 

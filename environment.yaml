@@ -30,3 +30,6 @@ dependencies:
     - python-docx
     - chinet
     - labellib
+    - deprecation
+    - pyopencl
+    - guiqwt

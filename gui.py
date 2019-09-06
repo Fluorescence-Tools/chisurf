@@ -1,12 +1,11 @@
 from __future__ import annotations
-from typing import List
 
 import os
 import sys
-import slugify
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication
+import mfm.cmd
 
 
 class Main(QMainWindow):
@@ -158,8 +157,10 @@ class Main(QMainWindow):
             self.comboBox_Model.addItems(model_names)
 
     def onAddFit(self):
-        idxs = [r.row() for r in self.dataset_selector.selectedIndexes()]
-        mfm.run("mfm.cmd.add_fit(model_name='%s', dataset_indices=%s)" % (self.current_model_name, idxs))
+        mfm.run(
+            "mfm.cmd.add_fit(model_name='%s', dataset_indices=%s)" %
+            (self.current_model_name, [r.row() for r in self.dataset_selector.selectedIndexes()])
+        )
 
     def onExperimentChanged(self):
         experiment_name = self.comboBox_experimentSelect.currentText()
@@ -173,8 +174,7 @@ class Main(QMainWindow):
 
     def onLoadFitResults(self, **kwargs):
         filename = mfm.widgets.get_filename(file_type="*.json", description="Load results into fit-models", **kwargs)
-        mfm.run("mfm.fits[%s].models.load('%s')" % (self.fit_idx, filename))
-        mfm.run("mfm.fits[%s].update()" % (self.fit_idx))
+        mfm.run("mfm.cmd.load_fit_result(%s, %s)" % (self.fit_idx, filename))
 
     def onSetupChanged(self):
         mfm.widgets.hide_items_in_layout(self.verticalLayout_5)
@@ -190,107 +190,30 @@ class Main(QMainWindow):
         mfm.fits = []
         mfm.fit_windows = []
 
-    def close_fit(
-            self,
-            idx: int = None
-    ):
-        if idx is None:
-            sub_window = self.mdiarea.currentSubWindow()
-            for i, w in enumerate(mfm.fit_windows):
-                if w is sub_window:
-                    idx = i
-        mfm.fits.pop(idx)
-        sub_window = mfm.fit_windows.pop(idx)
-        sub_window.close_confirm = False
-        mfm.widgets.hide_items_in_layout(self.modelLayout)
-        mfm.widgets.hide_items_in_layout(self.plotOptionsLayout)
-        sub_window.close()
+    def onAddDataset(self):
+        mfm.cmd.add_dataset(self.current_setup)
 
-    def group_datasets(
-            self,
-            dataset_indices: List[int]
-    ):
-        #selected_data = mfm.data_sets[dataset_numbers]
-        selected_data = [mfm.imported_datasets[i] for i in dataset_indices]
-        if isinstance(selected_data[0], mfm.experiments.data.DataCurve):
-            # TODO: check for double names!!!
-            dg = mfm.experiments.data.ExperimentDataCurveGroup(selected_data, name="Data-Group")
-        else:
-            dg = mfm.experiments.data.ExperimentDataGroup(selected_data, name="Data-Group")
-        dn = list()
-        for d in mfm.imported_datasets:
-            if d not in dg:
-                dn.append(d)
-        dn.append(dg)
-        mfm.imported_datasets = dn
-
-    def add_dataset(
-            self,
-            **kwargs
-    ):
-        setup = kwargs.get('setup', self.current_setup)
-        dataset = kwargs.pop('dataset', None)
-        if dataset is None:
-            dataset = setup.get_data(**kwargs)
-
-        dataset_group = dataset if \
-            isinstance(dataset, mfm.experiments.data.ExperimentDataGroup) else \
-            mfm.experiments.data.ExperimentDataCurveGroup(dataset)
-        if len(dataset_group) == 1:
-            mfm.imported_datasets.append(dataset_group[0])
-        else:
-            mfm.imported_datasets.append(dataset_group)
-        self.dataset_selector.update()
-
-    @staticmethod
-    def remove_datasets(
-            dataset_indices: List[int]
-    ):
-        dataset_indices = [dataset_indices] if not isinstance(dataset_indices, list) else dataset_indices
-        l = list()
-        for i, d in enumerate(mfm.imported_datasets):
-            if d.name == 'Global-fit':
-                l.append(d)
-                continue
-            if i not in dataset_indices:
-                l.append(d)
-            else:
-                fw = list()
-                for fit_window in mfm.fit_windows:
-                    if fit_window.fit.data is d:
-                        fit_window.close_confirm = False
-                        fit_window.close()
-                    else:
-                        fw.append(fit_window)
-                mfm.fit_windows = fw
-        mfm.imported_datasets = l
-
-    def save_fits(self, **kwargs):
+    def onSaveFits(self, **kwargs):
         path = kwargs.get('path', mfm.widgets.get_directory(**kwargs))
-        cf = self.fit_idx
-        for fit in mfm.fits:
-            fit_name = fit.name
-            path_name = slugify.slugify(str(fit_name))
-            p2 = path + '//' + path_name
-            os.mkdir(p2)
-            self.current_fit = fit
-            self.save_fit(directory=p2)
-        self.current_fit = mfm.fits[cf]
+        mfm.cmd.save_fits(path)
 
-    def save_fit(self, **kwargs):
+    def onSaveFit(self, **kwargs):
         directory = kwargs.pop('directory', None)
         if directory is None:
             mfm.working_path = mfm.widgets.get_directory(**kwargs)
         else:
             mfm.working_path = directory
-        mfm.console.run_macro('./macros/save_fit.py')
+        mfm.console.run('mfm.cmd.save_fit()')
 
-    def __init__(self, *args, **kwargs):
-        import mfm.experiments
+    def init_widgets(self):
+        #self.decay_generator = mfm.tools.dye_diffusion.TransientDecayGenerator()
+        #self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
 
-        QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
-        uic.loadUi("mfm/ui/mainwindow.ui", self)
-        self.setCentralWidget(self.mdiarea)
+        #self.fret_lines = mfm.tools.fret_lines.FRETLineGeneratorWidget()
+        #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.fret_lines.show)
+
+        #self.decay_fret_generator = mfm.fluorescence.dye_diffusion.TransientFRETDecayGenerator()
+
 
         ##########################################################
         #      Fluorescence widgets                              #
@@ -299,16 +222,8 @@ class Main(QMainWindow):
         self.lifetime_calc = mfm.tools.FRETCalculator()
         self.actionCalculator.triggered.connect(self.lifetime_calc.show)
 
-        self.kappa2_dist = mfm.tools.kappa2dist.Kappa2Dist()
+        self.kappa2_dist = mfm.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
         self.actionKappa2_Distribution.triggered.connect(self.kappa2_dist.show)
-
-        #self.decay_generator = mfm.tools.dye_diffusion.TransientDecayGenerator()
-        #self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
-
-        #self.fret_lines = mfm.tools.fret_lines.FRETLineGeneratorWidget()
-        #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.fret_lines.show)
-
-        #self.decay_fret_generator = mfm.fluorescence.dye_diffusion.TransientFRETDecayGenerator()
 
         ##########################################################
         #      TTTR-widgets                                      #
@@ -325,11 +240,11 @@ class Main(QMainWindow):
         ##########################################################
         #      TTTR-widgets                                      #
         ##########################################################
-        #self.hdf2pdb = mfm.tools.MDConverter()
-        #self.actionTrajectory_converter.triggered.connect(self.hdf2pdb.show)
+        self.hdf2pdb = mfm.tools.modelling.trajectory.MDConverter()
+        self.actionTrajectory_converter.triggered.connect(self.hdf2pdb.show)
 
-        #self.trajectory_rot_trans = mfm.tools.RotateTranslateTrajectoryWidget()
-        #self.actionRotate_Translate_trajectory.triggered.connect(self.trajectory_rot_trans.show)
+        self.trajectory_rot_trans = mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget()
+        self.actionRotate_Translate_trajectory.triggered.connect(self.trajectory_rot_trans.show)
 
         #self.calculate_potential = mfm.tools.PotentialEnergyWidget()
         #self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
@@ -337,26 +252,35 @@ class Main(QMainWindow):
         self.pdb2label = mfm.tools.PDB2Label()
         self.actionPDB2Label.triggered.connect(self.pdb2label.show)
 
-        self.structure2transfer = tools.traj2fret.gui.Structure2Transfer()
+        self.structure2transfer = mfm.tools.traj2fret.gui.Structure2Transfer()
         self.actionStructure2Transfer.triggered.connect(self.structure2transfer.show)
 
-        #self.join_trajectories = mfm.tools.JoinTrajectoriesWidget()
-        #self.actionJoin_trajectories.triggered.connect(self.join_trajectories.show)
+        self.join_trajectories = mfm.tools.modelling.trajectory.JoinTrajectoriesWidget()
+        self.actionJoin_trajectories.triggered.connect(self.join_trajectories.show)
 
-        #self.traj_save_topol = mfm.tools.SaveTopology()
-        #self.actionSave_topology.triggered.connect(self.traj_save_topol.show)
+        self.traj_save_topol = mfm.tools.modelling.trajectory.SaveTopology()
+        self.actionSave_topology.triggered.connect(self.traj_save_topol.show)
 
         #self.remove_clashes = mfm.tools.RemoveClashedFrames()
         #self.actionRemove_clashes.triggered.connect(self.remove_clashes.show)
 
-        #self.align_trajectory = mfm.tools.AlignTrajectoryWidget()
-        #self.actionAlign_trajectory.triggered.connect(self.align_trajectory.show)
+        self.align_trajectory = mfm.tools.modelling.trajectory.AlignTrajectoryWidget()
+        self.actionAlign_trajectory.triggered.connect(self.align_trajectory.show)
 
         #self.update_widget = mfm.widgets.downloader.UpdateDialog()
         #self.connect(self.actionUpdate, QtCore.SIGNAL('triggered()'), self.update_widget.show)
 
         self.f_test = mfm.tools.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
+
+    def __init__(self, *args, **kwargs):
+        import mfm.experiments
+
+        QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
+        uic.loadUi("mfm/ui/mainwindow.ui", self)
+        self.setCentralWidget(self.mdiarea)
+
+        self.init_widgets()
 
         self.configuration = mfm.widgets.CodeEditor(
             filename=mfm.settings.settings_file,
@@ -428,11 +352,11 @@ class Main(QMainWindow):
         self.actionExperimentChanged.triggered.connect(self.onExperimentChanged)
         self.actionChange_current_dataset.triggered.connect(self.onCurrentDatasetChanged)
         self.actionAdd_fit.triggered.connect(self.onAddFit)
-        self.actionSaveAllFits.triggered.connect(self.save_fits)
-        self.actionSaveCurrentFit.triggered.connect(self.save_fit)
-        self.actionClose_Fit.triggered.connect(self.close_fit)
+        self.actionSaveAllFits.triggered.connect(self.onSaveFits)
+        self.actionSaveCurrentFit.triggered.connect(self.onSaveFit)
+        self.actionClose_Fit.triggered.connect(mfm.cmd.close_fit)
         self.actionClose_all_fits.triggered.connect(self.onCloseAllFits)
-        self.actionLoad_Data.triggered.connect(self.add_dataset)
+        self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
         self.dataset_selector = mfm.widgets.CurveSelector(click_close=False, curve_types='all',
@@ -440,6 +364,7 @@ class Main(QMainWindow):
                                                           drag_enabled=True)
         self.verticalLayout_8.addWidget(self.dataset_selector)
 
+    def init_setups(self):
         ##########################################################
         #      Initialize Experiments and Setups                 #
         #      (Commented widgets don't work at the moment       #
@@ -494,7 +419,8 @@ class Main(QMainWindow):
         self.comboBox_experimentSelect.addItems(self.experiment_names)
 
         self.current_fit = None
-        self.add_dataset(experiment=global_fit, setup=global_setup)  # Add Global-Dataset by default
+        mfm.cmd.add_dataset(setup=global_setup)
+        #self.onAddDataset(experiment=global_fit, setup=global_setup)  # Add Global-Dataset by default
 
 
 if __name__ == "__main__":
@@ -503,13 +429,13 @@ if __name__ == "__main__":
     import mfm.widgets
     import mfm.tools
     import mfm.ui.resource
-    import tools
 
     mfm.console = mfm.widgets.QIPythonWidget()
 
     win = Main(parent=None)
     mfm.console.history_widget = win.plainTextEditHistory
     mfm.cs = win
+    win.init_setups()
 
     with open(mfm.settings.style_sheet_file, 'r') as fp:
         style_sheet = fp.read()

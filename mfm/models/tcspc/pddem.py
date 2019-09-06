@@ -232,8 +232,6 @@ class PDDEMModelWidget(PDDEMModel, ModelWidget):
         self.gaussians = GaussianWidget(donors=None,  model=self.model, short='G', no_donly=True, name='gaussians')
 
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
 
         self.layout.addWidget(self.convolve)

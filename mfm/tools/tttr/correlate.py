@@ -1,5 +1,6 @@
 import copy
 from copy import deepcopy
+import os
 
 import numpy as np
 import pyqtgraph as pg
@@ -77,7 +78,14 @@ class CorrelateTTTR(QtWidgets.QWidget):
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
         self._curves = list()
-        uic.loadUi('./mfm/ui/tools/tttr_correlate.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "tttr_correlate.ui"
+            ),
+            self
+        )
+
         w = mfm.tools.tttr.correlate.FCStttr()
         self.corr = w
         self.verticalLayout.addWidget(w)
@@ -316,9 +324,15 @@ class CorrelatorWidget(QtWidgets.QWidget):
 
 class CrFilterWidget(QtWidgets.QWidget):
 
-    def __init__(self, parent, photon_source, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/experiments/fcs-cr-filter.ui', self)
+    def __init__(self, parent, photon_source, *args, **kwargs):
+        super(CrFilterWidget, self).__init__(*args, **kwargs)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                'fcs-cr-filter.ui'
+            ),
+            self
+        )
         self.photon_source = photon_source
         self.parent = parent
 
@@ -382,8 +396,6 @@ class FCStttr(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
         self.parent = parent
         self.layout = layout
-        #self.layout.setMargin(0)
-        #self.layout.setSpacing(0)
         self.fileWidget = SpcFileWidget(self)
         self.countrateFilterWidget = CrFilterWidget(self, self.fileWidget)
         self.correlator = CorrelatorWidget(self, self.countrateFilterWidget)

@@ -1,4 +1,6 @@
-import copy
+from __future__ import annotations
+
+import os
 import copy
 import re
 
@@ -72,7 +74,13 @@ class HistogramTTTR(QtWidgets.QWidget):
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
         self._curves = list()
-        uic.loadUi('./mfm/ui/tools/tttr_histogram.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "tttr_histogram.ui"
+            ),
+            self
+        )
         w = TCSPCSetupTTTRWidget()
         self.decay = w
         self.verticalLayout.addWidget(w)
@@ -97,8 +105,6 @@ class TCSPCSetupTTTRWidget(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self, **kwargs)
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
-        #self.layout.setMargin(0)
-        #self.layout.setSpacing(0)
 
         self.tcspcTTTR = TcspcTTTRWidget(self)
         self.rep_rate = self.tcspcTTTR.rep_rate
@@ -127,8 +133,6 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
         uic.loadUi('mfm/ui/experiments/tcspcTTTRWidget.ui', self.tcspcTTTRWidget)
         self.spcFileWidget = SpcFileWidget(self)
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
         layout.addWidget(self.spcFileWidget)
         layout.addWidget(self.tcspcTTTRWidget)
 

@@ -192,7 +192,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         def linkcall():
             for key in self.parameter_dict:
                 v = target.parameters_all_dict[key].value
-                mfm.run("cs.current_fit.models.parameters_all_dict['%s'].value = %s" % (key, v))
+                mfm.run("cs.current_fit.model.parameters_all_dict['%s'].value = %s" % (key, v))
             mfm.run("cs.current_fit.update()")
         return linkcall
 

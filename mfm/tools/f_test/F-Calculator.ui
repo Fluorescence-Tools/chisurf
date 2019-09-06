@@ -1,0 +1,601 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>264</width>
+    <height>292</height>
+   </rect>
+  </property>
+  <property name="font">
+   <font>
+    <pointsize>12</pointsize>
+    <kerning>true</kerning>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>F-Calculator</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../../ui/resource.qrc">
+    <normaloff>:/icons/icons/1462894045_chart02_64.png</normaloff>:/icons/icons/1462894045_chart02_64.png</iconset>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="title">
+      <string>F-Test</string>
+     </property>
+     <property name="flat">
+      <bool>false</bool>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>12</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>12</number>
+      </property>
+      <property name="horizontalSpacing">
+       <number>1</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>0</number>
+      </property>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_12">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>conf</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="2" colspan="5">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
+        <property name="decimals">
+         <number>5</number>
+        </property>
+        <property name="singleStep">
+         <double>0.001000000000000</double>
+        </property>
+        <property name="value">
+         <double>0.950000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>χ2(1)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The chi2 of your model.&lt;/p&gt;&lt;p&gt;By clicking on &amp;quot;get&amp;quot; it will take the&lt;/p&gt;&lt;p&gt;number all parameters from the current&lt;/p&gt;&lt;p&gt;fitting model.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="decimals">
+         <number>4</number>
+        </property>
+        <property name="singleStep">
+         <double>0.001000000000000</double>
+        </property>
+        <property name="value">
+         <double>1.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="6">
+       <widget class="QPushButton" name="toolButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>&gt;</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_9">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>χ2(2)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="decimals">
+         <number>4</number>
+        </property>
+        <property name="singleStep">
+         <double>0.001000000000000</double>
+        </property>
+        <property name="value">
+         <double>1.500000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="4">
+       <widget class="QLabel" name="label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>n1</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="5">
+       <widget class="QSpinBox" name="spinBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The number of measurement points.&lt;/p&gt;&lt;p&gt;Usually this the the number of measured&lt;/p&gt;&lt;p&gt;points in your curve.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="maximum">
+         <number>1000000</number>
+        </property>
+        <property name="value">
+         <number>100</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="4">
+       <widget class="QLabel" name="label_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>n2</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="5">
+       <widget class="QSpinBox" name="spinBox_2">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The number of free parameters in&lt;/p&gt;&lt;p&gt;your fitted model function.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="maximum">
+         <number>1000000</number>
+        </property>
+        <property name="value">
+         <number>5</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="6">
+       <widget class="QPushButton" name="toolButton_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>&gt;</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="title">
+      <string>χ2 max</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>12</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>12</number>
+      </property>
+      <property name="horizontalSpacing">
+       <number>1</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>0</number>
+      </property>
+      <item row="7" column="2" colspan="3">
+       <widget class="QLineEdit" name="lineEdit"/>
+      </item>
+      <item row="2" column="4">
+       <widget class="QPushButton" name="toolButton_3">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>&gt;</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QLabel" name="label_8">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>χ2 max</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>dof</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>χ2 min</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>conf</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="2" colspan="3">
+       <widget class="QSpinBox" name="spinBox_4">
+        <property name="maximum">
+         <number>1000000</number>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_6">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>para</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="2" colspan="3">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_4">
+        <property name="decimals">
+         <number>5</number>
+        </property>
+        <property name="maximum">
+         <double>1.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.010000000000000</double>
+        </property>
+        <property name="value">
+         <double>0.950000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="2" colspan="3">
+       <widget class="QSpinBox" name="spinBox_3">
+        <property name="maximum">
+         <number>1000000</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2" colspan="2">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_5">
+        <property name="decimals">
+         <number>5</number>
+        </property>
+        <property name="maximum">
+         <double>10000.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.010000000000000</double>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+  <action name="actionN1Changed">
+   <property name="text">
+    <string>n1Changed</string>
+   </property>
+  </action>
+  <action name="actionN2Changed">
+   <property name="text">
+    <string>N2Changed</string>
+   </property>
+  </action>
+  <action name="actionChi2_1_F_Changed">
+   <property name="text">
+    <string>Chi2Changed</string>
+   </property>
+  </action>
+  <action name="actionConf_F_Changed">
+   <property name="text">
+    <string>ConfChanged</string>
+   </property>
+  </action>
+  <action name="actionChi2_2_F_Changed">
+   <property name="text">
+    <string>Chi2MaxChanged</string>
+   </property>
+  </action>
+  <action name="actionChi2MinChanged">
+   <property name="text">
+    <string>Chi2MinChanged</string>
+   </property>
+  </action>
+  <action name="actionNParameterChanged">
+   <property name="text">
+    <string>nParameterChanged</string>
+   </property>
+  </action>
+  <action name="actionDofChanged">
+   <property name="text">
+    <string>dofChanged</string>
+   </property>
+  </action>
+  <action name="actionOnConf_2_Changed">
+   <property name="text">
+    <string>onConf_2_Changed</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="../../ui/resource.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>spinBox</sender>
+   <signal>valueChanged(QString)</signal>
+   <receiver>actionN1Changed</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>68</x>
+     <y>24</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spinBox_2</sender>
+   <signal>valueChanged(QString)</signal>
+   <receiver>actionN2Changed</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>142</x>
+     <y>24</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>doubleSpinBox</sender>
+   <signal>valueChanged(QString)</signal>
+   <receiver>actionChi2_1_F_Changed</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>105</x>
+     <y>44</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>doubleSpinBox_2</sender>
+   <signal>valueChanged(QString)</signal>
+   <receiver>actionConf_F_Changed</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>105</x>
+     <y>64</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>doubleSpinBox_3</sender>
+   <signal>valueChanged(QString)</signal>
+   <receiver>actionChi2_2_F_Changed</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>105</x>
+     <y>84</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>doubleSpinBox_5</sender>
+   <signal>valueChanged(QString)</signal>
+   <receiver>actionChi2MinChanged</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>101</x>
+     <y>102</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spinBox_4</sender>
+   <signal>valueChanged(QString)</signal>
+   <receiver>actionNParameterChanged</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>113</x>
+     <y>123</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spinBox_3</sender>
+   <signal>valueChanged(QString)</signal>
+   <receiver>actionDofChanged</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>113</x>
+     <y>143</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>doubleSpinBox_4</sender>
+   <signal>valueChanged(QString)</signal>
+   <receiver>actionOnConf_2_Changed</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>113</x>
+     <y>163</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

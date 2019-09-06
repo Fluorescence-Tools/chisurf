@@ -4,6 +4,7 @@ import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import mfm
+import mfm.fluorescence.anisotropy.kappa2
 import mfm.math
 import mfm.plots as plots
 from mfm.models.model import ModelWidget
@@ -121,7 +122,7 @@ class OrientationParameter(FittingParameterGroup):
 
         # slow isotropic
         k2s = np.linspace(0.01, 4, 50)
-        p = mfm.fluorescence.general.p_isotropic_orientation_factor(k2s)
+        p = mfm.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(k2s)
         self._k2_slow_iso = mfm.fluorescence.general.two_column_to_interleaved(p, k2s)
 
         FittingParameterGroup.__init__(self, *args, **kwargs)
@@ -267,15 +268,11 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
 
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
-        self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.gb = QtWidgets.QGroupBox()
         self.layout.addWidget(self.gb)
         self.gb.setTitle("Gaussian distances")
         self.lh = QtWidgets.QVBoxLayout()
-        self.lh.setSpacing(0)
-        self.lh.setContentsMargins(0, 0, 0, 0)
         self.gb.setLayout(self.lh)
 
         self._gb = list()
@@ -318,8 +315,6 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
         n_gauss = len(self)
         gb.setTitle('G%i' % (n_gauss))
         l = QtWidgets.QVBoxLayout()
-        l.setSpacing(0)
-        l.setContentsMargins(0, 0, 0, 0)
 
         m = self._gaussianMeans[-1].make_widget(layout=l)
         s = self._gaussianSigma[-1].make_widget(layout=l)
@@ -465,8 +460,6 @@ for f in cs.current_fit:
         n_rates = len(self)
         gb.setTitle('G%i' % (n_rates + 1))
         l = QtWidgets.QVBoxLayout()
-        l.setSpacing(0)
-        l.setContentsMargins(0, 0, 0, 0)
         pm = FittingParameter(name='R(%s,%i)' % (self.short, n_rates + 1),
                               value=m, model=self.model, decimals=1,
                               bounds_on=False, lb=fret_settings['rda_min'], ub=fret_settings['rda_max'],
@@ -474,8 +467,8 @@ for f in cs.current_fit:
         px = FittingParameter(name='x(%s,%i)' % (self.short, n_rates + 1), value=x,
                               model=self.model, decimals=3,
                               bounds_on=False, text='x', update_function=self.update)
-        m = pm.make_widget(layout=l)
-        x = px.make_widget(layout=l)
+        m = mfm.fitting.widgets.make_fitting_parameter_widget(pm, layout=l)
+        x = mfm.fitting.widgets.make_fitting_parameter_widget(px, layout=l)
 
         gb.setLayout(l)
         row = n_rates / 2
@@ -702,9 +695,9 @@ class GaussianModelWidget(GaussianModel, LifetimeModelWidgetBase):
 
         self.layout_parameter.addWidget(donors)
 
-        fret_p = self.fret_parameters.to_widget()
-        self.layout_parameter.addWidget(fret_p)
-        fret_p.show()
+        self.layout_parameter.addWidget(
+            mfm.fitting.widgets.make_fitting_parameter_group_widget(self.fret_parameters)
+        )
 
         self.layout_parameter.addWidget(gaussians)
 

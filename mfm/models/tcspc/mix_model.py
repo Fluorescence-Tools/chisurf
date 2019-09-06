@@ -150,10 +150,6 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
 
         layout = QtWidgets.QVBoxLayout(self)
 
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setAlignment(QtCore.Qt.AlignTop)
-
         l = QtWidgets.QHBoxLayout()
 
         self.model_selector = QtWidgets.QComboBox()

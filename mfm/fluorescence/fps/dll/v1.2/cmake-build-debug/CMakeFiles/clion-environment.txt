@@ -1,0 +1,2 @@
+ToolSet: w64 5.0@C:\mingw-w64\mingw64
+CMake: 3.6.3@C:\Program Files (x86)\JetBrains\CLion 2016.3.5\bin\cmake\bin\cmake.exe
