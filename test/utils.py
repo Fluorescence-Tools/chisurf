@@ -10,24 +10,35 @@ if not hasattr(unittest.TestCase, 'assertIn'):
     def assertIn(self, member, container, msg=None):
         return self.assertTrue(member in container,
                                msg or '%s not found in %s' % (member, container))
+
+
     def assertNotIn(self, member, container, msg=None):
         return self.assertTrue(member not in container,
                                msg or '%s unexpectedly found in %s'
                                % (member, container))
+
+
     def assertIsInstance(self, obj, cls, msg=None):
         return self.assertTrue(isinstance(obj, cls),
                                msg or '%s is not an instance of %s' % (obj, cls))
+
+
     def assertLessEqual(self, a, b, msg=None):
         return self.assertTrue(a <= b,
                                msg or '%s not less than or equal to %s' % (a, b))
+
+
     def assertGreaterEqual(self, a, b, msg=None):
         return self.assertTrue(a >= b,
                                msg or '%s not greater than or equal to %s' % (a, b))
+
+
     unittest.TestCase.assertIn = assertIn
     unittest.TestCase.assertNotIn = assertNotIn
     unittest.TestCase.assertIsInstance = assertIsInstance
     unittest.TestCase.assertLessEqual = assertLessEqual
     unittest.TestCase.assertGreaterEqual = assertGreaterEqual
+
 
 def set_search_paths(topdir):
     """Set search paths so that we can import Python modules"""
@@ -35,9 +46,11 @@ def set_search_paths(topdir):
                                + os.environ.get('PYTHONPATH', '')
     sys.path.insert(0, topdir)
 
+
 def get_input_file_name(topdir, fname):
     """Return full path to a test input file"""
     return os.path.join(topdir, 'test', 'input', fname)
+
 
 @contextlib.contextmanager
 def temporary_directory(dir=None):
@@ -45,8 +58,10 @@ def temporary_directory(dir=None):
     yield _tmpdir
     shutil.rmtree(_tmpdir, ignore_errors=True)
 
+
 if 'coverage' in sys.modules:
     import atexit
+
     # Collect coverage information from subprocesses
     __site_tmpdir = tempfile.mkdtemp()
     with open(os.path.join(__site_tmpdir, 'sitecustomize.py'), 'w') as fh:
@@ -67,6 +82,9 @@ atexit.register(_coverage_cleanup, _cov)
     os.environ['PYTHONPATH'] = __site_tmpdir + os.pathsep \
                                + os.environ.get('PYTHONPATH', '')
 
+
     def __cleanup(d):
         shutil.rmtree(d, ignore_errors=True)
+
+
     atexit.register(__cleanup, __site_tmpdir)

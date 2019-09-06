@@ -6,6 +6,7 @@ from PyQt5 import QtWidgets, uic
 import pyqtgraph as pg
 import pyqtgraph.dockarea
 
+import mfm.fluorescence.anisotropy.kappa2
 from mfm.fluorescence.anisotropy.kappa2 import s2delta
 from mfm.fluorescence.anisotropy.kappa2 import kappasqAllDelta, kappasq_all
 from mfm.fluorescence import general as fluorescence
@@ -105,7 +106,7 @@ class Kappa2Dist(QtWidgets.QWidget):
 
     @property
     def k2_est(self):
-        return fluorescence.kappasq(self.delta, self.SA2, self.SD2)
+        return mfm.fluorescence.anisotropy.kappa2.kappasq(self.delta, self.SA2, self.SD2)
 
     @property
     def n_bins(self):
