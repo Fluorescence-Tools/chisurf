@@ -1,0 +1,2 @@
+C:\mingw-w64\mingw64\bin\ar.exe qc libfpsdll.a  CMakeFiles/fpsdll.dir/av_routines.cpp.obj CMakeFiles/fpsdll.dir/av_testbench.cpp.obj
+C:\mingw-w64\mingw64\bin\ranlib.exe libfpsdll.a

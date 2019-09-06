@@ -2,6 +2,7 @@ from __future__ import annotations
 from collections import Iterable
 from typing import List
 
+import os
 import numpy as np
 
 import mfm.base
@@ -30,7 +31,7 @@ console = None
 #######################################################
 #        SETTINGS  & CONSTANTS                        #
 #######################################################
-
+package_directory = os.path.dirname(os.path.abspath(__file__))
 verbose = mfm.settings.cs_settings['verbose']
 __version__ = mfm.settings.cs_settings['version']
 __name__ = mfm.settings.cs_settings['name']

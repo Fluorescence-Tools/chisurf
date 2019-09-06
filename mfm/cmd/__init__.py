@@ -3,14 +3,12 @@ from typing import List
 
 import os
 from slugify import slugify
-
-from PyQt5.QtWidgets import QMainWindow
-from PyQt5 import QtGui
-
 from docx import Document
 from docx.shared import Inches
+from PyQt5 import QtGui
 
 import mfm
+import mfm.widgets
 import mfm.experiments.data
 
 
@@ -238,3 +236,56 @@ def remove_datasets(
                     fw.append(fit_window)
             mfm.fit_windows = fw
     mfm.imported_datasets = l
+
+
+def add_dataset(
+        setup,
+        dataset: mfm.experiments.data.Data = None,
+        **kwargs
+):
+    cs = mfm.cs
+    if dataset is None:
+        dataset = setup.get_data(**kwargs)
+
+    dataset_group = dataset if isinstance(dataset, mfm.experiments.data.ExperimentDataGroup) \
+        else mfm.experiments.data.ExperimentDataCurveGroup(dataset)
+    if len(dataset_group) == 1:
+        mfm.imported_datasets.append(dataset_group[0])
+    else:
+        mfm.imported_datasets.append(dataset_group)
+    cs.dataset_selector.update()
+
+
+def save_fits(
+        path: str,
+        **kwargs
+):
+    cs = mfm.cs
+    if os.path.isdir(path):
+        cf = cs.fit_idx
+        for fit in mfm.fits:
+            fit_name = fit.name
+            path_name = slugify(str(fit_name))
+            p2 = path + '//' + path_name
+            os.mkdir(p2)
+            cs.current_fit = fit
+            cs.onSaveFit(directory=p2)
+        cs.current_fit = mfm.fits[cf]
+
+
+def close_fit(
+        idx: int = None
+):
+    cs = mfm.cs
+    if idx is None:
+        sub_window = cs.mdiarea.currentSubWindow()
+        for i, w in enumerate(mfm.fit_windows):
+            if w is sub_window:
+                idx = i
+    mfm.fits.pop(idx)
+    sub_window = mfm.fit_windows.pop(idx)
+    sub_window.close_confirm = False
+    mfm.widgets.hide_items_in_layout(cs.modelLayout)
+    mfm.widgets.hide_items_in_layout(cs.plotOptionsLayout)
+    sub_window.close()
+

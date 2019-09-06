@@ -16,8 +16,6 @@ class LoadStructure(QtWidgets.QWidget, ExperimentReader):
 
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
-        #self.layout.setMargin(0)
-        #self.layout.setSpacing(0)
         self.pdbWidget = PDBLoad(self)
         self.layout.addWidget(self.pdbWidget)
 
