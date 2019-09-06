@@ -1,9 +1,10 @@
+from __future__ import annotations
+
+import os
 from PyQt5 import QtWidgets, uic
 
-import mfm.fluorescence
-import mfm.fluorescence.general
-from  mfm.fluorescence.general import distance_to_fret_rate_constant, \
-    distance_to_fret_efficiency, fret_efficiency_to_lifetime, \
+from  mfm.fluorescence.general import \
+    distance_to_fret_rate_constant, distance_to_fret_efficiency, fret_efficiency_to_lifetime, \
     lifetime_to_fret_efficiency, fretrate_to_distance, fret_efficiency_to_distance
 
 
@@ -13,7 +14,13 @@ class FRETCalculator(QtWidgets.QWidget):
 
     def __init__(self, kappa2=0.667):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('./mfm/ui/tools/calc_tau2r.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "calc_tau2r.ui"
+            ),
+            self
+        )
         self.kappa2 = kappa2
         ## User-interface
         self.doubleSpinBox.editingFinished.connect(self.onTau0Changed)
@@ -67,43 +74,54 @@ class FRETCalculator(QtWidgets.QWidget):
         self.kFRET = distance_to_fret_rate_constant(self.R, self.R0, self.tau0)
         self.blockSignals(False)
 
-
     @property
-    def kFRET(self):
+    def kFRET(self) -> float:
         return float(self.doubleSpinBox_5.value())
 
     @kFRET.setter
-    def kFRET(self, value):
+    def kFRET(
+            self,
+            value: float
+    ):
         return self.doubleSpinBox_5.setValue(value)
 
     @property
-    def tau0(self):
+    def tau0(self) -> float:
         return float(self.doubleSpinBox.value())
 
     @property
-    def tau(self):
+    def tau(self) -> float:
         return float(self.doubleSpinBox_2.value())
 
     @tau.setter
-    def tau(self, v):
+    def tau(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_2.setValue(v)
 
     @property
-    def R0(self):
+    def R0(self) -> float:
         return float(self.doubleSpinBox_3.value())
 
     @property
-    def R(self):
+    def R(self) -> float:
         return float(self.doubleSpinBox_9.value())
 
     @R.setter
-    def R(self, v):
+    def R(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_9.setValue(v)
 
     @property
-    def E(self):
+    def E(self) -> float:
         return float(self.doubleSpinBox_4.value())
 
     @E.setter
-    def E(self, v):
+    def E(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_4.setValue(v)

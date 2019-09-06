@@ -243,8 +243,8 @@ class Main(QMainWindow):
         self.hdf2pdb = mfm.tools.modelling.trajectory.MDConverter()
         self.actionTrajectory_converter.triggered.connect(self.hdf2pdb.show)
 
-        #self.trajectory_rot_trans = mfm.tools.RotateTranslateTrajectoryWidget()
-        #self.actionRotate_Translate_trajectory.triggered.connect(self.trajectory_rot_trans.show)
+        self.trajectory_rot_trans = mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget()
+        self.actionRotate_Translate_trajectory.triggered.connect(self.trajectory_rot_trans.show)
 
         #self.calculate_potential = mfm.tools.PotentialEnergyWidget()
         #self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
@@ -255,17 +255,17 @@ class Main(QMainWindow):
         self.structure2transfer = tools.traj2fret.gui.Structure2Transfer()
         self.actionStructure2Transfer.triggered.connect(self.structure2transfer.show)
 
-        #self.join_trajectories = mfm.tools.JoinTrajectoriesWidget()
-        #self.actionJoin_trajectories.triggered.connect(self.join_trajectories.show)
+        self.join_trajectories = mfm.tools.modelling.trajectory.JoinTrajectoriesWidget()
+        self.actionJoin_trajectories.triggered.connect(self.join_trajectories.show)
 
-        #self.traj_save_topol = mfm.tools.SaveTopology()
-        #self.actionSave_topology.triggered.connect(self.traj_save_topol.show)
+        self.traj_save_topol = mfm.tools.modelling.trajectory.SaveTopology()
+        self.actionSave_topology.triggered.connect(self.traj_save_topol.show)
 
         #self.remove_clashes = mfm.tools.RemoveClashedFrames()
         #self.actionRemove_clashes.triggered.connect(self.remove_clashes.show)
 
-        #self.align_trajectory = mfm.tools.AlignTrajectoryWidget()
-        #self.actionAlign_trajectory.triggered.connect(self.align_trajectory.show)
+        self.align_trajectory = mfm.tools.modelling.trajectory.AlignTrajectoryWidget()
+        self.actionAlign_trajectory.triggered.connect(self.align_trajectory.show)
 
         #self.update_widget = mfm.widgets.downloader.UpdateDialog()
         #self.connect(self.actionUpdate, QtCore.SIGNAL('triggered()'), self.update_widget.show)

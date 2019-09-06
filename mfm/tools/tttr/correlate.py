@@ -78,7 +78,14 @@ class CorrelateTTTR(QtWidgets.QWidget):
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
         self._curves = list()
-        uic.loadUi('./mfm/ui/tools/tttr_correlate.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "tttr_correlate.ui"
+            ),
+            self
+        )
+
         w = mfm.tools.tttr.correlate.FCStttr()
         self.corr = w
         self.verticalLayout.addWidget(w)
