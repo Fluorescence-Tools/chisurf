@@ -372,8 +372,6 @@ class TCSPCSetupSDTWidget(TCSPCReader, QtWidgets.QWidget):
         TCSPCReader.__init__(self, **kwargs)
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
-        #self.layout.setMargin(0)
-        #self.layout.setSpacing(0)
 
         self.tcspcSDT = TcspcSDTWidget()
         #self.tcspcSDT.widget.hide()

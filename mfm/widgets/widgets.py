@@ -552,7 +552,7 @@ class CurveSelector(QtWidgets.QTreeWidget):
 
     def onRemoveDataset(self):
         dataset_idx = [selected_index.row() for selected_index in self.selectedIndexes()]
-        mfm.console.execute('cs.remove_datasets(%s)' % dataset_idx)
+        mfm.console.execute('mfm.cmd.remove_datasets(%s)' % dataset_idx)
         self.update()
 
     def onSaveDataset(self):
@@ -561,7 +561,7 @@ class CurveSelector(QtWidgets.QTreeWidget):
 
     def onGroupDatasets(self):
         dg = self.selected_dataset_idx
-        mfm.run("cs.group_datasets(%s)" % dg)
+        mfm.run("mfm.cmd.group_datasets(%s)" % dg)
         self.update()
 
     def onUnGroupDatasets(self):
@@ -780,8 +780,6 @@ def get_directory(**kwargs):
         return directory, filenames
 
 
-
-
 def make_widget_from_yaml(d, name=''):
     """
     >>> import numbers
@@ -800,8 +798,6 @@ def make_widget_from_yaml(d, name=''):
         g = QtWidgets.QGroupBox()
         g.setTitle(str(name))
         layout = QtWidgets.QFormLayout()
-        layout.setMargin(0)
-        layout.setSpacing(1)
         g.setLayout(layout)
 
         for row, key in enumerate(d):

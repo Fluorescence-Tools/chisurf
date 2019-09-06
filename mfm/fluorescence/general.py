@@ -12,28 +12,6 @@ rate2lifetime = lambda rate, lifetime: ne.evaluate("1. / (1. / lifetime + rate)"
 et = lambda fd0, fda: fda / fd0
 
 
-def p_isotropic_orientation_factor(k2, normalize=True):
-    """Calculates an the probability of a given kappa2 according to 
-    an isotropic orientation factor distribution
-    http://www.fretresearch.org/kappasquaredchapter.pdf
-    
-    :param k2: kappa squared 
-    :param normalize: if True (
-    :return: 
-    """
-    ks = np.sqrt(k2)
-    s3 = np.sqrt(3.)
-    r = np.zeros_like(k2)
-    for i, k in enumerate(ks):
-        if 0 <= k <= 1:
-            r[i] = 0.5 / (s3 * k) * np.log(2 + s3)
-        elif 1 <= k <= 2:
-            r[i] = 0.5 / (s3 * k) * np.log((2 + s3) / (k + np.sqrt(k**2 - 1.0)))
-    if normalize:
-        r /= max(1.0, r.sum())
-    return r
-
-
 def fretrate_to_distance(fretrate, forster_radius, tau0, kappa2=2. / 3.):
     """Calculate the distance given a FRET-rate
 
@@ -135,36 +113,6 @@ def fluorescence_averaged_lifetime(
         time_axis = fluorescence[0]
         intensity = fluorescence[1]
         return np.sum(intensity * time_axis) / np.sum(intensity)
-
-
-def phasor_giw(f, n, omega, times):
-    """Phasor plot gi(w)
-    The phasor approach to fluorescence lifetime page 236
-
-    :param f: array of the fluorescence intensity at the provided times
-    :param n: the nth harmonics
-    :param omega: the angular frequency (2*pi*frequency)
-    :param times: the times of the fluorescence intensities
-    :return:
-    """
-    y = f * np.cos(n * omega * times)
-    x = times
-    return np.trapz(y, x) / np.trapz(f, x)
-
-
-def phasor_siw(f, n, omega, times):
-    """Phasor plot gi(w)
-    The phasor approach to fluorescence lifetime page 236
-
-    :param f: array of the fluorescence intensity at the provided times
-    :param n: the nth harmonics
-    :param omega: the angular frequency (2*pi*frequency)
-    :param times: the times of the fluorescence intensities
-    :return:
-    """
-    y = f * np.sin(n * omega * times)
-    x = times
-    return np.trapz(y, x) / np.trapz(f, x)
 
 
 @nb.jit
@@ -280,33 +228,6 @@ def transfer_space(
     es = np.linspace(transfer_efficiency_min, transfer_efficiency_max, n_steps)
     rdas = fret_efficiency_to_distance(es, forster_radius)
     return rdas
-
-
-def kappasq(delta, sD2, sA2, beta1=None, beta2=None):
-    """
-    Calculates the kappa2 distribution given the order parameter sD2 and sA2
-
-    :param delta:
-    :param sD2: order parameter of donor s2D = - sqrt(r_inf_D/r0)
-    :param sA2: order parameter of acceptor s2A = sqrt(r_inf_A/r0)
-    :param beta1:
-    :param beta2:
-    """
-    if beta1 is None or beta2 is None:
-        beta1 = 0
-        beta2 = delta
-
-    s2delta = (3.0 * np.cos(delta) * np.cos(delta) - 1.0) / 2.0
-    s2beta1 = (3.0 * np.cos(beta1) * np.cos(beta1) - 1.0) / 2.0
-    s2beta2 = (3.0 * np.cos(beta2) * np.cos(beta2) - 1.0) / 2.0
-    k2 = 2.0 / 3.0 * (1 + sD2 * s2beta1 + sA2 * s2beta2 +
-                  sD2 * sA2 * (s2delta +
-                                 6 * s2beta1 * s2beta2 +
-                                 1 + 2 * s2beta1 +
-                                 2 * s2beta2 -
-                                 9 * np.cos(beta1) *
-                                 np.cos(beta2) * np.cos(delta)))
-    return k2
 
 
 def calc_transfer_matrix(t, rDA_min=1.0, rDA_max=200.0, n_steps=200.0, kappa2=0.667, space='lin', **kwargs):

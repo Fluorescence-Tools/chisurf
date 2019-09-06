@@ -2,6 +2,7 @@ from __future__ import annotations
 from collections import Iterable
 from typing import List
 
+import os
 import numpy as np
 
 import mfm.base
@@ -14,11 +15,6 @@ import mfm.settings
 import mfm.models
 import mfm.fitting
 import mfm.structure
-
-#import mfm.fluorescence
-
-#from mfm.settings import cs_settings, colors
-
 
 #######################################################
 #        LIST OF FITS, DATA, EXPERIMENTS              #
@@ -35,37 +31,13 @@ console = None
 #######################################################
 #        SETTINGS  & CONSTANTS                        #
 #######################################################
-
+package_directory = os.path.dirname(os.path.abspath(__file__))
 verbose = mfm.settings.cs_settings['verbose']
 __version__ = mfm.settings.cs_settings['version']
 __name__ = mfm.settings.cs_settings['name']
 working_path = ''
 eps = np.sqrt(np.finfo(float).eps)
 cs = None
-
-
-def find_objects(
-        search_list: List,
-        object_type,
-        remove_double: bool = True):
-    """Traverse a list recursively a an return all objects of type `object_type` as
-    a list
-
-    :param search_list: list
-    :param object_type: an object type
-    :param remove_double: boolean
-    :return: list of objects with certain object type
-    """
-    re = []
-    for value in search_list:
-        if isinstance(value, object_type):
-            re.append(value)
-        elif isinstance(value, list):
-            re += find_objects(value, object_type)
-    if remove_double:
-        return list(set(re))
-    else:
-        return re
 
 
 def c(
@@ -80,7 +52,7 @@ def c(
     Example
     -------
     >>> mfm.c(self.checkBox.stateChanged, models", self.checkBox.isChecked)
-    >>> cs.current_fit.models.update_rmsd=True
+    >>> cs.current_fit.model.update_rmsd=True
 
     :param t: The signal of the qt-widget
     :param st: The string passed to the mfm-commandline
