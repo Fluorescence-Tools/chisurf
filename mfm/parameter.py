@@ -123,7 +123,7 @@ class Parameter(mfm.base.Base):
             self,
             v: dict
     ):
-        mfm.base.Base.from_dict(self, v)
+        super(Parameter, self).from_dict(v)
         self._value = v['value']
         self._decimals = v['decimals']
 
@@ -140,9 +140,10 @@ class ParameterGroup(mfm.base.Base):
     def __init__(
             self,
             fit: mfm.fitting.fit.Fit,
+            *args,
             **kwargs
     ):
-        super(ParameterGroup, self).__init__(**kwargs)
+        super(ParameterGroup, self).__init__(*args, **kwargs)
         self.fit = fit
         self._activeRuns = list()
         self._chi2 = list()
