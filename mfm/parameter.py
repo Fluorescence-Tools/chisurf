@@ -159,17 +159,16 @@ class ParameterGroup(mfm.base.Base):
             filename: str,
             sep: str = '\t'
     ):
-        fp = open(filename, 'w')
-        s = ""
-        for ph in self.parameter_names:
-            s += ph + sep
-        s += "\n"
-        for l in self.values.T:
-            for p in l:
-                s += "%.5f%s" % (p, sep)
+        with open(filename, 'w') as fp:
+            s = ""
+            for ph in self.parameter_names:
+                s += ph + sep
             s += "\n"
-        fp.write(s)
-        fp.close()
+            for l in self.values.T:
+                for p in l:
+                    s += "%.5f%s" % (p, sep)
+                s += "\n"
+            fp.write(s)
 
     @property
     def values(self) -> np.array:

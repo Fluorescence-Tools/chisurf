@@ -7,6 +7,8 @@ import tempfile
 
 import numpy as np
 from PyQt5 import QtWidgets, uic
+
+import mfm.io.xyz
 from mfm.fluorescence.fps.dynamic import DiffusionSimulation, Dye, Sticking, \
     ProteinQuenching
 from mfm.fluorescence.fps.widgets import ProteinQuenchingWidget, DyeWidget, StickingWidget
@@ -754,13 +756,13 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         if verbose:
             print("\nSaving slow AV...")
             print("Trajectory filename: %s" % av_slow_file)
-        mfm.io.pdb.write_xyz(av_slow_file, self.av.points_acv)
+        mfm.io.xyz.write_xyz(av_slow_file, self.av.points_acv)
 
         av_fast_file = os.path.join(directory, self.filename_prefix + '_av_fast.xyz')
         if verbose:
             print("\nSaving slow AV...")
             print("Trajectory filename: %s" % av_fast_file)
-        mfm.io.pdb.write_xyz(av_fast_file, self.av.points_fast)
+        mfm.io.xyz.write_xyz(av_fast_file, self.av.points_fast)
         return diff_file, av_slow_file, av_fast_file
 
     def onSimulationDtChanged(self):

@@ -2,6 +2,7 @@ import json
 import os
 import numpy as np
 
+import mfm.io.dx
 from . import dynamic
 import mfm
 import mfm.base
@@ -127,7 +128,12 @@ class BasicAV(object):
     def update(self):
         self.update_points()
 
-    def save(self, filename, mode='xyz', **kwargs):
+    def save(
+            self,
+            filename: str,
+            mode: str = 'xyz',
+            **kwargs
+    ):
         """Saves the accessible volume as xyz-file or open-dx density file
 
         Examples
@@ -146,12 +152,12 @@ class BasicAV(object):
             ng = self.ng
             dg = self.dg
             offset = (ng - 1) / 2 * dg
-            mfm.io.pdb.write_open_dx(filename,
-                                     d,
-                                     self.x0 - offset,
-                                     ng, ng, ng,
-                                     dg, dg, dg
-                                     )
+            mfm.io.dx.write_open_dx(filename,
+                                    d,
+                                    self.x0 - offset,
+                                    ng, ng, ng,
+                                    dg, dg, dg
+                                    )
         else:
             p = kwargs.get('points', self.points)
             d = p[:, [3]].flatten()
@@ -159,7 +165,8 @@ class BasicAV(object):
             xyz = p[:, [0, 1, 2]]
             mfm.io.pdb.write_points(filename=filename + '.'+mode,
                                     points=xyz,
-                                    mode=mode, verbose=self.verbose,
+                                    mode=mode,
+                                    verbose=self.verbose,
                                     density=d)
 
     def dRmp(self, av):
