@@ -7,6 +7,7 @@ import numexpr as ne
 
 import mfm
 import mfm.io
+import mfm.io.xyz
 from mfm.structure.structure import count_atoms
 from mfm.fluorescence.fps import _fps
 from mfm.fitting.parameter import FittingParameter
@@ -147,7 +148,7 @@ class DiffusionSimulation(object):
             coordinates = self.xyz[::skip]
             n_frames = coordinates.shape[0]
             coordinates = coordinates.reshape(n_frames, 3)
-            mfm.io.pdb.write_xyz(filename, coordinates)
+            mfm.io.xyz.write_xyz(filename, coordinates)
         elif mode == 'npy':
             np.save(filename, self.xyz)
 
