@@ -1,7 +1,9 @@
 """
 This module contain a small tool to generate JSON-labeling files
 """
+from __future__ import annotations
 
+import os
 import json
 from collections import OrderedDict
 
@@ -18,7 +20,13 @@ class PDB2Label(QtWidgets.QWidget):
 
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('./mfm/ui/tools/fps_json_edit.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "fps_json_edit.ui"
+            ),
+            self
+        )
         self.toolButton_4.clicked.connect(self.onLoadReferencePDB)
         self.pushButton_2.clicked.connect(self.onAddLabel)
         self.pushButton_3.clicked.connect(self.onAddDistance)
@@ -91,7 +99,7 @@ class PDB2Label(QtWidgets.QWidget):
         self.comboBox_4.addItems(label_names)
 
     @property
-    def distance_type(self):
+    def distance_type(self) -> str:
         distance_type = str(self.comboBox_3.currentText())
         if distance_type == 'dRDA':
             return 'RDAMean'
@@ -103,43 +111,46 @@ class PDB2Label(QtWidgets.QWidget):
             return 'pRDA'
 
     @property
-    def label1(self):
+    def label1(self) -> str:
         return str(self.comboBox_2.currentText())
 
     @property
-    def label2(self):
+    def label2(self) -> str:
         return str(self.comboBox_4.currentText())
 
     @property
-    def distance(self):
+    def distance(self) -> float:
         return float(self.doubleSpinBox.value())
 
     @property
-    def forster_radius(self):
+    def forster_radius(self) -> float:
         return float(self.doubleSpinBox_4.value())
 
     @property
-    def error_pos(self):
+    def error_pos(self) -> float:
         return float(self.doubleSpinBox_2.value())
 
     @property
-    def error_neg(self):
+    def error_neg(self) -> float:
         return float(self.doubleSpinBox_3.value())
 
     @property
-    def pdb_filename(self):
+    def pdb_filename(self) -> str:
         return str(self.lineEdit.text())
 
     @pdb_filename.setter
-    def pdb_filename(self, v):
+    def pdb_filename(
+            self,
+            v: str
+    ):
         self.lineEdit.setText(str(v))
 
     @property
-    def simulation_type(self):
+    def simulation_type(self) -> str:
         return str(self.comboBox.currentText())
 
     @property
-    def position_name(self):
+    def position_name(self) -> str:
         return str(self.lineEdit_2.text())
 
     def onLoadReferencePDB(self):
@@ -192,7 +203,10 @@ class PDB2Label(QtWidgets.QWidget):
         self.onUpdateInterface()
         self.onUpdateJSON()
 
-    def onSaveLabelingFile(self, json_file=None):
+    def onSaveLabelingFile(
+            self,
+            json_file: str = None
+    ):
         self.json_file = json_file if json_file is not None else self.json_file
         if self.json_file is None:
             #self.json_file = str(QtGui.QFileDialog.getOpenFileName(self, 'Open FPS-JSON File',
