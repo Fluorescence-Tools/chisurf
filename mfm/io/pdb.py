@@ -6,8 +6,6 @@ import numpy as np
 
 import mfm
 import mfm.common as common
-from mfm.io.pqr import parse_string_pqr
-from mfm.io.xyz import write_xyz
 
 keys_formats = [
     ('i4', 'i'),
