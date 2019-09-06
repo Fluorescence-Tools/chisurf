@@ -5,6 +5,7 @@ import matplotlib.colors as mpl_colors
 
 import mfm
 import mfm.math
+import mfm.math.statistics
 from mfm.plots import plotbase
 from pyqtgraph.dockarea import *
 
@@ -349,7 +350,7 @@ class LinePlot(plotbase.Plot):
                           '     </span>'
                           '</div>' % (fit.xmin, fit.xmax,
                                       fit.chi2r,
-                                      mfm.fitting.fit.durbin_watson(fit.weighted_residuals[0]))
+                                      mfm.math.statistics.durbin_watson(fit.weighted_residuals[0]))
                           )
 
         # Reference-function

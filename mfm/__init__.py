@@ -15,11 +15,6 @@ import mfm.models
 import mfm.fitting
 import mfm.structure
 
-#import mfm.fluorescence
-
-#from mfm.settings import cs_settings, colors
-
-
 #######################################################
 #        LIST OF FITS, DATA, EXPERIMENTS              #
 #######################################################

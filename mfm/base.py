@@ -228,7 +228,7 @@ def find_objects(
     :param remove_double: boolean
     :return: list of objects with certain object type
     """
-    re = []
+    re = list()
     for value in search_list:
         if isinstance(value, object_type):
             re.append(value)

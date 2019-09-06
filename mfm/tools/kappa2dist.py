@@ -3,8 +3,7 @@ from PyQt5 import QtWidgets, uic
 import pyqtgraph as pg
 import pyqtgraph.dockarea
 
-from mfm.fluorescence.anisotropy import s2delta
-from mfm.fluorescence.anisotropy.kappa2 import kappasqAllDelta, kappasq_all
+from mfm.fluorescence.anisotropy.kappa2 import kappasqAllDelta, kappasq_all, s2delta
 from ..fluorescence import general as fluorescence
 
 

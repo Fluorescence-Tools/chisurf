@@ -6,7 +6,6 @@ from PyQt5 import QtWidgets, uic, QtCore
 
 import mfm
 import mfm.widgets
-from mfm.fitting.fit import sample_fit
 
 parameter_settings = mfm.settings.cs_settings['parameter']
 
@@ -99,7 +98,7 @@ class FittingControllerWidget(QtWidgets.QWidget):
     def onErrorEstimate(self):
         filename = mfm.widgets.save_file('Error estimate', '*.er4')
         kw = mfm.settings.cs_settings['fitting']['sampling']
-        sample_fit(self.fit, filename, **kw)
+        mfm.fitting.sample.sample_fit(self.fit, filename, **kw)
 
     def onRunFit(self):
         mfm.run("cs.current_fit.run()")

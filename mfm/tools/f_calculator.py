@@ -3,6 +3,7 @@ from scipy.stats import f as fdist
 
 import mfm
 import mfm.fitting.fit
+import mfm.math.statistics
 
 
 class FTestWidget(QtWidgets.QWidget):
@@ -79,7 +80,7 @@ class FTestWidget(QtWidgets.QWidget):
             self.chi2_min = self._selected_fit.chi2r
         dof = max(1, self.dof)
         number_of_parameters = max(1, self.npars)
-        self.chi2_max = mfm.fitting.fit.chi2_max(
+        self.chi2_max = mfm.math.statistics.chi2_max(
             conf_level=self.conf_level_2,
             number_of_parameters=number_of_parameters,
             nu=dof,
