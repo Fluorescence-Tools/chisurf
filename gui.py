@@ -252,7 +252,7 @@ class Main(QMainWindow):
         self.pdb2label = mfm.tools.PDB2Label()
         self.actionPDB2Label.triggered.connect(self.pdb2label.show)
 
-        self.structure2transfer = tools.traj2fret.gui.Structure2Transfer()
+        self.structure2transfer = mfm.tools.traj2fret.gui.Structure2Transfer()
         self.actionStructure2Transfer.triggered.connect(self.structure2transfer.show)
 
         self.join_trajectories = mfm.tools.modelling.trajectory.JoinTrajectoriesWidget()
@@ -429,7 +429,6 @@ if __name__ == "__main__":
     import mfm.widgets
     import mfm.tools
     import mfm.ui.resource
-    import tools
 
     mfm.console = mfm.widgets.QIPythonWidget()
 

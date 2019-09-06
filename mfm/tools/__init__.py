@@ -1,6 +1,7 @@
 """
 This module contains a collection of tools
 """
+from . import traj2fret
 from mfm.tools.fret_calculator.tau2r import *
 #from modelling.screening import FPSScreenTrajectory
 #from mfm.tools.modelling.potential_enery import PotentialEnergyWidget
@@ -16,7 +17,7 @@ from mfm.tools.f_test.f_calculator import FTestWidget
 # from mfm.tools.modelling.potential_enery import PotentialEnergyWidget
 # from . import fret_lines
 import mfm.tools.kappa2_distribution.kappa2dist
-import mfm.tools.dye_diffusion
+import mfm.tools.decay_generator.dye_diffusion
 
 from mfm.tools.tttr.convert import TTTRConvert
 from mfm.tools.tttr.correlate import CorrelateTTTR
