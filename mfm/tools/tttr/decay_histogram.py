@@ -1,4 +1,6 @@
-import copy
+from __future__ import annotations
+
+import os
 import copy
 import re
 
@@ -72,7 +74,13 @@ class HistogramTTTR(QtWidgets.QWidget):
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
         self._curves = list()
-        uic.loadUi('./mfm/ui/tools/tttr_histogram.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "tttr_histogram.ui"
+            ),
+            self
+        )
         w = TCSPCSetupTTTRWidget()
         self.decay = w
         self.verticalLayout.addWidget(w)

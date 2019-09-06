@@ -165,7 +165,13 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
         super(TransientDecayGenerator, self).__init__(**settings)
 
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/dye_diffusion2.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "dye_diffusion2.ui"
+            ),
+            self
+        )
 
         self.pdb_selector = PDBSelector()
         self.verticalLayout_10.addWidget(self.pdb_selector)

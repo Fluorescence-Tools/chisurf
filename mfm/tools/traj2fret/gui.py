@@ -1,4 +1,6 @@
-# coding=utf-8
+from __future__ import annotations
+
+import os
 import tempfile
 
 import mdtraj as md
@@ -6,8 +8,9 @@ from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QApplication
 
 from mfm.io import pdb
+import mfm.widgets
 from mfm.widgets import PDBSelector
-from tools.traj2fret import CalculateTransfer
+from mfm.tools.traj2fret import CalculateTransfer
 
 
 class Structure2Transfer(QtWidgets.QWidget, CalculateTransfer):
@@ -16,7 +19,13 @@ class Structure2Transfer(QtWidgets.QWidget, CalculateTransfer):
 
     def __init__(self, verbose=True):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('./mfm/ui/structure2transfer.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "structure2transfer.ui"
+            ),
+            self
+        )
         CalculateTransfer.__init__(self)
         self._trajectory_file = ''
         self.filenames = list()
