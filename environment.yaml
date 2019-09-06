@@ -32,3 +32,4 @@ dependencies:
     - labellib
     - deprecation
     - pyopencl
+    - guiqwt

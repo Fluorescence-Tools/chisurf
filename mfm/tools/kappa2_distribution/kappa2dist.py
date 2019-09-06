@@ -1,11 +1,14 @@
+from __future__ import annotations
+
+import os
 import numpy as np
 from PyQt5 import QtWidgets, uic
 import pyqtgraph as pg
 import pyqtgraph.dockarea
 
-from mfm.fluorescence.anisotropy import s2delta
+from mfm.fluorescence.anisotropy.kappa2 import s2delta
 from mfm.fluorescence.anisotropy.kappa2 import kappasqAllDelta, kappasq_all
-from ..fluorescence import general as fluorescence
+from mfm.fluorescence import general as fluorescence
 
 
 class Kappa2Dist(QtWidgets.QWidget):
