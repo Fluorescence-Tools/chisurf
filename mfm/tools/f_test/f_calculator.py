@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+import os
+
 from PyQt5 import QtWidgets, uic
 from scipy.stats import f as fdist
 
@@ -54,7 +58,13 @@ class FTestWidget(QtWidgets.QWidget):
 
     def __init__(self, **kwargs):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi("mfm/ui/F-Calculator.ui", self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "F-Calculator.ui"
+            ),
+            self
+        )
         self.parent = kwargs.get('parent', None)
         self._selected_fit = None
 
@@ -123,81 +133,111 @@ class FTestWidget(QtWidgets.QWidget):
         self.doubleSpinBox_2.blockSignals(False)
 
     @property
-    def n1(self):
-        return float(self.spinBox.value())
+    def n1(self) -> int:
+        return int(self.spinBox.value())
 
     @n1.setter
-    def n1(self, v):
+    def n1(
+            self,
+            v: int
+    ):
         self.spinBox.setValue(v)
 
     @property
-    def n2(self):
-        return float(self.spinBox_2.value())
+    def n2(self) -> int:
+        return int(self.spinBox_2.value())
 
     @n2.setter
-    def n2(self, v):
+    def n2(
+            self,
+            v: int
+    ):
         self.spinBox_2.setValue(v)
 
     @property
-    def conf_level(self):
+    def conf_level(self) -> float:
         return float(self.doubleSpinBox_2.value())
 
     @conf_level.setter
-    def conf_level(self, c):
+    def conf_level(
+            self,
+            c: float
+    ):
         self.doubleSpinBox_2.setValue(c)
 
     @property
-    def chi2_1(self):
+    def chi2_1(self) -> float:
         return float(self.doubleSpinBox.value())
 
     @chi2_1.setter
-    def chi2_1(self, v):
+    def chi2_1(
+            self,
+            v: float
+    ):
         self.doubleSpinBox.setValue(v)
 
     @property
-    def chi2_2(self):
+    def chi2_2(self) -> float:
         return float(self.doubleSpinBox_3.value())
 
     @chi2_2.setter
-    def chi2_2(self, v):
+    def chi2_2(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_3.setValue(v)
 
     @property
-    def npars(self):
+    def npars(self) -> int:
         return int(self.spinBox_4.value())
 
     @npars.setter
-    def npars(self, v):
+    def npars(
+            self,
+            v: int
+    ):
         self.spinBox_4.setValue(v)
 
     @property
-    def dof(self):
+    def dof(self) -> int:
         return int(self.spinBox_3.value())
 
     @dof.setter
-    def dof(self, v):
+    def dof(
+            self,
+            v: int
+    ):
         self.spinBox_3.setValue(v)
 
     @property
-    def conf_level_2(self):
+    def conf_level_2(self) -> float:
         return float(self.doubleSpinBox_4.value())
 
     @conf_level_2.setter
-    def conf_level_2(self, c):
+    def conf_level_2(
+            self,
+            c: float
+    ):
         self.doubleSpinBox_4.setValue(c)
 
     @property
-    def chi2_max(self):
+    def chi2_max(self) -> float:
         return float(self.lineEdit.text())
 
     @chi2_max.setter
-    def chi2_max(self, c):
+    def chi2_max(
+            self,
+            c: float
+    ):
         self.lineEdit.setText(str(c))
 
     @property
-    def chi2_min(self):
+    def chi2_min(self) -> float:
         return float(self.doubleSpinBox_5.value())
 
     @chi2_min.setter
-    def chi2_min(self, c):
+    def chi2_min(
+            self,
+            c: float
+    ):
         self.doubleSpinBox_5.setValue(c)
