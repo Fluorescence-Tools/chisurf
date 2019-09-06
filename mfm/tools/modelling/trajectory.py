@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import Tuple
+
 import os
 import glob
 import numba as nb
@@ -122,7 +125,6 @@ def below_min_distance(xyz, min_distance, atom_list=np.empty(0, dtype=np.int32))
 
 
 class AlignTrajectoryWidget(QtWidgets.QWidget):
-    # WORKS
 
     @property
     def stride(self):
@@ -146,7 +148,14 @@ class AlignTrajectoryWidget(QtWidgets.QWidget):
         self.trajectory = None
 
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/tools/align_trajectory.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "align_trajectory.ui"
+            ),
+            self
+        )
+
         self.actionOpen_trajectory.triggered.connect(self.onOpenTrajectory)
         self.actionSave_aligned_trajectory.triggered.connect(self.onSaveTrajectory)
 
@@ -219,8 +228,14 @@ class JoinTrajectoriesWidget(QtWidgets.QWidget):
             return 'atoms'
 
     def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/tools/join_traj.ui', self)
+        super(JoinTrajectoriesWidget, self).__init__()
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "join_traj.ui"
+            ),
+            self
+        )
         self.actionOpen_first_trajectory.triggered.connect(self.onOpenTrajectory_1)
         self.actionOpen_second_trajectory.triggered.connect(self.onOpenTrajectory_2)
         self.actionSave_joined_trajectory.triggered.connect(self.onJoinTrajectories)
@@ -285,7 +300,13 @@ class SaveTopology(QtWidgets.QWidget):
 
     def __init__(self, **kwargs):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/tools/save_topology.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "save_topology.ui"
+            ),
+            self
+        )
         self.actionOpen_trajectory.triggered.connect(self.onOpenTrajectory)
         self.actionSave_clash_free_trajectory.triggered.connect(self.onSaveTopology)
 
@@ -342,25 +363,36 @@ class RotateTranslateTrajectoryWidget(QtWidgets.QWidget):
         return r / 10.0
 
     @translation_vector.setter
-    def translation_vector(self, v):
+    def translation_vector(
+            self,
+            v: Tuple[float, float, float]
+    ):
         self.lineEdit_12.setText(str(v[0]))
         self.lineEdit_13.setText(str(v[1]))
         self.lineEdit_14.setText(str(v[2]))
 
     @property
-    def trajectory_filename(self):
+    def trajectory_filename(self) -> str:
         return str(self.lineEdit.text())
 
     @trajectory_filename.setter
-    def trajectory_filename(self, v):
+    def trajectory_filename(
+            self,
+            v: str
+    ):
         self.lineEdit.setText(str(v))
 
     def __init__(self, **kwargs):
         self.trajectory = None
         self.verbose = kwargs.get('verbose', mfm.verbose)
-
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/tools/rotate_translate_traj.ui', self)
+        super(RotateTranslateTrajectoryWidget, self).__init__()
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "rotate_translate_traj.ui"
+            ),
+            self
+        )
         self.actionOpen_trajectory.triggered.connect(self.onOpenTrajectory)
         self.actionSave_trajectory.triggered.connect(self.onSaveTrajectory)
 
