@@ -42,7 +42,9 @@ class FittingControllerWidget(QtWidgets.QWidget):
     def __init__(
             self,
             fit: mfm.fitting.fit.FitGroup = None,
-            **kwargs
+            hide_fit_button: bool = False,
+            hide_range: bool = False,
+            hide_fitting: bool = False,
     ):
         super(FittingControllerWidget, self).__init__()
         self.curve_select = mfm.widgets.CurveSelector(
@@ -53,9 +55,6 @@ class FittingControllerWidget(QtWidgets.QWidget):
         uic.loadUi("mfm/ui/fittingWidget.ui", self)
 
         self.curve_select.hide()
-        hide_fit_button = kwargs.get('hide_fit_button', False)
-        hide_range = kwargs.get('hide_range', False)
-        hide_fitting = kwargs.get('hide_fitting', False)
         self.fit = fit
         fit_names = [os.path.basename(f.data.name) for f in fit]
         self.comboBox.addItems(fit_names)
@@ -92,17 +91,14 @@ class FittingControllerWidget(QtWidgets.QWidget):
         self.onAutoFitRange()
 
     def onDatasetChanged(self):
-        mfm.run("cs.current_fit.model.hide()")
-        mfm.run("cs.current_fit.current_fit = %i" % self.selected_fit)
-        mfm.run("cs.current_fit.update()")
-        mfm.run("cs.current_fit.model.show()")
+        mfm.run("mfm.cmd.change_selected_fit_of_group(%s)" % self.selected_fit)
         #name = self.fit.data.name
         #self.lineEdit.setText(name)
 
     def onErrorEstimate(self):
         filename = mfm.widgets.save_file('Error estimate', '*.er4')
         kw = mfm.settings.cs_settings['fitting']['sampling']
-        mfm.fitting.sample.sample_fit(self.fit, filename, **kw)
+        mfm.fitting.fit.sample_fit(self.fit, filename, **kw)
 
     def onRunFit(self):
         mfm.run("cs.current_fit.run()")
@@ -130,14 +126,14 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
     ):
         QtWidgets.QMdiSubWindow.__init__(self, kwargs.get('parent', None))
         self.setWindowTitle(fit.name)
-        l = self.layout()
+        layout = self.layout()
 
         self.tw = QtWidgets.QTabWidget()
         self.tw.setTabShape(QtWidgets.QTabWidget.Triangular)
         self.tw.setTabPosition(QtWidgets.QTabWidget.South)
         self.tw.currentChanged.connect(self.on_change_plot)
 
-        l.addWidget(self.tw)
+        layout.addWidget(self.tw)
         self.close_confirm = kwargs.get('close_confirm', mfm.settings.cs_settings['gui']['confirm_close_fit'])
         self.fit = fit
         self.fit_widget = kwargs.get('fit_widget')
@@ -344,6 +340,7 @@ for f in cs.current_fit:
        pass
             """ % (self.fitting_parameter.name, self.fitting_parameter.name)
             mfm.run(t)
+
             self.widget_link.setCheckState(QtCore.Qt.Checked)
             self.widget_value.setEnabled(False)
         elif cs == 0:
@@ -399,35 +396,47 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
             self,
             parameter_group,
             n_col: int = None,
-            *args, **kwargs):
-        self.parameter_group = parameter_group
-        super(FittingParameterGroupWidget, self).__init__(*args, **kwargs)
-        self.setTitle(parameter_group.name)
-        self.n_col = n_col if isinstance(n_col, int) else mfm.settings.cs_settings['gui']['fit_models']['n_columns']
-        self.n_row = 0
-        l = QtWidgets.QGridLayout()
-        self.setLayout(l)
+            *args,
+            **kwargs
+    ):
+        if n_col is None:
+            n_col = mfm.settings.cs_settings['gui']['fit_models']['n_columns']
 
+        super(FittingParameterGroupWidget, self).__init__(*args, **kwargs)
+        self.parameter_group = parameter_group
+        self.n_col = n_col
+        self.n_row = 0
+
+        self.setTitle(parameter_group.name)
+        layout = QtWidgets.QGridLayout()
+        self.setLayout(layout)
         for i, p in enumerate(parameter_group.parameters_all):
             pw = p.make_widget()
             col = i % self.n_col
             row = i // self.n_col
-            l.addWidget(pw, row, col)
+            layout.addWidget(pw, row, col)
 
 
 def make_fitting_parameter_widget(
         fitting_parameter,
+        text: str = None,
+        layout: QtWidgets.QLayout = None,
+        decimals: int = None,
         **kwargs
 ) -> FittingParameterWidget:
-    text = kwargs.get('text', fitting_parameter.name)
-    layout = kwargs.get('layout', None)
+
+    if text is None:
+        text = fitting_parameter.name
+    if decimals is None:
+        decimals = fitting_parameter.decimals
     update_widget = kwargs.get('update_widget', lambda x: x)
-    decimals = kwargs.get('decimals', fitting_parameter.decimals)
+
     kw = {
         'text': text,
         'decimals': decimals,
         'layout': layout
     }
+
     widget = FittingParameterWidget(fitting_parameter, **kw)
     fitting_parameter.controller = widget
     return widget
@@ -438,5 +447,9 @@ def make_fitting_parameter_group_widget(
         *args,
         **kwargs
 ):
-    return FittingParameterGroupWidget(fitting_parameter_group, *args, **kwargs)
+    return FittingParameterGroupWidget(
+        fitting_parameter_group,
+        *args,
+        **kwargs
+    )
 
