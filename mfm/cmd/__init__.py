@@ -308,3 +308,14 @@ def tcspc_set_linearization(
         f.model.corrections.lineEdit.setText(lin_name)
         f.model.corrections.checkBox.setChecked(True)
     cs.current_fit.update()
+
+
+def change_selected_fit_of_group(
+    selected_fit: int
+):
+    cs = mfm.cs
+    cs.current_fit.model.hide()
+    cs.current_fit.current_fit = selected_fit
+    cs.current_fit.update()
+    cs.current_fit.model.show()
+

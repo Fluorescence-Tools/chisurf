@@ -15,21 +15,6 @@ class Parameter(mfm.base.Base):
     _instances = set()
 
     @property
-    def decimals(self) -> int:
-        """
-        The number of decimals that are displayed
-        :return:
-        """
-        return self._decimals
-
-    @decimals.setter
-    def decimals(
-            self,
-            v: int
-    ):
-        self._decimals = v
-
-    @property
     def value(self) -> float:
         v = self._value
         if callable(v):
@@ -95,23 +80,23 @@ class Parameter(mfm.base.Base):
             a = self.value / other.value
         return Parameter(value=a)
 
+    def __invert__(self) -> Parameter:
+        return Parameter(
+            value=float(1.0 / self.value)
+        )
+
     def __float__(self):
         return float(self.value)
-
-    def __invert__(self) -> Parameter:
-        return Parameter(value=float(1.0 / self.value))
 
     def __init__(self,
                  value: float = 1.0,
                  link: Parameter = None,
                  *args, **kwargs
                  ):
-        self.controller = None
-        self._instances.add(weakref.ref(self))
         super(Parameter, self).__init__(*args, **kwargs)
+        self._instances.add(weakref.ref(self))
         self._link = link
         self._value = value
-        self._decimals = kwargs.get('decimals', mfm.settings.cs_settings['parameter']['decimals'])
 
     def to_dict(self) -> dict:
         v = mfm.base.Base.to_dict(self)
@@ -125,7 +110,6 @@ class Parameter(mfm.base.Base):
     ):
         super(Parameter, self).from_dict(v)
         self._value = v['value']
-        self._decimals = v['decimals']
 
     def update(self):
         pass

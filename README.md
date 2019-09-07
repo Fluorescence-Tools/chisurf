@@ -80,7 +80,8 @@ Linux users with snap scan simply install ChiSurf using snap.
 
 # Support
 
-Please submit feature requests, questions, and bugs in the following group.
+Please submit feature requests, questions, and bugs as GitHub issues. General questions are addressed in the Google
+group linked below.
 
 [Group](https://groups.google.com/d/forum/chisurf-software)
 
