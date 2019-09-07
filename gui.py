@@ -115,11 +115,12 @@ class Main(QMainWindow):
     def subWindowActivated(self):
         subwindow = self.mdiarea.currentSubWindow()
         if subwindow is not None:
-            for fit_idx, f in enumerate(mfm.fits):
+            for f in mfm.fits:
                 if f == subwindow.fit:
                     if self.current_fit is not mfm.fits[self.fit_idx]:
                         mfm.run("cs.current_fit = mfm.fits[%s]" % self.fit_idx)
                         break
+
             self.current_fit_widget = subwindow.fit_widget
             fit_name = self.current_fit.name
             window_title = mfm.__name__ + "(" + mfm.__version__ + "): " + fit_name
@@ -219,7 +220,7 @@ class Main(QMainWindow):
         #      Fluorescence widgets                              #
         #      (Commented widgets don't work at the moment       #
         ##########################################################
-        self.lifetime_calc = mfm.tools.FRETCalculator()
+        self.lifetime_calc = mfm.tools.fret_calculator.tau2r.FRETCalculator()
         self.actionCalculator.triggered.connect(self.lifetime_calc.show)
 
         self.kappa2_dist = mfm.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
@@ -234,7 +235,7 @@ class Main(QMainWindow):
         self.tttr_correlate = mfm.tools.CorrelateTTTR()
         self.actionCorrelate.triggered.connect(self.tttr_correlate.show)
 
-        self.tttr_histogram = mfm.tools.HistogramTTTR()
+        self.tttr_histogram = mfm.tools.tttr.decay_histogram.HistogramTTTR()
         self.actionGenerate_decay.triggered.connect(self.tttr_histogram.show)
 
         ##########################################################

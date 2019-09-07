@@ -7,8 +7,16 @@ import pyqtgraph as pg
 package_directory = os.path.dirname(os.path.abspath(__file__))
 settings_file = os.path.join(package_directory, 'chisurf.yaml')
 
-cs_settings = yaml.load(open(settings_file), Loader=yaml.FullLoader)
-colors = yaml.load(open(os.path.join(package_directory, 'colors.yaml')), Loader=yaml.FullLoader)
+cs_settings = yaml.safe_load(
+    open(settings_file)
+)
+
+colors = yaml.safe_load(
+    open(
+        os.path.join(package_directory, 'colors.yaml')
+    )
+)
+
 verbose = cs_settings['verbose']
 __version__ = cs_settings['version']
 __name__ = cs_settings['name']

@@ -31,6 +31,7 @@ class LCurve(object):
         """
         return self._l_curve_start
 
+    @l_curve_start.setter
     def l_curve_start(self, v):
         """
         The smallest regularization value
