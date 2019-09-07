@@ -365,7 +365,7 @@ def make_hdf(**kwargs):
     :return: hdf-file handle (pytables)
     """
     title = kwargs.get('title', str(mfm.settings.cs_settings['photons']['title']))
-    filename = kwargs.get('filename', tempfile.mktemp(".photons.h5"))
+    filename = kwargs.get('filename', tempfile.mkstemp(".photons.h5"))
     verbose = kwargs.get('verbose', mfm.verbose)
     complib = kwargs.get('complib', str(mfm.settings.cs_settings['photons']['complib']))
     complevel = kwargs.get('complevel', int(mfm.settings.cs_settings['photons']['complevel']))

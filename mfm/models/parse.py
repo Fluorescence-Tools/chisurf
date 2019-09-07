@@ -117,7 +117,7 @@ class ParseFormula(FittingParameterGroup):
     def load_model_file(self, filename):
         with open(filename, 'r') as fp:
             self._model_file = filename
-            self.models = yaml.load(fp)
+            self.models = yaml.safe_load(fp)
 
     def find_parameters(self):
         # do nothing

@@ -315,7 +315,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
             self,
             fit: mfm.fitting.fit.Fit
     ):
-        super(GlobalFitModel, self).__init__(fit)
+        super(GlobalFitModelWidget, self).__init__(fit)
         uic.loadUi("mfm/ui/fitting/models/globalfit_2.ui", self)
 
         self.actionOnAddToLocalFitList.triggered.connect(self.onAddToLocalFitList)
