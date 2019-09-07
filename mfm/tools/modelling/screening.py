@@ -196,17 +196,16 @@ class FPSScreenTrajectory(QtWidgets.QWidget):#(QtWidgets.QWidget, TrajectoryFile
     def onSaveStructureTable(self):
         print("onSaveStructureTable")
         filename = str(QtWidgets.QFileDialog.getSaveFileName(self, 'Save structure table', '.txt'))[0]
-        fp = open(filename, 'w')
-        s = "SN\tchi2\trmsd\tcl\tfilename\n"
-        fp.write(s)
-        for r in range(self.tableWidget.rowCount()):
-            filename = self.tableWidget.item(r, 1).text()
-            chi2 = self.tableWidget.item(r, 2).text()
-            rmsd = self.tableWidget.item(r, 3).text()
-            cl = self.tableWidget.item(r, 4).text()
-            s = "%s\t%s\t%s\t%s\t%s\n" % (r, chi2, rmsd, cl, filename)
+        with open(filename, 'w') as fp:
+            s = "SN\tchi2\trmsd\tcl\tfilename\n"
             fp.write(s)
-        fp.close()
+            for r in range(self.tableWidget.rowCount()):
+                filename = self.tableWidget.item(r, 1).text()
+                chi2 = self.tableWidget.item(r, 2).text()
+                rmsd = self.tableWidget.item(r, 3).text()
+                cl = self.tableWidget.item(r, 4).text()
+                s = "%s\t%s\t%s\t%s\t%s\n" % (r, chi2, rmsd, cl, filename)
+                fp.write(s)
 
     ######### OKAY #################
 
@@ -370,22 +369,21 @@ class FPSScreenTrajectory(QtWidgets.QWidget):#(QtWidgets.QWidget, TrajectoryFile
     def onSaveClusterTable(self):
         print("onSaveClusterTable")
         filename = str(QtWidgets.QFileDialog.getSaveFileName(self, 'Save cluster table', '.txt'))[0]
-        fp = open(filename, 'w')
-        s = "Cl\tsize\tSN\tchi2Rep\trmsd\tchi2M\tchi2SD\tfilename\n"
-        fp.write(s)
-        clKeys = list(self.clClusters.keys())
-        for r in range(self.tableWidget_2.rowCount()):
-            cl = self.tableWidget_2.item(r, 0).data(0).toInt()[0]
-            clSize = self.tableWidget_2.item(r, 1).data(0).toInt()[0]
-            sn = self.tableWidget_2.item(r, 2).data(0).toInt()[0]
-            chi2 = self.tableWidget_2.item(r, 3).data(0).toDouble()[0]
-            m = self.tableWidget_2.item(r, 4).data(0).toDouble()[0]
-            sd = self.tableWidget_2.item(r, 5).data(0).toDouble()[0]
-            rmsd = self.tableWidget_2.item(r, 6).data(0).toDouble()[0]
-            filename = self.structures[sn].folder
-            s = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (cl, clSize, r, chi2, rmsd, m, sd, filename)
+        with open(filename, 'w') as fp:
+            s = "Cl\tsize\tSN\tchi2Rep\trmsd\tchi2M\tchi2SD\tfilename\n"
             fp.write(s)
-        fp.close()
+            clKeys = list(self.clClusters.keys())
+            for r in range(self.tableWidget_2.rowCount()):
+                cl = self.tableWidget_2.item(r, 0).data(0).toInt()[0]
+                clSize = self.tableWidget_2.item(r, 1).data(0).toInt()[0]
+                sn = self.tableWidget_2.item(r, 2).data(0).toInt()[0]
+                chi2 = self.tableWidget_2.item(r, 3).data(0).toDouble()[0]
+                m = self.tableWidget_2.item(r, 4).data(0).toDouble()[0]
+                sd = self.tableWidget_2.item(r, 5).data(0).toDouble()[0]
+                rmsd = self.tableWidget_2.item(r, 6).data(0).toDouble()[0]
+                filename = self.structures[sn].folder
+                s = "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (cl, clSize, r, chi2, rmsd, m, sd, filename)
+                fp.write(s)
 
     def onGetSelectionRepresentative(self):
         print("onGetSelectionRepresentative")
@@ -404,28 +402,28 @@ class FPSScreenTrajectory(QtWidgets.QWidget):#(QtWidgets.QWidget, TrajectoryFile
 
         if os.path.isfile(filename):
             self.onClearStructures()
-            fp = open(filename, 'r')
-            filenames = []
-            lines = fp.readlines()
-            for r, l in enumerate(lines[1:]):
-                self.tableWidget.setRowCount(r + 1)
-                s = l.split()
-                #Chi2
-                chi2 = float(s[1])
-                self.chi2s.append(chi2)
-                tmp = QtWidgets.QTableWidgetItem()
-                self.tableWidget.setItem(r, 2, tmp)
-                self.tableWidget.item(r, 2).set_data(0, chi2)
-                # Cluster
-                try:
-                    cl = int(s[2])
+            with open(filename, 'r') as fp:
+                filenames = []
+                lines = fp.readlines()
+                for r, l in enumerate(lines[1:]):
+                    self.tableWidget.setRowCount(r + 1)
+                    s = l.split()
+                    #Chi2
+                    chi2 = float(s[1])
+                    self.chi2s.append(chi2)
                     tmp = QtWidgets.QTableWidgetItem()
-                    tmp.setData(0, cl)
-                except ValueError:
-                    tmp = QtWidgets.QTableWidgetItem('NA')
-                self.tableWidget.setItem(r, 4, tmp)
-                # Filenames
-                filenames.append(s[4])
+                    self.tableWidget.setItem(r, 2, tmp)
+                    self.tableWidget.item(r, 2).set_data(0, chi2)
+                    # Cluster
+                    try:
+                        cl = int(s[2])
+                        tmp = QtWidgets.QTableWidgetItem()
+                        tmp.setData(0, cl)
+                    except ValueError:
+                        tmp = QtWidgets.QTableWidgetItem('NA')
+                    self.tableWidget.setItem(r, 4, tmp)
+                    # Filenames
+                    filenames.append(s[4])
 
     def onSelectionChanged(self):
         print("onSelectionChanged")

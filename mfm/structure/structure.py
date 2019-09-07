@@ -261,7 +261,7 @@ class Structure(object):
             filename = args[0]
         aw = np.copy(self.atoms)
         aw['coord'] = self.xyz
-        self.io.write(filename, aw, append_model=append_model, append_coordinates=append_coordinates)
+        self.io.write_pdb(filename, aw, append_model=append_model, append_coordinates=append_coordinates)
 
     def update(self):
         pass

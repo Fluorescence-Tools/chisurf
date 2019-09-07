@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Tuple
 
 from math import floor, pow
 import numba as nb
@@ -11,7 +12,14 @@ correlationMethods = ['tp']
 
 
 @nb.jit(nopython=True, nogil=True)
-def correlate(n, B, t, taus, corr, w):
+def correlate(
+        n: int,
+        B: int,
+        t: np.array,
+        taus: np.array,
+        corr: np.array,
+        w: np.array
+) -> np.array:
     for b in range(B): # this could be prange (in principle)
         j = (n * B + b)
         shift = taus[j] // (pow(2.0, float(j / B)))
@@ -36,7 +44,15 @@ def correlate(n, B, t, taus, corr, w):
     return corr
 
 
-def normalize(np1, np2, dt1, dt2, tau, corr, B):
+def normalize(
+        np1: int,
+        np2: int,
+        dt1: float,
+        dt2: float,
+        tau: np.array,
+        corr: np.array,
+        B: int
+) -> float:
     cr1 = float(np1) / float(dt1)
     cr2 = float(np2) / float(dt2)
     for j in range(corr.shape[0]):
@@ -49,7 +65,12 @@ def normalize(np1, np2, dt1, dt2, tau, corr, B):
 
 
 @nb.jit
-def get_weights(rout, tac, wt, nPh):
+def get_weights(
+        rout: np.array,
+        tac: np.array,
+        wt: np.array,
+        nPh: int
+):
     w = np.zeros(nPh, dtype=np.float32)
     for i in range(nPh):
         w[i] = wt[rout[i], tac[i]]
@@ -57,7 +78,13 @@ def get_weights(rout, tac, wt, nPh):
 
 
 @nb.jit
-def count_rate_filter(mt, tw, n_ph_max, w, n_ph):
+def count_rate_filter(
+        mt: np.array,
+        tw: int,
+        n_ph_max: int,
+        w: np.array,
+        n_ph: int
+):
     i = 0
     while i < n_ph - 1:
         r = i
@@ -72,13 +99,19 @@ def count_rate_filter(mt, tw, n_ph_max, w, n_ph):
 
 
 @nb.jit(nopython=True)
-def make_fine(t, tac, nTAC):
+def make_fine(
+        t: np.array,
+        tac: np.array,
+        nTAC: int
+):
     for i in range(1, t.shape[0]):
         t[i] = t[i] * nTAC + tac[i]
 
 
 @nb.jit
-def count_photons(w):
+def count_photons(
+        w: np.array
+):
     k = np.zeros(w.shape[0], dtype=np.uint64)
     for j in range(w.shape[0]):
         for i in range(w.shape[1]):
@@ -88,7 +121,11 @@ def count_photons(w):
 
 
 @nb.jit(nopython=True, nogil=True)
-def compact(t, w, full=0):
+def compact(
+        t: np.array,
+        w: np.array,
+        full: bool = False
+) -> None:
     for j in range(t.shape[0]):
         k = 1
         r = t.shape[1] if full else t[j, 0]
@@ -101,7 +138,10 @@ def compact(t, w, full=0):
 
 
 @nb.jit(nopython=True, nogil=True)
-def coarsen(t, w):
+def coarsen(
+        t: np.array,
+        w: np.array
+) -> None:
     for j in range(t.shape[0]):
         t[j, 1] /= 2
         for i in range(2, t[j, 0]):
@@ -109,10 +149,25 @@ def coarsen(t, w):
             if t[j, i - 1] == t[j, i]:
                 w[j, i - 1] += w[j, i]
                 w[j, i] = 0.0
-    compact(t, w, 0)
+    compact(t, w, False)
 
 
-def log_corr(mt, tac, rout, cr_filter, w1, w2, B, nc, fine, nTAC):
+def log_corr(
+        mt: np.array,
+        tac: np.array,
+        rout: np.array,
+        cr_filter: np.array,
+        w1: np.array,
+        w2: np.array,
+        B: int,
+        nc: int,
+        fine: bool,
+        nTAC: int
+) -> Tuple[
+    int, int,
+    int, int,
+    np.array, np.array
+]:
     """Correlate macros-times and micro-times using a logarit
 
     :param mt: the macros-time array
@@ -154,7 +209,13 @@ def log_corr(mt, tac, rout, cr_filter, w1, w2, B, nc, fine, nTAC):
     return np1, np2, dt1, dt2, taus, corr
 
 
-def weights(t, g, dur, cr, **kwargs):
+def weights(
+        t: np.array,
+        g: np.array,
+        dur,
+        cr,
+        **kwargs
+) -> np.array:
     """
     :param t: correlation times [ms]
     :param g: correlation amplitude

@@ -22,3 +22,4 @@ def vm_rt_to_vv_vh(t, vm, rs, g_factor=1.0, l1=0.0, l2=0.0):
     vv_j = vv * (1. - l1) + vh * l1
     vh_j = vv * l2 + vh * (1. - l2)
     return vv_j, vh_j
+

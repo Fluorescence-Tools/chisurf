@@ -1,9 +1,3 @@
 *{
-    spacing: 0;
-    margin: 0;
-}
-
-QPushButton
-{
-    border-width: 1px;
+    font: 12pt;
 }

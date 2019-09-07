@@ -289,3 +289,22 @@ def close_fit(
     mfm.widgets.hide_items_in_layout(cs.plotOptionsLayout)
     sub_window.close()
 
+
+def tcspc_set_linearization(
+        idx: int = None,
+        curve_name: str = None,
+):
+    cs = mfm.cs
+    lin_table = cs.current_fit.model.corrections.lin_select.datasets[idx]
+    for f in cs.current_fit[cs.current_fit._selected_fit:]:
+        f.model.corrections.lintable = mfm.experiments.data.DataCurve(
+            x=lin_table.x,
+            y=lin_table.y
+        )
+        f.model.corrections.correct_dnl = True
+
+    lin_name = curve_name
+    for f in cs.current_fit[cs.current_fit._selected_fit:]:
+        f.model.corrections.lineEdit.setText(lin_name)
+        f.model.corrections.checkBox.setChecked(True)
+    cs.current_fit.update()
