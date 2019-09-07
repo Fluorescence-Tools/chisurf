@@ -148,10 +148,10 @@ class Photons(object):
                 except IOError:
                     tttr.make_hdf(**kwargs)
             elif file_type == 'bh132':
-                self._tempfile = tempfile.mktemp(".photons.h5")
+                self._tempfile = tempfile.mkstemp(".photons.h5")
                 self._h5 = tttr.spc2hdf(self._filenames, routine_name=file_type, filename=self._tempfile)
             elif file_type == 'iss':
-                self._tempfile = tempfile.mktemp(".photons.h5")
+                self._tempfile = tempfile.mkstemp(".photons.h5")
                 self._h5 = tttr.spc2hdf(self._filenames, routine_name=file_type, filename=self._tempfile)
         else:
             self._h5 = p_object

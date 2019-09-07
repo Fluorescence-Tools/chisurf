@@ -374,7 +374,7 @@ class FittingParameterGroup(mfm.base.Base):
             fit: mfm.fitting.fit.Fit = None,
             model: mfm.models.model.Model = None,
             short: str = '',
-            parameters: List[mfm.fitting.parameter.FittingParameter] = [],
+            parameters: List[mfm.fitting.parameter.FittingParameter] = None,
             *args, **kwargs):
         """
 
@@ -395,6 +395,9 @@ class FittingParameterGroup(mfm.base.Base):
         self.short = short
         self.model = model
         self.fit = fit
+
+        if parameters is None:
+            parameters = list()
         self._parameters = parameters
         self._aggregated_parameters = list()
         self._parameter_names = None

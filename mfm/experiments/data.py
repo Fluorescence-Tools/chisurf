@@ -55,7 +55,7 @@ class Data(Base):
     def filename(self) -> str:
         try:
             return os.path.normpath(self._filename)
-        except AttributeError or TypeError:
+        except (AttributeError, TypeError):
             return 'No file'
 
     @filename.setter

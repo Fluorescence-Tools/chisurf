@@ -92,7 +92,7 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
         if xmax is None:
             xmax = fit.xmax
         x, m = fit.model[xmin:xmax]
-        x, d, e = fit.data[xmin:xmax]
+        _, d, e = fit.data[xmin:xmax]
         ml = min([len(m), len(d)])
         wr = np.array((d[:ml] - m[:ml]) / e[:ml], dtype=np.float64)
         return wr
