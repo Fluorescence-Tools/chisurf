@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Tuple
 
 from collections import OrderedDict
 from PyQt5 import QtWidgets
@@ -11,20 +12,32 @@ from mfm.experiments.reader import ExperimentReader
 
 class GlobalFitSetup(ExperimentReader, QtWidgets.QWidget):
 
-    def __init__(self, *args, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        ExperimentReader.__init__(self, *args, **kwargs)
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super(GlobalFitSetup, self).__init__(*args, **kwargs)
         self.hide()
-
         self.parameterWidgets = []
         self.parameters = OrderedDict([])
 
-    def autofitrange(self, fit, threshold=10.0, area=0.999):
+    @staticmethod
+    def autofitrange(
+            *args, **kwargs
+    ) -> Tuple[int, int]:
         return 0, 0
 
-    def read(self, filename=None, **kwargs):
-        d = mfm.experiments.data.DataCurve(setup=self, name="Global-fit")
-        return d
+    def read(
+            self,
+            name: str = "Global-fit",
+            *args,
+            **kwargs
+    ):
+        return mfm.experiments.data.DataCurve(
+            setup=self,
+            name=name
+        )
 
     def __str__(self):
         s = 'Global-Fit\n'

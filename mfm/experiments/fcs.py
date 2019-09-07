@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Tuple
 
 import numpy as np
 from PyQt5 import QtWidgets
@@ -11,21 +12,46 @@ import mfm.experiments.data
 from mfm.io.widgets import CsvWidget
 from mfm.experiments.reader import ExperimentReader
 
-#settings = mfm.settings.cs_settings['correlator']
 
-
-class FCS(ExperimentReader, QtWidgets.QWidget):
+class FCS(ExperimentReader, CsvWidget):
 
     name = "FCS"
 
-    def __init__(self, experiment, *args, **kwargs):
+    def __init__(
+            self,
+            experiment,
+            *args,
+            **kwargs
+    ):
         super(FCS, self).__init__(*args, **kwargs)
         self.experiment = experiment
         self.hide()
+        self.skiprows = 0
+        self.use_header = False
+        self.spinBox.setEnabled(False)
         self.parent = kwargs.get('parent', None)
+        self.groupBox.hide()
+
+    def read(self, filename=None, **kwargs):
+        d = mfm.experiments.data.DataCurve(setup=self)
+        d.setup = self
+
+        CsvWidget.load(
+            self,
+            filename=filename,
+            skiprows=0,
+            use_header=None,
+            verbose=mfm.verbose
+        )
+
+        x, y = self.data[0], self.data[1]
+        w = self.data[2]
+
+        d.set_data(self.filename, x, y, w)
+        return d
 
 
-class FCSKristine(mfm.io.ascii.Csv, FCS, QtWidgets.QWidget):
+class FCSKristine(mfm.io.ascii.Csv, FCS):
 
     name = 'Kristine'
 
@@ -33,12 +59,6 @@ class FCSKristine(mfm.io.ascii.Csv, FCS, QtWidgets.QWidget):
         FCS.__init__(self, experiment, **kwargs)
         QtWidgets.QWidget.__init__(self)
         mfm.io.ascii.Csv.__init__(self, **kwargs)
-        #CsvWidget.__init__(self, **kwargs)
-        self.skiprows = 0
-        self.use_header = False
-        #self.spinBox.setEnabled(False)
-        self.parent = kwargs.get('parent', None)
-        #self.groupBox.hide()
 
     def read(self, **kwargs):
         """Uses eihter the error provided by the correlator (4. column)
@@ -78,34 +98,4 @@ class FCSKristine(mfm.io.ascii.Csv, FCS, QtWidgets.QWidget):
         d.set_data(self.filename, x, y, weights=w)
         return d
 
-
-class FCSCsv(FCS, CsvWidget):
-
-    name = 'CSV'
-
-    def __init__(self, experiment, **kwargs):
-        super(FCSCsv, self).__init__(experiment, **kwargs)
-        self.skiprows = 0
-        self.use_header = False
-        self.spinBox.setEnabled(False)
-        self.parent = kwargs.get('parent', None)
-        self.groupBox.hide()
-
-    def read(self, filename=None, **kwargs):
-        d = mfm.experiments.data.DataCurve(setup=self)
-        d.setup = self
-
-        CsvWidget.load(
-            self,
-            filename=filename,
-            skiprows=0,
-            use_header=None,
-            verbose=mfm.verbose
-        )
-
-        x, y = self.data[0], self.data[1]
-        w = self.data[2]
-
-        d.set_data(self.filename, x, y, w)
-        return d
 

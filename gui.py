@@ -399,7 +399,7 @@ class Main(QMainWindow):
         fcs.add_setups(
             [
                 mfm.experiments.fcs.FCSKristine(experiment=mfm.experiments.fcs),
-                mfm.experiments.fcs.FCSCsv(experiment=mfm.experiments.fcs)
+                mfm.experiments.fcs.FCS(experiment=mfm.experiments.fcs)
             ]
         )
         fcs.add_models(

@@ -184,7 +184,11 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
 
 class FittingParameterWidget(QtWidgets.QWidget):
 
-    def make_linkcall(self, fit_idx, parameter_name):
+    def make_linkcall(
+            self,
+            fit_idx: int,
+            parameter_name: str
+    ):
 
         def linkcall():
             tooltip = " linked to " + parameter_name
@@ -236,8 +240,12 @@ class FittingParameterWidget(QtWidgets.QWidget):
     def __str__(self):
         return ""
 
-    def __init__(self, fitting_parameter, **kwargs):
-        layout = kwargs.pop('layout', None)
+    def __init__(
+            self,
+            fitting_parameter: mfm.fitting.parameter.FittingParameter,
+            layout: QtWidgets.QLayout = None,
+            **kwargs
+    ):
         label_text = kwargs.pop('text', self.__class__.__name__)
         hide_bounds = kwargs.pop('hide_bounds', parameter_settings['hide_bounds'])
         hide_link = kwargs.pop('hide_link', parameter_settings['hide_link'])
@@ -251,7 +259,6 @@ class FittingParameterWidget(QtWidgets.QWidget):
         uic.loadUi('mfm/ui/variable_widget.ui', self)
         self.fitting_parameter = fitting_parameter
         self.widget_value = pg.SpinBox(dec=True, decimals=decimals)
-        self.widget_value.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
         self.widget_value.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addWidget(self.widget_value)
 

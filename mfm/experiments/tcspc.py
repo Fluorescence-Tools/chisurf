@@ -20,14 +20,17 @@ class CsvTCSPC(object):
 
     def __init__(
             self,
+            *args,
             dt: float = 1.0,
             rep_rate: float = 1.0,
             is_jordi: bool = False,
             mode: str = 'vm',
             g_factor: float = 1.0,
             rebin: Tuple[int, int] = (1, 1),
-            matrix_columns: Tuple[int, int] = (0, 1)
+            matrix_columns: Tuple[int, int] = (0, 1),
+            **kwargs
     ):
+        super(CsvTCSPC, self).__init__(*args, **kwargs)
         self.dt = dt
         self.excitation_repetition_rate = rep_rate
         self.is_jordi = is_jordi
@@ -96,18 +99,27 @@ class CsvTCSPCWidget(CsvTCSPC, QtWidgets.QWidget):
 
 class TCSPCReader(ExperimentReader):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            *args,
+            skiprows: int = 7,
+            is_jordi: bool = False,
+            rebin: Tuple[int, int] = (1, 1),
+            use_header: bool = True,
+            polarization: str = 'vm',
+            **kwargs
+    ):
         super(TCSPCReader, self).__init__(self, *args, **kwargs)
         self.csvSetup = kwargs.pop('csvSetup', Csv(*args, **kwargs))
-        self.skiprows = kwargs.pop('skiprows', 7)
+        self.skiprows = skiprows
+        self.is_jordi = is_jordi
+        self.rebin = rebin
+        self.use_header = use_header
+        self.polarization = polarization
         self.dt = kwargs.get('dt', mfm.settings.cs_settings['tcspc']['dt'])
         self.rep_rate = kwargs.get('rep_rate', mfm.settings.cs_settings['tcspc']['rep_rate'])
         self.g_factor = kwargs.get('g_factor', mfm.settings.cs_settings['tcspc']['g_factor'])
-        self.polarization = 'vm'
-        self.rebin = kwargs.get('rebin', (1, 1))
-        self.is_jordi = kwargs.get('is_jordi', False)
         self.matrix_columns = kwargs.get('matrix_columns', None)
-        self.use_header = True
 
     @staticmethod
     def autofitrange(
@@ -121,9 +133,10 @@ class TCSPCReader(ExperimentReader):
     def read(
             self,
             *args,
+            filename: str = None,
             **kwargs
     ) -> mfm.experiments.data.DataCurveGroup:
-        filename = kwargs.pop('filename', None)
+        filename = filename
         skiprows = kwargs.get('skiprows', self.skiprows)
 
         # Load data
@@ -131,7 +144,12 @@ class TCSPCReader(ExperimentReader):
         dt = self.dt
         mc = self.matrix_columns
 
-        self.csvSetup.load(filename, skiprows=skiprows, use_header=self.use_header, usecols=mc)
+        self.csvSetup.load(
+            filename,
+            skiprows=skiprows,
+            use_header=self.use_header,
+            usecols=mc
+        )
         data = self.csvSetup.data
 
         if self.is_jordi:
@@ -212,9 +230,9 @@ class TCSPCSetupWidget(TCSPCReader, mfm.io.ascii.Csv, QtWidgets.QWidget):
     def read(
             self,
             *args,
+            filename: str = None,
             **kwargs
     ) -> mfm.experiments.data.DataCurveGroup:
-        filename = kwargs.pop('filename', None)
         if filename is None:
             filename = mfm.widgets.get_filename(description='CSV-TCSPC file', file_type='All files (*.*)', working_path=None)
         if os.path.isfile(filename):
@@ -245,18 +263,18 @@ class TCSPCSetupWidget(TCSPCReader, mfm.io.ascii.Csv, QtWidgets.QWidget):
 class TcspcSDTWidget(QtWidgets.QWidget):
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.filename + " _ " + str(self.curve_number)
 
     @property
-    def n_curves(self):
+    def n_curves(self) -> int:
         n_data_curves = len(self._sdt.data)
         return n_data_curves
 
     @property
-    def curve_number(self):
+    def curve_number(self) -> int:
         """
-        The currently selected curves
+        The number of the currently selected curve
         """
         return int(self.comboBox.currentIndex())
 
@@ -333,7 +351,6 @@ class TcspcSDTWidget(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         uic.loadUi('mfm/ui/experiments/sdtfile.ui', self)
         self._sdt = None
-        self.rep_rate = kwargs.get('rep_rate', 16.0)
         self.actionOpen_SDT_file.triggered.connect(self.onOpenFile)
 
 
@@ -367,21 +384,26 @@ class TCSPCSetupSDTWidget(TCSPCReader, QtWidgets.QWidget):
     def __str__(self):
         return "Dummy TCSPC"
 
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self, **kwargs)
-        TCSPCReader.__init__(self, **kwargs)
+    def __init__(
+            self,
+            *args,
+            name: str = 'Becker SDT',
+            **kwargs
+    ):
+        super(TCSPCSetupSDTWidget, self).__init__(*args, **kwargs)
+
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
-
         self.tcspcSDT = TcspcSDTWidget()
-        #self.tcspcSDT.widget.hide()
-
         self.layout.addWidget(self.tcspcSDT)
-        self.name = kwargs.get('name', 'Becker SDT')
-
+        self.name = name
         #self.connect(self.tcspcSDT.actionAdd_curve, QtCore.SIGNAL('triggered()'), )
 
-    def read(self, *args, **kwargs):
+    def read(
+            self,
+            *args,
+            **kwargs
+    ):
         curves = list()
         self.tcspcSDT.onOpenFile(**kwargs)
         for curve_nbr in range(self.tcspcSDT.n_curves):
@@ -394,24 +416,47 @@ class TCSPCSetupDummy(TCSPCReader):
 
     name = "Dummy-TCSPC"
 
-    def __init__(self, **kwargs):
+    def __init__(
+            self,
+            *args,
+            n_TAC: int = 4096,
+            dt: float = 0.0141,
+            p0: float = 10000.0,
+            rep_rate: float = 10.0,
+            lifetime: float = 4.1,
+            name: str = 'Dummy',
+            sample_name: str = 'TCSPC-Dummy',
+            **kwargs
+    ):
+        super(TCSPCSetupDummy, self).__init__(*args, **kwargs)
         TCSPCReader.__init__(self, **kwargs)
         self.parent = kwargs.get('parent', None)
-        self.sample_name = kwargs.get('sample_name', 'Dummy-sample')
-        self.name = kwargs.get('name', "Dummy")
         self.verbose = kwargs.get('verbose', mfm.verbose)
-        self.lifetime = kwargs.get('lifetime', 4.1)
-        self.n_TAC = kwargs.get('n_TAC', 4096)
-        self.dt = kwargs.get('dt', 0.0141)
-        self.p0 = kwargs.get('p0', 10000.0)
-        self.rep_rate = 10.0  # TODO - dirty!!!
+        self.sample_name = sample_name
+        self.name = name
+        self.lifetime = lifetime
+        self.n_TAC = n_TAC
+        self.dt = dt
+        self.p0 = p0
+        self.rep_rate = rep_rate
 
-    def read(self, filename=None, **kwargs):
+    def read(
+            self,
+            filename: str = None,
+            **kwargs
+    ):
+        if filename is None:
+            filename = self.sample_name
         x = np.arange(self.n_TAC) * self.dt
         y = np.exp(-x/self.lifetime) * self.p0
         ey = 1./weights(y)
 
-        d = mfm.experiments.data.DataCurve(x=x, y=y, ey=ey, setup=self, name="TCSPC-Dummy")
+        d = mfm.experiments.data.DataCurve(
+            x=x, y=y,
+            ey=ey,
+            setup=self,
+            name=filename
+        )
         d.setup = self
 
         return d
@@ -424,7 +469,7 @@ class TCSPCSetupDummy(TCSPCReader):
 class TCSPCSetupDummyWidget(QtWidgets.QWidget, TCSPCSetupDummy):
 
     @property
-    def sample_name(self):
+    def sample_name(self) -> str:
         name = str(self.lineEdit.text())
         return name
 
@@ -433,7 +478,7 @@ class TCSPCSetupDummyWidget(QtWidgets.QWidget, TCSPCSetupDummy):
         pass
 
     @property
-    def p0(self):
+    def p0(self) -> int:
         return self.spinBox_2.value()
 
     @p0.setter
@@ -441,7 +486,7 @@ class TCSPCSetupDummyWidget(QtWidgets.QWidget, TCSPCSetupDummy):
         pass
 
     @property
-    def lifetime(self):
+    def lifetime(self) -> float:
         return self.doubleSpinBox_2.value()
 
     @lifetime.setter
@@ -449,7 +494,7 @@ class TCSPCSetupDummyWidget(QtWidgets.QWidget, TCSPCSetupDummy):
         pass
 
     @property
-    def n_TAC(self):
+    def n_TAC(self) -> int:
         return self.spinBox.value()
 
     @n_TAC.setter
@@ -457,7 +502,7 @@ class TCSPCSetupDummyWidget(QtWidgets.QWidget, TCSPCSetupDummy):
         pass
 
     @property
-    def dt(self):
+    def dt(self) -> float:
         return self.doubleSpinBox.value()
 
     @dt.setter

@@ -20,8 +20,10 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         :param hide_curve_convolution:
         :param kwargs:
         """
-        Convolve.__init__(self, fit, **kwargs)
-        QtWidgets.QWidget.__init__(self)
+        super(ConvolveWidget, self).__init__(
+            fit,
+            **kwargs
+        )
         uic.loadUi('mfm/ui/fitting/models/tcspc/convolveWidget.ui', self)
 
         if hide_curve_convolution:
@@ -131,19 +133,11 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
 
     def onChangeLin(self):
         idx = self.lin_select.selected_curve_index
-        t = "lin_table = cs.current_fit.models.corrections.lin_select.datasets[%s]\n" \
-            "for f in cs.current_fit[cs.current_fit._selected_fit:]:\n" \
-            "   f.models.corrections.lintable = mfm.curve.DataCurve(x=lin_table.x, y=lin_table.y)\n" \
-            "   f.models.corrections.correct_dnl = True\n" % idx
-        mfm.run(t)
-
         lin_name = self.lin_select.curve_name
-        t = "for f in cs.current_fit[cs.current_fit._selected_fit:]:\n" \
-            "   f.models.corrections.lineEdit.setText('%s')\n" \
-            "   f.models.corrections.checkBox.setChecked(True)\n" % lin_name
-        mfm.run(t)
-
-        mfm.run("cs.current_fit.update()")
+        mfm.run(
+            "mfm.cmd.tcspc_set_linearization(%s, '%s')" %
+            (idx, lin_name)
+        )
 
 
 class GenericWidget(QtWidgets.QWidget, Generic):
