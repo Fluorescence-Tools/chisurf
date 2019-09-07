@@ -2,11 +2,14 @@
 [![Anaconda-Server Version](https://anaconda.org/tpeulen/chisurf/badges/version.svg)](https://anaconda.org/tpeulen/chisurf)
 
 # ChiSurf
+
 ChiSurf is a software package for the analysis of complex fluorescence data acquired in time-resolved single-molecule 
 and ensemble fluorescence experiments. The main feature of ChiSurf is the joint (global) analysis of multiple datasets.
 ![ChiSurf GUI][1]
 
+
 ## History
+
 The original of ChiSurfs was to estimate errors of model parameters of fluorescence intensity decays in 
 Förster-resonance energy transfer (FRET) experiments for FRET-driven structural models of protein and other 
 biological macromolecules. It started as a collection of python scripts. With time more features were added, e.g., 
@@ -18,11 +21,13 @@ in old versions, may be not supported in newer versions, unless users explicitly
 ## Features
 
 ### General features
+
 *  Scripting interface and open API
 *  Interactive analysis of multiple datasets
 *  Combined analysis of different experimental techniques
 
 ### Global analysis
+
 *  Analysis of multiple data sets by joint model function freely defined by the user
 *  Freely definable models for FCS analysis & adaptable models for fluorescence decays analysis
 *  Fluorescence decay analysis
@@ -47,6 +52,7 @@ in old versions, may be not supported in newer versions, unless users explicitly
 *  Simulation of FRET rate constant distributions based on accessible volumes
 
 # Download
+
 ChiSurf is available as a compiled Windows installation file. By downloading and using ChiSurf, you agree with the 
 following terms:
 
@@ -73,11 +79,13 @@ Linux users with snap scan simply install ChiSurf using snap.
 [![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-white.svg)](https://snapcraft.io/chisurf)
 
 # Support
+
 Please submit feature requests, questions, and bugs in the following group.
 
 [Group](https://groups.google.com/d/forum/chisurf-software)
 
 # References
+
 1.  Peulen T, Opanasyuk O, Seidel C. Combining Graphical and Analytical Methods with Molecular Simulations To Analyze 
 Time-Resolved FRET Measurements of Labeled Macromolecules Accurately. J Phys Chem B. 2017;121(35):8211-8241.
 
