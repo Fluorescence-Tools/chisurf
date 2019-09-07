@@ -197,13 +197,11 @@ class Fit(mfm.base.Base):
 
     def save(
             self,
-            path: str,
-            name: str,
-            mode: str = 'txt'
+            filename: str,
+            file_type: str = 'txt'
     ):
-        filename = os.path.join(path, name)
         self.model.save(filename + '.json')
-        if mode == 'txt':
+        if file_type == 'txt':
             csv = mfm.io.ascii.Csv()
             wr = self.weighted_residuals
             xmin, xmax = self.xmin, self.xmax
@@ -217,7 +215,9 @@ class Fit(mfm.base.Base):
                     fp.write(str(self))
 
     def run(self, **kwargs):
-        self.model.find_parameters(parameter_type=mfm.fitting.parameter.FittingParameter)
+        self.model.find_parameters(
+            parameter_type=mfm.fitting.parameter.FittingParameter
+        )
         fitting_options = mfm.settings.cs_settings['fitting']['leastsq']
         self.model.find_parameters()
         self.results = leastsqbound(get_wres,
@@ -272,19 +272,25 @@ class FitGroup(list, Fit):
         return self.selected_fit.data
 
     @data.setter
-    def data(self, v):
+    def data(
+            self,
+            v: mfm.experiments.data.Data
+    ):
         self.selected_fit.data = v
 
     @property
-    def model(self):
+    def model(self) -> object:
         return self.selected_fit.model
 
     @model.setter
-    def model(self, v):
+    def model(
+            self,
+            v: object
+    ):
         self.selected_fit.model = v
 
     @property
-    def weighted_residuals(self):
+    def weighted_residuals(self) -> List[np.array]:
         return [self.selected_fit.weighted_residuals]
 
     @property
@@ -419,8 +425,8 @@ def sample_fit(
 
 #@nb.jit#(nopython=True)
 def approx_grad(
-        xk,
-        fit: Fit,
+        xk: np.array,
+        fit: mfm.fitting.fit.Fit,
         epsilon: float,
         args=(),
         f0=None
@@ -470,7 +476,11 @@ def covariance_matrix(
     epsilon = kwargs.get('epsilon', mfm.eps)
     xk = np.array(model.parameter_values)
 
-    fi_v, partial_derivatives = approx_grad(xk, fit, epsilon)
+    fi_v, partial_derivatives = approx_grad(
+        xk,
+        fit,
+        epsilon
+    )
 
     # find parameters which do not change the models
     # use only parameters which change the models
@@ -555,7 +565,7 @@ def lnprior(
 def lnprob(
         parameter_values,
         fit: Fit,
-        chi2max=np.inf,
+        chi2max: float = np.inf,
         **kwargs
 ) -> float:
     """

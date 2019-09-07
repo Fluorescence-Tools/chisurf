@@ -39,7 +39,11 @@ class FittingControllerWidget(QtWidgets.QWidget):
         self.curve_select.show()
         self.curve_select.update()
 
-    def __init__(self, fit=None, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup = None,
+            **kwargs
+    ):
         super(FittingControllerWidget, self).__init__()
         self.curve_select = mfm.widgets.CurveSelector(
             parent=None, fit=self,
@@ -118,7 +122,12 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         QtWidgets.QMdiSubWindow.update(self, *__args)
         self.tw.update(self, *__args)
 
-    def __init__(self, fit, control_layout, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            control_layout: QtWidgets.QLayout,
+            **kwargs
+    ):
         QtWidgets.QMdiSubWindow.__init__(self, kwargs.get('parent', None))
         self.setWindowTitle(fit.name)
         l = self.layout()
