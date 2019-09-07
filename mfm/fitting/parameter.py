@@ -17,7 +17,7 @@ class FittingParameter(mfm.parameter.Parameter):
 
     def __init__(
             self,
-            link=None,
+            link: FittingParameter = None,
             model: mfm.models.model.Model = None,
             lb: float = -10000,
             ub: float = 10000,
@@ -233,7 +233,13 @@ class GlobalFittingParameter(FittingParameter):
     ):
         pass
 
-    def __init__(self, f, g, formula, **kwargs):
+    def __init__(
+            self,
+            f,
+            g,
+            formula,
+            **kwargs
+    ):
         args = [f, g, formula]
         super(GlobalFittingParameter, self).__init__(*args, **kwargs)
         self.f, self.g = f, g
@@ -243,7 +249,7 @@ class GlobalFittingParameter(FittingParameter):
 class FittingParameterGroup(mfm.base.Base):
 
     @property
-    def parameters_all(self):
+    def parameters_all(self) -> List[mfm.fitting.parameter.FittingParameter]:
         return self._parameters
 
     @property
@@ -251,7 +257,7 @@ class FittingParameterGroup(mfm.base.Base):
         return dict([(p.name, p) for p in self.parameters_all])
 
     @property
-    def parameters(self):
+    def parameters(self) -> List[mfm.parameter.Parameter]:
         return self.parameters_all
 
     @property
@@ -288,7 +294,7 @@ class FittingParameterGroup(mfm.base.Base):
             ps[i].value = v
 
     @property
-    def outputs(self):
+    def outputs(self) -> dict:
         """The outputs of a ParameterGroup are a dictionary
 
         Returns
@@ -368,7 +374,7 @@ class FittingParameterGroup(mfm.base.Base):
             fit: mfm.fitting.fit.Fit = None,
             model: mfm.models.model.Model = None,
             short: str = '',
-            parameters: List[mfm.parameter.Parameter] = list(),
+            parameters: List[mfm.fitting.parameter.FittingParameter] = [],
             *args, **kwargs):
         """
 
@@ -379,6 +385,7 @@ class FittingParameterGroup(mfm.base.Base):
         :param args:
         :param kwargs:
         """
+        super(FittingParameterGroup, self).__init__(*args, **kwargs)
         if mfm.verbose:
             print("---------------")
             print("Class: %s" % self.__class__.name)
