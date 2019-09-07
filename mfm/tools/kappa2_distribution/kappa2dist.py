@@ -154,12 +154,12 @@ class Kappa2Dist(QtWidgets.QWidget):
 
     @Rapp_mean.setter
     def Rapp_mean(self, v):
-        return self.doubleSpinBox_6.setValue(v)
+        self.doubleSpinBox_6.setValue(v)
 
     @property
     def RappSD(self):
         return float(self.doubleSpinBox_8.value())
 
-    @Rapp_mean.setter
+    @RappSD.setter
     def RappSD(self, v):
-        return self.doubleSpinBox_8.setValue(v)
+        self.doubleSpinBox_8.setValue(v)

@@ -132,7 +132,7 @@ class Structure2Transfer(QtWidgets.QWidget, CalculateTransfer):
 
         frame0 = md.load_frame(self.trajectory_file, 0)
 
-        tmp = tempfile.mktemp(".pdb")
+        tmp = tempfile.mkstemp(".pdb")
         frame0.save(tmp)
 
         self.topology_file = tmp

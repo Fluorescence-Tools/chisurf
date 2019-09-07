@@ -217,7 +217,7 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
         s += "$$</mathjax></p>"
         s += self.models[self.model_name]['description']
         s += "</body></html>"
-        tempFile = QFile(tempfile.mktemp('.html'))
+        tempFile = QFile(tempfile.mkstemp('.html'))
         tempFile.open(QFile.WriteOnly)
         stream = QTextStream(tempFile)
         stream << s

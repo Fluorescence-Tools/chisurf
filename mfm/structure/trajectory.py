@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import List
 
 import copy
 import os
@@ -131,7 +132,19 @@ import mfm.structure    >>> import mfm
 
     parameterNames = ['rmsd', 'drmsd', 'energy', 'chi2']
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            *args,
+            filename: str = None,
+            make_coarse: bool = False,
+            rmsd_ref_state: int = 0,
+            stride: int = 1,
+            inverse_trajectory: bool = False,
+            center: bool = False,
+            verbose: bool = False,
+            atom_indices: List[int] = None,
+            **kwargs
+    ):
         """
 
         Parameters
@@ -141,20 +154,22 @@ import mfm.structure    >>> import mfm
             the models number of the pdb (optional argument). By default the first models in the PDB-File is used.
 
         """
-        #  TODO: Improve initialization this is all very cumbersome
         p_object = args[0]
         self.mode = kwargs.get('mode', 'r')
-        self.atom_indices = kwargs.get('atom_indices', None)
-        self.make_coarse = kwargs.get('make_coarse', False)
-        self.stride = kwargs.get('stride', 1)
-        self._rmsd_ref_state = kwargs.get('rmsd_ref_state', 0)
-        self.verbose = kwargs.get('verbose', False)
-        self.center = kwargs.get('center', False)
-        self._invert = kwargs.get('inverse_trajectory', False)
+        self.atom_indices = atom_indices
+        self.make_coarse = make_coarse
+        self.stride = stride
+        self._rmsd_ref_state = rmsd_ref_state
+        self.verbose = verbose
+        self.center = center
+        self._invert = inverse_trajectory
         self._structure = None
 
-        self._filename = kwargs.get('filename', tempfile.mktemp(".h5"))
-        pdb_tmp = "c:\\temp\\t11222.pdb" #tempfile.mktemp(".pdb")
+        if filename is None:
+            filename = tempfile.mkstemp(".h5")
+        self._filename = filename
+        pdb_tmp = tempfile.mkstemp(".pdb")
+
         if isinstance(p_object, str):
             if p_object.endswith('.pdb'):
                 self._mdtraj = mdtraj.Trajectory.load(p_object)
@@ -171,10 +186,10 @@ import mfm.structure    >>> import mfm
         if isinstance(p_object, mdtraj.Trajectory):
             self._mdtraj = p_object
             mdtraj.Trajectory.__init__(self, xyz=p_object.xyz, topology=p_object.topology)
-            self._filename = kwargs.get('filename', tempfile.mktemp(".h5"))
+            self._filename = kwargs.get('filename', tempfile.mkstemp(".h5"))
 
-        if isinstance(p_object, mfm.structure.Structure):
-            self._filename = kwargs.get('filename', tempfile.mktemp(".h5"))
+        if isinstance(p_object, mfm.structure.structure.Structure):
+            self._filename = kwargs.get('filename', tempfile.mkstemp(".h5"))
             p_object.write(pdb_tmp)
             self._mdtraj = mdtraj.Trajectory.load(pdb_tmp)
             self._mdtraj.save_hdf5(filename=self._filename)
@@ -182,7 +197,7 @@ import mfm.structure    >>> import mfm
             structure = p_object
         else:
             self._mdtraj[0].save_pdb(pdb_tmp)
-            structure = mfm.structure.Structure(pdb_tmp, verbose=self.verbose)
+            structure = mfm.structure.structure.Structure(pdb_tmp, verbose=self.verbose)
         self.structure = kwargs.get('structure', structure)
 
         if self.center:
@@ -191,17 +206,17 @@ import mfm.structure    >>> import mfm
         #super(TrajectoryFile, self).__init__(*args, **kwargs)
 
         self.rmsd_ref_state = kwargs.get('ref_state', 0)
-        self.rmsd = []
-        self.drmsd = []
-        self.energy = []
-        self.chi2r = []
+        self.rmsd = list()
+        self.drmsd = list()
+        self.energy = list()
+        self.chi2r = list()
         self.offset = 0
 
     def clear(self):
-        self.rmsd = []
-        self.drmsd = []
-        self.energy = []
-        self.chi2r = []
+        self.rmsd = list()
+        self.drmsd = list()
+        self.energy = list()
+        self.chi2r = list()
         self.rmsd_ref_state = 0
 
     '''
@@ -222,62 +237,74 @@ import mfm.structure    >>> import mfm
     '''
 
     @property
-    def structure(self):
+    def structure(self) -> mfm.structure.structure.Structure:
         return self._structure
 
     @structure.setter
-    def structure(self, v):
+    def structure(
+            self,
+            v: mfm.structure.structure.Structure
+    ):
         self._structure = copy.copy(v)
 
     @property
-    def invert(self):
+    def invert(self) -> bool:
         """If True the oder of the trajectory is inverted (by default False)
         """
         return self._invert
 
     @invert.setter
-    def invert(self, v):
+    def invert(
+            self,
+            v: bool
+    ):
         self._invert = bool(v)
 
     @property
-    def filename(self):
+    def filename(self) -> str:
         """The filename of the trajectory
         """
         return self._filename
 
     @filename.setter
-    def filename(self, v):
+    def filename(
+            self,
+            v: str
+    ):
         if isinstance(v, str):
             self._filename = v
             mdtraj.Trajectory.save(self, filename=v)
 
     @property
-    def mdtraj(self):
+    def mdtraj(self) -> mdtraj.Trajectory:
         return self._mdtraj
 
     @property
-    def name(self):
+    def name(self) -> str:
         """The name of the trajectory composed of the directory and the filename
         """
         try:
-            fn = copy(self.directory + self.filename)
+            fn = copy.copy(self.directory + self.filename)
             return fn.replace('/', '/ ')
         except AttributeError:
             return "None"
 
     @property
-    def rmsd_ref_state(self):
+    def rmsd_ref_state(self) -> int:
         """The index (frame number) of the reference state used for the RMSD calculation
         """
         return self._rmsd_ref_state
 
     @rmsd_ref_state.setter
-    def rmsd_ref_state(self, ref_frame):
+    def rmsd_ref_state(
+            self,
+            ref_frame: int
+    ):
         self._rmsd_ref_state = ref_frame
         self.rmsd = mdtraj.rmsd(self, self, ref_frame)
 
     @property
-    def directory(self):
+    def directory(self) -> str:
         """Directory in which the filename of the trajectory is located in
         """
         return os.path.dirname(self.filename)
@@ -328,7 +355,14 @@ import mfm.structure    >>> import mfm
         chi2 = np.array(self.chi2r)
         return np.vstack([rmsd, drmsd, energy, chi2])
 
-    def append(self, xyz, update_rmsd=True, energy=np.inf, energy_fret=np.inf, verbose=True):
+    def append(
+            self,
+            xyz,
+            update_rmsd: bool = True,
+            energy: float = np.inf,
+            energy_fret: float = np.inf,
+            verbose: bool = True
+    ):
         """Append a structure of type :py::class`mfm.mfm.structure.Structure` to the trajectory
 
         :param structure: mfm.structure.Structure
@@ -351,7 +385,7 @@ import mfm.structure    >>> import mfm
         <mdtraj.Trajectory with 93 frames, 2495 atoms, 164 residues, without unitcells at 0x11762b70>
         """
         verbose = verbose or self.verbose
-        if isinstance(xyz, mfm.structure.Structure):
+        if isinstance(xyz, mfm.structure.structure.Structure):
             xyz = xyz.xyz
 
         xyz = xyz.reshape((1, xyz.shape[0], 3)) / 10.0

@@ -55,7 +55,8 @@ def sample_emcee(
         nwalkers: int,
         thin: int = 10,
         std: float = 1e-4,
-        chi2max: float = np.inf):
+        chi2max: float = np.inf
+):
     """Sample the parameter space by emcee using a number of 'walkers'
 
     :param fit: the fit to be samples
