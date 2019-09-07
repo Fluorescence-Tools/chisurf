@@ -20,20 +20,20 @@ from . import modelling
 
 def get_data(
         curve_type: str = 'experiment',
-        data_set: List[data.ExperimentalData] = list()
-):
+        data_set: List[data.ExperimentalData] = None
+) -> List[data.ExperimentalData]:
     """
     Returns all curves `mfm.curve.DataCurve` except if the curve is names "Global-fit"
     """
     if curve_type == 'all':
-        return [d for d in data_set
-                if isinstance(d, data.ExperimentalData) or
-                isinstance(d, data.ExperimentDataGroup)
-                ]
+        return [
+            d for d in data_set if isinstance(d, data.ExperimentalData) or isinstance(d, data.ExperimentDataGroup)
+        ]
     elif curve_type == 'experiment':
         return [
-            d for d in data_set if (isinstance(d, data.ExperimentalData) or
-                                    isinstance(d, data.ExperimentDataGroup))
-                                   and d.name != "Global-fit"]
+            d for d in data_set if
+            (isinstance(d, data.ExperimentalData) or isinstance(d, data.ExperimentDataGroup)) and
+            d.name != "Global-fit"
+        ]
 
 

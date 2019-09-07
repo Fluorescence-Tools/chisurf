@@ -196,6 +196,6 @@ gui:
     pyqtgraph:
       background: "#022700"
       foreground: "#f2f2f2"
-      antialias: false
-      useOpenGL: false
+      antialias: true
+      useOpenGL: true
       useWeave: true

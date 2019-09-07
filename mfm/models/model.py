@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import List, Tuple
 
 import numpy as np
 from PyQt5 import QtWidgets, QtGui
@@ -19,31 +20,41 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
         self.model_number = kwargs.get('model_number', 0)
 
     @property
-    def x(self):
+    def x(self) -> np.array:
         return self._kw['x']
 
     @x.setter
-    def x(self, v):
+    def x(
+            self,
+            v: np.array
+    ):
         self._kw['x'] = v
 
     @property
-    def y(self):
+    def y(self) -> np.array:
         return self._kw['y']
 
     @y.setter
-    def y(self, v):
+    def y(
+            self,
+            v: np.array
+    ):
         self._kw['y'] = v
 
     @property
-    def parameters(self):
+    def parameters(self) -> List[mfm.fitting.parameter.FittingParameter]:
         return [p for p in self.parameters_all if not (p.fixed or p.is_linked)]
 
     @property
-    def parameter_bounds(self):
+    def parameter_bounds(
+            self
+    ) -> List[
+        Tuple[float, float]
+    ]:
         return [pi.bounds for pi in self.parameters]
 
     @property
-    def n_free(self):
+    def n_free(self) -> int:
         return len(self.parameters)
 
     def finalize(self):
@@ -72,13 +83,16 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
     def get_wres(
             self,
             fit: mfm.fitting.fit.Fit,
+            xmin: int = None,
+            xmax: int = None,
             **kwargs
     ) -> np.array:
-        f = fit
-        xmin = kwargs.get('xmin', f.xmin)
-        xmax = kwargs.get('xmax', f.xmax)
-        x, m = f.model[xmin:xmax]
-        x, d, e = f.data[xmin:xmax]
+        if xmin is None:
+            xmin = fit.xmin
+        if xmax is None:
+            xmax = fit.xmax
+        x, m = fit.model[xmin:xmax]
+        x, d, e = fit.data[xmin:xmax]
         ml = min([len(m), len(d)])
         wr = np.array((d[:ml] - m[:ml]) / e[:ml], dtype=np.float64)
         return wr
@@ -111,11 +125,21 @@ class ModelCurve(Model, mfm.curve.Curve):
     def n_points(self) -> int:
         return self.fit.xmax - self.fit.xmin
 
-    def __init__(self, fit, *args, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.Fit,
+            *args, **kwargs
+    ):
         x = fit.data.x
         y = np.zeros_like(fit.data.y)
         Model.__init__(self, fit, **kwargs)
-        Curve.__init__(self, *args, x=x, y=y, **kwargs)
+        Curve.__init__(
+            self,
+            *args,
+            x=x,
+            y=y,
+            **kwargs
+        )
 
     def __getitem__(self, key):
         start = key.start
