@@ -13,10 +13,16 @@ import mfm.experiments.experiment
 
 class Data(Base):
 
-    def __init__(self, *args, **kwargs):
-        Base.__init__(self, *args, **kwargs)
-        self._filename = kwargs.get('filename', None)
-        self._data = kwargs.get('data', None)
+    def __init__(
+            self,
+            *args,
+            filename: str = None,
+            data: mfm.experiments.data.Data = None,
+            **kwargs
+    ):
+        super(Data, self).__init__(*args, **kwargs)
+        self._filename = filename
+        self._data = data
         self._embed_data = mfm.settings.cs_settings['database']['embed_data']
         self._max_file_size = mfm.settings.cs_settings['database']['read_file_size_limit']
 
@@ -49,7 +55,7 @@ class Data(Base):
     def filename(self) -> str:
         try:
             return os.path.normpath(self._filename)
-        except AttributeError:
+        except (AttributeError, TypeError):
             return 'No file'
 
     @filename.setter
@@ -74,7 +80,7 @@ class Data(Base):
             print("File size [byte]: %s" % file_size)
 
     def __str__(self):
-        s = Base.__str__(self)
+        s = super(Data, self).__str__()
         s += "filename: %s\n" % self.filename
         return s
 
@@ -84,12 +90,13 @@ class ExperimentalData(Data):
     def __init__(
             self,
             *args,
-            setup = None,
+            setup=None,
+            experiment=None,
             **kwargs
     ):
         super(ExperimentalData, self).__init__(*args, **kwargs)
         self.setup = setup
-        self._experiment = kwargs.get('experiment', None)
+        self._experiment = experiment
 
     @property
     def experiment(self) -> mfm.experiments.experiment.Experiment:
@@ -105,11 +112,11 @@ class ExperimentalData(Data):
     def experiment(
             self,
             v: mfm.experiments.experiment.Experiment
-    ):
+    ) -> None:
         self._experiment = v
 
     def to_dict(self):
-        d = Data.to_dict(self)
+        d = super(ExperimentalData, self).to_dict()
         d['setup'] = self.setup.to_dict()
         return d
 
@@ -119,8 +126,12 @@ class DataCurve(Curve, ExperimentalData):
     def __init__(
             self,
             *args,
+            filename: str = '',
             **kwargs
     ):
+        super(DataCurve, self).__init__(*args, **kwargs)
+        if os.path.isfile(filename):
+            self.load(filename, **kwargs)
         try:
             ex, ey = args[2], args[3]
         except IndexError:
@@ -128,11 +139,6 @@ class DataCurve(Curve, ExperimentalData):
             ey = kwargs.get('ey', np.ones_like(kwargs.get('y', None)))
         kwargs['ex'] = ex
         kwargs['ey'] = ey
-        super(DataCurve, self).__init__(*args, **kwargs)
-        filename = kwargs.pop('filename', '')
-
-        if os.path.isfile(filename):
-            self.load(filename, **kwargs)
 
     def __str__(self):
         s = "Dataset:\n"
@@ -167,11 +173,13 @@ class DataCurve(Curve, ExperimentalData):
                 s += "{0:<12.3e}\t".format(ey)
                 s += "\n"
         except:
-            s += "This cuve does not 'own' data..."
+            s += "This curve does not 'own' data..."
         return s
 
-    def to_dict(self) -> dict:
-        d = Curve.to_dict(self)
+    def to_dict(
+            self
+    ) -> dict:
+        d = super(DataCurve, self).to_dict()
         d.update(ExperimentalData.to_dict(self))
         d['ex'] = list(self.ex)
         d['ey'] = list(self.ey)
@@ -182,8 +190,8 @@ class DataCurve(Curve, ExperimentalData):
     def from_dict(
             self,
             v: dict
-    ):
-        Curve.from_dict(self, v)
+    ) -> None:
+        super(DataCurve, self).from_dict(v)
         self._kw['ex'] = np.array(v['ex'], dtype=np.float64)
         self._kw['ey'] = np.array(v['ey'], dtype=np.float64)
 
@@ -191,9 +199,10 @@ class DataCurve(Curve, ExperimentalData):
             self,
             filename: str = None,
             mode: str = 'json'
-    ):
+    ) -> None:
         if filename is None:
             filename = os.path.join(self.name + '_data.txt')
+
         if mode == 'txt':
             mfm.io.ascii.Csv().save(self, filename)
         else:
@@ -203,10 +212,10 @@ class DataCurve(Curve, ExperimentalData):
     def load(
             self,
             filename: str,
+            skiprows: int = 9,
+            mode: str = 'txt',
             **kwargs
-    ):
-        mode = kwargs.get('mode', 'txt')
-        skiprows = kwargs.get('skiprows', 9)
+    ) -> None:
 
         if mode == 'txt':
             csv = mfm.io.ascii.Csv()
@@ -221,21 +230,19 @@ class DataCurve(Curve, ExperimentalData):
             filename: str,
             x: np.array,
             y: np.array,
-            **kwargs
-    ):
-        """test docs
-
-        :param filename:
-        :param x:
-        :param y:
-        :param kwargs:
-        :return:
-        """
-        self._kw['ex'] = kwargs.get('ex', np.zeros_like(x))
-        self._kw['ey'] = kwargs.get('ey', np.ones_like(y))
+            ex: np.array = None,
+            ey: np.array = None,
+    ) -> None:
         self.filename = filename
         self._kw['x'] = x
         self._kw['y'] = y
+
+        if ex is None:
+            ex = np.ones_like(x)
+        if ey is None:
+            ey = np.ones_like(y)
+        self._kw['ex'] = ex
+        self._kw['ey'] = ey
 
     def set_weights(
             self,
@@ -247,7 +254,7 @@ class DataCurve(Curve, ExperimentalData):
             self,
             key: str
     ):
-        x, y = Curve.__getitem__(self, key)
+        x, y = super(DataCurve, self).__getitem__(key)
         return x, y, self.ey[key]
 
     @property

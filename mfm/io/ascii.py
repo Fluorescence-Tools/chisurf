@@ -30,12 +30,11 @@ def save_xy(
     """
     if verbose:
         print("Writing histogram to file: %s" % filename)
-    fp = open(filename, 'w')
-    if header_string is not None:
-        fp.write(header_string)
-    for p in zip(x, y):
-        fp.write(fmt % (p[0], p[1]))
-    fp.close()
+    with open(filename, 'w') as fp:
+        if header_string is not None:
+            fp.write(header_string)
+        for p in zip(x, y):
+            fp.write(fmt % (p[0], p[1]))
 
 
 class Csv(object):

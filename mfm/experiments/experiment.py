@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import List
 
 import mfm.base
 
@@ -15,15 +16,15 @@ class Experiment(mfm.base.Base):
         return self.get_setups()
 
     @property
-    def setup_names(self):
+    def setup_names(self) -> List[str]:
         return self.get_setup_names()
 
     @property
-    def models(self):
+    def models(self) -> List:
         return self.model_classes
 
     @property
-    def model_names(self):
+    def model_names(self) -> List[str]:
         return self.get_model_names()
 
     def __init__(
@@ -41,28 +42,37 @@ class Experiment(mfm.base.Base):
     ):
         self.model_classes.append(model)
 
-    def add_models(self, models):
+    def add_models(
+            self,
+            models: List
+    ):
         for model in models:
             self.model_classes.append(model)
 
-    def add_setup(self, setup):
+    def add_setup(
+            self,
+            setup
+    ):
         self.setups.append(setup)
 
-    def add_setups(self, setups):
+    def add_setups(
+            self,
+            setups: List
+    ):
         self._setups += setups
         for s in setups:
             s.experiment = self
 
-    def get_setups(self):
+    def get_setups(self) -> List:
         return self._setups
 
-    def get_setup_names(self):
+    def get_setup_names(self) -> List[str]:
         names = list()
         for s in self.setups:
             names.append(s.name)
         return names
 
-    def get_model_names(self):
+    def get_model_names(self) -> List[str]:
         names = list()
         for s in self.model_classes:
             names.append(str(s.name))

@@ -39,7 +39,11 @@ class FittingControllerWidget(QtWidgets.QWidget):
         self.curve_select.show()
         self.curve_select.update()
 
-    def __init__(self, fit=None, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup = None,
+            **kwargs
+    ):
         super(FittingControllerWidget, self).__init__()
         self.curve_select = mfm.widgets.CurveSelector(
             parent=None, fit=self,
@@ -118,7 +122,12 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         QtWidgets.QMdiSubWindow.update(self, *__args)
         self.tw.update(self, *__args)
 
-    def __init__(self, fit, control_layout, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            control_layout: QtWidgets.QLayout,
+            **kwargs
+    ):
         QtWidgets.QMdiSubWindow.__init__(self, kwargs.get('parent', None))
         self.setWindowTitle(fit.name)
         l = self.layout()
@@ -175,7 +184,11 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
 
 class FittingParameterWidget(QtWidgets.QWidget):
 
-    def make_linkcall(self, fit_idx, parameter_name):
+    def make_linkcall(
+            self,
+            fit_idx: int,
+            parameter_name: str
+    ):
 
         def linkcall():
             tooltip = " linked to " + parameter_name
@@ -227,8 +240,12 @@ class FittingParameterWidget(QtWidgets.QWidget):
     def __str__(self):
         return ""
 
-    def __init__(self, fitting_parameter, **kwargs):
-        layout = kwargs.pop('layout', None)
+    def __init__(
+            self,
+            fitting_parameter: mfm.fitting.parameter.FittingParameter,
+            layout: QtWidgets.QLayout = None,
+            **kwargs
+    ):
         label_text = kwargs.pop('text', self.__class__.__name__)
         hide_bounds = kwargs.pop('hide_bounds', parameter_settings['hide_bounds'])
         hide_link = kwargs.pop('hide_link', parameter_settings['hide_link'])
@@ -242,7 +259,6 @@ class FittingParameterWidget(QtWidgets.QWidget):
         uic.loadUi('mfm/ui/variable_widget.ui', self)
         self.fitting_parameter = fitting_parameter
         self.widget_value = pg.SpinBox(dec=True, decimals=decimals)
-        self.widget_value.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
         self.widget_value.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addWidget(self.widget_value)
 

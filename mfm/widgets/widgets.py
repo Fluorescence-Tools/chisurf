@@ -183,10 +183,9 @@ def get_fortune(
             if attempt > attempts:
                 return ""
             continue
-        ffh = open(fortune_file, 'rU')
-        ffh.seek(start)
-        fortunecookie = ffh.read(length)
-        ffh.close()
+        with open(fortune_file, 'rU') as ffh:
+            ffh.seek(start)
+            fortunecookie = ffh.read(length)
         return fortunecookie
 
 

@@ -5,9 +5,6 @@ import numba as nb
 import numpy as np
 from numpy import linalg as linalg
 
-import mfm
-import mfm.fluorescence.general
-
 
 def kappasqAllDelta(
         delta: float,

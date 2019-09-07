@@ -7,15 +7,22 @@ import numpy as np
 import mfm
 import mfm.common as common
 
-keys = ['i', 'chain', 'res_id', 'res_name',
-             'atom_id', 'atom_name', 'element',
-             'coord',
-             'charge', 'radius', 'bfactor', 'mass']
+keys_formats = [
+    ('i4', 'i'),
+    ('|U1', 'chain'),
+    ('i4', 'res_id'),
+    ('|U5', 'res_name'),
+    ('i4', 'atom_id'),
+    ('|U5', 'atom_name'),
+    ('|U1', 'element'),
+    ('3f8', 'coord'),
+    ('f8', 'charge'),
+    ('f8', 'radius'),
+    ('f8', 'bfactor'),
+    ('f8', 'mass')
+]
 
-formats = ['i4', '|U1', 'i4', '|U5',
-           'i4', '|U5', '|U1',
-           '3f8',
-           'f8', 'f8', 'f8', 'f8']
+keys, formats = list(zip(*keys_formats))
 
 
 def fetch_pdb_string(
@@ -98,39 +105,6 @@ def parse_string_pdb(
     return atoms
 
 
-def parse_string_pqr(
-        string: str,
-        **kwargs
-):
-    rows = string.splitlines()
-    verbose = kwargs.get('verbose', mfm.verbose)
-    atoms = np.zeros(len(rows), dtype={'names': keys, 'formats': formats})
-    ni = 0
-
-    for line in rows:
-        if line[:4] == "ATOM" or line[:6] == "HETATM":
-            # Extract x, y, z, r from pqr to xyzr file
-            atom_name = line[12:16].strip().upper()
-            atoms['i'][ni] = ni
-            atoms['chain'][ni] = line[21]
-            atoms['atom_name'][ni] = atom_name.upper()
-            atoms['res_name'][ni] = line[17:20].strip().upper()
-            atoms['res_id'][ni] = line[21:27]
-            atoms['atom_id'][ni] = line[6:11]
-            atoms['coord'][ni][0] = "%10.5f" % float(line[30:38].strip())
-            atoms['coord'][ni][1] = "%10.5f" % float(line[38:46].strip())
-            atoms['coord'][ni][2] = "%10.5f" % float(line[46:54].strip())
-            atoms['radius'][ni] = "%10.5f" % float(line[63:70].strip())
-            atoms['element'][ni] = assign_element_to_atom_name(atom_name)
-            atoms['charge'][ni] = "%10.5f" % float(line[55:62].strip())
-            ni += 1
-
-    atoms = atoms[:ni]
-    if verbose:
-        print("Number of atoms: %s" % (ni + 1))
-    return atoms
-
-
 def read(
         filename: str,
         assign_charge: bool = False,
@@ -174,7 +148,7 @@ def read(
     return atoms
 
 
-def write(
+def write_pdb(
         filename: str,
         atoms=None,
         append_model: bool = False,
@@ -213,39 +187,6 @@ def write(
             fp.write('ENDMDL')
 
 
-def write_xyz(
-        filename: str,
-        points: np.array,
-        verbose: bool = False
-):
-    """
-    Writes the points as xyz-format file. The xyz-format file can be opened and displayed for instance
-    in PyMol
-
-    :param filename: string
-    :param points: array
-    :param verbose: bool
-
-    """
-    if verbose:
-        print("write_xyz\n")
-        print("Filename: %s\n" % filename)
-    fp = open(filename, 'w')
-    npoints = len(points)
-    fp.write('%i\n' % npoints)
-    fp.write('Name\n')
-    for p in points:
-        fp.write('D %.3f %.3f %.3f\n' % (p[0], p[1], p[2]))
-    fp.close()
-
-
-def read_xyz(
-        filename: str
-):
-    t = np.loadtxt(filename, skiprows=2, usecols=(1, 2, 3), delimiter=" ")
-    return t
-
-
 def write_points(
         filename: str,
         points,
@@ -267,7 +208,7 @@ def write_points(
         atoms['coord'] = points
         if density is not None:
             atoms['bfactor'] = density
-        write(filename, atoms, verbose=verbose)
+        write_pdb(filename, atoms, verbose=verbose)
     else:
         write_xyz(filename, points, verbose=verbose)
 
@@ -324,72 +265,3 @@ def get_atom_index(
     return attachment_atom_index
 
 
-def open_dx(
-        density: np.array,
-        ro: np.array,
-        rn: np.array,
-        dr: np.array
-) -> str:
-    """ Returns a open_dx string compatible with PyMOL
-
-    :param density: 3d-grid with values (densities)
-    :param ro: origin (x, y, z)
-    :param rn: number of grid-points in x, y, z
-    :param dr: grid-size (dx, dy, dz)
-    :return: string
-    """
-    xo, yo, zo = ro
-    xn, yn, zn = rn
-    dx, dy, dz = dr
-    s = ""
-    s += "object 1 class gridpositions counts %i %i %i\n" % (xn, yn, zn)
-    s += "origin " + str(xo) + " " + str(yo) + " " + str(zo) + "\n"
-    s += "delta %s 0 0\n" % dx
-    s += "delta 0 %s 0\n" % dy
-    s += "delta 0 0 %s\n" % dz
-    s += "object 2 class gridconnections counts %i %i %i\n" % (xn, yn, zn)
-    s += "object 3 class array type double rank 0 items " + str(xn*yn*zn) + " data follows\n"
-    n = 0
-    for i in range(0, xn):
-        for j in range(0, yn):
-            for k in range(0, zn):
-                s += str(density[i, j, k])
-                n += 1
-                if n % 3 == 0:
-                    s += "\n"
-                else:
-                    s += " "
-    s += "\nobject \"density (all) [A^-3]\" class field\n"
-
-    return s
-
-
-def write_open_dx(
-        filename: str,
-        density: np.array,
-        r0: np.array,
-        nx: int,
-        ny: int,
-        nz: int,
-        dx: float,
-        dy: float,
-        dz: float
-) -> None:
-    """Writes a density into a dx-file
-
-    :param filename: output filename
-    :param density: 3d-grid with values (densities)
-    :param density:
-    :param r0: origin (x, y, z)
-    :param nx:
-    :param ny:
-    :param nz:
-    :param dx:
-    :param dy:
-    :param dz:
-
-    :return:
-    """
-    with open(filename + '.dx', 'w') as fp:
-        s = mfm.io.pdb.open_dx(density, r0, (nx, ny, nz), (dx, dy, dz))
-        fp.write(s)

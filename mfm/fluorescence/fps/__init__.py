@@ -2,6 +2,7 @@ import json
 import os
 import numpy as np
 
+import mfm.io.dx
 from . import dynamic
 import mfm
 import mfm.base
@@ -127,7 +128,12 @@ class BasicAV(object):
     def update(self):
         self.update_points()
 
-    def save(self, filename, mode='xyz', **kwargs):
+    def save(
+            self,
+            filename: str,
+            mode: str = 'xyz',
+            **kwargs
+    ):
         """Saves the accessible volume as xyz-file or open-dx density file
 
         Examples
@@ -136,8 +142,8 @@ class BasicAV(object):
         >>> import mfm
         >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> av = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
-        >>> av.save('c:/temp/test', mode='xyz')
-        >>> av.save('c:/temp/test', mode='dx')
+        >>> av.save('c:/temp/test', file_type='xyz')
+        >>> av.save('c:/temp/test', file_type='dx')
 
         """
         if mode == 'dx':
@@ -146,12 +152,12 @@ class BasicAV(object):
             ng = self.ng
             dg = self.dg
             offset = (ng - 1) / 2 * dg
-            mfm.io.pdb.write_open_dx(filename,
-                                     d,
-                                     self.x0 - offset,
-                                     ng, ng, ng,
-                                     dg, dg, dg
-                                     )
+            mfm.io.dx.write_open_dx(filename,
+                                    d,
+                                    self.x0 - offset,
+                                    ng, ng, ng,
+                                    dg, dg, dg
+                                    )
         else:
             p = kwargs.get('points', self.points)
             d = p[:, [3]].flatten()
@@ -159,7 +165,8 @@ class BasicAV(object):
             xyz = p[:, [0, 1, 2]]
             mfm.io.pdb.write_points(filename=filename + '.'+mode,
                                     points=xyz,
-                                    mode=mode, verbose=self.verbose,
+                                    mode=mode,
+                                    verbose=self.verbose,
                                     density=d)
 
     def dRmp(self, av):
@@ -274,7 +281,7 @@ class ACV(BasicAV):
     >>> trapped_fraction = 0.5
     >>> av1 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=18, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
     >>> av2 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=577, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
-    >>> av1.save('c:/temp/test_05', mode='dx')
+    >>> av1.save('c:/temp/test_05', file_type='dx')
     >>> y1, x1 = av1.pRDA(av2)
 
     >>> import mfm
@@ -282,7 +289,7 @@ class ACV(BasicAV):
     >>> trapped_fraction = 0.9
     >>> av1 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=18, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
     >>> av2 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=577, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
-    >>> av1.save('c:/temp/test_09', mode='dx')
+    >>> av1.save('c:/temp/test_09', file_type='dx')
     >>> y2, x2 = av1.pRDA(av2)
 
     """
@@ -609,7 +616,7 @@ class DynamicAV(BasicAV):
         >>> p.show()
         >>> t_step = 0.0141
         >>> times, density, counts = av.get_donor_only_decay(n_it=4095, t_step=0.0141, n_out=1)
-        >>> av.save(filename='c:/temp/0t2', density=density, mode='dx')
+        >>> av.save(filename='c:/temp/0t2', density=density, file_type='dx')
         >>> irf = mfm.curve.DataCurve(filename='./sample_data/tcspc/ibh_sample/Prompt.txt', skiprows=9)
         >>> data = mfm.curve.DataCurve(filename='./sample_data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9) 
         >>> irf.x *= t_step; data.x *= t_step
