@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 
 import mfm
@@ -97,11 +99,20 @@ class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
         if pt == 'VH' or pt == 'VV':
             d = mfm.fluorescence.general.elte2(a, f)
             vv = np.hstack([f, mfm.fluorescence.general.e1tn(d, 2)])
-            vh = mfm.fluorescence.general.e1tn(np.hstack([f, mfm.fluorescence.e1tn(d, -1)]), self.g)
+            vh = mfm.fluorescence.general.e1tn(
+                np.hstack([f, mfm.fluorescence.e1tn(d, -1)]),
+                self.g
+            )
         if self.polarization_type.upper() == 'VH':
-            return np.hstack([mfm.fluorescence.general.e1tn(vv, self.l2), mfm.fluorescence.general.e1tn(vh, 1 - self.l2)])
+            return np.hstack(
+                [mfm.fluorescence.general.e1tn(vv, self.l2),
+                 mfm.fluorescence.general.e1tn(vh, 1 - self.l2)]
+            )
         elif self.polarization_type.upper() == 'VV':
-            r = np.hstack([mfm.fluorescence.general.e1tn(vv, 1 - self.l1), mfm.fluorescence.general.e1tn(vh, self.l1)])
+            r = np.hstack(
+                [mfm.fluorescence.general.e1tn(vv, 1 - self.l1),
+                 mfm.fluorescence.general.e1tn(vh, self.l1)]
+            )
             return r
         else:
             return f
@@ -109,23 +120,32 @@ class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
     def __len__(self):
         return len(self._bs)
 
-    def add_rotation(self, **kwargs):
-        b_value = kwargs.get('b', 0.2)
-        rho_value = kwargs.get('rho', 1.0)
-        lb = kwargs.get('lb', None)
-        ub = kwargs.get('ub', None)
-        fixed = kwargs.get('fixed', False)
-        bound_on = kwargs.get('bound_on', False)
+    def add_rotation(
+            self,
+            b: float = 0.2,
+            rho: float = 1.0,
+            lb: float = None,
+            ub: float = None,
+            fixed: bool = False,
+            bound_on: bool = False,
+            **kwargs
+    ):
+        b_value = b
+        rho_value = rho
 
-        b = mfm.fitting.parameter.FittingParameter(lb=lb, ub=ub,
-                                                   value=rho_value,
-                                                   name='b(%i)' % (len(self) + 1),
-                                                   fixed=fixed,
-                                                   bounds_on=bound_on)
-        rho = mfm.fitting.parameter.FittingParameter(lb=lb, ub=ub,
-                                                     value=b_value,
-                                                     name='rho(%i)' % (len(self) + 1),
-                                                     fixed=fixed, bounds_on=bound_on)
+        b = mfm.fitting.parameter.FittingParameter(
+            lb=lb, ub=ub,
+            value=rho_value,
+            name='b(%i)' % (len(self) + 1),
+            fixed=fixed,
+            bounds_on=bound_on
+        )
+        rho = mfm.fitting.parameter.FittingParameter(
+            lb=lb, ub=ub,
+            value=b_value,
+            name='rho(%i)' % (len(self) + 1),
+            fixed=fixed, bounds_on=bound_on
+        )
         self._rhos.append(rho)
         self._bs.append(b)
 
@@ -133,12 +153,23 @@ class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
         self._rhos.pop().close()
         self._bs.pop().close()
 
-    def __init__(self, **kwargs):
-        kwargs['name'] = 'Anisotropy'
-        mfm.fitting.parameter.FittingParameterGroup.__init__(self, **kwargs)
-        self._rhos = []
-        self._bs = []
-        self._polarization_type = kwargs.get('polarization', mfm.settings.cs_settings['tcspc']['polarization'])
+    def __init__(
+            self,
+            polarization: str = None,
+            name: str = 'Anisotropy',
+            **kwargs
+    ):
+        super(Anisotropy, self).__init__(
+            name=name,
+            **kwargs
+        )
+
+        self._rhos = list()
+        self._bs = list()
+
+        if polarization is None:
+            polarization = mfm.settings.cs_settings['tcspc']['polarization']
+        self._polarization_type = polarization
 
         self._r0 = mfm.fitting.parameter.FittingParameter(name='r0', value=0.38, fixed=True)
         self._g = mfm.fitting.parameter.FittingParameter(name='g', value=1.00, fixed=True)

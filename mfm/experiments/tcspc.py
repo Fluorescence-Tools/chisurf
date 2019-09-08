@@ -218,7 +218,15 @@ class TCSPCReader(ExperimentReader):
                 name = '{} {:d}_{:d}'.format(fn, i, n_data_sets)
             else:
                 name = filename
-            data = mfm.experiments.data.DataCurve(x=x, y=yi, ex=ex, ey=1. / eyi, setup=self, name=name, **kwargs)
+            data = mfm.experiments.data.DataCurve(
+                x=x,
+                y=yi,
+                ex=ex,
+                ey=1. / eyi,
+                setup=self,
+                name=name,
+                **kwargs
+            )
             data.filename = filename
             data_curves.append(data)
         data_group = mfm.experiments.data.DataCurveGroup(data_curves, filename)
@@ -234,7 +242,11 @@ class TCSPCSetupWidget(TCSPCReader, mfm.io.ascii.Csv, QtWidgets.QWidget):
             **kwargs
     ) -> mfm.experiments.data.DataCurveGroup:
         if filename is None:
-            filename = mfm.widgets.get_filename(description='CSV-TCSPC file', file_type='All files (*.*)', working_path=None)
+            filename = mfm.widgets.get_filename(
+                description='CSV-TCSPC file',
+                file_type='All files (*.*)',
+                working_path=None
+            )
         if os.path.isfile(filename):
             kwargs['filename'] = filename
             return TCSPCReader.read(self, *args, **kwargs)

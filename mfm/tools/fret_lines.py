@@ -9,6 +9,7 @@ import mfm.experiments.data
 import mfm.models.tcspc
 import mfm.models.tcspc as fret_models
 import mfm.models.tcspc.lifetime
+import mfm.models.tcspc.widgets
 from mfm.models import WormLikeChainModelWidget
 
 
@@ -617,14 +618,14 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
 
     name = "FRET-Line Generator"
 
-    models = [(mfm.models.tcspc.fret.GaussianModelWidget, {'hide_corrections': True,
+    models = [(mfm.models.tcspc.widgets.GaussianModelWidget, {'hide_corrections': True,
                                                           'hide_fit': True,
                                                           'hide_generic': True,
                                                           'hide_convolve': True,
                                                           'hide_rotation': True,
                                                           'hide_error': True,
                                                            'hide_donor': True
-                                                           }),
+                                                              }),
               (WormLikeChainModelWidget, {'hide_corrections': True,
                                                           'hide_fit': True,
                                                           'hide_generic': True,
@@ -642,15 +643,15 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
                                                           'hide_donor': True,
                                                                            'enable_mix_model_donor': True
                                                                    }),
-              (mfm.models.tcspc.fret.FRETrateModelWidget, {'hide_corrections': True,
+              (mfm.models.tcspc.widgets.FRETrateModelWidget, {'hide_corrections': True,
                                                           'hide_fit': True,
                                                           'hide_generic': True,
                                                           'hide_convolve': True,
                                                           'hide_rotation': True,
                                                           'hide_error': True,
                                                            'hide_donor': True,
-                                                           'enable_mix_model_donor': True
-                                                           }),
+                                                              'enable_mix_model_donor': True
+                                                              }),
               ]
 
     @property

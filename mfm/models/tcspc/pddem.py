@@ -1,15 +1,11 @@
 import numpy as np
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import mfm
-from mfm import plots
-from mfm.models.tcspc.fret import GaussianWidget, Gaussians
+from mfm.models.tcspc.fret import Gaussians
 from mfm.fluorescence import tcspc
 from mfm.fluorescence.general import distribution2rates
 from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
-from mfm.models.tcspc.lifetime import Lifetime, LifetimeWidget, LifetimeModel
-from mfm.models.tcspc.widgets import ConvolveWidget, CorrectionsWidget, GenericWidget, AnisotropyWidget
-from mfm.models.model import ModelWidget
+from mfm.models.tcspc.lifetime import Lifetime, LifetimeModel
 
 
 class PDDEM(FittingParameterGroup):
@@ -128,35 +124,6 @@ class PDDEM(FittingParameterGroup):
         self._pmB = FittingParameter(value=0.98, name='mB', model=self.model, decimals=2, fixed=True)
 
 
-class PDDEMWidget(QtWidgets.QWidget, PDDEM):
-
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        PDDEM.__init__(self, **kwargs)
-        uic.loadUi('mfm/ui/fitting/models/tcspc/pddem.ui', self)
-
-        l = QtWidgets.QHBoxLayout()
-        self._fAB = self._fAB.make_widget(layout=l, text='A>B')
-        self._fBA = self._fBA.make_widget(layout=l, text='B>A')
-        self.verticalLayout_3.addLayout(l)
-
-        l = QtWidgets.QHBoxLayout()
-        self._pA = self._pA.make_widget(layout=l)
-        self._pB = self._pB.make_widget(layout=l)
-        self.verticalLayout_3.addLayout(l)
-
-        l = QtWidgets.QHBoxLayout()
-        self._pxA = self._pxA.make_widget(layout=l, text='Ex<sub>A</sub>')
-        self._pxB = self._pxB.make_widget(layout=l, text='Ex<sub>B</sub>')
-        self.verticalLayout_3.addLayout(l)
-
-        l = QtWidgets.QHBoxLayout()
-        self._pmA = self._pmA.make_widget(layout=l, text='Em<sub>A</sub>')
-        self._pmB = self._pmB.make_widget(layout=l, text='Em<sub>B</sub>')
-        self.verticalLayout_3.addLayout(l)
-
-
-
 class PDDEMModel(LifetimeModel):
     """
     Kalinin, S., and Johansson, L.B.
@@ -210,40 +177,4 @@ class PDDEMModel(LifetimeModel):
         else:
             return lt
 
-class PDDEMModelWidget(PDDEMModel, ModelWidget):
-
-    plot_classes = [
-                       (plots.LinePlot, {'d_scalex': 'lin', 'd_scaley': 'log', 'r_scalex': 'lin', 'r_scaley': 'lin',
-                                         'x_label': 'x', 'y_label': 'y', 'plot_irf': True}),
-                       (plots.FitInfo, {}), (plots.DistributionPlot, {}), (plots.ParameterScanPlot, {})
-                    ]
-
-    def __init__(self, fit, **kwargs):
-        ModelWidget.__init__(self, fit=fit, icon=QtGui.QIcon(":/icons/icons/TCSPC.ico"))
-        PDDEMModel.__init__(self, fit=fit)
-
-        self.convolve = ConvolveWidget(name='convolve', fit=fit, model=self, dt=fit.data.dt, hide_curve_convolution=True,
-                                       **kwargs)
-
-        self.corrections = CorrectionsWidget(fit=fit, model=self, **kwargs)
-        self.generic = GenericWidget(fit=fit, model=self, parent=self, **kwargs)
-        self.anisotropy = AnisotropyWidget(model=self, short='rL', **kwargs)
-        self.pddem = PDDEMWidget(parent=self, model=self, short='P')
-        self.gaussians = GaussianWidget(donors=None,  model=self.model, short='G', no_donly=True, name='gaussians')
-
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setAlignment(QtCore.Qt.AlignTop)
-
-        self.layout.addWidget(self.convolve)
-        self.layout.addWidget(self.generic)
-        self.layout.addWidget(self.pddem)
-
-        self.fa = LifetimeWidget(title='Lifetimes-A', model=self.model, short='A', name='fa')
-        self.fb = LifetimeWidget(title='Lifetimes-B', model=self.model, short='B', name='fb')
-
-        self.layout.addWidget(self.fa)
-        self.layout.addWidget(self.fb)
-        self.layout.addWidget(self.gaussians)
-        self.layout.addWidget(self.anisotropy)
-        self.layout.addWidget(self.corrections)
 

@@ -137,6 +137,6 @@ class ParameterEditor(QtGui.QWidget):
     @json_file.setter
     def json_file(self, v):
         with open(v, 'r') as fp:
-            self._dict = yaml.load(fp)
+            self._dict = yaml.safe_load(fp)
         self._json_file = v
 

@@ -1,11 +1,7 @@
 import numpy as np
-from PyQt5 import QtCore, QtWidgets
 
-from mfm import plots
-from mfm.fluorescence import stack_lifetime_spectra
-from mfm.parameter import FittingParameterWidget
-from mfm.widgets import clear_layout
-from mfm.models import LifetimeModel, LifetimeModelWidgetBase
+from mfm.fluorescence.general import stack_lifetime_spectra
+from mfm.models.tcspc.lifetime import LifetimeModel
 
 
 class LifetimeMixModel(LifetimeModel):
@@ -13,28 +9,36 @@ class LifetimeMixModel(LifetimeModel):
     name = "Lifetime mix"
 
     @property
-    def current_model_idx(self):
+    def current_model_idx(self) -> int:
         return self._current_model_idx
 
     @current_model_idx.setter
-    def current_model_idx(self, v):
+    def current_model_idx(
+            self,
+            v: int
+    ):
         self._current_model_idx = v
 
     @property
-    def fractions(self):
+    def fractions(self) -> np.array:
         x = np.abs([f.value for f in self._fractions])
         x /= sum(x)
         return x
 
     @fractions.setter
-    def fractions(self, x):
+    def fractions(
+            self,
+            x: np.array
+    ):
         x = np.abs(x)
         x /= sum(x)
         for i, va in enumerate(x):
             self._fractions[i].value = va
 
     @property
-    def lifetime_spectrum(self):
+    def lifetime_spectrum(
+            self
+    ) -> np.array:
         if len(self) > 0:
             fractions = self.fractions
             lifetime_spectra = [m.lifetime_spectrum for m in self.models]
@@ -107,91 +111,3 @@ class LifetimeMixModel(LifetimeModel):
         return s
 
 
-class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
-
-    plot_classes = [(plots.LinePlot, {'d_scalex': 'lin',
-                                                  'd_scaley': 'log',
-                                                  'r_scalex': 'lin',
-                                                  'r_scaley': 'lin',
-                                                  'x_label': 'x',
-                                                  'y_label': 'y',
-                                                  'plot_irf': True}
-                     )
-                    , (plots.FitInfo, {})
-    ]
-
-    @property
-    def current_model_idx(self):
-        return int(self._current_model.value())
-
-    @current_model_idx.setter
-    def current_model_idx(self, v):
-        self._current_model.setValue(v)
-
-    @property
-    def amplitude(self):
-        layout = self.model_layout
-        re = list()
-        for i in range(layout.count()):
-            item = layout.itemAt(i)
-            if isinstance(item, FittingParameterWidget):
-                re.append(item)
-        return re
-
-    @property
-    def selected_fit(self):
-        i = self.model_selector.currentIndex()
-
-        return self.model_types[i]
-
-    def __init__(self, fit, **kwargs):
-        LifetimeModelWidgetBase.__init__(self, fit, **kwargs)
-        LifetimeMixModel.__init__(self, fit, **kwargs)
-
-        layout = QtWidgets.QVBoxLayout(self)
-
-        l = QtWidgets.QHBoxLayout()
-
-        self.model_selector = QtWidgets.QComboBox()
-        self.model_selector.addItems([m.name for m in self.model_types])
-        l.addWidget(self.model_selector)
-
-        self.add_button = QtWidgets.QPushButton('Add')
-        l.addWidget(self.add_button)
-
-        self.clear_button = QtWidgets.QPushButton('Clear')
-        l.addWidget(self.clear_button)
-        layout.addLayout(l)
-
-        self.add_button.clicked.connect(self.add_model)
-        self.clear_button.clicked.connect(self.clear_models)
-
-        self.model_layout = QtWidgets.QVBoxLayout()
-        layout.addLayout(self.model_layout)
-
-        self._current_model = QtWidgets.QSpinBox()
-        self._current_model.setMinimum(0)
-        self._current_model.setMaximum(0)
-        self.layout_parameter.addWidget(self._current_model)
-        self.layout_parameter.addLayout(layout)
-
-    def add_model(self, fit=None):
-        l = QtWidgets.QHBoxLayout()
-
-        if fit is None:
-            model = self.selected_fit.model
-        else:
-            model = fit.model
-
-        fraction_name = "x(%s)" % (len(self) + 1)
-        fraction = FittingParameterWidget(name=fraction_name, value=1.0, model=self, ub=1.0, lb=0.0, layout=l)
-        l.addWidget(fraction)
-        model_label = QtWidgets.QLabel(fit.name)
-        l.addWidget(model_label)
-
-        self.model_layout.addLayout(l)
-        self.append(model, fraction)
-
-    def clear_models(self):
-        LifetimeMixModel.clear_models(self)
-        clear_layout(self.model_layout)

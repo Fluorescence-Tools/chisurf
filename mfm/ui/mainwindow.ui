@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1107</width>
-    <height>679</height>
+    <width>1201</width>
+    <height>795</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -32,7 +32,7 @@
    <string>ChiSurf</string>
   </property>
   <property name="windowIcon">
-   <iconset>
+   <iconset resource="resource.qrc">
     <normaloff>:/icons/icons/cs_logo.png</normaloff>:/icons/icons/cs_logo.png</iconset>
   </property>
   <property name="windowOpacity">
@@ -206,7 +206,7 @@
           <x>0</x>
           <y>0</y>
           <width>254</width>
-          <height>109</height>
+          <height>145</height>
          </rect>
         </property>
         <property name="sizePolicy">
@@ -325,7 +325,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1107</width>
+     <width>1201</width>
      <height>22</height>
     </rect>
    </property>
@@ -409,7 +409,7 @@
       <string>FRET</string>
      </property>
      <property name="icon">
-      <iconset>
+      <iconset resource="resource.qrc">
        <normaloff>:/icons/icons/FRET.png</normaloff>:/icons/icons/FRET.png</iconset>
      </property>
      <addaction name="actionCalculator"/>
@@ -419,7 +419,7 @@
       <string>Anisotropy</string>
      </property>
      <property name="icon">
-      <iconset>
+      <iconset resource="resource.qrc">
        <normaloff>:/icons/icons/Cone.png</normaloff>:/icons/icons/Cone.png</iconset>
      </property>
      <addaction name="actionAnisotropy_Lines"/>
@@ -430,7 +430,7 @@
       <string>Modelling</string>
      </property>
      <property name="icon">
-      <iconset>
+      <iconset resource="resource.qrc">
        <normaloff>:/icons/icons/Peptide_FRET.png</normaloff>:/icons/icons/Peptide_FRET.png</iconset>
      </property>
      <widget class="QMenu" name="menuTrajectory_tools">
@@ -438,7 +438,7 @@
        <string>Trajectory tools</string>
       </property>
       <property name="icon">
-       <iconset>
+       <iconset resource="resource.qrc">
         <normaloff>:/icons/icons/Peptide_FRET.png</normaloff>:/icons/icons/Peptide_FRET.png</iconset>
       </property>
       <addaction name="actionTrajectory_converter"/>
@@ -463,7 +463,7 @@
       <string>TTTR</string>
      </property>
      <property name="icon">
-      <iconset>
+      <iconset resource="resource.qrc">
        <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
      </property>
      <addaction name="actionConvert"/>
@@ -650,7 +650,7 @@
     </size>
    </property>
    <property name="windowIcon">
-    <iconset>
+    <iconset resource="resource.qrc">
      <normaloff>:/icons/icons/kitesurf.svg</normaloff>:/icons/icons/kitesurf.svg</iconset>
    </property>
    <property name="floating">
@@ -683,7 +683,7 @@
       <number>0</number>
      </property>
      <item row="1" column="0" colspan="6">
-      <widget class="QGroupBox" name="groupBox_4">
+      <widget class="QGroupBox" name="groupBox_FileParameters">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -1011,7 +1011,7 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset>
+    <iconset resource="resource.qrc">
      <normaloff>:/icons/icons/cs_logo.png</normaloff>:/icons/icons/cs_logo.png</iconset>
    </property>
    <property name="text">
@@ -1044,7 +1044,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="resource.qrc">
      <normaloff>:/icons/icons/Document-print.svg</normaloff>:/icons/icons/Document-print.svg</iconset>
    </property>
    <property name="text">
@@ -1131,7 +1131,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="resource.qrc">
      <normaloff>:/icons/icons/FCS-Filter.png</normaloff>:/icons/icons/FCS-Filter.png</iconset>
    </property>
    <property name="text">
@@ -1140,7 +1140,7 @@
   </action>
   <action name="actionCalculator">
    <property name="icon">
-    <iconset>
+    <iconset resource="resource.qrc">
      <normaloff>:/icons/icons/accessories-calculator.png</normaloff>:/icons/icons/accessories-calculator.png</iconset>
    </property>
    <property name="text">
@@ -1149,7 +1149,7 @@
   </action>
   <action name="actionKappa2_Distribution">
    <property name="icon">
-    <iconset>
+    <iconset resource="resource.qrc">
      <normaloff>:/icons/icons/Cone.png</normaloff>:/icons/icons/Cone.png</iconset>
    </property>
    <property name="text">
@@ -1171,7 +1171,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="resource.qrc">
      <normaloff>:/icons/icons/Anisotropy-Lines.png</normaloff>:/icons/icons/Anisotropy-Lines.png</iconset>
    </property>
    <property name="text">
@@ -1204,7 +1204,7 @@
   </action>
   <action name="actionDye_Diffusion">
    <property name="icon">
-    <iconset>
+    <iconset resource="resource.qrc">
      <normaloff>:/icons/icons/dye-diffusion.png</normaloff>:/icons/icons/dye-diffusion.png</iconset>
    </property>
    <property name="text">
@@ -1231,7 +1231,7 @@
   </action>
   <action name="actionTrajectory_converter">
    <property name="icon">
-    <iconset>
+    <iconset resource="resource.qrc">
      <normaloff>:/icons/icons/hdf2pdb.png</normaloff>:/icons/icons/hdf2pdb.png</iconset>
    </property>
    <property name="text">
@@ -1240,7 +1240,7 @@
   </action>
   <action name="actionPDB2Label">
    <property name="icon">
-    <iconset>
+    <iconset resource="resource.qrc">
      <normaloff>:/icons/icons/pdb2label.png</normaloff>:/icons/icons/pdb2label.png</iconset>
    </property>
    <property name="text">
@@ -1249,7 +1249,7 @@
   </action>
   <action name="actionCalculate_Potential">
    <property name="icon">
-    <iconset>
+    <iconset resource="resource.qrc">
      <normaloff>:/icons/icons/potential.png</normaloff>:/icons/icons/potential.png</iconset>
    </property>
    <property name="text">
@@ -1378,7 +1378,7 @@
   </action>
   <action name="actionConvert">
    <property name="icon">
-    <iconset>
+    <iconset resource="resource.qrc">
      <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
    </property>
    <property name="text">
@@ -1387,7 +1387,7 @@
   </action>
   <action name="actionGenerate_decay">
    <property name="icon">
-    <iconset>
+    <iconset resource="resource.qrc">
      <normaloff>:/icons/icons/TCSPC.png</normaloff>:/icons/icons/TCSPC.png</iconset>
    </property>
    <property name="text">
@@ -1396,7 +1396,7 @@
   </action>
   <action name="actionCorrelate">
    <property name="icon">
-    <iconset>
+    <iconset resource="resource.qrc">
      <normaloff>:/icons/icons/FCS.png</normaloff>:/icons/icons/FCS.png</iconset>
    </property>
    <property name="text">
@@ -1434,7 +1434,7 @@
   </action>
   <action name="actionF_Test">
    <property name="icon">
-    <iconset>
+    <iconset resource="resource.qrc">
      <normaloff>:/icons/icons/1462894045_chart02_64.png</normaloff>:/icons/icons/1462894045_chart02_64.png</iconset>
    </property>
    <property name="text">
@@ -1487,7 +1487,7 @@
   <zorder>dockWidgetHistory</zorder>
  </widget>
  <resources>
-  <include location="rescource.qrc"/>
+  <include location="resource.qrc"/>
  </resources>
  <connections>
   <connection>
@@ -1587,7 +1587,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>groupBox_4</sender>
+   <sender>groupBox_FileParameters</sender>
    <signal>toggled(bool)</signal>
    <receiver>widget</receiver>
    <slot>setVisible(bool)</slot>

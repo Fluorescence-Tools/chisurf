@@ -368,7 +368,11 @@ class FitGroup(list, Fit):
         self._fits = list()
         for d in data:
             model_kw = kwargs.get('model_kw', {})
-            fit = Fit(model_class=model_class, data=d, model_kw=model_kw)
+            fit = Fit(
+                model_class=model_class,
+                data=d,
+                model_kw=model_kw
+            )
             self._fits.append(fit)
 
         list.__init__(self, self._fits)
@@ -406,13 +410,24 @@ def sample_fit(
     pv = fit.model.parameter_values
     for i_run in range(n_runs):
         fn = os.path.splitext(filename)[0] + "_" + str(i_run) + '.er4'
-        #if method == 'emcee':
-        n_walkers = int(fit.n_free * 2)
-        #try:
-        chi2, para = mfm.fitting.fit.sample.sample_emcee(fit, steps=steps, nwalkers=n_walkers, thin=thin, chi2max=chi2max, **kwargs)
-        #except ValueError:
-        #    fit.models.parameter_values = pv
-        #    fit.models.update()
+
+        if method != 'emcee':
+            pass
+        else:
+            n_walkers = int(fit.n_free * 2)
+            try:
+                chi2, para = mfm.fitting.sample.sample_emcee(
+                    fit,
+                    steps=steps,
+                    nwalkers=n_walkers,
+                    thin=thin,
+                    chi2max=chi2max,
+                    **kwargs
+                )
+            except ValueError:
+                fit.models.parameter_values = pv
+                fit.models.update()
+
         mask = np.where(np.isfinite(chi2))
         scan = np.vstack([chi2[mask], para[mask].T])
         header = "chi2\t"

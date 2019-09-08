@@ -141,16 +141,28 @@ def make_residue_lookup_table(
 
 
 @nb.jit(nogil=True, nopython=True)
-def internal_to_cartesian(bond, angle, dihedral, ans, ib, ia, id, n_atoms, r, p, startPoint):
+def internal_to_cartesian(
+        bond: np.array,
+        angle: np.array,
+        dihedral: np.array,
+        ans,
+        i_b: np.array,
+        i_a: np.array,
+        i_d: np.array,
+        n_atoms: int,
+        r,
+        p,
+        startPoint: int
+):
     """
 
     :param bond: bond-length
     :param angle: angle
     :param dihedral: dihedral
     :param ans:
-    :param ib:
-    :param ia:
-    :param id:
+    :param i_b:
+    :param i_a:
+    :param i_d:
     :param n_atoms:
     :param r:
     :param startPoint:
@@ -168,17 +180,17 @@ def internal_to_cartesian(bond, angle, dihedral, ans, ib, ia, id, n_atoms, r, p,
         p[i*3 + 2] = bond[i] * cos_theta
 
     for i in range(n_atoms):
-        if ib[i] != 0 and ia[i] != 0 and id[i] != 0:
-            ab1 = (r[ib[i], 0] - r[ia[i], 0])
-            ab2 = (r[ib[i], 1] - r[ia[i], 1])
-            ab3 = (r[ib[i], 2] - r[ia[i], 2])
+        if i_b[i] != 0 and i_a[i] != 0 and i_d[i] != 0:
+            ab1 = (r[i_b[i], 0] - r[i_a[i], 0])
+            ab2 = (r[i_b[i], 1] - r[i_a[i], 1])
+            ab3 = (r[i_b[i], 2] - r[i_a[i], 2])
             nab = math.sqrt(ab1*ab1+ab2*ab2+ab3*ab3)
             ab1 /= nab
             ab2 /= nab
             ab3 /= nab
-            bc1 = (r[ia[i], 0] - r[id[i], 0])
-            bc2 = (r[ia[i], 1] - r[id[i], 1])
-            bc3 = (r[ia[i], 2] - r[id[i], 2])
+            bc1 = (r[i_a[i], 0] - r[i_d[i], 0])
+            bc2 = (r[i_a[i], 1] - r[i_d[i], 1])
+            bc3 = (r[i_a[i], 2] - r[i_d[i], 2])
             nbc = math.sqrt(bc1*bc1+bc2*bc2+bc3*bc3)
             bc1 /= nbc
             bc2 /= nbc
@@ -195,9 +207,9 @@ def internal_to_cartesian(bond, angle, dihedral, ans, ib, ia, id, n_atoms, r, p,
             u2 = v3 * ab1 - v1 * ab3
             u3 = v1 * ab2 - v2 * ab1
 
-            r[ans[i], 0] = r[ib[i], 0] + v1 * p[i * 3 + 0] + u1 * p[i * 3 + 1] - ab1 * p[i * 3 + 2]
-            r[ans[i], 1] = r[ib[i], 1] + v2 * p[i * 3 + 0] + u2 * p[i * 3 + 1] - ab2 * p[i * 3 + 2]
-            r[ans[i], 2] = r[ib[i], 2] + v3 * p[i * 3 + 0] + u3 * p[i * 3 + 1] - ab3 * p[i * 3 + 2]
+            r[ans[i], 0] = r[i_b[i], 0] + v1 * p[i * 3 + 0] + u1 * p[i * 3 + 1] - ab1 * p[i * 3 + 2]
+            r[ans[i], 1] = r[i_b[i], 1] + v2 * p[i * 3 + 0] + u2 * p[i * 3 + 1] - ab2 * p[i * 3 + 2]
+            r[ans[i], 2] = r[i_b[i], 2] + v3 * p[i * 3 + 0] + u3 * p[i * 3 + 1] - ab3 * p[i * 3 + 2]
 
 
 def calc_internal_coordinates_bb(structure, **kwargs):

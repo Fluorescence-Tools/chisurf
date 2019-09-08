@@ -21,7 +21,7 @@ class ProteinMCWorker(object):
         self.verbose = kwargs.get('verbose', verbose)
         self.output_traj_file = kwargs.get('output_traj_file', None)
         if self.output_traj_file is None:
-            new_file = tempfile.mktemp(".h5")
+            new_file = tempfile.mkstemp(".h5")
             if self.verbose:
                 print("input_pdb: %s" % structure.labeling_file)
                 print("output_file: %s" % new_file)
