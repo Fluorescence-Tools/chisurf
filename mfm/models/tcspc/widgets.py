@@ -6,7 +6,7 @@ import mfm
 import mfm.models
 from mfm import plots
 from mfm.fitting.parameter import FittingParameter
-from mfm.fitting.widgets import FittingControllerWidget
+from mfm.fitting.fitting_widgets import FittingControllerWidget
 from mfm.models import parse
 from mfm.models.model import ModelWidget
 from mfm.models.tcspc.anisotropy import Anisotropy
@@ -50,18 +50,18 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             self.radioButton_3.setVisible(not hide_curve_convolution)
 
         l = QtWidgets.QHBoxLayout()
-        mfm.fitting.widgets.make_fitting_parameter_widget(self._dt, layout=l, fixed=True, hide_bounds=True)
-        mfm.fitting.widgets.make_fitting_parameter_widget(self._n0, layout=l, fixed=True, hide_bounds=True)
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._dt, layout=l, fixed=True, hide_bounds=True)
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._n0, layout=l, fixed=True, hide_bounds=True)
         self.verticalLayout_2.addLayout(l)
 
         l = QtWidgets.QHBoxLayout()
-        mfm.fitting.widgets.make_fitting_parameter_widget(self._start, layout=l)
-        mfm.fitting.widgets.make_fitting_parameter_widget(self._stop, layout=l)
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._start, layout=l)
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._stop, layout=l)
         self.verticalLayout_2.addLayout(l)
 
         l = QtWidgets.QHBoxLayout()
-        mfm.fitting.widgets.make_fitting_parameter_widget(self._lb, layout=l)
-        mfm.fitting.widgets.make_fitting_parameter_widget(self._ts, layout=l)
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._lb, layout=l)
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._ts, layout=l)
         self.verticalLayout_2.addLayout(l)
 
         self._rep.make_widget(layout=self.horizontalLayout_3, text='r[MHz]')
@@ -132,8 +132,8 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         if kwargs.get('hide_corrections', False):
             self.hide()
 
-        mfm.fitting.widgets.make_fitting_parameter_widget(self._dead_time, layout=self.horizontalLayout_2, text='t<sub>dead</sub>[ns]')
-        mfm.fitting.widgets.make_fitting_parameter_widget(self._window_length, layout=self.horizontalLayout_2, text='t<sub>dead</sub>[ns]')
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._dead_time, layout=self.horizontalLayout_2, text='t<sub>dead</sub>[ns]')
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._window_length, layout=self.horizontalLayout_2, text='t<sub>dead</sub>[ns]')
 
         self.lin_select = CurveSelector(parent=None,
                                         change_event=self.onChangeLin,
@@ -267,16 +267,16 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QWidget):
         self.radioButtonVM = QtWidgets.QRadioButton("VM")
         self.radioButtonVM.setToolTip("Excitation: Vertical\nDetection: Magic-Angle")
         self.radioButtonVM.setChecked(True)
-        self.radioButtonVM.clicked.connect(lambda: mfm.run("cs.current_fit.models.anisotropy.polarization_type = 'vm'"))
+        self.radioButtonVM.clicked.connect(lambda: mfm.run("cs.current_fit.model.anisotropy.polarization_type = 'vm'"))
         self.radioButtonVM.clicked.connect(self.hide_roation_parameters)
 
         self.radioButtonVV = QtWidgets.QRadioButton("VV")
         self.radioButtonVV.setToolTip("Excitation: Vertical\nDetection: Vertical")
-        self.radioButtonVV.clicked.connect(lambda: mfm.run("cs.current_fit.models.anisotropy.polarization_type = 'vv'"))
+        self.radioButtonVV.clicked.connect(lambda: mfm.run("cs.current_fit.model.anisotropy.polarization_type = 'vv'"))
 
         self.radioButtonVH = QtWidgets.QRadioButton("VH")
         self.radioButtonVH.setToolTip("Excitation: Vertical\nDetection: Horizontal")
-        self.radioButtonVH.clicked.connect(lambda: mfm.run("cs.current_fit.models.anisotropy.polarization_type = 'vh'"))
+        self.radioButtonVH.clicked.connect(lambda: mfm.run("cs.current_fit.model.anisotropy.polarization_type = 'vh'"))
 
         l = QtWidgets.QHBoxLayout()
         l.setSpacing(0)
@@ -309,13 +309,13 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QWidget):
         self.gb.setLayout(self.lh)
 
         l = QtWidgets.QHBoxLayout()
-        mfm.fitting.widgets.make_fitting_parameter_widget(self._r0, text='r0', layout=l, fixed=True)
-        mfm.fitting.widgets.make_fitting_parameter_widget(self._g, text='r0', layout=l, fixed=True)
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._r0, text='r0', layout=l, fixed=True)
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._g, text='r0', layout=l, fixed=True)
         self.lh.addLayout(l)
 
         l = QtWidgets.QHBoxLayout()
-        mfm.fitting.widgets.make_fitting_parameter_widget(self._l1, text='r0', layout=l, fixed=True, decimals=4)
-        mfm.fitting.widgets.make_fitting_parameter_widget(self._l2, text='r0', layout=l, fixed=True, decimals=4)
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._l1, text='r0', layout=l, fixed=True, decimals=4)
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._l2, text='r0', layout=l, fixed=True, decimals=4)
         self.lh.addLayout(l)
 
         self.lh.addLayout(l)
@@ -771,8 +771,8 @@ for f in cs.current_fit:
         px = FittingParameter(name='x(%s,%i)' % (self.short, n_rates + 1), value=x,
                               model=self.model, decimals=3,
                               bounds_on=False, text='x', update_function=self.update)
-        m = mfm.fitting.widgets.make_fitting_parameter_widget(pm, layout=l)
-        x = mfm.fitting.widgets.make_fitting_parameter_widget(px, layout=l)
+        m = mfm.fitting.fitting_widgets.make_fitting_parameter_widget(pm, layout=l)
+        x = mfm.fitting.fitting_widgets.make_fitting_parameter_widget(px, layout=l)
 
         gb.setLayout(l)
         row = n_rates / 2
@@ -809,7 +809,7 @@ class GaussianModelWidget(GaussianModel, LifetimeModelWidgetBase):
         self.layout_parameter.addWidget(donors)
 
         self.layout_parameter.addWidget(
-            mfm.fitting.widgets.make_fitting_parameter_group_widget(self.fret_parameters)
+            mfm.fitting.fitting_widgets.make_fitting_parameter_group_widget(self.fret_parameters)
         )
 
         self.layout_parameter.addWidget(gaussians)

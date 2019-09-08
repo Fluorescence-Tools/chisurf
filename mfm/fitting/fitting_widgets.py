@@ -130,7 +130,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             fit: mfm.fitting.fit.FitGroup,
             control_layout: QtWidgets.QLayout,
             close_confirm: bool = None,
-            fit_widget: mfm.fitting.widgets.FittingControllerWidget = None,
+            fit_widget: mfm.fitting.fitting_widgets.FittingControllerWidget = None,
             **kwargs
     ):
         self.fit = fit

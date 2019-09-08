@@ -6,7 +6,7 @@ from mfm import plots
 from mfm.models import _membrane, Lifetime, LifetimeWidget, ConvolveWidget
 from mfm.models import FRETModel
 from mfm.models import GenericWidget, CorrectionsWidget
-from mfm.fitting.widgets import FittingControllerWidget
+from mfm.fitting.fitting_widgets import FittingControllerWidget
 from mfm.parameter import FittingParameterWidget, FittingParameter
 
 
