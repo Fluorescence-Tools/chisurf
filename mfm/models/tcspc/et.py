@@ -8,10 +8,10 @@ import mfm.math
 from mfm import plots
 from mfm.fluorescence.tcspc.phasor import Phasor
 from mfm.fluorescence.tcspc.widgets import PhasorWidget
-from mfm.models import Model
+from mfm.models.model import Model
 from mfm.math.optimization import solve_richardson_lucy, maxent
 from mfm.math.optimization.nnls import solve_nnls
-from mfm.models import LifetimeModel
+from mfm.models.tcspc.lifetime import LifetimeModel
 
 
 class LCurve(object):
