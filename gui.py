@@ -11,6 +11,7 @@ import numpy as np
 
 import mfm.experiments
 import mfm.cmd
+import mfm.models.tcspc.widgets
 
 
 class Main(QMainWindow):
@@ -319,11 +320,11 @@ class Main(QMainWindow):
         )
         tcspc.add_models(
             models=[
-                mfm.models.tcspc.lifetime.LifetimeModelWidget,
-                mfm.models.tcspc.fret.FRETrateModelWidget,
-                mfm.models.tcspc.fret.GaussianModelWidget,
-                mfm.models.tcspc.pddem.PDDEMModelWidget,
-                mfm.models.tcspc.fret.WormLikeChainModelWidget
+                mfm.models.tcspc.widgets.LifetimeModelWidget,
+                mfm.models.tcspc.widgets.FRETrateModelWidget,
+                mfm.models.tcspc.widgets.GaussianModelWidget,
+                mfm.models.tcspc.widgets.PDDEMModelWidget,
+                mfm.models.tcspc.widgets.WormLikeChainModelWidget
             ]
         )
         mfm.experiment.append(tcspc)

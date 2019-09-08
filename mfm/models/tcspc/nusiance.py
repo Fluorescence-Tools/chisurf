@@ -362,13 +362,20 @@ class Convolve(FittingParameterGroup):
     def scale(
             self,
             decay: mfm.experiments.data.DataCurve,
-            **kwargs
-    ):
-        start = kwargs.get('start', min(0, self.start))
-        stop = kwargs.get('stop', min(self.stop, len(decay)))
-        bg = kwargs.get('bg', 0.0)
-        autoscale = kwargs.get('autoscale', self._n0.fixed)
-        data = kwargs.get('data', self.data)
+            start: int = None,
+            stop: int = None,
+            bg: float = 0.0,
+            data: np.array = None,
+            autoscale: bool = None
+    ) -> np.array:
+        if start is None:
+            start = min(0, self.start)
+        if stop is None:
+            stop = min(self.stop, len(decay))
+        if autoscale is None:
+            autoscale = self._n0.fixed
+        if data is None:
+            data = self.data
 
         if autoscale:
             weights = 1./data.ey
@@ -381,15 +388,26 @@ class Convolve(FittingParameterGroup):
     def convolve(
             self,
             data: mfm.experiments.data.DataCurve,
-            **kwargs
+            verbose: bool = None,
+            mode: str = None,
+            dt: float = None,
+            rep_rate: float = None,
+            irf: mfm.curve.Curve = None,
+            scatter: float = 0.0,
+            decay: np.array = None
     ):
-        verbose = kwargs.get('verbose', mfm.verbose)
-        mode = kwargs.get('mode', self.mode)
-        dt = kwargs.get('dt', self.dt)
-        rep_rate = kwargs.get('rep_rate', self.rep_rate)
-        irf = kwargs.get('irf', self.irf)
-        scatter = kwargs.get('scatter', 0.0)
-        decay = kwargs.get('decay', np.zeros(self.data.y.shape))
+        if verbose is None:
+            verbose = mfm.verbose
+        if mode is None:
+            mode = self.mode
+        if dt is None:
+            dt = self.dt
+        if rep_rate is None:
+            rep_rate = self.rep_rate
+        if irf is None:
+            irf = self.irf
+        if decay is None:
+            decay = np.zeros(self.data.y.shape)
 
         # Make sure used IRF is of same size as data-array
         irf_y = np.resize(irf.y, self.data.y.shape)
@@ -405,9 +423,19 @@ class Convolve(FittingParameterGroup):
             # mfm.fluorescence.tcspc.fconv_per_dt(decay, lifetime_spectrum, irf_y, start, stop, n_points, period, time)
         elif mode == "exp":
             t = self.data.x
-            mfm.fluorescence.tcspc.convolve.fconv(decay, data, irf_y, stop, t)
+            mfm.fluorescence.tcspc.convolve.fconv(
+                decay,
+                data,
+                irf_y,
+                stop,
+                t
+            )
         elif mode == "full":
-            decay = np.convolve(data, irf_y, mode="full")[:n_points]
+            decay = np.convolve(
+                data,
+                irf_y,
+                mode="full"
+            )[:n_points]
 
         if verbose:
             print("------------")
@@ -420,17 +448,19 @@ class Convolve(FittingParameterGroup):
             print("Convolution mode: %s" % mode)
 
         decay += (scatter * irf_y)
-
         return decay
 
     def __init__(
             self,
             fit: mfm.fitting.fit.Fit,
+            name: str = 'Convolution',
             **kwargs
     ):
-        kwargs['name'] = 'Convolution'
-        kwargs['fit'] = fit
-        super(Convolve, self).__init__(**kwargs)
+        super(Convolve, self).__init__(
+            fit=fit,
+            name=name,
+            **kwargs
+        )
 
         self._data = None
         try:
