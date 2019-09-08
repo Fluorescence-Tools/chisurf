@@ -36,17 +36,20 @@ def add_fit(
         if data_set.experiment is datasets[0].experiment:
             if not isinstance(data_set, mfm.experiments.data.DataGroup):
                 data_set = mfm.experiments.data.ExperimentDataCurveGroup(data_set)
-            fit = mfm.fitting.fit.FitGroup(data=data_set, model_class=model_class)
+            fit = mfm.fitting.fit.FitGroup(
+                data=data_set,
+                model_class=model_class
+            )
+
             mfm.fits.append(fit)
-            fit.model.find_parameters()
-            fit_control_widget = mfm.fitting.widgets.FittingControllerWidget(fit)
+            fit_control_widget = mfm.fitting.fitting_widgets.FittingControllerWidget(fit)
 
             cs.modelLayout.addWidget(fit_control_widget)
             for f in fit:
                 cs.modelLayout.addWidget(f.model)
-            fit_window = mfm.fitting.widgets.FitSubWindow(fit,
-                                                          control_layout=cs.plotOptionsLayout,
-                                                          fit_widget=fit_control_widget)
+            fit_window = mfm.fitting.fitting_widgets.FitSubWindow(fit,
+                                                                  control_layout=cs.plotOptionsLayout,
+                                                                  fit_widget=fit_control_widget)
             fit_window = cs.mdiarea.addSubWindow(fit_window)
             mfm.fit_windows.append(fit_window)
             fit_window.show()
@@ -308,3 +311,37 @@ def tcspc_set_linearization(
         f.model.corrections.lineEdit.setText(lin_name)
         f.model.corrections.checkBox.setChecked(True)
     cs.current_fit.update()
+
+
+def change_selected_fit_of_group(
+    selected_fit: int
+):
+    cs = mfm.cs
+    cs.current_fit.model.hide()
+    cs.current_fit.current_fit = selected_fit
+    cs.current_fit.update()
+    cs.current_fit.model.show()
+
+
+def link_fit_group(
+        fitting_parameter_name: str,
+        csi: int = 0
+):
+    cs = mfm.cs
+    if csi == 2:
+        s = cs.current_fit.model.parameters_all_dict[fitting_parameter_name]
+        for f in cs.current_fit:
+            try:
+                p = f.model.parameters_all_dict[fitting_parameter_name]
+                if p is not s:
+                    p.link = s
+            except KeyError:
+                pass
+    if csi == 0:
+        s = cs.current_fit.model.parameters_all_dict[fitting_parameter_name]
+        for f in cs.current_fit:
+            try:
+                p = f.model.parameters_all_dict[fitting_parameter_name]
+                p.link = None
+            except KeyError:
+                pass

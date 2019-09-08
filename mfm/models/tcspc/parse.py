@@ -1,12 +1,5 @@
-import os
-
-from PyQt5 import QtCore, QtGui, QtWidgets
-
 import mfm.models.tcspc.nusiance
-import mfm.models.tcspc.widgets
-from mfm.models.model import ModelWidget
 from mfm.models import parse
-from mfm.fitting.widgets import FittingControllerWidget
 
 
 class ParseDecayModel(parse.ParseModel):
@@ -36,32 +29,4 @@ class ParseDecayModel(parse.ParseModel):
             decay *= self.corrections.lintable
         self._y_values = decay
 
-
-class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
-
-    def __init__(self, fit, **kwargs):
-        ModelWidget.__init__(self, icon=QtGui.QIcon(":/icons/icons/TCSPC.ico"))
-
-        self.convolve = mfm.models.tcspc.widgets.ConvolveWidget(fit=fit, model=self, show_convolution_mode=False, dt=fit.data.dt, **kwargs)
-        generic = mfm.models.tcspc.widgets.GenericWidget(fit=fit, parent=self, model=self, **kwargs)
-        #error_widget = mfm.fitting.error_estimate.ErrorWidget(fit, **kwargs)
-
-        fn = os.path.join(mfm.package_directory, 'settings/tcspc.models.json')
-        pw = parse.ParseFormulaWidget(self, model_file=fn)
-        corrections = mfm.models.tcspc.widgets.CorrectionsWidget(fit, model=self, **kwargs)
-
-        self.fit = fit
-        ParseDecayModel.__init__(self, fit=fit, parse=pw, convolve=self.convolve,
-                                 generic=generic, corrections=corrections)
-        fitting_widget = FittingControllerWidget(fit=fit, **kwargs)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setAlignment(QtCore.Qt.AlignTop)
-        layout.addWidget(fitting_widget)
-        layout.addWidget(self.convolve)
-        layout.addWidget(generic)
-        layout.addWidget(pw)
-        layout.addWidget(error_widget)
-        layout.addWidget(corrections)
-        self.setLayout(layout)
 

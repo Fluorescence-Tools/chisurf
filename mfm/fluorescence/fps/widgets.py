@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import mfm
 from mfm.fluorescence.fps.dynamic import ProteinQuenching, Dye, Sticking
-from mfm.fitting.widgets import FittingParameterWidget
+from mfm.fitting.fitting_widgets import FittingParameterWidget
 
 
 class ProteinQuenchingWidget(ProteinQuenching, QtWidgets.QGroupBox):

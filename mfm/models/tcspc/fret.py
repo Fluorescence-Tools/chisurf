@@ -1,19 +1,14 @@
 from __future__ import annotations
 
 import numpy as np
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import mfm
 import mfm.fluorescence.anisotropy.kappa2
 import mfm.math
-import mfm.plots as plots
-from mfm.models.model import ModelWidget
-from mfm.models.tcspc.widgets import ConvolveWidget, CorrectionsWidget, GenericWidget, AnisotropyWidget
-from mfm.models.tcspc.lifetime import Lifetime, LifetimeWidget, LifetimeModel, LifetimeModelWidgetBase
+from mfm.models.tcspc.lifetime import Lifetime, LifetimeModel
 from mfm.fluorescence.general import distribution2rates, rates2lifetimes
 from mfm.fluorescence import rda_axis
 from mfm.fitting.parameter import FittingParameter, FittingParameterGroup
-from mfm.fitting.widgets import FittingControllerWidget
 
 fret_settings = mfm.settings.cs_settings['fret']
 
@@ -259,82 +254,6 @@ class Gaussians(FittingParameterGroup):
         self.is_distance_between_gaussians = True # If this is True than the fitted distance is the distance between two Gaussians
 
 
-class GaussianWidget(Gaussians, QtWidgets.QWidget):
-
-    def __init__(self, donors, model=None, **kwargs):
-
-        Gaussians.__init__(self, donors=donors, model=model, **kwargs)
-        QtWidgets.QWidget.__init__(self)
-
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setAlignment(QtCore.Qt.AlignTop)
-
-        self.gb = QtWidgets.QGroupBox()
-        self.layout.addWidget(self.gb)
-        self.gb.setTitle("Gaussian distances")
-        self.lh = QtWidgets.QVBoxLayout()
-        self.gb.setLayout(self.lh)
-
-        self._gb = list()
-
-        self.grid_layout = QtWidgets.QGridLayout()
-
-        l = QtWidgets.QHBoxLayout()
-        addGaussian = QtWidgets.QPushButton()
-        addGaussian.setText("add")
-        l.addWidget(addGaussian)
-
-        removeGaussian = QtWidgets.QPushButton()
-        removeGaussian.setText("del")
-        l.addWidget(removeGaussian)
-        self.lh.addLayout(l)
-
-        self.lh.addLayout(self.grid_layout)
-
-        addGaussian.clicked.connect(self.onAddGaussian)
-        removeGaussian.clicked.connect(self.onRemoveGaussian)
-
-        # add some initial distance
-        self.append(1.0, 50.0, 6.0, 0.0)
-
-    def onAddGaussian(self):
-        t = "for f in cs.current_fit:\n" \
-            "   f.models.%s.append()\n" \
-            "   f.models.update()" % self.name
-        mfm.run(t)
-
-    def onRemoveGaussian(self):
-        t = "for f in cs.current_fit:\n" \
-            "   f.models.%s.pop()\n" \
-            "   f.models.update()" % self.name
-        mfm.run(t)
-
-    def append(self, *args, **kwargs):
-        Gaussians.append(self, 50.0, 6., 1., **kwargs)
-        gb = QtWidgets.QGroupBox()
-        n_gauss = len(self)
-        gb.setTitle('G%i' % (n_gauss))
-        l = QtWidgets.QVBoxLayout()
-
-        m = self._gaussianMeans[-1].make_widget(layout=l)
-        s = self._gaussianSigma[-1].make_widget(layout=l)
-        shape = self._gaussianShape[-1].make_widget(layout=l)
-        x = self._gaussianAmplitudes[-1].make_widget(layout=l)
-
-        gb.setLayout(l)
-        row = (n_gauss - 1) / 2 + 1
-        col = (n_gauss - 1) % 2
-        self.grid_layout.addWidget(gb, row, col)
-        self._gb.append(gb)
-
-    def pop(self) -> None:
-        #self._gaussianMeans.pop().close()
-        #self._gaussianSigma.pop().close()
-        #self._gaussianAmplitudes.pop().close()
-        #self._gaussianShape.pop().close()
-        self._gb.pop().close()
-
-
 class DiscreteDistance(FittingParameterGroup):
 
     name = "discrete_distance"
@@ -400,90 +319,6 @@ class DiscreteDistance(FittingParameterGroup):
 
         self._distances = []
         self._amplitudes = []
-
-
-class DiscreteDistanceWidget(DiscreteDistance, QtWidgets.QWidget):
-
-    def __init__(self, donors, model=None, **kwargs):
-        DiscreteDistance.__init__(self, donors=donors, model=model, **kwargs)
-        QtWidgets.QWidget.__init__(self)
-
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setAlignment(QtCore.Qt.AlignTop)
-
-        self.gb = QtWidgets.QGroupBox()
-        self.layout.addWidget(self.gb)
-        self.gb.setTitle("FRET-rates")
-        self.lh = QtWidgets.QVBoxLayout()
-        self.gb.setLayout(self.lh)
-
-        self._gb = list()
-
-        self.grid_layout = QtWidgets.QGridLayout()
-
-        l = QtWidgets.QHBoxLayout()
-        addFRETrate = QtWidgets.QPushButton()
-        addFRETrate.setText("add")
-        l.addWidget(addFRETrate)
-
-        removeFRETrate = QtWidgets.QPushButton()
-        removeFRETrate.setText("del")
-        l.addWidget(removeFRETrate)
-        self.lh.addLayout(l)
-
-        self.lh.addLayout(self.grid_layout)
-
-        addFRETrate.clicked.connect(self.onAddFRETrate)
-        removeFRETrate.clicked.connect(self.onRemoveFRETrate)
-
-        # add some initial distance
-        self.append(1.0, 50.0, False)
-
-    def onAddFRETrate(self):
-        t = """
-for f in cs.current_fit:
-    f.models.%s.append()
-            """ % self.name
-        mfm.run(t)
-
-    def onRemoveFRETrate(self):
-        t = """
-for f in cs.current_fit:
-    f.models.%s.pop()
-            """ % self.name
-        mfm.run(t)
-
-    def append(self, x=None, distance=None, update=True):
-        x = 1.0 if x is None else x
-        m = 50.0 if distance is None else distance
-        gb = QtWidgets.QGroupBox()
-        n_rates = len(self)
-        gb.setTitle('G%i' % (n_rates + 1))
-        l = QtWidgets.QVBoxLayout()
-        pm = FittingParameter(name='R(%s,%i)' % (self.short, n_rates + 1),
-                              value=m, model=self.model, decimals=1,
-                              bounds_on=False, lb=fret_settings['rda_min'], ub=fret_settings['rda_max'],
-                              text='R', update_function=self.update)
-        px = FittingParameter(name='x(%s,%i)' % (self.short, n_rates + 1), value=x,
-                              model=self.model, decimals=3,
-                              bounds_on=False, text='x', update_function=self.update)
-        m = mfm.fitting.widgets.make_fitting_parameter_widget(pm, layout=l)
-        x = mfm.fitting.widgets.make_fitting_parameter_widget(px, layout=l)
-
-        gb.setLayout(l)
-        row = n_rates / 2
-        col = n_rates % 2
-        self.grid_layout.addWidget(gb, row, col)
-        self._gb.append(gb)
-        self._distances.append(m)
-        self._amplitudes.append(x)
-        mfm.run("cs.current_fit.update()")
-
-    def pop(self):
-        self._distances.pop().close()
-        self._amplitudes.pop().close()
-        self._gb.pop().close()
-        mfm.run("cs.current_fit.update()")
 
 
 class FRETModel(LifetimeModel):
@@ -677,31 +512,6 @@ class GaussianModel(FRETModel):
         self.gaussians = kwargs.get('gaussians', Gaussians(**kwargs))
 
 
-class GaussianModelWidget(GaussianModel, LifetimeModelWidgetBase):
-
-    plot_classes = [
-                       (plots.LinePlot, {'d_scalex': 'lin', 'd_scaley': 'log', 'r_scalex': 'lin', 'r_scaley': 'lin',
-                                         'x_label': 'x', 'y_label': 'y', 'plot_irf': True}),
-                       (plots.FitInfo, {}), (plots.DistributionPlot, {}), (plots.ParameterScanPlot, {})
-                    ]
-
-    def __init__(self, fit, **kwargs):
-        donors = LifetimeWidget(parent=self, model=self, title='Donor(0)')
-        gaussians = GaussianWidget(donors=donors, parent=self, model=self, short='G', **kwargs)
-        GaussianModel.__init__(self, fit=fit, lifetimes=donors, gaussians=gaussians)
-
-        LifetimeModelWidgetBase.__init__(self, fit=fit, **kwargs)
-        self.lifetimes = donors
-
-        self.layout_parameter.addWidget(donors)
-
-        self.layout_parameter.addWidget(
-            mfm.fitting.widgets.make_fitting_parameter_group_widget(self.fret_parameters)
-        )
-
-        self.layout_parameter.addWidget(gaussians)
-
-
 class FRETrateModel(FRETModel):
 
     name = "FRET: FD (Discrete)"
@@ -741,31 +551,6 @@ class FRETrateModel(FRETModel):
         self.fret_rates = kwargs.get('fret_rates', DiscreteDistance(**kwargs))
 
 
-class FRETrateModelWidget(FRETrateModel, LifetimeModelWidgetBase):
-
-    plot_classes = [
-                       (plots.LinePlot, {'d_scalex': 'lin', 'd_scaley': 'log', 'r_scalex': 'lin', 'r_scaley': 'lin',
-                                         'x_label': 'x', 'y_label': 'y', 'plot_irf': True}),
-                       (plots.FitInfo, {}), (plots.DistributionPlot, {}), (plots.ParameterScanPlot, {})
-                    ]
-
-    def __init__(
-            self,
-            fit: mfm.fitting.fit.FitGroup,
-            **kwargs
-    ):
-        donors = LifetimeWidget(parent=self, model=self, title='Donor(0)')
-        fret_rates = DiscreteDistanceWidget(donors=donors, parent=self, model=self, short='G', **kwargs)
-        FRETrateModel.__init__(self, fit=fit, lifetimes=donors, fret_rates=fret_rates)
-
-        LifetimeModelWidgetBase.__init__(self, fit=fit, **kwargs)
-        self.lifetimes = donors
-
-        self.layout_parameter.addWidget(donors)
-        self.layout_parameter.addWidget(self.fret_parameters.to_widget())
-        self.layout_parameter.addWidget(fret_rates)
-
-
 class WormLikeChainModel(FRETModel):
 
     name = "FD(A): Worm-like chain"
@@ -802,51 +587,6 @@ class WormLikeChainModel(FRETModel):
         self._persistence_length = FittingParameter(name='persistence', value=30.0,
                                                     model=self, decimals=4,
                                                     fixed=False, text='lp')
-
-
-class WormLikeChainModelWidget(WormLikeChainModel, LifetimeModelWidgetBase):
-
-    plot_classes = [
-        (plots.LinePlot,
-         {'d_scalex': 'lin',
-          'd_scaley': 'log',
-          'r_scalex': 'lin',
-          'r_scaley': 'lin',
-          'x_label': 'x',
-          'y_label': 'y',
-          'plot_irf': True}
-         ),
-        (plots.FitInfo, {}),
-        (plots.DistributionPlot, {}),
-        (plots.ParameterScanPlot, {})
-    ]
-
-    @property
-    def use_dye_linker(self):
-        return bool(self._use_dye_linker.isChecked())
-
-    @use_dye_linker.setter
-    def use_dye_linker(self, v):
-        self._use_dye_linker.setChecked(v)
-
-    def __init__(self, fit, **kwargs):
-        donors = LifetimeWidget(parent=self, model=self, title='Donor(0)', name='donors')
-        WormLikeChainModel.__init__(self, fit=fit, lifetimes=donors, **kwargs)
-
-        LifetimeModelWidgetBase.__init__(self, fit, **kwargs)
-        self.lifetimes = donors
-
-        l = QtWidgets.QHBoxLayout()
-        self._use_dye_linker = QtWidgets.QCheckBox()
-        self._use_dye_linker.setText('Use linker')
-        l.addWidget(self._use_dye_linker)
-        self._sigma_linker = self._sigma_linker.make_widget(layout=l)
-
-        self.layout_parameter.addWidget(self.fret_parameters.to_widget())
-        self.layout_parameter.addWidget(donors)
-        self.layout_parameter.addLayout(l)
-        self._chain_length = self._chain_length.make_widget(layout=self.layout_parameter)
-        self._persistence_length = self._persistence_length.make_widget(layout=self.layout_parameter)
 
 
 class SingleDistanceModel(FRETModel):
@@ -894,54 +634,3 @@ class SingleDistanceModel(FRETModel):
         self._prda = kwargs.get('prda', np.array([100.0]))
 
 
-class SingleDistanceModelWidget(ModelWidget, SingleDistanceModel):
-
-    def __init__(self, fit, **kwargs):
-        self.anisotropy = AnisotropyWidget(model=self, short='rL', **kwargs)
-        self.convolve = ConvolveWidget(fit=fit, model=self, **kwargs)
-        self.donors = LifetimeWidget(parent=self, model=self, title='Donor(0)')
-        self.generic = GenericWidget(fit=fit, model=self, parent=self, **kwargs)
-        self.fitting_widget = QtWidgets.QLabel() if kwargs.get('disable_fit', False) else FittingControllerWidget(fit=fit, **kwargs)
-        #self.errors = ErrorWidget(fit, **kwargs)
-        self.corrections = CorrectionsWidget(fit, model=self, **kwargs)
-
-        ModelWidget.__init__(self, fit=fit, icon=QtGui.QIcon(":/icons/icons/TCSPC.png"), **kwargs)
-
-        SingleDistanceModel.__init__(self, fit=fit, convolve=self.convolve, corrections=self.corrections,
-                                     generic=self.generic, lifetimes=self.donors, anisotropy=self.anisotropy)
-
-        self._donly = self._donly.make_widget()
-
-        uic.loadUi('mfm/ui/fitting/models/tcspc/load_distance_distibution.ui', self)
-        self.icon = QtGui.QIcon(":/icons/icons/TCSPC.ico")
-        self.actionOpen_distirbution.triggered.connect(self.load_distance_distribution)
-
-        self.verticalLayout.addWidget(self.fitting_widget)
-        self.verticalLayout.addWidget(self.convolve)
-        self.verticalLayout.addWidget(self.generic)
-        self.verticalLayout.addWidget(self._donly)
-        self.verticalLayout.addWidget(self.donors)
-        self.verticalLayout.addWidget(self.anisotropy)
-        self.verticalLayout.addWidget(self.corrections)
-        self.verticalLayout.addWidget(self.errors)
-
-    def load_distance_distribution(self, **kwargs):
-        """
-
-        :param kwargs:
-        :return:
-        """
-        #print "load_distance_distribution"
-        verbose = kwargs.get('verbose', self.verbose)
-        #filename = kwargs.get('filename', str(QtGui.QFileDialog.getOpenFileName(self, 'Open File')))
-        filename = mfm.widgets.get_filename('Open distance distribution', 'CSV-files (*.csv)')
-        self.lineEdit.setText(filename)
-        csv = mfm.io.ascii.Csv(filename)
-        ar = csv.data.T
-        if verbose:
-            print("Opening distribution")
-            print("Filename: %s" % filename)
-            print("Shape: %s" % ar.shape)
-        self.rda = ar[0]
-        self.prda = ar[1]
-        self.update_model()

@@ -1,17 +1,23 @@
 from __future__ import annotations
+from typing import List
 
 import os
 import sys
-import numpy as np
+
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtWidgets import QMainWindow, QApplication
+
+import numpy as np
+
+import mfm.experiments
 import mfm.cmd
+import mfm.models.tcspc.widgets
 
 
 class Main(QMainWindow):
 
     @property
-    def current_dataset(self):
+    def current_dataset(self) -> mfm.experiments.data.Data:
         return self.dataset_selector.selected_dataset
 
     @current_dataset.setter
@@ -49,7 +55,7 @@ class Main(QMainWindow):
         self.comboBox_experimentSelect.setCurrentIndex(v)
 
     @property
-    def current_experiment(self):
+    def current_experiment(self) -> List:
         return mfm.experiment[self.current_experiment_idx]
 
     @current_experiment.setter
@@ -115,11 +121,12 @@ class Main(QMainWindow):
     def subWindowActivated(self):
         subwindow = self.mdiarea.currentSubWindow()
         if subwindow is not None:
-            for fit_idx, f in enumerate(mfm.fits):
+            for f in mfm.fits:
                 if f == subwindow.fit:
                     if self.current_fit is not mfm.fits[self.fit_idx]:
                         mfm.run("cs.current_fit = mfm.fits[%s]" % self.fit_idx)
                         break
+
             self.current_fit_widget = subwindow.fit_widget
             fit_name = self.current_fit.name
             window_title = mfm.__name__ + "(" + mfm.__version__ + "): " + fit_name
@@ -187,22 +194,30 @@ class Main(QMainWindow):
         for sub_window in mfm.fit_windows:
             sub_window.widget().close_confirm = False
             sub_window.close()
-        mfm.fits = []
-        mfm.fit_windows = []
+
+        mfm.fits = list()
+        mfm.fit_windows = list()
 
     def onAddDataset(self):
         mfm.cmd.add_dataset(self.current_setup)
 
-    def onSaveFits(self, **kwargs):
-        path = kwargs.get('path', mfm.widgets.get_directory(**kwargs))
+    def onSaveFits(
+            self,
+            path: str = None,
+            **kwargs
+    ):
+        if path is None:
+            path = kwargs.get('path', mfm.widgets.get_directory(**kwargs))
         mfm.cmd.save_fits(path)
 
-    def onSaveFit(self, **kwargs):
-        directory = kwargs.pop('directory', None)
+    def onSaveFit(
+            self,
+            directory: str = None,
+            **kwargs
+    ):
         if directory is None:
             mfm.working_path = mfm.widgets.get_directory(**kwargs)
-        else:
-            mfm.working_path = directory
+        mfm.working_path = directory
         mfm.console.run('mfm.cmd.save_fit()')
 
     def init_widgets(self):
@@ -214,12 +229,11 @@ class Main(QMainWindow):
 
         #self.decay_fret_generator = mfm.fluorescence.dye_diffusion.TransientFRETDecayGenerator()
 
-
         ##########################################################
         #      Fluorescence widgets                              #
         #      (Commented widgets don't work at the moment       #
         ##########################################################
-        self.lifetime_calc = mfm.tools.FRETCalculator()
+        self.lifetime_calc = mfm.tools.fret_calculator.tau2r.FRETCalculator()
         self.actionCalculator.triggered.connect(self.lifetime_calc.show)
 
         self.kappa2_dist = mfm.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
@@ -234,7 +248,7 @@ class Main(QMainWindow):
         self.tttr_correlate = mfm.tools.CorrelateTTTR()
         self.actionCorrelate.triggered.connect(self.tttr_correlate.show)
 
-        self.tttr_histogram = mfm.tools.HistogramTTTR()
+        self.tttr_histogram = mfm.tools.tttr.decay_histogram.HistogramTTTR()
         self.actionGenerate_decay.triggered.connect(self.tttr_histogram.show)
 
         ##########################################################
@@ -273,9 +287,76 @@ class Main(QMainWindow):
         self.f_test = mfm.tools.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
 
-    def __init__(self, *args, **kwargs):
-        import mfm.experiments
+    def init_console(self):
+        self.verticalLayout_4.addWidget(mfm.console)
+        mfm.console.pushVariables({'cs': self})
+        mfm.console.pushVariables({'mfm': mfm})
+        mfm.console.pushVariables({'np': np})
+        mfm.console.pushVariables({'os': os})
+        mfm.console.pushVariables({'QtCore': QtCore})
+        mfm.console.pushVariables({'QtGui': QtGui})
+        mfm.run = mfm.console.execute
+        mfm.run(str(mfm.settings.cs_settings['gui']['console']['init']))
 
+    def init_setups(self):
+        ##########################################################
+        #      Initialize Experiments and Setups                 #
+        #      (Commented widgets don't work at the moment       #
+        ##########################################################
+        # This needs to move to the QtApplication or it needs to be
+        # independent as new Widgets can only be created once a QApplication has been created
+
+        structure_setups = [
+            mfm.experiments.modelling.PDBLoad()
+        ]
+
+        tcspc = mfm.experiments.experiment.Experiment('TCSPC')
+        tcspc.add_setups(
+            [
+                mfm.experiments.tcspc.TCSPCSetupWidget(name="CSV/PQ/IBH", **mfm.settings.cs_settings['tcspc_csv']),
+                mfm.experiments.tcspc.TCSPCSetupSDTWidget(),
+                mfm.experiments.tcspc.TCSPCSetupDummyWidget()
+            ]
+        )
+        tcspc.add_models(
+            models=[
+                mfm.models.tcspc.widgets.LifetimeModelWidget,
+                mfm.models.tcspc.widgets.FRETrateModelWidget,
+                mfm.models.tcspc.widgets.GaussianModelWidget,
+                mfm.models.tcspc.widgets.PDDEMModelWidget,
+                mfm.models.tcspc.widgets.WormLikeChainModelWidget
+            ]
+        )
+        mfm.experiment.append(tcspc)
+
+        fcs = mfm.experiments.experiment.Experiment('FCS')
+        fcs.add_setups(
+            [
+                mfm.experiments.fcs.FCSKristine(experiment=mfm.experiments.fcs),
+                mfm.experiments.fcs.FCS(experiment=mfm.experiments.fcs)
+            ]
+        )
+        fcs.add_models(
+            models=[
+                mfm.models.fcs.ParseFCSWidget
+            ]
+        )
+        mfm.experiment.append(fcs)
+
+        global_fit = mfm.experiments.experiment.Experiment('Global')
+        global_setup = mfm.experiments.globalfit.GlobalFitSetup(name='Global-Fit', experiment=global_fit)
+        global_fit.add_model(mfm.models.globalfit.GlobalFitModelWidget)
+        global_fit.add_setup(global_setup)
+        mfm.experiment.append(global_fit)
+
+        self.experiment_names = [b.name for b in mfm.experiment if b.name is not 'Global']
+        self.comboBox_experimentSelect.addItems(self.experiment_names)
+
+        self.current_fit = None
+        mfm.cmd.add_dataset(setup=global_setup)
+        #self.onAddDataset(experiment=global_fit, setup=global_setup)  # Add Global-Dataset by default
+
+    def __init__(self, *args, **kwargs):
         QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
         uic.loadUi("mfm/ui/mainwindow.ui", self)
         self.setCentralWidget(self.mdiarea)
@@ -305,16 +386,7 @@ class Main(QMainWindow):
         ##########################################################
         self.dockWidgetScriptEdit.setVisible(mfm.settings.cs_settings['gui']['show_macro_edit'])
         self.dockWidget_console.setVisible(mfm.settings.cs_settings['gui']['show_console'])
-
-        self.verticalLayout_4.addWidget(mfm.console)
-        mfm.console.pushVariables({'cs': self})
-        mfm.console.pushVariables({'mfm': mfm})
-        mfm.console.pushVariables({'np': np})
-        mfm.console.pushVariables({'os': os})
-        mfm.console.pushVariables({'QtCore': QtCore})
-        mfm.console.pushVariables({'QtGui': QtGui})
-        mfm.run = mfm.console.execute
-        mfm.run(str(mfm.settings.cs_settings['gui']['console']['init']))
+        self.init_console()
 
         ##########################################################
         #      Record and run recorded macros                    #
@@ -331,6 +403,7 @@ class Main(QMainWindow):
         self.tabifyDockWidget(self.dockWidgetAnalysis, self.dockWidgetPlot)
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetFits)
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
+        self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
         self.editor = mfm.widgets.CodeEditor()
         self.verticalLayout_10.addWidget(self.editor)
 
@@ -342,7 +415,7 @@ class Main(QMainWindow):
         self.actionTab_windows.triggered.connect(self.onTabWindows)
         self.actionCascade.triggered.connect(self.onCascadeWindows)
         self.mdiarea.subWindowActivated.connect(self.subWindowActivated)
-        #self.groupBox_4.setChecked(False)
+        self.groupBox_FileParameters.setChecked(True)
 
         ##########################################################
         #    Connect changes in User-interface to actions like:  #
@@ -363,64 +436,6 @@ class Main(QMainWindow):
                                                           change_event=self.onCurrentDatasetChanged,
                                                           drag_enabled=True)
         self.verticalLayout_8.addWidget(self.dataset_selector)
-
-    def init_setups(self):
-        ##########################################################
-        #      Initialize Experiments and Setups                 #
-        #      (Commented widgets don't work at the moment       #
-        ##########################################################
-        # This needs to move to the QtApplication or it needs to be
-        # independent as new Widgets can only be created once a QApplication has been created
-
-        structure_setups = [
-            mfm.experiments.modelling.PDBLoad()
-        ]
-
-        tcspc = mfm.experiments.experiment.Experiment('TCSPC')
-        tcspc.add_setups(
-            [
-                mfm.experiments.tcspc.TCSPCSetupWidget(name="CSV/PQ/IBH", **mfm.settings.cs_settings['tcspc_csv']),
-                mfm.experiments.tcspc.TCSPCSetupSDTWidget(),
-                mfm.experiments.tcspc.TCSPCSetupDummyWidget()
-            ]
-        )
-        tcspc.add_models(
-            models=[
-                mfm.models.tcspc.lifetime.LifetimeModelWidget,
-                mfm.models.tcspc.fret.FRETrateModelWidget,
-                mfm.models.tcspc.fret.GaussianModelWidget,
-                mfm.models.tcspc.pddem.PDDEMModelWidget,
-                mfm.models.tcspc.fret.WormLikeChainModelWidget
-            ]
-        )
-        mfm.experiment.append(tcspc)
-
-        fcs = mfm.experiments.experiment.Experiment('FCS')
-        fcs.add_setups(
-            [
-                mfm.experiments.fcs.FCSKristine(experiment=mfm.experiments.fcs),
-                mfm.experiments.fcs.FCS(experiment=mfm.experiments.fcs)
-            ]
-        )
-        fcs.add_models(
-            models=[
-                mfm.models.fcs.ParseFCSWidget
-            ]
-        )
-        mfm.experiment.append(fcs)
-
-        global_fit = mfm.experiments.experiment.Experiment('Global')
-        global_setup = mfm.experiments.globalfit.GlobalFitSetup(name='Global-Fit', experiment=global_fit)
-        #global_fit.add_model(mfm.fitting.model.GlobalFitModelWidget)
-        global_fit.add_setup(global_setup)
-        mfm.experiment.append(global_fit)
-
-        self.experiment_names = [b.name for b in mfm.experiment if b.name is not 'Global']
-        self.comboBox_experimentSelect.addItems(self.experiment_names)
-
-        self.current_fit = None
-        mfm.cmd.add_dataset(setup=global_setup)
-        #self.onAddDataset(experiment=global_fit, setup=global_setup)  # Add Global-Dataset by default
 
 
 if __name__ == "__main__":

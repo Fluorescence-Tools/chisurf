@@ -4,13 +4,11 @@ from typing import List, Tuple
 import math
 
 import numpy as np
-from PyQt5 import QtWidgets, QtCore, QtGui
 
 import mfm
 from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
-from mfm.models.model import Model, ModelWidget, ModelCurve
+from mfm.models.model import Model, ModelCurve
 from mfm.models.tcspc.nusiance import Generic, Corrections, Convolve
-from mfm.models.tcspc.widgets import ConvolveWidget, CorrectionsWidget, GenericWidget, AnisotropyWidget
 from mfm.models.tcspc.anisotropy import Anisotropy
 from mfm.fluorescence.general import species_averaged_lifetime, fluorescence_averaged_lifetime
 
@@ -181,154 +179,6 @@ class Lifetime(FittingParameterGroup):
         return self.n
 
 
-class LifetimeWidget(Lifetime, QtWidgets.QWidget):
-
-    def update(self, *__args):
-        QtWidgets.QWidget.update(self, *__args)
-        Lifetime.update(self)
-
-    def read_values(self, target):
-
-        def linkcall():
-            for key in self.parameter_dict:
-                v = target.parameters_all_dict[key].value
-                mfm.run("cs.current_fit.model.parameters_all_dict['%s'].value = %s" % (key, v))
-            mfm.run("cs.current_fit.update()")
-        return linkcall
-
-    def read_menu(self):
-        menu = QtWidgets.QMenu()
-        for f in mfm.fits:
-            for fs in f:
-                submenu = QtWidgets.QMenu(menu)
-                submenu.setTitle(fs.name)
-                for a in fs.model.aggregated_parameters:
-                    if isinstance(a, LifetimeWidget):
-                        Action = submenu.addAction(a.name)
-                        Action.triggered.connect(self.read_values(a))
-                menu.addMenu(submenu)
-        self.readFrom.setMenu(menu)
-        #menu.exec_(event.globalPos())
-
-    def link_values(self, target):
-        def linkcall():
-            self._link = target
-            self.setEnabled(False)
-        return linkcall
-
-    def link_menu(self):
-        menu = QtWidgets.QMenu()
-        for f in mfm.fits:
-            for fs in f:
-                submenu = QtWidgets.QMenu(menu)
-                submenu.setTitle(fs.name)
-                for a in fs.model.aggregated_parameters:
-                    if isinstance(a, LifetimeWidget):
-                        Action = submenu.addAction(a.name)
-                        Action.triggered.connect(self.link_values(a))
-                menu.addMenu(submenu)
-        self.linkFrom.setMenu(menu)
-        #menu.exec_(event.globalPos())
-
-    def __init__(self, title='', **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        Lifetime.__init__(self, **kwargs)
-
-        self.layout = QtWidgets.QVBoxLayout(self)
-
-        self.gb = QtWidgets.QGroupBox()
-        self.gb.setTitle(title)
-        self.lh = QtWidgets.QVBoxLayout()
-        self.gb.setLayout(self.lh)
-        self.layout.addWidget(self.gb)
-        self._amp_widgets = list()
-        self._lifetime_widgets = list()
-
-        lh = QtWidgets.QHBoxLayout()
-
-        addDonor = QtWidgets.QPushButton()
-        addDonor.setText("add")
-        addDonor.clicked.connect(self.onAddLifetime)
-        lh.addWidget(addDonor)
-
-        removeDonor = QtWidgets.QPushButton()
-        removeDonor.setText("del")
-        removeDonor.clicked.connect(self.onRemoveLifetime)
-        lh.addWidget(removeDonor)
-
-        spacerItem = QtWidgets.QSpacerItem(20, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        lh.addItem(spacerItem)
-
-        readFrom = QtWidgets.QToolButton()
-        readFrom.setText("read")
-        readFrom.setPopupMode(QtWidgets.QToolButton.InstantPopup)
-        readFrom.clicked.connect(self.read_menu)
-        lh.addWidget(readFrom)
-        self.readFrom = readFrom
-
-        linkFrom = QtWidgets.QToolButton()
-        linkFrom.setText("link")
-        linkFrom.setPopupMode(QtWidgets.QToolButton.InstantPopup)
-        linkFrom.clicked.connect(self.link_menu)
-        lh.addWidget(linkFrom)
-        self.linkFrom = linkFrom
-
-        normalize_amplitude = QtWidgets.QCheckBox("Norm.")
-        normalize_amplitude.setChecked(True)
-        normalize_amplitude.setToolTip("Normalize amplitudes to unity.\nThe sum of all amplitudes equals one.")
-        normalize_amplitude.clicked.connect(self.onNormalizeAmplitudes)
-        self.normalize_amplitude = normalize_amplitude
-
-        absolute_amplitude = QtWidgets.QCheckBox("Abs.")
-        absolute_amplitude.setChecked(True)
-        absolute_amplitude.setToolTip("Take absolute value of amplitudes\nNo negative amplitudes")
-        absolute_amplitude.clicked.connect(self.onAbsoluteAmplitudes)
-        self.absolute_amplitude = absolute_amplitude
-
-        lh.addWidget(absolute_amplitude)
-        lh.addWidget(normalize_amplitude)
-        self.lh.addLayout(lh)
-
-        self.append()
-
-    def onNormalizeAmplitudes(self):
-        mfm.run(
-            "mfm.cmd.normalize_lifetime_amplitudes(%s)",
-            self.normalize_amplitude.isChecked()
-        )
-
-    def onAbsoluteAmplitudes(self):
-        mfm.run(
-            "mfm.cmd.absolute_amplitudes(%s)",
-            self.absolute_amplitude.isChecked()
-        )
-
-    def onAddLifetime(self):
-        mfm.run(
-            "mfm.cmd.add_lifetime('%s')" % self.name
-        )
-
-    def onRemoveLifetime(self):
-        mfm.run(
-            "mfm.cmd.remove_lifetime('%s')" % self.name
-        )
-
-    def append(self, *args, **kwargs):
-        Lifetime.append(self, *args, **kwargs)
-        l = QtWidgets.QHBoxLayout()
-        a = self._amplitudes[-1].make_widget(layout=l)
-        t = self._lifetimes[-1].make_widget(layout=l)
-        self._amp_widgets.append(a)
-        self._lifetime_widgets.append(t)
-        self.lh.addLayout(l)
-
-    def pop(self):
-        self._amplitudes.pop()
-        self._lifetimes.pop()
-        self._amp_widgets.pop().close()
-        self._lifetime_widgets.pop().close()
-
-
 class LifetimeModel(ModelCurve):
 
     name = "Lifetime fit"
@@ -405,57 +255,6 @@ class LifetimeModel(ModelCurve):
         decay += background
         decay = self.corrections.linearize(decay)
         self.y = np.maximum(decay, 0)
-
-
-class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
-
-    def __init__(
-            self,
-            fit: mfm.fitting.fit.FitGroup,
-            icon=None,
-            **kwargs
-    ):
-        if icon is None:
-            icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
-        ModelWidget.__init__(self, fit=fit, icon=icon)
-        hide_nuisances = kwargs.get('hide_nuisances', False)
-
-        corrections = CorrectionsWidget(fit=fit, **kwargs)
-        generic = GenericWidget(fit=fit, parent=self, **kwargs)
-        anisotropy = AnisotropyWidget(name='anisotropy', short='rL', **kwargs)
-        convolve = ConvolveWidget(name='convolve', fit=fit, show_convolution_mode=False, **kwargs)
-
-        LifetimeModel.__init__(self, fit)
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setAlignment(QtCore.Qt.AlignTop)
-
-        ## add widgets
-        if not hide_nuisances:
-            layout.addWidget(convolve)
-            layout.addWidget(generic)
-
-        self.layout_parameter = QtWidgets.QVBoxLayout()
-
-        layout.addLayout(self.layout_parameter)
-        if not hide_nuisances:
-            layout.addWidget(anisotropy)
-            layout.addWidget(corrections)
-
-        self.setLayout(layout)
-        self.layout = layout
-
-        self.generic = generic
-        self.corrections = corrections
-        self.anisotropy = anisotropy
-        self.convolve = convolve
-
-
-class LifetimeModelWidget(LifetimeModelWidgetBase):
-
-    def __init__(self, fit, **kwargs):
-        super(LifetimeModelWidget, self).__init__(fit=fit, **kwargs)
-        self.lifetimes = LifetimeWidget(name='lifetimes', parent=self, title='Lifetimes', short='L', fit=fit)
-        self.layout_parameter.addWidget(self.lifetimes)
 
 
 class DecayModel(ModelCurve):
