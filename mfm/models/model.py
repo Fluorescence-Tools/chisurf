@@ -150,9 +150,18 @@ class ModelCurve(Model, mfm.curve.Curve):
 
 
 class ModelWidget(Model, QtWidgets.QWidget):
+
     plot_classes = [
-        (plots.LinePlot, {'d_scalex': 'lin', 'd_scaley': 'log', 'r_scalex': 'lin', 'r_scaley': 'lin',
-                          'x_label': 'x', 'y_label': 'y', 'plot_irf': True}),
+        (
+            plots.LinePlot, {
+                'scale_x': 'lin',
+                'd_scaley': 'log',
+                'r_scaley': 'lin',
+                'x_label': 'x',
+                'y_label': 'y',
+                'plot_irf': True
+            }
+        ),
         (plots.FitInfo, {}), (plots.ParameterScanPlot, {}),
         (plots.ResidualPlot, {})
         #(plots.FitInfo, {}), (plots.AvPlot, {})
