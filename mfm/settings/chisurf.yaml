@@ -130,7 +130,6 @@ tcspc:
 fcs:
   weight_type: suren
 database:
-  engine: sqlite://
   read_file_size_limit: 104857600
   compression_data_limit: 102400
   embed_data_limit: 3145728
@@ -159,9 +158,9 @@ gui:
   confirm_close_program: true
   RubberBandResize: true
   RubberBandMove: true
-  fit_windows_size: [250, 250]
+  fit_windows_size: [200, 200]
   console:
-    style: 'lightbg' # options are linux, lightbg, or nocolor
+    style: 'linux' # options are linux, lightbg, or nocolor
     init: |
       %matplotlib inline
       import pylab as p
@@ -197,5 +196,5 @@ gui:
       background: "#022700"
       foreground: "#f2f2f2"
       antialias: true
-      useOpenGL: true
+      useOpenGL: false
       useWeave: true
