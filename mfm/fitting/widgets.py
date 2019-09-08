@@ -32,8 +32,8 @@ class FittingControllerWidget(QtWidgets.QWidget):
         dataset = self.curve_select.selected_dataset
         self.fit.data = dataset
         self.fit.update()
-        self.lineEdit.clear()
-        self.lineEdit.setText(dataset[0].name)
+        # TODO this seems not to work
+        self.comboBox.setCurrentText(dataset.name)
 
     def show_selector(self):
         self.curve_select.show()
@@ -47,15 +47,23 @@ class FittingControllerWidget(QtWidgets.QWidget):
             hide_fitting: bool = False,
     ):
         super(FittingControllerWidget, self).__init__()
+
+        self.fit = fit
         self.curve_select = mfm.widgets.CurveSelector(
-            parent=None, fit=self,
+            parent=None,
+            fit=self.fit,
             change_event=self.change_dataset,
             setup=fit.data.setup.__class__
         )
-        uic.loadUi("mfm/ui/fittingWidget.ui", self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "fittingWidget.ui"
+            ),
+            self
+        )
 
         self.curve_select.hide()
-        self.fit = fit
         fit_names = [os.path.basename(f.data.name) for f in fit]
         self.comboBox.addItems(fit_names)
 
@@ -240,20 +248,38 @@ class FittingParameterWidget(QtWidgets.QWidget):
             self,
             fitting_parameter: mfm.fitting.parameter.FittingParameter,
             layout: QtWidgets.QLayout = None,
+            decimals: int = None,
+            hide_label: bool = None,
+            hide_error: bool = None,
+            fixable: bool = None,
+            hide_bounds: bool = None,
+            text: str = None,
+            label_text: str = None,
+            hide_link: bool = None,
             **kwargs
     ):
-        label_text = kwargs.pop('text', self.__class__.__name__)
-        hide_bounds = kwargs.pop('hide_bounds', parameter_settings['hide_bounds'])
-        hide_link = kwargs.pop('hide_link', parameter_settings['hide_link'])
-        fixable = kwargs.pop('fixable', parameter_settings['fixable'])
-        hide_fix_checkbox = kwargs.pop('hide_fix_checkbox', parameter_settings['fixable'])
-        hide_error = kwargs.pop('hide_error', parameter_settings['hide_error'])
-        hide_label = kwargs.pop('hide_label', parameter_settings['hide_label'])
-        decimals = kwargs.pop('decimals', parameter_settings['decimals'])
+        if hide_link is None:
+            hide_link = parameter_settings['hide_link']
+        if hide_bounds is None:
+            hide_bounds = parameter_settings['hide_bounds']
+        if text is None:
+            text = self.__class__.__name__
+        if label_text is None:
+            label_text = text
+        if fixable is None:
+            fixable = parameter_settings['fixable']
+            hide_fix_checkbox = parameter_settings['fixable']
+        if hide_error is None:
+            hide_error = parameter_settings['hide_error']
+        if hide_label is None:
+            hide_label = parameter_settings['hide_label']
+        if decimals is None:
+            decimals = parameter_settings['decimals']
 
         super(FittingParameterWidget, self).__init__(**kwargs)
         uic.loadUi('mfm/ui/variable_widget.ui', self)
         self.fitting_parameter = fitting_parameter
+
         self.widget_value = pg.SpinBox(dec=True, decimals=decimals)
         self.widget_value.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addWidget(self.widget_value)

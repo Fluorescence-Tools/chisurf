@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-from typing import List
+from typing import List, Callable
 
 import inspect
 import fnmatch
@@ -517,27 +517,36 @@ class CurveSelector(QtWidgets.QTreeWidget):
             return data_curves
 
     @property
-    def selected_curve_index(self):
+    def selected_curve_index(self) -> int:
         if self.currentIndex().parent().isValid():
             return self.currentIndex().parent().row()
         else:
             return self.currentIndex().row()
 
     @selected_curve_index.setter
-    def selected_curve_index(self, v):
+    def selected_curve_index(
+            self,
+            v: int
+    ):
         self.setCurrentItem(self.topLevelItem(v))
 
     @property
-    def selected_dataset(self):
+    def selected_dataset(
+            self
+    ) -> mfm.experiments.data.ExperimentalData:
         return self.datasets[self.selected_curve_index]
 
     @property
-    def selected_datasets(self):
+    def selected_datasets(
+            self
+    ) -> List[mfm.experiments.data.ExperimentalData]:
         data_sets_idx = self.selected_dataset_idx
         return [self.datasets[i] for i in data_sets_idx]
 
     @property
-    def selected_dataset_idx(self):
+    def selected_dataset_idx(
+            self
+    ) -> List[int]:
         return [r.row() for r in self.selectedIndexes()]
 
     def onCurveChanged(self):
@@ -648,35 +657,45 @@ class CurveSelector(QtWidgets.QTreeWidget):
         self.update()
         QtWidgets.QTreeWidget.show(self)
 
-    def __init__(self, **kwargs):
-        QtWidgets.QTreeWidget.__init__(self)
-        self.setWindowIcon(QtGui.QIcon(":/icons/icons/list-add.png"))
-        self.setWordWrap(True)
-        self.setHeaderHidden(True)
-        self.setAlternatingRowColors(True)
-
-        if kwargs.get('drag_enabled', False):
-            self.setAcceptDrops(True)
-            self.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
-
-        # http://python.6.x6.nabble.com/Drag-and-drop-editing-in-QListWidget-or-QListView-td1792540.html
-        self.drag_item = None
-        self.drag_row = None
-
+    def __init__(
+            self,
+            *args,
+            fit: mfm.fitting.fit.Fit = None,
+            setup=None,
+            drag_enabled: bool = False,
+            click_close: bool = True,
+            change_event: Callable = None,
+            curve_types: str = 'experiment',
+            **kwargs
+    ):
         def get_data_curves(**kwargs):
             return mfm.experiments.get_data(
                 data_set=mfm.imported_datasets,
                 **kwargs
             )
-
         self.get_data_curves = get_data_curves
 
-        self.change_event = kwargs.get('change_event', self.change_event)
-        self.curve_type = kwargs.get('curve_types', 'experiment')
-        self.click_close = kwargs.get('click_close', True)
-        self.setup = kwargs.get('setup', None)
-        self.fit = kwargs.get('fit', None)
+        if change_event is not None:
+            self.change_event = change_event
+        self.curve_type = curve_types
+        self.click_close = click_close
+        self.fit = fit
+        self.setup = setup
+
+        super(CurveSelector, self).__init__()
+        self.setWindowIcon(QtGui.QIcon(":/icons/icons/list-add.png"))
+        self.setWordWrap(True)
+        self.setHeaderHidden(True)
+        self.setAlternatingRowColors(True)
+
+        if drag_enabled:
+            self.setAcceptDrops(True)
+            self.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+
+        # http://python.6.x6.nabble.com/Drag-and-drop-editing-in-QListWidget-or-QListView-td1792540.html
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.drag_item = None
+        self.drag_row = None
 
         self.clicked.connect(self.onCurveChanged)
         self.itemChanged.connect(self.onItemChanged)
@@ -699,7 +718,11 @@ class LoadThread(QtCore.QThread):
         print('reading finished')
 
 
-def get_filename(description='', file_type='All files (*.*)', working_path=None):
+def get_filename(
+        description: str = '',
+        file_type: str = 'All files (*.*)',
+        working_path: str = None
+):
     """Open a file within a working path. If no path is specified the last
     path is used. After using this function the current working path of the
     running program (ChiSurf) is updated according to the folder of the opened
@@ -712,12 +735,22 @@ def get_filename(description='', file_type='All files (*.*)', working_path=None)
     """
     if working_path is None:
         working_path = mfm.working_path
-    filename = str(QtWidgets.QFileDialog.getOpenFileName(None, description, working_path, file_type)[0])
+    filename = str(
+        QtWidgets.QFileDialog.getOpenFileName(
+            None,
+            description,
+            working_path,
+            file_type
+        )[0])
     mfm.working_path = os.path.dirname(filename)
     return filename
 
 
-def open_files(description='', file_type='All files (*.*)', working_path=None):
+def open_files(
+        description: str = '',
+        file_type: str = 'All files (*.*)',
+        working_path: str = None
+):
     """Open a file within a working path. If no path is specified the last
     path is used. After using this function the current working path of the
     running program (ChiSurf) is updated according to the folder of the opened
@@ -730,12 +763,21 @@ def open_files(description='', file_type='All files (*.*)', working_path=None):
     """
     if working_path is None:
         working_path = mfm.working_path
-    filenames = QtWidgets.QFileDialog.getOpenFileNames(None, description, working_path, file_type)[0]
+    filenames = QtWidgets.QFileDialog.getOpenFileNames(
+        None,
+        description,
+        working_path,
+        file_type
+    )[0]
     mfm.working_path = os.path.dirname(filenames[0])
     return filenames
 
 
-def save_file(description='', file_type='All files (*.*)', working_path=None):
+def save_file(
+        description:str = '',
+        file_type:str = 'All files (*.*)',
+        working_path: str = None
+):
     """Same as open see above a file within a working path. If no path is specified the last
     path is used. After using this function the current working path of the
     running program (ChiSurf) is updated according to the folder of the opened
@@ -748,7 +790,14 @@ def save_file(description='', file_type='All files (*.*)', working_path=None):
     """
     if working_path is None:
         working_path = mfm.working_path
-    filename = str(QtWidgets.QFileDialog.getSaveFileName(None, description, working_path, file_type)[0])
+    filename = str(
+        QtWidgets.QFileDialog.getSaveFileName(
+            None,
+            description,
+            working_path,
+            file_type
+        )[0]
+    )
     mfm.working_path = os.path.dirname(filename)
     return filename
 

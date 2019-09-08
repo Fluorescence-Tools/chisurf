@@ -368,7 +368,11 @@ class FitGroup(list, Fit):
         self._fits = list()
         for d in data:
             model_kw = kwargs.get('model_kw', {})
-            fit = Fit(model_class=model_class, data=d, model_kw=model_kw)
+            fit = Fit(
+                model_class=model_class,
+                data=d,
+                model_kw=model_kw
+            )
             self._fits.append(fit)
 
         list.__init__(self, self._fits)

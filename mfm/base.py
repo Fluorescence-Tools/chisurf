@@ -156,7 +156,12 @@ class Base(object):
         s += self.to_yaml()
         return s
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            *args,
+            verbose: bool = False,
+            **kwargs
+    ):
         """The class saves all passed keyword arguments in dictionary and makes
         these keywords accessible as attributes. Moreover, this class may saves these
         keywords in a JSON or YAML file. These files can be also loaded.
@@ -196,7 +201,7 @@ class Base(object):
         # Assign the the names and set standard values
         name = kwargs.pop('name', self.__class__.__name__)
         d['name'] = name() if callable(name) else name
-        d['verbose'] = d.get('verbose', False)
+        d['verbose'] = verbose
         self._kw = dict()
         self._kw = d
 

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, TypeVar
+from typing import List, TypeVar, Tuple
 
 import weakref
 import numpy as np
@@ -45,9 +45,9 @@ class Parameter(mfm.base.Base):
             other: T
     ) -> Parameter:
         if isinstance(other, (int, float)):
-            a = self.value + other
+            a = self.value.__add__(other)
         else:
-            a = self.value + other.value
+            a = self.value.__add__(other.value)
         return Parameter(value=a)
 
     def __mul__(
@@ -65,20 +65,20 @@ class Parameter(mfm.base.Base):
             other: T
     ) -> Parameter:
         if isinstance(other, (int, float)):
-            a = self.value - other
+            a = self.value.__sub__(other)
         else:
-            a = self.value - other.value
+            a = self.value.__sub__(other.value)
         return Parameter(value=a)
 
-    def __div__(
+    def __divmod__(
             self,
             other: T
-    ) -> Parameter:
+    ) -> Tuple[Parameter, Parameter]:
         if isinstance(other, (int, float)):
-            a = self.value / other
+            d, m = self.value.__divmod__(other)
         else:
-            a = self.value / other.value
-        return Parameter(value=a)
+            d, m = self.value.__divmod__(other.value)
+        return Parameter(value=d), Parameter(value=m)
 
     def __invert__(self) -> Parameter:
         return Parameter(
@@ -88,18 +88,44 @@ class Parameter(mfm.base.Base):
     def __float__(self):
         return float(self.value)
 
+    def __eq__(
+            self,
+            other: Parameter
+    ) -> bool:
+        if isinstance(other, Parameter):
+            return self.value == other.value
+        return NotImplemented
+
+    def __ne__(
+            self,
+            other: Parameter
+    ):
+        result = self.__eq__(other)
+        if result is NotImplemented:
+            return result
+        return not result
+
+    def __hash__(self):
+        return super(Parameter, self).__hash__()
+
+    def __repr__(self):
+        s = super(Parameter, self).__repr__()
+        s += "\n"
+        s += self.__str__()
+        return s
+
     def __init__(self,
                  value: float = 1.0,
                  link: Parameter = None,
                  *args, **kwargs
                  ):
-        super(Parameter, self).__init__(*args, **kwargs)
         self._instances.add(weakref.ref(self))
+        super(Parameter, self).__init__(*args, **kwargs)
         self._link = link
         self._value = value
 
     def to_dict(self) -> dict:
-        v = mfm.base.Base.to_dict(self)
+        v = super(Parameter, self).to_dict()
         v['value'] = self.value
         v['decimals'] = self.decimals
         return v
@@ -110,13 +136,6 @@ class Parameter(mfm.base.Base):
     ):
         super(Parameter, self).from_dict(v)
         self._value = v['value']
-
-    def update(self):
-        pass
-
-    def finalize(self):
-        if self.controller:
-            self.controller.finalize()
 
 
 class ParameterGroup(mfm.base.Base):

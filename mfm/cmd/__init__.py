@@ -36,9 +36,12 @@ def add_fit(
         if data_set.experiment is datasets[0].experiment:
             if not isinstance(data_set, mfm.experiments.data.DataGroup):
                 data_set = mfm.experiments.data.ExperimentDataCurveGroup(data_set)
-            fit = mfm.fitting.fit.FitGroup(data=data_set, model_class=model_class)
+            fit = mfm.fitting.fit.FitGroup(
+                data=data_set,
+                model_class=model_class
+            )
+
             mfm.fits.append(fit)
-            fit.model.find_parameters()
             fit_control_widget = mfm.fitting.widgets.FittingControllerWidget(fit)
 
             cs.modelLayout.addWidget(fit_control_widget)
