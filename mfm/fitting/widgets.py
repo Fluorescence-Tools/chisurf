@@ -15,7 +15,6 @@ class FittingControllerWidget(QtWidgets.QWidget):
     @property
     def selected_fit(self) -> int:
         return int(self.comboBox.currentIndex())
-        #return int(self.spinBox.value())
 
     @selected_fit.setter
     def selected_fit(
@@ -32,8 +31,10 @@ class FittingControllerWidget(QtWidgets.QWidget):
         dataset = self.curve_select.selected_dataset
         self.fit.data = dataset
         self.fit.update()
-        # TODO this seems not to work
-        self.comboBox.setCurrentText(dataset.name)
+        self.comboBox.setItemText(
+            self.comboBox.currentIndex(),
+            dataset.name
+        )
 
     def show_selector(self):
         self.curve_select.show()
@@ -74,7 +75,9 @@ class FittingControllerWidget(QtWidgets.QWidget):
             def update_new(*args, **kwargs):
                 f(*args, **kwargs)
                 self.update(*args)
-                self.fit.model.update_plots(only_fit_range=True)
+                self.fit.model.update_plots(
+                    only_fit_range=True
+                )
             return update_new
 
         self.fit.run = wrapper(self.fit.run)
@@ -94,14 +97,10 @@ class FittingControllerWidget(QtWidgets.QWidget):
         if hide_fitting:
             self.hide()
 
-        #self.spinBox.setMaximum(len(fit) - 1)
-        #self.lineEdit.setText(fit.data.name)
         self.onAutoFitRange()
 
     def onDatasetChanged(self):
         mfm.run("mfm.cmd.change_selected_fit_of_group(%s)" % self.selected_fit)
-        #name = self.fit.data.name
-        #self.lineEdit.setText(name)
 
     def onErrorEstimate(self):
         filename = mfm.widgets.save_file('Error estimate', '*.er4')
@@ -121,30 +120,34 @@ class FittingControllerWidget(QtWidgets.QWidget):
 
 class FitSubWindow(QtWidgets.QMdiSubWindow):
 
-    def update(self, *__args):
+    def update(self, *args):
         self.setWindowTitle(self.fit.name)
-        QtWidgets.QMdiSubWindow.update(self, *__args)
-        self.tw.update(self, *__args)
+        QtWidgets.QMdiSubWindow.update(self, *args)
+        self.tw.update(*args)
 
     def __init__(
             self,
             fit: mfm.fitting.fit.FitGroup,
             control_layout: QtWidgets.QLayout,
+            close_confirm: bool = None,
+            fit_widget: mfm.fitting.widgets.FittingControllerWidget = None,
             **kwargs
     ):
-        QtWidgets.QMdiSubWindow.__init__(self, kwargs.get('parent', None))
-        self.setWindowTitle(fit.name)
-        layout = self.layout()
+        self.fit = fit
+        self.fit_widget = fit_widget
 
+        super(FitSubWindow, self).__init__(**kwargs)
+
+        layout = self.layout()
         self.tw = QtWidgets.QTabWidget()
         self.tw.setTabShape(QtWidgets.QTabWidget.Triangular)
         self.tw.setTabPosition(QtWidgets.QTabWidget.South)
         self.tw.currentChanged.connect(self.on_change_plot)
 
         layout.addWidget(self.tw)
-        self.close_confirm = kwargs.get('close_confirm', mfm.settings.cs_settings['gui']['confirm_close_fit'])
-        self.fit = fit
-        self.fit_widget = kwargs.get('fit_widget')
+        if close_confirm is None:
+            close_confirm = mfm.settings.cs_settings['gui']['confirm_close_fit']
+        self.close_confirm = close_confirm
 
         self.current_plt_ctrl = QtWidgets.QWidget(self)
         self.current_plt_ctrl.hide()
@@ -169,15 +172,23 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         self.current_plt_ctrl = self.fit.plots[idx].pltControl
         self.current_plt_ctrl.show()
 
-    def updateStatusBar(self, msg):
+    def updateStatusBar(
+            self,
+            msg: str
+    ):
         self.statusBar().showMessage(msg)
 
-    def closeEvent(self, event):
+    def closeEvent(
+            self,
+            event: QtCore.QCloseEvent
+    ):
         if self.close_confirm:
-            reply = QtWidgets.QMessageBox.question(self, 'Message',
-                                                   "Are you sure to close this fit?:\n%s" % self.fit.name,
-                                                   QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
-
+            reply = QtWidgets.QMessageBox.question(
+                self,
+                'Message',
+                "Are you sure to close this fit?:\n%s" % self.fit.name,
+                QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No
+            )
             if reply == QtWidgets.QMessageBox.Yes:
                 mfm.console.execute('mfm.cmd.close_fit()')
             else:
@@ -268,7 +279,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
             label_text = text
         if fixable is None:
             fixable = parameter_settings['fixable']
-            hide_fix_checkbox = parameter_settings['fixable']
+        hide_fix_checkbox = fixable
         if hide_error is None:
             hide_error = parameter_settings['hide_error']
         if hide_label is None:
@@ -280,16 +291,22 @@ class FittingParameterWidget(QtWidgets.QWidget):
         uic.loadUi('mfm/ui/variable_widget.ui', self)
         self.fitting_parameter = fitting_parameter
 
-        self.widget_value = pg.SpinBox(dec=True, decimals=decimals)
-        self.widget_value.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.widget_value = pg.SpinBox(
+            dec=True,
+            decimals=decimals
+        )
         self.horizontalLayout.addWidget(self.widget_value)
 
-        self.widget_lower_bound = pg.SpinBox(dec=True, decimals=decimals)
-        self.widget_lower_bound.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
+        self.widget_lower_bound = pg.SpinBox(
+            dec=True,
+            decimals=decimals
+        )
         self.horizontalLayout_2.addWidget(self.widget_lower_bound)
 
-        self.widget_upper_bound = pg.SpinBox(dec=True, decimals=decimals)
-        self.widget_upper_bound.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
+        self.widget_upper_bound = pg.SpinBox(
+            dec=True,
+            decimals=decimals
+        )
         self.horizontalLayout_2.addWidget(self.widget_upper_bound)
 
         # Hide and disable widgets
@@ -354,32 +371,11 @@ class FittingParameterWidget(QtWidgets.QWidget):
     def onLinkFitGroup(self):
         self.blockSignals(True)
         cs = self.widget_link.checkState()
-        if cs == 2:
-            t = """
-s = cs.current_fit.model.parameters_all_dict['%s']
-for f in cs.current_fit:
-   try:
-       p = f.model.parameters_all_dict['%s']
-       if p is not s:
-           p.link = s
-   except KeyError:
-       pass
-            """ % (self.fitting_parameter.name, self.fitting_parameter.name)
-            mfm.run(t)
-
-            self.widget_link.setCheckState(QtCore.Qt.Checked)
-            self.widget_value.setEnabled(False)
-        elif cs == 0:
-            t = """
-s = cs.current_fit.model.parameters_all_dict['%s']
-for f in cs.current_fit:
-   try:
-       p = f.model.parameters_all_dict['%s']
-       p.link = None
-   except KeyError:
-       pass
-            """ % (self.fitting_parameter.name, self.fitting_parameter.name)
-            mfm.run(t)
+        self.widget_link.setCheckState(QtCore.Qt.Checked)
+        self.widget_value.setEnabled(False)
+        mfm.run(
+            "mfm.cmd.fitting_parameter_name(%s, %s)" % (self.fitting_parameter.name, cs)
+        )
         self.widget_value.setEnabled(True)
         self.widget_link.setCheckState(QtCore.Qt.Unchecked)
         self.blockSignals(False)

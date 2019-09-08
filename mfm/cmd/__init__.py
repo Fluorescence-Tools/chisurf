@@ -322,3 +322,26 @@ def change_selected_fit_of_group(
     cs.current_fit.update()
     cs.current_fit.model.show()
 
+
+def link_fit_group(
+        fitting_parameter_name: str,
+        csi: int = 0
+):
+    cs = mfm.cs
+    if csi == 2:
+        s = cs.current_fit.model.parameters_all_dict[fitting_parameter_name]
+        for f in cs.current_fit:
+            try:
+                p = f.model.parameters_all_dict[fitting_parameter_name]
+                if p is not s:
+                    p.link = s
+            except KeyError:
+                pass
+    if csi == 0:
+        s = cs.current_fit.model.parameters_all_dict[fitting_parameter_name]
+        for f in cs.current_fit:
+            try:
+                p = f.model.parameters_all_dict[fitting_parameter_name]
+                p.link = None
+            except KeyError:
+                pass

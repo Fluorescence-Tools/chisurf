@@ -1,4 +1,9 @@
+from __future__ import annotations
+
+import os
+
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
+
 import mdtraj
 import mfm
 from mfm.structure.potential import potentials
@@ -11,7 +16,13 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
 
     def __init__(self, **kwargs):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('./mfm/ui/tools//calculate_potential.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "calculate_potential.ui"
+            ),
+            self
+        )
         self._trajectory_file = ''
         self.potential_weight = 1.0
         self.energies = []

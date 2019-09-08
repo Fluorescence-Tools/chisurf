@@ -200,7 +200,7 @@
   </action>
  </widget>
  <resources>
-  <include location="resource.qrc"/>
+  <include location="../ui/resource.qrc"/>
  </resources>
  <connections>
   <connection>
