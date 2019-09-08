@@ -42,14 +42,14 @@ def add_fit(
             )
 
             mfm.fits.append(fit)
-            fit_control_widget = mfm.fitting.widgets.FittingControllerWidget(fit)
+            fit_control_widget = mfm.fitting.fitting_widgets.FittingControllerWidget(fit)
 
             cs.modelLayout.addWidget(fit_control_widget)
             for f in fit:
                 cs.modelLayout.addWidget(f.model)
-            fit_window = mfm.fitting.widgets.FitSubWindow(fit,
-                                                          control_layout=cs.plotOptionsLayout,
-                                                          fit_widget=fit_control_widget)
+            fit_window = mfm.fitting.fitting_widgets.FitSubWindow(fit,
+                                                                  control_layout=cs.plotOptionsLayout,
+                                                                  fit_widget=fit_control_widget)
             fit_window = cs.mdiarea.addSubWindow(fit_window)
             mfm.fit_windows.append(fit_window)
             fit_window.show()

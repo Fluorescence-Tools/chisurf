@@ -7,7 +7,7 @@ import numpy as np
 import mfm
 import mfm.base
 import mfm.parameter
-import mfm.fitting.widgets
+import mfm.fitting.fitting_widgets
 import mfm.decorators
 
 parameter_settings = mfm.settings.cs_settings['parameter']
@@ -191,7 +191,7 @@ class FittingParameter(mfm.parameter.Parameter):
     def make_widget(
             self,
             **kwargs
-    ) -> mfm.fitting.widgets.FittingParameterWidget:
+    ) -> mfm.fitting.fitting_widgets.FittingParameterWidget:
         text = kwargs.get('text', self.name)
         layout = kwargs.get('layout', None)
         update_widget = kwargs.get('update_widget', lambda x: x)
@@ -201,7 +201,7 @@ class FittingParameter(mfm.parameter.Parameter):
             'decimals': decimals,
             'layout': layout
         }
-        widget = mfm.fitting.widgets.FittingParameterWidget(self, **kw)
+        widget = mfm.fitting.fitting_widgets.FittingParameterWidget(self, **kw)
         self.controller = widget
         return widget
 
@@ -414,7 +414,7 @@ class FittingParameterGroup(mfm.base.Base):
         current_version="19.08.23",
         details="use the mfm.fitting.widget.make_fitting_parameter_group_widget function instead"
     )
-    def to_widget(self, *args, **kwargs) -> mfm.fitting.widgets.FittingParameterGroupWidget:
-        return mfm.fitting.widgets.FittingParameterGroupWidget(self, *args, **kwargs)
+    def to_widget(self, *args, **kwargs) -> mfm.fitting.fitting_widgets.FittingParameterGroupWidget:
+        return mfm.fitting.fitting_widgets.FittingParameterGroupWidget(self, *args, **kwargs)
 
 

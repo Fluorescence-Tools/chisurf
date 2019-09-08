@@ -17,7 +17,7 @@ import mfm
 import mfm.fitting.fit
 import mfm.models.tcspc.nusiance
 #import mfm.fitting.models.tcspc.tcspc
-import mfm.fitting.widgets
+import mfm.fitting.fitting_widgets
 import mfm.fluorescence.fps as fps
 import mfm.fluorescence.tcspc.convolve
 import mfm.io
@@ -639,7 +639,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         DyeDecay.__init__(self, fit=fit, convolve=convolve, generic=generic, corrections=corrections, **settings)
 
         if not kwargs.get('disable_fit', False):
-            fitting_widget = mfm.fitting.widgets.FittingControllerWidget(fit, **kwargs)
+            fitting_widget = mfm.fitting.fitting_widgets.FittingControllerWidget(fit, **kwargs)
         else:
             fitting_widget = QtWidgets.QLabel()
 
