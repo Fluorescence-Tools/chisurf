@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import os
 import numpy as np
 import pyqtgraph as pg
 from PyQt5 import QtWidgets, uic
@@ -18,22 +21,29 @@ class LinePlotControl(QtWidgets.QWidget):
     def __init__(
             self,
             parent=None,
-            d_scalex: str = 'linear',
+            scale_x: str = 'lin',
             d_scaley: str = 'log',
-            r_scaley: str = 'linear',
+            r_scaley: str = 'lin',
             reference_curve: bool = False,
-            *args, **kwargs
+            xmin: float = 0.0,
+            ymin: float = 1.0
     ):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/plots/linePlotWidget.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "linePlotWidget.ui"
+            ),
+            self
+        )
         self.parent = parent
         self.use_reference = reference_curve
 
         self.data_logy = d_scaley
-        self.data_logx = d_scalex
+        self.scale_x = scale_x
         self.res_logy = r_scaley
-        self.xmin = kwargs.get('xmin', 0.0)
-        self.ymin = kwargs.get('xmin', 1.0)
+        self.xmin = xmin
+        self.ymin = ymin
 
         self.actionUpdate_Plot.triggered.connect(parent.update_all)
         self.checkBox.stateChanged [int].connect(self.SetLog)
@@ -43,111 +53,162 @@ class LinePlotControl(QtWidgets.QWidget):
         self.checkBox_3.stateChanged [int].connect(self.SetDensity)
 
     @property
-    def data_logy(self):
+    def data_logy(
+            self
+    ) -> str:
         """
         y-data is plotted logarithmically
         """
         return 'log' if self.checkBox.isChecked() else 'linear'
 
     @data_logy.setter
-    def data_logy(self, v):
+    def data_logy(
+            self,
+            v: str
+    ):
         if v == 'lin':
             self.checkBox.setCheckState(0)
         else:
             self.checkBox.setCheckState(2)
 
     @property
-    def data_logx(self):
+    def scale_x(
+            self
+    ) -> str:
         """
         x-data is plotted logarithmically
         """
         return 'log' if self.checkBox_2.isChecked() else 'linear'
 
-    @property
-    def data_is_log_x(self):
-        return self.data_logx == 'log'
-
-    @property
-    def data_is_log_y(self):
-        return self.data_logy == 'log'
-
-    @property
-    def res_is_log_y(self):
-        return self.res_logy == 'log'
-
-    @data_logx.setter
-    def data_logx(self, v):
+    @scale_x.setter
+    def scale_x(
+            self,
+            v: str
+    ):
         if v == 'lin':
             self.checkBox_2.setCheckState(0)
         else:
             self.checkBox_2.setCheckState(2)
 
     @property
-    def res_logy(self):
+    def data_is_log_x(
+            self
+    ) -> bool:
+        return self.scale_x == 'log'
+
+    @property
+    def data_is_log_y(
+            self
+    ) -> bool:
+        return self.data_logy == 'log'
+
+    @property
+    def res_is_log_y(
+            self
+    ) -> bool:
+        return self.res_logy == 'log'
+
+    @property
+    def res_logy(
+            self
+    ) -> str:
         """
         y-residuals is plotted logarithmically
         """
         return 'log' if self.checkBox_4.isChecked() else 'lin'
 
     @res_logy.setter
-    def res_logy(self, v):
+    def res_logy(
+            self,
+            v: str
+    ):
         if v == 'lin':
             self.checkBox_4.setCheckState(0)
         else:
             self.checkBox_4.setCheckState(2)
 
     @property
-    def use_reference(self):
+    def use_reference(
+            self
+    ) -> bool:
         """
         If true use a reference curve for plotting
         """
         return bool(self.checkBox_5.isChecked())
 
     @use_reference.setter
-    def use_reference(self, v):
+    def use_reference(
+            self,
+            v: bool
+    ):
         if v is True:
             self.checkBox_5.setCheckState(2)
         else:
             self.checkBox_5.setCheckState(0)
 
     @property
-    def ymin(self):
+    def ymin(
+            self
+    ) -> float:
         return self.doubleSpinBox_2.value()
 
     @ymin.setter
-    def ymin(self, v):
+    def ymin(
+            self,
+            v: float
+    ):
         return self.doubleSpinBox_2.setValue(v)
 
     @property
-    def xmin(self):
+    def xmin(
+            self
+    ) -> float:
         return self.doubleSpinBox.value()
 
     @xmin.setter
-    def xmin(self, v):
+    def xmin(
+            self,
+            v: float
+    ):
         return self.doubleSpinBox.setValue(v)
 
     @property
-    def x_shift(self):
+    def x_shift(
+            self
+    ) -> float:
         return self.doubleSpinBox_6.value()
 
     @x_shift.setter
-    def x_shift(self, v):
+    def x_shift(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_6.setValue(v)
 
     @property
-    def y_shift(self):
+    def y_shift(
+            self
+    ) -> float:
         return self.doubleSpinBox_5.value()
 
     @y_shift.setter
-    def y_shift(self, v):
+    def y_shift(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_5.setValue(v)
 
     @property
-    def is_density(self):
+    def is_density(
+            self
+    ) -> bool:
         return bool(self.checkBox_3.isChecked())
 
     @is_density.setter
-    def is_density(self, v):
+    def is_density(
+            self,
+            v: bool
+    ):
         if v is True:
             self.checkBox_3.setCheckState(2)
         else:
@@ -182,22 +243,43 @@ class LinePlot(plotbase.Plot):
 
     name = "Fit"
 
-    def __init__(self, fit, d_scalex='lin', d_scaley='lin', r_scaley='lin',
-                 reference_curve=False, **kwargs):
-        mfm.plots.Plot.__init__(self, fit)
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            scale_x: str = 'lin',
+            d_scaley: str = 'lin',
+            r_scaley: str = 'lin',
+            reference_curve: bool = False,
+            x_label: str = 'x',
+            y_label: str = 'y',
+            plot_irf: bool = False,
+            data_x: np.array = None,
+            data_y: np.array = None,
+            **kwargs
+    ):
+        super(LinePlot, self).__init__(fit)
+
         # plot control dialog
-        self.pltControl = LinePlotControl(self, d_scalex, d_scaley, r_scaley, reference_curve, **kwargs)
+        self.pltControl = LinePlotControl(
+            self,
+            scale_x,
+            d_scaley,
+            r_scaley,
+            reference_curve,
+            **kwargs
+        )
 
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.data_x, self.data_y = None, None
-        self.plot_irf = kwargs.get('plot_irf', False)
+        self.data_x = data_x
+        self.data_y = data_y
+        self.plot_irf = plot_irf
 
         area = DockArea()
         self.layout.addWidget(area)
         hide_title = mfm.settings.cs_settings['gui']['plot']['hideTitle']
-        d1 = Dock("res", size=(500, 80), hideTitle=hide_title)
-        d2 = Dock("a.corr.", size=(500, 80), hideTitle=hide_title)
-        d3 = Dock("Fit", size=(500, 400), hideTitle=hide_title)
+        d1 = Dock("residuals", size=(300, 80), hideTitle=hide_title)
+        d2 = Dock("a.corr.", size=(300, 80), hideTitle=hide_title)
+        d3 = Dock("Fit", size=(300, 300), hideTitle=hide_title)
 
         p1 = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])
         p2 = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])
@@ -214,7 +296,6 @@ class LinePlot(plotbase.Plot):
         residuals_plot = p1.getPlotItem()
         auto_corr_plot = p2.getPlotItem()
         data_plot = p3.getPlotItem()
-        #self.legend = data_plot.addLegend(offset=(150, 30))
 
         self.data_plot = data_plot
         self.res_plot = residuals_plot
@@ -224,6 +305,7 @@ class LinePlot(plotbase.Plot):
         self.text = pg.TextItem(text='', border='w', fill=(0, 0, 255, 100), anchor=(0, 0))
         self.data_plot.addItem(self.text)
         colors = mfm.settings.cs_settings['gui']['plot']['colors']
+
         # Fitting-region selector
         if mfm.settings.cs_settings['gui']['plot']['enable_region_selector']:
             ca = list(mpl_colors.hex2color(colors["region_selector"]))
@@ -242,15 +324,10 @@ class LinePlot(plotbase.Plot):
 
                 lb_i = np.searchsorted(data_x, lb, side='right')
                 ub_i = np.searchsorted(data_x, ub, side='left')
-
-                #mfm.run("cs.current_fit.fit_range = %i, %i" % (lb_i, ub_i - 1))
                 mfm.run("cs.current_fit.fit_range = (%s, %s)" % (lb_i - 1, ub_i))
-                #self.fit.fit_range = (lb_i - 1, ub_i)
-                #self.fit.models.update_model()
                 self.update_all(only_fit_range=True)
 
             region.sigRegionChangeFinished.connect(update_region)
-            #proxy = pg.SignalProxy(region.sigRegionChanged, rateLimit=60, slot=update_region)
 
         # Grid
         if mfm.settings.cs_settings['gui']['plot']['enable_grid']:
@@ -268,8 +345,8 @@ class LinePlot(plotbase.Plot):
         if mfm.settings.cs_settings['gui']['plot']['label_axis']:
             residuals_plot.setLabel('left', "w.res.")
             auto_corr_plot.setLabel('left', "a.corr.")
-            data_plot.setLabel('left', kwargs.get('y_label', 'y'))
-            data_plot.setLabel('bottom', kwargs.get('x_label', 'x'))
+            data_plot.setLabel('left', y_label)
+            data_plot.setLabel('bottom', x_label)
 
         # Plotted lines
         lw = mfm.settings.cs_settings['gui']['plot']['line_width']
@@ -280,25 +357,22 @@ class LinePlot(plotbase.Plot):
         p1.setXLink(p3)
         p2.setXLink(p3)
 
-    def update_all(self, only_fit_range=False, *args, **kwargs):
+    def update_all(
+            self,
+            only_fit_range: bool = False,
+            *args,
+            **kwargs
+    ):
         fit = self.fit
         # Get parameters from plot-control
         plt_ctrl = self.pltControl
 
-        if isinstance(plt_ctrl, LinePlotControl):
-            data_log_y = plt_ctrl.data_is_log_y
-            data_log_x = plt_ctrl.data_is_log_x
-            res_log_y = plt_ctrl.res_is_log_y
-            use_reference = self.pltControl.use_reference
-            y_shift = plt_ctrl.y_shift
-            x_shift = plt_ctrl.x_shift
-        else:
-            data_log_y = False
-            data_log_x = False
-            res_log_y = False
-            use_reference = False
-            x_shift = 0.0
-            y_shift = 0.0
+        data_log_y = plt_ctrl.data_is_log_y
+        data_log_x = plt_ctrl.data_is_log_x
+        res_log_y = plt_ctrl.res_is_log_y
+        use_reference = self.pltControl.use_reference
+        y_shift = plt_ctrl.y_shift
+        x_shift = plt_ctrl.x_shift
 
         # Model function
         model_x, model_y = fit.model[fit.xmin:fit.xmax]

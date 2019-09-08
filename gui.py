@@ -186,7 +186,7 @@ class Main(QMainWindow):
     def onSetupChanged(self):
         mfm.widgets.hide_items_in_layout(self.verticalLayout_5)
         setup_name = self.comboBox_setupSelect.currentText()
-        mfm.run("cs.current_setup =cs.current_setup = '%s'" % setup_name)
+        mfm.run("cs.current_setup = '%s'" % setup_name)
         self.verticalLayout_5.addWidget(self.current_setup)
         self.current_setup.show()
 
