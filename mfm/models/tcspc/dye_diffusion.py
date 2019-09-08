@@ -16,7 +16,6 @@ from mfm.fluorescence.fps.widgets import ProteinQuenchingWidget, DyeWidget, Stic
 import mfm
 import mfm.fitting.fit
 import mfm.models.tcspc.nusiance
-#import mfm.fitting.models.tcspc.tcspc
 import mfm.fitting.fitting_widgets
 import mfm.fluorescence.fps as fps
 import mfm.fluorescence.tcspc.convolve
@@ -27,10 +26,10 @@ import mfm.structure
 import mfm.structure.structure
 from mfm import plots
 from mfm.curve import Curve
-from mfm.models import Model
+from mfm.models.model import Model
 from mfm.fluorescence.fps import ACV
 from mfm.fluorescence.simulation import photon
-from mfm.structure import Structure, get_coordinates_of_residues
+from mfm.structure.structure import Structure, get_coordinates_of_residues
 from mfm.widgets import PDBSelector
 
 

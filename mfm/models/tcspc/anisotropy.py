@@ -99,11 +99,20 @@ class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
         if pt == 'VH' or pt == 'VV':
             d = mfm.fluorescence.general.elte2(a, f)
             vv = np.hstack([f, mfm.fluorescence.general.e1tn(d, 2)])
-            vh = mfm.fluorescence.general.e1tn(np.hstack([f, mfm.fluorescence.e1tn(d, -1)]), self.g)
+            vh = mfm.fluorescence.general.e1tn(
+                np.hstack([f, mfm.fluorescence.e1tn(d, -1)]),
+                self.g
+            )
         if self.polarization_type.upper() == 'VH':
-            return np.hstack([mfm.fluorescence.general.e1tn(vv, self.l2), mfm.fluorescence.general.e1tn(vh, 1 - self.l2)])
+            return np.hstack(
+                [mfm.fluorescence.general.e1tn(vv, self.l2),
+                 mfm.fluorescence.general.e1tn(vh, 1 - self.l2)]
+            )
         elif self.polarization_type.upper() == 'VV':
-            r = np.hstack([mfm.fluorescence.general.e1tn(vv, 1 - self.l1), mfm.fluorescence.general.e1tn(vh, self.l1)])
+            r = np.hstack(
+                [mfm.fluorescence.general.e1tn(vv, 1 - self.l1),
+                 mfm.fluorescence.general.e1tn(vh, self.l1)]
+            )
             return r
         else:
             return f
