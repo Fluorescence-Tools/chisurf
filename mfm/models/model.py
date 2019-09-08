@@ -177,7 +177,6 @@ class ModelWidget(Model, QtWidgets.QWidget):
         pass
 
     def __init__(self, fit, *args, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        Model.__init__(self, fit, *args, **kwargs)
+        super(ModelWidget, self).__init__(fit, *args, **kwargs)
         self.plots = list()
         self.icon = kwargs.get('icon', QtGui.QIcon(":/icons/document-open.png"))
