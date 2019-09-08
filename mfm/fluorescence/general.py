@@ -569,8 +569,8 @@ def elte2(
     array([  5.        ,   1.5       ,   7.        ,   1.6       ,
         15.        ,   2.4       ,  21.        ,   2.66666667])
     """
-    n1 = e1.shape[0]/2
-    n2 = e2.shape[0]/2
+    n1 = e1.shape[0] // 2
+    n2 = e2.shape[0] // 2
     r = np.empty(n1*n2*2, dtype=np.float64)
 
     k = 0
@@ -608,8 +608,8 @@ def ere2(
     array([  5.        ,   1.5       ,   7.        ,   1.6       ,
         15.        ,   2.4       ,  21.        ,   2.66666667])
     """
-    n1 = e1.shape[0]/2
-    n2 = e2.shape[0]/2
+    n1 = e1.shape[0] // 2
+    n2 = e2.shape[0] // 2
     r = np.zeros(n1*n2*2, dtype=np.float64)
 
     k = 0
@@ -677,8 +677,8 @@ def e1ti2(
         e1: np.array,
         e2: np.array
 ) -> np.array:
-    n1 = e1.shape[0]/2
-    n2 = e2.shape[0]/2
+    n1 = e1.shape[0] // 2
+    n2 = e2.shape[0] // 2
     r = np.zeros(n1 * n2 * 2, dtype=np.float64)
 
     k = 0
