@@ -15,6 +15,7 @@ import mfm.settings
 import mfm.models
 import mfm.fitting
 import mfm.structure
+import mfm.widgets
 
 #######################################################
 #        LIST OF FITS, DATA, EXPERIMENTS              #

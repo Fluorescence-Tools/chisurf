@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import List
 
 import os
 import sys
@@ -9,9 +8,12 @@ from PyQt5.QtWidgets import QMainWindow, QApplication
 
 import numpy as np
 
-import mfm.experiments
+import mfm
 import mfm.cmd
-import mfm.models.tcspc.widgets
+import mfm.experiments
+import mfm.widgets
+import mfm.tools
+import mfm.ui.resource
 
 
 class Main(QMainWindow):
@@ -445,7 +447,7 @@ class Main(QMainWindow):
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
-        self.dataset_selector = mfm.widgets.CurveSelector(
+        self.dataset_selector = mfm.widgets.curve.ExperimentalDataSelector(
             click_close=False, curve_types='all',
             change_event=self.onCurrentDatasetChanged,
             drag_enabled=True
@@ -455,21 +457,12 @@ class Main(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    import mfm
-    import mfm.widgets
-    import mfm.tools
-    import mfm.ui.resource
 
     mfm.console = mfm.widgets.QIPythonWidget()
-
     win = Main(parent=None)
     mfm.console.history_widget = win.plainTextEditHistory
     mfm.cs = win
     win.init_setups()
-
-    with open(mfm.settings.style_sheet_file, 'r') as fp:
-        style_sheet = fp.read()
-        app.setStyleSheet(style_sheet)
-
+    mfm.widgets.widgets.set_app_style(app, mfm.settings.style_sheet_file)
     win.show()
     sys.exit(app.exec_())

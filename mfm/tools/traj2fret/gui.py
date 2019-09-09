@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QApplication
 
 from mfm.io import pdb
 import mfm.widgets
-from mfm.widgets import PDBSelector
+from mfm.widgets.pdb import PDBSelector
 from mfm.tools.traj2fret import CalculateTransfer
 
 

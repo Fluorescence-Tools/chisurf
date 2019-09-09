@@ -174,7 +174,7 @@ class Base(object):
         -------
 
         >>> import mfm
-        >>> bc = mfm.Base(parameter="ala", lol=1)
+        >>> bc = mfm.base.Base(parameter="ala", lol=1)
         >>> bc.lol
         1
         >>> bc.parameter

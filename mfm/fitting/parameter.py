@@ -7,7 +7,6 @@ import numpy as np
 import mfm
 import mfm.base
 import mfm.parameter
-import mfm.fitting.fitting_widgets
 import mfm.decorators
 
 parameter_settings = mfm.settings.cs_settings['parameter']

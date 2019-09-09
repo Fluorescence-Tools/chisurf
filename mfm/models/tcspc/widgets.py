@@ -17,7 +17,8 @@ from mfm.models.tcspc.mix_model import LifetimeMixModel
 from mfm.models.tcspc.nusiance import Convolve, Corrections, Generic
 from mfm.models.tcspc.parse import ParseDecayModel
 from mfm.models.tcspc.pddem import PDDEM, PDDEMModel
-from mfm.widgets import CurveSelector, clear_layout
+from mfm.widgets import clear_layout
+from mfm.widgets.curve import ExperimentalDataSelector
 
 
 class ConvolveWidget(Convolve, QtWidgets.QWidget):
@@ -66,10 +67,10 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
         self._rep.make_widget(layout=self.horizontalLayout_3, text='r[MHz]')
 
-        self.irf_select = CurveSelector(parent=None,
-                                        change_event=self.change_irf,
-                                        fit=self.fit,
-                                        setup=mfm.experiments.tcspc.TCSPCReader)
+        self.irf_select = ExperimentalDataSelector(parent=None,
+                                                   change_event=self.change_irf,
+                                                   fit=self.fit,
+                                                   setup=mfm.experiments.tcspc.TCSPCReader)
 
         self.actionSelect_IRF.triggered.connect(self.irf_select.show)
         self.radioButton_3.clicked.connect(self.onConvolutionModeChanged)
@@ -135,10 +136,10 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._dead_time, layout=self.horizontalLayout_2, text='t<sub>dead</sub>[ns]')
         mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._window_length, layout=self.horizontalLayout_2, text='t<sub>dead</sub>[ns]')
 
-        self.lin_select = CurveSelector(parent=None,
-                                        change_event=self.onChangeLin,
-                                        fit=self.fit,
-                                        setup=mfm.experiments.tcspc.TCSPCReader)
+        self.lin_select = ExperimentalDataSelector(parent=None,
+                                                   change_event=self.onChangeLin,
+                                                   fit=self.fit,
+                                                   setup=mfm.experiments.tcspc.TCSPCReader)
 
         self.actionSelect_lintable.triggered.connect(self.lin_select.show)
 
@@ -226,7 +227,7 @@ class GenericWidget(QtWidgets.QWidget, Generic):
         open_bg.setText('...')
         ly.addWidget(open_bg)
 
-        self.background_select = CurveSelector(parent=None, change_event=self.change_bg_curve, fit=self.fit)
+        self.background_select = ExperimentalDataSelector(parent=None, change_event=self.change_bg_curve, fit=self.fit)
         open_bg.clicked.connect(self.background_select.show)
 
         a = QtWidgets.QHBoxLayout()
