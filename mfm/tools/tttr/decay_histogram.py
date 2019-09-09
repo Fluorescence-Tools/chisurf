@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import os
 import copy
 import re
@@ -7,6 +8,7 @@ import re
 import numpy as np
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets, uic
+import qdarkstyle
 
 import mfm
 import mfm.experiments
@@ -130,10 +132,15 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
     histDone = QtCore.pyqtSignal()
 
     def __init__(self, parent):
-        QtWidgets.QWidget.__init__(self, parent)
-        self.parent = parent
+        super(TcspcTTTRWidget, self).__init__(parent)
         self.tcspcTTTRWidget = QtWidgets.QWidget(self)
-        uic.loadUi('mfm/ui/experiments/tcspcTTTRWidget.ui', self.tcspcTTTRWidget)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "tcspcTTTRWidget.ui"
+            ),
+            self
+        )
         self.spcFileWidget = SpcFileWidget(self)
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self.spcFileWidget)
@@ -232,3 +239,10 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
         self.nROUT = self.spcFileWidget.nROUT
         self.onTacDivChanged()
 
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    win = HistogramTTTR()
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    win.show()
+    sys.exit(app.exec_())

@@ -14,7 +14,14 @@ class SpcFileWidget(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/io/spcSampleSelectWidget.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "spcSampleSelectWidget.ui"
+            ),
+            self
+        )
+
         self.parent = parent
         self.filenames = list()
         self.filetypes = filetypes

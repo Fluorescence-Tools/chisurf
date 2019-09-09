@@ -1,7 +1,9 @@
+import sys
 import os
 import copy
 
-from qtpy import  QtWidgets, uic
+from qtpy import QtWidgets, uic
+import qdarkstyle
 
 import mfm
 import mfm.widgets
@@ -62,3 +64,9 @@ class TTTRConvert(QtWidgets.QWidget):
         h5.close()
 
 
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    win = TTTRConvert()
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    win.show()
+    sys.exit(app.exec_())

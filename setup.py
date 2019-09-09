@@ -76,8 +76,11 @@ setup(
         # If any package contains the listed file types and include them:
         '': ['*.json', '*.yaml', '*.ui', '*.png', '*.svg', '*.css'],
     },
-    install_requires=['numpy', 'slugify', 'sip', 'PyQt5', 'emcee', 'numba', 'scipy', 'pyqtgraph', 'sympy', 'PyYAML',
-                      'tables', 'numexpr', 'matplotlib', 'python-docx', 'deprecation', 'pyopencl'],
+    install_requires=[
+        'numpy', 'slugify', 'sip', 'PyQt5', 'emcee', 'numba', 'scipy', 'pyqtgraph', 'sympy', 'PyYAML',
+        'tables', 'numexpr', 'matplotlib', 'python-docx', 'deprecation', 'pyopencl', 'qdarkstyle',
+        'qtpy'
+    ],
     ext_modules=extensions,
     cmdclass={
         'build_ext': build_ext
