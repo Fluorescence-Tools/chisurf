@@ -6,10 +6,12 @@ import copy
 import numpy as np
 import numba as nb
 import scipy.stats
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtWidgets, uic
 
 import mfm.fluorescence
 from mfm.fluorescence.fps import BasicAV
+from mfm.structure.potential.widgets import HPotentialWidget, GoPotentialWidget, MJPotentialWidget, CEPotentialWidget, \
+    ClashPotentialWidget, AvPotentialWidget
 from mfm.structure.structure import Structure
 from mfm.structure.potential import cPotentials
 import mfm.widgets
@@ -354,83 +356,6 @@ class HPotential(object):
         self.hPot = self._hPot
 
 
-class HPotentialWidget(HPotential, QtWidgets.QWidget):
-
-    def __init__(self, structure, parent, cutoff_ca=8.0, cutoff_hbond=3.0):
-        QtWidgets.QWidget.__init__(self, parent=parent)
-        uic.loadUi('mfm/ui/Potential_Hbond_2.ui', self)
-        HPotential.__init__(self, structure)
-        self.checkBox.stateChanged [int].connect(self.updateParameter)
-        self.checkBox_2.stateChanged [int].connect(self.updateParameter)
-        self.checkBox_3.stateChanged [int].connect(self.updateParameter)
-        self.checkBox_4.stateChanged [int].connect(self.updateParameter)
-        self.actionLoad_potential.triggered.connect(self.onOpenFile)
-        self.cutoffCA = cutoff_ca
-        self.cutoffH = cutoff_hbond
-
-    def onOpenFile(self):
-        filename = mfm.widgets.get_filename('Open File', 'CSV data files (*.csv)')
-        self.potential = filename
-
-    @property
-    def potential(self):
-        return self.hPot
-
-    @potential.setter
-    def potential(self, v):
-        self._hPot = np.loadtxt(v, skiprows=1, dtype=np.float64).T[1:, :]
-        self.hPot = self._hPot
-        self.lineEdit_3.setText(str(v))
-
-    @property
-    def oh(self):
-        return int(self.checkBox.isChecked())
-
-    @oh.setter
-    def oh(self, v):
-        self.checkBox.setChecked(v)
-
-    @property
-    def cn(self):
-        return int(self.checkBox_2.isChecked())
-
-    @cn.setter
-    def cn(self, v):
-        self.checkBox_2.setChecked(v)
-
-    @property
-    def ch(self):
-        return int(self.checkBox_3.isChecked())
-
-    @ch.setter
-    def ch(self, v):
-        self.checkBox_3.setChecked(v)
-
-    @property
-    def on(self):
-        return int(self.checkBox_4.isChecked())
-
-    @on.setter
-    def on(self, v):
-        self.checkBox_4.setChecked(v)
-
-    @property
-    def cutoffH(self):
-        return float(self.doubleSpinBox.value())
-
-    @cutoffH.setter
-    def cutoffH(self, v):
-        self.doubleSpinBox.setValue(float(v))
-
-    @property
-    def cutoffCA(self):
-        return float(self.doubleSpinBox_2.value())
-
-    @cutoffCA.setter
-    def cutoffCA(self, v):
-        self.doubleSpinBox_2.setValue(float(v))
-
-
 class GoPotential(object):
 
     def __init__(self, structure):
@@ -467,37 +392,6 @@ class GoPotential(object):
         self.nMatrix = nMatrix
 
 
-class GoPotentialWidget(GoPotential, QtWidgets.QWidget):
-
-    def __init__(self, structure, parent):
-        GoPotential.__init__(self, structure)
-        QtWidgets.QWidget.__init__(self, parent=None)
-        uic.loadUi('mfm/ui/Potential-CaLJ.ui', self)
-        self.lineEdit.textChanged['QString'].connect(self.setGo)
-        self.lineEdit_2.textChanged['QString'].connect(self.setGo)
-        self.lineEdit_3.textChanged['QString'].connect(self.setGo)
-
-    @property
-    def native_cutoff_on(self):
-        return bool(self.checkBox.isChecked())
-
-    @property
-    def non_native_contact_on(self):
-        return bool(self.checkBox_2.isChecked())
-
-    @property
-    def epsilon(self):
-        return float(self.lineEdit.text())
-
-    @property
-    def nnEFactor(self):
-        return float(self.lineEdit_2.text())
-
-    @property
-    def cutoff(self):
-        return float(self.lineEdit_3.text())
-
-
 class MJPotential(object):
 
     name = 'Miyazawa-Jernigan'
@@ -525,38 +419,6 @@ class MJPotential(object):
 
     def getNbrContacts(self):
         return self.nCont
-
-
-class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
-
-    def __init__(self, structure, parent, filename='./mfm/structure/potential/database/mj.csv', ca_cutoff=6.5):
-        QtWidgets.QWidget.__init__(self, parent=None)
-        uic.loadUi('mfm/ui/MJ-resource.ui', self)
-        MJPotential.__init__(self, structure)
-        self.pushButton.clicked.connect(self.onOpenFile)
-        self.potential = filename
-        self.ca_cutoff = ca_cutoff
-
-    def onOpenFile(self):
-        filename = mfm.widgets.get_filename('Open MJ-Potential', 'CSV data files (*.csv)')
-        self.potential = filename
-
-    @property
-    def potential(self):
-        return self.mjPot
-
-    @potential.setter
-    def potential(self, v):
-        self.mjPot = np.loadtxt(v)
-        self.lineEdit.setText(v)
-
-    @property
-    def ca_cutoff(self):
-        return float(self.lineEdit_2.text())
-
-    @ca_cutoff.setter
-    def ca_cutoff(self, v):
-        self.lineEdit_2.setText(str(v))
 
 
 class ASA(object):
@@ -590,7 +452,11 @@ class CEPotential(object):
 
     name = 'Iso-UNRES'
 
-    def __init__(self, structure, **kwargs):
+    def __init__(
+            self,
+            structure,
+            **kwargs
+    ):
         """
         scaling_factor : factor to scale energies from kCal/mol to kT=1.0 at 298K
         """
@@ -638,39 +504,6 @@ class CEPotential(object):
 
     def getNbrContacts(self):
         return self.nCont
-
-
-class CEPotentialWidget(CEPotential, QtWidgets.QWidget):
-
-    def __init__(self, structure, parent, potential='./mfm/structure/potential/database/unres.npy',
-                 ca_cutoff=25.0):
-        QtWidgets.QWidget.__init__(self, parent=None)
-        uic.loadUi('mfm/ui/unres-cb-resource.ui', self)
-        CEPotential.__init__(self, structure, potential, ca_cutoff=ca_cutoff)
-        self.actionOpen_potential_file.triggered.connect(self.onOpenPotentialFile)
-        self.ca_cutoff = ca_cutoff
-
-    @property
-    def potential(self):
-        return self._potential
-
-    @potential.setter
-    def potential(self, v):
-        self.lineEdit.setText(str(v))
-        self._potential = np.load(v)
-
-    @property
-    def ca_cutoff(self):
-        return float(self.doubleSpinBox.value())
-
-    @ca_cutoff.setter
-    def ca_cutoff(self, v):
-        self.doubleSpinBox.setValue(float(v))
-
-    def onOpenPotentialFile(self):
-        #filename = str(QtGui.QFileDialog.getOpenFileName(None, 'Open CE-Potential', '', 'Numpy file (*.npy)'))
-        filename = mfm.widgets.get_filename('Open CE-Potential', 'Numpy file (*.npy)')
-        self.potential = filename
 
 
 class ASA(object):
@@ -754,30 +587,6 @@ class ClashPotential(object):
     def getEnergy(self):
         c = self.structure
         return cPotentials.clash_potential(c.xyz, c.vdw, self.clash_tolerance, self.covalent_radius)
-
-
-class ClashPotentialWidget(ClashPotential, QtWidgets.QWidget):
-
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/potential-clash.ui', self)
-        ClashPotential.__init__(self, **kwargs)
-
-    @property
-    def clash_tolerance(self):
-        return float(self.doubleSpinBox.value())
-
-    @clash_tolerance.setter
-    def clash_tolerance(self, v):
-        self.doubleSpinBox.setValue(v)
-
-    @property
-    def covalent_radius(self):
-        return float(self.doubleSpinBox_2.value())
-
-    @covalent_radius.setter
-    def covalent_radius(self, v):
-        self.doubleSpinBox_2.setValue(v)
 
 
 class AvPotential(object):
@@ -951,46 +760,6 @@ class AvPotential(object):
             return energy
         else:
             return self.getChi2(self, self.structure)
-
-
-class AvPotentialWidget(AvPotential, QtWidgets.QWidget):
-    def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self, parent=parent)
-        uic.loadUi('./mfm/ui/fluorescence/avWidget.ui', self)
-        AvPotential.__init__(self)
-        self._filename = None
-        self.actionOpenLabeling.triggered.connect(self.onLoadAvJSON)
-
-    def onLoadAvJSON(self):
-        self.filename = mfm.widgets.get_filename('Open FPS-JSON', 'FPS-file (*.fps.json)')
-
-    @property
-    def labeling_file(self):
-        return self._filename
-
-    @labeling_file.setter
-    def filename(self, v):
-        self._filename = v
-        p = json.load(open(v))
-        self.distances = p["Distances"]
-        self.positions = p["Positions"]
-        self.lineEdit_2.setText(v)
-
-    @property
-    def n_av_samples(self):
-        return int(self.spinBox_2.value())
-
-    @n_av_samples.setter
-    def n_av_samples(self, v):
-        self.spinBox_2.setValue(int(v))
-
-    @property
-    def min_av(self):
-        return int(self.spinBox_2.value())
-
-    @min_av.setter
-    def min_av(self, v):
-        self.spinBox.setValue(int(v))
 
 
 potentialDict = OrderedDict()

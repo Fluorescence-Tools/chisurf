@@ -393,7 +393,10 @@ def get_directory(**kwargs):
         return directory, filenames
 
 
-def make_widget_from_yaml(d, name=''):
+def make_widget_from_yaml(
+        variable_dictionary,
+        name: str = ''
+):
     """
     >>> import numbers
     >>> import pyqtgraph as pg
@@ -403,7 +406,7 @@ def make_widget_from_yaml(d, name=''):
     >>> od = collections.OrderedDict(sorted(d.items()))
     >>> w = make_widget_from_yaml(od, 'test')
     >>> w.show()
-    :param d: 
+    :param variable_dictionary: 
     :param name: 
     :return: 
     """
@@ -431,7 +434,7 @@ def make_widget_from_yaml(d, name=''):
                 layout.addRow(label, wd)
         return g
 
-    return make_group(d, name)
+    return make_group(variable_dictionary, name)
 
 
 def set_app_style(
