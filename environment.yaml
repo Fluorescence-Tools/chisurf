@@ -33,3 +33,4 @@ dependencies:
     - deprecation
     - pyopencl
     - guiqwt
+    - progressbar2

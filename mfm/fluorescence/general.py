@@ -732,9 +732,9 @@ def calculate_fluorescence_decay(
     if normalize:
         am /= am.sum()
     ls = lifetime_spectrum[1::2]
-    for a, l in zip(am, ls):
-        if l == 0:
+    for amplitude, lifetime in zip(am, ls):
+        if lifetime == 0:
             continue
-        decay += np.exp(-time_axis / l) * a
+        decay += np.exp(-time_axis / lifetime) * amplitude
     return time_axis, decay
 

@@ -55,7 +55,7 @@ class Main(QMainWindow):
         self.comboBox_experimentSelect.setCurrentIndex(v)
 
     @property
-    def current_experiment(self) -> List:
+    def current_experiment(self) -> mfm.experiments.experiment.Experiment:
         return mfm.experiment[self.current_experiment_idx]
 
     @current_experiment.setter
@@ -84,7 +84,7 @@ class Main(QMainWindow):
 
     @property
     def current_setup(self):
-        return self.current_experiment.setups[self.current_experiment_idx]
+        return self.current_experiment.setups[self.current_setup_idx]
 
     @current_setup.setter
     def current_setup(
@@ -93,8 +93,7 @@ class Main(QMainWindow):
     ):
         i = self.current_setup_idx
         j = i
-        setups = self.current_experiment.get_setups()
-        for j, s in enumerate(setups):
+        for j, s in enumerate(self.current_experiment.setups):
             if s.name == name:
                 break
         if j != i:
@@ -180,7 +179,11 @@ class Main(QMainWindow):
         self.onSetupChanged()
 
     def onLoadFitResults(self, **kwargs):
-        filename = mfm.widgets.get_filename(file_type="*.json", description="Load results into fit-models", **kwargs)
+        filename = mfm.widgets.get_filename(
+            file_type="*.json",
+            description="Load results into fit-models",
+            **kwargs
+        )
         mfm.run("mfm.cmd.load_fit_result(%s, %s)" % (self.fit_idx, filename))
 
     def onSetupChanged(self):
@@ -313,7 +316,10 @@ class Main(QMainWindow):
         tcspc = mfm.experiments.experiment.Experiment('TCSPC')
         tcspc.add_setups(
             [
-                mfm.experiments.tcspc.TCSPCSetupWidget(name="CSV/PQ/IBH", **mfm.settings.cs_settings['tcspc_csv']),
+                mfm.experiments.tcspc.TCSPCSetupWidget(
+                    name="CSV/PQ/IBH",
+                    **mfm.settings.cs_settings['tcspc_csv']
+                ),
                 mfm.experiments.tcspc.TCSPCSetupSDTWidget(),
                 mfm.experiments.tcspc.TCSPCSetupDummyWidget()
             ]
@@ -332,8 +338,12 @@ class Main(QMainWindow):
         fcs = mfm.experiments.experiment.Experiment('FCS')
         fcs.add_setups(
             [
-                mfm.experiments.fcs.FCSKristine(experiment=mfm.experiments.fcs),
-                mfm.experiments.fcs.FCS(experiment=mfm.experiments.fcs)
+                mfm.experiments.fcs.FCSKristine(
+                    experiment=mfm.experiments.fcs
+                ),
+                mfm.experiments.fcs.FCS(
+                    experiment=mfm.experiments.fcs
+                )
             ]
         )
         fcs.add_models(
@@ -344,7 +354,10 @@ class Main(QMainWindow):
         mfm.experiment.append(fcs)
 
         global_fit = mfm.experiments.experiment.Experiment('Global')
-        global_setup = mfm.experiments.globalfit.GlobalFitSetup(name='Global-Fit', experiment=global_fit)
+        global_setup = mfm.experiments.globalfit.GlobalFitSetup(
+            name='Global-Fit',
+            experiment=global_fit
+        )
         global_fit.add_model(mfm.models.globalfit.GlobalFitModelWidget)
         global_fit.add_setup(global_setup)
         mfm.experiment.append(global_fit)
@@ -432,9 +445,11 @@ class Main(QMainWindow):
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
-        self.dataset_selector = mfm.widgets.CurveSelector(click_close=False, curve_types='all',
-                                                          change_event=self.onCurrentDatasetChanged,
-                                                          drag_enabled=True)
+        self.dataset_selector = mfm.widgets.CurveSelector(
+            click_close=False, curve_types='all',
+            change_event=self.onCurrentDatasetChanged,
+            drag_enabled=True
+        )
         self.verticalLayout_8.addWidget(self.dataset_selector)
 
 
