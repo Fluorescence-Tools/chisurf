@@ -9,7 +9,7 @@ import pickle
 import random
 from datetime import datetime
 
-from qtpy import  QtCore, QtGui, QtWidgets
+from qtpy import QtGui, QtWidgets
 import pyqtgraph as pg
 from qtconsole.qtconsoleapp import RichJupyterWidget
 from qtconsole.inprocess import QtInProcessKernelManager
