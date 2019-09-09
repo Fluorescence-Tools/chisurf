@@ -6,6 +6,7 @@ from PyQt5 import QtWidgets, uic, QtCore
 
 import mfm
 import mfm.widgets
+import mfm.widgets.curve
 
 parameter_settings = mfm.settings.cs_settings['parameter']
 
@@ -50,7 +51,7 @@ class FittingControllerWidget(QtWidgets.QWidget):
         super(FittingControllerWidget, self).__init__()
 
         self.fit = fit
-        self.curve_select = mfm.widgets.CurveSelector(
+        self.curve_select = mfm.widgets.curve.ExperimentalDataSelector(
             parent=None,
             fit=self.fit,
             change_event=self.change_dataset,

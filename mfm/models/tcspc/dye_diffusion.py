@@ -30,7 +30,7 @@ from mfm.models.model import Model
 from mfm.fluorescence.fps import ACV
 from mfm.fluorescence.simulation import photon
 from mfm.structure.structure import Structure, get_coordinates_of_residues
-from mfm.widgets import PDBSelector
+from mfm.widgets.pdb import PDBSelector
 
 
 class DyeDecay(Model, Curve):

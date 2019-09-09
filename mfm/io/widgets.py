@@ -5,11 +5,6 @@ import os
 from PyQt5 import QtWidgets, uic
 
 import mfm
-#import mfm.experiments
-#import mfm.experiments.data
-#import mfm.structure
-#import mfm.structure.structure
-import mfm.widgets
 from mfm.io.ascii import Csv
 from .photons import Photons
 from .tttr import filetypes

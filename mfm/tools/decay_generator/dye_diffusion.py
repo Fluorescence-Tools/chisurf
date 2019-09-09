@@ -13,7 +13,7 @@ import mfm.io.xyz
 from mfm.fluorescence.simulation.dye_diffusion import DyeDecay
 from mfm.plots.MolView import MolQtWidget
 from mfm.structure.structure import Structure
-from mfm.widgets import PDBSelector
+from mfm.widgets.pdb import PDBSelector
 
 
 class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
