@@ -139,7 +139,7 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
                 os.path.dirname(os.path.abspath(__file__)),
                 "tcspcTTTRWidget.ui"
             ),
-            self
+            self.tcspcTTTRWidget
         )
         self.spcFileWidget = SpcFileWidget(self)
         layout = QtWidgets.QVBoxLayout(self)

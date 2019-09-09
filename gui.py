@@ -247,10 +247,10 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #      TTTR-widgets                                      #
         ##########################################################
-        self.tttr_convert = mfm.tools.TTTRConvert()
+        self.tttr_convert = mfm.tools.tttr.convert.TTTRConvert()
         self.actionConvert.triggered.connect(self.tttr_convert.show)
 
-        self.tttr_correlate = mfm.tools.CorrelateTTTR()
+        self.tttr_correlate = mfm.tools.tttr.correlate.CorrelateTTTR()
         self.actionCorrelate.triggered.connect(self.tttr_correlate.show)
 
         self.tttr_histogram = mfm.tools.tttr.decay_histogram.HistogramTTTR()
@@ -268,7 +268,7 @@ class Main(QtWidgets.QMainWindow):
         #self.calculate_potential = mfm.tools.PotentialEnergyWidget()
         #self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
 
-        self.pdb2label = mfm.tools.PDB2Label()
+        self.pdb2label = mfm.tools.fps_json.pdb2labeling.PDB2Label()
         self.actionPDB2Label.triggered.connect(self.pdb2label.show)
 
         self.structure2transfer = mfm.tools.traj2fret.gui.Structure2Transfer()
@@ -289,7 +289,7 @@ class Main(QtWidgets.QMainWindow):
         #self.update_widget = mfm.widgets.downloader.UpdateDialog()
         #self.connect(self.actionUpdate, QtCore.SIGNAL('triggered()'), self.update_widget.show)
 
-        self.f_test = mfm.tools.FTestWidget()
+        self.f_test = mfm.tools.f_test.f_calculator.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
 
     def init_console(self):
