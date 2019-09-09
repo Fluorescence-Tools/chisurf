@@ -119,7 +119,10 @@ class ParseFormula(FittingParameterGroup):
             self._model_file = filename
             self.models = yaml.safe_load(fp)
 
-    def find_parameters(self):
+    def find_parameters(
+            self,
+            parameter_type=mfm.parameter.Parameter
+    ):
         # do nothing
         pass
 
