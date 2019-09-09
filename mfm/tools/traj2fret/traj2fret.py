@@ -213,7 +213,17 @@ def traj2decay(k, t_step, t_max, tau0=None):
 
 class CalculateTransfer(object):
 
-    def __init__(self, trajectory_file=None, **kwargs):
+    def __init__(
+            self,
+            trajectory_file: str = None,
+            dipoles: bool = True,
+            tau0: float = 2.6,
+            stride: int = 1,
+            verbose: bool = True,
+            kappa2: float = 0.66666667,
+            forster_radius: float = 52.0,
+            **kwargs
+    ):
         """
 
         :param trajectory: TrajectoryFile
@@ -229,19 +239,17 @@ class CalculateTransfer(object):
             If verbose is True -> output to std-out.
         """
         self._trajectory_file = trajectory_file
+        self._dipoles = dipoles
+        self._tau0 = tau0
+        self._stride = stride
+        self.verbose = verbose
+        self._kappa2 = kappa2
+        self.__forster_radius = forster_radius
+
         self.__donorAtomID = None
         self.__acceptorAtomID = None
-        self._dipoles = kwargs.get('dipoles', True)
         self.__kappa2s = None
         self.__distances = None
-        self.__tauD0 = kwargs.get('tauD0', True)
-        self.__forster_radius = kwargs.get('forster_radius', 52.0)
-
-        self._stride = kwargs.get('stride', 1)
-        self.verbose = kwargs.get('verbose', True)
-        self._kappa2 = kwargs.get('kappa2', 0.66666666)
-        self._tau0 = kwargs.get('tau0', 2.6)
-        self._settings = kwargs
 
     @property
     def stride(self):
@@ -250,14 +258,6 @@ class CalculateTransfer(object):
     @stride.setter
     def stride(self, v):
         self._stride = v
-
-    @property
-    def tau0(self):
-        return self._tau0
-
-    @tau0.setter
-    def tau0(self, v):
-        self._tau0 = v
 
     @property
     def dipoles(self):
@@ -311,11 +311,11 @@ class CalculateTransfer(object):
 
     @property
     def tau0(self):
-        return self.__tauD0
+        return self._tau0
 
     @tau0.setter
     def tau0(self, v):
-        self.__tauD0 = float(v)
+        self._tau0 = float(v)
 
     @property
     def forster_radius(self):
@@ -325,15 +325,25 @@ class CalculateTransfer(object):
     def forster_radius(self, v):
         self.__forster_radius = float(v)
 
-    def calc(self, output_file, **kwargs):
+    def calc(
+            self,
+            output_file: str,
+            trajectory_file: str = None,
+            stride: int = None,
+            chunk: int = 1000,
+            **kwargs
+    ):
         verbose = kwargs.get('verbose', self.verbose)
-        trajectory_file = kwargs.get('trajectory_file', self.trajectory_file)
+        if trajectory_file is None:
+            trajectory_file = self.trajectory_file
+        if stride is None:
+            stride = self.stride
+
         donor = self.donor
         acceptor = self.acceptor
-        stride = kwargs.get('stride', self.stride)
         time_step = self._settings['t_step'] * stride
         dipoles = kwargs.get('dipoles', self.dipoles)
-        chunk = kwargs.get('chunk', 1000)
+
         #traj = kwargs.get('traj', None)
         #if traj is None:
         #    md.load(trajectory_file, stride=stride)

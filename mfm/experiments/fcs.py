@@ -20,13 +20,15 @@ class FCS(ExperimentReader, CsvWidget):
             self,
             experiment,
             *args,
+            use_header: bool = False,
+            skiprows: int = 0,
             **kwargs
     ):
         super(FCS, self).__init__(*args, **kwargs)
         self.experiment = experiment
         self.hide()
-        self.skiprows = 0
-        self.use_header = False
+        self.skiprows = skiprows
+        self.use_header = use_header
         self.spinBox.setEnabled(False)
         self.parent = kwargs.get('parent', None)
         self.groupBox.hide()
@@ -94,7 +96,12 @@ class FCSKristine(mfm.io.ascii.Csv, FCS):
                 # In case everything fails
                 # Use no errors at all but uniform weighting
                 w = np.ones_like(y)
-        d.set_data(self.filename, x, y, weights=w)
+        d.set_data(
+            self.filename,
+            x,
+            y,
+            ey=w
+        )
         return d
 
 

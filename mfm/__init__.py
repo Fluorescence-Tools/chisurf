@@ -24,8 +24,8 @@ fits = []
 fit_windows = []
 experiment = []
 imported_datasets = []
-run = None   # This is replaced during initialization to execute commands via a command line interface
-cs = None    # The current instance of ChiSurf
+run = lambda x: x   # This is replaced during initialization to execute commands via a command line interface
+cs = None           # The current instance of ChiSurf
 console = None
 
 

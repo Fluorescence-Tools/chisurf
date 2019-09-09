@@ -87,7 +87,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
     def onUnGroupDatasets(self):
         dg = mfm.experiments.data.ExperimentDataGroup(self.selected_datasets)[0]
         dn = list()
-        for i, d in enumerate(mfm.imported_datasets):
+        for d in mfm.imported_datasets:
             if d is not dg:
                 dn.append(d)
             else:

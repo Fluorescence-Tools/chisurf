@@ -7,7 +7,6 @@ ChiSurf is a software package for the analysis of complex fluorescence data acqu
 and ensemble fluorescence experiments. The main feature of ChiSurf is the joint (global) analysis of multiple datasets.
 ![ChiSurf GUI][1]
 
-
 ## History
 
 The original of ChiSurfs was to estimate errors of model parameters of fluorescence intensity decays in 
