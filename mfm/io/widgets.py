@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 import os
-from PyQt5 import QtWidgets, uic
+from qtpy import  QtWidgets, uic
 
 import mfm
 from mfm.io.ascii import Csv

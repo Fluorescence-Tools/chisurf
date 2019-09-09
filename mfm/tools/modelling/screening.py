@@ -1,7 +1,7 @@
 import os
 import pickle
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from qtpy import  QtCore, QtGui, QtWidgets, uic
 import numpy as np
 from scipy.stats import f
 

@@ -4,8 +4,8 @@ import os
 import tempfile
 
 import mdtraj as md
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QApplication
+from qtpy import  QtWidgets, uic
+from qtpy.QtWidgets import QApplication
 
 from mfm.io import pdb
 import mfm.widgets

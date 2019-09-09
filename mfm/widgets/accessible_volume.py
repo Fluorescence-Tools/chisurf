@@ -1,6 +1,6 @@
 import os
 
-from PyQt5 import QtWidgets, uic
+from qtpy import  QtWidgets, uic
 
 
 class AVProperties(QtWidgets.QWidget):

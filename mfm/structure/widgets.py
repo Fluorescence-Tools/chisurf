@@ -1,7 +1,7 @@
 # coding=utf-8
 import os
 
-from PyQt5 import QtWidgets, uic
+from qtpy import  QtWidgets, uic
 
 from mfm.structure.structure import Structure
 from mfm.structure.trajectory import TrajectoryFile

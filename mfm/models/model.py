@@ -2,12 +2,12 @@ from __future__ import annotations
 from typing import List, Tuple
 
 import numpy as np
-from PyQt5 import QtWidgets, QtGui
+from qtpy import  QtWidgets, QtGui
 
 import mfm.curve
 import mfm.fitting.parameter
 import mfm.fitting.fitting_widgets
-from mfm import plots as plots
+import mfm.plots
 from mfm.curve import Curve
 
 
@@ -153,7 +153,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
 
     plot_classes = [
         (
-            plots.LinePlot, {
+            mfm.plots.LinePlot, {
                 'scale_x': 'lin',
                 'd_scaley': 'log',
                 'r_scaley': 'lin',
@@ -162,8 +162,9 @@ class ModelWidget(Model, QtWidgets.QWidget):
                 'plot_irf': True
             }
         ),
-        (plots.FitInfo, {}), (plots.ParameterScanPlot, {}),
-        (plots.ResidualPlot, {})
+        (mfm.plots.FitInfo, {}),
+        (mfm.plots.ParameterScanPlot, {}),
+        (mfm.plots.ResidualPlot, {})
         #(plots.FitInfo, {}), (plots.AvPlot, {})
     ]
 

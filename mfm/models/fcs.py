@@ -1,5 +1,5 @@
 import os
-from PyQt5 import QtGui
+from qtpy import  QtGui
 
 import mfm
 from mfm import plots

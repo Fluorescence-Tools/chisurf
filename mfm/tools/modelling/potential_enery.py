@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from qtpy import  QtCore, QtGui, QtWidgets, uic
 
 import mdtraj
 import mfm

@@ -1,7 +1,7 @@
 import os
 
 import numpy as np
-from PyQt5 import QtWidgets, uic, QtCore
+from qtpy import  QtWidgets, uic, QtCore
 
 import mfm.io
 

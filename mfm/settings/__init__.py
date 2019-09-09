@@ -22,7 +22,6 @@ __version__ = cs_settings['version']
 __name__ = cs_settings['name']
 working_path = ''
 
-style_sheet_file = os.path.join(package_directory, cs_settings['gui']['style_sheet'])
 structure_data = json.load(open(os.path.join(package_directory, 'structure.json')))
 
 pyqtgraph_settings = cs_settings['gui']['plot']["pyqtgraph"]

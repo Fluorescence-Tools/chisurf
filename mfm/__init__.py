@@ -5,12 +5,23 @@ from typing import List
 import os
 import numpy as np
 
+#######################################################
+#        SETTINGS  & CONSTANTS                        #
+#######################################################
+import mfm.settings
+package_directory = os.path.dirname(os.path.abspath(__file__))
+verbose = mfm.settings.cs_settings['verbose']
+__version__ = mfm.settings.cs_settings['version']
+__name__ = mfm.settings.cs_settings['name']
+working_path = ''
+eps = np.sqrt(np.finfo(float).eps)
+cs = None
+
 import mfm.base
 import mfm.io
 import mfm.parameter
 import mfm.curve
 import mfm.experiments
-import mfm.settings
 
 import mfm.models
 import mfm.fitting
@@ -20,25 +31,13 @@ import mfm.widgets
 #######################################################
 #        LIST OF FITS, DATA, EXPERIMENTS              #
 #######################################################
-fits = []
-fit_windows = []
-experiment = []
-imported_datasets = []
+fits = list()
+fit_windows = list()
+experiment = list()
+imported_datasets = list()
 run = lambda x: x   # This is replaced during initialization to execute commands via a command line interface
 cs = None           # The current instance of ChiSurf
 console = None
-
-
-#######################################################
-#        SETTINGS  & CONSTANTS                        #
-#######################################################
-package_directory = os.path.dirname(os.path.abspath(__file__))
-verbose = mfm.settings.cs_settings['verbose']
-__version__ = mfm.settings.cs_settings['version']
-__name__ = mfm.settings.cs_settings['name']
-working_path = ''
-eps = np.sqrt(np.finfo(float).eps)
-cs = None
 
 
 def c(

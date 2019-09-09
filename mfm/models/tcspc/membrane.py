@@ -1,5 +1,5 @@
 import numpy as np
-from PyQt5 import QtCore, QtWidgets
+from qtpy import  QtCore, QtWidgets
 
 import mfm
 from mfm import plots

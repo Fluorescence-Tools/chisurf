@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import List, Callable
 
-from PyQt5 import QtWidgets, QtCore, QtGui
+from qtpy import  QtWidgets, QtCore, QtGui
 
 import mfm.fitting
 import mfm.widgets

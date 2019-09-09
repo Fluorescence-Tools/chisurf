@@ -2,7 +2,7 @@ import json
 import os
 
 import numpy as np
-from PyQt5 import QtWidgets, uic
+from qtpy import  QtWidgets, uic
 from parse import ParseModelWidget
 
 import mfm

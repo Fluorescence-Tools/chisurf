@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from PyQt5 import QtWidgets, uic
+from qtpy import  QtWidgets, uic
 
 from  mfm.fluorescence.general import \
     distance_to_fret_rate_constant, distance_to_fret_efficiency, fret_efficiency_to_lifetime, \

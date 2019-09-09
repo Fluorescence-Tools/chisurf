@@ -15,4 +15,5 @@ from __future__ import annotations
 import mfm.structure.structure
 import mfm.structure.trajectory
 import mfm.structure.protein
+import mfm.structure.potential
 

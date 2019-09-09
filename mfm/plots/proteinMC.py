@@ -3,7 +3,7 @@
 
 import numpy as np
 import pyqtgraph as pg
-from PyQt5 import QtWidgets
+from qtpy import  QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
 import mfm

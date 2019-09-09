@@ -2,7 +2,7 @@ from __future__ import annotations
 import os
 
 import pyqtgraph as pg
-from PyQt5 import QtWidgets, uic, QtCore
+from qtpy import  QtWidgets, uic, QtCore
 
 import mfm
 import mfm.widgets

@@ -4,8 +4,8 @@ import tempfile
 from collections import defaultdict, OrderedDict
 import sympy
 import yaml
-from PyQt5 import QtCore, QtWidgets, uic
-from PyQt5.QtCore import QFile, QFileInfo, QTextStream, QUrl
+from qtpy import  QtCore, QtWidgets, uic
+from qtpy.QtCore import QFile, QFileInfo, QTextStream, QUrl
 from numpy import *
 from sympy.printing.latex import latex
 from re import Scanner

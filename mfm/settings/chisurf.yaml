@@ -151,7 +151,6 @@ gui:
     CaretLineBackgroundColor: "#ffe4e4"
     font_size: 9
     language: Python
-  style_sheet: style_sheet_day.css
   show_console: true
   show_macro_edit: true
   confirm_close_fit: true

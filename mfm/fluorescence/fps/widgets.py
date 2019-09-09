@@ -1,6 +1,6 @@
 # coding=utf-8
 from collections import OrderedDict
-from PyQt5 import QtCore, QtGui, QtWidgets
+from qtpy import  QtCore, QtGui, QtWidgets
 
 import mfm
 from mfm.fluorescence.fps.dynamic import ProteinQuenching, Dye, Sticking
