@@ -9,8 +9,8 @@
 import sys
 
 from PyQt5.Qsci import QsciScintilla, QsciLexerPython
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from qtpy.QtGui import *
+from qtpy.QtWidgets import *
 
 import mfm
 

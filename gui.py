@@ -3,8 +3,8 @@ from __future__ import annotations
 import os
 import sys
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from PyQt5.QtWidgets import QMainWindow, QApplication
+from qtpy import QtCore, QtGui, QtWidgets, uic
+import qdarkstyle
 
 import numpy as np
 
@@ -16,7 +16,7 @@ import mfm.tools
 import mfm.ui.resource
 
 
-class Main(QMainWindow):
+class Main(QtWidgets.QMainWindow):
 
     @property
     def current_dataset(self) -> mfm.experiments.data.Data:
@@ -456,13 +456,12 @@ class Main(QMainWindow):
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
+    app = QtWidgets.QApplication(sys.argv)
     mfm.console = mfm.widgets.QIPythonWidget()
     win = Main(parent=None)
     mfm.console.history_widget = win.plainTextEditHistory
     mfm.cs = win
     win.init_setups()
-    mfm.widgets.widgets.set_app_style(app, mfm.settings.style_sheet_file)
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win.show()
     sys.exit(app.exec_())

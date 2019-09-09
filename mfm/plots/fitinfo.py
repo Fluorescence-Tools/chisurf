@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets
+from qtpy import  QtWidgets
 
 import mfm
 from mfm.plots import plotbase

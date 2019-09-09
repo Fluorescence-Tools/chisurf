@@ -4,7 +4,7 @@ import tempfile
 
 import mfm.fluorescence.fps.widgets
 import numpy as np
-from PyQt5 import QtWidgets, uic
+from qtpy import  QtWidgets, uic
 from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
 

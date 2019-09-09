@@ -1,5 +1,5 @@
 import numpy as np
-from PyQt5 import QtWidgets
+from qtpy import  QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 import pyqtgraph.opengl as gl
 from matplotlib import cm

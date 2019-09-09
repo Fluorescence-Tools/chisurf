@@ -1,7 +1,7 @@
 import os
 import copy
 
-from PyQt5 import QtWidgets, uic
+from qtpy import  QtWidgets, uic
 
 import mfm
 import mfm.widgets

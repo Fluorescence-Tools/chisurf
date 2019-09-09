@@ -9,7 +9,7 @@ import pickle
 import random
 from datetime import datetime
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from qtpy import  QtCore, QtGui, QtWidgets
 import pyqtgraph as pg
 from qtconsole.qtconsoleapp import RichJupyterWidget
 from qtconsole.inprocess import QtInProcessKernelManager
@@ -436,11 +436,3 @@ def make_widget_from_yaml(
 
     return make_group(variable_dictionary, name)
 
-
-def set_app_style(
-        app: QtCore,
-        style_sheet_file: str
-):
-    with open(style_sheet_file, 'r') as fp:
-        style_sheet = fp.read()
-        app.setStyleSheet(style_sheet)

@@ -5,7 +5,7 @@ import os
 from slugify import slugify
 from docx import Document
 from docx.shared import Inches
-from PyQt5 import QtGui
+from qtpy import  QtGui
 
 import mfm
 import mfm.widgets

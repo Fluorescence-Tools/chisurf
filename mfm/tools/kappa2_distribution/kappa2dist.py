@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import numpy as np
-from PyQt5 import QtWidgets, uic
+from qtpy import  QtWidgets, uic
 import pyqtgraph as pg
 import pyqtgraph.dockarea
 

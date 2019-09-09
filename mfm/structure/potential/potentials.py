@@ -6,12 +6,9 @@ import copy
 import numpy as np
 import numba as nb
 import scipy.stats
-from PyQt5 import QtWidgets, uic
 
 import mfm.fluorescence
 from mfm.fluorescence.fps import BasicAV
-from mfm.structure.potential.widgets import HPotentialWidget, GoPotentialWidget, MJPotentialWidget, CEPotentialWidget, \
-    ClashPotentialWidget, AvPotentialWidget
 from mfm.structure.structure import Structure
 from mfm.structure.potential import cPotentials
 import mfm.widgets
@@ -444,7 +441,7 @@ class CEPotential(object):
     >>> import mfm.structure
     >>> import mfm.structure.potential
 
-    >>> s = mfm.Structure('./sample_data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
+    >>> s = mfm..structure.Structure('./sample_data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
     >>> pce = mfm.structure.potential.potentials.CEPotential(s, ca_cutoff=64.0)
     >>> pce.getEnergy()
     -0.15896629131635745
@@ -523,41 +520,6 @@ class ASA(object):
         #double probe=1.0, double radius = 2.5, char sum=1)
         asa = cPotentials.asa(c.xyz, c.l_res, c.dist_ca, self.sphere_points, self.probe, self.radius)
         return asa
-
-
-class AsaWidget(ASA, QtWidgets.QWidget):
-
-    def __init__(self, structure, parent):
-        ASA.__init__(self, structure)
-        QtWidgets.QWidget.__init__(self, parent=None)
-        uic.loadUi('mfm/ui/Potential_Asa.ui', self)
-
-        self.lineEdit.textChanged['QString'].connect(self.setParameterSphere)
-        self.lineEdit_2.textChanged['QString'].connect(self.setParameterProbe)
-
-        self.lineEdit.setText('590')
-        self.lineEdit_2.setText('3.5')
-
-    def setParameterSphere(self):
-        self.n_sphere_point = int(self.lineEdit.text())
-
-    def setParameterProbe(self):
-        self.probe = float(self.lineEdit_2.text())
-
-
-class RadiusGyration(QtWidgets.QWidget):
-
-    name = 'Radius-Gyration'
-
-    def __init__(self, structure, parent=None):
-        QtWidgets.QWidget.__init__(self, parent=parent)
-        self.structure = structure
-        self.parent = parent
-
-    def getEnergy(self, c=None):
-        if c is None:
-            c = self.structure
-        return c.radius_gyration
 
 
 class ClashPotential(object):
@@ -760,15 +722,4 @@ class AvPotential(object):
             return energy
         else:
             return self.getChi2(self, self.structure)
-
-
-potentialDict = OrderedDict()
-potentialDict['H-Bond'] = HPotentialWidget
-potentialDict['AV-Potential'] = AvPotentialWidget
-potentialDict['Iso-UNRES'] = CEPotentialWidget
-potentialDict['Miyazawa-Jernigan'] = MJPotentialWidget
-potentialDict['Go-Potential'] = GoPotentialWidget
-potentialDict['ASA-Calpha'] = AsaWidget
-potentialDict['Radius of Gyration'] = RadiusGyration
-potentialDict['Clash potential'] = ClashPotentialWidget
 

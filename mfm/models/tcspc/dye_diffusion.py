@@ -6,7 +6,7 @@ import os
 import tempfile
 
 import numpy as np
-from PyQt5 import QtWidgets, uic
+from qtpy import  QtWidgets, uic
 
 import mfm.io.xyz
 from mfm.fluorescence.fps.dynamic import DiffusionSimulation, Dye, Sticking, \

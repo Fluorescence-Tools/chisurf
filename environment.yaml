@@ -34,3 +34,5 @@ dependencies:
     - pyopencl
     - guiqwt
     - progressbar2
+    - qtpy
+    - qdarkstyle

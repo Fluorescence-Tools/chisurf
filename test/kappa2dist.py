@@ -2,9 +2,9 @@ import utils
 import os
 import sys
 import unittest
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtTest import QTest
-from PyQt5.QtCore import Qt
+from qtpy.QtWidgets import QApplication
+from qtpy.QtTest import QTest
+from qtpy.QtCore import Qt
 
 TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)

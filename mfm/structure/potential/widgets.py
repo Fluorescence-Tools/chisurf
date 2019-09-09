@@ -1,11 +1,13 @@
-import json
+from __future__ import annotations
 
+import json
 import os
 import numpy as np
-from PyQt5 import QtWidgets, uic
+from qtpy import  QtWidgets, uic
 
 import mfm.widgets
-from mfm.structure.potential import HPotential, GoPotential, MJPotential, CEPotential, ClashPotential, AvPotential
+from mfm.structure.potential.potentials import HPotential, GoPotential, MJPotential, CEPotential, ClashPotential, \
+    AvPotential, ASA
 
 
 class HPotentialWidget(HPotential, QtWidgets.QWidget):
@@ -284,3 +286,38 @@ class AvPotentialWidget(AvPotential, QtWidgets.QWidget):
     @min_av.setter
     def min_av(self, v):
         self.spinBox.setValue(int(v))
+
+
+class AsaWidget(ASA, QtWidgets.QWidget):
+
+    def __init__(self, structure, parent):
+        ASA.__init__(self, structure)
+        QtWidgets.QWidget.__init__(self, parent=None)
+        uic.loadUi('mfm/ui/Potential_Asa.ui', self)
+
+        self.lineEdit.textChanged['QString'].connect(self.setParameterSphere)
+        self.lineEdit_2.textChanged['QString'].connect(self.setParameterProbe)
+
+        self.lineEdit.setText('590')
+        self.lineEdit_2.setText('3.5')
+
+    def setParameterSphere(self):
+        self.n_sphere_point = int(self.lineEdit.text())
+
+    def setParameterProbe(self):
+        self.probe = float(self.lineEdit_2.text())
+
+
+class RadiusGyrationWidget(QtWidgets.QWidget):
+
+    name = 'Radius-Gyration'
+
+    def __init__(self, structure, parent=None):
+        QtWidgets.QWidget.__init__(self, parent=parent)
+        self.structure = structure
+        self.parent = parent
+
+    def getEnergy(self, c=None):
+        if c is None:
+            c = self.structure
+        return c.radius_gyration

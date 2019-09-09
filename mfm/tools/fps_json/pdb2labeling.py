@@ -7,7 +7,7 @@ import os
 import json
 from collections import OrderedDict
 
-from PyQt5 import QtWidgets, uic
+from qtpy import  QtWidgets, uic
 
 import mfm
 import mfm.structure
