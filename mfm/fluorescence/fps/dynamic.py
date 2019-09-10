@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import OrderedDict
 import time
 import json
@@ -407,13 +409,20 @@ class Sticking(ParameterGroup):
     def sticky_mode(self, v):
         self._sticky_mode = v
 
-    def __init__(self, structure, quenching_parameter=None, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.Fit,
+            structure: mfm.structure.structure.Structure,
+            quenching_parameter=None,
+            **kwargs
+    ):
         """
 
         :param structure: Structure
         :param quenching_parameter:
         :param kwargs:
         """
+        super(Sticking, self).__init__(fit, **kwargs)
         self.verbose = kwargs.get('verbose', mfm.verbose)
         self.quenching_parameter = quenching_parameter
         self.structure = structure

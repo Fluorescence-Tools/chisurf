@@ -1,6 +1,5 @@
-# coding=utf-8
 from collections import OrderedDict
-from qtpy import  QtCore, QtGui, QtWidgets
+from qtpy import QtWidgets
 
 import mfm
 from mfm.fluorescence.fps.dynamic import ProteinQuenching, Dye, Sticking
@@ -157,21 +156,30 @@ class StickingWidget(Sticking, QtWidgets.QGroupBox):
             self.radioButton.setChecked(False)
             self.radioButton_2.setChecked(True)
 
-    def __init__(self, **kwargs):
-        QtWidgets.QGroupBox.__init__(self)
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.Fit,
+            structure: mfm.structure.structure.Structure,
+            **kwargs
+    ):
+        super(StickingWidget, self).__init__(fit, structure, **kwargs)
+
         self.setTitle('Sticking')
         layout = QtWidgets.QGridLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
         self.setLayout(layout)
         self.radioButton = QtWidgets.QRadioButton('Surface')
         self.radioButton_2 = QtWidgets.QRadioButton('Quencher')
-        Sticking.__init__(self)
-        self._slow_radius = FittingParameterWidget(name='Rs[A]', value=10.0, digits=1, model=self.model)
-        self._slow_fact = FittingParameterWidget(name='slow fact', value=0.15, digits=3, model=self.model)
-        layout.addWidget(self._slow_fact, 0, 1)
-        layout.addWidget(self._slow_radius, 1, 1)
+
+        layout.addWidget(
+            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._slow_radius),
+            0,
+            1
+        )
+        layout.addWidget(
+            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._slow_fact),
+            1,
+            1
+        )
 
         layout.addWidget(self.radioButton, 0, 0)
         layout.addWidget(self.radioButton_2, 1, 0)

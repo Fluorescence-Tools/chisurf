@@ -49,7 +49,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
 
     def onProcessTrajectory(self):
         print("onProcessTrajectory")
-        energy_file = str(QtWidgets.QFileDialog.getSaveFileName(self, 'Save energies', '.txt', 'CSV-text file (*.txt)'))[0]
+        energy_file = str(QtWidgets.QFileDialog.getSaveFileName(self, 'Save energies', '.txt', 'CSV-name file (*.txt)'))[0]
 
         s = 'FrameNbr\t'
         for p in self.universe.potentials:

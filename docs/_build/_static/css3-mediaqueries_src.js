@@ -8,7 +8,7 @@ website: http://code.google.com/p/css3-mediaqueries-js/
 
 W3C spec: http://www.w3.org/TR/css3-mediaqueries/
 
-Note: use of embedded <style> is not recommended when using media queries, because IE  has no way of returning the raw literal css text from a <style> element.
+Note: use of embedded <style> is not recommended when using media queries, because IE  has no way of returning the raw literal css name from a <style> element.
 */
 
 
@@ -577,7 +577,7 @@ var cssHelper = function () {
 	return {
 		addStyle: function (s, mediaTypes, process) {
 			var el = document.createElement('style');
-			el.setAttribute('type', 'text/css');
+			el.setAttribute('type', 'name/css');
 			if (mediaTypes && mediaTypes.length > 0) {
 			    el.setAttribute('media', mediaTypes.join(','));
 			}

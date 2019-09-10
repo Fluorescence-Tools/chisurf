@@ -205,7 +205,7 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
 
     def onUpdateEquation(self):
         s = """<html><head>
-            <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_SVG.js"></script>
+            <script type="name/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_SVG.js"></script>
             </head><body>
             <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
             <h3>%s</h3>

@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import numpy as np
-from qtpy import  QtCore, QtWidgets
+from qtpy import QtWidgets
 
 import mfm
 from mfm import plots
-from mfm.models import _membrane, Lifetime, LifetimeWidget, ConvolveWidget
-from mfm.models import FRETModel
-from mfm.models import GenericWidget, CorrectionsWidget
-from mfm.fitting.fitting_widgets import FittingControllerWidget
-from mfm.parameter import FittingParameterWidget, FittingParameter
+from mfm.models.tcspc.lifetime import _membrane, Lifetime
+from mfm.models.tcspc.fret import FRETModel
+from mfm.models.tcspc.widgets import GenericWidget, CorrectionsWidget, ConvolveWidget, LifetimeWidget
+from mfm.fitting.fitting_widgets import FittingControllerWidget, FittingParameterWidget
+from mfm.fitting.parameter import FittingParameter
 
 
 class GridModel(FRETModel):

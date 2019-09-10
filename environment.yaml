@@ -36,3 +36,6 @@ dependencies:
     - progressbar2
     - qtpy
     - qdarkstyle
+    - sphinx
+    - sphinx_bootstrap_theme
+    - numpydoc

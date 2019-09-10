@@ -4,7 +4,6 @@ from .distribution import DistributionPlot
 from .fitinfo import *
 from .lineplot import *
 # from .global_tcspc import *
-from .lineplot import *
 from .parameter_scan import ParameterScanPlot
 from .plotbase import *
 # from .global_fit import *

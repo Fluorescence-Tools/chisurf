@@ -127,7 +127,7 @@ class QIPythonWidget(RichJupyterWidget):
         self._control.clear()
 
     def printText(self, text):
-        """ Prints some plain text to the console """
+        """ Prints some plain name to the console """
         self._append_plain_text(text)
 
     def executeCommand(self, command):

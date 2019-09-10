@@ -350,7 +350,7 @@
         div
           .find('span.user-id:first')
           .text('[deleted]').end()
-          .find('div.comment-text:first')
+          .find('div.comment-name:first')
           .text('[deleted]').end()
           .find('#cm' + id + ', #dc' + id + ', #ac' + id + ', #rc' + id +
                 ', #sp' + id + ', #hp' + id + ', #cr' + id + ', #rl' + id)
@@ -467,7 +467,7 @@
     data.vote = d.value;
     div.data('comment', data);
 
-    // Change the rating text.
+    // Change the rating name.
     div.find('.rating:first')
       .text(data.rating + ' point' + (data.rating == 1 ? '' : 's'));
 
@@ -699,7 +699,7 @@
       <p class="add-a-comment">Add a comment\
         (<a href="#" class="comment-markup" id="ab<%id%>">markup</a>):</p>\
       <div class="comment-markup-box" id="mb<%id%>">\
-        reStructured text markup: <i>*emph*</i>, <b>**strong**</b>, \
+        reStructured name markup: <i>*emph*</i>, <b>**strong**</b>, \
         <code>``code``</code>, \
         code blocks: <code>::</code> and an indented block after blank line</div>\
       <form method="post" id="cf<%id%>" class="comment-form" action="">\
@@ -747,7 +747,7 @@
           <span class="rating"><%pretty_rating%></span>\
           <span class="delta"><%time.delta%></span>\
         </p>\
-        <div class="comment-text comment"><#text#></div>\
+        <div class="comment-name comment"><#name#></div>\
         <p class="comment-opts comment">\
           <a href="#" class="reply hidden" id="rl<%id%>">reply &#9657;</a>\
           <a href="#" class="close-reply" id="cr<%id%>">reply &#9663;</a>\

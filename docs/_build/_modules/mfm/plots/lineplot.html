@@ -1,44 +1,29 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>mfm.plots.lineplot &mdash; ChiSurf 0.0.5 documentation</title>
-    
-    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <meta charset="utf-8" />
+    <title>mfm.plots.lineplot &#8212; ChiSurf  documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../',
-        VERSION:     '0.0.5',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../index.html" />
-    <link rel="up" title="Module code" href="../../index.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body role="document">
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -51,7 +36,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -67,13 +52,11 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
-</ul>
-<ul class="simple">
 </ul>
 </ul>
 </li>
@@ -118,148 +101,243 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary">
+<form action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
       
   <h1>Source code for mfm.plots.lineplot</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">uic</span><span class="p">,</span> <span class="n">Qt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pyqtgraph</span> <span class="k">as</span> <span class="nn">pg</span>
+<span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span>  <span class="n">QtWidgets</span><span class="p">,</span> <span class="n">uic</span>
+<span class="kn">import</span> <span class="nn">matplotlib.colors</span> <span class="k">as</span> <span class="nn">mpl_colors</span>
+
 <span class="kn">import</span> <span class="nn">mfm</span>
-<span class="kn">from</span> <span class="nn">mfm.plots</span> <span class="kn">import</span> <span class="n">plotbase</span>
-<span class="kn">import</span> <span class="nn">pyqtgraph</span> <span class="kn">as</span> <span class="nn">pg</span>
-<span class="kn">from</span> <span class="nn">pyqtgraph.dockarea</span> <span class="kn">import</span> <span class="n">DockArea</span><span class="p">,</span> <span class="n">Dock</span>
-<span class="n">pyqtgraph_settings</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s2">&quot;pyqtgraph&quot;</span><span class="p">]</span>
-<span class="k">for</span> <span class="n">setting</span> <span class="ow">in</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;pyqtgraph&#39;</span><span class="p">]:</span>
-    <span class="n">pg</span><span class="o">.</span><span class="n">setConfigOption</span><span class="p">(</span><span class="n">setting</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;pyqtgraph&#39;</span><span class="p">][</span><span class="n">setting</span><span class="p">])</span>
-<span class="c1">#colors = mfm.settings[&#39;gui&#39;][&#39;plot&#39;][&#39;colors&#39;]</span>
-<span class="n">color_scheme</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">colors</span>
+<span class="kn">import</span> <span class="nn">mfm.math</span>
+<span class="kn">import</span> <span class="nn">mfm.math.statistics</span>
+<span class="kn">from</span> <span class="nn">mfm.plots</span> <span class="k">import</span> <span class="n">plotbase</span>
+<span class="kn">from</span> <span class="nn">pyqtgraph.dockarea</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="n">pyqtgraph_settings</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">pyqtgraph_settings</span>
+<span class="n">color_scheme</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">colors</span>
 
 
+<div class="viewcode-block" id="LinePlotControl"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.lineplot.LinePlotControl">[docs]</a><span class="k">class</span> <span class="nc">LinePlotControl</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
 
-<div class="viewcode-block" id="LinePlotControl"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.lineplot.LinePlotControl">[docs]</a><span class="k">class</span> <span class="nc">LinePlotControl</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">d_scalex</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="n">d_scaley</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span> <span class="n">r_scaley</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span>
-                 <span class="n">reference_curve</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;mfm/ui/plots/linePlotWidget.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">scale_x</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+            <span class="n">d_scaley</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;log&#39;</span><span class="p">,</span>
+            <span class="n">r_scaley</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+            <span class="n">reference_curve</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="n">xmin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">ymin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="p">):</span>
+        <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span>
+                <span class="s2">&quot;linePlotWidget.ui&quot;</span>
+            <span class="p">),</span>
+            <span class="bp">self</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">use_reference</span> <span class="o">=</span> <span class="n">reference_curve</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">data_logy</span> <span class="o">=</span> <span class="n">d_scaley</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data_logx</span> <span class="o">=</span> <span class="n">d_scalex</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale_x</span> <span class="o">=</span> <span class="n">scale_x</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">res_logy</span> <span class="o">=</span> <span class="n">r_scaley</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;xmin&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ymin</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;xmin&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span> <span class="o">=</span> <span class="n">xmin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ymin</span> <span class="o">=</span> <span class="n">ymin</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionUpdate_Plot</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="n">parent</span><span class="o">.</span><span class="n">update_all</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;stateChanged (int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">SetLog</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_2</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;stateChanged (int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">SetLog</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_4</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;stateChanged (int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">SetLog</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_5</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;stateChanged (int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">SetReference</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actionUpdate_Plot</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">update_all</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="o">.</span><span class="n">stateChanged</span> <span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SetLog</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_2</span><span class="o">.</span><span class="n">stateChanged</span> <span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SetLog</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_4</span><span class="o">.</span><span class="n">stateChanged</span> <span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SetLog</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_5</span><span class="o">.</span><span class="n">stateChanged</span> <span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SetReference</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_3</span><span class="o">.</span><span class="n">stateChanged</span> <span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SetDensity</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">data_logy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">data_logy</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        y-data is plotted logarithmically</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s1">&#39;log&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="o">.</span><span class="n">isChecked</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;linear&#39;</span>
 
-    <span class="nd">@data_logy.setter</span>
-    <span class="k">def</span> <span class="nf">data_logy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="nd">@data_logy</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">data_logy</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">):</span>
         <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;lin&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">data_logx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">scale_x</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        x-data is plotted logarithmically</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s1">&#39;log&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_2</span><span class="o">.</span><span class="n">isChecked</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;linear&#39;</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">data_is_log_x</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_logx</span> <span class="o">==</span> <span class="s1">&#39;log&#39;</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">data_is_log_y</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_logy</span> <span class="o">==</span> <span class="s1">&#39;log&#39;</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">res_is_log_y</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">res_logy</span> <span class="o">==</span> <span class="s1">&#39;log&#39;</span>
-
-    <span class="nd">@data_logx.setter</span>
-    <span class="k">def</span> <span class="nf">data_logx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="nd">@scale_x</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">scale_x</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">):</span>
         <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;lin&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_2</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_2</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">res_logy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">data_is_log_x</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_x</span> <span class="o">==</span> <span class="s1">&#39;log&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data_is_log_y</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_logy</span> <span class="o">==</span> <span class="s1">&#39;log&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">res_is_log_y</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">res_logy</span> <span class="o">==</span> <span class="s1">&#39;log&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">res_logy</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        y-residuals is plotted logarithmically</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s1">&#39;log&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_4</span><span class="o">.</span><span class="n">isChecked</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;lin&#39;</span>
 
-    <span class="nd">@res_logy.setter</span>
-    <span class="k">def</span> <span class="nf">res_logy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="nd">@res_logy</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">res_logy</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">):</span>
         <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;lin&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_4</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_4</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">use_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">use_reference</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        If true use a reference curve for plotting</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_5</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span>
 
-    <span class="nd">@use_reference.setter</span>
-    <span class="k">def</span> <span class="nf">use_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="bp">True</span><span class="p">:</span>
+    <span class="nd">@use_reference</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">use_reference</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_5</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_5</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">ymin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">ymin</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_2</span><span class="o">.</span><span class="n">value</span><span class="p">()</span>
 
-    <span class="nd">@ymin.setter</span>
-    <span class="k">def</span> <span class="nf">ymin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="nd">@ymin</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">ymin</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_2</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">xmin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">xmin</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox</span><span class="o">.</span><span class="n">value</span><span class="p">()</span>
 
-    <span class="nd">@xmin.setter</span>
-    <span class="k">def</span> <span class="nf">xmin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="nd">@xmin</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">xmin</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">x_shift</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">x_shift</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_6</span><span class="o">.</span><span class="n">value</span><span class="p">()</span>
 
-    <span class="nd">@x_shift.setter</span>
-    <span class="k">def</span> <span class="nf">x_shift</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="nd">@x_shift</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">x_shift</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_6</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">y_shift</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">y_shift</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_5</span><span class="o">.</span><span class="n">value</span><span class="p">()</span>
 
-    <span class="nd">@y_shift.setter</span>
-    <span class="k">def</span> <span class="nf">y_shift</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="nd">@y_shift</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">y_shift</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_5</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_density</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_3</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span>
+
+    <span class="nd">@is_density</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">is_density</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_3</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_3</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
 <div class="viewcode-block" id="LinePlotControl.SetReference"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.lineplot.LinePlotControl.SetReference">[docs]</a>    <span class="k">def</span> <span class="nf">SetReference</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_all</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="LinePlotControl.SetLog"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.lineplot.LinePlotControl.SetLog">[docs]</a>    <span class="k">def</span> <span class="nf">SetLog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_all</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="LinePlotControl.SetDensity"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.lineplot.LinePlotControl.SetDensity">[docs]</a>    <span class="k">def</span> <span class="nf">SetDensity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_all</span><span class="p">()</span></div></div>
 
 
@@ -268,12 +346,12 @@
 <span class="sd">    Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals</span>
 <span class="sd">    and the autocorrelation of the residuals. Now it is also used also for FCS-data.</span>
 
-<span class="sd">    In case the model is a :py:class:`~experiment.model.tcspc.LifetimeModel` it takes the irf and displays it:</span>
+<span class="sd">    In case the models is a :py:class:`~experiment.models.tcspc.LifetimeModel` it takes the irf and displays it:</span>
 
-<span class="sd">        irf = fit.model.convolve.irf</span>
+<span class="sd">        irf = fit.models.convolve.irf</span>
 <span class="sd">        irf_y = irf.y</span>
 
-<span class="sd">    The model data and the weighted residuals are taken directly from the fit:</span>
+<span class="sd">    The models data and the weighted residuals are taken directly from the fit:</span>
 
 <span class="sd">        model_x, model_y = fit[:]</span>
 <span class="sd">        wres_y = fit.weighted_residuals</span>
@@ -282,22 +360,43 @@
 
     <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Fit&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="n">d_scalex</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span> <span class="n">d_scaley</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span> <span class="n">r_scaley</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span>
-                 <span class="n">reference_curve</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">plots</span><span class="o">.</span><span class="n">Plot</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">)</span>
-        <span class="c1"># plot control dialog</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pltControl</span> <span class="o">=</span> <span class="n">LinePlotControl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_scalex</span><span class="p">,</span> <span class="n">d_scaley</span><span class="p">,</span> <span class="n">r_scaley</span><span class="p">,</span> <span class="n">reference_curve</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">fit</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">FitGroup</span><span class="p">,</span>
+            <span class="n">scale_x</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+            <span class="n">d_scaley</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+            <span class="n">r_scaley</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+            <span class="n">reference_curve</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="n">x_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span>
+            <span class="n">y_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span>
+            <span class="n">plot_irf</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="n">data_x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">data_y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LinePlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fit</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_y</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">plot_irf</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;plot_irf&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="c1"># plot control dialog</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pltControl</span> <span class="o">=</span> <span class="n">LinePlotControl</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">scale_x</span><span class="p">,</span>
+            <span class="n">d_scaley</span><span class="p">,</span>
+            <span class="n">r_scaley</span><span class="p">,</span>
+            <span class="n">reference_curve</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_x</span> <span class="o">=</span> <span class="n">data_x</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_y</span> <span class="o">=</span> <span class="n">data_y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_irf</span> <span class="o">=</span> <span class="n">plot_irf</span>
 
         <span class="n">area</span> <span class="o">=</span> <span class="n">DockArea</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">area</span><span class="p">)</span>
-        <span class="n">hide_title</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;hideTitle&#39;</span><span class="p">]</span>
-        <span class="n">d1</span> <span class="o">=</span> <span class="n">Dock</span><span class="p">(</span><span class="s2">&quot;res&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">80</span><span class="p">),</span> <span class="n">hideTitle</span><span class="o">=</span><span class="n">hide_title</span><span class="p">)</span>
-        <span class="n">d2</span> <span class="o">=</span> <span class="n">Dock</span><span class="p">(</span><span class="s2">&quot;a.corr.&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">80</span><span class="p">),</span> <span class="n">hideTitle</span><span class="o">=</span><span class="n">hide_title</span><span class="p">)</span>
-        <span class="n">d3</span> <span class="o">=</span> <span class="n">Dock</span><span class="p">(</span><span class="s2">&quot;Fit&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">400</span><span class="p">),</span> <span class="n">hideTitle</span><span class="o">=</span><span class="n">hide_title</span><span class="p">)</span>
+        <span class="n">hide_title</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;hideTitle&#39;</span><span class="p">]</span>
+        <span class="n">d1</span> <span class="o">=</span> <span class="n">Dock</span><span class="p">(</span><span class="s2">&quot;residuals&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">300</span><span class="p">,</span> <span class="mi">80</span><span class="p">),</span> <span class="n">hideTitle</span><span class="o">=</span><span class="n">hide_title</span><span class="p">)</span>
+        <span class="n">d2</span> <span class="o">=</span> <span class="n">Dock</span><span class="p">(</span><span class="s2">&quot;a.corr.&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">300</span><span class="p">,</span> <span class="mi">80</span><span class="p">),</span> <span class="n">hideTitle</span><span class="o">=</span><span class="n">hide_title</span><span class="p">)</span>
+        <span class="n">d3</span> <span class="o">=</span> <span class="n">Dock</span><span class="p">(</span><span class="s2">&quot;Fit&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">300</span><span class="p">,</span> <span class="mi">300</span><span class="p">),</span> <span class="n">hideTitle</span><span class="o">=</span><span class="n">hide_title</span><span class="p">)</span>
 
         <span class="n">p1</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">PlotWidget</span><span class="p">(</span><span class="n">useOpenGL</span><span class="o">=</span><span class="n">pyqtgraph_settings</span><span class="p">[</span><span class="s1">&#39;useOpenGL&#39;</span><span class="p">])</span>
         <span class="n">p2</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">PlotWidget</span><span class="p">(</span><span class="n">useOpenGL</span><span class="o">=</span><span class="n">pyqtgraph_settings</span><span class="p">[</span><span class="s1">&#39;useOpenGL&#39;</span><span class="p">])</span>
@@ -308,13 +407,12 @@
         <span class="n">d3</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">p3</span><span class="p">)</span>
 
         <span class="n">area</span><span class="o">.</span><span class="n">addDock</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="s1">&#39;top&#39;</span><span class="p">)</span>
-        <span class="n">area</span><span class="o">.</span><span class="n">addDock</span><span class="p">(</span><span class="n">d2</span><span class="p">,</span> <span class="s1">&#39;right&#39;</span><span class="p">,</span> <span class="n">d1</span><span class="p">)</span>
-        <span class="n">area</span><span class="o">.</span><span class="n">addDock</span><span class="p">(</span><span class="n">d3</span><span class="p">,</span> <span class="s1">&#39;bottom&#39;</span><span class="p">)</span>
+        <span class="n">area</span><span class="o">.</span><span class="n">addDock</span><span class="p">(</span><span class="n">d2</span><span class="p">,</span> <span class="s1">&#39;top&#39;</span><span class="p">,</span> <span class="n">d1</span><span class="p">)</span>
+        <span class="n">area</span><span class="o">.</span><span class="n">addDock</span><span class="p">(</span><span class="n">d3</span><span class="p">,</span> <span class="s1">&#39;bottom&#39;</span><span class="p">,</span> <span class="n">d1</span><span class="p">)</span>
 
         <span class="n">residuals_plot</span> <span class="o">=</span> <span class="n">p1</span><span class="o">.</span><span class="n">getPlotItem</span><span class="p">()</span>
         <span class="n">auto_corr_plot</span> <span class="o">=</span> <span class="n">p2</span><span class="o">.</span><span class="n">getPlotItem</span><span class="p">()</span>
         <span class="n">data_plot</span> <span class="o">=</span> <span class="n">p3</span><span class="o">.</span><span class="n">getPlotItem</span><span class="p">()</span>
-        <span class="c1">#self.legend = data_plot.addLegend(offset=(150, 30))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">data_plot</span> <span class="o">=</span> <span class="n">data_plot</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">res_plot</span> <span class="o">=</span> <span class="n">residuals_plot</span>
@@ -323,11 +421,13 @@
         <span class="c1"># Labels</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">TextItem</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">border</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span> <span class="n">anchor</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data_plot</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="n">colors</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;colors&#39;</span><span class="p">]</span>
-        <span class="c1"># Fitting-region selector</span>
-        <span class="k">if</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;enable_region_selector&#39;</span><span class="p">]:</span>
+        <span class="n">colors</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;colors&#39;</span><span class="p">]</span>
 
-            <span class="n">region</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">LinearRegionItem</span><span class="p">(</span><span class="n">brush</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="s2">&quot;region_selector&quot;</span><span class="p">])</span>
+        <span class="c1"># Fitting-region selector</span>
+        <span class="k">if</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;enable_region_selector&#39;</span><span class="p">]:</span>
+            <span class="n">ca</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">mpl_colors</span><span class="o">.</span><span class="n">hex2color</span><span class="p">(</span><span class="n">colors</span><span class="p">[</span><span class="s2">&quot;region_selector&quot;</span><span class="p">]))</span>
+            <span class="n">co</span> <span class="o">=</span> <span class="p">[</span><span class="n">ca</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">255</span><span class="p">,</span> <span class="n">ca</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">255</span><span class="p">,</span> <span class="n">ca</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="mi">255</span><span class="p">,</span> <span class="n">colors</span><span class="p">[</span><span class="s2">&quot;region_selector_alpha&quot;</span><span class="p">]]</span>
+            <span class="n">region</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">LinearRegionItem</span><span class="p">(</span><span class="n">brush</span><span class="o">=</span><span class="n">co</span><span class="p">)</span>
             <span class="n">data_plot</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">region</span>
 
@@ -341,58 +441,55 @@
 
                 <span class="n">lb_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">data_x</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
                 <span class="n">ub_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">data_x</span><span class="p">,</span> <span class="n">ub</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
-
-                <span class="c1">#mfm.run(&quot;cs.current_fit.fit_range = %i, %i&quot; % (lb_i, ub_i - 1))</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">fit_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">lb_i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ub_i</span><span class="p">)</span>
-                <span class="c1">#self.fit.model.update_model()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">update_all</span><span class="p">(</span><span class="n">only_fit_range</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;cs.current_fit.fit_range = (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">lb_i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ub_i</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">update_all</span><span class="p">(</span><span class="n">only_fit_range</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
             <span class="n">region</span><span class="o">.</span><span class="n">sigRegionChangeFinished</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">update_region</span><span class="p">)</span>
-            <span class="c1">#proxy = pg.SignalProxy(region.sigRegionChanged, rateLimit=60, slot=update_region)</span>
 
         <span class="c1"># Grid</span>
-        <span class="k">if</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;enable_grid&#39;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;show_data_grid&#39;</span><span class="p">]:</span>
-                <span class="n">data_plot</span><span class="o">.</span><span class="n">showGrid</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;show_residual_grid&#39;</span><span class="p">]:</span>
-                <span class="n">residuals_plot</span><span class="o">.</span><span class="n">showGrid</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;show_acorr_grid&#39;</span><span class="p">]:</span>
-                <span class="n">auto_corr_plot</span><span class="o">.</span><span class="n">showGrid</span><span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;enable_grid&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;show_data_grid&#39;</span><span class="p">]:</span>
+                <span class="n">data_plot</span><span class="o">.</span><span class="n">showGrid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;show_residual_grid&#39;</span><span class="p">]:</span>
+                <span class="n">residuals_plot</span><span class="o">.</span><span class="n">showGrid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;show_acorr_grid&#39;</span><span class="p">]:</span>
+                <span class="n">auto_corr_plot</span><span class="o">.</span><span class="n">showGrid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
 
         <span class="c1"># Labels</span>
-        <span class="n">residuals_plot</span><span class="o">.</span><span class="n">setLabel</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="s2">&quot;w.res.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">residuals_plot</span> <span class="o">=</span> <span class="n">residuals_plot</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">auto_corr_plot</span> <span class="o">=</span> <span class="n">auto_corr_plot</span>
 
-        <span class="n">auto_corr_plot</span><span class="o">.</span><span class="n">setLabel</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="s2">&quot;a.corr.&quot;</span><span class="p">)</span>
-        <span class="n">data_plot</span><span class="o">.</span><span class="n">setLabel</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;y_label&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">))</span>
-        <span class="n">data_plot</span><span class="o">.</span><span class="n">setLabel</span><span class="p">(</span><span class="s1">&#39;bottom&#39;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;x_label&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;label_axis&#39;</span><span class="p">]:</span>
+            <span class="n">residuals_plot</span><span class="o">.</span><span class="n">setLabel</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="s2">&quot;w.res.&quot;</span><span class="p">)</span>
+            <span class="n">auto_corr_plot</span><span class="o">.</span><span class="n">setLabel</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="s2">&quot;a.corr.&quot;</span><span class="p">)</span>
+            <span class="n">data_plot</span><span class="o">.</span><span class="n">setLabel</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">y_label</span><span class="p">)</span>
+            <span class="n">data_plot</span><span class="o">.</span><span class="n">setLabel</span><span class="p">(</span><span class="s1">&#39;bottom&#39;</span><span class="p">,</span> <span class="n">x_label</span><span class="p">)</span>
 
         <span class="c1"># Plotted lines</span>
-        <span class="n">lw</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;line_width&#39;</span><span class="p">]</span>
+        <span class="n">lw</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;line_width&#39;</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_irf</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">irf_curve</span> <span class="o">=</span> <span class="n">data_plot</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">pen</span><span class="o">=</span><span class="n">pg</span><span class="o">.</span><span class="n">mkPen</span><span class="p">(</span><span class="n">colors</span><span class="p">[</span><span class="s1">&#39;irf&#39;</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="n">lw</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;IRF&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data_curve</span> <span class="o">=</span> <span class="n">data_plot</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">pen</span><span class="o">=</span><span class="n">pg</span><span class="o">.</span><span class="n">mkPen</span><span class="p">(</span><span class="n">colors</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="n">lw</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Data&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fit_curve</span> <span class="o">=</span> <span class="n">data_plot</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">pen</span><span class="o">=</span><span class="n">pg</span><span class="o">.</span><span class="n">mkPen</span><span class="p">(</span><span class="n">colors</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="n">lw</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Model&#39;</span><span class="p">)</span>
+        <span class="n">p1</span><span class="o">.</span><span class="n">setXLink</span><span class="p">(</span><span class="n">p3</span><span class="p">)</span>
+        <span class="n">p2</span><span class="o">.</span><span class="n">setXLink</span><span class="p">(</span><span class="n">p3</span><span class="p">)</span>
 
-<div class="viewcode-block" id="LinePlot.update_all"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.lineplot.LinePlot.update_all">[docs]</a>    <span class="k">def</span> <span class="nf">update_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">only_fit_range</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="LinePlot.update_all"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.lineplot.LinePlot.update_all">[docs]</a>    <span class="k">def</span> <span class="nf">update_all</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">only_fit_range</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
         <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span>
         <span class="c1"># Get parameters from plot-control</span>
         <span class="n">plt_ctrl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pltControl</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plt_ctrl</span><span class="p">,</span> <span class="n">LinePlotControl</span><span class="p">):</span>
-            <span class="n">data_log_y</span> <span class="o">=</span> <span class="n">plt_ctrl</span><span class="o">.</span><span class="n">data_is_log_y</span>
-            <span class="n">data_log_x</span> <span class="o">=</span> <span class="n">plt_ctrl</span><span class="o">.</span><span class="n">data_is_log_x</span>
-            <span class="n">res_log_y</span> <span class="o">=</span> <span class="n">plt_ctrl</span><span class="o">.</span><span class="n">res_is_log_y</span>
-            <span class="n">use_reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pltControl</span><span class="o">.</span><span class="n">use_reference</span>
-            <span class="n">y_shift</span> <span class="o">=</span> <span class="n">plt_ctrl</span><span class="o">.</span><span class="n">y_shift</span>
-            <span class="n">x_shift</span> <span class="o">=</span> <span class="n">plt_ctrl</span><span class="o">.</span><span class="n">x_shift</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">data_log_y</span> <span class="o">=</span> <span class="bp">False</span>
-            <span class="n">data_log_x</span> <span class="o">=</span> <span class="bp">False</span>
-            <span class="n">res_log_y</span> <span class="o">=</span> <span class="bp">False</span>
-            <span class="n">use_reference</span> <span class="o">=</span> <span class="bp">False</span>
-            <span class="n">x_shift</span> <span class="o">=</span> <span class="mf">0.0</span>
-            <span class="n">y_shift</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="n">data_log_y</span> <span class="o">=</span> <span class="n">plt_ctrl</span><span class="o">.</span><span class="n">data_is_log_y</span>
+        <span class="n">data_log_x</span> <span class="o">=</span> <span class="n">plt_ctrl</span><span class="o">.</span><span class="n">data_is_log_x</span>
+        <span class="n">res_log_y</span> <span class="o">=</span> <span class="n">plt_ctrl</span><span class="o">.</span><span class="n">res_is_log_y</span>
+        <span class="n">use_reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pltControl</span><span class="o">.</span><span class="n">use_reference</span>
+        <span class="n">y_shift</span> <span class="o">=</span> <span class="n">plt_ctrl</span><span class="o">.</span><span class="n">y_shift</span>
+        <span class="n">x_shift</span> <span class="o">=</span> <span class="n">plt_ctrl</span><span class="o">.</span><span class="n">x_shift</span>
 
         <span class="c1"># Model function</span>
         <span class="n">model_x</span><span class="p">,</span> <span class="n">model_y</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="p">[</span><span class="n">fit</span><span class="o">.</span><span class="n">xmin</span><span class="p">:</span><span class="n">fit</span><span class="o">.</span><span class="n">xmax</span><span class="p">]</span>
@@ -403,16 +500,23 @@
         <span class="n">data_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">y</span><span class="p">)</span> <span class="o">+</span> <span class="n">y_shift</span>
         <span class="c1"># Weighted residuals + Autocorrelation</span>
         <span class="n">wres_y</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">weighted_residuals</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pltControl</span><span class="o">.</span><span class="n">is_density</span><span class="p">:</span>
+            <span class="n">data_y</span> <span class="o">=</span> <span class="n">data_y</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="n">data_y</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">data_x</span><span class="p">)</span>
+
+            <span class="n">model_y</span> <span class="o">=</span> <span class="n">model_y</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="n">model_y</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">model_x</span><span class="p">)</span>
 
         <span class="c1"># IRF</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">irf_y</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">irf</span><span class="o">.</span><span class="n">y</span> <span class="o">*</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">n0</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">irf</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+            <span class="n">irf_y</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">irf</span><span class="o">.</span><span class="n">y</span> <span class="o">*</span> <span class="n">norm</span>
             <span class="n">irf_x</span> <span class="o">=</span> <span class="n">data_x</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="n">irf_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
             <span class="n">irf_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;No instrument response to plot.&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No instrument response to plot.&quot;</span><span class="p">)</span>
 
         <span class="n">xmin</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">data_x</span><span class="p">,</span> <span class="mf">1e-12</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">xmin</span><span class="p">)</span> <span class="k">if</span> <span class="n">data_log_x</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">xmin</span>
         <span class="n">lb_min</span><span class="p">,</span> <span class="n">ub_max</span> <span class="o">=</span> <span class="n">data_x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data_x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -429,7 +533,7 @@
             <span class="n">y_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">y_max</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">setPos</span><span class="p">(</span><span class="n">ub_max</span> <span class="o">*</span> <span class="o">.</span><span class="mi">7</span><span class="p">,</span> <span class="n">y_max</span> <span class="o">*</span> <span class="o">.</span><span class="mi">9</span><span class="p">)</span>
         <span class="c1">#self.legend.setPos(ub_max * .7, y_max * .3)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">setHtml</span><span class="p">(</span><span class="s1">&#39;&lt;div style=&quot;text-align: center&quot;&gt;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">setHtml</span><span class="p">(</span><span class="s1">&#39;&lt;div style=&quot;name-align: center&quot;&gt;&#39;</span>
                           <span class="s1">&#39;     &lt;span style=&quot;color: #FF0; font-size: 10pt;&quot;&gt;&#39;</span>
                           <span class="s1">&#39;         Fit-range: </span><span class="si">%s</span><span class="s1">, </span><span class="si">%s</span><span class="s1"> &lt;br /&gt;&#39;</span>
                           <span class="s1">&#39;         &amp;Chi;&lt;sup&gt;2&lt;/sup&gt;=</span><span class="si">%.4f</span><span class="s1"> &lt;br /&gt;&#39;</span>
@@ -437,7 +541,7 @@
                           <span class="s1">&#39;     &lt;/span&gt;&#39;</span>
                           <span class="s1">&#39;&lt;/div&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">fit</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="n">fit</span><span class="o">.</span><span class="n">xmax</span><span class="p">,</span>
                                       <span class="n">fit</span><span class="o">.</span><span class="n">chi2r</span><span class="p">,</span>
-                                      <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">durbin_watson</span><span class="p">(</span><span class="n">fit</span><span class="o">.</span><span class="n">weighted_residuals</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+                                      <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">statistics</span><span class="o">.</span><span class="n">durbin_watson</span><span class="p">(</span><span class="n">fit</span><span class="o">.</span><span class="n">weighted_residuals</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
                           <span class="p">)</span>
 
         <span class="c1"># Reference-function</span>
@@ -471,8 +575,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">residuals_plot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">auto_corr_plot</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
-        <span class="n">colors</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;colors&#39;</span><span class="p">]</span>
-        <span class="n">lw</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;line_width&#39;</span><span class="p">]</span>
+        <span class="n">colors</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;colors&#39;</span><span class="p">]</span>
+        <span class="n">lw</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;plot&#39;</span><span class="p">][</span><span class="s1">&#39;line_width&#39;</span><span class="p">]</span>
+
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">wres_y</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">residuals_plot</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">model_x</span><span class="p">,</span>
                                      <span class="n">y</span><span class="o">=</span><span class="n">w</span><span class="p">,</span>
@@ -481,7 +586,7 @@
             <span class="n">ac_y</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">autocorr</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">auto_corr_plot</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">model_x</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
                                      <span class="n">y</span><span class="o">=</span><span class="n">ac_y</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
-                                     <span class="n">pen</span><span class="o">=</span><span class="n">pg</span><span class="o">.</span><span class="n">mkPen</span><span class="p">(</span><span class="n">colors</span><span class="p">[</span><span class="s1">&#39;residuals&#39;</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="n">lw</span><span class="p">),</span>
+                                     <span class="n">pen</span><span class="o">=</span><span class="n">pg</span><span class="o">.</span><span class="n">mkPen</span><span class="p">(</span><span class="n">colors</span><span class="p">[</span><span class="s1">&#39;auto_corr&#39;</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="n">lw</span><span class="p">),</span>
                                      <span class="n">name</span><span class="o">=</span><span class="s1">&#39;residues&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data_x</span> <span class="o">=</span> <span class="n">data_x</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data_y</span> <span class="o">=</span> <span class="n">data_y</span></div></div>
@@ -500,7 +605,7 @@
     </p>
     <p>
         &copy; Copyright 2016, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

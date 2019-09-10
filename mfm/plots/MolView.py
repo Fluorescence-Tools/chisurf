@@ -258,7 +258,7 @@ class ControlWidget(QtWidgets.QWidget):
         sys.stdout = sys.__stdout__
 
     def normalOutputWritten(self, text):
-        """Append text to the QTextEdit."""
+        """Append name to the QTextEdit."""
         # Maybe QTextEdit.append() works as well, but this is how I do it:
         cursor = self.plainTextEdit.textCursor()
         cursor.movePosition(QtGui.QTextCursor.End)

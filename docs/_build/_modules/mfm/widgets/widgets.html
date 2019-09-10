@@ -1,44 +1,29 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>mfm.widgets.widgets &mdash; ChiSurf 0.0.5 documentation</title>
-    
-    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <meta charset="utf-8" />
+    <title>mfm.widgets.widgets &#8212; ChiSurf  documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../',
-        VERSION:     '0.0.5',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../index.html" />
-    <link rel="up" title="Module code" href="../../index.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body role="document">
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -51,7 +36,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -67,13 +52,11 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
-</ul>
-<ul class="simple">
 </ul>
 </ul>
 </li>
@@ -118,42 +101,113 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary">
+<form action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
       
   <h1>Source code for mfm.widgets.widgets</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Qt-Widgets used throughout ChiSURF</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">import</span> <span class="nn">fnmatch</span>
+<span class="kn">import</span> <span class="nn">numbers</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
 <span class="kn">import</span> <span class="nn">random</span>
-<span class="kn">from</span> <span class="nn">PyQt4.QtCore</span> <span class="kn">import</span> <span class="n">pyqtSignal</span>
-<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">uic</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">QtWidgets</span>
+<span class="kn">import</span> <span class="nn">pyqtgraph</span> <span class="k">as</span> <span class="nn">pg</span>
+<span class="kn">from</span> <span class="nn">qtconsole.qtconsoleapp</span> <span class="k">import</span> <span class="n">RichJupyterWidget</span>
+<span class="kn">from</span> <span class="nn">qtconsole.inprocess</span> <span class="k">import</span> <span class="n">QtInProcessKernelManager</span>
+<span class="kn">from</span> <span class="nn">IPython.lib</span> <span class="k">import</span> <span class="n">guisupport</span>
+
+<span class="kn">import</span> <span class="nn">mfm</span>
+<span class="kn">import</span> <span class="nn">mfm.curve</span>
 
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PYZMQ_BACKEND&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;cython&#39;</span>
-<span class="kn">from</span> <span class="nn">qtconsole.qtconsoleapp</span> <span class="kn">import</span> <span class="n">RichJupyterWidget</span>
-<span class="kn">from</span> <span class="nn">qtconsole.inprocess</span> <span class="kn">import</span> <span class="n">QtInProcessKernelManager</span>
-
-<span class="kn">from</span> <span class="nn">IPython.lib</span> <span class="kn">import</span> <span class="n">guisupport</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">mfm.structure</span> <span class="kn">import</span> <span class="n">Structure</span>
-<span class="kn">from</span> <span class="nn">mfm.structure.trajectory</span> <span class="kn">import</span> <span class="n">TrajectoryFile</span>
-<span class="kn">import</span> <span class="nn">mfm</span>
-
 <span class="n">DEFAULT_INSTANCE_ARGS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;qtconsole&#39;</span><span class="p">,</span><span class="s1">&#39;--pylab=inline&#39;</span><span class="p">,</span> <span class="s1">&#39;--colors=linux&#39;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="QIPythonWidget"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.QIPythonWidget">[docs]</a><span class="k">class</span> <span class="nc">QIPythonWidget</span><span class="p">(</span><span class="n">RichJupyterWidget</span><span class="p">):</span>
 
-<div class="viewcode-block" id="QIPythonWidget.run"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.QIPythonWidget.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">hidden</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">hidden</span><span class="p">)</span></div>
+<div class="viewcode-block" id="QIPythonWidget.start_recording"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.QIPythonWidget.start_recording">[docs]</a>    <span class="k">def</span> <span class="nf">start_recording</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_macro</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recording</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="QIPythonWidget.stop_recording"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.QIPythonWidget.stop_recording">[docs]</a>    <span class="k">def</span> <span class="nf">stop_recording</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recording</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="QIPythonWidget.run_macro"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.QIPythonWidget.run_macro">[docs]</a>    <span class="k">def</span> <span class="nf">run_macro</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">get_filename</span><span class="p">(</span><span class="s2">&quot;Python macros&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;Python file (*.py)&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">hidden</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="QIPythonWidget.save_macro"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.QIPythonWidget.save_macro">[docs]</a>    <span class="k">def</span> <span class="nf">save_macro</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_recording</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">save_file</span><span class="p">(</span><span class="s2">&quot;Python macros&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;Python file (*.py)&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_macro</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="QIPythonWidget.execute"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.QIPythonWidget.execute">[docs]</a>    <span class="k">def</span> <span class="nf">execute</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+            <span class="n">hidden</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">hidden</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">new_text</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session_file</span><span class="p">,</span> <span class="s1">&#39;a+&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+                    <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">new_text</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">recording</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_macro</span> <span class="o">+=</span> <span class="n">new_text</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">history_widget</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QPlainTextEdit</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">history_widget</span><span class="o">.</span><span class="n">insertPlainText</span><span class="p">(</span><span class="n">new_text</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="n">RichJupyterWidget</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="QIPythonWidget.execute_function"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.QIPythonWidget.execute_function">[docs]</a>    <span class="k">def</span> <span class="nf">execute_function</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">function</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Gets the function string executes the function on the command line</span>
+
+<span class="sd">        :param args:</span>
+<span class="sd">        :param kwargs:</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getsource</span><span class="p">(</span><span class="n">function</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">t</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">RichJupyterWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">RichJupyterWidget</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history_widget</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;history_widget&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">kernel_manager</span> <span class="o">=</span> <span class="n">kernel_manager</span> <span class="o">=</span> <span class="n">QtInProcessKernelManager</span><span class="p">()</span>
-        <span class="n">kernel_manager</span><span class="o">.</span><span class="n">start_kernel</span><span class="p">(</span><span class="n">show_banner</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-        <span class="n">kernel_manager</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">gui</span> <span class="o">=</span> <span class="s1">&#39;qt4&#39;</span>
+        <span class="n">kernel_manager</span><span class="o">.</span><span class="n">start_kernel</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">kernel_client</span> <span class="o">=</span> <span class="n">kernel_client</span> <span class="o">=</span> <span class="n">kernel_manager</span><span class="o">.</span><span class="n">client</span><span class="p">()</span>
         <span class="n">kernel_client</span><span class="o">.</span><span class="n">start_channels</span><span class="p">()</span>
 
@@ -163,7 +217,23 @@
             <span class="n">guisupport</span><span class="o">.</span><span class="n">get_app_qt4</span><span class="p">()</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">exit_requested</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">stop</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;width&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;console&#39;</span><span class="p">][</span><span class="s1">&#39;width&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s1">&#39;width&#39;</span><span class="p">,</span>
+            <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;console&#39;</span><span class="p">][</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_macro</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recording</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># save nevertheless every inputs into a session file</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;session_%H_%M_</span><span class="si">%d</span><span class="s1">_%m_%Y.py&#39;</span><span class="p">)</span>
+        <span class="n">home</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">home</span><span class="p">,</span> <span class="s1">&#39;./.chisurf&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_default_style</span><span class="p">(</span>
+            <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;console&#39;</span><span class="p">][</span><span class="s1">&#39;style&#39;</span><span class="p">]</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="QIPythonWidget.pushVariables"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.QIPythonWidget.pushVariables">[docs]</a>    <span class="k">def</span> <span class="nf">pushVariables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variableDict</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Given a dictionary containing name / value pairs, push those variables to the IPython console widget &quot;&quot;&quot;</span>
@@ -174,309 +244,112 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="QIPythonWidget.printText"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.QIPythonWidget.printText">[docs]</a>    <span class="k">def</span> <span class="nf">printText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Prints some plain text to the console &quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot; Prints some plain name to the console &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_append_plain_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="QIPythonWidget.executeCommand"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.QIPythonWidget.executeCommand">[docs]</a>    <span class="k">def</span> <span class="nf">executeCommand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Execute a command in the frame of the console widget &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;show_commands&#39;</span><span class="p">])</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;show_commands&#39;</span><span class="p">])</span></div></div>
 
 
-<div class="viewcode-block" id="widgets_in_layout"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.widgets_in_layout">[docs]</a><span class="k">def</span> <span class="nf">widgets_in_layout</span><span class="p">(</span><span class="n">layout</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Return the widgets within a layout</span>
-
-<span class="sd">    :param layout:</span>
-<span class="sd">    :return:</span>
+<div class="viewcode-block" id="get_widgets_in_layout"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.get_widgets_in_layout">[docs]</a><span class="k">def</span> <span class="nf">get_widgets_in_layout</span><span class="p">(</span><span class="n">layout</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a list of all widgets within a layout</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">itemAt</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">count</span><span class="p">()))</span></div>
 
 
 <div class="viewcode-block" id="clear_layout"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.clear_layout">[docs]</a><span class="k">def</span> <span class="nf">clear_layout</span><span class="p">(</span><span class="n">layout</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Used to clear all widgets in a layout</span>
-<span class="sd">    :param layout:</span>
-<span class="sd">    :return:</span>
+    <span class="sd">&quot;&quot;&quot;Clears all widgets within a layout</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">layout</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="k">while</span> <span class="n">layout</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
-            <span class="n">child</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">takeAt</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">widget</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="n">child</span><span class="o">.</span><span class="n">widget</span><span class="p">()</span><span class="o">.</span><span class="n">deleteLater</span><span class="p">()</span>
-            <span class="k">elif</span> <span class="n">child</span><span class="o">.</span><span class="n">layout</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="n">clear_layout</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">layout</span><span class="p">())</span></div>
+    <span class="k">while</span> <span class="n">layout</span><span class="o">.</span><span class="n">count</span><span class="p">():</span>
+        <span class="n">child</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">takeAt</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">widget</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">child</span><span class="o">.</span><span class="n">widget</span><span class="p">()</span><span class="o">.</span><span class="n">deleteLater</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">child</span><span class="o">.</span><span class="n">layout</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">clear_layout</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">layout</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="hide_items_in_layout"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.hide_items_in_layout">[docs]</a><span class="k">def</span> <span class="nf">hide_items_in_layout</span><span class="p">(</span><span class="n">layout</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;This function hides all items within a Qt-layout</span>
-
-<span class="sd">    :param layout: Qt-Layout</span>
+    <span class="sd">&quot;&quot;&quot;Hides all items within a Qt-layout</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">count</span><span class="p">()):</span>
         <span class="n">item</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">itemAt</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">==</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidgetItem</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">==</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidgetItem</span><span class="p">:</span>
             <span class="n">item</span><span class="o">.</span><span class="n">widget</span><span class="p">()</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="get_fortune"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.get_fortune">[docs]</a><span class="k">def</span> <span class="nf">get_fortune</span><span class="p">(</span><span class="n">fortunepath</span><span class="o">=</span><span class="s1">&#39;./mfm/ui/fortune/&#39;</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">attempts</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="get_fortune"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.get_fortune">[docs]</a><span class="k">def</span> <span class="nf">get_fortune</span><span class="p">(</span>
+        <span class="n">fortunepath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;./mfm/ui/fortune/&#39;</span><span class="p">,</span>
+        <span class="n">min_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">max_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">attempts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
     <span class="n">fortune_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">pdat</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">pdat</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">fortunepath</span><span class="p">)</span> <span class="k">if</span> <span class="n">pdat</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.pdat&quot;</span><span class="p">)]</span>
     <span class="n">attempt</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
         <span class="n">fortune_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fortunepath</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">fortune_files</span><span class="p">))</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">fortune_file</span><span class="o">+</span><span class="s2">&quot;.pdat&quot;</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
         <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="k">print</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">length</span> <span class="o">&lt;</span> <span class="n">min_length</span> <span class="ow">or</span> <span class="p">(</span><span class="n">max_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">length</span> <span class="o">&gt;</span> <span class="n">max_length</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">length</span> <span class="o">&lt;</span> <span class="n">min_length</span> <span class="ow">or</span> <span class="p">(</span><span class="n">max_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">length</span> <span class="o">&gt;</span> <span class="n">max_length</span><span class="p">):</span>
             <span class="n">attempt</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">if</span> <span class="n">attempt</span> <span class="o">&gt;</span> <span class="n">attempts</span><span class="p">:</span>
                 <span class="k">return</span> <span class="s2">&quot;&quot;</span>
             <span class="k">continue</span>
-        <span class="n">ffh</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fortune_file</span><span class="p">,</span> <span class="s1">&#39;rU&#39;</span><span class="p">)</span>
-        <span class="n">ffh</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
-        <span class="n">fortunecookie</span> <span class="o">=</span> <span class="n">ffh</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">length</span><span class="p">)</span>
-        <span class="n">ffh</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fortune_file</span><span class="p">,</span> <span class="s1">&#39;rU&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ffh</span><span class="p">:</span>
+            <span class="n">ffh</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+            <span class="n">fortunecookie</span> <span class="o">=</span> <span class="n">ffh</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">length</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">fortunecookie</span></div>
 
 
-<div class="viewcode-block" id="AVProperties"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.AVProperties">[docs]</a><span class="k">class</span> <span class="nc">AVProperties</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+<div class="viewcode-block" id="MyMessageBox"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.MyMessageBox">[docs]</a><span class="k">class</span> <span class="nc">MyMessageBox</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMessageBox</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av_type</span><span class="o">=</span><span class="s2">&quot;AV1&quot;</span><span class="p">):</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;./mfm/ui/av_property.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_av_type</span> <span class="o">=</span> <span class="n">av_type</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">av_type</span> <span class="o">=</span> <span class="n">av_type</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">groupBox</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">av_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_av_type</span>
-
-    <span class="nd">@av_type.setter</span>
-    <span class="k">def</span> <span class="nf">av_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_av_type</span> <span class="o">=</span> <span class="n">v</span>
-        <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;AV1&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">label_4</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">label_5</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_4</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_5</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;AV0&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_4</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_5</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;AV3&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">label_4</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">label_5</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_4</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_5</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">linker_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
-
-    <span class="nd">@linker_length.setter</span>
-    <span class="k">def</span> <span class="nf">linker_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">linker_width</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_2</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
-
-    <span class="nd">@linker_width.setter</span>
-    <span class="k">def</span> <span class="nf">linker_width</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_2</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">radius_1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_3</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
-
-    <span class="nd">@radius_1.setter</span>
-    <span class="k">def</span> <span class="nf">radius_1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_3</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">radius_2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_4</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
-
-    <span class="nd">@radius_2.setter</span>
-    <span class="k">def</span> <span class="nf">radius_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_4</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">radius_3</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_5</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
-
-    <span class="nd">@radius_3.setter</span>
-    <span class="k">def</span> <span class="nf">radius_3</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_5</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">resolution</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_6</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
-
-    <span class="nd">@resolution.setter</span>
-    <span class="k">def</span> <span class="nf">resolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_6</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">initial_linker_sphere</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_7</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
-
-    <span class="nd">@initial_linker_sphere.setter</span>
-    <span class="k">def</span> <span class="nf">initial_linker_sphere</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_7</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">initial_linker_sphere_min</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_8</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
-
-    <span class="nd">@initial_linker_sphere_min.setter</span>
-    <span class="k">def</span> <span class="nf">initial_linker_sphere_min</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_8</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">initial_linker_sphere_max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_9</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
-
-    <span class="nd">@initial_linker_sphere_max.setter</span>
-    <span class="k">def</span> <span class="nf">initial_linker_sphere_max</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_9</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="PDBSelector"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.PDBSelector">[docs]</a><span class="k">class</span> <span class="nc">PDBSelector</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">show_labels</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;./mfm/ui/pdb_widget.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_pdb</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;currentIndexChanged(int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onChainChanged</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;currentIndexChanged(int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onResidueChanged</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">show_labels</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">label_2</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">label_3</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">update</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;currentIndexChanged(int)&quot;</span><span class="p">),</span> <span class="n">update</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;currentIndexChanged(int)&quot;</span><span class="p">),</span> <span class="n">update</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pdb</span>
-
-    <span class="nd">@atoms.setter</span>
-    <span class="k">def</span> <span class="nf">atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_pdb</span> <span class="o">=</span> <span class="n">v</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">update_chain</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">chain_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">currentText</span><span class="p">())</span>
-
-    <span class="nd">@chain_id.setter</span>
-    <span class="k">def</span> <span class="nf">chain_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="k">pass</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">residue_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">atom_number</span><span class="p">][</span><span class="s1">&#39;res_name&#39;</span><span class="p">])</span>
-        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-            <span class="k">return</span> <span class="mi">0</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">residue_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="o">.</span><span class="n">currentText</span><span class="p">())</span>
-        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-            <span class="k">return</span> <span class="mi">0</span>
-
-    <span class="nd">@residue_id.setter</span>
-    <span class="k">def</span> <span class="nf">residue_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="k">pass</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">atom_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comboBox_3</span><span class="o">.</span><span class="n">currentText</span><span class="p">())</span>
-
-    <span class="nd">@atom_name.setter</span>
-    <span class="k">def</span> <span class="nf">atom_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="k">pass</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">atom_number</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">pdb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span>
-        <span class="n">residue_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">residue_id</span>
-        <span class="n">atom_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atom_name</span>
-        <span class="n">chain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chain_id</span>
-        <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">pdb</span><span class="p">[</span><span class="s1">&#39;res_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">residue_key</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pdb</span><span class="p">[</span><span class="s1">&#39;atom_name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">atom_name</span><span class="p">)</span> <span class="o">&amp;</span>
-                     <span class="p">(</span><span class="n">pdb</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">chain</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">w</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-
-<div class="viewcode-block" id="PDBSelector.onChainChanged"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.PDBSelector.onChainChanged">[docs]</a>    <span class="k">def</span> <span class="nf">onChainChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;PDBSelector:onChainChanged&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="n">pdb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pdb</span>
-        <span class="n">chain</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">currentText</span><span class="p">())</span>
-        <span class="n">atom_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pdb</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">chain</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">residue_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;res_id&#39;</span><span class="p">][</span><span class="n">atom_ids</span><span class="p">]))</span>
-        <span class="n">residue_ids_str</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">residue_ids</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span><span class="n">residue_ids_str</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="PDBSelector.onResidueChanged"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.PDBSelector.onResidueChanged">[docs]</a>    <span class="k">def</span> <span class="nf">onResidueChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_3</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="n">pdb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span>
-        <span class="n">chain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chain_id</span>
-        <span class="n">residue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">residue_id</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;onResidueChanged: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">residue</span><span class="p">)</span>
-        <span class="n">atom_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">pdb</span><span class="p">[</span><span class="s1">&#39;res_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">residue</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pdb</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">chain</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">atom_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">atom</span><span class="p">[</span><span class="s1">&#39;atom_name&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">pdb</span><span class="p">[</span><span class="n">atom_ids</span><span class="p">]]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_3</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span><span class="n">atom_names</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="PDBSelector.update_chain"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.PDBSelector.update_chain">[docs]</a>    <span class="k">def</span> <span class="nf">update_chain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="n">chain_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">][:]))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span><span class="n">chain_ids</span><span class="p">)</span></div></div>
-
-
-<div class="viewcode-block" id="MyMessageBox"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.MyMessageBox">[docs]</a><span class="k">class</span> <span class="nc">MyMessageBox</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QMessageBox</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">info</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MyMessageBox</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">Icon</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setSizeGripEnabled</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setIcon</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">Information</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setSizeGripEnabled</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setIcon</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">Information</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">info</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">info</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">setDetailedText</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fortune&#39;</span><span class="p">]:</span>
-            <span class="n">fortune</span> <span class="o">=</span> <span class="n">get_fortune</span><span class="p">(</span><span class="o">**</span><span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fortune&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fortune&#39;</span><span class="p">]:</span>
+            <span class="n">fortune</span> <span class="o">=</span> <span class="n">get_fortune</span><span class="p">(</span><span class="o">**</span><span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fortune&#39;</span><span class="p">])</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">setInformativeText</span><span class="p">(</span><span class="n">fortune</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">exec_</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">setMinimumWidth</span><span class="p">(</span><span class="mi">450</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">setSizePolicy</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Expanding</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Expanding</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setSizePolicy</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Expanding</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Expanding</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
 <div class="viewcode-block" id="MyMessageBox.event"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.MyMessageBox.event">[docs]</a>    <span class="k">def</span> <span class="nf">event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">setMinimumHeight</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setMaximumHeight</span><span class="p">(</span><span class="mi">16777215</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setMaximumWidth</span><span class="p">(</span><span class="mi">16777215</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setSizePolicy</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Expanding</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Expanding</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setSizePolicy</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Expanding</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Expanding</span><span class="p">)</span>
 
-        <span class="n">textEdit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">findChild</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTextEdit</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">textEdit</span> <span class="o">!=</span> <span class="bp">None</span> <span class="p">:</span>
+        <span class="n">textEdit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">findChild</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QTextEdit</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">textEdit</span> <span class="o">!=</span> <span class="kc">None</span> <span class="p">:</span>
             <span class="n">textEdit</span><span class="o">.</span><span class="n">setMinimumHeight</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="n">textEdit</span><span class="o">.</span><span class="n">setMaximumHeight</span><span class="p">(</span><span class="mi">16777215</span><span class="p">)</span>
             <span class="n">textEdit</span><span class="o">.</span><span class="n">setMinimumWidth</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="n">textEdit</span><span class="o">.</span><span class="n">setMaximumWidth</span><span class="p">(</span><span class="mi">16777215</span><span class="p">)</span>
-            <span class="n">textEdit</span><span class="o">.</span><span class="n">setSizePolicy</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Expanding</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Expanding</span><span class="p">)</span>
+            <span class="n">textEdit</span><span class="o">.</span><span class="n">setSizePolicy</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Expanding</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Expanding</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">result</span></div></div>
 
 
-<div class="viewcode-block" id="FileList"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.FileList">[docs]</a><span class="k">class</span> <span class="nc">FileList</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QListWidget</span><span class="p">):</span>
+<div class="viewcode-block" id="FileList"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.FileList">[docs]</a><span class="k">class</span> <span class="nc">FileList</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QListWidget</span><span class="p">):</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">filenames</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">filenames</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="n">fn</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">count</span><span class="p">()):</span>
             <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
@@ -497,306 +370,41 @@
             <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">mimeData</span><span class="p">()</span><span class="o">.</span><span class="n">urls</span><span class="p">():</span>
                 <span class="n">s</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">url</span><span class="o">.</span><span class="n">toLocalFile</span><span class="p">())</span>
                 <span class="n">url</span><span class="o">.</span><span class="n">setScheme</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename_ending</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename_ending</span><span class="p">)</span> <span class="ow">or</span> \
+                        <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename_ending</span><span class="o">+</span><span class="s1">&#39;.gz&#39;</span><span class="p">)</span> <span class="ow">or</span> \
+                        <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename_ending</span><span class="o">+</span><span class="s1">&#39;.bz2&#39;</span><span class="p">)</span> <span class="ow">or</span> \
+                        <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename_ending</span><span class="o">+</span><span class="s1">&#39;.zip&#39;</span><span class="p">):</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
             <span class="n">event</span><span class="o">.</span><span class="n">acceptProposedAction</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">super</span><span class="p">(</span><span class="n">FileList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">dropEvent</span><span class="p">(</span><span class="n">event</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QListWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">accept_drops</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;drag_enabled&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">filename_ending</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;filename_ending&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">accept_drops</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">setAcceptDrops</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">setDragDropMode</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QAbstractItemView</span><span class="o">.</span><span class="n">InternalMove</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">accept_drops</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="n">filename_ending</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;*&quot;</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param accept_drops: if True accepts files that are dropped into the list</span>
+<span class="sd">        :param kwargs:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FileList</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename_ending</span> <span class="o">=</span> <span class="n">filename_ending</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drag_item</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drag_row</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">drag_item</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">drag_row</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">accept_drops</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setAcceptDrops</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setDragDropMode</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QAbstractItemView</span><span class="o">.</span><span class="n">InternalMove</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">setWindowIcon</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QIcon</span><span class="p">(</span><span class="s2">&quot;:/icons/icons/list-add.png&quot;</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="CurveSelector"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector">[docs]</a><span class="k">class</span> <span class="nc">CurveSelector</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTreeWidget</span><span class="p">):</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">curve_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_dataset</span><span class="o">.</span><span class="n">name</span>
-        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Noname&quot;</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">data_curves</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data_curves</span><span class="p">(</span><span class="n">curve_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">curve_type</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data_curves</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">setup</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">)]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">data_curves</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">selected_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">isValid</span><span class="p">():</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">()</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
-
-    <span class="nd">@selected_index.setter</span>
-    <span class="k">def</span> <span class="nf">selected_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">selected_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_index</span><span class="p">]</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">selected_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">data_sets_idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">row</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">selectedIndexes</span><span class="p">()]</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">data_sets_idx</span><span class="p">]</span>
-
-<div class="viewcode-block" id="CurveSelector.onCurveChanged"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector.onCurveChanged">[docs]</a>    <span class="k">def</span> <span class="nf">onCurveChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">click_close</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">change_event</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="CurveSelector.onChangeCurveName"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector.onChangeCurveName">[docs]</a>    <span class="k">def</span> <span class="nf">onChangeCurveName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># select current curve and change its name</span>
-        <span class="k">pass</span></div>
-
-<div class="viewcode-block" id="CurveSelector.onRemoveDataset"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector.onRemoveDataset">[docs]</a>    <span class="k">def</span> <span class="nf">onRemoveDataset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">dataset_idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">selected_index</span><span class="o">.</span><span class="n">row</span><span class="p">()</span> <span class="k">for</span> <span class="n">selected_index</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">selectedIndexes</span><span class="p">()]</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">console</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;cs.remove_dataset(</span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="n">dataset_idx</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="CurveSelector.onSaveDataset"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector.onSaveDataset">[docs]</a>    <span class="k">def</span> <span class="nf">onSaveDataset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">save_file</span><span class="p">(</span><span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;*.csv&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">selected_dataset</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="CurveSelector.onGroupDatasets"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector.onGroupDatasets">[docs]</a>    <span class="k">def</span> <span class="nf">onGroupDatasets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">datasets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_datasets</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mfm</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">DataCurve</span><span class="p">):</span>
-            <span class="c1"># TODO: check for double names!!!</span>
-            <span class="n">dg</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">ExperimentDataCurveGroup</span><span class="p">(</span><span class="n">datasets</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Unnamed&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">dg</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">ExperimentDataGroup</span><span class="p">(</span><span class="n">datasets</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Unnamed&quot;</span><span class="p">)</span>
-        <span class="n">dn</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">data_sets</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">d</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dg</span><span class="p">:</span>
-                <span class="n">dn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-        <span class="n">dn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dg</span><span class="p">)</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">data_sets</span> <span class="o">=</span> <span class="n">dn</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="CurveSelector.onUnGroupDatasets"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector.onUnGroupDatasets">[docs]</a>    <span class="k">def</span> <span class="nf">onUnGroupDatasets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">dg</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">ExperimentDataGroup</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_datasets</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">dn</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">data_sets</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">dg</span><span class="p">:</span>
-                <span class="n">dn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">dn</span> <span class="o">+=</span> <span class="n">dg</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">data_sets</span> <span class="o">=</span> <span class="n">dn</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="CurveSelector.contextMenuEvent"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector.contextMenuEvent">[docs]</a>    <span class="k">def</span> <span class="nf">contextMenuEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
-        <span class="n">menu</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QMenu</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">menu</span><span class="o">.</span><span class="n">setTitle</span><span class="p">(</span><span class="s2">&quot;Datasets&quot;</span><span class="p">)</span>
-        <span class="n">menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="s2">&quot;Save&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onSaveDataset</span><span class="p">)</span>
-        <span class="n">menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="s2">&quot;Remove&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onRemoveDataset</span><span class="p">)</span>
-        <span class="n">menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="s2">&quot;Group&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onGroupDatasets</span><span class="p">)</span>
-        <span class="n">menu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="s2">&quot;Ungroup&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onUnGroupDatasets</span><span class="p">)</span>
-        <span class="n">menu</span><span class="o">.</span><span class="n">exec_</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">globalPos</span><span class="p">())</span></div>
-
-<div class="viewcode-block" id="CurveSelector.update"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QTreeWidget</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">window_title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">name</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="n">window_title</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-
-        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">:</span>
-            <span class="n">fn</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">name</span>
-            <span class="n">item</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTreeWidgetItem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">[</span><span class="n">fn</span><span class="p">])</span>
-            <span class="n">item</span><span class="o">.</span><span class="n">setFlags</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">flags</span><span class="p">()</span> <span class="o">|</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">ItemIsEditable</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">ExperimentDataGroup</span><span class="p">):</span>
-                <span class="k">for</span> <span class="n">di</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
-                    <span class="n">i2</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTreeWidgetItem</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="p">[</span><span class="n">di</span><span class="o">.</span><span class="n">name</span><span class="p">])</span></div>
-
-<div class="viewcode-block" id="CurveSelector.dragMoveEvent"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector.dragMoveEvent">[docs]</a>    <span class="k">def</span> <span class="nf">dragMoveEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">CurveSelector</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">dragMoveEvent</span><span class="p">(</span><span class="n">event</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="CurveSelector.dragEnterEvent"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector.dragEnterEvent">[docs]</a>    <span class="k">def</span> <span class="nf">dragEnterEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">mimeData</span><span class="p">()</span><span class="o">.</span><span class="n">hasUrls</span><span class="p">():</span>
-            <span class="n">event</span><span class="o">.</span><span class="n">acceptProposedAction</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="nb">super</span><span class="p">(</span><span class="n">CurveSelector</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">dragEnterEvent</span><span class="p">(</span><span class="n">event</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="CurveSelector.startDrag"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector.startDrag">[docs]</a>    <span class="k">def</span> <span class="nf">startDrag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">supportedActions</span><span class="p">):</span>
-        <span class="c1">#self.drag_item = self.currentItem()</span>
-        <span class="c1">#self.drag_row = self.row(self.drag_item)</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">CurveSelector</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">startDrag</span><span class="p">(</span><span class="n">supportedActions</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="CurveSelector.dropEvent"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector.dropEvent">[docs]</a>    <span class="k">def</span> <span class="nf">dropEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">mimeData</span><span class="p">()</span><span class="o">.</span><span class="n">hasUrls</span><span class="p">():</span>
-            <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">url</span><span class="o">.</span><span class="n">toLocalFile</span><span class="p">())</span> <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">mimeData</span><span class="p">()</span><span class="o">.</span><span class="n">urls</span><span class="p">()]</span>
-            <span class="n">paths</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
-                <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;cs.add_dataset(filename=&#39;</span><span class="si">%s</span><span class="s2">&#39;)&quot;</span> <span class="o">%</span> <span class="n">path</span>
-                <span class="n">mfm</span><span class="o">.</span><span class="n">console</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-            <span class="n">event</span><span class="o">.</span><span class="n">acceptProposedAction</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="nb">super</span><span class="p">(</span><span class="n">CurveSelector</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">dropEvent</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="CurveSelector.onItemChanged"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector.onItemChanged">[docs]</a>    <span class="k">def</span> <span class="nf">onItemChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_datasets</span><span class="p">:</span>
-            <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">ds</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">currentItem</span><span class="p">()</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span></div>
-
-<div class="viewcode-block" id="CurveSelector.change_event"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector.change_event">[docs]</a>    <span class="k">def</span> <span class="nf">change_event</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span></div>
-
-<div class="viewcode-block" id="CurveSelector.show"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.CurveSelector.show">[docs]</a>    <span class="k">def</span> <span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QTreeWidget</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QTreeWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setWindowIcon</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QIcon</span><span class="p">(</span><span class="s2">&quot;:/icons/icons/list-add.png&quot;</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setHeaderHidden</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setColumnCount</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setAlternatingRowColors</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;drag_enabled&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">setAcceptDrops</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">setDragDropMode</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QAbstractItemView</span><span class="o">.</span><span class="n">InternalMove</span><span class="p">)</span>
-            <span class="c1">#self.setDragDropMode(QtGui.QAbstractItemView.DropOnly)</span>
-
-        <span class="c1"># http://python.6.x6.nabble.com/Drag-and-drop-editing-in-QListWidget-or-QListView-td1792540.html</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">drag_item</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">drag_row</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">get_data_curves</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;get_data_curves&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">get_data</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">change_event</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;change_event&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">change_event</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">curve_type</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;curve_types&#39;</span><span class="p">,</span> <span class="s1">&#39;experiment&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">click_close</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;click_close&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setup</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;setup&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fit&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="n">x_size</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;x_size&#39;</span><span class="p">,</span> <span class="mi">600</span><span class="p">)</span>
-        <span class="n">y_size</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;x_size&#39;</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">x_size</span><span class="p">,</span> <span class="n">y_size</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setWordWrap</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setSelectionMode</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QAbstractItemView</span><span class="o">.</span><span class="n">ExtendedSelection</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onCurveChanged</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">itemChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onItemChanged</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="LoadThread"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.LoadThread">[docs]</a><span class="k">class</span> <span class="nc">LoadThread</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QThread</span><span class="p">):</span>
-
-    <span class="c1">#procDone = pyqtSignal(bool)</span>
-    <span class="c1">#partDone = pyqtSignal(int)</span>
-
-<div class="viewcode-block" id="LoadThread.run"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.LoadThread.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">nFiles</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">)</span>
-        <span class="k">print</span><span class="p">(</span><span class="s1">&#39;File loading started&#39;</span><span class="p">)</span>
-        <span class="k">print</span><span class="p">(</span><span class="s1">&#39;#Files: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">nFiles</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">fn</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">):</span>
-            <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">read_parameter</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">append_parameter</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">partDone</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">nFiles</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
-        <span class="c1">#self.procDone.emit(True)</span>
-        <span class="k">print</span><span class="p">(</span><span class="s1">&#39;reading finished&#39;</span><span class="p">)</span></div></div>
-
-
-<div class="viewcode-block" id="PDBFolderLoad"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.PDBFolderLoad">[docs]</a><span class="k">class</span> <span class="nc">PDBFolderLoad</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s2">&quot;mfm/ui/proteinFolderLoad.ui&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pushButton_12</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;clicked()&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onLoadStructure</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">updatePBar</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">load_thread</span> <span class="o">=</span> <span class="n">LoadThread</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">load_thread</span><span class="o">.</span><span class="n">partDone</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">updatePBar</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">load_thread</span><span class="o">.</span><span class="n">procDone</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fin</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">()</span>
-
-<div class="viewcode-block" id="PDBFolderLoad.fin"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.PDBFolderLoad.fin">[docs]</a>    <span class="k">def</span> <span class="nf">fin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Loading of structures finished&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nAtoms</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_2</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nResidues</span><span class="p">))</span></div>
-
-<div class="viewcode-block" id="PDBFolderLoad.updatePBar"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.PDBFolderLoad.updatePBar">[docs]</a>    <span class="k">def</span> <span class="nf">updatePBar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">progressBar</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">val</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="PDBFolderLoad.onLoadStructure"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.PDBFolderLoad.onLoadStructure">[docs]</a>    <span class="k">def</span> <span class="nf">onLoadStructure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">directory</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getExistingDirectory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;Select Directory&quot;</span><span class="p">))</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">folder</span> <span class="o">=</span> <span class="n">directory</span>
-        <span class="n">filenames</span> <span class="o">=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
-                     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">f</span><span class="p">))]</span>
-        <span class="n">filenames</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
-
-        <span class="n">pdb_filenames</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">filename</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">filenames</span><span class="p">):</span>
-            <span class="n">extension</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span>
-            <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.pdb&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">extension</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
-                <span class="n">pdb_filenames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_files</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pdb_filenames</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">load_thread</span><span class="o">.</span><span class="n">read</span> <span class="o">=</span> <span class="n">Structure</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">load_thread</span><span class="o">.</span><span class="n">read_parameter</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">calc_internal</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">load_thread</span><span class="o">.</span><span class="n">append_parameter</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">calc_rmsd</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="n">use_objects</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">use_objects</span><span class="p">,</span> <span class="n">calc_internal</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">calc_internal</span><span class="p">,</span>
-                                     <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">load_thread</span><span class="o">.</span><span class="n">filenames</span> <span class="o">=</span> <span class="n">pdb_filenames</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">load_thread</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">load_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">calc_rmsd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_4</span><span class="o">.</span><span class="n">isChecked</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">n_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_3</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
-
-    <span class="nd">@n_files.setter</span>
-    <span class="k">def</span> <span class="nf">n_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_3</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">verbose</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_3</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">nAtoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">n_atoms</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">nResidues</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">n_residues</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">folder</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_7</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
-
-    <span class="nd">@folder.setter</span>
-    <span class="k">def</span> <span class="nf">folder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_7</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">use_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_2</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">calc_internal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="o">.</span><span class="n">isChecked</span><span class="p">()</span></div>
-
-
-<div class="viewcode-block" id="open_file"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.open_file">[docs]</a><span class="k">def</span> <span class="nf">open_file</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;All files (*.*)&#39;</span><span class="p">,</span> <span class="n">working_path</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="get_filename"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.get_filename">[docs]</a><span class="k">def</span> <span class="nf">get_filename</span><span class="p">(</span>
+        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="n">file_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;All files (*.*)&#39;</span><span class="p">,</span>
+        <span class="n">working_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Open a file within a working path. If no path is specified the last</span>
 <span class="sd">    path is used. After using this function the current working path of the</span>
 <span class="sd">    running program (ChiSurf) is updated according to the folder of the opened</span>
@@ -807,14 +415,24 @@
 <span class="sd">    :param file_type:</span>
 <span class="sd">    :return:</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">working_path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">working_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">working_path</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">working_path</span>
-    <span class="n">filename</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getOpenFileName</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">working_path</span><span class="p">,</span> <span class="n">file_type</span><span class="p">))</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span>
+        <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getOpenFileName</span><span class="p">(</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="n">description</span><span class="p">,</span>
+            <span class="n">working_path</span><span class="p">,</span>
+            <span class="n">file_type</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
     <span class="n">mfm</span><span class="o">.</span><span class="n">working_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">filename</span></div>
 
 
-<div class="viewcode-block" id="open_files"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.open_files">[docs]</a><span class="k">def</span> <span class="nf">open_files</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;All files (*.*)&#39;</span><span class="p">,</span> <span class="n">working_path</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="open_files"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.open_files">[docs]</a><span class="k">def</span> <span class="nf">open_files</span><span class="p">(</span>
+        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="n">file_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;All files (*.*)&#39;</span><span class="p">,</span>
+        <span class="n">working_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Open a file within a working path. If no path is specified the last</span>
 <span class="sd">    path is used. After using this function the current working path of the</span>
 <span class="sd">    running program (ChiSurf) is updated according to the folder of the opened</span>
@@ -825,14 +443,23 @@
 <span class="sd">    :param file_type:</span>
 <span class="sd">    :return:</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">working_path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">working_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">working_path</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">working_path</span>
-    <span class="n">filenames</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getOpenFileNames</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">working_path</span><span class="p">,</span> <span class="n">file_type</span><span class="p">)</span>
+    <span class="n">filenames</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getOpenFileNames</span><span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="p">,</span>
+        <span class="n">working_path</span><span class="p">,</span>
+        <span class="n">file_type</span>
+    <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">mfm</span><span class="o">.</span><span class="n">working_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">filenames</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">filenames</span></div>
 
 
-<div class="viewcode-block" id="save_file"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.save_file">[docs]</a><span class="k">def</span> <span class="nf">save_file</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;All files (*.*)&#39;</span><span class="p">,</span> <span class="n">working_path</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="save_file"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.save_file">[docs]</a><span class="k">def</span> <span class="nf">save_file</span><span class="p">(</span>
+        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="n">file_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;All files (*.*)&#39;</span><span class="p">,</span>
+        <span class="n">working_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Same as open see above a file within a working path. If no path is specified the last</span>
 <span class="sd">    path is used. After using this function the current working path of the</span>
 <span class="sd">    running program (ChiSurf) is updated according to the folder of the opened</span>
@@ -843,9 +470,16 @@
 <span class="sd">    :param file_type:</span>
 <span class="sd">    :return:</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">working_path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">working_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">working_path</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">working_path</span>
-    <span class="n">filename</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getSaveFileName</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">working_path</span><span class="p">,</span> <span class="n">file_type</span><span class="p">))</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span>
+        <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getSaveFileName</span><span class="p">(</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="n">description</span><span class="p">,</span>
+            <span class="n">working_path</span><span class="p">,</span>
+            <span class="n">file_type</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="p">)</span>
     <span class="n">mfm</span><span class="o">.</span><span class="n">working_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">filename</span></div>
 
@@ -859,23 +493,65 @@
 
 <span class="sd">    :return: directory str</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">fn_ending</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;filename_ending&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="n">fn_ending</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;filename_ending&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">directory</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;directory&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">working_path</span><span class="p">)</span>
-    <span class="n">get_files</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;get_files&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+    <span class="n">get_files</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;get_files&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="n">directory</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getExistingDirectory</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="s2">&quot;Select Directory&quot;</span><span class="p">,</span> <span class="n">directory</span><span class="p">))</span>
+        <span class="n">directory</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getExistingDirectory</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Select Directory&quot;</span><span class="p">,</span> <span class="n">directory</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">directory</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getExistingDirectory</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="s2">&quot;Select Directory&quot;</span><span class="p">))</span>
+        <span class="n">directory</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFileDialog</span><span class="o">.</span><span class="n">getExistingDirectory</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Select Directory&quot;</span><span class="p">))</span>
     <span class="n">mfm</span><span class="o">.</span><span class="n">working_path</span> <span class="o">=</span> <span class="n">directory</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">get_files</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">directory</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">filenames</span> <span class="o">=</span> <span class="p">[</span><span class="n">directory</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">directory</span><span class="p">)]</span>
-        <span class="k">if</span> <span class="n">fn_ending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">fn_ending</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">filenames</span> <span class="o">=</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">filenames</span><span class="p">,</span> <span class="n">fn_ending</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">directory</span><span class="p">,</span> <span class="n">filenames</span></div>
 
 
+<div class="viewcode-block" id="make_widget_from_yaml"><a class="viewcode-back" href="../../../api/mfm.widgets.html#mfm.widgets.widgets.make_widget_from_yaml">[docs]</a><span class="k">def</span> <span class="nf">make_widget_from_yaml</span><span class="p">(</span>
+        <span class="n">variable_dictionary</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &gt;&gt;&gt; import numbers</span>
+<span class="sd">    &gt;&gt;&gt; import pyqtgraph as pg</span>
+<span class="sd">    &gt;&gt;&gt; import collections</span>
+<span class="sd">    &gt;&gt;&gt; import yaml</span>
+<span class="sd">    &gt;&gt;&gt; d = yaml.load(open(&quot;./test_session.yaml&quot;))[&#39;datasets&#39;]</span>
+<span class="sd">    &gt;&gt;&gt; od = collections.OrderedDict(sorted(d.items()))</span>
+<span class="sd">    &gt;&gt;&gt; w = make_widget_from_yaml(od, &#39;test&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; w.show()</span>
+<span class="sd">    :param variable_dictionary: </span>
+<span class="sd">    :param name: </span>
+<span class="sd">    :return: </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">make_group</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QGroupBox</span><span class="p">()</span>
+        <span class="n">g</span><span class="o">.</span><span class="n">setTitle</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+        <span class="n">layout</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFormLayout</span><span class="p">()</span>
+        <span class="n">g</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="n">layout</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">row</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">wd</span> <span class="o">=</span> <span class="n">make_group</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+                <span class="n">layout</span><span class="o">.</span><span class="n">addRow</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="n">wd</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+                    <span class="n">wd</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QCheckBox</span><span class="p">()</span>
+                    <span class="n">wd</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Real</span><span class="p">):</span>
+                    <span class="n">wd</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">SpinBox</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">wd</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QLineEdit</span><span class="p">()</span>
+                    <span class="n">wd</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+                <span class="n">layout</span><span class="o">.</span><span class="n">addRow</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">wd</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">g</span>
+
+    <span class="k">return</span> <span class="n">make_group</span><span class="p">(</span><span class="n">variable_dictionary</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span></div>
 
 </pre></div>
 
@@ -891,7 +567,7 @@
     </p>
     <p>
         &copy; Copyright 2016, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>
