@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import numpy as np
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from qtpy import  QtCore, QtGui, QtWidgets, uic
 
 import mfm
 import mfm.fluorescence

@@ -5,7 +5,7 @@ import threading
 from collections import OrderedDict
 from typing import List
 import numpy as np
-from PyQt5 import QtCore, QtWidgets, uic
+from qtpy import  QtCore, QtWidgets, uic
 
 import mfm
 from mfm import plots
@@ -343,27 +343,27 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         self.lineEdit_3.setText(self.current_origin_link_formula)
 
     @property
-    def current_origin_formula(self):
+    def current_origin_formula(self) -> str:
         return str(self.lineEdit_3.text())
 
     @property
-    def add_all_fits(self):
+    def add_all_fits(self) -> bool:
         return bool(self.checkBox.isChecked())
 
     @property
-    def current_global_variable_name(self):
+    def current_global_variable_name(self) -> str:
         return str(self.lineEdit.text())
 
     @property
-    def current_fit_index(self):
+    def current_fit_index(self) -> int:
         return self.comboBox.currentIndex()
 
     @property
-    def link_all_of_type(self):
+    def link_all_of_type(self) -> bool:
         return not self.checkBox_2.isChecked()
 
     @property
-    def clear_on_update(self):
+    def clear_on_update(self) -> bool:
         return self.checkBox_3.isChecked()
 
     @clear_on_update.setter
@@ -374,15 +374,21 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         self.checkBox_3.setChecked(v)
 
     @property
-    def local_fits(self):
-        return [s for s in mfm.fits if isinstance(s, mfm.fitting.Fit) and s.model is not self]
+    def local_fits(self) -> List[mfm.fitting.fit.Fit]:
+        return [
+            s for s in mfm.fits
+            if isinstance(s, mfm.fitting.fit.Fit) and s.model is not self
+        ]
 
     @property
-    def local_fit_idx(self):
-        return [i for i, s in enumerate(mfm.fits) if isinstance(s, mfm.fitting.Fit) and s.model is not self]
+    def local_fit_idx(self) -> List[int]:
+        return [
+            i for i, s in enumerate(mfm.fits)
+            if isinstance(s, mfm.fitting.fit.Fit) and s.model is not self
+        ]
 
     @property
-    def local_fit_names(self):
+    def local_fit_names(self) -> List[str]:
         return [f.name for f in self.local_fits]
 
     def onRemoveLocalFit(self):

@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
 import json
 import math
 from collections import OrderedDict
@@ -6,7 +7,6 @@ import copy
 import numpy as np
 import numba as nb
 import scipy.stats
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 import mfm.fluorescence
 from mfm.fluorescence.fps import BasicAV
@@ -17,8 +17,19 @@ import mfm
 
 
 @nb.njit
-def centroid2(atom_lookup, res_types, ca_dist, r, potential,
-              cutoff=6.5, centroid_pos=4, min_dist=3.5, max_dist=19.0, bin_width=0.05, repulsion=100.0):
+def centroid2(
+        atom_lookup,
+        res_types,
+        ca_dist,
+        r,
+        potential,
+        cutoff: float = 6.5,
+        centroid_pos: int = 4,
+        min_dist: float = 3.5,
+        max_dist: float = 19.0,
+        bin_width: float = 0.05,
+        repulsion: float = 100.0
+):
     """
     Calculate the potential energy given the UNRES GBV-Sidechain potential and isotropic conditions.
 
@@ -52,9 +63,6 @@ def centroid2(atom_lookup, res_types, ca_dist, r, potential,
             The spacing between the bin of the distance points in the pre-calculated potential
     cutoff : double
             Distances between the centroids bigger than the cut-off distance will be neglected
-
-    Citation
-    --------
 
     Citation
     --------
@@ -100,7 +108,13 @@ def centroid2(atom_lookup, res_types, ca_dist, r, potential,
 
 
 @nb.jit(nopython=True)
-def internal_potential(internal_coordinates, equilibrium_internal=None, k_bond=0.5, k_angle=0.1, k_dihedral=0.05):
+def internal_potential(
+        internal_coordinates,
+        equilibrium_internal=None,
+        k_bond: float = 0.5,
+        k_angle: float = 0.1,
+        k_dihedral: float = 0.05
+) -> float:
     """ Simple potential based internal coordinates for C-alpha bead model
     """
     if equilibrium_internal is None:
@@ -118,7 +132,10 @@ def internal_potential(internal_coordinates, equilibrium_internal=None, k_bond=0
     return e
 
 
-def internal_potential_calpha(structure, **kwargs):
+def internal_potential_calpha(
+        structure: mfm.structure.structure.Structure,
+        **kwargs
+) -> float:
     """Calculates a *internal* potential based on the similarity of the bonds length, angles, and dihedrals
     to a reference structure.
 
@@ -134,7 +151,10 @@ def internal_potential_calpha(structure, **kwargs):
 
 
 @nb.jit(nopython=True)
-def lj_calpha(ca_coordinates, rm=3.8208650279):
+def lj_calpha(
+        ca_coordinates: np.array,
+        rm: float = 3.8208650279
+) -> float:
     """Truncated Lennard Jones
 
     :param ca_coordinates:
@@ -155,20 +175,30 @@ def lj_calpha(ca_coordinates, rm=3.8208650279):
     return energy
 
 
-def lennard_jones_calpha(structure, rm=3.8208650279):
+def lennard_jones_calpha(
+        structure: mfm.structure.structure.Structure,
+        rm: float = 3.8208650279
+):
     """
 
     :param structure: a structure object
     :param rm: is the C-alpha equilibrium distance
     :return:
     """
-    sel = mfm.structure.get_atom_index_by_name(structure.atoms, ['CA'])
+    sel = mfm.structure.structure.get_atom_index_by_name(
+        structure.atoms, ['CA']
+    )
     ca_atoms = structure.atoms.take(sel)
     return lj_calpha(ca_atoms['coord'][0], rm)
 
 
 @nb.njit
-def gb(xyz, epsilon=4.0, epsilon0=80.1, cutoff=12.0):
+def gb(
+        xyz: np.array,
+        epsilon: float = 4.0,
+        epsilon0: float = 80.1,
+        cutoff: float = 12.0
+) -> float:
     """
     Generalized Born http://en.wikipedia.org/wiki/Implicit_solvation
     with cutoff-potential potential shifted by value at cutoff to smooth the energy
@@ -217,7 +247,11 @@ def gb(xyz, epsilon=4.0, epsilon0=80.1, cutoff=12.0):
 
 
 @nb.jit
-def go(ca_dist, energy_matrix, rm_matrix):
+def go(
+        ca_dist: np.array,
+        energy_matrix: np.array,
+        rm_matrix: np.array
+):
     """
     If cutoff is True the LJ-Potential is cutoff and shifted at 2.5 sigma
 
@@ -251,7 +285,11 @@ def go(ca_dist, energy_matrix, rm_matrix):
 
 class Ramachandran(object):
 
-    def __init__(self, structure, filename='./mfm/structure/potential/database/rama_ala_pro_gly.npy'):
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure,
+            filename='./mfm/structure/potential/database/rama_ala_pro_gly.npy'
+    ):
         """
         :param filename:
         :return:
@@ -261,7 +299,7 @@ class Ramachandran(object):
         self.filename = filename
         self.ramaPot = np.load(self.filename)
 
-    def getEnergy(self):
+    def getEnergy(self) -> float:
         c = self.structure
         Erama = cPotentials.ramaEnergy(c.residue_lookup_i, c.iAtoms, self.ramaPot)
         self.E = Erama
@@ -280,7 +318,7 @@ class Electrostatics(object):
         if type == 'gb':
             self.p = cPotentials.gb
 
-    def getEnergy(self):
+    def getEnergy(self) -> float:
         structure = self.structure
         #Eel = cPotentials.gb(structure.xyz)
         Eel = gb(structure.xyz)
@@ -294,7 +332,7 @@ class LJ_Bead(object):
         self.structure = structure
         self.name = 'LJ_bead'
 
-    def getEnergy(self):
+    def getEnergy(self) -> float:
         structure = self.structure
         self.E = lennard_jones_calpha(self.structure.atoms['coord'])
         return self.E
@@ -354,83 +392,6 @@ class HPotential(object):
         self.hPot = self._hPot
 
 
-class HPotentialWidget(HPotential, QtWidgets.QWidget):
-
-    def __init__(self, structure, parent, cutoff_ca=8.0, cutoff_hbond=3.0):
-        QtWidgets.QWidget.__init__(self, parent=parent)
-        uic.loadUi('mfm/ui/Potential_Hbond_2.ui', self)
-        HPotential.__init__(self, structure)
-        self.checkBox.stateChanged [int].connect(self.updateParameter)
-        self.checkBox_2.stateChanged [int].connect(self.updateParameter)
-        self.checkBox_3.stateChanged [int].connect(self.updateParameter)
-        self.checkBox_4.stateChanged [int].connect(self.updateParameter)
-        self.actionLoad_potential.triggered.connect(self.onOpenFile)
-        self.cutoffCA = cutoff_ca
-        self.cutoffH = cutoff_hbond
-
-    def onOpenFile(self):
-        filename = mfm.widgets.get_filename('Open File', 'CSV data files (*.csv)')
-        self.potential = filename
-
-    @property
-    def potential(self):
-        return self.hPot
-
-    @potential.setter
-    def potential(self, v):
-        self._hPot = np.loadtxt(v, skiprows=1, dtype=np.float64).T[1:, :]
-        self.hPot = self._hPot
-        self.lineEdit_3.setText(str(v))
-
-    @property
-    def oh(self):
-        return int(self.checkBox.isChecked())
-
-    @oh.setter
-    def oh(self, v):
-        self.checkBox.setChecked(v)
-
-    @property
-    def cn(self):
-        return int(self.checkBox_2.isChecked())
-
-    @cn.setter
-    def cn(self, v):
-        self.checkBox_2.setChecked(v)
-
-    @property
-    def ch(self):
-        return int(self.checkBox_3.isChecked())
-
-    @ch.setter
-    def ch(self, v):
-        self.checkBox_3.setChecked(v)
-
-    @property
-    def on(self):
-        return int(self.checkBox_4.isChecked())
-
-    @on.setter
-    def on(self, v):
-        self.checkBox_4.setChecked(v)
-
-    @property
-    def cutoffH(self):
-        return float(self.doubleSpinBox.value())
-
-    @cutoffH.setter
-    def cutoffH(self, v):
-        self.doubleSpinBox.setValue(float(v))
-
-    @property
-    def cutoffCA(self):
-        return float(self.doubleSpinBox_2.value())
-
-    @cutoffCA.setter
-    def cutoffCA(self, v):
-        self.doubleSpinBox_2.setValue(float(v))
-
-
 class GoPotential(object):
 
     def __init__(self, structure):
@@ -467,42 +428,16 @@ class GoPotential(object):
         self.nMatrix = nMatrix
 
 
-class GoPotentialWidget(GoPotential, QtWidgets.QWidget):
-
-    def __init__(self, structure, parent):
-        GoPotential.__init__(self, structure)
-        QtWidgets.QWidget.__init__(self, parent=None)
-        uic.loadUi('mfm/ui/Potential-CaLJ.ui', self)
-        self.lineEdit.textChanged['QString'].connect(self.setGo)
-        self.lineEdit_2.textChanged['QString'].connect(self.setGo)
-        self.lineEdit_3.textChanged['QString'].connect(self.setGo)
-
-    @property
-    def native_cutoff_on(self):
-        return bool(self.checkBox.isChecked())
-
-    @property
-    def non_native_contact_on(self):
-        return bool(self.checkBox_2.isChecked())
-
-    @property
-    def epsilon(self):
-        return float(self.lineEdit.text())
-
-    @property
-    def nnEFactor(self):
-        return float(self.lineEdit_2.text())
-
-    @property
-    def cutoff(self):
-        return float(self.lineEdit_3.text())
-
-
 class MJPotential(object):
 
     name = 'Miyazawa-Jernigan'
 
-    def __init__(self, structure, filename='./mfm/structure/potential/database/mj.csv', ca_cutcoff=6.5):
+    def __init__(
+            self,
+            structure,
+            filename='./mfm/structure/potential/database/mj.csv',
+            ca_cutcoff: float = 6.5
+    ):
         self.filename = filename
         self.structure = structure
         self.potential = filename
@@ -527,53 +462,6 @@ class MJPotential(object):
         return self.nCont
 
 
-class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
-
-    def __init__(self, structure, parent, filename='./mfm/structure/potential/database/mj.csv', ca_cutoff=6.5):
-        QtWidgets.QWidget.__init__(self, parent=None)
-        uic.loadUi('mfm/ui/MJ-resource.ui', self)
-        MJPotential.__init__(self, structure)
-        self.pushButton.clicked.connect(self.onOpenFile)
-        self.potential = filename
-        self.ca_cutoff = ca_cutoff
-
-    def onOpenFile(self):
-        filename = mfm.widgets.get_filename('Open MJ-Potential', 'CSV data files (*.csv)')
-        self.potential = filename
-
-    @property
-    def potential(self):
-        return self.mjPot
-
-    @potential.setter
-    def potential(self, v):
-        self.mjPot = np.loadtxt(v)
-        self.lineEdit.setText(v)
-
-    @property
-    def ca_cutoff(self):
-        return float(self.lineEdit_2.text())
-
-    @ca_cutoff.setter
-    def ca_cutoff(self, v):
-        self.lineEdit_2.setText(str(v))
-
-
-class ASA(object):
-    def __init__(self, structure, probe=1.0, n_sphere_point=590, radius=2.5):
-        self.structure = structure
-        self.probe = probe
-        self.n_sphere_point = n_sphere_point
-        self.sphere_points = cPotentials.spherePoints(n_sphere_point)
-        self.radius = radius
-
-    def getEnergy(self):
-        c = self.structure
-        asa = cPotentials.asa(c.rAtoms['coord'], c.residue_lookup_r, c.dist_ca,
-                              self.sphere_points, self.probe, self.radius)
-        return asa
-
-
 class CEPotential(object):
     """
     Examples
@@ -582,7 +470,7 @@ class CEPotential(object):
     >>> import mfm.structure
     >>> import mfm.structure.potential
 
-    >>> s = mfm.Structure('./sample_data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
+    >>> s = mfm..structure.structure.Structure('./sample_data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
     >>> pce = mfm.structure.potential.potentials.CEPotential(s, ca_cutoff=64.0)
     >>> pce.getEnergy()
     -0.15896629131635745
@@ -590,7 +478,11 @@ class CEPotential(object):
 
     name = 'Iso-UNRES'
 
-    def __init__(self, structure, **kwargs):
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure,
+            **kwargs
+    ):
         """
         scaling_factor : factor to scale energies from kCal/mol to kT=1.0 at 298K
         """
@@ -614,10 +506,17 @@ class CEPotential(object):
         return self._potential
 
     @potential.setter
-    def potential(self, v):
+    def potential(
+            self,
+            v
+    ):
         self._potential = np.load(v)
 
-    def getEnergy(self, cutoff=None, **kwargs):
+    def getEnergy(
+            self,
+            cutoff=None,
+            **kwargs
+    ) -> float:
         cutoff = cutoff if cutoff is not None else self.ca_cutoff
         c = self.structure
         coord = np.ascontiguousarray(c.xyz)
@@ -636,95 +535,34 @@ class CEPotential(object):
         self.nCont = nCont
         return float(E * self.scaling_factor)
 
-    def getNbrContacts(self):
+    def getNbrContacts(self) -> int:
         return self.nCont
-
-
-class CEPotentialWidget(CEPotential, QtWidgets.QWidget):
-
-    def __init__(self, structure, parent, potential='./mfm/structure/potential/database/unres.npy',
-                 ca_cutoff=25.0):
-        QtWidgets.QWidget.__init__(self, parent=None)
-        uic.loadUi('mfm/ui/unres-cb-resource.ui', self)
-        CEPotential.__init__(self, structure, potential, ca_cutoff=ca_cutoff)
-        self.actionOpen_potential_file.triggered.connect(self.onOpenPotentialFile)
-        self.ca_cutoff = ca_cutoff
-
-    @property
-    def potential(self):
-        return self._potential
-
-    @potential.setter
-    def potential(self, v):
-        self.lineEdit.setText(str(v))
-        self._potential = np.load(v)
-
-    @property
-    def ca_cutoff(self):
-        return float(self.doubleSpinBox.value())
-
-    @ca_cutoff.setter
-    def ca_cutoff(self, v):
-        self.doubleSpinBox.setValue(float(v))
-
-    def onOpenPotentialFile(self):
-        #filename = str(QtGui.QFileDialog.getOpenFileName(None, 'Open CE-Potential', '', 'Numpy file (*.npy)'))
-        filename = mfm.widgets.get_filename('Open CE-Potential', 'Numpy file (*.npy)')
-        self.potential = filename
 
 
 class ASA(object):
 
     name = 'Asa-Ca'
 
-    def __init__(self, structure, probe=1.0, n_sphere_point=590, radius=2.5):
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure,
+            probe: float = 1.0,
+            n_sphere_point: int = 590,
+            radius: float = 2.5
+    ):
+        super(ASA, self).__init__()
         self.structure = structure
         self.probe = probe
         self.n_sphere_point = n_sphere_point
         self.sphere_points = cPotentials.spherePoints(n_sphere_point)
         self.radius = radius
 
-    def getEnergy(self):
+    def getEnergy(self) -> float:
         c = self.structure
         #def asa(double[:, :] xyz, int[:, :] resLookUp, double[:, :] caDist, double[:, :] sphere_points,
         #double probe=1.0, double radius = 2.5, char sum=1)
         asa = cPotentials.asa(c.xyz, c.l_res, c.dist_ca, self.sphere_points, self.probe, self.radius)
         return asa
-
-
-class AsaWidget(ASA, QtWidgets.QWidget):
-
-    def __init__(self, structure, parent):
-        ASA.__init__(self, structure)
-        QtWidgets.QWidget.__init__(self, parent=None)
-        uic.loadUi('mfm/ui/Potential_Asa.ui', self)
-
-        self.lineEdit.textChanged['QString'].connect(self.setParameterSphere)
-        self.lineEdit_2.textChanged['QString'].connect(self.setParameterProbe)
-
-        self.lineEdit.setText('590')
-        self.lineEdit_2.setText('3.5')
-
-    def setParameterSphere(self):
-        self.n_sphere_point = int(self.lineEdit.text())
-
-    def setParameterProbe(self):
-        self.probe = float(self.lineEdit_2.text())
-
-
-class RadiusGyration(QtWidgets.QWidget):
-
-    name = 'Radius-Gyration'
-
-    def __init__(self, structure, parent=None):
-        QtWidgets.QWidget.__init__(self, parent=parent)
-        self.structure = structure
-        self.parent = parent
-
-    def getEnergy(self, c=None):
-        if c is None:
-            c = self.structure
-        return c.radius_gyration
 
 
 class ClashPotential(object):
@@ -742,7 +580,7 @@ class ClashPotential(object):
         >>> import mfm.structure
         >>> import mfm.structure.potential
 
-        >>> s = mfm.Structure('./sample_data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
+        >>> s = mfm.structure.structure.Structure('./sample_data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
         >>> pce = mfm.structure.potential.potentials.ClashPotential(structure=s, clash_tolerance=6.0)
         >>> pce.getEnergy()
 
@@ -751,33 +589,9 @@ class ClashPotential(object):
         self.clash_tolerance = kwargs.get('clash_tolerance', 2.0)
         self.covalent_radius = kwargs.get('covalent_radius', 1.5)
 
-    def getEnergy(self):
+    def getEnergy(self) -> float:
         c = self.structure
         return cPotentials.clash_potential(c.xyz, c.vdw, self.clash_tolerance, self.covalent_radius)
-
-
-class ClashPotentialWidget(ClashPotential, QtWidgets.QWidget):
-
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/potential-clash.ui', self)
-        ClashPotential.__init__(self, **kwargs)
-
-    @property
-    def clash_tolerance(self):
-        return float(self.doubleSpinBox.value())
-
-    @clash_tolerance.setter
-    def clash_tolerance(self, v):
-        self.doubleSpinBox.setValue(v)
-
-    @property
-    def covalent_radius(self):
-        return float(self.doubleSpinBox_2.value())
-
-    @covalent_radius.setter
-    def covalent_radius(self, v):
-        self.doubleSpinBox_2.setValue(v)
 
 
 class AvPotential(object):
@@ -795,14 +609,17 @@ class AvPotential(object):
     >>> distances = labeling['Distances']
     >>> positions = labeling['Positions']
     >>> import mfm
-    >>> av_potential = mfm.fps.AvPotential(distances=distances, positions=positions)
-    >>> structure = mfm.Structure('/sample_data/model/HM_1FN5_Naming.pdb')
+    >>> av_potential = mfm.structure.potential.potentials.AvPotential(distances=distances, positions=positions)
+    >>> structure = mfm.structure.structure.Structure('/sample_data/model/HM_1FN5_Naming.pdb')
     >>> av_potential.getChi2(structure)
 
     """
     name = 'Av'
 
-    def __init__(self, **kwargs):
+    def __init__(
+            self,
+            **kwargs
+    ):
         self._labeling_file = kwargs.get('labeling_file', None)
         self._structure = kwargs.get('structure', None)
 
@@ -826,19 +643,22 @@ class AvPotential(object):
         self.positions = p["Positions"]
 
     @property
-    def structure(self):
+    def structure(self) -> mfm.structure.structure.Structure:
         """
         The Structure object used for the calculation of the accessible volumes
         """
         return self._structure
 
     @structure.setter
-    def structure(self, structure):
+    def structure(
+            self,
+            structure: mfm.structure.structure.Structure
+    ):
         self._structure = structure
         self.calc_avs()
 
     @property
-    def chi2(self):
+    def chi2(self) -> float:
         """
         The current unreduced chi2 (recalculated at each call)
         """
@@ -863,7 +683,11 @@ class AvPotential(object):
         for i, position_key in enumerate(self.positions):
             self.avs[position_key] = avs[i]
 
-    def calc_distances(self, structure=None, verbose=False):
+    def calc_distances(
+            self,
+            structure: mfm.structure.structure.Structure = None,
+            verbose: bool = False
+    ):
         """
 
         :param structure: Structure
@@ -900,7 +724,12 @@ class AvPotential(object):
                 print("Experimental distance: %.1f (-%.1f, +%.1f)" % (distance['distance'],
                                                                       distance['error_neg'], distance['error_pos']))
 
-    def getChi2(self, structure=None, reduced=False, verbose=False):
+    def getChi2(
+            self,
+            structure: mfm.structure.structure.Structure = None,
+            reduced: bool = False,
+            verbose: bool = False
+    ):
         """
 
         :param structure: Structure
@@ -935,8 +764,12 @@ class AvPotential(object):
         else:
             return chi2
 
-    def getEnergy(self, structure=None, gauss_bond=True):
-        if isinstance(structure, Structure):
+    def getEnergy(
+            self,
+            structure: mfm.structure.structure.Structure = None,
+            gauss_bond: bool = True
+    ):
+        if isinstance(structure, mfm.structure.structure.Structure):
             self.structure = structure
         if gauss_bond:
             energy = 0.0
@@ -951,55 +784,4 @@ class AvPotential(object):
             return energy
         else:
             return self.getChi2(self, self.structure)
-
-
-class AvPotentialWidget(AvPotential, QtWidgets.QWidget):
-    def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self, parent=parent)
-        uic.loadUi('./mfm/ui/fluorescence/avWidget.ui', self)
-        AvPotential.__init__(self)
-        self._filename = None
-        self.actionOpenLabeling.triggered.connect(self.onLoadAvJSON)
-
-    def onLoadAvJSON(self):
-        self.filename = mfm.widgets.get_filename('Open FPS-JSON', 'FPS-file (*.fps.json)')
-
-    @property
-    def labeling_file(self):
-        return self._filename
-
-    @labeling_file.setter
-    def filename(self, v):
-        self._filename = v
-        p = json.load(open(v))
-        self.distances = p["Distances"]
-        self.positions = p["Positions"]
-        self.lineEdit_2.setText(v)
-
-    @property
-    def n_av_samples(self):
-        return int(self.spinBox_2.value())
-
-    @n_av_samples.setter
-    def n_av_samples(self, v):
-        self.spinBox_2.setValue(int(v))
-
-    @property
-    def min_av(self):
-        return int(self.spinBox_2.value())
-
-    @min_av.setter
-    def min_av(self, v):
-        self.spinBox.setValue(int(v))
-
-
-potentialDict = OrderedDict()
-potentialDict['H-Bond'] = HPotentialWidget
-potentialDict['AV-Potential'] = AvPotentialWidget
-potentialDict['Iso-UNRES'] = CEPotentialWidget
-potentialDict['Miyazawa-Jernigan'] = MJPotentialWidget
-potentialDict['Go-Potential'] = GoPotentialWidget
-potentialDict['ASA-Calpha'] = AsaWidget
-potentialDict['Radius of Gyration'] = RadiusGyration
-potentialDict['Clash potential'] = ClashPotentialWidget
 

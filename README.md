@@ -1,12 +1,12 @@
-[![Linux Build Status](https://travis-ci.org/Fluorescence-Tools/ChiSurf.svg?branch=master)](https://travis-ci.org/Fluorescence-Tools/ChiSurf)
 [![Anaconda-Server Version](https://anaconda.org/tpeulen/chisurf/badges/version.svg)](https://anaconda.org/tpeulen/chisurf)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/814238f7b1a14f87821beadabc758408)](https://www.codacy.com/manual/tpeulen/ChiSurf?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Fluorescence-Tools/ChiSurf&amp;utm_campaign=Badge_Grade)
+[![Linux Build Status](https://travis-ci.org/Fluorescence-Tools/ChiSurf.svg?branch=master)](https://travis-ci.org/Fluorescence-Tools/ChiSurf)
 
 # ChiSurf
 
 ChiSurf is a software package for the analysis of complex fluorescence data acquired in time-resolved single-molecule 
 and ensemble fluorescence experiments. The main feature of ChiSurf is the joint (global) analysis of multiple datasets.
 ![ChiSurf GUI][1]
-
 
 ## History
 

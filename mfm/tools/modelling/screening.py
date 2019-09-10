@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import os
 import pickle
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from qtpy import QtCore, QtWidgets, uic
 import numpy as np
 from scipy.stats import f
 
@@ -12,16 +14,21 @@ from mfm.structure.trajectory import TrajectoryFile
 import mfm.widgets
 
 
-class FPSScreenTrajectory(QtWidgets.QWidget):#(QtWidgets.QWidget, TrajectoryFile, Model):
+class FPSScreenTrajectory(QtWidgets.QWidget):
 
     name = "Screening"
     modelID = 0
 
     def __init__(self, fit, parent):
+        super(FPSScreenTrajectory, self).__init__(parent)
         self.structure_table_data = []
-        QtWidgets.QWidget.__init__(self)
-        #model.Model.__init__(self, parent)
-        uic.loadUi("mfm/ui/filterStructures.ui", self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "filterStructures.ui"
+            ),
+            self
+        )
         try:
             filenames = fit.data.filenames
             load_structures = False

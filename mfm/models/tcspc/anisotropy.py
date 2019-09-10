@@ -100,20 +100,20 @@ class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
             d = mfm.fluorescence.general.elte2(a, f)
             vv = np.hstack([f, mfm.fluorescence.general.e1tn(d, 2)])
             vh = mfm.fluorescence.general.e1tn(
-                np.hstack([f, mfm.fluorescence.e1tn(d, -1)]),
+                np.hstack([f, mfm.fluorescence.general.e1tn(d, -1)]),
                 self.g
             )
-        if self.polarization_type.upper() == 'VH':
-            return np.hstack(
-                [mfm.fluorescence.general.e1tn(vv, self.l2),
-                 mfm.fluorescence.general.e1tn(vh, 1 - self.l2)]
-            )
-        elif self.polarization_type.upper() == 'VV':
-            r = np.hstack(
-                [mfm.fluorescence.general.e1tn(vv, 1 - self.l1),
-                 mfm.fluorescence.general.e1tn(vh, self.l1)]
-            )
-            return r
+            if self.polarization_type.upper() == 'VH':
+                return np.hstack(
+                    [mfm.fluorescence.general.e1tn(vv, self.l2),
+                     mfm.fluorescence.general.e1tn(vh, 1 - self.l2)]
+                )
+            elif self.polarization_type.upper() == 'VV':
+                r = np.hstack(
+                    [mfm.fluorescence.general.e1tn(vv, 1 - self.l1),
+                     mfm.fluorescence.general.e1tn(vh, self.l1)]
+                )
+                return r
         else:
             return f
 
@@ -135,14 +135,14 @@ class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
 
         b = mfm.fitting.parameter.FittingParameter(
             lb=lb, ub=ub,
-            value=rho_value,
+            value=b_value,
             name='b(%i)' % (len(self) + 1),
             fixed=fixed,
             bounds_on=bound_on
         )
         rho = mfm.fitting.parameter.FittingParameter(
             lb=lb, ub=ub,
-            value=b_value,
+            value=rho_value,
             name='rho(%i)' % (len(self) + 1),
             fixed=fixed, bounds_on=bound_on
         )

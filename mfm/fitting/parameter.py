@@ -7,7 +7,6 @@ import numpy as np
 import mfm
 import mfm.base
 import mfm.parameter
-import mfm.fitting.fitting_widgets
 import mfm.decorators
 
 parameter_settings = mfm.settings.cs_settings['parameter']
@@ -192,12 +191,12 @@ class FittingParameter(mfm.parameter.Parameter):
             self,
             **kwargs
     ) -> mfm.fitting.fitting_widgets.FittingParameterWidget:
-        text = kwargs.get('text', self.name)
+        text = kwargs.get('name', self.name)
         layout = kwargs.get('layout', None)
         update_widget = kwargs.get('update_widget', lambda x: x)
         decimals = kwargs.get('decimals', self.decimals)
         kw = {
-            'text': text,
+            'name': text,
             'decimals': decimals,
             'layout': layout
         }

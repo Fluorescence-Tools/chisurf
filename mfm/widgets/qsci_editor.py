@@ -1,16 +1,10 @@
-#-------------------------------------------------------------------------
-# qsci_simple_pythoneditor.pyw
-#
-# QScintilla sample with PyQt
-# Eli Bendersky (eliben@gmail.com)
-# This code is in the public domain
-#-------------------------------------------------------------------------
+from __future__ import annotations
 
 import sys
 
 from PyQt5.Qsci import QsciScintilla, QsciLexerPython
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from qtpy.QtGui import *
+from qtpy.QtWidgets import *
 
 import mfm
 

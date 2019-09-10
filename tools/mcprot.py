@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import json
 import os
@@ -8,8 +10,7 @@ from progressbar import Bar, ETA, ProgressBar, RotatingMarker, Percentage
 
 import mfm
 from mfm.math.rand import weighted_choice, mc
-from mfm.structure import ProteinCentroid
-from mfm.structure.potential import potentials
+from mfm.structure.protein import ProteinCentroid
 from mfm.structure.trajectory import TrajectoryFile, Universe
 
 verbose = False
@@ -17,9 +18,23 @@ verbose = False
 
 class ProteinMCWorker(object):
 
-    def __init__(self, structure, **kwargs):
-        self.verbose = kwargs.get('verbose', verbose)
-        self.output_traj_file = kwargs.get('output_traj_file', None)
+    def __init__(
+            self,
+            structure: mfm.structure.protein.ProteinCentroid,
+            output_traj_file: str = None,
+            settings: dict = None,
+            update_rmsd: bool = False,
+            verbose: bool = verbose,
+            **kwargs
+    ):
+        self.exiting = False
+        self._config_filename = None
+        self.verbose = verbose
+        if settings is None:
+            settings = mfm.settings.cs_settings['mc_settings']
+        self.settings = settings
+
+        self.output_traj_file = output_traj_file
         if self.output_traj_file is None:
             new_file = tempfile.mkstemp(".h5")
             if self.verbose:
@@ -27,15 +42,19 @@ class ProteinMCWorker(object):
                 print("output_file: %s" % new_file)
             self.output_traj_file = new_file
 
-        self.exiting = False
-        self._config_filename = None
         self.u1 = Universe()
-        self.settings = kwargs.get('settings', mfm.settings.cs_settings['mc_settings'])
-        self.update_rmsd = kwargs.get('update_rmsd', False)
+        self.update_rmsd = update_rmsd
         self.structure = structure
-        self.output_traj = TrajectoryFile(self.structure, mode='w', filename=self.output_traj_file)
+        self.output_traj = TrajectoryFile(
+            self.structure,
+            mode='w',
+            filename=self.output_traj_file
+        )
 
-    def load_config(self, filename):
+    def load_config(
+            self,
+            filename: str
+    ):
         if self.verbose:
             print("Load config: %s" % filename)
         self._config_filename = filename
@@ -45,8 +64,12 @@ class ProteinMCWorker(object):
         if self.verbose:
             print(self.settings)
 
-    def add_potentials(self, **kwargs):
-        for p in kwargs.get('potentials'):
+    def add_potentials(
+            self,
+            potentials: dict = None,
+            **kwargs
+    ):
+        for p in potentials:
             try:
                 pot = potentials.potentialDict[p['name']](structure=self.structure, **p['settings'])
                 pot.hide()
@@ -74,8 +97,12 @@ class ProteinMCWorker(object):
         kwargs['energy'] = energy
         self.output_traj.append(xyz, **kwargs)
 
-    def add_potential(self, potential, **kwargs):
-        potential_weight = kwargs.get('potential_weight', 1.0)
+    def add_potential(
+            self,
+            potential,
+            potential_weight: float = 1.0,
+            **kwargs
+    ):
         potential = kwargs.get('potential', potential)
         self.u1.addPotential(potential, potential_weight)
 
@@ -89,7 +116,7 @@ class ProteinMCWorker(object):
          Example
          -------
 
-        >>> structure = mfm.structure.ProteinCentroid('./sample_data/modelling/pdb_files/eGFP-mCherry.pqr')
+        >>> structure = mfm.structure.protein.ProteinCentroid('./sample_data/modelling/pdb_files/eGFP-mCherry.pqr')
         >>> mcw = ProteinMCWorker(structure)
         >>> mcw.run(n_out=100, n_iter=10000)
         """
@@ -189,7 +216,10 @@ class ProteinMCWorker(object):
         print("Rejection-ratio [%%]: %.2f" % (fraction_rejected * 100.0))
         print("Simulation finished!")
 
-    def run(self, **kwargs):
+    def run(
+            self,
+            **kwargs
+    ):
         mc_mode = self.settings['mc_mode']
 
         if mc_mode == 'simple':

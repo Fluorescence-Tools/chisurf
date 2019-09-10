@@ -1,17 +1,23 @@
+from __future__ import annotations
+
 import copy
 from copy import deepcopy
 import os
+import sys
 
 import numpy as np
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets, uic
+import qdarkstyle
 
 import mfm
+import mfm.tools
 import mfm.fluorescence
 import mfm.experiments
 import mfm.experiments.data
 import mfm.settings
 import mfm.widgets
+import mfm.widgets.curve
 from mfm.io.widgets import SpcFileWidget
 
 settings = mfm.settings.cs_settings['correlator']
@@ -91,7 +97,7 @@ class CorrelateTTTR(QtWidgets.QWidget):
         self.verticalLayout.addWidget(w)
         w.show()
 
-        self.cs = mfm.widgets.CurveSelector(get_data_curves=self.get_data_curves, click_close=False)
+        self.cs = mfm.widgets.curve.ExperimentalDataSelector(get_data_curves=self.get_data_curves, click_close=False)
         self.verticalLayout_6.addWidget(self.cs)
 
         w.correlator.pushButton_3.clicked.connect(w.correlator.correlator_thread.start)
@@ -392,7 +398,7 @@ class FCStttr(QtWidgets.QWidget):
     name = 'FCS-tttr'
 
     def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self)
+        super(FCStttr, self).__init__(parent)
         layout = QtWidgets.QVBoxLayout(self)
         self.parent = parent
         self.layout = layout
@@ -408,3 +414,11 @@ class FCStttr(QtWidgets.QWidget):
         d.setup = self
         d.name = self.fileWidget.sample_name
         return deepcopy(d)
+
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    win = CorrelateTTTR()
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    win.show()
+    sys.exit(app.exec_())

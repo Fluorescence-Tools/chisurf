@@ -487,12 +487,25 @@ class ProteinBead(Structure):
         dihedral = internal_coordinates['d']
         ans = internal_coordinates['i']
 
-        ib = internal_coordinates['ib']
-        ia = internal_coordinates['ia']
-        id = internal_coordinates['id']
+        i_bonds = internal_coordinates['ib']
+        i_angles = internal_coordinates['ia']
+        i_dihedrals = internal_coordinates['id']
+
         r = self.xyz
         p = self._temp
-        internal_to_cartesian(bond, angle, dihedral, ans, ib, ia, id, n_atoms, r, p, start_point)
+        internal_to_cartesian(
+            bond,
+            angle,
+            dihedral,
+            ans,
+            i_bonds,
+            i_angles,
+            i_dihedrals,
+            n_atoms,
+            r,
+            p,
+            start_point
+        )
 
     def calc_internal_coordinates(self):
 

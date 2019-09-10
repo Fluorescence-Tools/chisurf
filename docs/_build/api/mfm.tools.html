@@ -1,43 +1,29 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>mfm.tools package &mdash; ChiSurf 0.0.5 documentation</title>
-    
-    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <meta charset="utf-8" />
+    <title>mfm.tools package &#8212; ChiSurf  documentation</title>
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../',
-        VERSION:     '0.0.5',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../index.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body role="document">
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -50,7 +36,7 @@
         </button>
         <a class="navbar-brand" href="../index.html">
           ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -66,13 +52,11 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
-</ul>
-<ul class="simple">
 </ul>
 </ul>
 </li>
@@ -89,12 +73,12 @@
 <li><a class="reference internal" href="#">mfm.tools package</a><ul>
 <li><a class="reference internal" href="#subpackages">Subpackages</a></li>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-mfm.tools.dye_diffusion">mfm.tools.dye_diffusion module</a></li>
-<li><a class="reference internal" href="#module-mfm.tools.f_calculator">mfm.tools.f_calculator module</a></li>
-<li><a class="reference internal" href="#module-mfm.tools.fret_lines">mfm.tools.fret_lines module</a></li>
-<li><a class="reference internal" href="#module-mfm.tools.kappa2dist">mfm.tools.kappa2dist module</a></li>
-<li><a class="reference internal" href="#module-mfm.tools.pdb2labeling">mfm.tools.pdb2labeling module</a></li>
-<li><a class="reference internal" href="#module-mfm.tools.tau2r">mfm.tools.tau2r module</a></li>
+<li><a class="reference internal" href="#mfm-tools-dye-diffusion-module">mfm.tools.dye_diffusion module</a></li>
+<li><a class="reference internal" href="#mfm-tools-f-calculator-module">mfm.tools.f_calculator module</a></li>
+<li><a class="reference internal" href="#mfm-tools-fret-lines-module">mfm.tools.fret_lines module</a></li>
+<li><a class="reference internal" href="#mfm-tools-kappa2dist-module">mfm.tools.kappa2dist module</a></li>
+<li><a class="reference internal" href="#mfm-tools-pdb2labeling-module">mfm.tools.pdb2labeling module</a></li>
+<li><a class="reference internal" href="#mfm-tools-tau2r-module">mfm.tools.tau2r module</a></li>
 <li><a class="reference internal" href="#module-mfm.tools">Module contents</a></li>
 </ul>
 </li>
@@ -113,7 +97,7 @@
             
               <li class="hidden-sm">
 <div id="sourcelink">
-  <a href="../_sources/api/mfm.tools.txt"
+  <a href="../_sources/api/mfm.tools.rst.txt"
      rel="nofollow">Source</a>
 </div></li>
             
@@ -135,7 +119,36 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
+<li><a class="reference internal" href="#">mfm.tools package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#mfm-tools-dye-diffusion-module">mfm.tools.dye_diffusion module</a></li>
+<li><a class="reference internal" href="#mfm-tools-f-calculator-module">mfm.tools.f_calculator module</a></li>
+<li><a class="reference internal" href="#mfm-tools-fret-lines-module">mfm.tools.fret_lines module</a></li>
+<li><a class="reference internal" href="#mfm-tools-kappa2dist-module">mfm.tools.kappa2dist module</a></li>
+<li><a class="reference internal" href="#mfm-tools-pdb2labeling-module">mfm.tools.pdb2labeling module</a></li>
+<li><a class="reference internal" href="#mfm-tools-tau2r-module">mfm.tools.tau2r module</a></li>
+<li><a class="reference internal" href="#module-mfm.tools">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="sourcelink">
+  <a href="../_sources/api/mfm.tools.rst.txt"
+     rel="nofollow">Source</a>
+</div>
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
       
   <div class="section" id="mfm-tools-package">
 <h1>mfm.tools package<a class="headerlink" href="#mfm-tools-package" title="Permalink to this headline">¶</a></h1>
@@ -149,7 +162,7 @@
 <li class="toctree-l2"><a class="reference internal" href="mfm.tools.modelling.html#module-mfm.tools.modelling.screening">mfm.tools.modelling.screening module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mfm.tools.modelling.html#module-mfm.tools.modelling.trajectory">mfm.tools.modelling.trajectory module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mfm.tools.modelling.html#mfm-tools-modelling-transfer-desktop-c0n6tor-module">mfm.tools.modelling.transfer-DESKTOP-C0N6TOR module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.tools.modelling.html#module-mfm.tools.modelling.transfer">mfm.tools.modelling.transfer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.tools.modelling.html#mfm-tools-modelling-transfer-module">mfm.tools.modelling.transfer module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mfm.tools.modelling.html#module-mfm.tools.modelling">Module contents</a></li>
 </ul>
 </li>
@@ -167,1112 +180,23 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-mfm.tools.dye_diffusion">
-<span id="mfm-tools-dye-diffusion-module"></span><h2>mfm.tools.dye_diffusion module<a class="headerlink" href="#module-mfm.tools.dye_diffusion" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator">
-<em class="property">class </em><code class="descclassname">mfm.tools.dye_diffusion.</code><code class="descname">TransientDecayGenerator</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/dye_diffusion.html#TransientDecayGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.DyeDecay" title="mfm.fluorescence.simulation.dye_diffusion.DyeDecay"><code class="xref py py-class docutils literal"><span class="pre">mfm.fluorescence.simulation.dye_diffusion.DyeDecay</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.all_quencher_atoms">
-<code class="descname">all_quencher_atoms</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.all_quencher_atoms" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.attachment_atom_name">
-<code class="descname">attachment_atom_name</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.attachment_atom_name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.attachment_chain">
-<code class="descname">attachment_chain</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.attachment_chain" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.attachment_residue">
-<code class="descname">attachment_residue</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.attachment_residue" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.critical_distance">
-<code class="descname">critical_distance</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.critical_distance" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.decay_mode">
-<code class="descname">decay_mode</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.decay_mode" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.dtTAC">
-<code class="descname">dtTAC</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.dtTAC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.filename_prefix">
-<code class="descname">filename_prefix</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.filename_prefix" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.molview_highlight_quencher">
-<code class="descname">molview_highlight_quencher</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/dye_diffusion.html#TransientDecayGenerator.molview_highlight_quencher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.molview_highlight_quencher" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.nBins">
-<code class="descname">nBins</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.nBins" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.nTAC">
-<code class="descname">nTAC</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.nTAC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.n_curves">
-<code class="descname">n_curves</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.n_curves" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.n_frames">
-<code class="descname">n_frames</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.n_frames" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.n_photons">
-<code class="descname">n_photons</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.n_photons" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.name">
-<code class="descname">name</code><em class="property"> = 'Decay Generator'</em><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.onLoadPDB">
-<code class="descname">onLoadPDB</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/dye_diffusion.html#TransientDecayGenerator.onLoadPDB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.onLoadPDB" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.onLoadSettings">
-<code class="descname">onLoadSettings</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/dye_diffusion.html#TransientDecayGenerator.onLoadSettings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.onLoadSettings" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.onSaveAV">
-<code class="descname">onSaveAV</code><span class="sig-paren">(</span><em>directory=None</em>, <em>verbose=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/dye_diffusion.html#TransientDecayGenerator.onSaveAV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.onSaveAV" title="Permalink to this definition">¶</a></dt>
-<dd><p>Saves the accessible volumes to a directory. If no directory is provided a dialog-window
-is opned in which the user chooses the target-directory.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.onSaveHist">
-<code class="descname">onSaveHist</code><span class="sig-paren">(</span><em>verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/dye_diffusion.html#TransientDecayGenerator.onSaveHist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.onSaveHist" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.onSaveTrajectory">
-<code class="descname">onSaveTrajectory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/dye_diffusion.html#TransientDecayGenerator.onSaveTrajectory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.onSaveTrajectory" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.onSimulationDtChanged">
-<code class="descname">onSimulationDtChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/dye_diffusion.html#TransientDecayGenerator.onSimulationDtChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.onSimulationDtChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.onSimulationTimeChanged">
-<code class="descname">onSimulationTimeChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/dye_diffusion.html#TransientDecayGenerator.onSimulationTimeChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.onSimulationTimeChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.settings_file">
-<code class="descname">settings_file</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.settings_file" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.skip_frame">
-<code class="descname">skip_frame</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.skip_frame" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.t_max">
-<code class="descname">t_max</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.t_max" title="Permalink to this definition">¶</a></dt>
-<dd><p>simulation time in nano-seconds</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.t_step">
-<code class="descname">t_step</code><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.t_step" title="Permalink to this definition">¶</a></dt>
-<dd><p>time-step in picoseconds</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.update_3D">
-<code class="descname">update_3D</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/dye_diffusion.html#TransientDecayGenerator.update_3D"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.update_3D" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.update_decay_histogram">
-<code class="descname">update_decay_histogram</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/dye_diffusion.html#TransientDecayGenerator.update_decay_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.update_decay_histogram" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.update_model">
-<code class="descname">update_model</code><span class="sig-paren">(</span><em>verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/dye_diffusion.html#TransientDecayGenerator.update_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.update_model" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.dye_diffusion.TransientDecayGenerator.update_trajectory_curve">
-<code class="descname">update_trajectory_curve</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/dye_diffusion.html#TransientDecayGenerator.update_trajectory_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.dye_diffusion.TransientDecayGenerator.update_trajectory_curve" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="mfm-tools-dye-diffusion-module">
+<h2>mfm.tools.dye_diffusion module<a class="headerlink" href="#mfm-tools-dye-diffusion-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-mfm.tools.f_calculator">
-<span id="mfm-tools-f-calculator-module"></span><h2>mfm.tools.f_calculator module<a class="headerlink" href="#module-mfm.tools.f_calculator" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mfm.tools.f_calculator.FTestWidget">
-<em class="property">class </em><code class="descclassname">mfm.tools.f_calculator.</code><code class="descname">FTestWidget</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/f_calculator.html#FTestWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
-<dl class="method">
-<dt id="mfm.tools.f_calculator.FTestWidget.calculate_chi2_max">
-<code class="descname">calculate_chi2_max</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/f_calculator.html#FTestWidget.calculate_chi2_max"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.calculate_chi2_max" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.f_calculator.FTestWidget.chi2_1">
-<code class="descname">chi2_1</code><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.chi2_1" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.f_calculator.FTestWidget.chi2_2">
-<code class="descname">chi2_2</code><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.chi2_2" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.f_calculator.FTestWidget.chi2_max">
-<code class="descname">chi2_max</code><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.chi2_max" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.f_calculator.FTestWidget.chi2_min">
-<code class="descname">chi2_min</code><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.chi2_min" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.f_calculator.FTestWidget.conf_level">
-<code class="descname">conf_level</code><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.conf_level" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.f_calculator.FTestWidget.conf_level_2">
-<code class="descname">conf_level_2</code><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.conf_level_2" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.f_calculator.FTestWidget.dof">
-<code class="descname">dof</code><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.dof" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.f_calculator.FTestWidget.n1">
-<code class="descname">n1</code><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.n1" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.f_calculator.FTestWidget.n2">
-<code class="descname">n2</code><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.n2" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.f_calculator.FTestWidget.npars">
-<code class="descname">npars</code><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.npars" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.f_calculator.FTestWidget.onChi2_1_Changed">
-<code class="descname">onChi2_1_Changed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/f_calculator.html#FTestWidget.onChi2_1_Changed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.onChi2_1_Changed" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.f_calculator.FTestWidget.onChi2_2_Changed">
-<code class="descname">onChi2_2_Changed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/f_calculator.html#FTestWidget.onChi2_2_Changed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.onChi2_2_Changed" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.f_calculator.FTestWidget.onConfChanged">
-<code class="descname">onConfChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/f_calculator.html#FTestWidget.onConfChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.onConfChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.f_calculator.FTestWidget.onN1Changed">
-<code class="descname">onN1Changed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/f_calculator.html#FTestWidget.onN1Changed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.onN1Changed" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.f_calculator.FTestWidget.onN2Changed">
-<code class="descname">onN2Changed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/f_calculator.html#FTestWidget.onN2Changed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.onN2Changed" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.f_calculator.FTestWidget.read_n">
-<code class="descname">read_n</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/f_calculator.html#FTestWidget.read_n"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.read_n" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.f_calculator.FTestWidget.read_n1">
-<code class="descname">read_n1</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/f_calculator.html#FTestWidget.read_n1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.read_n1" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.f_calculator.FTestWidget.read_n2">
-<code class="descname">read_n2</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/f_calculator.html#FTestWidget.read_n2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.read_n2" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.f_calculator.FTestWidget.read_v">
-<code class="descname">read_v</code><span class="sig-paren">(</span><em>target</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/f_calculator.html#FTestWidget.read_v"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.read_v" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.f_calculator.FTestWidget.read_values">
-<code class="descname">read_values</code><span class="sig-paren">(</span><em>target</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/f_calculator.html#FTestWidget.read_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.f_calculator.FTestWidget.read_values" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="mfm-tools-f-calculator-module">
+<h2>mfm.tools.f_calculator module<a class="headerlink" href="#mfm-tools-f-calculator-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-mfm.tools.fret_lines">
-<span id="mfm-tools-fret-lines-module"></span><h2>mfm.tools.fret_lines module<a class="headerlink" href="#module-mfm.tools.fret_lines" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mfm.tools.fret_lines.DynamicFRETLine">
-<em class="property">class </em><code class="descclassname">mfm.tools.fret_lines.</code><code class="descname">DynamicFRETLine</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/fret_lines.html#DynamicFRETLine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.fret_lines.DynamicFRETLine" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mfm.tools.fret_lines.FRETLineGenerator" title="mfm.tools.fret_lines.FRETLineGenerator"><code class="xref py py-class docutils literal"><span class="pre">mfm.tools.fret_lines.FRETLineGenerator</span></code></a></p>
-<p>This is a <cite>convenience</cite> class for a simple two-state Gaussian distance distribution
-dynamic FRET-model. Two Gaussian distance distributions are considered as limiting
-states and the dynamic-FRET line is calculated</p>
-<p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.tools.fret_lines</span> <span class="k">as</span> <span class="nn">fret_lines</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">fret_lines</span><span class="o">.</span><span class="n">DynamicFRETLine</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">d</span><span class="o">.</span><span class="n">model</span>
-<span class="go">Model: Gaussian-Donor</span>
-<span class="go">Parameter       Value   Bounds  Fixed   Linke</span>
-<span class="go">bg      0.0000  (None, None)    False   False</span>
-<span class="go">sc      0.0000  (None, None)    False   False</span>
-<span class="go">t(L,1)  4.0000  (None, None)    False   False</span>
-<span class="go">x(L,1)  1.0000  (None, None)    False   False</span>
-<span class="go">t0      4.1000  (None, None)    True    False</span>
-<span class="go">R0      52.0000 (None, None)    True    False</span>
-<span class="go">k2      0.6670  (None, None)    True    False</span>
-<span class="go">DOnly   0.0000  (0.0, 1.0)      False   False</span>
-<span class="go">x(G,1)  1.0000  (None, None)    False   False</span>
-<span class="go">x(G,2)  1.0000  (None, None)    False   False</span>
-<span class="go">s(G,1)  10.0000 (None, None)    False   False</span>
-<span class="go">s(G,2)  10.0000 (None, None)    False   False</span>
-<span class="go">R(G,1)  40.0000 (None, None)    False   False</span>
-<span class="go">R(G,2)  80.0000 (None, None)    False   False</span>
-<span class="go">dt      0.1000  (None, None)    True    False</span>
-<span class="go">start   0.0000  (None, None)    True    False</span>
-<span class="go">stop    20.0000 (None, None)    True    False</span>
-<span class="go">rep     10.0000 (None, None)    True    False</span>
-<span class="go">lb      0.0000  (None, None)    False   False</span>
-<span class="go">ts      0.0000  (None, None)    False   False</span>
-<span class="go">p0      1.0000  (None, None)    True    False</span>
-<span class="go">r0      0.3800  (None, None)    False   False</span>
-<span class="go">l1      0.0308  (None, None)    False   False</span>
-<span class="go">l2      0.0368  (None, None)    False   False</span>
-<span class="go">g       1.0000  (None, None)    False   False</span>
-</pre></div>
+<div class="section" id="mfm-tools-fret-lines-module">
+<h2>mfm.tools.fret_lines module<a class="headerlink" href="#mfm-tools-fret-lines-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<p>Set a new sigma</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="mf">3.0</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">d</span><span class="o">.</span><span class="n">model</span>
-<span class="go">Model: Gaussian-Donor</span>
-<span class="go">Parameter       Value   Bounds  Fixed   Linke</span>
-<span class="go">bg      0.0000  (None, None)    False   False</span>
-<span class="go">sc      0.0000  (None, None)    False   False</span>
-<span class="go">t(L,1)  4.0000  (None, None)    False   False</span>
-<span class="go">x(L,1)  1.0000  (None, None)    False   False</span>
-<span class="go">t0      4.1000  (None, None)    True    False</span>
-<span class="go">R0      52.0000 (None, None)    True    False</span>
-<span class="go">k2      0.6670  (None, None)    True    False</span>
-<span class="go">DOnly   0.0000  (0.0, 1.0)      False   False</span>
-<span class="go">x(G,1)  1.0000  (None, None)    False   False</span>
-<span class="go">x(G,2)  1.0000  (None, None)    False   False</span>
-<span class="go">s(G,1)  3.0000  (None, None)    False   False</span>
-<span class="go">s(G,2)  3.0000  (None, None)    False   False</span>
-<span class="go">R(G,1)  40.0000 (None, None)    False   False</span>
-<span class="go">R(G,2)  80.0000 (None, None)    False   False</span>
-<span class="go">dt      0.1000  (None, None)    True    False</span>
-<span class="go">start   0.0000  (None, None)    True    False</span>
-<span class="go">stop    20.0000 (None, None)    True    False</span>
-<span class="go">rep     10.0000 (None, None)    True    False</span>
-<span class="go">lb      0.0000  (None, None)    False   False</span>
-<span class="go">ts      0.0000  (None, None)    False   False</span>
-<span class="go">p0      1.0000  (None, None)    True    False</span>
-<span class="go">r0      0.3800  (None, None)    False   False</span>
-<span class="go">l1      0.0308  (None, None)    False   False</span>
-<span class="go">l2      0.0368  (None, None)    False   False</span>
-<span class="go">g       1.0000  (None, None)    False   False</span>
-</pre></div>
+<div class="section" id="mfm-tools-kappa2dist-module">
+<h2>mfm.tools.kappa2dist module<a class="headerlink" href="#mfm-tools-kappa2dist-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<p>Calculate the FRET-line</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">calc</span><span class="p">()</span>
-<span class="go">Calculating FRET-Line</span>
-<span class="go">Using parameter: x(G,2)</span>
-<span class="go">In a range: 0.1 .. 100.0</span>
-</pre></div>
+<div class="section" id="mfm-tools-pdb2labeling-module">
+<h2>mfm.tools.pdb2labeling module<a class="headerlink" href="#mfm-tools-pdb2labeling-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<p>Plot the conversion function</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pylab</span> <span class="k">as</span> <span class="nn">p</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">tauf</span><span class="p">,</span> <span class="n">taux</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">conversion_function</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tauf</span><span class="p">,</span> <span class="n">taux</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
-<dl class="method">
-<dt id="mfm.tools.fret_lines.DynamicFRETLine.calc">
-<code class="descname">calc</code><span class="sig-paren">(</span><em>parameter_name=None</em>, <em>parameter_range=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/fret_lines.html#DynamicFRETLine.calc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.fret_lines.DynamicFRETLine.calc" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.DynamicFRETLine.mean_distance_1">
-<code class="descname">mean_distance_1</code><a class="headerlink" href="#mfm.tools.fret_lines.DynamicFRETLine.mean_distance_1" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mean distance of first limiting state 1</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.DynamicFRETLine.mean_distance_2">
-<code class="descname">mean_distance_2</code><a class="headerlink" href="#mfm.tools.fret_lines.DynamicFRETLine.mean_distance_2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mean distance of first limiting state 1</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.DynamicFRETLine.sigma">
-<code class="descname">sigma</code><a class="headerlink" href="#mfm.tools.fret_lines.DynamicFRETLine.sigma" title="Permalink to this definition">¶</a></dt>
-<dd><p>The width of both sigmas</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.DynamicFRETLine.sigma_1">
-<code class="descname">sigma_1</code><a class="headerlink" href="#mfm.tools.fret_lines.DynamicFRETLine.sigma_1" title="Permalink to this definition">¶</a></dt>
-<dd><p>Width of second limiting state</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.DynamicFRETLine.sigma_2">
-<code class="descname">sigma_2</code><a class="headerlink" href="#mfm.tools.fret_lines.DynamicFRETLine.sigma_2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Width of second limiting state</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.tools.fret_lines.DynamicFRETLineSteps">
-<em class="property">class </em><code class="descclassname">mfm.tools.fret_lines.</code><code class="descname">DynamicFRETLineSteps</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/fret_lines.html#DynamicFRETLineSteps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.fret_lines.DynamicFRETLineSteps" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mfm.tools.fret_lines.DynamicFRETLine" title="mfm.tools.fret_lines.DynamicFRETLine"><code class="xref py py-class docutils literal"><span class="pre">mfm.tools.fret_lines.DynamicFRETLine</span></code></a></p>
-<p>This class helps to generate a dynamic FRET line for a linear multi-state system
-if two end-points are known the number of steps <cite>n</cite> between the end-points is provided
-by the user of this class and and <cite>n</cite> dynamic FRET-lines are calculated. Based on these
-FRET-lines an overall conversion function covering the whole range from the start to
-the end is calculated.</p>
-<p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.tools.fret_lines</span> <span class="k">as</span> <span class="nn">fret_lines</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">fret_lines</span><span class="o">.</span><span class="n">DynamicFRETLineSteps</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>We also want to plot the conversion function. I use pylab</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pylab</span> <span class="k">as</span> <span class="nn">p</span>
-</pre></div>
-</div>
-<p>Now lets calculate the conversion function. By default 10 intermediate steps
-are used</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">calc</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">joint_conversion_function</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Now lets use only three steps and lets check how it looks like</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">number_of_intermediates</span> <span class="o">=</span> <span class="mi">3</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">calc</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">joint_conversion_function</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Before we look at the plot a 1:1 conversion function might be useful to have a
-reference and a static FRET-line</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">fret_lines</span><span class="o">.</span><span class="n">StaticFRETLine</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="o">.</span><span class="n">calc</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">conversion_function</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
-<dl class="method">
-<dt id="mfm.tools.fret_lines.DynamicFRETLineSteps.calc">
-<code class="descname">calc</code><span class="sig-paren">(</span><em>parameter_name=None</em>, <em>parameter_range=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/fret_lines.html#DynamicFRETLineSteps.calc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.fret_lines.DynamicFRETLineSteps.calc" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.DynamicFRETLineSteps.end_point">
-<code class="descname">end_point</code><a class="headerlink" href="#mfm.tools.fret_lines.DynamicFRETLineSteps.end_point" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.DynamicFRETLineSteps.joint_conversion_function">
-<code class="descname">joint_conversion_function</code><a class="headerlink" href="#mfm.tools.fret_lines.DynamicFRETLineSteps.joint_conversion_function" title="Permalink to this definition">¶</a></dt>
-<dd><p>The overall conversion function including all intermediates</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.DynamicFRETLineSteps.mean_distances">
-<code class="descname">mean_distances</code><a class="headerlink" href="#mfm.tools.fret_lines.DynamicFRETLineSteps.mean_distances" title="Permalink to this definition">¶</a></dt>
-<dd><p>The array of mean distances between the two endpoints</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.DynamicFRETLineSteps.number_of_intermediates">
-<code class="descname">number_of_intermediates</code><a class="headerlink" href="#mfm.tools.fret_lines.DynamicFRETLineSteps.number_of_intermediates" title="Permalink to this definition">¶</a></dt>
-<dd><p>The number of intermediate points between the start and the endpoint</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.DynamicFRETLineSteps.start_point">
-<code class="descname">start_point</code><a class="headerlink" href="#mfm.tools.fret_lines.DynamicFRETLineSteps.start_point" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator">
-<em class="property">class </em><code class="descclassname">mfm.tools.fret_lines.</code><code class="descname">FRETLineGenerator</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/fret_lines.html#FRETLineGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
-<p>Calculates FRET-lines for arbitrary models</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>kwargs</strong> &#8211; </td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.fitting.models.tcspc</span> <span class="k">as</span> <span class="nn">m</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mfm.tools.fret_lines</span> <span class="k">import</span> <span class="n">FRETLineGenerator</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">R1</span> <span class="o">=</span> <span class="mi">80</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">R2</span> <span class="o">=</span> <span class="mi">35</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fl</span> <span class="o">=</span> <span class="n">FRETLineGenerator</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fl</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">GaussianModel</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fl</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_dict</span><span class="p">[</span><span class="s1">&#39;DOnly&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="mf">0.0</span>
-</pre></div>
-</div>
-<p>Adding donor lifetimes</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fl</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">donors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fl</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">donors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Add a new Gaussian distance</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fl</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">55.0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>The fluorescence/species averaged lifetime of the model is obtained by</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fl</span><span class="o">.</span><span class="n">fret_fluorescence_averaged_lifetime</span>
-<span class="go">2.5600809847436152</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fl</span><span class="o">.</span><span class="n">fret_species_averaged_lifetime</span>
-<span class="go">2.2459102590812412</span>
-</pre></div>
-</div>
-<p>The model parameters can be changed using their names by the <em>parameter_dict</em></p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fl</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_dict</span><span class="p">[</span><span class="s1">&#39;R(G,1)&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="mf">40.0</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fl</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_dict</span><span class="p">[</span><span class="s1">&#39;s(G,1)&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="mf">8.0</span>
-</pre></div>
-</div>
-<p>Set the name of the parameter changes to calculate the distributions used for the
-FRET-lines. Here a more common parameter as the donor-acceptor separation distance
-is used to generate a static FRET-line.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fl</span><span class="o">.</span><span class="n">parameter_name</span> <span class="o">=</span> <span class="s1">&#39;R(G,1)&#39;</span>
-</pre></div>
-</div>
-<p>Set the range in which this parameter is modified to generate the line and calculate the FRET-line</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fl</span><span class="o">.</span><span class="n">parameter_range</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">1000</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fl</span><span class="o">.</span><span class="n">calc</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>By adding a second Gaussian and changing the species fraction you can also generate a dynamic-FRET line</p>
-<p>(<a class="reference external" href="../plots/fret-lines.py">Source code</a>)</p>
-<p class="rubric">Attributes</p>
-<table border="1" class="longtable docutils">
-<colgroup>
-<col width="10%" />
-<col width="90%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#mfm.tools.fret_lines.FRETLineGenerator.parameter_name" title="mfm.tools.fret_lines.FRETLineGenerator.parameter_name"><code class="xref py py-obj docutils literal"><span class="pre">parameter_name</span></code></a></td>
-<td>The name of the parameter which is varies</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mfm.tools.fret_lines.FRETLineGenerator.fret_species_averaged_lifetime" title="mfm.tools.fret_lines.FRETLineGenerator.fret_species_averaged_lifetime"><code class="xref py py-obj docutils literal"><span class="pre">fret_species_averaged_lifetime</span></code></a></td>
-<td>The current species averages lifetime of the FRET sample xi * taui</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mfm.tools.fret_lines.FRETLineGenerator.fret_fluorescence_averaged_lifetime" title="mfm.tools.fret_lines.FRETLineGenerator.fret_fluorescence_averaged_lifetime"><code class="xref py py-obj docutils literal"><span class="pre">fret_fluorescence_averaged_lifetime</span></code></a></td>
-<td>The current fluorescence averaged lifetime of the FRET-sample = xi*taui**2 / species_averaged_lifetime</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mfm.tools.fret_lines.FRETLineGenerator.donor_species_averaged_lifetime" title="mfm.tools.fret_lines.FRETLineGenerator.donor_species_averaged_lifetime"><code class="xref py py-obj docutils literal"><span class="pre">donor_species_averaged_lifetime</span></code></a></td>
-<td>The current species averaged lifetime of the donor sample xi*taui</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mfm.tools.fret_lines.FRETLineGenerator.transfer_efficiency" title="mfm.tools.fret_lines.FRETLineGenerator.transfer_efficiency"><code class="xref py py-obj docutils literal"><span class="pre">transfer_efficiency</span></code></a></td>
-<td>The current transfer efficency</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mfm.tools.fret_lines.FRETLineGenerator.parameter_values" title="mfm.tools.fret_lines.FRETLineGenerator.parameter_values"><code class="xref py py-obj docutils literal"><span class="pre">parameter_values</span></code></a></td>
-<td>The values the parameter as defined by <code class="xref py py-attr docutils literal"><span class="pre">parameter_name</span></code></td>
-</tr>
-</tbody>
-</table>
-<table border="1" class="docutils">
-<colgroup>
-<col width="14%" />
-<col width="86%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td>parameter_range</td>
-<td>(array) Start and stop value of the parameter range used for calculation of the FRET-line</td>
-</tr>
-<tr class="row-even"><td>n_points</td>
-<td>(int) The number of points used to calculate the FRET-line</td>
-</tr>
-<tr class="row-odd"><td>model</td>
-<td>(LifetimeModel) The TCSPC-model used to calculate the FRET-line</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Methods</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="19%" />
-<col width="81%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td>calc()</td>
-<td>Recaclulates the FRET-line</td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.calc">
-<code class="descname">calc</code><span class="sig-paren">(</span><em>parameter_name=None</em>, <em>parameter_range=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/fret_lines.html#FRETLineGenerator.calc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.calc" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.conversion_function">
-<code class="descname">conversion_function</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.conversion_function" title="Permalink to this definition">¶</a></dt>
-<dd><p>The fluorescence averaged lifetime vs. the species averaged lifetime</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.conversion_function_string">
-<code class="descname">conversion_function_string</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.conversion_function_string" title="Permalink to this definition">¶</a></dt>
-<dd><p>A string used for plotting of the conversion function tauX(tauF)</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.donor_lifetime_spectrum">
-<code class="descname">donor_lifetime_spectrum</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.donor_lifetime_spectrum" title="Permalink to this definition">¶</a></dt>
-<dd><p>The donor lifetime spectrum in form amplitude, lifetime, amplitude, lifetime</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.donor_species_averaged_lifetime">
-<code class="descname">donor_species_averaged_lifetime</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.donor_species_averaged_lifetime" title="Permalink to this definition">¶</a></dt>
-<dd><p>The current species averaged lifetime of the donor sample xi*taui</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.fdfa_string">
-<code class="descname">fdfa_string</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.fdfa_string" title="Permalink to this definition">¶</a></dt>
-<dd><p>Used for instance for plotting in origin</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.fret_fluorescence_averaged_lifetime">
-<code class="descname">fret_fluorescence_averaged_lifetime</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.fret_fluorescence_averaged_lifetime" title="Permalink to this definition">¶</a></dt>
-<dd><p>The current fluorescence averaged lifetime of the FRET-sample = xi*taui**2 / species_averaged_lifetime</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.fret_species_averaged_lifetime">
-<code class="descname">fret_species_averaged_lifetime</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.fret_species_averaged_lifetime" title="Permalink to this definition">¶</a></dt>
-<dd><p>The current species averages lifetime of the FRET sample xi * taui</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.model">
-<code class="descname">model</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.model" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.n_points">
-<code class="descname">n_points</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.n_points" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.parameter_name">
-<code class="descname">parameter_name</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.parameter_name" title="Permalink to this definition">¶</a></dt>
-<dd><p>The name of the parameter which is varies</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.parameter_range">
-<code class="descname">parameter_range</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.parameter_range" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.parameter_values">
-<code class="descname">parameter_values</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.parameter_values" title="Permalink to this definition">¶</a></dt>
-<dd><p>The values the parameter as defined by <code class="xref py py-attr docutils literal"><span class="pre">parameter_name</span></code></p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.polynom_coefficients">
-<code class="descname">polynom_coefficients</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.polynom_coefficients" title="Permalink to this definition">¶</a></dt>
-<dd><p>A numpy array with polynomial coefficients approximating the tauX(tauF) conversion function</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.polynomial_degree">
-<code class="descname">polynomial_degree</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.polynomial_degree" title="Permalink to this definition">¶</a></dt>
-<dd><p>The degree of the polynomial to approximate the conversion function</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.transfer_efficency_string">
-<code class="descname">transfer_efficency_string</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.transfer_efficency_string" title="Permalink to this definition">¶</a></dt>
-<dd><p>Used for instance for plotting in origin</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGenerator.transfer_efficiency">
-<code class="descname">transfer_efficiency</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGenerator.transfer_efficiency" title="Permalink to this definition">¶</a></dt>
-<dd><p>The current transfer efficency</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.tools.fret_lines.FRETLineGeneratorWidget">
-<em class="property">class </em><code class="descclassname">mfm.tools.fret_lines.</code><code class="descname">FRETLineGeneratorWidget</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/fret_lines.html#FRETLineGeneratorWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGeneratorWidget" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code>, <a class="reference internal" href="#mfm.tools.fret_lines.FRETLineGenerator" title="mfm.tools.fret_lines.FRETLineGenerator"><code class="xref py py-class docutils literal"><span class="pre">mfm.tools.fret_lines.FRETLineGenerator</span></code></a></p>
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGeneratorWidget.current_model_index">
-<code class="descname">current_model_index</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGeneratorWidget.current_model_index" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGeneratorWidget.model">
-<code class="descname">model</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGeneratorWidget.model" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGeneratorWidget.models">
-<code class="descname">models</code><em class="property"> = [(&lt;class 'mfm.fitting.models.tcspc.fret.GaussianModelWidget'&gt;, {'hide_rotation': True, 'hide_donor': True, 'hide_error': True, 'hide_generic': True, 'hide_fit': True, 'hide_corrections': True, 'hide_convolve': True}), (&lt;class 'mfm.fitting.models.tcspc.fret.WormLikeChainModelWidget'&gt;, {'hide_rotation': True, 'hide_donor': True, 'hide_error': True, 'hide_generic': True, 'hide_fit': True, 'hide_corrections': True, 'hide_convolve': True}), (&lt;class 'mfm.fitting.models.tcspc.mix_model.MixModelWidget'&gt;, {'hide_rotation': True, 'hide_donor': True, 'hide_fit': True, 'enable_mix_model_donor': True, 'hide_error': True, 'hide_corrections': True, 'hide_generic': True, 'hide_convolve': True}), (&lt;class 'mfm.fitting.models.tcspc.fret.FRETrateModelWidget'&gt;, {'hide_rotation': True, 'hide_donor': True, 'hide_fit': True, 'enable_mix_model_donor': True, 'hide_error': True, 'hide_corrections': True, 'hide_generic': True, 'hide_convolve': True})]</em><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGeneratorWidget.models" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGeneratorWidget.n_points">
-<code class="descname">n_points</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGeneratorWidget.n_points" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGeneratorWidget.name">
-<code class="descname">name</code><em class="property"> = 'FRET-Line Generator'</em><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGeneratorWidget.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.fret_lines.FRETLineGeneratorWidget.onCalculate">
-<code class="descname">onCalculate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/fret_lines.html#FRETLineGeneratorWidget.onCalculate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGeneratorWidget.onCalculate" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.fret_lines.FRETLineGeneratorWidget.onClearPlot">
-<code class="descname">onClearPlot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/fret_lines.html#FRETLineGeneratorWidget.onClearPlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGeneratorWidget.onClearPlot" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.fret_lines.FRETLineGeneratorWidget.onModelChanged">
-<code class="descname">onModelChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/fret_lines.html#FRETLineGeneratorWidget.onModelChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGeneratorWidget.onModelChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.fret_lines.FRETLineGeneratorWidget.onParameterChanged">
-<code class="descname">onParameterChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/fret_lines.html#FRETLineGeneratorWidget.onParameterChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGeneratorWidget.onParameterChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.FRETLineGeneratorWidget.parameter_range">
-<code class="descname">parameter_range</code><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGeneratorWidget.parameter_range" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.fret_lines.FRETLineGeneratorWidget.update_parameter">
-<code class="descname">update_parameter</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/fret_lines.html#FRETLineGeneratorWidget.update_parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.fret_lines.FRETLineGeneratorWidget.update_parameter" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.tools.fret_lines.StaticFRETLine">
-<em class="property">class </em><code class="descclassname">mfm.tools.fret_lines.</code><code class="descname">StaticFRETLine</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/fret_lines.html#StaticFRETLine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.fret_lines.StaticFRETLine" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mfm.tools.fret_lines.FRETLineGenerator" title="mfm.tools.fret_lines.FRETLineGenerator"><code class="xref py py-class docutils literal"><span class="pre">mfm.tools.fret_lines.FRETLineGenerator</span></code></a></p>
-<p>This class is used to calculate static-FRET lines of Gaussian distributed states.</p>
-<p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.tools.fret_lines</span> <span class="k">as</span> <span class="nn">fret_lines</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">fret_lines</span><span class="o">.</span><span class="n">StaticFRETLine</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="o">.</span><span class="n">calc</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>Now lets look at the conversion function in comparison to a 1:1 relation</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pylab</span> <span class="k">as</span> <span class="nn">p</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">conversion_function</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>This class has basically only one relevant attribute that is the width of the DA-distance distirbution
-within a state.</p>
-<p>A conversion polynomial for plotting purposes can be obtained</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="o">.</span><span class="n">polynomial_string</span>
-</pre></div>
-</div>
-<dl class="method">
-<dt id="mfm.tools.fret_lines.StaticFRETLine.calc">
-<code class="descname">calc</code><span class="sig-paren">(</span><em>parameter_name=None, parameter_range=[0, 500], **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/fret_lines.html#StaticFRETLine.calc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.fret_lines.StaticFRETLine.calc" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.fret_lines.StaticFRETLine.sigma">
-<code class="descname">sigma</code><a class="headerlink" href="#mfm.tools.fret_lines.StaticFRETLine.sigma" title="Permalink to this definition">¶</a></dt>
-<dd><p>Width of the DA-distance distribution within the state</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="module-mfm.tools.kappa2dist">
-<span id="mfm-tools-kappa2dist-module"></span><h2>mfm.tools.kappa2dist module<a class="headerlink" href="#module-mfm.tools.kappa2dist" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist">
-<em class="property">class </em><code class="descclassname">mfm.tools.kappa2dist.</code><code class="descname">Kappa2Dist</code><span class="sig-paren">(</span><em>kappa2=0.667</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/kappa2dist.html#Kappa2Dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.RappSD">
-<code class="descname">RappSD</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.RappSD" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.Rapp_mean">
-<code class="descname">Rapp_mean</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.Rapp_mean" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.SA2">
-<code class="descname">SA2</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.SA2" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.SD2">
-<code class="descname">SD2</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.SD2" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.delta">
-<code class="descname">delta</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.delta" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.k2_est">
-<code class="descname">k2_est</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.k2_est" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.k2_mean">
-<code class="descname">k2_mean</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.k2_mean" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.k2_sd">
-<code class="descname">k2_sd</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.k2_sd" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.k2_true">
-<code class="descname">k2_true</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.k2_true" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.min_max">
-<code class="descname">min_max</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.min_max" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.model">
-<code class="descname">model</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.model" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.n_bins">
-<code class="descname">n_bins</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.n_bins" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.name">
-<code class="descname">name</code><em class="property"> = 'Kappa2Dist'</em><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.onUpdateHist">
-<code class="descname">onUpdateHist</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/kappa2dist.html#Kappa2Dist.onUpdateHist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.onUpdateHist" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.onUpdateRapp">
-<code class="descname">onUpdateRapp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/kappa2dist.html#Kappa2Dist.onUpdateRapp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.onUpdateRapp" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.rAD_known">
-<code class="descname">rAD_known</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.rAD_known" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.r_0">
-<code class="descname">r_0</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.r_0" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.r_ADinf">
-<code class="descname">r_ADinf</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.r_ADinf" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.r_Ainf">
-<code class="descname">r_Ainf</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.r_Ainf" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.r_Dinf">
-<code class="descname">r_Dinf</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.r_Dinf" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.kappa2dist.Kappa2Dist.step">
-<code class="descname">step</code><a class="headerlink" href="#mfm.tools.kappa2dist.Kappa2Dist.step" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="module-mfm.tools.pdb2labeling">
-<span id="mfm-tools-pdb2labeling-module"></span><h2>mfm.tools.pdb2labeling module<a class="headerlink" href="#module-mfm.tools.pdb2labeling" title="Permalink to this headline">¶</a></h2>
-<p>This module contain a small tool to generate JSON-labeling files</p>
-<dl class="class">
-<dt id="mfm.tools.pdb2labeling.PDB2Label">
-<em class="property">class </em><code class="descclassname">mfm.tools.pdb2labeling.</code><code class="descname">PDB2Label</code><a class="reference internal" href="../_modules/mfm/tools/pdb2labeling.html#PDB2Label"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
-<dl class="attribute">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.distance">
-<code class="descname">distance</code><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.distance" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.distance_type">
-<code class="descname">distance_type</code><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.distance_type" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.error_neg">
-<code class="descname">error_neg</code><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.error_neg" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.error_pos">
-<code class="descname">error_pos</code><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.error_pos" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.forster_radius">
-<code class="descname">forster_radius</code><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.forster_radius" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.label1">
-<code class="descname">label1</code><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.label1" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.label2">
-<code class="descname">label2</code><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.label2" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.name">
-<code class="descname">name</code><em class="property"> = 'PDB2Label'</em><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.onAddDistance">
-<code class="descname">onAddDistance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/pdb2labeling.html#PDB2Label.onAddDistance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.onAddDistance" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.onAddLabel">
-<code class="descname">onAddLabel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/pdb2labeling.html#PDB2Label.onAddLabel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.onAddLabel" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.onClear">
-<code class="descname">onClear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/pdb2labeling.html#PDB2Label.onClear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.onClear" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.onDistanceListDoubleClicked">
-<code class="descname">onDistanceListDoubleClicked</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/pdb2labeling.html#PDB2Label.onDistanceListDoubleClicked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.onDistanceListDoubleClicked" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.onLabelingListDoubleClicked">
-<code class="descname">onLabelingListDoubleClicked</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/pdb2labeling.html#PDB2Label.onLabelingListDoubleClicked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.onLabelingListDoubleClicked" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.onLoadJSON">
-<code class="descname">onLoadJSON</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/pdb2labeling.html#PDB2Label.onLoadJSON"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.onLoadJSON" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.onLoadReferencePDB">
-<code class="descname">onLoadReferencePDB</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/pdb2labeling.html#PDB2Label.onLoadReferencePDB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.onLoadReferencePDB" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.onReadTextEdit">
-<code class="descname">onReadTextEdit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/pdb2labeling.html#PDB2Label.onReadTextEdit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.onReadTextEdit" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.onSaveLabelingFile">
-<code class="descname">onSaveLabelingFile</code><span class="sig-paren">(</span><em>json_file=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/pdb2labeling.html#PDB2Label.onSaveLabelingFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.onSaveLabelingFile" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.onSimulationTypeChanged">
-<code class="descname">onSimulationTypeChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/pdb2labeling.html#PDB2Label.onSimulationTypeChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.onSimulationTypeChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.onUpdateInterface">
-<code class="descname">onUpdateInterface</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/pdb2labeling.html#PDB2Label.onUpdateInterface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.onUpdateInterface" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.onUpdateJSON">
-<code class="descname">onUpdateJSON</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/pdb2labeling.html#PDB2Label.onUpdateJSON"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.onUpdateJSON" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.pdb_filename">
-<code class="descname">pdb_filename</code><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.pdb_filename" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.position_name">
-<code class="descname">position_name</code><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.position_name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.pdb2labeling.PDB2Label.simulation_type">
-<code class="descname">simulation_type</code><a class="headerlink" href="#mfm.tools.pdb2labeling.PDB2Label.simulation_type" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="module-mfm.tools.tau2r">
-<span id="mfm-tools-tau2r-module"></span><h2>mfm.tools.tau2r module<a class="headerlink" href="#module-mfm.tools.tau2r" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mfm.tools.tau2r.FRETCalculator">
-<em class="property">class </em><code class="descclassname">mfm.tools.tau2r.</code><code class="descname">FRETCalculator</code><span class="sig-paren">(</span><em>kappa2=0.667</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tau2r.html#FRETCalculator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tau2r.FRETCalculator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtGui.QWidget</span></code></p>
-<dl class="attribute">
-<dt id="mfm.tools.tau2r.FRETCalculator.E">
-<code class="descname">E</code><a class="headerlink" href="#mfm.tools.tau2r.FRETCalculator.E" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.tau2r.FRETCalculator.R">
-<code class="descname">R</code><a class="headerlink" href="#mfm.tools.tau2r.FRETCalculator.R" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.tau2r.FRETCalculator.R0">
-<code class="descname">R0</code><a class="headerlink" href="#mfm.tools.tau2r.FRETCalculator.R0" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.tau2r.FRETCalculator.kFRET">
-<code class="descname">kFRET</code><a class="headerlink" href="#mfm.tools.tau2r.FRETCalculator.kFRET" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.tau2r.FRETCalculator.name">
-<code class="descname">name</code><em class="property"> = 'FRET-Calculator'</em><a class="headerlink" href="#mfm.tools.tau2r.FRETCalculator.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tau2r.FRETCalculator.onEChanged">
-<code class="descname">onEChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tau2r.html#FRETCalculator.onEChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tau2r.FRETCalculator.onEChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tau2r.FRETCalculator.onR0Changed">
-<code class="descname">onR0Changed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tau2r.html#FRETCalculator.onR0Changed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tau2r.FRETCalculator.onR0Changed" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tau2r.FRETCalculator.onRChanged">
-<code class="descname">onRChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tau2r.html#FRETCalculator.onRChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tau2r.FRETCalculator.onRChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tau2r.FRETCalculator.onTau0Changed">
-<code class="descname">onTau0Changed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tau2r.html#FRETCalculator.onTau0Changed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tau2r.FRETCalculator.onTau0Changed" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tau2r.FRETCalculator.onTauChanged">
-<code class="descname">onTauChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tau2r.html#FRETCalculator.onTauChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tau2r.FRETCalculator.onTauChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tau2r.FRETCalculator.onkFRETChanged">
-<code class="descname">onkFRETChanged</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tau2r.html#FRETCalculator.onkFRETChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tau2r.FRETCalculator.onkFRETChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.tau2r.FRETCalculator.tau">
-<code class="descname">tau</code><a class="headerlink" href="#mfm.tools.tau2r.FRETCalculator.tau" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.tau2r.FRETCalculator.tau0">
-<code class="descname">tau0</code><a class="headerlink" href="#mfm.tools.tau2r.FRETCalculator.tau0" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="mfm-tools-tau2r-module">
+<h2>mfm.tools.tau2r module<a class="headerlink" href="#mfm-tools-tau2r-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-mfm.tools">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.tools" title="Permalink to this headline">¶</a></h2>
@@ -1293,7 +217,7 @@ within a state.</p>
     </p>
     <p>
         &copy; Copyright 2016, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

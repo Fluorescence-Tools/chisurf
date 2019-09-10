@@ -1,44 +1,29 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>mfm.fluorescence.fps &mdash; ChiSurf 0.0.5 documentation</title>
-    
-    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <meta charset="utf-8" />
+    <title>mfm.fluorescence.fps &#8212; ChiSurf  documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../',
-        VERSION:     '0.0.5',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../index.html" />
-    <link rel="up" title="Module code" href="../../index.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body role="document">
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -51,7 +36,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -67,13 +52,11 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
-</ul>
-<ul class="simple">
 </ul>
 </ul>
 </li>
@@ -118,27 +101,37 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary">
+<form action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
       
   <h1>Source code for mfm.fluorescence.fps</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">scipy.stats</span>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
+<span class="kn">import</span> <span class="nn">mfm.io.dx</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">dynamic</span>
 <span class="kn">import</span> <span class="nn">mfm</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">uic</span>
+<span class="kn">import</span> <span class="nn">mfm.base</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">static</span>
+<span class="kn">from</span> <span class="nn">mfm.fluorescence.fps</span> <span class="k">import</span> <span class="n">functions</span>
+<span class="kn">from</span> <span class="nn">mfm.structure.structure</span> <span class="k">import</span> <span class="n">Structure</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">functions</span>
+<span class="kn">from</span> <span class="nn">.functions</span> <span class="k">import</span> <span class="n">assign_diffusion_to_grid_1</span><span class="p">,</span> <span class="n">assign_diffusion_to_grid_2</span><span class="p">,</span> \
+    <span class="n">get_kQ_rC</span><span class="p">,</span> <span class="n">create_quenching_map</span><span class="p">,</span> <span class="n">assign_diffusion_to_grid_3</span>
+<span class="kn">from</span> <span class="nn">.static</span> <span class="k">import</span> <span class="n">calculate_1_radius</span><span class="p">,</span> <span class="n">calculate_3_radius</span>
 
-<span class="kn">from</span> <span class="nn">.static</span> <span class="kn">import</span> <span class="n">calculate_1_radius</span><span class="p">,</span> <span class="n">calculate_3_radius</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">functions</span>
-<span class="kn">import</span> <span class="nn">mfm.io.pdb</span> <span class="kn">as</span> <span class="nn">pdb</span>
-<span class="kn">from</span> <span class="nn">mfm.structure</span> <span class="kn">import</span> <span class="n">Structure</span>
-<span class="kn">import</span> <span class="nn">static</span>
-<span class="kn">import</span> <span class="nn">dynamic</span>
-
-
-<span class="n">package_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">)</span>
+<span class="n">package_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
 <span class="n">dye_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">package_directory</span><span class="p">,</span> <span class="s1">&#39;settings/dye_definition.json&#39;</span><span class="p">)</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="n">dye_definition</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">dye_file</span><span class="p">))</span>
@@ -148,193 +141,81 @@
 <span class="n">dye_names</span> <span class="o">=</span> <span class="n">dye_definition</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="AV"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AV">[docs]</a><span class="k">class</span> <span class="nc">AV</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="BasicAV"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.BasicAV">[docs]</a><span class="k">class</span> <span class="nc">BasicAV</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simulates the accessible volume of a dye</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
-<span class="sd">    Calculating accessible volume using provided pdb-file</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
-<span class="sd">    &gt;&gt;&gt; residue_number = 18</span>
-<span class="sd">    &gt;&gt;&gt; atom_name = &#39;CB&#39;</span>
-<span class="sd">    &gt;&gt;&gt; attachment_atom = 1</span>
-<span class="sd">    &gt;&gt;&gt; av = mfm.fps.AV(pdb_filename, attachment_atom=1, verbose=True)</span>
-
-<span class="sd">    Calculating accessible volume using provided Structure object</span>
-
-<span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
-<span class="sd">    &gt;&gt;&gt; structure = mfm.Structure(pdb_filename)</span>
-<span class="sd">    &gt;&gt;&gt; av = mfm.fps.AV(structure, attachment_atom=1, verbose=True)</span>
-<span class="sd">    Calculating accessible volume</span>
-<span class="sd">    -----------------------------</span>
-<span class="sd">    Loading PDB</span>
-<span class="sd">    Calculating initial-AV</span>
-<span class="sd">    Linker-length  : 20.00</span>
-<span class="sd">    Linker-width   : 0.50</span>
-<span class="sd">    Linker-radius  : 5.00</span>
-<span class="sd">    Attachment-atom: 1</span>
-<span class="sd">    AV-resolution  : 0.50</span>
-<span class="sd">    AV: calculate1R</span>
-<span class="sd">    Number of atoms: 2647</span>
-<span class="sd">    Attachment atom: [ 33.28   58.678  40.397]</span>
-<span class="sd">    Points in AV: 111911</span>
-<span class="sd">    Points in total-AV: 111911</span>
-
-<span class="sd">    Using residue_seq_number and atom_name to calculate accessible volume, this also works without</span>
-<span class="sd">    chain_identifier. However, only if a single-chain is present.</span>
-
-<span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
-<span class="sd">    &gt;&gt;&gt; structure = mfm.Structure(pdb_filename)</span>
-<span class="sd">    &gt;&gt;&gt; av = mfm.fps.AV(structure, residue_seq_number=11, atom_name=&#39;CB&#39;, verbose=True)</span>
-
-<span class="sd">    If save_av is True the calculated accessible volume is save to disk. The filename of the calculated</span>
-<span class="sd">    accessible volume is determined by output_file</span>
-
-<span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
-<span class="sd">    &gt;&gt;&gt; structure = mfm.Structure(pdb_filename)</span>
-<span class="sd">    &gt;&gt;&gt; av = mfm.fps.AV(structure, residue_seq_number=11, atom_name=&#39;CB&#39;, verbose=True, save_av=True, output_file=&#39;test&#39;)</span>
-<span class="sd">    Calculating accessible volume</span>
-<span class="sd">    -----------------------------</span>
-<span class="sd">    Loading PDB</span>
-<span class="sd">    Calculating initial-AV</span>
-<span class="sd">    Linker-length  : 20.00</span>
-<span class="sd">    Linker-width   : 0.50</span>
-<span class="sd">    Linker-radius  : 5.00</span>
-<span class="sd">    Attachment-atom: 174</span>
-<span class="sd">    AV-resolution  : 0.50</span>
-<span class="sd">    AV: calculate1R</span>
-<span class="sd">    Number of atoms: 2647</span>
-<span class="sd">    Attachment atom: [ 41.606  44.953  36.625]</span>
-<span class="sd">    Points in AV: 22212</span>
-<span class="sd">    Points in total-AV: 22212</span>
-
-<span class="sd">    write_xyz</span>
-<span class="sd">    ---------</span>
-<span class="sd">    Filename: test.xyz</span>
-<span class="sd">    -------------------</span>
+<span class="sd">    &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; av = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name=&#39;CB&#39;)</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">chain_identifier</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                 <span class="n">linker_length</span><span class="o">=</span><span class="mf">20.0</span><span class="p">,</span> <span class="n">linker_width</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">radius1</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
-                 <span class="n">radius2</span><span class="o">=</span><span class="mf">4.5</span><span class="p">,</span> <span class="n">radius3</span><span class="o">=</span><span class="mf">3.5</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="s1">&#39;out&#39;</span><span class="p">,</span>
-                 <span class="n">attachment_atom_index</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">simulation_type</span><span class="o">=</span><span class="s1">&#39;AV1&#39;</span><span class="p">,</span>
-                 <span class="n">position_name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">residue_name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">structure</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BasicAV</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-<span class="sd">        :param structure: :class:`mfm.structure.structure` or str</span>
-<span class="sd">            Structure object of filename pointing to PDB-File</span>
-<span class="sd">        :param residue_seq_number: int</span>
-<span class="sd">            Attachment residue of the accessible volume</span>
-<span class="sd">        :param atom_name: string</span>
-<span class="sd">            Atom name where the dye is attached to</span>
-<span class="sd">        :param chain_identifier: string</span>
-<span class="sd">            Chain identifier</span>
-<span class="sd">        :param linker_length: float</span>
-<span class="sd">            Length of the dye linker</span>
-<span class="sd">        :param linker_width: float</span>
-<span class="sd">            Width of the dye linker</span>
-<span class="sd">        :param radius1: float</span>
-<span class="sd">            Radius of the dye</span>
-<span class="sd">        :param radius2: float</span>
-<span class="sd">            Radius of the dye</span>
-<span class="sd">        :param radius3: float</span>
-<span class="sd">            Radius of the dye</span>
-<span class="sd">        :param simulation_grid_resolution: float</span>
-<span class="sd">            Resolution of the simulation grid</span>
-<span class="sd">        :param save_av: bool</span>
-<span class="sd">            If True than the accessible volume is saved after performing the simulation</span>
-<span class="sd">        :param output_file: string</span>
-<span class="sd">            Filename used to save the accessible volume</span>
-<span class="sd">        :param attachment_atom_index: int</span>
-<span class="sd">            Optional parameter. If an attachment atom index is provided the parameters atom_name, chain_identifier,</span>
-<span class="sd">            and residue_seq_number are ignored to look-up the atom</span>
-<span class="sd">        :param verbose: bool</span>
-<span class="sd">            If True an output to the stdout is generated</span>
-<span class="sd">        :param allowed_sphere_radius: float</span>
-<span class="sd">        :param simulation_type:</span>
-<span class="sd">        :param position_name:</span>
-<span class="sd">        :param residue_name:</span>
-<span class="sd">        :return:</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dg</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;simulation_grid_resolution&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fps&#39;</span><span class="p">][</span><span class="s1">&#39;simulation_grid_resolution&#39;</span><span class="p">])</span>
-        <span class="n">save_av</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;save_av&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fps&#39;</span><span class="p">][</span><span class="s1">&#39;save_av&#39;</span><span class="p">])</span>
-        <span class="n">allowed_sphere_radius</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;save_av&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fps&#39;</span><span class="p">][</span><span class="s1">&#39;allowed_sphere_radius&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allowed_sphere_radius</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;allowed_sphere_radius&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fps&#39;</span><span class="p">][</span><span class="s1">&#39;allowed_sphere_radius&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">position_name</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;position_name&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">residue_name</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;residue_name&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attachment_residue</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attachment_atom</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;atom_name&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">chain_identifier</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;chain_identifier&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radius1</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;radius1&#39;</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radius2</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;radius2&#39;</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radius3</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;radius3&#39;</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linker_width</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;linker_width&#39;</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">linker_length</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;linker_length&#39;</span><span class="p">,</span> <span class="mf">20.5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulation_type</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;simulation_type&#39;</span><span class="p">,</span> <span class="s1">&#39;AV1&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">Structure</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">structure</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">points_slow</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">position_name</span> <span class="o">=</span> <span class="n">position_name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">residue_name</span> <span class="o">=</span> <span class="n">residue_name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">output_file</span> <span class="o">=</span> <span class="n">output_file</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">attachment_residue</span> <span class="o">=</span> <span class="n">residue_seq_number</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">attachment_atom</span> <span class="o">=</span> <span class="n">atom_name</span>
+        <span class="n">attachment_atom_index</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;attachment_atom_index&#39;</span><span class="p">,</span>
+                                           <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb</span><span class="o">.</span><span class="n">get_atom_index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">,</span>
+                                                                     <span class="n">chain_identifier</span><span class="p">,</span>
+                                                                     <span class="bp">self</span><span class="o">.</span><span class="n">attachment_residue</span><span class="p">,</span>
+                                                                     <span class="bp">self</span><span class="o">.</span><span class="n">attachment_atom</span><span class="p">,</span>
+                                                                     <span class="bp">self</span><span class="o">.</span><span class="n">residue_name</span><span class="p">)</span>
+                                           <span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">attachment_atom_index</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">residue_seq_number</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">atom_name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;either attachment_atom number or residue and atom_name have to be provided.&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">attachment_atom_index</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="n">attachment_atom_index</span> <span class="o">=</span> <span class="n">pdb</span><span class="o">.</span><span class="n">get_atom_index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">,</span>
-                                                           <span class="n">chain_identifier</span><span class="p">,</span>
-                                                           <span class="n">residue_seq_number</span><span class="p">,</span>
-                                                           <span class="n">atom_name</span><span class="p">,</span> <span class="n">residue_name</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Calculating accessible volume&quot;</span><span class="p">)</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;-----------------------------&quot;</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][:,</span> <span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][:,</span> <span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][:,</span> <span class="mi">2</span><span class="p">]</span>
+        <span class="n">vdw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;radius&#39;</span><span class="p">]</span>
 
-            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][:,</span> <span class="mi">0</span><span class="p">]</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][:,</span> <span class="mi">1</span><span class="p">]</span>
-            <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][:,</span> <span class="mi">2</span><span class="p">]</span>
-            <span class="n">vdw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;radius&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulation_type</span> <span class="o">==</span> <span class="s1">&#39;AV3&#39;</span><span class="p">:</span>
+            <span class="n">density</span><span class="p">,</span> <span class="n">ng</span><span class="p">,</span> <span class="n">x0</span> <span class="o">=</span> <span class="n">calculate_3_radius</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linker_length</span><span class="p">,</span>
+                                                 <span class="bp">self</span><span class="o">.</span><span class="n">linker_width</span><span class="p">,</span>
+                                                 <span class="bp">self</span><span class="o">.</span><span class="n">radius1</span><span class="p">,</span>
+                                                 <span class="bp">self</span><span class="o">.</span><span class="n">radius2</span><span class="p">,</span>
+                                                 <span class="bp">self</span><span class="o">.</span><span class="n">radius3</span><span class="p">,</span>
+                                                 <span class="n">attachment_atom_index</span><span class="p">,</span>
+                                                 <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">vdw</span><span class="p">,</span>
+                                                 <span class="n">linkersphere</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">allowed_sphere_radius</span><span class="p">,</span>
+                                                 <span class="n">dg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">density</span><span class="p">,</span> <span class="n">ng</span><span class="p">,</span> <span class="n">x0</span> <span class="o">=</span> <span class="n">calculate_1_radius</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linker_length</span><span class="p">,</span>
+                                                 <span class="bp">self</span><span class="o">.</span><span class="n">linker_width</span><span class="p">,</span>
+                                                 <span class="bp">self</span><span class="o">.</span><span class="n">radius1</span><span class="p">,</span>
+                                                 <span class="n">attachment_atom_index</span><span class="p">,</span>
+                                                 <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">vdw</span><span class="p">,</span>
+                                                 <span class="n">linkersphere</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">allowed_sphere_radius</span><span class="p">,</span>
+                                                 <span class="n">dg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Calculating initial-AV&quot;</span><span class="p">)</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Linker-length  : </span><span class="si">%.2f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">linker_length</span><span class="p">)</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Linker-width   : </span><span class="si">%.2f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">linker_width</span><span class="p">)</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Linker-radius  : </span><span class="si">%.2f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">radius1</span><span class="p">)</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Attachment-atom: </span><span class="si">%i</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">attachment_atom_index</span><span class="p">)</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;AV-resolution  : </span><span class="si">%.2f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">dg</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="n">simulation_type</span> <span class="o">==</span> <span class="s1">&#39;AV3&#39;</span><span class="p">:</span>
-                <span class="n">points</span><span class="p">,</span> <span class="n">density</span><span class="p">,</span> <span class="n">ng</span><span class="p">,</span> <span class="n">x0</span> <span class="o">=</span> <span class="n">calculate_3_radius</span><span class="p">(</span><span class="n">linker_length</span><span class="p">,</span> <span class="n">linker_width</span><span class="p">,</span> <span class="n">radius1</span><span class="p">,</span> <span class="n">radius2</span><span class="p">,</span> <span class="n">radius3</span><span class="p">,</span>
-                                                      <span class="n">attachment_atom_index</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">vdw</span><span class="p">,</span> <span class="n">dg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dg</span><span class="p">,</span>
-                                                      <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">,</span>
-                                                      <span class="n">linkersphere</span><span class="o">=</span><span class="n">allowed_sphere_radius</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">points</span><span class="p">,</span> <span class="n">density</span><span class="p">,</span> <span class="n">ng</span><span class="p">,</span> <span class="n">x0</span> <span class="o">=</span> <span class="n">calculate_1_radius</span><span class="p">(</span><span class="n">linker_length</span><span class="p">,</span> <span class="n">linker_width</span><span class="p">,</span> <span class="n">radius1</span><span class="p">,</span> <span class="n">attachment_atom_index</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span>
-                                                      <span class="n">vdw</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">,</span>
-                                                      <span class="n">linkersphere</span><span class="o">=</span><span class="n">allowed_sphere_radius</span><span class="p">,</span> <span class="n">dg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dg</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">points</span> <span class="o">=</span> <span class="n">points</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">points_fast</span> <span class="o">=</span> <span class="n">points</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">density_slow</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_density</span> <span class="o">=</span> <span class="n">density</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="n">x0</span>
-            <span class="k">if</span> <span class="n">save_av</span><span class="p">:</span>
-                <span class="n">pdb</span><span class="o">.</span><span class="n">write_xyz</span><span class="p">(</span><span class="n">output_file</span> <span class="o">+</span> <span class="s1">&#39;.xyz&#39;</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Accessible volume</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;-----------------</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;x0: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">x0</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;Shape slow (x,y,z): </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">density_slow</span><span class="o">.</span><span class="n">shape</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;Shape fast (x,y,z): </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="o">.</span><span class="n">shape</span>
-        <span class="k">return</span> <span class="n">s</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x0</span> <span class="o">=</span> <span class="n">x0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bounds</span> <span class="o">=</span> <span class="n">density</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="n">density</span> <span class="o">/=</span> <span class="n">density</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_density</span> <span class="o">=</span> <span class="n">density</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_points</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">atoms</span>
+    <span class="k">def</span> <span class="nf">bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bounds</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">ng</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -344,127 +225,68 @@
     <span class="k">def</span> <span class="nf">density</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_density</span>
 
-    <span class="nd">@density.setter</span>
-    <span class="k">def</span> <span class="nf">density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_density</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">points</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_points</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_points</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_points</span>
 
-<div class="viewcode-block" id="AV.save"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AV.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;xyz&#39;</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Saves the accessible volume as xyz-file</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;xyz&#39;</span><span class="p">:</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_fast.xyz&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
-                <span class="n">points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">points_fast</span>
-                <span class="n">npoints</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
-                <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">npoints</span><span class="p">)</span>
-                <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Name</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
-                    <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;D </span><span class="si">%.3f</span><span class="s1"> </span><span class="si">%.3f</span><span class="s1"> </span><span class="si">%.3f</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
-                <span class="n">fp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_slow.xyz&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
-                <span class="n">points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">points_slow</span>
-                <span class="n">npoints</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
-                <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">npoints</span><span class="p">)</span>
-                <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Name</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
-                    <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;D </span><span class="si">%.3f</span><span class="s1"> </span><span class="si">%.3f</span><span class="s1"> </span><span class="si">%.3f</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
-                <span class="n">fp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">atoms</span>
 
-<div class="viewcode-block" id="AV.calc_slow_av"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AV.calc_slow_av">[docs]</a>    <span class="k">def</span> <span class="nf">calc_slow_av</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slow_centers</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">slow_radius</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">replace_density</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Calculates a subav given the accessible volume determined during class initiation.</span>
+<div class="viewcode-block" id="BasicAV.update_points"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.BasicAV.update_points">[docs]</a>    <span class="k">def</span> <span class="nf">update_points</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ng</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ng</span>
+        <span class="n">density</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">density</span>
+        <span class="n">x0</span><span class="p">,</span> <span class="n">dg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dg</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">functions</span><span class="o">.</span><span class="n">density2points</span><span class="p">(</span><span class="n">ng</span><span class="p">,</span> <span class="n">dg</span><span class="p">,</span> <span class="n">density</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_points</span> <span class="o">=</span> <span class="n">p</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span></div>
 
-<span class="sd">        :param slow_centers: array_like</span>
-<span class="sd">            A list of Cartesian coordinated representing the slow centers. The shape should be (n,3)</span>
-<span class="sd">            where n is the number of slow centers.</span>
-<span class="sd">        :param slow_radius: array_like, or float</span>
-<span class="sd">            A list of radii the shape</span>
-<span class="sd">        :param save: bool</span>
-<span class="sd">            If save is True the slow-accessible volume is saved to an xyz-file with the suffix &#39;_slow&#39;</span>
-<span class="sd">        :param verbose: bool</span>
-<span class="sd">        :param replace_density: bool</span>
-<span class="sd">            If replace_density is True the AV-density will be replaced by the density of the slow</span>
-<span class="sd">            accessible volume</span>
-<span class="sd">        :return:</span>
+<div class="viewcode-block" id="BasicAV.update"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.BasicAV.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_points</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="BasicAV.save"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.BasicAV.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;xyz&#39;</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Saves the accessible volume as xyz-file or open-dx density file</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
 
-<span class="sd">        Using residue_seq_number and atom_name to calculate accessible volume, this also works without</span>
-<span class="sd">        chain_identifier. However, only if a single-chain is present.</span>
-
 <span class="sd">        &gt;&gt;&gt; import mfm</span>
-<span class="sd">        &gt;&gt;&gt; pdb_filename = &#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
-<span class="sd">        &gt;&gt;&gt; structure = mfm.Structure(pdb_filename)</span>
-<span class="sd">        &gt;&gt;&gt; av = mfm.fps.AV(structure, residue_seq_number=11, atom_name=&#39;CB&#39;, verbose=True)</span>
-
-<span class="sd">        Now lets determine the points within the AV within a certain radius</span>
-
-<span class="sd">        &gt;&gt;&gt; av.calc_slow_av(slow_centers=np.array([[10, 5.0, 2.1]]), slow_radius=5.0, verbose=True)</span>
-<span class="sd">        Calculating slow-AV:</span>
-<span class="sd">        [[ 10.    5.    2.1]]</span>
-<span class="sd">        Calculating slow AV</span>
-<span class="sd">        slow centers:</span>
-<span class="sd">        [[ 10.    5.    2.1]]</span>
-<span class="sd">        Points in slow-AV: 0</span>
-
-<span class="sd">        There are no points within a radius of 5.0. At a bigger radius will find some points.</span>
-
-<span class="sd">        &gt;&gt;&gt; av.calc_slow_av(slow_centers=np.array([[10, 5.0, 2.1]]), slow_radius=70.0, verbose=True)</span>
-<span class="sd">        Calculating slow-AV:</span>
-<span class="sd">        [[ 10.    5.    2.1]]</span>
-<span class="sd">        Calculating slow AV</span>
-<span class="sd">        slow centers:</span>
-<span class="sd">        [[ 10.    5.    2.1]]</span>
-<span class="sd">        Points in slow-AV: 2809</span>
+<span class="sd">        &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name=&#39;CB&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av.save(&#39;c:/temp/test&#39;, file_type=&#39;xyz&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av.save(&#39;c:/temp/test&#39;, file_type=&#39;dx&#39;)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="n">density</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;density&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">)</span>
-        <span class="n">dg</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;dg&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dg</span><span class="p">)</span>
-        <span class="n">ng</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ng&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ng</span><span class="p">)</span>
-        <span class="n">x0</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ng&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x0</span><span class="p">)</span>
-        <span class="n">output_file</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;output_file&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_file</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Calculating slow-AV:&quot;</span><span class="p">)</span>
-            <span class="k">print</span><span class="p">(</span><span class="n">slow_centers</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">slow_radius</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">long</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-            <span class="n">slow_radii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">slow_centers</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">slow_radius</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;dx&#39;</span><span class="p">:</span>
+            <span class="n">density</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;density&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">)</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">density</span> <span class="o">/</span> <span class="n">density</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="mf">0.5</span>
+            <span class="n">ng</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ng</span>
+            <span class="n">dg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dg</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="n">ng</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">dg</span>
+            <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">dx</span><span class="o">.</span><span class="n">write_open_dx</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span>
+                                    <span class="n">d</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">x0</span> <span class="o">-</span> <span class="n">offset</span><span class="p">,</span>
+                                    <span class="n">ng</span><span class="p">,</span> <span class="n">ng</span><span class="p">,</span> <span class="n">ng</span><span class="p">,</span>
+                                    <span class="n">dg</span><span class="p">,</span> <span class="n">dg</span><span class="p">,</span> <span class="n">dg</span>
+                                    <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">slow_radii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">slow_radius</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">slow_radii</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">slow_centers</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The size of the slow_radius doesnt match the number of slow_centers&quot;</span><span class="p">)</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;points&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="p">)</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">p</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">3</span><span class="p">]]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="n">d</span> <span class="o">/=</span> <span class="nb">max</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">*</span> <span class="mf">50.0</span>
+            <span class="n">xyz</span> <span class="o">=</span> <span class="n">p</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]]</span>
+            <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb</span><span class="o">.</span><span class="n">write_points</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">filename</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="n">mode</span><span class="p">,</span>
+                                    <span class="n">points</span><span class="o">=</span><span class="n">xyz</span><span class="p">,</span>
+                                    <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
+                                    <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">,</span>
+                                    <span class="n">density</span><span class="o">=</span><span class="n">d</span><span class="p">)</span></div>
 
-        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Calculating slow AV&quot;</span><span class="p">)</span>
-            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;slow centers: </span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">slow_centers</span><span class="p">)</span>
-
-        <span class="n">npm</span> <span class="o">=</span> <span class="p">(</span><span class="n">ng</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-        <span class="n">slow_density</span> <span class="o">=</span> <span class="n">functions</span><span class="o">.</span><span class="n">make_subav</span><span class="p">(</span><span class="n">density</span><span class="p">,</span> <span class="n">dg</span><span class="p">,</span> <span class="n">slow_radii</span><span class="p">,</span> <span class="n">slow_centers</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
-
-        <span class="n">n</span> <span class="o">=</span> <span class="n">slow_density</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-        <span class="n">points</span> <span class="o">=</span> <span class="n">functions</span><span class="o">.</span><span class="n">density2points</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">npm</span><span class="p">,</span> <span class="n">dg</span><span class="p">,</span> <span class="n">slow_density</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">ng</span> <span class="o">*</span> <span class="n">ng</span> <span class="o">*</span> <span class="n">ng</span><span class="p">),</span> <span class="n">x0</span><span class="p">,</span> <span class="n">ng</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Points in slow-AV: </span><span class="si">%i</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">n</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
-            <span class="n">pdb</span><span class="o">.</span><span class="n">write_xyz</span><span class="p">(</span><span class="n">output_file</span> <span class="o">+</span> <span class="s1">&#39;_slow.xyz&#39;</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">density_slow</span> <span class="o">=</span> <span class="n">slow_density</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">points_slow</span> <span class="o">=</span> <span class="n">points</span>
-        <span class="k">if</span> <span class="n">replace_density</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">density</span> <span class="o">=</span> <span class="n">slow_density</span></div>
-
-<div class="viewcode-block" id="AV.get_random_distance"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AV.get_random_distance">[docs]</a>    <span class="k">def</span> <span class="nf">get_random_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">functions</span><span class="o">.</span><span class="n">random_distances</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">Rmp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The mean position of the accessible volume (average x, y, z coordinate)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
-<div class="viewcode-block" id="AV.dRmp"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AV.dRmp">[docs]</a>    <span class="k">def</span> <span class="nf">dRmp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">):</span>
+<div class="viewcode-block" id="BasicAV.dRmp"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.BasicAV.dRmp">[docs]</a>    <span class="k">def</span> <span class="nf">dRmp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate the distance between the mean positions with respect to the accessible volume `av`</span>
 
@@ -475,15 +297,14 @@
 <span class="sd">        --------</span>
 
 <span class="sd">        &gt;&gt;&gt; import mfm</span>
-<span class="sd">        &gt;&gt;&gt; pdb_filename = &#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
-<span class="sd">        &gt;&gt;&gt; structure = mfm.Structure(pdb_filename)</span>
-<span class="sd">        &gt;&gt;&gt; av1 = mfm.fps.AV(structure, residue_seq_number=72, atom_name=&#39;CB&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; av2 = mfm.fps.AV(structure, residue_seq_number=134, atom_name=&#39;CB&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name=&#39;CB&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name=&#39;CB&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; av1.dRmp(av2)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">functions</span><span class="o">.</span><span class="n">dRmp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="AV.dRDA"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AV.dRDA">[docs]</a>    <span class="k">def</span> <span class="nf">dRDA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">):</span>
+<div class="viewcode-block" id="BasicAV.dRDA"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.BasicAV.dRDA">[docs]</a>    <span class="k">def</span> <span class="nf">dRDA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Calculate the mean distance to the second accessible volume</span>
 
 <span class="sd">        :param av:</span>
@@ -493,18 +314,32 @@
 <span class="sd">        --------</span>
 
 <span class="sd">        &gt;&gt;&gt; import mfm</span>
-<span class="sd">        &gt;&gt;&gt; pdb_filename = &#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
-<span class="sd">        &gt;&gt;&gt; structure = mfm.Structure(pdb_filename)</span>
-<span class="sd">        &gt;&gt;&gt; av1 = mfm.fluorescence.fps.AV(structure, residue_seq_number=72, atom_name=&#39;CB&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; av2 = mfm.fluorescence.fps.AV(structure, residue_seq_number=134, atom_name=&#39;CB&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name=&#39;CB&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name=&#39;CB&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; av1.dRDA(av2)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">functions</span><span class="o">.</span><span class="n">RDAMean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">functions</span><span class="o">.</span><span class="n">RDAMean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="AV.widthRDA"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AV.widthRDA">[docs]</a>    <span class="k">def</span> <span class="nf">widthRDA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">):</span>
+<div class="viewcode-block" id="BasicAV.widthRDA"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.BasicAV.widthRDA">[docs]</a>    <span class="k">def</span> <span class="nf">widthRDA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculates the width of a DA-distance distribution</span>
+
+<span class="sd">        :param av:</span>
+<span class="sd">        :return:</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+
+<span class="sd">        &gt;&gt;&gt; import mfm</span>
+<span class="sd">        &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name=&#39;CB&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name=&#39;CB&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av1.widthRDA(av2)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">functions</span><span class="o">.</span><span class="n">widthRDA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="AV.dRDAE"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AV.dRDAE">[docs]</a>    <span class="k">def</span> <span class="nf">dRDAE</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">):</span>
+<div class="viewcode-block" id="BasicAV.dRDAE"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.BasicAV.dRDAE">[docs]</a>    <span class="k">def</span> <span class="nf">dRDAE</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">,</span> <span class="n">forster_radius</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Calculate the FRET-averaged mean distance to the second accessible volume</span>
 
 <span class="sd">        :param av: Accessible volume</span>
@@ -513,16 +348,15 @@
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
 
-<span class="sd">import mfm.structure        &gt;&gt;&gt; import mfm</span>
-<span class="sd">        &gt;&gt;&gt; pdb_filename = &#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
-<span class="sd">        &gt;&gt;&gt; structure = mfm.structure.Structure(pdb_filename)</span>
-<span class="sd">        &gt;&gt;&gt; av1 = mfm.fluorescence.fps.AV(structure, residue_seq_number=72, atom_name=&#39;CB&#39;)</span>
-<span class="sd">        &gt;&gt;&gt; av2 = mfm.fluorescence.fps.AV(structure, residue_seq_number=134, atom_name=&#39;CB&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; import mfm</span>
+<span class="sd">        &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name=&#39;CB&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name=&#39;CB&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; av1.dRDAE(av2)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">functions</span><span class="o">.</span><span class="n">RDAMeanE</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">functions</span><span class="o">.</span><span class="n">RDAMeanE</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">,</span> <span class="n">forster_radius</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="AV.pRDA"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AV.pRDA">[docs]</a>    <span class="k">def</span> <span class="nf">pRDA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="BasicAV.pRDA"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.BasicAV.pRDA">[docs]</a>    <span class="k">def</span> <span class="nf">pRDA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Calculates the distance distribution with respect to a second accessible volume and returns the</span>
 <span class="sd">        distance axis and the probability of the respective distance. By default the distance-axis &quot;mfm.rda_axis&quot;</span>
 <span class="sd">        is taken to generate the histogram.</span>
@@ -530,221 +364,443 @@
 <span class="sd">        :param av: Accessible volume</span>
 <span class="sd">        :param kwargs:</span>
 <span class="sd">        :return:</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+
+<span class="sd">        &gt;&gt;&gt; import mfm</span>
+<span class="sd">        &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name=&#39;CB&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name=&#39;CB&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; y, x = av1.pRDA(av2)</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">rda_axis</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;rda_axis&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">rda_axis</span><span class="p">)</span>
-        <span class="n">same_size</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;same_size&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
-        <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_random_distance</span><span class="p">(</span><span class="n">av</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">rda_axis</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">same_size</span><span class="p">:</span>
-            <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">p</span><span class="p">,</span> <span class="n">rda_axis</span></div>
+        <span class="k">return</span> <span class="n">functions</span><span class="o">.</span><span class="n">histogram_rda</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">av</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;Accessible Volume</span><span class="se">\n</span><span class="s1">&#39;</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;-----------------</span><span class="se">\n</span><span class="s1">&#39;</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;Attachment residue: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">attachment_residue</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;Attachment atom: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">attachment_atom</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;Fast-AV:</span><span class="se">\n</span><span class="s1">&#39;</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">n-points: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">points_fast</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;Slow-AV:</span><span class="se">\n</span><span class="s1">&#39;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">points_slow</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">n-points: </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">points_slow</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">!!not calculated!!</span><span class="se">\n</span><span class="s1">&#39;</span>
-        <span class="k">return</span> <span class="n">s</span></div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Rmp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The mean position of the accessible volume (average x, y, z coordinate)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span>
+        <span class="n">weights</span> <span class="o">/=</span> <span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">xyz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">xyz</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="AvPotential"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AvPotential">[docs]</a><span class="k">class</span> <span class="nc">AvPotential</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="ACV"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.ACV">[docs]</a><span class="k">class</span> <span class="nc">ACV</span><span class="p">(</span><span class="n">BasicAV</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    The AvPotential class provides the possibility to calculate the reduced or unreduced chi2 given a set of</span>
-<span class="sd">    labeling positions and experimental distances. Here the labeling positions and distances are provided as</span>
-<span class="sd">    dictionaries.</span>
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
 
-<span class="sd">    Examples</span>
-<span class="sd">    --------</span>
-
-<span class="sd">    &gt;&gt;&gt; import json</span>
-<span class="sd">    &gt;&gt;&gt; labeling_file = &#39;./sample_data/model/labeling.json&#39;</span>
-<span class="sd">    &gt;&gt;&gt; labeling = json.load(open(labeling_file, &#39;r&#39;))</span>
-<span class="sd">    &gt;&gt;&gt; distances = labeling[&#39;Distances&#39;]</span>
-<span class="sd">    &gt;&gt;&gt; positions = labeling[&#39;Positions&#39;]</span>
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; av_potential = mfm.fps.AvPotential(distances=distances, positions=positions)</span>
-<span class="sd">    &gt;&gt;&gt; structure = mfm.Structure(&#39;/sample_data/model/HM_1FN5_Naming.pdb&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; av_potential.getChi2(structure)</span>
+<span class="sd">    &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; trapped_fraction = 0.5</span>
+<span class="sd">    &gt;&gt;&gt; av1 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=18, atom_name=&#39;CB&#39;, contact_volume_trapped_fraction=trapped_fraction)</span>
+<span class="sd">    &gt;&gt;&gt; av2 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=577, atom_name=&#39;CB&#39;, contact_volume_trapped_fraction=trapped_fraction)</span>
+<span class="sd">    &gt;&gt;&gt; av1.save(&#39;c:/temp/test_05&#39;, file_type=&#39;dx&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; y1, x1 = av1.pRDA(av2)</span>
+
+<span class="sd">    &gt;&gt;&gt; import mfm</span>
+<span class="sd">    &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; trapped_fraction = 0.9</span>
+<span class="sd">    &gt;&gt;&gt; av1 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=18, atom_name=&#39;CB&#39;, contact_volume_trapped_fraction=trapped_fraction)</span>
+<span class="sd">    &gt;&gt;&gt; av2 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=577, atom_name=&#39;CB&#39;, contact_volume_trapped_fraction=trapped_fraction)</span>
+<span class="sd">    &gt;&gt;&gt; av1.save(&#39;c:/temp/test_09&#39;, file_type=&#39;dx&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; y2, x2 = av1.pRDA(av2)</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Av&#39;</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distances</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">positions</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">av_samples</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">min_av</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">distances</span> <span class="o">=</span> <span class="n">distances</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">positions</span> <span class="o">=</span> <span class="n">positions</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_av_samples</span> <span class="o">=</span> <span class="n">av_samples</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">min_av</span> <span class="o">=</span> <span class="n">min_av</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">avs</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">structure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The Structure object used for the calculation of the accessible volumes</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span>
+    <span class="k">def</span> <span class="nf">contact_volume_trapped_fraction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contact_volume_trapped_fraction</span>
 
-    <span class="nd">@structure.setter</span>
-    <span class="k">def</span> <span class="nf">structure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">structure</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span> <span class="o">=</span> <span class="n">structure</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">calc_avs</span><span class="p">()</span>
+    <span class="nd">@contact_volume_trapped_fraction</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">contact_volume_trapped_fraction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_contact_volume_trapped_fraction</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">chi2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The current unreduced chi2 (recalculated at each call)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">getChi2</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">slow_centers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_slow_centers</span>
 
-<div class="viewcode-block" id="AvPotential.calc_avs"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AvPotential.calc_avs">[docs]</a>    <span class="k">def</span> <span class="nf">calc_avs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Calculates/recalculates the accessible volumes.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">positions</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Positions not set unable to calculate AVs&quot;</span><span class="p">)</span>
-        <span class="n">arguments</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="nb">dict</span><span class="p">(</span>
-                <span class="p">{</span><span class="s1">&#39;structure&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span><span class="p">,</span>
-                 <span class="s1">&#39;verbose&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">,</span>
-                <span class="p">},</span>
-                <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">positions</span><span class="p">[</span><span class="n">position_key</span><span class="p">]</span>
-            <span class="p">)</span>
-            <span class="k">for</span> <span class="n">position_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">positions</span>
-        <span class="p">]</span>
-        <span class="n">avs</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">AV</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">),</span> <span class="n">arguments</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">position_key</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">positions</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">avs</span><span class="p">[</span><span class="n">position_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">avs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span></div>
+    <span class="nd">@slow_centers</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">slow_centers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="n">atoms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+                <span class="n">slow_centers</span> <span class="o">=</span> <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;atom_name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">v</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">slow_centers</span> <span class="o">=</span> <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][</span><span class="n">a</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_slow_centers</span> <span class="o">=</span> <span class="n">slow_centers</span>
 
-<div class="viewcode-block" id="AvPotential.calc_distances"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AvPotential.calc_distances">[docs]</a>    <span class="k">def</span> <span class="nf">calc_distances</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">slow_radius</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_slow_radius</span>
 
-<span class="sd">        :param structure: Structure</span>
-<span class="sd">            If this object is provided the attributes regarding dye-attachment are kept constant</span>
-<span class="sd">            and the structure is changed prior calculation of the distances.</span>
-<span class="sd">        :param verbose: bool</span>
-<span class="sd">            If this is True output to stdout is generated</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">Structure</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">structure</span>
-        <span class="k">for</span> <span class="n">distance_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">distances</span><span class="p">:</span>
-            <span class="n">distance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distances</span><span class="p">[</span><span class="n">distance_key</span><span class="p">]</span>
-            <span class="n">av1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">avs</span><span class="p">[</span><span class="n">distance</span><span class="p">[</span><span class="s1">&#39;position1_name&#39;</span><span class="p">]]</span>
-            <span class="n">av2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">avs</span><span class="p">[</span><span class="n">distance</span><span class="p">[</span><span class="s1">&#39;position2_name&#39;</span><span class="p">]]</span>
-            <span class="n">distance_type</span> <span class="o">=</span> <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;distance_type&#39;</span><span class="p">]</span>
-            <span class="n">R0</span> <span class="o">=</span> <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;Forster_radius&#39;</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">distance_type</span> <span class="o">==</span> <span class="s1">&#39;RDAMean&#39;</span><span class="p">:</span>
-                <span class="n">d12</span> <span class="o">=</span> <span class="n">functions</span><span class="o">.</span><span class="n">RDAMean</span><span class="p">(</span><span class="n">av1</span><span class="p">,</span> <span class="n">av2</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">distance_type</span> <span class="o">==</span> <span class="s1">&#39;Rmp&#39;</span><span class="p">:</span>
-                <span class="n">d12</span> <span class="o">=</span> <span class="n">functions</span><span class="o">.</span><span class="n">dRmp</span><span class="p">(</span><span class="n">av1</span><span class="p">,</span> <span class="n">av2</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">distance_type</span> <span class="o">==</span> <span class="s1">&#39;RDAMeanE&#39;</span><span class="p">:</span>
-                <span class="n">d12</span> <span class="o">=</span> <span class="n">functions</span><span class="o">.</span><span class="n">RDAMeanE</span><span class="p">(</span><span class="n">av1</span><span class="p">,</span> <span class="n">av2</span><span class="p">,</span> <span class="n">R0</span><span class="p">)</span>
-            <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;model_distance&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">d12</span>
-            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;-------------&quot;</span><span class="p">)</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Distance: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">distance_key</span><span class="p">)</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Forster-Radius </span><span class="si">%.1f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;Forster_radius&#39;</span><span class="p">])</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Distance type: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">distance_type</span><span class="p">)</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Model distance: </span><span class="si">%.1f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">d12</span><span class="p">)</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Experimental distance: </span><span class="si">%.1f</span><span class="s2"> (-</span><span class="si">%.1f</span><span class="s2">, +</span><span class="si">%.1f</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">distance</span><span class="p">[</span><span class="s1">&#39;distance&#39;</span><span class="p">],</span>
-                                                                      <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;error_neg&#39;</span><span class="p">],</span> <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;error_pos&#39;</span><span class="p">]))</span></div>
-
-<div class="viewcode-block" id="AvPotential.getChi2"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AvPotential.getChi2">[docs]</a>    <span class="k">def</span> <span class="nf">getChi2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">reduced</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">        :param structure: Structure</span>
-<span class="sd">            A Structure object if provided the attributes regarding dye-attachment are kept constant</span>
-<span class="sd">            and the structure is changed prior calculation of the distances.</span>
-<span class="sd">        :param reduced: bool</span>
-<span class="sd">            If True the reduced chi2 is calculated (by default False)</span>
-<span class="sd">        :param verbose: bool</span>
-<span class="sd">            Output to stdout</span>
-<span class="sd">        :return: A float containig the chi2 (reduced or unreduced) of the current or provided structure.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">verbose</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="ow">or</span> <span class="n">verbose</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">Structure</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">structure</span>
-
-        <span class="n">chi2</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">calc_distances</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">distance</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distances</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
-            <span class="n">dm</span> <span class="o">=</span> <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;model_distance&#39;</span><span class="p">]</span>
-            <span class="n">de</span> <span class="o">=</span> <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;distance&#39;</span><span class="p">]</span>
-            <span class="n">error_neg</span> <span class="o">=</span> <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;error_neg&#39;</span><span class="p">]</span>
-            <span class="n">error_pos</span> <span class="o">=</span> <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;error_pos&#39;</span><span class="p">]</span>
-            <span class="n">d</span> <span class="o">=</span> <span class="n">dm</span> <span class="o">-</span> <span class="n">de</span>
-            <span class="n">chi2</span> <span class="o">+=</span> <span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="n">error_neg</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="n">error_pos</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
-        <span class="k">if</span> <span class="n">reduced</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">chi2</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distances</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="nd">@slow_radius</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">slow_radius</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="n">slow_centers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">slow_centers</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">long</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+            <span class="n">slow_radii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">slow_centers</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">v</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">chi2</span></div>
+            <span class="n">slow_radii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">slow_radii</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">slow_centers</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The size of the slow_radius doesnt match the number of slow_centers&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_slow_radius</span> <span class="o">=</span> <span class="n">slow_radii</span>
 
-<div class="viewcode-block" id="AvPotential.getEnergy"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AvPotential.getEnergy">[docs]</a>    <span class="k">def</span> <span class="nf">getEnergy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">gauss_bond</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">Structure</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">structure</span>
-        <span class="k">if</span> <span class="n">gauss_bond</span><span class="p">:</span>
-            <span class="n">energy</span> <span class="o">=</span> <span class="mf">0.0</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">calc_distances</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">distance</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distances</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
-                <span class="n">dm</span> <span class="o">=</span> <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;model_distance&#39;</span><span class="p">]</span>
-                <span class="n">de</span> <span class="o">=</span> <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;distance&#39;</span><span class="p">]</span>
-                <span class="n">error_neg</span> <span class="o">=</span> <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;error_neg&#39;</span><span class="p">]</span>
-                <span class="n">error_pos</span> <span class="o">=</span> <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;error_pos&#39;</span><span class="p">]</span>
-                <span class="n">err</span> <span class="o">=</span> <span class="n">error_neg</span> <span class="k">if</span> <span class="p">(</span><span class="n">dm</span> <span class="o">-</span> <span class="n">de</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">error_pos</span>
-                <span class="n">energy</span> <span class="o">-=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">de</span><span class="p">,</span> <span class="n">dm</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">energy</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">contact_volume_trapped_fraction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contact_volume_trapped_fraction</span>
+
+    <span class="nd">@contact_volume_trapped_fraction</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">contact_volume_trapped_fraction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_contact_volume_trapped_fraction</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">contact_density</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contact_density</span>
+
+<div class="viewcode-block" id="ACV.update_density"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.ACV.update_density">[docs]</a>    <span class="k">def</span> <span class="nf">update_density</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">av</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">contact_volume_trapped_fraction</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">contact_volume_trapped_fraction</span>
+        <span class="n">dg</span><span class="p">,</span> <span class="n">x0</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">dg</span><span class="p">,</span> <span class="n">av</span><span class="o">.</span><span class="n">x0</span>
+        <span class="n">slow_radius</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">slow_radius</span>
+        <span class="n">slow_centers</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">slow_centers</span>
+        <span class="n">density</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">density</span>
+        <span class="n">nc</span><span class="p">,</span> <span class="n">nn</span><span class="p">,</span> <span class="n">cd</span><span class="p">,</span> <span class="n">nd</span> <span class="o">=</span> <span class="n">functions</span><span class="o">.</span><span class="n">split_av_acv</span><span class="p">(</span><span class="n">density</span><span class="p">,</span> <span class="n">dg</span><span class="p">,</span> <span class="n">slow_radius</span><span class="p">,</span> <span class="n">slow_centers</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
+
+        <span class="n">cd</span> <span class="o">*=</span> <span class="n">contact_volume_trapped_fraction</span> <span class="o">/</span> <span class="n">nc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_contact_density</span> <span class="o">=</span> <span class="n">cd</span>
+
+        <span class="n">nd</span> <span class="o">*=</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">-</span> <span class="n">contact_volume_trapped_fraction</span><span class="p">)</span> <span class="o">/</span> <span class="n">nn</span>
+        <span class="n">density</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">density</span> <span class="o">+=</span> <span class="n">cd</span>
+        <span class="n">density</span> <span class="o">+=</span> <span class="n">nd</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_density</span> <span class="o">=</span> <span class="n">density</span></div>
+
+<div class="viewcode-block" id="ACV.update"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.ACV.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_density</span><span class="p">()</span>
+        <span class="n">BasicAV</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">BasicAV</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_slow_centers</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">slow_centers</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;slow_centers&#39;</span><span class="p">,</span> <span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_slow_radius</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">slow_radius</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;slow_radius&#39;</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_contact_volume_trapped_fraction</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contact_volume_trapped_fraction</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;contact_volume_trapped_fraction&#39;</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_contact_density</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_density</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="DynamicAV"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.DynamicAV">[docs]</a><span class="k">class</span> <span class="nc">DynamicAV</span><span class="p">(</span><span class="n">BasicAV</span><span class="p">):</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">diffusion_map</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_diffusion_coefficient_map</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rate_map</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fret_rate_map</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quenching_rate_map</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fret_rate_map</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">getChi2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span><span class="p">)</span></div></div>
-
-
-<div class="viewcode-block" id="AvWidget"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AvWidget">[docs]</a><span class="k">class</span> <span class="nc">AvWidget</span><span class="p">(</span><span class="n">AvPotential</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="n">parent</span><span class="p">)</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;./mfm/ui/fluorescence/avWidget.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        <span class="n">AvPotential</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionOpenLabeling</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;triggered()&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onLoadAvJSON</span><span class="p">)</span>
-
-<div class="viewcode-block" id="AvWidget.onLoadAvJSON"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.AvWidget.onLoadAvJSON">[docs]</a>    <span class="k">def</span> <span class="nf">onLoadAvJSON</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1">#self.filename = str(QtGui.QFileDialog.getOpenFileName(None, &#39;Open FRET-JSON&#39;, &#39;&#39;, &#39;link file (*.fps.json)&#39;))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">open_file</span><span class="p">(</span><span class="s1">&#39;Open FPS-JSON&#39;</span><span class="p">,</span> <span class="s1">&#39;FPS-file (*.fps.json)&#39;</span><span class="p">)</span></div>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quenching_rate_map</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">filename</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span>
-
-    <span class="nd">@filename.setter</span>
-    <span class="k">def</span> <span class="nf">filename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">v</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">distances</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;Distances&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">positions</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;Positions&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_2</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">fret_rate_map</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fret_rate_map</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">n_av_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox_2</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
-
-    <span class="nd">@n_av_samples.setter</span>
-    <span class="k">def</span> <span class="nf">n_av_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">spinBox_2</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">quenching_rate_map</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quenching_rate_map</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">min_av</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox_2</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+    <span class="k">def</span> <span class="nf">fluorescence_lifetime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tau0</span>
 
-    <span class="nd">@min_av.setter</span>
-    <span class="k">def</span> <span class="nf">min_av</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">))</span></div>
+    <span class="nd">@fluorescence_lifetime</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">fluorescence_lifetime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tau0</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">contact_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contact_distance</span>
+
+    <span class="nd">@contact_distance</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">contact_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="n">av</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_contact_distance</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">+</span> <span class="nb">max</span><span class="p">(</span><span class="n">av</span><span class="o">.</span><span class="n">radius1</span><span class="p">,</span> <span class="n">av</span><span class="o">.</span><span class="n">radius2</span><span class="p">,</span> <span class="n">av</span><span class="o">.</span><span class="n">radius3</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">slow_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_slow_factor</span>
+
+    <span class="nd">@slow_factor</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">slow_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_slow_factor</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">donor_only_fluorescence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d0_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d0_fluorescence</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">excited_state_map</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ex_state</span>
+
+<div class="viewcode-block" id="DynamicAV.update_diffusion_map"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.DynamicAV.update_diffusion_map">[docs]</a>    <span class="k">def</span> <span class="nf">update_diffusion_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Updates the diffusion coefficient map.</span>
+
+<span class="sd">        Example</span>
+<span class="sd">        -------</span>
+<span class="sd">        &gt;&gt;&gt; import mfm</span>
+<span class="sd">        &gt;&gt;&gt; import mfm.fluorescence</span>
+<span class="sd">        &gt;&gt;&gt; structure = mfm.structure.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; free_diffusion = 8.0</span>
+<span class="sd">        &gt;&gt;&gt; av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=18, atom_name=&#39;CB&#39;, slow_factor=0.9, contact_distance=1.5, diffusion_coefficients=free_diffusion)</span>
+<span class="sd">        &gt;&gt;&gt; p.imshow(av.bounds[:,:,20])</span>
+<span class="sd">        &gt;&gt;&gt; p.show()</span>
+<span class="sd">        &gt;&gt;&gt; p.imshow(av.diffusion_map[:,:,20])</span>
+<span class="sd">        &gt;&gt;&gt; p.show()</span>
+<span class="sd">        &gt;&gt;&gt; p.imshow(av.density[:,:,20])</span>
+<span class="sd">        &gt;&gt;&gt; p.show()</span>
+<span class="sd">        &gt;&gt;&gt; p.hist(av.diffusion_map.flatten(), bins=np.arange(0.01, free_diffusion, 0.5))</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">diffusion_coefficient</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;diffusion_coefficient&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_diffusion_coefficient</span><span class="p">)</span>
+        <span class="n">slow_factor</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;slow_factor&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">slow_factor</span><span class="p">)</span>
+        <span class="n">stick_distance</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;stick_distance&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">contact_distance</span><span class="p">)</span>
+
+        <span class="n">av</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">coordinates</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">]</span>
+        <span class="n">ds_sq</span> <span class="o">=</span> <span class="n">stick_distance</span><span class="o">**</span><span class="mf">2.0</span>
+        <span class="n">density</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">_density</span>
+        <span class="n">r0</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">x0</span>
+        <span class="n">dg</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">dg</span>
+
+        <span class="c1">#diffusion_mode = kwargs.get(&#39;diffusion_mode&#39;, self.diffusion_mode)</span>
+
+        <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="n">a1</span><span class="p">,</span> <span class="n">a2</span><span class="p">,</span> <span class="n">a3</span> <span class="o">=</span> <span class="mf">10.5</span><span class="p">,</span> <span class="mf">500.</span><span class="p">,</span> <span class="mf">37.2</span>
+            <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">m3</span> <span class="o">=</span> <span class="mf">20.2</span><span class="p">,</span> <span class="mf">11.7</span><span class="p">,</span> <span class="mf">1.40</span>
+            <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">s3</span> <span class="o">=</span> <span class="mf">0.47</span><span class="p">,</span> <span class="mf">11.8</span><span class="p">,</span> <span class="mf">1.54</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="o">-</span><span class="mf">11.0</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">a1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-.</span><span class="mi">5</span> <span class="o">*</span> <span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">m1</span><span class="p">)</span> <span class="o">/</span> <span class="n">s1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">s1</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">**</span> <span class="o">.</span><span class="mi">5</span><span class="p">)</span> <span class="o">+</span> \
+                <span class="n">a2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-.</span><span class="mi">5</span> <span class="o">*</span> <span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">m2</span><span class="p">)</span> <span class="o">/</span> <span class="n">s2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">s2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">**</span> <span class="o">.</span><span class="mi">5</span><span class="p">)</span> <span class="o">+</span> \
+                <span class="n">a3</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-.</span><span class="mi">5</span> <span class="o">*</span> <span class="p">((</span><span class="n">x</span> <span class="o">-</span> <span class="n">m3</span><span class="p">)</span> <span class="o">/</span> <span class="n">s3</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">s3</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">**</span> <span class="o">.</span><span class="mi">5</span><span class="p">)</span> <span class="o">+</span> \
+                <span class="n">b</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">d_map</span> <span class="o">=</span> <span class="n">assign_diffusion_to_grid_3</span><span class="p">(</span><span class="n">density</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">dg</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="n">d_map</span> <span class="o">=</span> <span class="n">assign_diffusion_to_grid_1</span><span class="p">(</span><span class="n">d_map</span><span class="p">,</span> <span class="n">density</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">dg</span><span class="p">,</span> <span class="n">coordinates</span><span class="p">,</span> <span class="n">ds_sq</span><span class="p">,</span> <span class="n">slow_factor</span><span class="p">)</span>
+        <span class="c1">#d_map = assign_diffusion_to_grid_2(density, r0, dg, diffusion_coefficient, coordinates, stick_distance, slow_factor)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_diffusion_coefficient_map</span> <span class="o">=</span> <span class="n">d_map</span></div>
+
+<div class="viewcode-block" id="DynamicAV.update_equilibrium"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.DynamicAV.update_equilibrium">[docs]</a>    <span class="k">def</span> <span class="nf">update_equilibrium</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Updates the equilibrium probabilities of the dye</span>
+<span class="sd">        Example</span>
+<span class="sd">        -------</span>
+<span class="sd">        &gt;&gt;&gt; import mfm</span>
+<span class="sd">        &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; free_diffusion = 8.0</span>
+<span class="sd">        &gt;&gt;&gt; av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name=&#39;CB&#39;, slow_factor=0.985, contact_distance=3.5, diffusion_coefficients=free_diffusion, simulation_grid_resolution=2.0)</span>
+<span class="sd">        &gt;&gt;&gt; p.imshow(av.diffusion_map[:,:,20])</span>
+<span class="sd">        &gt;&gt;&gt; p.show()</span>
+<span class="sd">        &gt;&gt;&gt; p.imshow(av.density[:,:,20])</span>
+<span class="sd">        &gt;&gt;&gt; p.show()</span>
+<span class="sd">        &gt;&gt;&gt; av.update_diffusion_map()</span>
+<span class="sd">        &gt;&gt;&gt; av.update_equilibrium()#t_max=100.)</span>
+<span class="sd">        &gt;&gt;&gt; p.imshow(av.density[:,:,20])</span>
+<span class="sd">        &gt;&gt;&gt; p.show()</span>
+<span class="sd">        &gt;&gt;&gt; y, x = np.histogram(av.diffusion_map.flatten(), range=(0.01, 10), bins=20, weights=av.density.flatten())</span>
+<span class="sd">        &gt;&gt;&gt; p.plot(x[1:], y)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">t_step</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;t_step&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_step_eq</span><span class="p">)</span>
+        <span class="n">t_max</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;t_max&#39;</span><span class="p">,</span> <span class="mf">250.0</span><span class="p">)</span>
+        <span class="n">max_it</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;max_it&#39;</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
+        <span class="n">n_it</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">t_max</span> <span class="o">/</span> <span class="n">t_step</span><span class="p">),</span> <span class="n">max_it</span><span class="p">)</span>
+        <span class="n">n_out</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n_out&#39;</span><span class="p">,</span> <span class="n">n_it</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quenching_rate_map</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion_map</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_density</span><span class="p">)</span> <span class="o">*</span> <span class="n">b</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_di</span><span class="o">.</span><span class="n">to_device</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">it</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">t_step</span><span class="o">=</span><span class="n">t_step</span><span class="p">)</span>
+        <span class="n">t</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_di</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">n_it</span><span class="o">=</span><span class="n">n_it</span><span class="p">,</span> <span class="n">n_out</span><span class="o">=</span><span class="n">n_out</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">cs</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">c</span> <span class="o">/=</span> <span class="n">cs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_density</span> <span class="o">=</span> <span class="n">c</span></div>
+
+<div class="viewcode-block" id="DynamicAV.update_quenching_map"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.DynamicAV.update_quenching_map">[docs]</a>    <span class="k">def</span> <span class="nf">update_quenching_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Assigns a quenching rate constant to each grid point of the AV</span>
+<span class="sd">        </span>
+<span class="sd">        Example</span>
+<span class="sd">        -------</span>
+
+<span class="sd">        &gt;&gt;&gt; import mfm</span>
+<span class="sd">        &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=18, atom_name=&#39;CB&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; p.imshow(av.quenching_rate_map[:,:,20])</span>
+<span class="sd">        &gt;&gt;&gt; p.show()</span>
+<span class="sd">        &gt;&gt;&gt; p.hist(av.quenching_rate_map.flatten(), bins=np.arange(0.01, av.fluorescence_lifetime, 0.5))</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">av</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">atoms</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">atoms</span>
+        <span class="n">r0</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">x0</span>
+        <span class="n">dg</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">dg</span>
+        <span class="n">density</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">density</span>
+
+        <span class="n">quencher</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quencher</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;quencher&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">quencher</span><span class="p">)</span>
+        <span class="n">kQ</span><span class="p">,</span> <span class="n">rC</span> <span class="o">=</span> <span class="n">get_kQ_rC</span><span class="p">(</span><span class="n">atoms</span><span class="p">,</span> <span class="n">quencher</span><span class="o">=</span><span class="n">quencher</span><span class="p">)</span>
+        <span class="n">tau0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fluorescence_lifetime</span>
+        <span class="n">dye_radius</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">radius1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius3</span><span class="p">)</span>
+        <span class="c1">#self._quenching_rate_map = create_quenching_map(density, r0, dg, atoms[&#39;coord&#39;], tau0, kQ, rC, dye_radius)</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">rC</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rC_electron_transfer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_quenching_rate_map</span> <span class="o">=</span> <span class="n">create_quenching_map</span><span class="p">(</span><span class="n">density</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="n">dg</span><span class="p">,</span> <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">],</span> <span class="n">tau0</span><span class="p">,</span> <span class="n">kQ</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">dye_radius</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DynamicAV.update_fret_map"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.DynamicAV.update_fret_map">[docs]</a>    <span class="k">def</span> <span class="nf">update_fret_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acceptor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Calculates an average FRET-rate constant for every AV grid point.</span>
+<span class="sd">        </span>
+<span class="sd">        In the FRET-map the average time of FRET to occur is used as FRET rate constant for each grid point</span>
+<span class="sd">        of the donor. In an excat solution it should be considered, that the FRET-rate constants of the donor</span>
+<span class="sd">        at each grid points follow a distribution the function create_fret_rate_map approximates this</span>
+<span class="sd">        distribution by the average time of FRET.</span>
+
+<span class="sd">        Example</span>
+<span class="sd">        -------</span>
+
+<span class="sd">        &gt;&gt;&gt; import mfm</span>
+<span class="sd">        &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av_d = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=18, atom_name=&#39;CB&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av_a = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name=&#39;CB&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av_d.update_fret_map(av_a)</span>
+<span class="sd">        #</span>
+<span class="sd">        &gt;&gt;&gt; rda = (av_d._fret_rate_map.flatten() * av_d.fluorescence_lifetime) ** (-1./6.) * 52.</span>
+<span class="sd">        &gt;&gt;&gt; y, x = np.histogram(rda, range=(0.0, 100), bins=100, weights=av_d.density.flatten())</span>
+<span class="sd">        &gt;&gt;&gt; p.plot(x[1:], y)</span>
+<span class="sd">        &gt;&gt;&gt; y, x = av_d.pRDA(av=av_a)</span>
+<span class="sd">        &gt;&gt;&gt; p.plot(x, y)</span>
+<span class="sd">        &gt;&gt;&gt; p.show()</span>
+<span class="sd">        &gt;&gt;&gt; average_rate = np.dot(av_d._fret_rate_map.flatten(), av_d.density.flatten())</span>
+<span class="sd">        &gt;&gt;&gt; (average_rate * av_d.fluorescence_lifetime) ** (-1./6.) * 52.</span>
+<span class="sd">        &gt;&gt;&gt; np.dot(x, y)</span>
+
+<span class="sd">        &gt;&gt;&gt; p.imshow(av_d.fret_rate_map[:,:,20])</span>
+<span class="sd">        &gt;&gt;&gt; p.show()</span>
+<span class="sd">        &gt;&gt;&gt; p.imshow(av_d.quenching_rate_map[:,:,20])</span>
+<span class="sd">        &gt;&gt;&gt; p.show()</span>
+<span class="sd">        &gt;&gt;&gt; p.imshow(av_d.rate_map[:,:,20])</span>
+<span class="sd">        &gt;&gt;&gt; p.show()</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">density_donor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">density</span>
+        <span class="n">density_acceptor</span> <span class="o">=</span> <span class="n">acceptor</span><span class="o">.</span><span class="n">density</span>
+        <span class="n">x0_donor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x0</span>
+        <span class="n">x0_acceptor</span> <span class="o">=</span> <span class="n">acceptor</span><span class="o">.</span><span class="n">x0</span>
+        <span class="n">dg_donor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dg</span>
+        <span class="n">dg_acceptor</span> <span class="o">=</span> <span class="n">acceptor</span><span class="o">.</span><span class="n">dg</span>
+        <span class="n">foerster_radius</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;foerster_radius&#39;</span><span class="p">,</span> <span class="mf">52.0</span><span class="p">)</span>
+        <span class="n">kf</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;foerster_radius&#39;</span><span class="p">,</span> <span class="mf">1.</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fluorescence_lifetime</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fret_rate_map</span> <span class="o">=</span> <span class="n">functions</span><span class="o">.</span><span class="n">create_fret_rate_map</span><span class="p">(</span>
+            <span class="n">density_donor</span><span class="p">,</span>
+            <span class="n">density_acceptor</span><span class="p">,</span>
+            <span class="n">x0_donor</span><span class="p">,</span>
+            <span class="n">x0_acceptor</span><span class="p">,</span>
+            <span class="n">dg_donor</span><span class="p">,</span>
+            <span class="n">dg_acceptor</span><span class="p">,</span>
+            <span class="n">foerster_radius</span><span class="p">,</span>
+            <span class="n">kf</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="DynamicAV.get_donor_only_decay"><a class="viewcode-back" href="../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.DynamicAV.get_donor_only_decay">[docs]</a>    <span class="k">def</span> <span class="nf">get_donor_only_decay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param kwargs:</span>
+<span class="sd">        :return:</span>
+
+<span class="sd">        Example</span>
+<span class="sd">        -------</span>
+<span class="sd">        &gt;&gt;&gt; import mfm</span>
+<span class="sd">        &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name=&#39;CB&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; p.imshow(av.density[:,:,20])</span>
+<span class="sd">        &gt;&gt;&gt; p.show()</span>
+<span class="sd">        &gt;&gt;&gt; t_step = 0.0141</span>
+<span class="sd">        &gt;&gt;&gt; times, density, counts = av.get_donor_only_decay(n_it=4095, t_step=0.0141, n_out=1)</span>
+<span class="sd">        &gt;&gt;&gt; av.save(filename=&#39;c:/temp/0t2&#39;, density=density, file_type=&#39;dx&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; irf = mfm.curve.DataCurve(filename=&#39;./sample_data/tcspc/ibh_sample/Prompt.txt&#39;, skiprows=9)</span>
+<span class="sd">        &gt;&gt;&gt; data = mfm.experiments.c.DataCurve(filename=&#39;./sample_data/tcspc/ibh_sample/Decay_577D.txt&#39;, skiprows=9)</span>
+<span class="sd">        &gt;&gt;&gt; irf.x *= t_step; data.x *= t_step</span>
+<span class="sd">        &gt;&gt;&gt; convolve = mfm.fluorescence.tcspc.convolve.Convolve(fit=None, dt=t_step, rep_rate=10, irf=irf, data=data)</span>
+<span class="sd">        &gt;&gt;&gt; decay = convolve.convolve(counts, mode=&#39;full&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; p.semilogy(times, decay)</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">t_step</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;t_step&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_step_fl</span><span class="p">)</span>
+        <span class="n">t_max</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;t_max&#39;</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">)</span>
+        <span class="n">max_it</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;max_it&#39;</span><span class="p">,</span> <span class="mf">1e6</span><span class="p">)</span>
+        <span class="n">n_out</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n_out&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="n">n_it</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n_it&#39;</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">t_max</span> <span class="o">/</span> <span class="n">t_step</span><span class="p">),</span> <span class="n">max_it</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_di</span><span class="o">.</span><span class="n">to_device</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quenching_rate_map</span><span class="p">,</span>
+                           <span class="n">p</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">,</span>
+                           <span class="n">d</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">diffusion_map</span><span class="p">,</span>
+                           <span class="n">b</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
+                           <span class="n">it</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                           <span class="n">t_step</span><span class="o">=</span><span class="n">t_step</span><span class="p">)</span>
+        <span class="n">t</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_di</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">n_it</span><span class="o">=</span><span class="n">n_it</span><span class="p">,</span> <span class="n">n_out</span><span class="o">=</span><span class="n">n_out</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_d0_time</span> <span class="o">=</span> <span class="n">t</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_d0_fluorescence</span> <span class="o">=</span> <span class="n">n</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ex_state</span> <span class="o">=</span> <span class="n">c</span>
+        <span class="k">return</span> <span class="n">t</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">n</span></div>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">BasicAV</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># Initialization of internal variables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tau0</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_contact_distance</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_quenching_rate_map</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fret_rate_map</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_di</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_slow_factor</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_diffusion_coefficient_map</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_d0_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_d0_fluorescence</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ex_state</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rC_electron_transfer</span> <span class="o">=</span> <span class="mf">1.5</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fluorescence_lifetime</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tau0&#39;</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_diffusion_coefficient</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;diffusion_coefficient&#39;</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">)</span>
+
+        <span class="c1"># These values were &quot;manually&quot; optimized that the diffusion coefficient distribution</span>
+        <span class="c1"># matches more or less what is expected by MD-simulations on nucleic acids (Stas-paper)</span>
+        <span class="c1"># the contact distance is deliberately big, so that the dye does not stick in very</span>
+        <span class="c1"># tinny pockets.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">slow_factor</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;slow_factor&#39;</span><span class="p">,</span> <span class="mf">0.99</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contact_distance</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;contact_distance&#39;</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">)</span> <span class="c1"># th</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">quencher</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;quencher&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">common</span><span class="o">.</span><span class="n">quencher</span><span class="p">)</span>
+        <span class="c1">#self.diffusion_mode = kwargs.get(&#39;diffusion_mode&#39;, &#39;two_state&#39;)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_step_fl</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;t_step_fl&#39;</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">)</span>  <span class="c1"># integration time step of fluorescence decay</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_step_eq</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;t_step_eq&#39;</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">)</span>  <span class="c1"># integration time step of equilibration</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_diffusion_map</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_quenching_map</span><span class="p">()</span>
+
+        <span class="c1"># Iterator for equilibration and calculation of fluorescence decay</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_di</span> <span class="o">=</span> <span class="n">functions</span><span class="o">.</span><span class="n">DiffusionIterator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diffusion_map</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">density</span><span class="p">,</span>
+                                               <span class="n">dg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dg</span><span class="p">,</span> <span class="n">t_step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">t_step_eq</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_di</span><span class="o">.</span><span class="n">build_program</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_equilibrium</span><span class="p">()</span></div>
+
+
 </pre></div>
 
     </div>
@@ -759,7 +815,7 @@
     </p>
     <p>
         &copy; Copyright 2016, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

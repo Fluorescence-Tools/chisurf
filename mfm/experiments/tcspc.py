@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Tuple
 
 import numpy as np
-from PyQt5 import QtWidgets, uic
+from qtpy import  QtWidgets, uic
 import os
 
 import mfm
@@ -352,7 +352,9 @@ class TcspcSDTWidget(QtWidgets.QWidget):
 
         fn = kwargs.get('filename', None)
         if fn is None:
-            self.filename = mfm.widgets.get_filename('Open BH-SDT file', 'SDT-files (*.sdt)')
+            filename = mfm.widgets.get_filename('Open BH-SDT file', 'SDT-files (*.sdt)')
+            self.filename = filename
+            print(self.filename)
         else:
             self.filename = fn
 

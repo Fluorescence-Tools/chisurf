@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import Tuple
+
 import copy
 from math import floor
 
@@ -108,11 +111,18 @@ def overlapping_region(
     return (ox1, oy1), (ox2, oy2)
 
 
-def align_x_spacing(dataset1, dataset2, method = 'linear-close'):
+def align_x_spacing(
+        dataset1: Tuple[np.array, np.array],
+        dataset2: Tuple[np.array, np.array],
+        method: str = 'linear-close'
+) -> Tuple[
+    Tuple[np.array, np.array],
+    Tuple[np.array, np.array]
+]:
     (ox1, oy1), (ox2, oy2) = dataset1, dataset2
     #Assume that data is more or less equaliy spaced
     # t- template array, r - rescale array
-    if len(ox1) <len(ox2):
+    if len(ox1) < len(ox2):
         tx = ox1
         ty = oy1
         rx = ox2
@@ -163,7 +173,7 @@ def align_x_spacing(dataset1, dataset2, method = 'linear-close'):
         ry2 = ny
         rx1 = tx
         ry1 = ty            
-    return ((rx1, ry1), (rx2, ry2))
+    return (rx1, ry1), (rx2, ry2)
 
 
 if __name__ == "__main__":

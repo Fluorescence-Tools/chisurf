@@ -3,11 +3,13 @@ This module contain a small tool to generate JSON-labeling files
 """
 from __future__ import annotations
 
+import sys
 import os
 import json
 from collections import OrderedDict
 
-from PyQt5 import QtWidgets, uic
+from qtpy import QtWidgets, uic
+import qdarkstyle
 
 import mfm
 import mfm.structure
@@ -39,9 +41,9 @@ class PDB2Label(QtWidgets.QWidget):
         #self.listWidget.itemDoubleClicked[QListWidgetItem].connect(self.onLabelingListDoubleClicked)
         #self.listWidget_2.itemDoubleClicked[QListWidgetItem].connect(self.onDistanceListDoubleClicked)
 
-        self.atom_select = mfm.widgets.PDBSelector()
+        self.atom_select = mfm.widgets.pdb.PDBSelector()
         self.verticalLayout_3.addWidget(self.atom_select)
-        self.av_properties = mfm.widgets.AVProperties()
+        self.av_properties = mfm.widgets.accessible_volume.AVProperties()
         self.verticalLayout_4.addWidget(self.av_properties)
 
         self.structure = None
@@ -233,3 +235,11 @@ class PDB2Label(QtWidgets.QWidget):
         self.distances = OrderedDict()
         self.onUpdateInterface()
         self.onUpdateJSON()
+
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    win = PDB2Label()
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    win.show()
+    sys.exit(app.exec_())

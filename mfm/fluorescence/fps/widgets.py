@@ -1,6 +1,5 @@
-# coding=utf-8
 from collections import OrderedDict
-from PyQt5 import QtCore, QtGui, QtWidgets
+from qtpy import QtWidgets
 
 import mfm
 from mfm.fluorescence.fps.dynamic import ProteinQuenching, Dye, Sticking
@@ -79,7 +78,14 @@ class DyeWidget(Dye, QtWidgets.QGroupBox):
         self.dye_select.setCurrentIndex(v)
         self.update_parameter()
 
-    def __init__(self, **kwargs):
+    def __init__(
+            self,
+            critical_distance: float = 7.0,
+            diffusion_coefficient: float = 5.0,
+            tau0: float = 4.0,
+            title: str = '',
+            **kwargs
+    ):
         QtWidgets.QGroupBox.__init__(self)
         self.dye_select = QtWidgets.QComboBox()
         self.dye_select.addItems(mfm.fluorescence.fps.dye_names)
@@ -89,7 +95,7 @@ class DyeWidget(Dye, QtWidgets.QGroupBox):
         self.setLayout(layout)
 
         gb = QtWidgets.QGroupBox()
-        gb.setTitle(kwargs.get('title', ''))
+        gb.setTitle(title)
         layout.addWidget(gb)
 
         gl = QtWidgets.QGridLayout()
@@ -97,27 +103,37 @@ class DyeWidget(Dye, QtWidgets.QGroupBox):
         gl.setContentsMargins(0, 0, 0, 0)
         gb.setLayout(gl)
 
-        self._critical_distance = FittingParameterWidget(value=7.0, name='RQ', digits=1, model=self.model)
-        self._diffusion_coefficient = FittingParameterWidget(value=5.0, name='D[A2/ns]', digits=1, model=self.model)
-        self._tau0 = FittingParameterWidget(value=4.0, name='tau0[ns]', digits=2, model=self.model)
-
-        self._av_length = FittingParameterWidget(name='L', value=20.0, digits=1, model=self.model)
-        self._av_width = FittingParameterWidget(name='W', value=0.5, digits=1, model=self.model)
-        self._av_radius = FittingParameterWidget(name='R', value=5.0, digits=1, model=self.model)
-
-        self.critical_distance = kwargs.get('critical_distance', 7.0)
-        self.diffusion_coefficient = kwargs.get('diffusion_coefficient', 5.0)
-        self.tau0 = kwargs.get('tau0', 4.0)
+        self.critical_distance = critical_distance
+        self.diffusion_coefficient = diffusion_coefficient
+        self.tau0 = tau0
 
         gl.addWidget(self.dye_select, 0, 0, 1, 2)
 
-        gl.addWidget(self._critical_distance, 1, 0)
-        gl.addWidget(self._diffusion_coefficient, 2, 0)
-        gl.addWidget(self._tau0, 3, 0)
+        gl.addWidget(
+            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._critical_distance),
+            1, 0
+        )
+        gl.addWidget(
+            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._diffusion_coefficient),
+            2, 0
+        )
+        gl.addWidget(
+            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._tau0),
+            3, 0
+        )
 
-        gl.addWidget(self._av_length, 1, 1)
-        gl.addWidget(self._av_width, 2, 1)
-        gl.addWidget(self._av_radius, 3, 1)
+        gl.addWidget(
+            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._av_length),
+            1, 1
+        )
+        gl.addWidget(
+            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._av_width),
+            2, 1
+        )
+        gl.addWidget(
+            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._av_radius),
+            3, 1
+        )
         self.dye_select.currentIndexChanged[int].connect(self.update_parameter)
         self.update_parameter()
 
@@ -140,21 +156,30 @@ class StickingWidget(Sticking, QtWidgets.QGroupBox):
             self.radioButton.setChecked(False)
             self.radioButton_2.setChecked(True)
 
-    def __init__(self, **kwargs):
-        QtWidgets.QGroupBox.__init__(self)
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.Fit,
+            structure: mfm.structure.structure.Structure,
+            **kwargs
+    ):
+        super(StickingWidget, self).__init__(fit, structure, **kwargs)
+
         self.setTitle('Sticking')
         layout = QtWidgets.QGridLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
         self.setLayout(layout)
         self.radioButton = QtWidgets.QRadioButton('Surface')
         self.radioButton_2 = QtWidgets.QRadioButton('Quencher')
-        Sticking.__init__(self)
-        self._slow_radius = FittingParameterWidget(name='Rs[A]', value=10.0, digits=1, model=self.model)
-        self._slow_fact = FittingParameterWidget(name='slow fact', value=0.15, digits=3, model=self.model)
-        layout.addWidget(self._slow_fact, 0, 1)
-        layout.addWidget(self._slow_radius, 1, 1)
+
+        layout.addWidget(
+            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._slow_radius),
+            0,
+            1
+        )
+        layout.addWidget(
+            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._slow_fact),
+            1,
+            1
+        )
 
         layout.addWidget(self.radioButton, 0, 0)
         layout.addWidget(self.radioButton_2, 1, 0)

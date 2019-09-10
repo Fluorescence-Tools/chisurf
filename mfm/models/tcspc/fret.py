@@ -222,7 +222,13 @@ class Gaussians(FittingParameterGroup):
     def __len__(self):
         return len(self._gaussianAmplitudes)
 
-    def __init__(self, **kwargs):
+    def __init__(
+            self,
+            short: str = 'G',
+            is_distance_between_gaussians: bool = True,
+            name: str = 'gaussians',
+            **kwargs
+    ):
         """
         This class keeps the necessary parameters to perform a fit with Gaussian/Normal-disitributed
         distances. New distance distributions are added using the methods append.
@@ -240,18 +246,19 @@ class Gaussians(FittingParameterGroup):
         :param no_donly: bool
             If this is True the donor-only fraction is not displayed/present.
         """
-        FittingParameterGroup.__init__(self, **kwargs)
-        self._name = kwargs.get('name', 'gaussians')
-
-        self.donors = Lifetime(**kwargs)
-
-        self._gaussianMeans = []
-        self._gaussianSigma = []
-        self._gaussianShape = []
-        self._gaussianAmplitudes = []
-        self.short = kwargs.get('short', 'G')
-
-        self.is_distance_between_gaussians = True # If this is True than the fitted distance is the distance between two Gaussians
+        super(Gaussians, self).__init__(
+            name=name,
+            **kwargs
+        )
+        self.donors = Lifetime(
+            **kwargs
+        )
+        self.short = short
+        self._gaussianMeans = list()
+        self._gaussianSigma = list()
+        self._gaussianShape = list()
+        self._gaussianAmplitudes = list()
+        self.is_distance_between_gaussians = is_distance_between_gaussians
 
 
 class DiscreteDistance(FittingParameterGroup):
@@ -310,15 +317,18 @@ class DiscreteDistance(FittingParameterGroup):
     def __len__(self):
         return len(self._amplitudes)
 
-    def __init__(self, **kwargs):
-        FittingParameterGroup.__init__(self, **kwargs)
-        self.name = kwargs.get('name', 'fret_rate')
-        self.short = kwargs.get('short', 'G')
-
+    def __init__(
+            self,
+            name: str = 'fret_rate',
+            short: str = 'G',
+            **kwargs
+    ):
+        super(DiscreteDistance, self).__init__(**kwargs)
+        self.name = name
+        self.short = short
         self.donors = Lifetime(**kwargs)
-
-        self._distances = []
-        self._amplitudes = []
+        self._distances = list()
+        self._amplitudes = list()
 
 
 class FRETModel(LifetimeModel):
@@ -452,9 +462,19 @@ class FRETModel(LifetimeModel):
         s += "Donor tauF: %s \n" % self.donor_fluorescence_averaged_lifetime
         return s
 
-    def __init__(self, fit, **kwargs):
-        LifetimeModel.__init__(self, fit, **kwargs)
-        self.orientation_parameter = OrientationParameter(orientation_mode=mfm.settings.cs_settings['fret']['orientation_mode'])
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            lifetimes: Lifetime = None,
+            **kwargs
+    ):
+        super(FRETModel, self).__init__(
+            fit,
+            **kwargs
+        )
+        self.orientation_parameter = OrientationParameter(
+            orientation_mode=mfm.settings.cs_settings['fret']['orientation_mode']
+        )
         self.fret_parameters = kwargs.get(
             'fret_parameters',
             FRETParameters(
@@ -462,9 +482,14 @@ class FRETModel(LifetimeModel):
                 **kwargs
             )
         )
-        self._donors = kwargs.get('lifetimes', Lifetime())
+        if lifetimes is None:
+            lifetimes = Lifetime()
 
-        self._reference = LifetimeModel(fit, **kwargs)
+        self._donors = lifetimes
+        self._reference = LifetimeModel(
+            fit,
+            **kwargs
+        )
         self._reference.lifetimes = self.donors
         self._reference.convolve = self.convolve
 
@@ -507,8 +532,15 @@ class GaussianModel(FRETModel):
         super(FRETModel, self).finalize()
         self.gaussians.finalize()
 
-    def __init__(self, fit, **kwargs):
-        FRETModel.__init__(self, fit, **kwargs)
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            **kwargs
+    ):
+        super(GaussianModel).__init__(
+            fit,
+            **kwargs
+        )
         self.gaussians = kwargs.get('gaussians', Gaussians(**kwargs))
 
 
@@ -518,11 +550,12 @@ class FRETrateModel(FRETModel):
 
     @property
     def fret_rate_spectrum(self) -> np.array:
-        fret_rates = mfm.fluorescence.general.distance_to_fret_rate_constant(self.fret_rates.distance,
-                                                                             self.fret_parameters.forster_radius,
-                                                                             self.fret_parameters.tauD0,
-                                                                             self.fret_parameters.kappa2
-                                                                             )
+        fret_rates = mfm.fluorescence.general.distance_to_fret_rate_constant(
+            self.fret_rates.distance,
+            self.fret_parameters.forster_radius,
+            self.fret_parameters.tauD0,
+            self.fret_parameters.kappa2
+        )
         amplitudes = self.fret_rates.amplitude
         r = np.ravel(np.column_stack((amplitudes, fret_rates)))
         return r

@@ -1,15 +1,16 @@
 from __future__ import annotations
 
+import sys
 import os
 import numpy as np
-from PyQt5 import QtWidgets, uic
+from qtpy import QtWidgets, uic
 import pyqtgraph as pg
 import pyqtgraph.dockarea
+import qdarkstyle
 
 import mfm.fluorescence.anisotropy.kappa2
 from mfm.fluorescence.anisotropy.kappa2 import s2delta
 from mfm.fluorescence.anisotropy.kappa2 import kappasqAllDelta, kappasq_all
-from mfm.fluorescence import general as fluorescence
 
 
 class Kappa2Dist(QtWidgets.QWidget):
@@ -163,3 +164,11 @@ class Kappa2Dist(QtWidgets.QWidget):
     @RappSD.setter
     def RappSD(self, v):
         self.doubleSpinBox_8.setValue(v)
+
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    win = Kappa2Dist()
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    win.show()
+    sys.exit(app.exec_())

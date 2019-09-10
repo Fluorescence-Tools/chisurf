@@ -5,7 +5,7 @@ import os
 from slugify import slugify
 from docx import Document
 from docx.shared import Inches
-from PyQt5 import QtGui
+from qtpy import  QtGui
 
 import mfm
 import mfm.widgets
@@ -153,7 +153,7 @@ def save_fit():
     p.add_run('bold').bold = True
     p.add_run(', linked parameters in ')
     p.add_run('italic.').italic = True
-    p.add_run(' fixed parameters are plain text. ')
+    p.add_run(' fixed parameters are plain name. ')
 
     table = document.add_table(rows=1, cols=len(fs) + 1)
     hdr_cells = table.rows[0].cells

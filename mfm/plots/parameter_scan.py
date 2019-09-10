@@ -1,6 +1,6 @@
 import numpy as np
 import pyqtgraph as pg
-from PyQt5 import QtWidgets, uic
+from qtpy import  QtWidgets, uic
 from pyqtgraph.dockarea import DockArea, Dock
 
 import mfm

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This example demonstrates the use of pyqtgraph's parametertree system. This provides
 a simple way to generate user interfaces that control sets of parameters. The example
@@ -6,11 +5,13 @@ demonstrates a variety of different parameter types (int, float, list, etc.)
 as well as some customized parameter types
 
 """
+from __future__ import annotations
+
 import re
 from collections import OrderedDict
 
 import yaml
-from pyqtgraph.Qt import QtGui
+from pyqtgraph.Qt import QtGui, QtWidgets
 from pyqtgraph.parametertree import Parameter, ParameterTree
 from pyqtgraph.parametertree.parameterTypes import ListParameter
 
@@ -24,7 +25,7 @@ def dict2pt(target, origin):
     :param origin:
     :return:
     """
-    for i, key in enumerate(origin.keys()):
+    for key in origin.keys():
         if key.endswith('_options'):
             target[-1]['values'] = origin[key]
             target[-1]['type'] = 'list'
@@ -50,7 +51,10 @@ def dict2pt(target, origin):
     return target
 
 
-def pt2dict(parameter_tree, target=OrderedDict()):
+def pt2dict(
+        parameter_tree,
+        target=OrderedDict()
+):
     """Converts a pyqtgraph parameter tree to an ordinary dictionary that could be saved
     as JSON file
 
@@ -75,10 +79,11 @@ def pt2dict(parameter_tree, target=OrderedDict()):
     return target
 
 
-class ParameterEditor(QtGui.QWidget):
+class ParameterEditor(QtWidgets.QWidget):
 
     def __init__(self, *args, **kwargs):
-        QtGui.QWidget.__init__(self)
+        super(ParameterEditor, self).__init__()
+
         self._json_file = ""
         self._dict = dict()
         self._p = None
@@ -93,13 +98,13 @@ class ParameterEditor(QtGui.QWidget):
         t = ParameterTree()
         t.setParameters(self._p, showTop=False)
 
-        win = QtGui.QWidget()
-        layout = QtGui.QGridLayout()
+        win = QtWidgets.QWidget()
+        layout = QtWidgets.QGridLayout()
         win.setLayout(layout)
         layout.addWidget(t, 1, 0, 1, 1)
         win.show()
         win.resize(450, 400)
-        layout = QtGui.QGridLayout()
+        layout = QtWidgets.QGridLayout()
         self.setLayout(layout)
         layout.addWidget(t, 1, 0, 1, 1)
         self.resize(450, 400)
@@ -112,14 +117,14 @@ class ParameterEditor(QtGui.QWidget):
         self._target.settings = obj
 
     @property
-    def dict(self):
+    def dict(self) -> dict:
         if self._p is not None:
             return pt2dict(self._p, OrderedDict())
         else:
             return self._dict
 
     @property
-    def parameter_dict(self):
+    def parameter_dict(self) -> dict:
         od = OrderedDict(self.dict)
         params = dict2pt(list(), od)
         params.append(
@@ -131,11 +136,14 @@ class ParameterEditor(QtGui.QWidget):
         return params
 
     @property
-    def json_file(self):
+    def json_file(self) -> str:
         return self._json_file
 
     @json_file.setter
-    def json_file(self, v):
+    def json_file(
+            self,
+            v: str
+    ):
         with open(v, 'r') as fp:
             self._dict = yaml.safe_load(fp)
         self._json_file = v

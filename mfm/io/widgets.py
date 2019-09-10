@@ -2,14 +2,9 @@ from __future__ import annotations
 
 
 import os
-from PyQt5 import QtWidgets, uic
+from qtpy import  QtWidgets, uic
 
 import mfm
-#import mfm.experiments
-#import mfm.experiments.data
-#import mfm.structure
-#import mfm.structure.structure
-import mfm.widgets
 from mfm.io.ascii import Csv
 from .photons import Photons
 from .tttr import filetypes
@@ -19,7 +14,14 @@ class SpcFileWidget(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/io/spcSampleSelectWidget.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "spcSampleSelectWidget.ui"
+            ),
+            self
+        )
+
         self.parent = parent
         self.filenames = list()
         self.filetypes = filetypes

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, TypeVar, Tuple
+from typing import List, TypeVar
 
 import weakref
 import numpy as np
@@ -44,45 +44,76 @@ class Parameter(mfm.base.Base):
             self,
             other: T
     ) -> Parameter:
-        if isinstance(other, (int, float)):
-            a = self.value.__add__(other)
-        else:
-            a = self.value.__add__(other.value)
-        return Parameter(value=a)
+        a = self.value
+        b = other.value if isinstance(other, Parameter) else other
+        return Parameter(
+            value=a.__add__(b)
+        )
 
     def __mul__(
             self,
             other: T
     ) -> Parameter:
-        if isinstance(other, (int, float)):
-            a = self.value * other
-        else:
-            a = self.value * other.value
-        return Parameter(value=a)
+        a = self.value
+        b = other.value if isinstance(other, Parameter) else other
+        return Parameter(
+            value=a.__mul__(b)
+        )
+
+    def __truediv__(
+            self,
+            other: T
+    ) -> Parameter:
+        a = self.value
+        b = other.value if isinstance(other, Parameter) else other
+        return Parameter(
+            value=a.__truediv__(b)
+        )
+
+    def __floordiv__(
+            self,
+            other: T
+    ) -> Parameter:
+        a = self.value
+        b = other.value if isinstance(other, Parameter) else other
+        return Parameter(
+            value=a.__floordiv__(b)
+        )
 
     def __sub__(
             self,
             other: T
     ) -> Parameter:
-        if isinstance(other, (int, float)):
-            a = self.value.__sub__(other)
-        else:
-            a = self.value.__sub__(other.value)
-        return Parameter(value=a)
+        a = self.value
+        b = other.value if isinstance(other, Parameter) else other
+        return Parameter(
+            value=a.__sub__(b)
+        )
 
-    def __divmod__(
+    def __mod__(
             self,
             other: T
-    ) -> Tuple[Parameter, Parameter]:
-        if isinstance(other, (int, float)):
-            d, m = self.value.__divmod__(other)
-        else:
-            d, m = self.value.__divmod__(other.value)
-        return Parameter(value=d), Parameter(value=m)
+    ) -> Parameter:
+        a = self.value
+        b = other.value if isinstance(other, Parameter) else other
+        return Parameter(
+            value=a.__mod__(b)
+        )
+
+    def __pow__(
+            self,
+            other: T
+    ) -> Parameter:
+        a = self.value
+        b = other.value if isinstance(other, Parameter) else other
+        return Parameter(
+            value=a.__pow__(b)
+        )
 
     def __invert__(self) -> Parameter:
+        a = self.value
         return Parameter(
-            value=float(1.0 / self.value)
+            value=(1./a)
         )
 
     def __float__(self):
@@ -114,13 +145,15 @@ class Parameter(mfm.base.Base):
         s += self.__str__()
         return s
 
-    def __init__(self,
-                 value: float = 1.0,
-                 link: Parameter = None,
-                 *args, **kwargs
-                 ):
-        self._instances.add(weakref.ref(self))
+    def __init__(
+            self,
+            value: float = 1.0,
+            link: Parameter = None,
+            *args,
+            **kwargs
+    ):
         super(Parameter, self).__init__(*args, **kwargs)
+        self._instances.add(weakref.ref(self))
         self._link = link
         self._value = value
 

@@ -2,10 +2,11 @@ from __future__ import annotations
 import os
 
 import pyqtgraph as pg
-from PyQt5 import QtWidgets, uic, QtCore
+from qtpy import  QtWidgets, uic, QtCore
 
 import mfm
 import mfm.widgets
+import mfm.widgets.curve
 
 parameter_settings = mfm.settings.cs_settings['parameter']
 
@@ -50,7 +51,7 @@ class FittingControllerWidget(QtWidgets.QWidget):
         super(FittingControllerWidget, self).__init__()
 
         self.fit = fit
-        self.curve_select = mfm.widgets.CurveSelector(
+        self.curve_select = mfm.widgets.curve.ExperimentalDataSelector(
             parent=None,
             fit=self.fit,
             change_event=self.change_dataset,
@@ -257,14 +258,14 @@ class FittingParameterWidget(QtWidgets.QWidget):
 
     def __init__(
             self,
-            fitting_parameter: mfm.fitting.parameter.FittingParameter,
+            fitting_parameter: mfm.fitting.parameter.FittingParameter = None,
             layout: QtWidgets.QLayout = None,
             decimals: int = None,
             hide_label: bool = None,
             hide_error: bool = None,
             fixable: bool = None,
             hide_bounds: bool = None,
-            text: str = None,
+            name: str = None,
             label_text: str = None,
             hide_link: bool = None,
             **kwargs
@@ -273,10 +274,10 @@ class FittingParameterWidget(QtWidgets.QWidget):
             hide_link = parameter_settings['hide_link']
         if hide_bounds is None:
             hide_bounds = parameter_settings['hide_bounds']
-        if text is None:
-            text = self.__class__.__name__
+        if name is None:
+            name = self.__class__.__name__
         if label_text is None:
-            label_text = text
+            label_text = name
         if fixable is None:
             fixable = parameter_settings['fixable']
         hide_fix_checkbox = fixable
@@ -288,7 +289,19 @@ class FittingParameterWidget(QtWidgets.QWidget):
             decimals = parameter_settings['decimals']
 
         super(FittingParameterWidget, self).__init__(**kwargs)
-        uic.loadUi('mfm/ui/variable_widget.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "variable_widget.ui"
+            ),
+            self
+        )
+
+        if fitting_parameter is None:
+            fitting_parameter = mfm.fitting.parameter.FittingParameter(
+                name=name,
+                value=1.0
+            )
         self.fitting_parameter = fitting_parameter
 
         self.widget_value = pg.SpinBox(
@@ -454,7 +467,7 @@ def make_fitting_parameter_widget(
     update_widget = kwargs.get('update_widget', lambda x: x)
 
     kw = {
-        'text': text,
+        'name': text,
         'decimals': decimals,
         'layout': layout
     }

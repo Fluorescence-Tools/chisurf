@@ -1,44 +1,29 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>mfm.structure.labeled_structure &mdash; ChiSurf 0.0.5 documentation</title>
-    
-    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <meta charset="utf-8" />
+    <title>mfm.structure.labeled_structure &#8212; ChiSurf  documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../',
-        VERSION:     '0.0.5',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../index.html" />
-    <link rel="up" title="mfm.structure" href="../structure.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body role="document">
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -51,7 +36,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -67,13 +52,11 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
-</ul>
-<ul class="simple">
 </ul>
 </ul>
 </li>
@@ -118,12 +101,26 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary">
+<form action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
       
   <h1>Source code for mfm.structure.labeled_structure</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
 <span class="kn">import</span> <span class="nn">mfm</span>
-<span class="kn">from</span> <span class="nn">mfm.structure</span> <span class="kn">import</span> <span class="n">Structure</span>
+<span class="kn">from</span> <span class="nn">mfm.structure.structure</span> <span class="k">import</span> <span class="n">Structure</span>
 
 
 <div class="viewcode-block" id="av_distance_distribution"><a class="viewcode-back" href="../../../api/mfm.structure.html#mfm.structure.labeled_structure.av_distance_distribution">[docs]</a><span class="k">def</span> <span class="nf">av_distance_distribution</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -145,8 +142,8 @@
 <span class="sd">    &gt;&gt;&gt; pRDA, rda = av_distance_distribution(structure, donor_av_parameter=donor_description, acceptor_av_parameter=acceptor_description)</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">av_donor</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="o">**</span><span class="n">donor_av_parameter</span><span class="p">)</span>
-    <span class="n">av_acceptor</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="o">**</span><span class="n">acceptor_av_parameter</span><span class="p">)</span>
+    <span class="n">av_donor</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">ACV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="o">**</span><span class="n">donor_av_parameter</span><span class="p">)</span>
+    <span class="n">av_acceptor</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">ACV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="o">**</span><span class="n">acceptor_av_parameter</span><span class="p">)</span>
     <span class="n">amplitude</span><span class="p">,</span> <span class="n">distance</span> <span class="o">=</span> <span class="n">av_donor</span><span class="o">.</span><span class="n">pRDA</span><span class="p">(</span><span class="n">av_acceptor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">amplitude</span><span class="p">,</span> <span class="n">distance</span></div>
 
@@ -168,10 +165,10 @@
 <span class="sd">    &gt;&gt;&gt; rs = av_fret_rate_spectrum(structure, donor_description, acceptor_description)</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">forster_radius</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">])</span>
-    <span class="n">kappa2</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;kappa2&#39;</span><span class="p">])</span>
-    <span class="n">tau0</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tau0&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;tau0&#39;</span><span class="p">])</span>
-    <span class="n">interleave</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;interleave&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+    <span class="n">forster_radius</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">])</span>
+    <span class="n">kappa2</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;kappa2&#39;</span><span class="p">])</span>
+    <span class="n">tau0</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tau0&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;tau0&#39;</span><span class="p">])</span>
+    <span class="n">interleave</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;interleave&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
     <span class="n">p_rda</span><span class="p">,</span> <span class="n">rda</span> <span class="o">=</span> <span class="n">av_distance_distribution</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">donor_av_parameter</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">acceptor_av_parameter</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">p_rda</span><span class="p">,</span> <span class="n">rda</span><span class="p">]])</span>
@@ -294,9 +291,9 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">lifetime_spectrum</span> <span class="o">=</span> <span class="n">av_lifetime_spectrum</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="n">convolve</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;convolve&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="n">convolve</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;convolve&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">convolve</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">Convolve</span><span class="p">):</span>
-        <span class="n">decay</span> <span class="o">=</span> <span class="n">convolve</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">lifetime_spectrum</span><span class="o">=</span><span class="n">lifetime_spectrum</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">decay</span> <span class="o">=</span> <span class="n">convolve</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">lifetime_spectrum</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">time_axis</span><span class="p">,</span> <span class="n">decay</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">calculate_fluorescence_decay</span><span class="p">(</span><span class="n">lifetime_spectrum</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">time_axis</span><span class="p">)</span>
     <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">lifetime_filters</span><span class="p">,</span> <span class="n">decay</span><span class="p">)</span>
@@ -344,7 +341,7 @@
     <span class="k">def</span> <span class="nf">donor_lifetime_spectrum</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ds</span>
 
-    <span class="nd">@donor_lifetime_spectrum.setter</span>
+    <span class="nd">@donor_lifetime_spectrum</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">donor_lifetime_spectrum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ds</span> <span class="o">=</span> <span class="n">v</span>
 
@@ -352,19 +349,19 @@
     <span class="k">def</span> <span class="nf">donor_label</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span>
 
-    <span class="nd">@donor_label.setter</span>
+    <span class="nd">@donor_label</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">donor_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span> <span class="o">=</span> <span class="n">v</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_donor_av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_donor_av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">ACV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">acceptor_label</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_description</span>
 
-    <span class="nd">@acceptor_label.setter</span>
+    <span class="nd">@acceptor_label</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">acceptor_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_description</span> <span class="o">=</span> <span class="n">v</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">ACV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">distance_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -428,19 +425,19 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_donor_av</span><span class="o">.</span><span class="n">dRmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_av</span><span class="p">)</span>
 
 <div class="viewcode-block" id="LabeledStructure.update"><a class="viewcode-back" href="../../../api/mfm.structure.html#mfm.structure.labeled_structure.LabeledStructure.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_description</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_donor_av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">ACV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_description</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_donor_av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">ACV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">Structure</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;donor_av_parameter&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_description</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;acceptor_av_parameter&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">Structure</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;donor_av_parameter&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_description</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;acceptor_av_parameter&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_donor_av</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_av</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">forster_radius</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tau0</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tau0&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;tau0&#39;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">kappa2</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;kappa2&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;kappa2&#39;</span><span class="p">])</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_donor_av</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_av</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">forster_radius</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tau0</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tau0&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;tau0&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kappa2</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;kappa2&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;kappa2&#39;</span><span class="p">])</span></div>
 
 </pre></div>
 
@@ -456,7 +453,7 @@
     </p>
     <p>
         &copy; Copyright 2016, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>
