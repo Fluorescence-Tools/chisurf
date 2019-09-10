@@ -1,8 +1,6 @@
 import utils
 import os
 import unittest
-import sys
-import json
 
 TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
@@ -30,17 +28,26 @@ class Tests(unittest.TestCase):
         p1 = mfm.parameter.Parameter(value=2.0)
         p2 = mfm.parameter.Parameter(value=3.0)
 
-        p3 = p1 * p2
-        self.assertEqual(p3.value, p1.value * p2.value)
-
-        p3 = p1 / p2
-        self.assertEqual(p3.value, p1.value / p2.value)
-
         p3 = p1 + p2
-        self.assertEqual(p3.value, p1.value + p2.value)
+        self.assertEqual(p3.value, 5.0)
 
         p3 = p1 - p2
-        self.assertEqual(p3.value, p1.value - p2.value)
+        self.assertEqual(p3.value, -1.0)
+
+        p3 = p1 * p2
+        self.assertEqual(p3.value, 6.0)
+
+        p3 = p1 / p2
+        self.assertEqual(p3.value, 2. / 3.)
+
+        p3 = p1 // p2
+        self.assertEqual(p3.value, 2. // 3.)
+
+        p3 = p1 % p2
+        self.assertEqual(p3.value, 2. % 3.)
+
+        p3 = p1 ** p2
+        self.assertEqual(p3.value, 2. ** 3.)
 
 
 if __name__ == '__main__':

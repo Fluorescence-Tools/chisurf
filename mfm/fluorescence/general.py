@@ -371,7 +371,13 @@ def stack_lifetime_spectra(lifetime_spectra, fractions, normalize_fractions=True
     return np.hstack(re)
 
 
-def distribution2rates(distribution, tau0, kappa2, R0, remove_negative=False):
+def distribution2rates(
+        distribution,
+        tau0: float,
+        kappa2,
+        forster_radius: float,
+        remove_negative: bool = False
+):
     """
     gets distribution in form: (1,2,3)
     0: number of distribution
@@ -386,7 +392,7 @@ def distribution2rates(distribution, tau0, kappa2, R0, remove_negative=False):
     :param distribution:
     :param tau0:
     :param kappa2: a interleaved list of orientation factors (orientation factor spectrum)
-    :param R0:
+    :param forster_radius:
     """
 
     n_dist, n_ampl, n_points = distribution.shape
@@ -397,7 +403,7 @@ def distribution2rates(distribution, tau0, kappa2, R0, remove_negative=False):
     for i in range(n_dist):
         rate_dist[i, 1] = distance_to_fret_rate_constant(
             rate_dist[i, 1],
-            R0,
+            forster_radius,
             tau0,
             0.66667
         )
@@ -569,8 +575,8 @@ def elte2(
     array([  5.        ,   1.5       ,   7.        ,   1.6       ,
         15.        ,   2.4       ,  21.        ,   2.66666667])
     """
-    n1 = e1.shape[0]/2
-    n2 = e2.shape[0]/2
+    n1 = e1.shape[0] // 2
+    n2 = e2.shape[0] // 2
     r = np.empty(n1*n2*2, dtype=np.float64)
 
     k = 0
@@ -608,8 +614,8 @@ def ere2(
     array([  5.        ,   1.5       ,   7.        ,   1.6       ,
         15.        ,   2.4       ,  21.        ,   2.66666667])
     """
-    n1 = e1.shape[0]/2
-    n2 = e2.shape[0]/2
+    n1 = e1.shape[0] // 2
+    n2 = e2.shape[0] // 2
     r = np.zeros(n1*n2*2, dtype=np.float64)
 
     k = 0
@@ -677,8 +683,8 @@ def e1ti2(
         e1: np.array,
         e2: np.array
 ) -> np.array:
-    n1 = e1.shape[0]/2
-    n2 = e2.shape[0]/2
+    n1 = e1.shape[0] // 2
+    n2 = e2.shape[0] // 2
     r = np.zeros(n1 * n2 * 2, dtype=np.float64)
 
     k = 0
@@ -732,9 +738,9 @@ def calculate_fluorescence_decay(
     if normalize:
         am /= am.sum()
     ls = lifetime_spectrum[1::2]
-    for a, l in zip(am, ls):
-        if l == 0:
+    for amplitude, lifetime in zip(am, ls):
+        if lifetime == 0:
             continue
-        decay += np.exp(-time_axis / l) * a
+        decay += np.exp(-time_axis / lifetime) * amplitude
     return time_axis, decay
 

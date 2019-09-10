@@ -1,20 +1,22 @@
 from __future__ import annotations
-from typing import List
 
 import os
 import sys
 
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from PyQt5.QtWidgets import QMainWindow, QApplication
+from qtpy import QtCore, QtGui, QtWidgets, uic
+import qdarkstyle
 
 import numpy as np
 
-import mfm.experiments
+import mfm
 import mfm.cmd
-import mfm.models.tcspc.widgets
+import mfm.experiments
+import mfm.widgets
+import mfm.tools
+import mfm.ui.resource
 
 
-class Main(QMainWindow):
+class Main(QtWidgets.QMainWindow):
 
     @property
     def current_dataset(self) -> mfm.experiments.data.Data:
@@ -55,7 +57,7 @@ class Main(QMainWindow):
         self.comboBox_experimentSelect.setCurrentIndex(v)
 
     @property
-    def current_experiment(self) -> List:
+    def current_experiment(self) -> mfm.experiments.experiment.Experiment:
         return mfm.experiment[self.current_experiment_idx]
 
     @current_experiment.setter
@@ -84,7 +86,7 @@ class Main(QMainWindow):
 
     @property
     def current_setup(self):
-        return self.current_experiment.setups[self.current_experiment_idx]
+        return self.current_experiment.setups[self.current_setup_idx]
 
     @current_setup.setter
     def current_setup(
@@ -93,8 +95,7 @@ class Main(QMainWindow):
     ):
         i = self.current_setup_idx
         j = i
-        setups = self.current_experiment.get_setups()
-        for j, s in enumerate(setups):
+        for j, s in enumerate(self.current_experiment.setups):
             if s.name == name:
                 break
         if j != i:
@@ -180,13 +181,17 @@ class Main(QMainWindow):
         self.onSetupChanged()
 
     def onLoadFitResults(self, **kwargs):
-        filename = mfm.widgets.get_filename(file_type="*.json", description="Load results into fit-models", **kwargs)
+        filename = mfm.widgets.get_filename(
+            file_type="*.json",
+            description="Load results into fit-models",
+            **kwargs
+        )
         mfm.run("mfm.cmd.load_fit_result(%s, %s)" % (self.fit_idx, filename))
 
     def onSetupChanged(self):
         mfm.widgets.hide_items_in_layout(self.verticalLayout_5)
         setup_name = self.comboBox_setupSelect.currentText()
-        mfm.run("cs.current_setup =cs.current_setup = '%s'" % setup_name)
+        mfm.run("cs.current_setup = '%s'" % setup_name)
         self.verticalLayout_5.addWidget(self.current_setup)
         self.current_setup.show()
 
@@ -242,10 +247,10 @@ class Main(QMainWindow):
         ##########################################################
         #      TTTR-widgets                                      #
         ##########################################################
-        self.tttr_convert = mfm.tools.TTTRConvert()
+        self.tttr_convert = mfm.tools.tttr.convert.TTTRConvert()
         self.actionConvert.triggered.connect(self.tttr_convert.show)
 
-        self.tttr_correlate = mfm.tools.CorrelateTTTR()
+        self.tttr_correlate = mfm.tools.tttr.correlate.CorrelateTTTR()
         self.actionCorrelate.triggered.connect(self.tttr_correlate.show)
 
         self.tttr_histogram = mfm.tools.tttr.decay_histogram.HistogramTTTR()
@@ -263,7 +268,7 @@ class Main(QMainWindow):
         #self.calculate_potential = mfm.tools.PotentialEnergyWidget()
         #self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
 
-        self.pdb2label = mfm.tools.PDB2Label()
+        self.pdb2label = mfm.tools.fps_json.pdb2labeling.PDB2Label()
         self.actionPDB2Label.triggered.connect(self.pdb2label.show)
 
         self.structure2transfer = mfm.tools.traj2fret.gui.Structure2Transfer()
@@ -284,7 +289,7 @@ class Main(QMainWindow):
         #self.update_widget = mfm.widgets.downloader.UpdateDialog()
         #self.connect(self.actionUpdate, QtCore.SIGNAL('triggered()'), self.update_widget.show)
 
-        self.f_test = mfm.tools.FTestWidget()
+        self.f_test = mfm.tools.f_test.f_calculator.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
 
     def init_console(self):
@@ -313,7 +318,10 @@ class Main(QMainWindow):
         tcspc = mfm.experiments.experiment.Experiment('TCSPC')
         tcspc.add_setups(
             [
-                mfm.experiments.tcspc.TCSPCSetupWidget(name="CSV/PQ/IBH", **mfm.settings.cs_settings['tcspc_csv']),
+                mfm.experiments.tcspc.TCSPCSetupWidget(
+                    name="CSV/PQ/IBH",
+                    **mfm.settings.cs_settings['tcspc_csv']
+                ),
                 mfm.experiments.tcspc.TCSPCSetupSDTWidget(),
                 mfm.experiments.tcspc.TCSPCSetupDummyWidget()
             ]
@@ -332,8 +340,12 @@ class Main(QMainWindow):
         fcs = mfm.experiments.experiment.Experiment('FCS')
         fcs.add_setups(
             [
-                mfm.experiments.fcs.FCSKristine(experiment=mfm.experiments.fcs),
-                mfm.experiments.fcs.FCS(experiment=mfm.experiments.fcs)
+                mfm.experiments.fcs.FCSKristine(
+                    experiment=mfm.experiments.fcs
+                ),
+                mfm.experiments.fcs.FCS(
+                    experiment=mfm.experiments.fcs
+                )
             ]
         )
         fcs.add_models(
@@ -344,7 +356,10 @@ class Main(QMainWindow):
         mfm.experiment.append(fcs)
 
         global_fit = mfm.experiments.experiment.Experiment('Global')
-        global_setup = mfm.experiments.globalfit.GlobalFitSetup(name='Global-Fit', experiment=global_fit)
+        global_setup = mfm.experiments.globalfit.GlobalFitSetup(
+            name='Global-Fit',
+            experiment=global_fit
+        )
         global_fit.add_model(mfm.models.globalfit.GlobalFitModelWidget)
         global_fit.add_setup(global_setup)
         mfm.experiment.append(global_fit)
@@ -432,29 +447,21 @@ class Main(QMainWindow):
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
-        self.dataset_selector = mfm.widgets.CurveSelector(click_close=False, curve_types='all',
-                                                          change_event=self.onCurrentDatasetChanged,
-                                                          drag_enabled=True)
+        self.dataset_selector = mfm.widgets.curve.ExperimentalDataSelector(
+            click_close=False, curve_types='all',
+            change_event=self.onCurrentDatasetChanged,
+            drag_enabled=True
+        )
         self.verticalLayout_8.addWidget(self.dataset_selector)
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    import mfm
-    import mfm.widgets
-    import mfm.tools
-    import mfm.ui.resource
-
+    app = QtWidgets.QApplication(sys.argv)
     mfm.console = mfm.widgets.QIPythonWidget()
-
     win = Main(parent=None)
     mfm.console.history_widget = win.plainTextEditHistory
     mfm.cs = win
     win.init_setups()
-
-    with open(mfm.settings.style_sheet_file, 'r') as fp:
-        style_sheet = fp.read()
-        app.setStyleSheet(style_sheet)
-
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win.show()
     sys.exit(app.exec_())

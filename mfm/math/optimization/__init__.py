@@ -2,7 +2,6 @@ import numpy as np
 
 import mfm.math.linalg
 from .leastsqbound import leastsqbound
-from mfm.math.optimization import fnnls
 
 
 def solve_richardson_lucy(

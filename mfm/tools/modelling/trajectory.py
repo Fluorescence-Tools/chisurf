@@ -6,7 +6,7 @@ import glob
 import numba as nb
 import mfm
 import numpy as np
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from qtpy import  QtCore, QtGui, QtWidgets, uic
 import mdtraj as md
 import tables
 import mdtraj.scripts.mdconvert as mdconvert

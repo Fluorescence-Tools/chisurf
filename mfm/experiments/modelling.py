@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from PyQt5 import QtWidgets
+from qtpy import  QtWidgets
 
 import mfm
 import mfm.structure.widgets

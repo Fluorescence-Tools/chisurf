@@ -443,7 +443,8 @@ class DynamicAV(BasicAV):
         Example
         -------
         >>> import mfm
-        >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> import mfm.fluorescence
+        >>> structure = mfm.structure.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> free_diffusion = 8.0
         >>> av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=18, atom_name='CB', slow_factor=0.9, contact_distance=1.5, diffusion_coefficients=free_diffusion)
         >>> p.imshow(av.bounds[:,:,20])
@@ -618,7 +619,7 @@ class DynamicAV(BasicAV):
         >>> times, density, counts = av.get_donor_only_decay(n_it=4095, t_step=0.0141, n_out=1)
         >>> av.save(filename='c:/temp/0t2', density=density, file_type='dx')
         >>> irf = mfm.curve.DataCurve(filename='./sample_data/tcspc/ibh_sample/Prompt.txt', skiprows=9)
-        >>> data = mfm.curve.DataCurve(filename='./sample_data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9) 
+        >>> data = mfm.experiments.c.DataCurve(filename='./sample_data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)
         >>> irf.x *= t_step; data.x *= t_step
         >>> convolve = mfm.fluorescence.tcspc.convolve.Convolve(fit=None, dt=t_step, rep_rate=10, irf=irf, data=data)
         >>> decay = convolve.convolve(counts, mode='full')

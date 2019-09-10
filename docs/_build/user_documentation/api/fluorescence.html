@@ -1,43 +1,29 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Fluorescence &mdash; ChiSurf 0.0.5 documentation</title>
-    
-    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <meta charset="utf-8" />
+    <title>Fluorescence &#8212; ChiSurf  documentation</title>
     <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../',
-        VERSION:     '0.0.5',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../index.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body role="document">
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -50,7 +36,7 @@
         </button>
         <a class="navbar-brand" href="../../index.html">
           ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -66,13 +52,11 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tools.html">Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../use_cases.html">Use cases</a></li>
-</ul>
-<ul class="simple">
 </ul>
 </ul>
 </li>
@@ -111,7 +95,7 @@
             
               <li class="hidden-sm">
 <div id="sourcelink">
-  <a href="../../_sources/user_documentation/api/fluorescence.txt"
+  <a href="../../_sources/user_documentation/api/fluorescence.rst.txt"
      rel="nofollow">Source</a>
 </div></li>
             
@@ -133,61 +117,104 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
+<li><a class="reference internal" href="#">Fluorescence</a><ul>
+<li><a class="reference internal" href="#module-mfm.fluorescence">General</a></li>
+<li><a class="reference internal" href="#decay-generator">Decay-Generator</a><ul>
+<li><a class="reference internal" href="#photon">Photon</a></li>
+<li><a class="reference internal" href="#dye-diffusion">Dye-Diffusion</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fret-lines">FRET-Lines</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="sourcelink">
+  <a href="../../_sources/user_documentation/api/fluorescence.rst.txt"
+     rel="nofollow">Source</a>
+</div>
+<form action="../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
       
   <div class="section" id="fluorescence">
 <h1>Fluorescence<a class="headerlink" href="#fluorescence" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="module-mfm.fluorescence">
 <span id="general"></span><h2>General<a class="headerlink" href="#module-mfm.fluorescence" title="Permalink to this headline">¶</a></h2>
 <p>Fluorescence</p>
-<span class="target" id="module-mfm.fluorescence.fcs"></span><p>Auu</p>
+<span class="target" id="module-mfm.fluorescence.fcs"></span><dl class="function">
+<dt id="mfm.fluorescence.fcs.log_corr">
+<code class="sig-prename descclassname">mfm.fluorescence.fcs.</code><code class="sig-name descname">log_corr</code><span class="sig-paren">(</span><em class="sig-param">macro_times: 'np.array'</em>, <em class="sig-param">tac_channels: 'np.array'</em>, <em class="sig-param">rout: 'np.array'</em>, <em class="sig-param">cr_filter: 'np.array'</em>, <em class="sig-param">weights_1: 'np.array'</em>, <em class="sig-param">weights_2: 'np.array'</em>, <em class="sig-param">B: 'int'</em>, <em class="sig-param">nc: 'int'</em>, <em class="sig-param">fine: 'bool'</em>, <em class="sig-param">number_of_tac_channels: 'int'</em><span class="sig-paren">)</span> &#x2192; 'Tuple[int, int, int, int, np.array, np.array]'<a class="reference internal" href="../../_modules/mfm/fluorescence/fcs.html#log_corr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fcs.log_corr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Correlate macros-times and micro-times using a logarit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>macro_times</strong> – the macros-time array</p></li>
+<li><p><strong>tac_channels</strong> – the micro-time array</p></li>
+<li><p><strong>rout</strong> – the array of routing channels</p></li>
+<li><p><strong>cr_filter</strong> – </p></li>
+<li><p><strong>weights_1</strong> – </p></li>
+<li><p><strong>weights_2</strong> – </p></li>
+<li><p><strong>B</strong> – </p></li>
+<li><p><strong>nc</strong> – </p></li>
+<li><p><strong>fine</strong> – </p></li>
+<li><p><strong>number_of_tac_channels</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="function">
 <dt id="mfm.fluorescence.fcs.weights">
-<code class="descclassname">mfm.fluorescence.fcs.</code><code class="descname">weights</code><span class="sig-paren">(</span><em>t</em>, <em>g</em>, <em>dur</em>, <em>cr</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/fcs.html#weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fcs.weights" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>t</strong> &#8211; correlation times [ms]</li>
-<li><strong>g</strong> &#8211; correlation amplitude</li>
-<li><strong>dur</strong> &#8211; measurement duration [s]</li>
-<li><strong>cr</strong> &#8211; count-rate [kHz]</li>
-<li><strong>kwargs</strong> &#8211; optional weight type &#8216;type&#8217; either &#8216;suren&#8217; or &#8216;uniform&#8217; for uniform weighting or Suren-weighting</li>
+<code class="sig-prename descclassname">mfm.fluorescence.fcs.</code><code class="sig-name descname">weights</code><span class="sig-paren">(</span><em class="sig-param">times: 'np.array'</em>, <em class="sig-param">correlation: 'np.array'</em>, <em class="sig-param">measurement_duration</em>, <em class="sig-param">mean_count_rate</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../../_modules/mfm/fluorescence/fcs.html#weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fcs.weights" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>times</strong> – correlation times [ms]</p></li>
+<li><p><strong>correlation</strong> – correlation amplitude</p></li>
+<li><p><strong>measurement_duration</strong> – measurement duration [s]</p></li>
+<li><p><strong>mean_count_rate</strong> – count-rate [kHz]</p></li>
+<li><p><strong>kwargs</strong> – optional weight type ‘type’ either ‘suren’ or ‘uniform’ for uniform weighting or Suren-weighting</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <span class="target" id="module-mfm.fluorescence.general"></span><dl class="function">
 <dt id="mfm.fluorescence.general.calc_decay_matrix">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">calc_decay_matrix</code><span class="sig-paren">(</span><em>t</em>, <em>tau_min=0.01</em>, <em>tau_max=200.0</em>, <em>n_steps=200.0</em>, <em>space='lin'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#calc_decay_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.calc_decay_matrix" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">calc_decay_matrix</code><span class="sig-paren">(</span><em class="sig-param">t</em>, <em class="sig-param">tau_min=0.01</em>, <em class="sig-param">tau_max=200.0</em>, <em class="sig-param">n_steps=200.0</em>, <em class="sig-param">space='lin'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#calc_decay_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.calc_decay_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates a fluorescence decay matrix converting probabilities of lifetimes to a time-resolved
 fluorescence intensity</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>t</strong> &#8211; </li>
-<li><strong>tau_min</strong> &#8211; </li>
-<li><strong>tau_max</strong> &#8211; </li>
-<li><strong>n_steps</strong> &#8211; </li>
-<li><strong>space</strong> &#8211; </li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> – </p></li>
+<li><p><strong>tau_min</strong> – </p></li>
+<li><p><strong>tau_max</strong> – </p></li>
+<li><p><strong>n_steps</strong> – </p></li>
+<li><p><strong>space</strong> – </p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mf">0.0141</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mf">0.0141</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="p">,</span> <span class="n">r_da</span> <span class="o">=</span> <span class="n">calc_decay_matrix</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Now plot the decay matrix</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pylab</span> <span class="k">as</span> <span class="nn">p</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pylab</span> <span class="k">as</span> <span class="nn">p</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
@@ -196,33 +223,30 @@ fluorescence intensity</p>
 
 <dl class="function">
 <dt id="mfm.fluorescence.general.calc_transfer_matrix">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">calc_transfer_matrix</code><span class="sig-paren">(</span><em>t</em>, <em>rDA_min=1.0</em>, <em>rDA_max=200.0</em>, <em>n_steps=200.0</em>, <em>kappa2=0.667</em>, <em>space='lin'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#calc_transfer_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.calc_transfer_matrix" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">calc_transfer_matrix</code><span class="sig-paren">(</span><em class="sig-param">t</em>, <em class="sig-param">rDA_min=1.0</em>, <em class="sig-param">rDA_max=200.0</em>, <em class="sig-param">n_steps=200.0</em>, <em class="sig-param">kappa2=0.667</em>, <em class="sig-param">space='lin'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#calc_transfer_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.calc_transfer_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates a matrix converting a distance distribution to an E(t)-decay</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>t</strong> &#8211; </li>
-<li><strong>rDA_min</strong> &#8211; </li>
-<li><strong>rDA_max</strong> &#8211; </li>
-<li><strong>n_steps</strong> &#8211; </li>
-<li><strong>kappa2</strong> &#8211; </li>
-<li><strong>log_space</strong> &#8211; </li>
-<li><strong>kwargs</strong> &#8211; <p>tau0 - lifetime,
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> – </p></li>
+<li><p><strong>rDA_min</strong> – </p></li>
+<li><p><strong>rDA_max</strong> – </p></li>
+<li><p><strong>n_steps</strong> – </p></li>
+<li><p><strong>kappa2</strong> – </p></li>
+<li><p><strong>log_space</strong> – </p></li>
+<li><p><strong>kwargs</strong> – <p>tau0 - lifetime,
 R0 - Forster-radius,
 n_donor_bins: int (default 10)</p>
 <blockquote>
-<div>the number of bins with rate 0.0 (Donor-only). The longest distances are
-replaced by zero-rates</div></blockquote>
-</li>
+<div><p>the number of bins with rate 0.0 (Donor-only). The longest distances are
+replaced by zero-rates</p>
+</div></blockquote>
+</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mf">0.0141</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mf">0.0141</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="p">,</span> <span class="n">r_da</span> <span class="o">=</span> <span class="n">calc_transfer_matrix</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -231,25 +255,21 @@ replaced by zero-rates</div></blockquote>
 
 <dl class="attribute">
 <dt id="mfm.fluorescence.general.calculate_fluorescence_decay">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">calculate_fluorescence_decay</code><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#calculate_fluorescence_decay"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.calculate_fluorescence_decay" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">calculate_fluorescence_decay</code><span class="sig-paren">(</span><em class="sig-param">lifetime_spectrum: 'np.array'</em>, <em class="sig-param">time_axis: 'np.array' = None</em>, <em class="sig-param">normalize: 'bool' = True</em><span class="sig-paren">)</span> &#x2192; '(np.array, np.array)'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#calculate_fluorescence_decay"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.calculate_fluorescence_decay" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts a interleaved lifetime spectrum into a intensity decay</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>lifetime_spectrum</strong> &#8211; interleaved lifetime spectrum</li>
-<li><strong>time_axis</strong> &#8211; time-axis</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lifetime_spectrum</strong> – interleaved lifetime spectrum</p></li>
+<li><p><strong>time_axis</strong> – time-axis</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
 <p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">time_axis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">time_axis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">donor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">344</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">acceptor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">496</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
@@ -261,76 +281,45 @@ replaced by zero-rates</div></blockquote>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="mfm.fluorescence.general.distance2fretrate">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">distance2fretrate</code><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#distance2fretrate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.distance2fretrate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts the DA-distance to a FRET-rate</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>r</strong> &#8211; donor-acceptor distance</li>
-<li><strong>R0</strong> &#8211; Forster-radius</li>
-<li><strong>tau0</strong> &#8211; lifetime</li>
-<li><strong>kappa2</strong> &#8211; orientation factor</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.fluorescence.general.distance2rate">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">distance2rate</code><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#distance2rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.distance2rate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts the DA-distance to a FRET-rate</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>distance</strong> &#8211; DA-distance</li>
-<li><strong>kappa2</strong> &#8211; orientation factor</li>
-<li><strong>tau0</strong> &#8211; radiative lifetime</li>
-<li><strong>R0</strong> &#8211; Forster-radius</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.fluorescence.general.distance2transfer">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">distance2transfer</code><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#distance2transfer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.distance2transfer" title="Permalink to this definition">¶</a></dt>
-<dd><div class="math">
+<dt id="mfm.fluorescence.general.distance_to_fret_efficiency">
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">distance_to_fret_efficiency</code><span class="sig-paren">(</span><em class="sig-param">distance: 'float'</em>, <em class="sig-param">forster_radius: 'float'</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#distance_to_fret_efficiency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.distance_to_fret_efficiency" title="Permalink to this definition">¶</a></dt>
+<dd><div class="math notranslate nohighlight">
 \[E = 1.0 / (1.0 + (R_{DA} / R_0)^6)\]</div>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>distance</strong> &#8211; DA-distance</li>
-<li><strong>R0</strong> &#8211; Forster-radius</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>distance</strong> – DA-distance</p></li>
+<li><p><strong>forster_radius</strong> – Forster-radius</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.general.distance_to_fret_rate_constant">
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">distance_to_fret_rate_constant</code><span class="sig-paren">(</span><em class="sig-param">r</em>, <em class="sig-param">forster_radius: 'float'</em>, <em class="sig-param">tau0: 'float'</em>, <em class="sig-param">kappa2: 'float' = 0.6666666666666666</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#distance_to_fret_rate_constant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.distance_to_fret_rate_constant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the DA-distance to a FRET-rate</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> – donor-acceptor distance</p></li>
+<li><p><strong>forster_radius</strong> – Forster-radius</p></li>
+<li><p><strong>tau0</strong> – lifetime</p></li>
+<li><p><strong>kappa2</strong> – orientation factor</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.fluorescence.general.distribution2rates">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">distribution2rates</code><span class="sig-paren">(</span><em>distribution</em>, <em>tau0</em>, <em>kappa2</em>, <em>R0</em>, <em>remove_negative=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#distribution2rates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.distribution2rates" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">distribution2rates</code><span class="sig-paren">(</span><em class="sig-param">distribution</em>, <em class="sig-param">tau0: 'float'</em>, <em class="sig-param">kappa2</em>, <em class="sig-param">forster_radius: 'float'</em>, <em class="sig-param">remove_negative: 'bool' = False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#distribution2rates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.distribution2rates" title="Permalink to this definition">¶</a></dt>
 <dd><p>gets distribution in form: (1,2,3)
 0: number of distribution
 1: amplitude
@@ -339,41 +328,33 @@ replaced by zero-rates</div></blockquote>
 0: number of dist
 1: amplitude
 2: rate</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>distribution</strong> &#8211; </li>
-<li><strong>tau0</strong> &#8211; </li>
-<li><strong>kappa2</strong> &#8211; </li>
-<li><strong>R0</strong> &#8211; </li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>distribution</strong> – </p></li>
+<li><p><strong>tau0</strong> – </p></li>
+<li><p><strong>kappa2</strong> – a interleaved list of orientation factors (orientation factor spectrum)</p></li>
+<li><p><strong>forster_radius</strong> – </p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.fluorescence.general.e1tn">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">e1tn</code><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#e1tn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.e1tn" title="Permalink to this definition">¶</a></dt>
-<dd><p>Multiply amplitudes of rate spectrum by float</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>e1</strong> &#8211; array-like
-Rate spectrum</li>
-<li><strong>n</strong> &#8211; float</li>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">e1tn</code><span class="sig-paren">(</span><em class="sig-param">e1: 'np.array'</em>, <em class="sig-param">n: 'float'</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#e1tn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.e1tn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multiply amplitudes of interleaved rate/lifetime spectrum by float</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>e1</strong> – array-like
+Rate spectrum</p></li>
+<li><p><strong>n</strong> – float</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">e1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">])</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">e1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">e1tn</span><span class="p">(</span><span class="n">e1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
 <span class="go">array([2, 2, 6, 4])</span>
 </pre></div>
@@ -382,29 +363,55 @@ Rate spectrum</li>
 
 <dl class="attribute">
 <dt id="mfm.fluorescence.general.elte2">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">elte2</code><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#elte2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.elte2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Takes two interleaved spectrum of lifetimes (a11, l11, a12, l12,...) and (a21, l21, a22, l22,...)
-and return a new spectrum of lifetimes of the form (a11*a21, 1/(1/l11+1/l21), a12*a22, 1/(1/l22+1/l22), ...)</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>e1</strong> &#8211; array-like
-Lifetime spectrum 1</li>
-<li><strong>e2</strong> &#8211; array-like
-Lifetime spectrum 2</li>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">elte2</code><span class="sig-paren">(</span><em class="sig-param">e1: 'np.array'</em>, <em class="sig-param">e2: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#elte2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.elte2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes two interleaved spectrum of lifetimes (a11, l11, a12, l12,…) and (a21, l21, a22, l22,…)
+and return a new spectrum of lifetimes of the form (a11*a21, 1/(1/l11+1/l21), a12*a22, 1/(1/l22+1/l22), …)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>e1</strong> – array-like
+Lifetime spectrum 1</p></li>
+<li><p><strong>e2</strong> – array-like
+Lifetime spectrum 2</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">array-like
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>array-like
 Lifetime-spectrum</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">e1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">e2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">elte2</span><span class="p">(</span><span class="n">e1</span><span class="p">,</span> <span class="n">e2</span><span class="p">)</span>
+<span class="go">array([  5.        ,   1.5       ,   7.        ,   1.6       ,</span>
+<span class="go">    15.        ,   2.4       ,  21.        ,   2.66666667])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.general.ere2">
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">ere2</code><span class="sig-paren">(</span><em class="sig-param">e1: 'np.array'</em>, <em class="sig-param">e2: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#ere2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.ere2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes two interleaved spectrum of rates (a11, r11, a12, r12,…) and (a21, r21, a22, r22,…)
+and return a new spectrum of lifetimes of the form (a11*a21, r11+r21), a12*a22, r22+r22), …)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>e1</strong> – array-like
+Lifetime spectrum 1</p></li>
+<li><p><strong>e2</strong> – array-like
+Lifetime spectrum 2</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>array-like
+Lifetime-spectrum</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">e1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">e2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">elte2</span><span class="p">(</span><span class="n">e1</span><span class="p">,</span> <span class="n">e2</span><span class="p">)</span>
@@ -416,32 +423,28 @@ Lifetime-spectrum</p>
 
 <dl class="function">
 <dt id="mfm.fluorescence.general.et2pRDA">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">et2pRDA</code><span class="sig-paren">(</span><em>ts</em>, <em>et</em>, <em>t_matrix=None</em>, <em>r_DA=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#et2pRDA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.et2pRDA" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">et2pRDA</code><span class="sig-paren">(</span><em class="sig-param">ts</em>, <em class="sig-param">et</em>, <em class="sig-param">t_matrix=None</em>, <em class="sig-param">r_DA=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#et2pRDA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.et2pRDA" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the distance distribution given an E(t) decay
 Here the amplitudes of E(t) are passed as well as the time-axis. If no transfer-matrix is provided it will
 be calculated in a range from 5 Ang to 200 Ang assuming a lifetime of 4 ns with a Forster-radius of 52 Ang.
 These parameters can be provided by <em>kwargs</em></p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>t</strong> &#8211; </li>
-<li><strong>et</strong> &#8211; </li>
-<li><strong>t_matrix</strong> &#8211; </li>
-<li><strong>r_DA</strong> &#8211; </li>
-<li><strong>kwargs</strong> &#8211; tau0 donor-lifetime in absence of quenching, R0 - Forster-Radius</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t</strong> – </p></li>
+<li><p><strong>et</strong> – </p></li>
+<li><p><strong>t_matrix</strong> – </p></li>
+<li><p><strong>r_DA</strong> – </p></li>
+<li><p><strong>kwargs</strong> – tau0 donor-lifetime in absence of quenching, R0 - Forster-Radius</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a distance and probability array</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a distance and probability array</p>
+</dd>
+</dl>
 <p class="rubric">Examples</p>
 <p>First calculate an E(t)-decay</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rda_mean</span> <span class="o">=</span> <span class="p">[</span><span class="mf">45.1</span><span class="p">,</span> <span class="mf">65.0</span><span class="p">]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rda_mean</span> <span class="o">=</span> <span class="p">[</span><span class="mf">45.1</span><span class="p">,</span> <span class="mf">65.0</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">rda_sigma</span> <span class="o">=</span> <span class="p">[</span><span class="mf">8.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">amplitudes</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">rates</span> <span class="o">=</span> <span class="n">gaussian2rates</span><span class="p">(</span><span class="n">rda_mean</span><span class="p">,</span> <span class="n">rda_sigma</span><span class="p">,</span> <span class="n">amplitudes</span><span class="p">,</span> <span class="n">interleaved</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -455,79 +458,104 @@ These parameters can be provided by <em>kwargs</em></p>
 
 <dl class="function">
 <dt id="mfm.fluorescence.general.fluorescence_averaged_lifetime">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">fluorescence_averaged_lifetime</code><span class="sig-paren">(</span><em>lifetime_spectrum</em>, <em>taux=None</em>, <em>normalize=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#fluorescence_averaged_lifetime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.fluorescence_averaged_lifetime" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>lifetime_spectrum</strong> &#8211; interleaved lifetime spectrum</li>
-<li><strong>taux</strong> &#8211; float
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">fluorescence_averaged_lifetime</code><span class="sig-paren">(</span><em class="sig-param">fluorescence</em>, <em class="sig-param">taux: 'float' = None</em>, <em class="sig-param">normalize: 'bool' = True</em>, <em class="sig-param">is_lifetime_spectrum: 'bool' = True</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#fluorescence_averaged_lifetime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.fluorescence_averaged_lifetime" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fluorescence</strong> – interleaved lifetime spectrum</p></li>
+<li><p><strong>taux</strong> – float
 The species averaged lifetime. If this value is not provided it is calculated based
-on th lifetime spectrum</li>
+on th lifetime spectrum</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.general.fret_efficiency_to_distance">
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">fret_efficiency_to_distance</code><span class="sig-paren">(</span><em class="sig-param">fret_efficiency: 'float'</em>, <em class="sig-param">forster_radius: 'float'</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#fret_efficiency_to_distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.fret_efficiency_to_distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the transfer-efficiency to a distance</p>
+<div class="math notranslate nohighlight">
+\[R_{DA} = R_0 (1 / E - 1)^{1/6}\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fret_efficiency</strong> – Transfer-efficency</p></li>
+<li><p><strong>forster_radius</strong> – Forster-radius</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.general.fret_efficiency_to_lifetime">
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">fret_efficiency_to_lifetime</code><span class="sig-paren">(</span><em class="sig-param">fret_efficiency: 'float'</em>, <em class="sig-param">tau0: 'float'</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#fret_efficiency_to_lifetime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.fret_efficiency_to_lifetime" title="Permalink to this definition">¶</a></dt>
+<dd><div class="math notranslate nohighlight">
+\[tau_{DA} = (1 - E) * tau_0\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fret_efficiency</strong> – </p></li>
+<li><p><strong>tau0</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
-<dt id="mfm.fluorescence.general.fretrate2distance">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">fretrate2distance</code><span class="sig-paren">(</span><em>fretrate</em>, <em>forster_radius</em>, <em>tau0</em>, <em>kappa2=0.6666666666666666</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#fretrate2distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.fretrate2distance" title="Permalink to this definition">¶</a></dt>
+<dt id="mfm.fluorescence.general.fretrate_to_distance">
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">fretrate_to_distance</code><span class="sig-paren">(</span><em class="sig-param">fretrate</em>, <em class="sig-param">forster_radius</em>, <em class="sig-param">tau0</em>, <em class="sig-param">kappa2=0.6666666666666666</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#fretrate_to_distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.fretrate_to_distance" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the distance given a FRET-rate</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>fretrate</strong> &#8211; FRET-rate</li>
-<li><strong>forster_radius</strong> &#8211; Forster radius</li>
-<li><strong>tau0</strong> &#8211; lifetime of the donor</li>
-<li><strong>kappa2</strong> &#8211; orientation factor</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fretrate</strong> – FRET-rate</p></li>
+<li><p><strong>forster_radius</strong> – Forster radius</p></li>
+<li><p><strong>tau0</strong> – lifetime of the donor</p></li>
+<li><p><strong>kappa2</strong> – orientation factor</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.fluorescence.general.gaussian2rates">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">gaussian2rates</code><span class="sig-paren">(</span><em>means</em>, <em>sigmas</em>, <em>amplitudes</em>, <em>tau0=4.0</em>, <em>kappa2=0.667</em>, <em>R0=52.0</em>, <em>n_points=64</em>, <em>m_sigma=1.5</em>, <em>interleaved=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#gaussian2rates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.gaussian2rates" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">gaussian2rates</code><span class="sig-paren">(</span><em class="sig-param">means</em>, <em class="sig-param">sigmas</em>, <em class="sig-param">amplitudes</em>, <em class="sig-param">tau0=4.0</em>, <em class="sig-param">kappa2=0.667</em>, <em class="sig-param">R0=52.0</em>, <em class="sig-param">n_points=64</em>, <em class="sig-param">m_sigma=1.5</em>, <em class="sig-param">interleaved=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#gaussian2rates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.gaussian2rates" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate distribution of FRET-rates given a list of normal/Gaussian distributed
 distances.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>means</strong> &#8211; array</li>
-<li><strong>sigmas</strong> &#8211; array</li>
-<li><strong>amplitudes</strong> &#8211; array</li>
-<li><strong>tau0</strong> &#8211; float</li>
-<li><strong>kappa2</strong> &#8211; float</li>
-<li><strong>R0</strong> &#8211; float</li>
-<li><strong>n_points</strong> &#8211; int</li>
-<li><strong>m_sigma</strong> &#8211; float</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>means</strong> – array</p></li>
+<li><p><strong>sigmas</strong> – array</p></li>
+<li><p><strong>amplitudes</strong> – array</p></li>
+<li><p><strong>tau0</strong> – float</p></li>
+<li><p><strong>kappa2</strong> – float</p></li>
+<li><p><strong>R0</strong> – float</p></li>
+<li><p><strong>n_points</strong> – int</p></li>
+<li><p><strong>m_sigma</strong> – float</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">either an interleaved rate-spectrum, or a 2D-array stack</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>either an interleaved rate-spectrum, or a 2D-array stack</p>
+</dd>
+</dl>
 <p class="rubric">Examples</p>
 <p>This generates an interleaved array here it follows the <em>rule</em>:
-amplitude, rate, amplitude, rate, ...</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gaussian2rates</span><span class="p">([</span><span class="mi">50</span><span class="p">],</span> <span class="p">[</span><span class="mf">8.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">],</span> <span class="n">interleaved</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">n_points</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+amplitude, rate, amplitude, rate, …</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gaussian2rates</span><span class="p">([</span><span class="mi">50</span><span class="p">],</span> <span class="p">[</span><span class="mf">8.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">],</span> <span class="n">interleaved</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">n_points</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
 <span class="go">array([ 0.06060222,  1.64238732,  0.10514622,  0.97808684,  0.1518205 ,</span>
 <span class="go">        0.60699836,  0.18243106,  0.39018018,  0.18243106,  0.25853181,</span>
 <span class="go">        0.1518205 ,  0.17589017,  0.10514622,  0.12247918,  0.06060222,</span>
@@ -536,7 +564,7 @@ amplitude, rate, amplitude, rate, ...</p>
 </div>
 <p>If <em>interleaved</em> is False a 2D-numpy array is returned. The first dimension corresponds
 to the amplitudes the second to the rates.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gaussian2rates</span><span class="p">([</span><span class="mi">50</span><span class="p">],</span> <span class="p">[</span><span class="mf">8.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">],</span> <span class="n">interleaved</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_points</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gaussian2rates</span><span class="p">([</span><span class="mi">50</span><span class="p">],</span> <span class="p">[</span><span class="mf">8.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">],</span> <span class="n">interleaved</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_points</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
 <span class="go">array([[ 0.06060222,  1.64238732],</span>
 <span class="go">       [ 0.10514622,  0.97808684],</span>
 <span class="go">       [ 0.1518205 ,  0.60699836],</span>
@@ -551,255 +579,180 @@ to the amplitudes the second to the rates.</p>
 
 <dl class="function">
 <dt id="mfm.fluorescence.general.interleaved_to_two_columns">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">interleaved_to_two_columns</code><span class="sig-paren">(</span><em>ls</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#interleaved_to_two_columns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.interleaved_to_two_columns" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">interleaved_to_two_columns</code><span class="sig-paren">(</span><em class="sig-param">ls: 'np.array'</em>, <em class="sig-param">sort: 'bool' = False</em><span class="sig-paren">)</span> &#x2192; 'Tuple[np.array, np.array]'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#interleaved_to_two_columns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.interleaved_to_two_columns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts an interleaved spectrum to two column-data
 :param ls: numpy array</p>
 <blockquote>
-<div>The interleaved spectrum (amplitude, lifetime)</div></blockquote>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="mfm.fluorescence.general.kappasq">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">kappasq</code><span class="sig-paren">(</span><em>delta</em>, <em>sD2</em>, <em>sA2</em>, <em>beta1=None</em>, <em>beta2=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#kappasq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.kappasq" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the kappa2 distribution given the order parameter sD2 and sA2</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>delta</strong> &#8211; </li>
-<li><strong>sD2</strong> &#8211; order parameter of donor s2D = - sqrt(r_inf_D/r0)</li>
-<li><strong>sA2</strong> &#8211; order parameter of acceptor s2A = sqrt(r_inf_A/r0)</li>
-<li><strong>beta1</strong> &#8211; </li>
-<li><strong>beta2</strong> &#8211; </li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
+<div><p>The interleaved spectrum (amplitude, lifetime)</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sort</strong> – bool
+if True sort by the size of the lifetimes</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>two arrays (amplitudes), (lifetimes)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="mfm.fluorescence.general.lifetime2transfer">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">lifetime2transfer</code><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#lifetime2transfer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.lifetime2transfer" title="Permalink to this definition">¶</a></dt>
-<dd><div class="math">
+<dt id="mfm.fluorescence.general.invert_interleaved">
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">invert_interleaved</code><span class="sig-paren">(</span><em class="sig-param">interleaved_spectrum: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#invert_interleaved"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.invert_interleaved" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts interleaved lifetime to rate spectra and vice versa</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>interleaved_spectrum</strong> – array-like
+Lifetime/rate spectrum</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">e1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">invert_interleaved</span><span class="p">(</span><span class="n">e1</span><span class="p">)</span>
+<span class="go">array([ 1.  ,  0.5 ,  3.  ,  0.25])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.general.lifetime_to_fret_efficiency">
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">lifetime_to_fret_efficiency</code><span class="sig-paren">(</span><em class="sig-param">tau: 'float'</em>, <em class="sig-param">tau0: 'float'</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#lifetime_to_fret_efficiency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.lifetime_to_fret_efficiency" title="Permalink to this definition">¶</a></dt>
+<dd><div class="math notranslate nohighlight">
 \[E = 1 - tau / tau_0\]</div>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>tau</strong> &#8211; </li>
-<li><strong>tau0</strong> &#8211; </li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tau</strong> – fluorescence lifetime in the presence of FRET</p></li>
+<li><p><strong>tau0</strong> – fluorescence lifetime in the absence of FRET</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.fluorescence.general.pairwise">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">pairwise</code><span class="sig-paren">(</span><em>iterable</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#pairwise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.pairwise" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">pairwise</code><span class="sig-paren">(</span><em class="sig-param">iterable</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#pairwise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.pairwise" title="Permalink to this definition">¶</a></dt>
 <dd><p>Iterate in pairs of 2 over iterable</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>iterable</strong> &#8211; </td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="mfm.fluorescence.general.phasor_giw">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">phasor_giw</code><span class="sig-paren">(</span><em>f</em>, <em>n</em>, <em>omega</em>, <em>times</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#phasor_giw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.phasor_giw" title="Permalink to this definition">¶</a></dt>
-<dd><p>Phasor plot gi(w)
-The phasor approach to fluorescence lifetime page 236</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>f</strong> &#8211; array of the fluorescence intensity at the provided times</li>
-<li><strong>n</strong> &#8211; the nth harmonics</li>
-<li><strong>omega</strong> &#8211; the angular frequency (2*pi*frequency)</li>
-<li><strong>times</strong> &#8211; the times of the fluorescence intensities</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="mfm.fluorescence.general.phasor_siw">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">phasor_siw</code><span class="sig-paren">(</span><em>f</em>, <em>n</em>, <em>omega</em>, <em>times</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#phasor_siw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.phasor_siw" title="Permalink to this definition">¶</a></dt>
-<dd><p>Phasor plot gi(w)
-The phasor approach to fluorescence lifetime page 236</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>f</strong> &#8211; array of the fluorescence intensity at the provided times</li>
-<li><strong>n</strong> &#8211; the nth harmonics</li>
-<li><strong>omega</strong> &#8211; the angular frequency (2*pi*frequency)</li>
-<li><strong>times</strong> &#8211; the times of the fluorescence intensities</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>iterable</strong> – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.fluorescence.general.rates2lifetimes">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">rates2lifetimes</code><span class="sig-paren">(</span><em>rates</em>, <em>donors</em>, <em>x_donly=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#rates2lifetimes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.rates2lifetimes" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">rates2lifetimes</code><span class="sig-paren">(</span><em class="sig-param">fret_rate_spectrum</em>, <em class="sig-param">donor_rate_spectrum</em>, <em class="sig-param">x_donly=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.fluorescence.general.rates2lifetimes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts an interleaved rate spectrum to an interleaved lifetime spectrum
 given an interleaved donor spectrum and the fraction of donor-only</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>rates</strong> &#8211; numpy-array</li>
-<li><strong>donors</strong> &#8211; numpy-array</li>
-<li><strong>x_donly</strong> &#8211; float</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fret_rate_spectrum</strong> – numpy-array</p></li>
+<li><p><strong>donor_rate_spectrum</strong> – numpy-array</p></li>
+<li><p><strong>x_donly</strong> – float</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.general.rates2lifetimes_new">
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">rates2lifetimes_new</code><span class="sig-paren">(</span><em class="sig-param">fret_rate_spectrum</em>, <em class="sig-param">donor_rate_spectrum</em>, <em class="sig-param">x_donly=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#rates2lifetimes_new"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.rates2lifetimes_new" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts an interleaved rate spectrum to an interleaved lifetime spectrum
+given an interleaved donor spectrum and the fraction of donor-only</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fret_rate_spectrum</strong> – numpy-array</p></li>
+<li><p><strong>donor_rate_spectrum</strong> – numpy-array</p></li>
+<li><p><strong>x_donly</strong> – float</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.general.rates2lifetimes_old">
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">rates2lifetimes_old</code><span class="sig-paren">(</span><em class="sig-param">rates</em>, <em class="sig-param">donors</em>, <em class="sig-param">x_donly=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#rates2lifetimes_old"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.rates2lifetimes_old" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts an interleaved rate spectrum to an interleaved lifetime spectrum
+given an interleaved donor spectrum and the fraction of donor-only</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rates</strong> – numpy-array</p></li>
+<li><p><strong>donors</strong> – numpy-array</p></li>
+<li><p><strong>x_donly</strong> – float</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.fluorescence.general.species_averaged_lifetime">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">species_averaged_lifetime</code><span class="sig-paren">(</span><em>lifetime_spectrum</em>, <em>normalize=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#species_averaged_lifetime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.species_averaged_lifetime" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">species_averaged_lifetime</code><span class="sig-paren">(</span><em class="sig-param">fluorescence</em>, <em class="sig-param">normalize: 'bool' = True</em>, <em class="sig-param">is_lifetime_spectrum: 'bool' = True</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#species_averaged_lifetime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.species_averaged_lifetime" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the species averaged lifetime given a lifetime spectrum</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>lifetime_spectrum</strong> &#8211; inter-leaved lifetime-spectrum</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fluorescence</strong> – either a inter-leaved lifetime-spectrum (if is_lifetime_spectrum is True) or a 
+fluorescence decay (times, fluorescence intensity)</p></li>
+<li><p><strong>normalize</strong> – </p></li>
+<li><p><strong>is_lifetime_spectrum</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.fluorescence.general.stack_lifetime_spectra">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">stack_lifetime_spectra</code><span class="sig-paren">(</span><em>lifetime_spectra</em>, <em>fractions</em>, <em>normalize_fractions=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#stack_lifetime_spectra"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.stack_lifetime_spectra" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">stack_lifetime_spectra</code><span class="sig-paren">(</span><em class="sig-param">lifetime_spectra</em>, <em class="sig-param">fractions</em>, <em class="sig-param">normalize_fractions=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#stack_lifetime_spectra"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.stack_lifetime_spectra" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes an array of lifetime spectra and an array of fractions and returns an mixed array of lifetimes
 whereas the amplitudes are multiplied by the fractions. <cite>normalize_fractions</cite> is True the fractions
 are normalized to one.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">numpy-array</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.fluorescence.general.transfer2distance">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">transfer2distance</code><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#transfer2distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.transfer2distance" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts the transfer-efficency to a distance</p>
-<div class="math">
-\[R_{DA} = R_0 (1 / E - 1)^{1/6}\]</div>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>E</strong> &#8211; Transfer-efficency</li>
-<li><strong>R0</strong> &#8211; Forster-radius</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.fluorescence.general.transfer2lifetime">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">transfer2lifetime</code><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#transfer2lifetime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.transfer2lifetime" title="Permalink to this definition">¶</a></dt>
-<dd><div class="math">
-\[tau_{DA} = (1 - E) * tau_0\]</div>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>E</strong> &#8211; </li>
-<li><strong>tau0</strong> &#8211; </li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>numpy-array</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.fluorescence.general.transfer_space">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">transfer_space</code><span class="sig-paren">(</span><em>e_min</em>, <em>e_max</em>, <em>n_steps</em>, <em>R0=52.0</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#transfer_space"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.transfer_space" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">transfer_space</code><span class="sig-paren">(</span><em class="sig-param">transfer_efficiency_min: 'float'</em>, <em class="sig-param">transfer_efficiency_max: 'float'</em>, <em class="sig-param">n_steps: 'int'</em>, <em class="sig-param">forster_radius: 'float' = 52.0</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#transfer_space"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.transfer_space" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generates distances with equally spaced transfer efficiencies</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>e_min</strong> &#8211; float
-minimum transfer efficency</li>
-<li><strong>e_max</strong> &#8211; float
-maximum transfer efficency</li>
-<li><strong>n_steps</strong> &#8211; int
-number of distances</li>
-<li><strong>R0</strong> &#8211; float
-Forster-radius</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>transfer_efficiency_min</strong> – float
+minimum transfer efficency</p></li>
+<li><p><strong>transfer_efficiency_max</strong> – float
+maximum transfer efficency</p></li>
+<li><p><strong>n_steps</strong> – int
+number of distances</p></li>
+<li><p><strong>forster_radius</strong> – float
+Forster-radius</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.fluorescence.general.two_column_to_interleaved">
-<code class="descclassname">mfm.fluorescence.general.</code><code class="descname">two_column_to_interleaved</code><span class="sig-paren">(</span><em>x</em>, <em>t</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#two_column_to_interleaved"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.two_column_to_interleaved" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">two_column_to_interleaved</code><span class="sig-paren">(</span><em class="sig-param">x: 'np.array'</em>, <em class="sig-param">t: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#two_column_to_interleaved"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.two_column_to_interleaved" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts two column lifetime spectra to interleaved lifetime spectra
 :param ls: The
 :return:</p>
@@ -833,7 +786,7 @@ Forster-radius</li>
     </p>
     <p>
         &copy; Copyright 2016, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

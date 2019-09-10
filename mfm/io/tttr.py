@@ -624,11 +624,10 @@ def read_pht3(data, n_rec, version=1):
     for di in data:
         ns = (di & 0b00000000000000001111111111111111) >> 0
         dt = (di & 0b00001111111111110000000000000000) >> 16
+        ch = (di & 0b11110000000000000000000000000000) >> 28
         sp = 1 if ch == 0b1111 else 0
-
         n_sync = over_flow + ns
         if 1 <= ch <= 4:
-            ch = (di & 0b11110000000000000000000000000000) >> 28
             mt[nph] = n_sync
             mi[nph] = dt
             cn[nph] = ch + 1

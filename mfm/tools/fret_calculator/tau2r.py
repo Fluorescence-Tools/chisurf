@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import sys
 import os
-from PyQt5 import QtWidgets, uic
+
+from qtpy import QtWidgets, uic
+import qdarkstyle
 
 from  mfm.fluorescence.general import \
     distance_to_fret_rate_constant, distance_to_fret_efficiency, fret_efficiency_to_lifetime, \
@@ -22,6 +25,7 @@ class FRETCalculator(QtWidgets.QWidget):
             self
         )
         self.kappa2 = kappa2
+
         ## User-interface
         self.doubleSpinBox.editingFinished.connect(self.onTau0Changed)
         self.doubleSpinBox_2.editingFinished.connect(self.onTauChanged)
@@ -83,7 +87,7 @@ class FRETCalculator(QtWidgets.QWidget):
             self,
             value: float
     ):
-        return self.doubleSpinBox_5.setValue(value)
+        self.doubleSpinBox_5.setValue(value)
 
     @property
     def tau0(self) -> float:
@@ -125,3 +129,11 @@ class FRETCalculator(QtWidgets.QWidget):
             v: float
     ):
         self.doubleSpinBox_4.setValue(v)
+
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    win = FRETCalculator()
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    win.show()
+    sys.exit(app.exec_())

@@ -1,5 +1,5 @@
 import numpy as np
-from PyQt5 import QtCore, QtWidgets, uic
+from qtpy import  QtCore, QtWidgets, uic
 from guiqwt.builder import make
 from guiqwt.plot import CurveDialog, ImageDialog
 

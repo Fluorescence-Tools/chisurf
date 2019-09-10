@@ -7,7 +7,7 @@ import numpy as np
 
 import mfm
 from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
-from mfm.models.model import Model, ModelCurve
+from mfm.models.model import ModelCurve
 from mfm.models.tcspc.nusiance import Generic, Corrections, Convolve
 from mfm.models.tcspc.anisotropy import Anisotropy
 from mfm.fluorescence.general import species_averaged_lifetime, fluorescence_averaged_lifetime
@@ -137,43 +137,63 @@ class Lifetime(FittingParameterGroup):
     def finalize(self):
         self.update()
 
-    def append(self, *args, **kwargs):
-        amplitude = args[0] if len(args) > 2 else 1.0
-        lifetime = args[1] if len(args) > 2 else 4.0
-        amplitude = kwargs.get('amplitude', amplitude)
-        lifetime = kwargs.get('amplitude', lifetime)
-        lower_bound_amplitude = kwargs.get('lower_bound_amplitude', None)
-        upper_bound_amplitude = kwargs.get('upper_bound_amplitude', None)
-        fixed = kwargs.get('upper_bound_amplitude', False)
-        bound_on = kwargs.get('bound_on', False)
-        lower_bound_lifetime = kwargs.get('lower_bound_lifetime', None)
-        upper_bound_lifetime = kwargs.get('upper_bound_lifetime', None)
-
+    def append(
+            self,
+            amplitude: float = 1.0,
+            lifetime: float = 4.0,
+            lower_bound_amplitude: float = None,
+            upper_bound_amplitude: float = None,
+            fixed: bool = False,
+            bound_on: bool = False,
+            lower_bound_lifetime: float = None,
+            upper_bound_lifetime: float = None,
+            **kwargs
+    ):
         n = len(self)
-        a = FittingParameter(lb=lower_bound_amplitude, ub=upper_bound_amplitude,
-                             value=amplitude, name='x%s%i' % (self.short, n + 1),
-                             fixed=fixed, bounds_on=bound_on)
-        t = FittingParameter(lb=lower_bound_lifetime, ub=upper_bound_lifetime,
-                             value=lifetime, name='t%s%i' % (self.short, n + 1),
-                             fixed=fixed, bounds_on=bound_on)
+        a = FittingParameter(
+            lb=lower_bound_amplitude, ub=upper_bound_amplitude,
+            value=amplitude, name='x%s%i' % (self.short, n + 1),
+            fixed=fixed, bounds_on=bound_on
+        )
+        t = FittingParameter(
+            lb=lower_bound_lifetime, ub=upper_bound_lifetime,
+            value=lifetime, name='t%s%i' % (self.short, n + 1),
+            fixed=fixed, bounds_on=bound_on
+        )
         self._amplitudes.append(a)
         self._lifetimes.append(t)
 
     def pop(self) -> Tuple[float, float]:
-        a = self._amplitudes.pop()
-        l = self._lifetimes.pop()
-        return a, l
+        amplitude = self._amplitudes.pop()
+        lifetime = self._lifetimes.pop()
+        return amplitude, lifetime
 
-    def __init__(self, **kwargs):
-        FittingParameterGroup.__init__(self, **kwargs)
-        self.short = kwargs.get('short', 'L')
+    def __init__(
+            self,
+            short: str = 'L',
+            absolute_amplitudes: bool = True,
+            normalize_amplitudes: bool = True,
+            amplitudes: List[float] = None,
+            lifetimes: List[float] = None,
+            name: str = 'lifetimes',
+            link: FittingParameter = None,
+            **kwargs
+    ):
+        super(Lifetime, self).__init__(**kwargs)
+        self.short = short
+        self._abs_amplitudes = absolute_amplitudes
+        self._normalize_amplitudes = normalize_amplitudes
         self._lifetime_spectrum = None
-        self._abs_amplitudes = kwargs.get('absolute_amplitudes', True)
-        self._normalize_amplitudes = kwargs.get('normalize_amplitudes', True)
-        self._amplitudes = kwargs.get('amplitudes', [])
-        self._lifetimes = kwargs.get('lifetimes', [])
-        self._name = kwargs.get('name', 'lifetimes')
-        self._link = kwargs.get('link', None)
+        self._name = name
+        self._link = link
+
+        if amplitudes is None:
+            amplitudes = list()
+        self._amplitudes = amplitudes
+
+        if lifetimes is None:
+            lifetimes = list()
+        self._lifetimes = lifetimes
 
     def __len__(self):
         return self.n
@@ -184,20 +204,46 @@ class LifetimeModel(ModelCurve):
     name = "Lifetime fit"
 
     def __str__(self):
-        s = Model.__str__(self)
+        s = super(LifetimeModel, self).__str__()
         s += "\nLifetimes"
         s += "\n------------------\n"
         s += "\nAverage Lifetimes:\n"
         s += "<tau>x: %.3f\n<tau>F: %.3f\n" % (self.species_averaged_lifetime, self.fluorescence_averaged_lifetime)
         return s
 
-    def __init__(self, fit, **kwargs):
-        ModelCurve.__init__(self, fit, **kwargs)
-        self.generic = kwargs.get('generic', Generic(name='generic', fit=fit, **kwargs))
-        self.corrections = kwargs.get('corrections', Corrections(name='corrections', fit=fit, **kwargs))
-        self.anisotropy = kwargs.get('anisotropy', Anisotropy(name='anisotropy', **kwargs))
-        self.lifetimes = kwargs.get('lifetimes', Lifetime(name='lifetimes', fit=fit, **kwargs))
-        self.convolve = kwargs.get('convolve', Convolve(name='convolve', fit=fit, **kwargs))
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            generic: Generic = None,
+            corrections: Corrections = None,
+            anisotropy: Anisotropy = None,
+            lifetimes: Lifetime = None,
+            convolve: Convolve = None,
+            **kwargs
+    ):
+        super(LifetimeModel, self).__init__(
+            fit,
+            **kwargs
+        )
+        if generic is None:
+            generic = Generic(name='generic', fit=fit, **kwargs)
+        self.generic = generic
+
+        if corrections is None:
+            corrections = Corrections(name='corrections', fit=fit, **kwargs)
+        self.corrections = corrections
+
+        if anisotropy is None:
+            anisotropy = Anisotropy(name='anisotropy', **kwargs)
+        self.anisotropy = anisotropy
+
+        if lifetimes is None:
+            lifetimes = Lifetime(name='lifetimes', fit=fit, **kwargs)
+        self.lifetimes = lifetimes
+
+        if convolve is None:
+            convolve = Convolve(name='convolve', fit=fit, **kwargs)
+        self.convolve = convolve
 
     @property
     def species_averaged_lifetime(self) -> float:
@@ -218,7 +264,7 @@ class LifetimeModel(ModelCurve):
         return self.lifetimes.lifetime_spectrum
 
     def finalize(self) -> None:
-        Model.finalize(self)
+        super(LifetimeModel, self).finalize()
         self.lifetimes.update()
 
     def decay(
@@ -228,7 +274,10 @@ class LifetimeModel(ModelCurve):
         amplitudes, lifetimes = mfm.fluorescence.general.interleaved_to_two_columns(self.lifetime_spectrum)
         return np.array([np.dot(amplitudes, np.exp(- t / lifetimes)) for t in time])
 
-    def update_model(self, **kwargs):
+    def update_model(
+            self,
+            **kwargs
+    ):
         verbose = kwargs.get('verbose', mfm.verbose)
         lifetime_spectrum = kwargs.get('lifetime_spectrum', self.lifetime_spectrum)
         scatter = kwargs.get('scatter', self.generic.scatter)
@@ -288,7 +337,10 @@ class DecayModel(ModelCurve):
     def decay(self):
         return self._y
 
-    def update_model(self, **kwargs):
+    def update_model(
+            self,
+            **kwargs
+    ):
         verbose = kwargs.get('verbose', mfm.verbose)
         scatter = kwargs.get('scatter', self.generic.scatter)
         background = kwargs.get('background', self.generic.background)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import OrderedDict
 import time
 import json
@@ -334,10 +336,10 @@ class Dye(ParameterGroup):
         self.structure = sticking.structure
         self.model = kwargs.get('model', None)
 
-        self._critical_distance = FittingParameter(7.0, name='RQ')
-        self._diffusion_coefficient = FittingParameter(5.0, name='D[A2/ns]')
-        self._tau0 = FittingParameter(4.0, name='tau0[ns]')
-        self._simulation_grid_resolution = FittingParameter(0.5, name='grid spacing')
+        self._critical_distance = FittingParameter(value=7.0, name='RQ')
+        self._diffusion_coefficient = FittingParameter(value=5.0, name='D[A2/ns]')
+        self._tau0 = FittingParameter(value=4.0, name='tau0[ns]')
+        self._simulation_grid_resolution = FittingParameter(value=0.5, name='grid spacing')
 
         self._av_length = FittingParameter(name='L', value=20.0)
         self._av_width = FittingParameter(name='W', value=0.5)
@@ -407,13 +409,20 @@ class Sticking(ParameterGroup):
     def sticky_mode(self, v):
         self._sticky_mode = v
 
-    def __init__(self, structure, quenching_parameter=None, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.Fit,
+            structure: mfm.structure.structure.Structure,
+            quenching_parameter=None,
+            **kwargs
+    ):
         """
 
         :param structure: Structure
         :param quenching_parameter:
         :param kwargs:
         """
+        super(Sticking, self).__init__(fit, **kwargs)
         self.verbose = kwargs.get('verbose', mfm.verbose)
         self.quenching_parameter = quenching_parameter
         self.structure = structure

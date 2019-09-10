@@ -1,44 +1,29 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>mfm.io.pdb &mdash; ChiSurf 0.0.5 documentation</title>
-    
-    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <meta charset="utf-8" />
+    <title>mfm.io.pdb &#8212; ChiSurf  documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../',
-        VERSION:     '0.0.5',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../index.html" />
-    <link rel="up" title="Module code" href="../../index.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body role="document">
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -51,7 +36,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -67,13 +52,11 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
-</ul>
-<ul class="simple">
 </ul>
 </ul>
 </li>
@@ -118,38 +101,65 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary">
+<form action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
       
   <h1>Source code for mfm.io.pdb</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
 <span class="kn">import</span> <span class="nn">mfm</span>
-<span class="kn">import</span> <span class="nn">mfm.common</span> <span class="kn">as</span> <span class="nn">common</span>
-<span class="kn">import</span> <span class="nn">urllib</span>
+<span class="kn">import</span> <span class="nn">mfm.common</span> <span class="k">as</span> <span class="nn">common</span>
+
+<span class="n">keys_formats</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s1">&#39;i4&#39;</span><span class="p">,</span> <span class="s1">&#39;i&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;|U1&#39;</span><span class="p">,</span> <span class="s1">&#39;chain&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;i4&#39;</span><span class="p">,</span> <span class="s1">&#39;res_id&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;|U5&#39;</span><span class="p">,</span> <span class="s1">&#39;res_name&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;i4&#39;</span><span class="p">,</span> <span class="s1">&#39;atom_id&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;|U5&#39;</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;|U1&#39;</span><span class="p">,</span> <span class="s1">&#39;element&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;3f8&#39;</span><span class="p">,</span> <span class="s1">&#39;coord&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;f8&#39;</span><span class="p">,</span> <span class="s1">&#39;charge&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;f8&#39;</span><span class="p">,</span> <span class="s1">&#39;radius&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;f8&#39;</span><span class="p">,</span> <span class="s1">&#39;bfactor&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;f8&#39;</span><span class="p">,</span> <span class="s1">&#39;mass&#39;</span><span class="p">)</span>
+<span class="p">]</span>
+
+<span class="n">keys</span><span class="p">,</span> <span class="n">formats</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">keys_formats</span><span class="p">))</span>
 
 
-<span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;chain&#39;</span><span class="p">,</span> <span class="s1">&#39;res_id&#39;</span><span class="p">,</span> <span class="s1">&#39;res_name&#39;</span><span class="p">,</span>
-             <span class="s1">&#39;atom_id&#39;</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">,</span> <span class="s1">&#39;element&#39;</span><span class="p">,</span>
-             <span class="s1">&#39;coord&#39;</span><span class="p">,</span>
-             <span class="s1">&#39;charge&#39;</span><span class="p">,</span> <span class="s1">&#39;radius&#39;</span><span class="p">,</span> <span class="s1">&#39;bfactor&#39;</span><span class="p">,</span> <span class="s1">&#39;mass&#39;</span><span class="p">]</span>
-
-<span class="n">formats</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;i4&#39;</span><span class="p">,</span> <span class="s1">&#39;|S1&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">,</span> <span class="s1">&#39;|S5&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;i4&#39;</span><span class="p">,</span> <span class="s1">&#39;|S5&#39;</span><span class="p">,</span> <span class="s1">&#39;|S1&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;3f8&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;f8&#39;</span><span class="p">,</span> <span class="s1">&#39;f8&#39;</span><span class="p">,</span> <span class="s1">&#39;f8&#39;</span><span class="p">,</span> <span class="s1">&#39;f8&#39;</span><span class="p">]</span>
+<div class="viewcode-block" id="fetch_pdb_string"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.pdb.fetch_pdb_string">[docs]</a><span class="k">def</span> <span class="nf">fetch_pdb_string</span><span class="p">(</span>
+        <span class="n">pdb_id</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">):</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;http://www.rcsb.org/pdb/files/</span><span class="si">%s</span><span class="s1">.pdb&#39;</span> <span class="o">%</span> <span class="n">pdb_id</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="fetch_pdb_string"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.pdb.fetch_pdb_string">[docs]</a><span class="k">def</span> <span class="nf">fetch_pdb_string</span><span class="p">(</span><span class="nb">id</span><span class="p">):</span>
-    <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;http://www.rcsb.org/pdb/files/</span><span class="si">%s</span><span class="s1">.pdb&#39;</span> <span class="o">%</span> <span class="nb">id</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">urllib</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span></div>
+<div class="viewcode-block" id="fetch_pdb"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.pdb.fetch_pdb">[docs]</a><span class="k">def</span> <span class="nf">fetch_pdb</span><span class="p">(</span>
+        <span class="n">pdb_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="n">fetch_pdb_string</span><span class="p">(</span><span class="n">pdb_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">parse_string_pdb</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="fetch_pdb"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.pdb.fetch_pdb">[docs]</a><span class="k">def</span> <span class="nf">fetch_pdb</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="n">st</span> <span class="o">=</span> <span class="n">fetch_pdb_string</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">parse_string</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="assign_element_to_atom_name"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.pdb.assign_element_to_atom_name">[docs]</a><span class="k">def</span> <span class="nf">assign_element_to_atom_name</span><span class="p">(</span><span class="n">atom_name</span><span class="p">):</span>
+<div class="viewcode-block" id="assign_element_to_atom_name"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.pdb.assign_element_to_atom_name">[docs]</a><span class="k">def</span> <span class="nf">assign_element_to_atom_name</span><span class="p">(</span>
+        <span class="n">atom_name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Tries to guess element from atom name if not recognised.</span>
 
 <span class="sd">    :param atom_name: string</span>
@@ -160,31 +170,34 @@
 <span class="sd">    &gt;&gt;&gt; assign_element_to_atom_name(&#39;CA&#39;)</span>
 <span class="sd">    C</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">element</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
     <span class="k">if</span> <span class="n">atom_name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">common</span><span class="o">.</span><span class="n">atom_weights</span><span class="p">:</span>
-    <span class="c1"># Inorganic elements have their name shifted left by one position</span>
-    <span class="c1">#  (is a convention in PDB, but not part of the standard).</span>
-    <span class="c1"># isdigit() check on last two characters to avoid mis-assignment of</span>
-    <span class="c1"># hydrogens atoms (GLN HE21 for example)</span>
-    <span class="c1"># Hs may have digit in [0]</span>
+        <span class="c1"># Inorganic elements have their name shifted left by one position</span>
+        <span class="c1">#  (is a convention in PDB, but not part of the standard).</span>
+        <span class="c1"># isdigit() check on last two characters to avoid mis-assignment of</span>
+        <span class="c1"># hydrogens atoms (GLN HE21 for example)</span>
+        <span class="c1"># Hs may have digit in [0]</span>
         <span class="n">putative_element</span> <span class="o">=</span> <span class="n">atom_name</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">atom_name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="k">else</span> <span class="n">atom_name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">putative_element</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span> <span class="ow">in</span> <span class="n">common</span><span class="o">.</span><span class="n">atom_weights</span><span class="p">:</span>
-            <span class="n">atom_name</span> <span class="o">=</span> <span class="n">putative_element</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">atom_name</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">atom_name</span></div>
+        <span class="k">if</span> <span class="n">putative_element</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span> <span class="ow">in</span> <span class="n">common</span><span class="o">.</span><span class="n">atom_weights</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">element</span> <span class="o">=</span> <span class="n">putative_element</span>
+    <span class="k">return</span> <span class="n">element</span></div>
 
 
-<div class="viewcode-block" id="parse_string"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.pdb.parse_string">[docs]</a><span class="k">def</span> <span class="nf">parse_string</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="n">assignCharge</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="parse_string_pdb"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.pdb.parse_string_pdb">[docs]</a><span class="k">def</span> <span class="nf">parse_string_pdb</span><span class="p">(</span>
+        <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">assign_charge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
     <span class="n">rows</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
     <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
-    <span class="n">atoms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;names&#39;</span><span class="p">:</span> <span class="n">keys</span><span class="p">,</span> <span class="s1">&#39;formats&#39;</span><span class="p">:</span> <span class="n">formats</span><span class="p">})</span>
+    <span class="n">atoms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;names&#39;</span><span class="p">:</span> <span class="n">keys</span><span class="p">,</span> <span class="s1">&#39;formats&#39;</span><span class="p">:</span> <span class="n">formats</span><span class="p">})</span>
     <span class="n">ni</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;ATOM&#39;</span><span class="p">):</span>
             <span class="n">atom_name</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">12</span><span class="p">:</span><span class="mi">16</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
             <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="o">=</span> <span class="n">ni</span>
             <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">21</span><span class="p">]</span>
-            <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;res_name&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">17</span><span class="p">:</span><span class="mi">20</span><span class="p">]</span><span class="c1">#.strip().upper()</span>
+            <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;res_name&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">17</span><span class="p">:</span><span class="mi">20</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
             <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;atom_name&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="o">=</span> <span class="n">atom_name</span>
             <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;res_id&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">22</span><span class="p">:</span><span class="mi">26</span><span class="p">]</span>
             <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;atom_id&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">6</span><span class="p">:</span><span class="mi">11</span><span class="p">]</span>
@@ -192,27 +205,32 @@
             <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">38</span><span class="p">:</span><span class="mi">46</span><span class="p">]</span>
             <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">46</span><span class="p">:</span><span class="mi">54</span><span class="p">]</span>
             <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;bfactor&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">60</span><span class="p">:</span><span class="mi">65</span><span class="p">]</span>
-            <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;element&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="o">=</span> <span class="n">assign_element_to_atom_name</span><span class="p">(</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;atom_name&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">])</span>
+            <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;element&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="o">=</span> <span class="n">assign_element_to_atom_name</span><span class="p">(</span><span class="n">atom_name</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">assignCharge</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">assign_charge</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;res_name&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="ow">in</span> <span class="n">common</span><span class="o">.</span><span class="n">CHARGE_DICT</span><span class="p">:</span>
                         <span class="k">if</span> <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;atom_name&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="o">==</span> <span class="n">common</span><span class="o">.</span><span class="n">TITR_ATOM_COARSE</span><span class="p">[</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;res_name&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]]:</span>
                             <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;charge&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">CHARGE_DICT</span><span class="p">[</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;res_name&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]]</span>
                 <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;mass&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">atom_weights</span><span class="p">[</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;element&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]]</span>
                 <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;radius&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">VDW_DICT</span><span class="p">[</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;element&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]]</span>
             <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-                <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Cloud not assign parameters to: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">line</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cloud not assign parameters to: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">line</span><span class="p">)</span>
             <span class="n">ni</span> <span class="o">+=</span> <span class="mi">1</span>
     <span class="n">atoms</span> <span class="o">=</span> <span class="n">atoms</span><span class="p">[:</span><span class="n">ni</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Number of atoms: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ni</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of atoms: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ni</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">atoms</span></div>
 
 
-<div class="viewcode-block" id="read"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.pdb.read">[docs]</a><span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">assignCharge</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="read"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.pdb.read">[docs]</a><span class="k">def</span> <span class="nf">read</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">assign_charge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Open pdb_file and read each line into pdb (a list of lines)</span>
 
 <span class="sd">    :param filename:</span>
+<span class="sd">    :param assign_charge:</span>
 <span class="sd">    :return:</span>
 <span class="sd">        numpy structured array containing the PDB info and VdW-radii and charges</span>
 
@@ -220,7 +238,7 @@
 <span class="sd">    --------</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; pdb_file = &#39;./sample_data/model/hgbp1/hGBP1_closed.pdb&#39;</span>
+<span class="sd">    &gt;&gt;&gt; pdb_file = models&#39;</span>
 <span class="sd">    &gt;&gt;&gt; pdb = mfm.io.pdb_file.read(pdb_file, verbose=True)</span>
 <span class="sd">    &gt;&gt;&gt; pdb[:5]</span>
 <span class="sd">    array([ (0, &#39; &#39;, 7, &#39;MET&#39;, 1, &#39;N&#39;, &#39;N&#39;, [72.739, -17.501, 8.879], 0.0, 1.65, 0.0, 14.0067),</span>
@@ -237,14 +255,23 @@
         <span class="n">string</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
             <span class="n">path</span><span class="p">,</span> <span class="n">baseName</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;======================================&quot;</span><span class="p">)</span>
-            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Filename: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">filename</span><span class="p">)</span>
-            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Path: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">path</span><span class="p">)</span>
-        <span class="n">atoms</span> <span class="o">=</span> <span class="n">parse_string</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="n">assignCharge</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;======================================&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Filename: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">filename</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Path: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.pdb&#39;</span><span class="p">):</span>
+            <span class="n">atoms</span> <span class="o">=</span> <span class="n">parse_string_pdb</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="n">assign_charge</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.pqr&#39;</span><span class="p">):</span>
+            <span class="n">atoms</span> <span class="o">=</span> <span class="n">parse_string_pqr</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">atoms</span></div>
 
 
-<div class="viewcode-block" id="write"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.pdb.write">[docs]</a><span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">atoms</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">append_model</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">append_coordinates</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="write_pdb"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.pdb.write_pdb">[docs]</a><span class="k">def</span> <span class="nf">write_pdb</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">atoms</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">append_model</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">append_coordinates</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Writes a structured numpy array containing the PDB-info to a PDB-file</span>
 
 <span class="sd">    If append_model and append_coordinates are False the file is overwritten. Otherwise the atomic-coordinates</span>
@@ -254,59 +281,63 @@
 <span class="sd">    :param filename: target-filename</span>
 <span class="sd">    :param atoms: structured numpy array</span>
 <span class="sd">    :param append_model: bool</span>
-<span class="sd">        If True the atoms are appended as a new model</span>
+<span class="sd">        If True the atoms are appended as a new models</span>
 <span class="sd">    :param append_coordinates:</span>
 <span class="sd">        If True the coordinates are appended to the file</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;a+&#39;</span> <span class="k">if</span> <span class="n">append_model</span> <span class="ow">or</span> <span class="n">append_coordinates</span> <span class="k">else</span> <span class="s1">&#39;w+&#39;</span>
-    <span class="n">fp</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
-
-    <span class="c1"># http://cupnet.net/pdb_format/</span>
-    <span class="n">al</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;</span><span class="si">%-6s%5d</span><span class="s2"> </span><span class="si">%4s%1s%3s</span><span class="s2"> </span><span class="si">%1s%4d%1s</span><span class="s2">   </span><span class="si">%8.3f%8.3f%8.3f%6.2f%6.2f</span><span class="s2">          </span><span class="si">%2s%2s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span>
-          <span class="p">(</span><span class="s2">&quot;ATOM &quot;</span><span class="p">,</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;atom_id&#39;</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;atom_name&#39;</span><span class="p">],</span> <span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;res_name&#39;</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;res_id&#39;</span><span class="p">],</span> <span class="s2">&quot; &quot;</span><span class="p">,</span>
-           <span class="n">at</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;bfactor&#39;</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;element&#39;</span><span class="p">],</span> <span class="s2">&quot;  &quot;</span><span class="p">)</span>
-          <span class="k">for</span> <span class="n">at</span> <span class="ow">in</span> <span class="n">atoms</span>
-    <span class="p">]</span>
-    <span class="k">if</span> <span class="n">append_model</span><span class="p">:</span>
-        <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;MODEL&#39;</span><span class="p">)</span>
-    <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">al</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">append_model</span><span class="p">:</span>
-        <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;ENDMDL&#39;</span><span class="p">)</span>
-    <span class="n">fp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
-
-
-<div class="viewcode-block" id="write_xyz"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.pdb.write_xyz">[docs]</a><span class="k">def</span> <span class="nf">write_xyz</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Writes the points as xyz-format file. The xyz-format file can be opened and displayed for instance</span>
-<span class="sd">    in PyMol</span>
-
-<span class="sd">    :param filename: string</span>
-<span class="sd">    :param points: array</span>
-<span class="sd">    :param verbose: bool</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-        <span class="k">print</span> <span class="s2">&quot;write_xyz</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="k">print</span> <span class="s2">&quot;Filename: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">filename</span>
-    <span class="n">fp</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
-    <span class="n">npoints</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
-    <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%i</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">npoints</span><span class="p">)</span>
-    <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Name</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
-        <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;D </span><span class="si">%.3f</span><span class="s1"> </span><span class="si">%.3f</span><span class="s1"> </span><span class="si">%.3f</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
-    <span class="n">fp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Writing to file: &quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+        <span class="c1"># http://cupnet.net/pdb_format/</span>
+        <span class="n">al</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;</span><span class="si">%-6s%5d</span><span class="s2"> </span><span class="si">%4s%1s%3s</span><span class="s2"> </span><span class="si">%1s%4d%1s</span><span class="s2">   </span><span class="si">%8.3f%8.3f%8.3f%6.2f%6.2f</span><span class="s2">          </span><span class="si">%2s%2s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span>
+            <span class="p">(</span><span class="s2">&quot;ATOM &quot;</span><span class="p">,</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;atom_id&#39;</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;atom_name&#39;</span><span class="p">],</span> <span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;res_name&#39;</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;res_id&#39;</span><span class="p">],</span> <span class="s2">&quot; &quot;</span><span class="p">,</span>
+             <span class="n">at</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;bfactor&#39;</span><span class="p">],</span> <span class="n">at</span><span class="p">[</span><span class="s1">&#39;element&#39;</span><span class="p">],</span> <span class="s2">&quot;  &quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">at</span> <span class="ow">in</span> <span class="n">atoms</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">append_model</span><span class="p">:</span>
+            <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;MODEL&#39;</span><span class="p">)</span>
+        <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">al</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">append_model</span><span class="p">:</span>
+            <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;ENDMDL&#39;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="sequence"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.pdb.sequence">[docs]</a><span class="k">def</span> <span class="nf">sequence</span><span class="p">(</span><span class="n">structure</span><span class="p">):</span>
-    <span class="n">a</span> <span class="o">=</span> <span class="n">structure</span><span class="o">.</span><span class="n">atoms</span>
-    <span class="n">s</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">structure</span><span class="o">.</span><span class="n">residue_ids</span><span class="p">:</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="s1">&#39;res_id&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">i</span><span class="p">)[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;res_name&#39;</span><span class="p">]))</span>
-    <span class="k">return</span> <span class="n">s</span></div>
+<div class="viewcode-block" id="write_points"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.pdb.write_points">[docs]</a><span class="k">def</span> <span class="nf">write_points</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">points</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;xyz&#39;</span><span class="p">,</span>
+        <span class="n">density</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    :param filename:</span>
+<span class="sd">    :param points:</span>
+<span class="sd">    :param verbose:</span>
+<span class="sd">    :param mode:</span>
+<span class="sd">    :param density:</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;pdb&#39;</span><span class="p">:</span>
+        <span class="n">atoms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;names&#39;</span><span class="p">:</span> <span class="n">keys</span><span class="p">,</span> <span class="s1">&#39;formats&#39;</span><span class="p">:</span> <span class="n">formats</span><span class="p">})</span>
+        <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">points</span>
+        <span class="k">if</span> <span class="n">density</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;bfactor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">density</span>
+        <span class="n">write_pdb</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">atoms</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">write_xyz</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_atom_index"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.pdb.get_atom_index">[docs]</a><span class="k">def</span> <span class="nf">get_atom_index</span><span class="p">(</span><span class="n">atoms</span><span class="p">,</span> <span class="n">chain_identifier</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="p">,</span> <span class="n">atom_name</span><span class="p">,</span> <span class="n">residue_name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="get_atom_index"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.pdb.get_atom_index">[docs]</a><span class="k">def</span> <span class="nf">get_atom_index</span><span class="p">(</span>
+        <span class="n">atoms</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">chain_identifier</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">residue_seq_number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">atom_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">residue_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get the atom index by the the identifier</span>
 
@@ -319,16 +350,18 @@
 <span class="sd">    :return:</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Determine Labeling position</span>
+    <span class="k">if</span> <span class="n">residue_seq_number</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">atom_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either attachment_atom number or residue and atom_name have to be provided.&quot;</span><span class="p">)</span>
     <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
-    <span class="n">ignore_multiple_selections</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ignore_multiple_selections&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+    <span class="n">ignore_multiple_selections</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ignore_multiple_selections&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Labeling position&quot;</span><span class="p">)</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Chain ID: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">chain_identifier</span><span class="p">)</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Residue seq. number: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">residue_seq_number</span><span class="p">)</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Residue name: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">residue_name</span><span class="p">)</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Atom name: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">atom_name</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Labeling position&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Chain ID: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">chain_identifier</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Residue seq. number: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">residue_seq_number</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Residue name: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">residue_name</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Atom name: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">atom_name</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">chain_identifier</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">chain_identifier</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">chain_identifier</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">chain_identifier</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
         <span class="n">attachment_atom_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;res_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">residue_seq_number</span><span class="p">)</span> <span class="o">&amp;</span>
                                          <span class="p">(</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;atom_name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">atom_name</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
@@ -336,17 +369,18 @@
                                          <span class="p">(</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;atom_name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">atom_name</span><span class="p">)</span> <span class="o">&amp;</span>
                                          <span class="p">(</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">chain_identifier</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">attachment_atom_index</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ignore_multiple_selections</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Labeling position&quot;</span><span class="p">)</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Chain ID: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">chain_identifier</span><span class="p">)</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Residue seq. number: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">residue_seq_number</span><span class="p">)</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Residue name: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">residue_name</span><span class="p">)</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Atom name: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">atom_name</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Labeling position&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Chain ID: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">chain_identifier</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Residue seq. number: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">residue_seq_number</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Residue name: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">residue_name</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Atom name: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">atom_name</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid selection of attachment atom&quot;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">attachment_atom_index</span> <span class="o">=</span> <span class="n">attachment_atom_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Atom index: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">attachment_atom_index</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Atom index: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">attachment_atom_index</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">attachment_atom_index</span></div>
+
 
 </pre></div>
 
@@ -362,7 +396,7 @@
     </p>
     <p>
         &copy; Copyright 2016, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

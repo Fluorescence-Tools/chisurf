@@ -2,12 +2,12 @@ from __future__ import annotations
 from typing import List, Tuple
 
 import numpy as np
-from PyQt5 import QtWidgets, QtGui
+from qtpy import  QtWidgets, QtGui
 
 import mfm.curve
 import mfm.fitting.parameter
 import mfm.fitting.fitting_widgets
-from mfm import plots as plots
+import mfm.plots
 from mfm.curve import Curve
 
 
@@ -97,7 +97,7 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
         wr = np.array((d[:ml] - m[:ml]) / e[:ml], dtype=np.float64)
         return wr
 
-    def update_model(self):
+    def update_model(self, **kwargs):
         pass
 
     def update(self):
@@ -150,11 +150,21 @@ class ModelCurve(Model, mfm.curve.Curve):
 
 
 class ModelWidget(Model, QtWidgets.QWidget):
+
     plot_classes = [
-        (plots.LinePlot, {'d_scalex': 'lin', 'd_scaley': 'log', 'r_scalex': 'lin', 'r_scaley': 'lin',
-                          'x_label': 'x', 'y_label': 'y', 'plot_irf': True}),
-        (plots.FitInfo, {}), (plots.ParameterScanPlot, {}),
-        (plots.ResidualPlot, {})
+        (
+            mfm.plots.LinePlot, {
+                'scale_x': 'lin',
+                'd_scaley': 'log',
+                'r_scaley': 'lin',
+                'x_label': 'x',
+                'y_label': 'y',
+                'plot_irf': True
+            }
+        ),
+        (mfm.plots.FitInfo, {}),
+        (mfm.plots.ParameterScanPlot, {}),
+        (mfm.plots.ResidualPlot, {})
         #(plots.FitInfo, {}), (plots.AvPlot, {})
     ]
 
@@ -177,7 +187,6 @@ class ModelWidget(Model, QtWidgets.QWidget):
         pass
 
     def __init__(self, fit, *args, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        Model.__init__(self, fit, *args, **kwargs)
+        super(ModelWidget, self).__init__(fit, *args, **kwargs)
         self.plots = list()
         self.icon = kwargs.get('icon', QtGui.QIcon(":/icons/document-open.png"))

@@ -4,12 +4,11 @@ import os
 import tempfile
 
 import mdtraj as md
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtWidgets import QApplication
+from qtpy import QtWidgets, uic
 
 from mfm.io import pdb
 import mfm.widgets
-from mfm.widgets import PDBSelector
+from mfm.widgets.pdb import PDBSelector
 from mfm.tools.traj2fret import CalculateTransfer
 
 
@@ -147,7 +146,7 @@ class Structure2Transfer(QtWidgets.QWidget, CalculateTransfer):
 if __name__ == "__main__":
     import sys
 
-    app = QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     w = Structure2Transfer()
 
     w.show()

@@ -1,11 +1,11 @@
-# coding=utf-8
-import os
+from __future__ import annotations
 
-from PyQt5 import QtWidgets, uic
+import os
+from qtpy import QtWidgets, uic
 
 from mfm.structure.structure import Structure
 from mfm.structure.trajectory import TrajectoryFile
-from mfm.widgets import LoadThread
+from mfm.widgets.pdb import LoadThread
 
 
 class PDBFolderLoad(QtWidgets.QWidget):

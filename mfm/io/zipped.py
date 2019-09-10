@@ -11,7 +11,7 @@ from mdtraj.utils.six import PY2, StringIO
 
 def open_maybe_zipped(filename, mode, force_overwrite=True):
     # TODO: make it work with numpy and gzip files
-    """Open a file in text (not binary) mode, transparently handling
+    """Open a file in name (not binary) mode, transparently handling
     .gz or .bz2 compresssion, with utf-8 encoding.
 
     Parameters
