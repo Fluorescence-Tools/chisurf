@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from qtpy import  QtWidgets, uic, QtCore, QtGui
 
 import os

@@ -1,5 +1,8 @@
+from __future__ import annotations
+
+import os
 import numpy as np
-from qtpy import  QtWidgets, uic
+from qtpy import QtWidgets, uic
 
 from mfm.fluorescence.tcspc.phasor import Phasor
 
@@ -38,10 +41,18 @@ class PhasorWidget(Phasor, QtWidgets.QWidget):
     def phasor_n(self, v):
         self._phasor_n = float(v)
 
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        Phasor.__init__(self, **kwargs)
-        uic.loadUi('mfm/ui/fitting/models/tcspc/phasor_widget.ui', self)
+    def __init__(
+            self,
+            **kwargs
+    ):
+        super(PhasorWidget, self).__init__(**kwargs)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "phasor_widget.ui"
+            ),
+            self
+        )
         #self.connect(self.actionUpdate_phasor, QtCore.SIGNAL('triggered()'), self.onUpdatePhasor)
         #self.connect(self.actionUpdate_phasor, QtCore.SIGNAL('triggered()'), self.onUpdatePhasor)
 

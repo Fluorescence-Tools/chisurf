@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import mfm
 from mfm.models.tcspc.lifetime import DecayModel
 from mfm.fluorescence.fps import DynamicAV

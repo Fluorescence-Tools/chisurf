@@ -290,10 +290,15 @@ class AvPotentialWidget(AvPotential, QtWidgets.QWidget):
 
 class AsaWidget(ASA, QtWidgets.QWidget):
 
-    def __init__(self, structure, parent):
-        ASA.__init__(self, structure)
-        QtWidgets.QWidget.__init__(self, parent=None)
-        uic.loadUi('mfm/ui/Potential_Asa.ui', self)
+    def __init__(self, structure, **kwargs):
+        super(AsaWidget, self).__init__(structure, **kwargs)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "Potential_Asa.ui"
+            ),
+            self
+        )
 
         self.lineEdit.textChanged['QString'].connect(self.setParameterSphere)
         self.lineEdit_2.textChanged['QString'].connect(self.setParameterProbe)
@@ -313,7 +318,7 @@ class RadiusGyrationWidget(QtWidgets.QWidget):
     name = 'Radius-Gyration'
 
     def __init__(self, structure, parent=None):
-        QtWidgets.QWidget.__init__(self, parent=parent)
+        super(RadiusGyrationWidget, self).__init__(parent)
         self.structure = structure
         self.parent = parent
 

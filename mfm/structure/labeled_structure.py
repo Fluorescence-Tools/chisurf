@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import numpy as np
 
 import mfm
-from mfm.structure import Structure
+from mfm.structure.structure import Structure
 
 
 def av_distance_distribution(structure, donor_av_parameter, acceptor_av_parameter, **kwargs):

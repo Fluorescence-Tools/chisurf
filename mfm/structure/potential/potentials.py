@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
 import json
 import math
 from collections import OrderedDict
@@ -16,8 +17,19 @@ import mfm
 
 
 @nb.njit
-def centroid2(atom_lookup, res_types, ca_dist, r, potential,
-              cutoff=6.5, centroid_pos=4, min_dist=3.5, max_dist=19.0, bin_width=0.05, repulsion=100.0):
+def centroid2(
+        atom_lookup,
+        res_types,
+        ca_dist,
+        r,
+        potential,
+        cutoff: float = 6.5,
+        centroid_pos: int = 4,
+        min_dist: float = 3.5,
+        max_dist: float = 19.0,
+        bin_width: float = 0.05,
+        repulsion: float = 100.0
+):
     """
     Calculate the potential energy given the UNRES GBV-Sidechain potential and isotropic conditions.
 
@@ -51,9 +63,6 @@ def centroid2(atom_lookup, res_types, ca_dist, r, potential,
             The spacing between the bin of the distance points in the pre-calculated potential
     cutoff : double
             Distances between the centroids bigger than the cut-off distance will be neglected
-
-    Citation
-    --------
 
     Citation
     --------
@@ -99,7 +108,13 @@ def centroid2(atom_lookup, res_types, ca_dist, r, potential,
 
 
 @nb.jit(nopython=True)
-def internal_potential(internal_coordinates, equilibrium_internal=None, k_bond=0.5, k_angle=0.1, k_dihedral=0.05):
+def internal_potential(
+        internal_coordinates,
+        equilibrium_internal=None,
+        k_bond: float = 0.5,
+        k_angle: float = 0.1,
+        k_dihedral: float = 0.05
+) -> float:
     """ Simple potential based internal coordinates for C-alpha bead model
     """
     if equilibrium_internal is None:
@@ -117,7 +132,10 @@ def internal_potential(internal_coordinates, equilibrium_internal=None, k_bond=0
     return e
 
 
-def internal_potential_calpha(structure, **kwargs):
+def internal_potential_calpha(
+        structure: mfm.structure.structure.Structure,
+        **kwargs
+) -> float:
     """Calculates a *internal* potential based on the similarity of the bonds length, angles, and dihedrals
     to a reference structure.
 
@@ -133,7 +151,10 @@ def internal_potential_calpha(structure, **kwargs):
 
 
 @nb.jit(nopython=True)
-def lj_calpha(ca_coordinates, rm=3.8208650279):
+def lj_calpha(
+        ca_coordinates: np.array,
+        rm: float = 3.8208650279
+):
     """Truncated Lennard Jones
 
     :param ca_coordinates:
@@ -154,7 +175,10 @@ def lj_calpha(ca_coordinates, rm=3.8208650279):
     return energy
 
 
-def lennard_jones_calpha(structure, rm=3.8208650279):
+def lennard_jones_calpha(
+        structure: mfm.structure.structure.Structure,
+        rm: float = 3.8208650279
+):
     """
 
     :param structure: a structure object
@@ -167,7 +191,12 @@ def lennard_jones_calpha(structure, rm=3.8208650279):
 
 
 @nb.njit
-def gb(xyz, epsilon=4.0, epsilon0=80.1, cutoff=12.0):
+def gb(
+        xyz: np.array,
+        epsilon: float = 4.0,
+        epsilon0: float = 80.1,
+        cutoff:float = 12.0
+):
     """
     Generalized Born http://en.wikipedia.org/wiki/Implicit_solvation
     with cutoff-potential potential shifted by value at cutoff to smooth the energy
@@ -216,7 +245,11 @@ def gb(xyz, epsilon=4.0, epsilon0=80.1, cutoff=12.0):
 
 
 @nb.jit
-def go(ca_dist, energy_matrix, rm_matrix):
+def go(
+        ca_dist: np.array,
+        energy_matrix: np.array,
+        rm_matrix: np.array
+):
     """
     If cutoff is True the LJ-Potential is cutoff and shifted at 2.5 sigma
 
@@ -250,7 +283,11 @@ def go(ca_dist, energy_matrix, rm_matrix):
 
 class Ramachandran(object):
 
-    def __init__(self, structure, filename='./mfm/structure/potential/database/rama_ala_pro_gly.npy'):
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure,
+            filename='./mfm/structure/potential/database/rama_ala_pro_gly.npy'
+    ):
         """
         :param filename:
         :return:
@@ -393,7 +430,12 @@ class MJPotential(object):
 
     name = 'Miyazawa-Jernigan'
 
-    def __init__(self, structure, filename='./mfm/structure/potential/database/mj.csv', ca_cutcoff=6.5):
+    def __init__(
+            self,
+            structure,
+            filename='./mfm/structure/potential/database/mj.csv',
+            ca_cutcoff: float = 6.5
+    ):
         self.filename = filename
         self.structure = structure
         self.potential = filename
@@ -418,21 +460,6 @@ class MJPotential(object):
         return self.nCont
 
 
-class ASA(object):
-    def __init__(self, structure, probe=1.0, n_sphere_point=590, radius=2.5):
-        self.structure = structure
-        self.probe = probe
-        self.n_sphere_point = n_sphere_point
-        self.sphere_points = cPotentials.spherePoints(n_sphere_point)
-        self.radius = radius
-
-    def getEnergy(self):
-        c = self.structure
-        asa = cPotentials.asa(c.rAtoms['coord'], c.residue_lookup_r, c.dist_ca,
-                              self.sphere_points, self.probe, self.radius)
-        return asa
-
-
 class CEPotential(object):
     """
     Examples
@@ -451,7 +478,7 @@ class CEPotential(object):
 
     def __init__(
             self,
-            structure,
+            structure: mfm.structure.structure.Structure,
             **kwargs
     ):
         """
@@ -477,10 +504,17 @@ class CEPotential(object):
         return self._potential
 
     @potential.setter
-    def potential(self, v):
+    def potential(
+            self,
+            v
+    ):
         self._potential = np.load(v)
 
-    def getEnergy(self, cutoff=None, **kwargs):
+    def getEnergy(
+            self,
+            cutoff=None,
+            **kwargs
+    ) -> float:
         cutoff = cutoff if cutoff is not None else self.ca_cutoff
         c = self.structure
         coord = np.ascontiguousarray(c.xyz)
@@ -499,7 +533,7 @@ class CEPotential(object):
         self.nCont = nCont
         return float(E * self.scaling_factor)
 
-    def getNbrContacts(self):
+    def getNbrContacts(self) -> int:
         return self.nCont
 
 
@@ -507,14 +541,21 @@ class ASA(object):
 
     name = 'Asa-Ca'
 
-    def __init__(self, structure, probe=1.0, n_sphere_point=590, radius=2.5):
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure,
+            probe: float = 1.0,
+            n_sphere_point: int = 590,
+            radius: float = 2.5
+    ):
+        super(ASA, self).__init__()
         self.structure = structure
         self.probe = probe
         self.n_sphere_point = n_sphere_point
         self.sphere_points = cPotentials.spherePoints(n_sphere_point)
         self.radius = radius
 
-    def getEnergy(self):
+    def getEnergy(self) -> float:
         c = self.structure
         #def asa(double[:, :] xyz, int[:, :] resLookUp, double[:, :] caDist, double[:, :] sphere_points,
         #double probe=1.0, double radius = 2.5, char sum=1)
@@ -537,7 +578,7 @@ class ClashPotential(object):
         >>> import mfm.structure
         >>> import mfm.structure.potential
 
-        >>> s = mfm.Structure('./sample_data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
+        >>> s = mfm.structure.structure.Structure('./sample_data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
         >>> pce = mfm.structure.potential.potentials.ClashPotential(structure=s, clash_tolerance=6.0)
         >>> pce.getEnergy()
 
@@ -546,7 +587,7 @@ class ClashPotential(object):
         self.clash_tolerance = kwargs.get('clash_tolerance', 2.0)
         self.covalent_radius = kwargs.get('covalent_radius', 1.5)
 
-    def getEnergy(self):
+    def getEnergy(self) -> float:
         c = self.structure
         return cPotentials.clash_potential(c.xyz, c.vdw, self.clash_tolerance, self.covalent_radius)
 
@@ -573,7 +614,10 @@ class AvPotential(object):
     """
     name = 'Av'
 
-    def __init__(self, **kwargs):
+    def __init__(
+            self,
+            **kwargs
+    ):
         self._labeling_file = kwargs.get('labeling_file', None)
         self._structure = kwargs.get('structure', None)
 
@@ -597,19 +641,22 @@ class AvPotential(object):
         self.positions = p["Positions"]
 
     @property
-    def structure(self):
+    def structure(self) -> mfm.structure.structure.Structure:
         """
         The Structure object used for the calculation of the accessible volumes
         """
         return self._structure
 
     @structure.setter
-    def structure(self, structure):
+    def structure(
+            self,
+            structure: mfm.structure.structure.Structure
+    ):
         self._structure = structure
         self.calc_avs()
 
     @property
-    def chi2(self):
+    def chi2(self) -> float:
         """
         The current unreduced chi2 (recalculated at each call)
         """
@@ -634,7 +681,11 @@ class AvPotential(object):
         for i, position_key in enumerate(self.positions):
             self.avs[position_key] = avs[i]
 
-    def calc_distances(self, structure=None, verbose=False):
+    def calc_distances(
+            self,
+            structure: mfm.structure.structure.Structure = None,
+            verbose: bool = False
+    ):
         """
 
         :param structure: Structure
@@ -671,7 +722,12 @@ class AvPotential(object):
                 print("Experimental distance: %.1f (-%.1f, +%.1f)" % (distance['distance'],
                                                                       distance['error_neg'], distance['error_pos']))
 
-    def getChi2(self, structure=None, reduced=False, verbose=False):
+    def getChi2(
+            self,
+            structure: mfm.structure.structure.Structure = None,
+            reduced: bool = False,
+            verbose: bool = False
+    ):
         """
 
         :param structure: Structure
@@ -706,8 +762,12 @@ class AvPotential(object):
         else:
             return chi2
 
-    def getEnergy(self, structure=None, gauss_bond=True):
-        if isinstance(structure, Structure):
+    def getEnergy(
+            self,
+            structure: mfm.structure.structure.Structure = None,
+            gauss_bond: bool = True
+    ):
+        if isinstance(structure, mfm.structure.structure.Structure):
             self.structure = structure
         if gauss_bond:
             energy = 0.0

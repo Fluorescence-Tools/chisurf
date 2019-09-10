@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import os
-from qtpy import  QtGui
+from qtpy import QtGui
 
 import mfm
 from mfm import plots

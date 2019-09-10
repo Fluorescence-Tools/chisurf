@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import numpy as np
-from scipy.cluster import hierarchy as hclust
+from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster
 
 from mfm.structure.structure import rmsd, average, find_best
@@ -38,7 +40,7 @@ def cluster(structures, threshold=5000, criterion='maxclust', Z=None, distances=
     if Z is None:
         # run hierarchical clustering on the distance matrix
         print('\n\nRunning hierarchical clustering (UPGMA)...')
-        Z = hclust.linkage(distances, method='average', preserve_input=True)
+        Z = hierarchy.linkage(distances, method='average', preserve_input=True)
         # get flat clusters from the linkage matrix corresponding to states
         if directory is not None:
             print("Saving cluster-results")

@@ -1,9 +1,9 @@
 from __future__ import annotations
-from collections import Iterable
 from typing import List
 
 import os
 import numpy as np
+from collections import Iterable
 
 #######################################################
 #        SETTINGS  & CONSTANTS                        #

@@ -371,7 +371,13 @@ def stack_lifetime_spectra(lifetime_spectra, fractions, normalize_fractions=True
     return np.hstack(re)
 
 
-def distribution2rates(distribution, tau0, kappa2, R0, remove_negative=False):
+def distribution2rates(
+        distribution,
+        tau0: float,
+        kappa2,
+        forster_radius: float,
+        remove_negative: bool = False
+):
     """
     gets distribution in form: (1,2,3)
     0: number of distribution
@@ -386,7 +392,7 @@ def distribution2rates(distribution, tau0, kappa2, R0, remove_negative=False):
     :param distribution:
     :param tau0:
     :param kappa2: a interleaved list of orientation factors (orientation factor spectrum)
-    :param R0:
+    :param forster_radius:
     """
 
     n_dist, n_ampl, n_points = distribution.shape
@@ -397,7 +403,7 @@ def distribution2rates(distribution, tau0, kappa2, R0, remove_negative=False):
     for i in range(n_dist):
         rate_dist[i, 1] = distance_to_fret_rate_constant(
             rate_dist[i, 1],
-            R0,
+            forster_radius,
             tau0,
             0.66667
         )

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import mfm.models.tcspc.nusiance
 from mfm.models import parse
 
