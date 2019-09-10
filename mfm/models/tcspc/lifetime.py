@@ -7,7 +7,7 @@ import numpy as np
 
 import mfm
 from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
-from mfm.models.model import Model, ModelCurve
+from mfm.models.model import ModelCurve
 from mfm.models.tcspc.nusiance import Generic, Corrections, Convolve
 from mfm.models.tcspc.anisotropy import Anisotropy
 from mfm.fluorescence.general import species_averaged_lifetime, fluorescence_averaged_lifetime

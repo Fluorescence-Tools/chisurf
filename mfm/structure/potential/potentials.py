@@ -154,7 +154,7 @@ def internal_potential_calpha(
 def lj_calpha(
         ca_coordinates: np.array,
         rm: float = 3.8208650279
-):
+) -> float:
     """Truncated Lennard Jones
 
     :param ca_coordinates:
@@ -185,7 +185,9 @@ def lennard_jones_calpha(
     :param rm: is the C-alpha equilibrium distance
     :return:
     """
-    sel = mfm.structure.get_atom_index_by_name(structure.atoms, ['CA'])
+    sel = mfm.structure.structure.get_atom_index_by_name(
+        structure.atoms, ['CA']
+    )
     ca_atoms = structure.atoms.take(sel)
     return lj_calpha(ca_atoms['coord'][0], rm)
 
@@ -195,8 +197,8 @@ def gb(
         xyz: np.array,
         epsilon: float = 4.0,
         epsilon0: float = 80.1,
-        cutoff:float = 12.0
-):
+        cutoff: float = 12.0
+) -> float:
     """
     Generalized Born http://en.wikipedia.org/wiki/Implicit_solvation
     with cutoff-potential potential shifted by value at cutoff to smooth the energy
@@ -297,7 +299,7 @@ class Ramachandran(object):
         self.filename = filename
         self.ramaPot = np.load(self.filename)
 
-    def getEnergy(self):
+    def getEnergy(self) -> float:
         c = self.structure
         Erama = cPotentials.ramaEnergy(c.residue_lookup_i, c.iAtoms, self.ramaPot)
         self.E = Erama
@@ -316,7 +318,7 @@ class Electrostatics(object):
         if type == 'gb':
             self.p = cPotentials.gb
 
-    def getEnergy(self):
+    def getEnergy(self) -> float:
         structure = self.structure
         #Eel = cPotentials.gb(structure.xyz)
         Eel = gb(structure.xyz)
@@ -330,7 +332,7 @@ class LJ_Bead(object):
         self.structure = structure
         self.name = 'LJ_bead'
 
-    def getEnergy(self):
+    def getEnergy(self) -> float:
         structure = self.structure
         self.E = lennard_jones_calpha(self.structure.atoms['coord'])
         return self.E
@@ -468,7 +470,7 @@ class CEPotential(object):
     >>> import mfm.structure
     >>> import mfm.structure.potential
 
-    >>> s = mfm..structure.Structure('./sample_data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
+    >>> s = mfm..structure.structure.Structure('./sample_data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
     >>> pce = mfm.structure.potential.potentials.CEPotential(s, ca_cutoff=64.0)
     >>> pce.getEnergy()
     -0.15896629131635745
@@ -607,8 +609,8 @@ class AvPotential(object):
     >>> distances = labeling['Distances']
     >>> positions = labeling['Positions']
     >>> import mfm
-    >>> av_potential = mfm.fps.AvPotential(distances=distances, positions=positions)
-    >>> structure = mfm.Structure('/sample_data/model/HM_1FN5_Naming.pdb')
+    >>> av_potential = mfm.structure.potential.potentials.AvPotential(distances=distances, positions=positions)
+    >>> structure = mfm.structure.structure.Structure('/sample_data/model/HM_1FN5_Naming.pdb')
     >>> av_potential.getChi2(structure)
 
     """

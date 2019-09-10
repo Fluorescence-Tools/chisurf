@@ -97,7 +97,7 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
         wr = np.array((d[:ml] - m[:ml]) / e[:ml], dtype=np.float64)
         return wr
 
-    def update_model(self):
+    def update_model(self, **kwargs):
         pass
 
     def update(self):

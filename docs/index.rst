@@ -1,11 +1,11 @@
-ChiSURF
+ChiSurf
 =======
 
-ChiSURF is a software-suite dedicated to the analysis of fluorescence data.
+ChiSurf is a software-suite dedicated to the analysis of fluorescence data.
 Its main purpose is the interpretation of fluorescence measurements by structural
 models and the analysis time-resolved fluorescence measurements.
 
-Currently, ChiSURF is capable to analyze TCSPC, FCS and stopped-flow data. Its
+Currently, ChiSurf is capable to analyze TCSPC, FCS and stopped-flow data. Its
 open frame-work and API allows to extend its capabilities relatively easy.
 
 ChiSurf supports Windows, Linux and MacOS. Pre-assembled packages are available

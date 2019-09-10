@@ -1,44 +1,29 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>mfm.parameter &mdash; ChiSurf 0.0.5 documentation</title>
-    
-    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <meta charset="utf-8" />
+    <title>mfm.parameter &#8212; ChiSurf  documentation</title>
     <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../',
-        VERSION:     '0.0.5',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../index.html" />
-    <link rel="up" title="Module code" href="../index.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body role="document">
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -51,7 +36,7 @@
         </button>
         <a class="navbar-brand" href="../../index.html">
           ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -67,13 +52,11 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_documentation/tools.html">Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_documentation/use_cases.html">Use cases</a></li>
-</ul>
-<ul class="simple">
 </ul>
 </ul>
 </li>
@@ -118,613 +101,242 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary">
+<form action="../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
       
   <h1>Source code for mfm.parameter</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">uic</span><span class="p">,</span> <span class="n">QtCore</span>
-<span class="kn">import</span> <span class="nn">mfm</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">pyqtgraph</span> <span class="kn">as</span> <span class="nn">pg</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">TypeVar</span>
+
 <span class="kn">import</span> <span class="nn">weakref</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<span class="n">parameter_settings</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">]</span>
+<span class="kn">import</span> <span class="nn">mfm</span>
+<span class="kn">import</span> <span class="nn">mfm.base</span>
+
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s1">&#39;Parameter&#39;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="Parameter"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.Parameter">[docs]</a><span class="k">class</span> <span class="nc">Parameter</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">Base</span><span class="p">):</span>
+<div class="viewcode-block" id="Parameter"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.Parameter">[docs]</a><span class="k">class</span> <span class="nc">Parameter</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Base</span><span class="p">):</span>
 
     <span class="n">_instances</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">decimals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;decimals&#39;</span><span class="p">]</span>
-
-    <span class="nd">@decimals.setter</span>
-    <span class="k">def</span> <span class="nf">decimals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;decimals&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span>
+        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">v</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">v</span>
 
-    <span class="nd">@value.setter</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="nd">@value</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">value</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
-
-    <span class="nd">@name.setter</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
-
-    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Parameter.getinstances"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.Parameter.getinstances">[docs]</a>    <span class="k">def</span> <span class="nf">getinstances</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+<div class="viewcode-block" id="Parameter.getinstances"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.Parameter.getinstances">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">getinstances</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]:</span>
         <span class="n">dead</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">_instances</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_instances</span><span class="p">:</span>
             <span class="n">obj</span> <span class="o">=</span> <span class="n">ref</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">yield</span> <span class="n">obj</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">dead</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">_instances</span> <span class="o">-=</span> <span class="n">dead</span></div>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_instances</span> <span class="o">-=</span> <span class="n">dead</span></div>
 
-    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="n">other</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span>
-        <span class="k">return</span> <span class="n">Parameter</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">other</span><span class="p">:</span> <span class="n">T</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parameter</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="fm">__add__</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="n">other</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span>
-        <span class="k">return</span> <span class="n">Parameter</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">other</span><span class="p">:</span> <span class="n">T</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parameter</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="fm">__mul__</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">-</span> <span class="n">other</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">-</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span>
-        <span class="k">return</span> <span class="n">Parameter</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__truediv__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">other</span><span class="p">:</span> <span class="n">T</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parameter</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="fm">__truediv__</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__div__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="n">other</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span>
-        <span class="k">return</span> <span class="n">Parameter</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__floordiv__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">other</span><span class="p">:</span> <span class="n">T</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parameter</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="fm">__floordiv__</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__sub__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">other</span><span class="p">:</span> <span class="n">T</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parameter</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="fm">__sub__</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__mod__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">other</span><span class="p">:</span> <span class="n">T</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parameter</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="fm">__mod__</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__pow__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">other</span><span class="p">:</span> <span class="n">T</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parameter</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">)</span> <span class="k">else</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="fm">__pow__</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__invert__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parameter</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">value</span><span class="o">=</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">a</span><span class="p">)</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__float__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__invert__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">other</span><span class="p">:</span> <span class="n">Parameter</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="bp">NotImplemented</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_instances</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">weakref</span><span class="o">.</span><span class="n">ref</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">Base</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_link</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;link&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">other</span><span class="p">:</span> <span class="n">Parameter</span>
+    <span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">NotImplemented</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="n">result</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;decimals&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;decimals&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">][</span><span class="s1">&#39;decimals&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Parameter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">()</span>
 
-<div class="viewcode-block" id="Parameter.to_json"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.Parameter.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">vd</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="n">vd</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
-        <span class="n">vd</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
-        <span class="n">vd</span><span class="p">[</span><span class="s1">&#39;decimals&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decimals</span>
-        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">vd</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="Parameter.from_json"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.Parameter.from_json">[docs]</a>    <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span> <span class="o">=</span> <span class="n">s</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="Parameter.update"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.Parameter.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span></div></div>
-
-
-<div class="viewcode-block" id="FittingParameter"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.FittingParameter">[docs]</a><span class="k">class</span> <span class="nc">FittingParameter</span><span class="p">(</span><span class="n">Parameter</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">Parameter</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_link</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;link&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;lb&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lb&#39;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;-inf&#39;</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;ub&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ub&#39;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;fixed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fixed&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;bounds_on&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;bounds_on&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;error_estimate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;error_estimate&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_chi2s</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_values</span> <span class="o">=</span> <span class="bp">None</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">parameter_scan</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chi2s</span>
-
-    <span class="nd">@parameter_scan.setter</span>
-    <span class="k">def</span> <span class="nf">parameter_scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chi2s</span> <span class="o">=</span> <span class="n">v</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">error_estimate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_linked</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_link</span><span class="o">.</span><span class="n">error_estimate</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;error_estimate&#39;</span><span class="p">],</span> <span class="nb">float</span><span class="p">):</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;error_estimate&#39;</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s2">&quot;NA&quot;</span>
-
-    <span class="nd">@error_estimate.setter</span>
-    <span class="k">def</span> <span class="nf">error_estimate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;error_estimate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds_on</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;lb&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;ub&#39;</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
-
-    <span class="nd">@bounds.setter</span>
-    <span class="k">def</span> <span class="nf">bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;lb&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;ub&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">bounds_on</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;bounds_on&#39;</span><span class="p">]</span>
-
-    <span class="nd">@bounds_on.setter</span>
-    <span class="k">def</span> <span class="nf">bounds_on</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;bounds_on&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">v</span><span class="p">()</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_linked</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">link</span><span class="o">.</span><span class="n">value</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds_on</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">lb</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="n">v</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">lb</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">ub</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                    <span class="n">v</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ub</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
-                <span class="k">return</span> <span class="n">v</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">v</span>
-
-    <span class="nd">@value.setter</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_linked</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">link</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;fixed&#39;</span><span class="p">]</span>
-
-    <span class="nd">@fixed.setter</span>
-    <span class="k">def</span> <span class="nf">fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;fixed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">link</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_link</span>
-
-    <span class="nd">@link.setter</span>
-    <span class="k">def</span> <span class="nf">link</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">link</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">link</span><span class="p">,</span> <span class="n">FittingParameter</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_link</span> <span class="o">=</span> <span class="n">link</span>
-        <span class="k">elif</span> <span class="n">link</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_link</span><span class="o">.</span><span class="n">value</span>
-            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-                <span class="k">pass</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_link</span> <span class="o">=</span> <span class="bp">None</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_linked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_link</span><span class="p">,</span> <span class="n">FittingParameter</span><span class="p">)</span>
-
-<div class="viewcode-block" id="FittingParameter.to_json"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.FittingParameter.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">vd</span> <span class="o">=</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">vd</span><span class="p">[</span><span class="s1">&#39;lb&#39;</span><span class="p">],</span> <span class="n">vd</span><span class="p">[</span><span class="s1">&#39;ub&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span>
-        <span class="n">vd</span><span class="p">[</span><span class="s1">&#39;fixed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed</span>
-        <span class="n">vd</span><span class="p">[</span><span class="s1">&#39;bounds_on&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds_on</span>
-        <span class="n">vd</span><span class="p">[</span><span class="s1">&#39;error_estimate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_estimate</span>
-        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">vd</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="FittingParameter.scan"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.FittingParameter.scan">[docs]</a>    <span class="k">def</span> <span class="nf">scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">fit</span><span class="o">.</span><span class="n">chi2_scan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
-
-    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Variable</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;name: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
-        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;internal-value: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds_on</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;bounds: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_linked</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;linked to: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">link</span><span class="o">.</span><span class="n">name</span>
-            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;link-value: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Parameter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">s</span>
 
-<div class="viewcode-block" id="FittingParameter.widget"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.FittingParameter.widget">[docs]</a>    <span class="k">def</span> <span class="nf">widget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">text</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="n">layout</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;layout&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="n">update_widget</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;update_widget&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">)</span>
-        <span class="n">decimals</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;decimals&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decimals</span><span class="p">)</span>
-        <span class="n">fixed</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fixed&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="p">)</span>
-        <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span>
-        <span class="n">lb</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lb&#39;</span><span class="p">,</span> <span class="n">lb</span><span class="p">)</span>
-        <span class="n">ub</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ub&#39;</span><span class="p">,</span> <span class="n">ub</span><span class="p">)</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">layout</span><span class="o">=</span><span class="n">layout</span><span class="p">,</span>
-                            <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
-                            <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
-                            <span class="n">update_function</span><span class="o">=</span><span class="n">update_widget</span><span class="p">,</span>
-                            <span class="n">decimals</span><span class="o">=</span><span class="n">decimals</span><span class="p">,</span>
-                            <span class="n">fixed</span><span class="o">=</span><span class="n">fixed</span><span class="p">,</span>
-                            <span class="n">lb</span><span class="o">=</span><span class="n">lb</span><span class="p">,</span>
-                            <span class="n">ub</span><span class="o">=</span><span class="n">ub</span><span class="p">,</span>
-                            <span class="n">bounds_on</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds_on</span><span class="p">,</span>
-                            <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-        <span class="n">r</span><span class="o">.</span><span class="n">_vd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vd</span>
-        <span class="k">return</span> <span class="n">r</span></div></div>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+            <span class="n">link</span><span class="p">:</span> <span class="n">Parameter</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Parameter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_instances</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">weakref</span><span class="o">.</span><span class="n">ref</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_link</span> <span class="o">=</span> <span class="n">link</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="Parameter.to_dict"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.Parameter.to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Parameter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+        <span class="n">v</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">v</span><span class="p">[</span><span class="s1">&#39;decimals&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decimals</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+
+<div class="viewcode-block" id="Parameter.from_dict"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.Parameter.from_dict">[docs]</a>    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">dict</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Parameter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span></div></div>
 
 
-<div class="viewcode-block" id="ParameterWidget"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.ParameterWidget">[docs]</a><span class="k">class</span> <span class="nc">ParameterWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">,</span> <span class="n">FittingParameter</span><span class="p">):</span>
+<div class="viewcode-block" id="ParameterGroup"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.ParameterGroup">[docs]</a><span class="k">class</span> <span class="nc">ParameterGroup</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Base</span><span class="p">):</span>
 
-<div class="viewcode-block" id="ParameterWidget.make_linkcall"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.ParameterWidget.make_linkcall">[docs]</a>    <span class="k">def</span> <span class="nf">make_linkcall</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">fit</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">Fit</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ParameterGroup</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span> <span class="o">=</span> <span class="n">fit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_activeRuns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_chi2</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameter_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 
-        <span class="k">def</span> <span class="nf">linkcall</span><span class="p">():</span>
-            <span class="n">tooltip</span> <span class="o">=</span> <span class="s2">&quot; linked to &quot;</span> <span class="o">+</span> <span class="n">target</span><span class="o">.</span><span class="n">name</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">link</span> <span class="o">=</span> <span class="n">target</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">widget_link</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="n">tooltip</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">widget_link</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">widget_value</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+<div class="viewcode-block" id="ParameterGroup.clear"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.ParameterGroup.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_chi2</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span></div>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">linkcall</span></div>
-
-<div class="viewcode-block" id="ParameterWidget.contextMenuEvent"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.ParameterWidget.contextMenuEvent">[docs]</a>    <span class="k">def</span> <span class="nf">contextMenuEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
-
-        <span class="n">menu</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QMenu</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">menu</span><span class="o">.</span><span class="n">setTitle</span><span class="p">(</span><span class="s2">&quot;Link &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; to:&quot;</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fits</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">fs</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
-                <span class="n">submenu</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QMenu</span><span class="p">(</span><span class="n">menu</span><span class="p">)</span>
-                <span class="n">submenu</span><span class="o">.</span><span class="n">setTitle</span><span class="p">(</span><span class="n">fs</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">fs</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">aggregated_parameters</span><span class="p">:</span>
-                    <span class="n">action_submenu</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QMenu</span><span class="p">(</span><span class="n">submenu</span><span class="p">)</span>
-                    <span class="n">action_submenu</span><span class="o">.</span><span class="n">setTitle</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">a</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">self</span><span class="p">:</span>
-                            <span class="n">Action</span> <span class="o">=</span> <span class="n">action_submenu</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-                            <span class="n">Action</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">make_linkcall</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
-                    <span class="n">submenu</span><span class="o">.</span><span class="n">addMenu</span><span class="p">(</span><span class="n">action_submenu</span><span class="p">)</span>
-                <span class="n">menu</span><span class="o">.</span><span class="n">addMenu</span><span class="p">(</span><span class="n">submenu</span><span class="p">)</span>
-        <span class="n">menu</span><span class="o">.</span><span class="n">exec_</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">globalPos</span><span class="p">())</span></div>
-
-    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">FittingParameter</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;mfm/ui/variable_widget.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_value</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">SpinBox</span><span class="p">(</span><span class="n">dec</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_value</span><span class="o">.</span><span class="n">setSizePolicy</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Expanding</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Minimum</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_value</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span><span class="s2">&quot;color: rgb(0, 180, 0);&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">horizontalLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">widget_value</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_lower_bound</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">SpinBox</span><span class="p">(</span><span class="n">dec</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_lower_bound</span><span class="o">.</span><span class="n">setSizePolicy</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">MinimumExpanding</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Minimum</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">horizontalLayout_2</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">widget_lower_bound</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_upper_bound</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">SpinBox</span><span class="p">(</span><span class="n">dec</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_upper_bound</span><span class="o">.</span><span class="n">setSizePolicy</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">MinimumExpanding</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Minimum</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">horizontalLayout_2</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">widget_upper_bound</span><span class="p">)</span>
-
-        <span class="n">layout</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;layout&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QLayout</span><span class="p">):</span>
-            <span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-
-        <span class="n">hide_bounds</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hide_bounds&#39;</span><span class="p">,</span> <span class="n">parameter_settings</span><span class="p">[</span><span class="s1">&#39;hide_bounds&#39;</span><span class="p">])</span>
-        <span class="n">hide_link</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hide_link&#39;</span><span class="p">,</span> <span class="n">parameter_settings</span><span class="p">[</span><span class="s1">&#39;hide_link&#39;</span><span class="p">])</span>
-        <span class="n">fixable</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fixable&#39;</span><span class="p">,</span> <span class="n">parameter_settings</span><span class="p">[</span><span class="s1">&#39;fixable&#39;</span><span class="p">])</span>
-        <span class="n">hide_fix_checkbox</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hide_fix_checkbox&#39;</span><span class="p">,</span> <span class="n">parameter_settings</span><span class="p">[</span><span class="s1">&#39;fixable&#39;</span><span class="p">])</span>
-        <span class="n">hide_error</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hide_error&#39;</span><span class="p">,</span> <span class="n">parameter_settings</span><span class="p">[</span><span class="s1">&#39;hide_error&#39;</span><span class="p">])</span>
-        <span class="n">hide_label</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hide_label&#39;</span><span class="p">,</span> <span class="n">parameter_settings</span><span class="p">[</span><span class="s1">&#39;hide_label&#39;</span><span class="p">])</span>
-        <span class="n">label_text</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-
-        <span class="c1"># Hide and disable widgets</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">setVisible</span><span class="p">(</span><span class="ow">not</span> <span class="n">hide_label</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit</span><span class="o">.</span><span class="n">setVisible</span><span class="p">(</span><span class="ow">not</span> <span class="n">hide_error</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_bounds_on</span><span class="o">.</span><span class="n">setDisabled</span><span class="p">(</span><span class="n">hide_bounds</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_fix</span><span class="o">.</span><span class="n">setVisible</span><span class="p">(</span><span class="n">fixable</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">hide_fix_checkbox</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget</span><span class="o">.</span><span class="n">setHidden</span><span class="p">(</span><span class="n">hide_bounds</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_link</span><span class="o">.</span><span class="n">setDisabled</span><span class="p">(</span><span class="n">hide_link</span><span class="p">)</span>
-
-        <span class="c1"># Display of values</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_value</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">label_text</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
-
-        <span class="c1"># variable bounds</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds_on</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">widget_bounds_on</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">Unchecked</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">widget_bounds_on</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">Checked</span><span class="p">)</span>
-
-        <span class="c1"># variable fixed</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">widget_fix</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">Checked</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">widget_fix</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">Unchecked</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-
-        <span class="c1"># The variable value</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_value</span><span class="o">.</span><span class="n">editingFinished</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-            <span class="s2">&quot;cs.current_fit.model.parameters_all_dict[&#39;</span><span class="si">%s</span><span class="s2">&#39;].value = </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span>
-            <span class="s2">&quot;cs.current_fit.update()&quot;</span>
-            <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">widget_value</span><span class="o">.</span><span class="n">value</span><span class="p">()))</span>
-        <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_fix</span><span class="o">.</span><span class="n">toggled</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-            <span class="s2">&quot;cs.current_fit.model.parameters_all_dict[&#39;</span><span class="si">%s</span><span class="s2">&#39;].fixed = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">widget_fix</span><span class="o">.</span><span class="n">isChecked</span><span class="p">()))</span>
-        <span class="p">)</span>
-
-        <span class="c1"># Variable is bounded</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_bounds_on</span><span class="o">.</span><span class="n">toggled</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-            <span class="s2">&quot;cs.current_fit.model.parameters_all_dict[&#39;</span><span class="si">%s</span><span class="s2">&#39;].bounds_on = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">widget_bounds_on</span><span class="o">.</span><span class="n">isChecked</span><span class="p">()))</span>
-        <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_lower_bound</span><span class="o">.</span><span class="n">editingFinished</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-            <span class="s2">&quot;cs.current_fit.model.parameters_all_dict[&#39;</span><span class="si">%s</span><span class="s2">&#39;].bounds = (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">widget_lower_bound</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">widget_upper_bound</span><span class="o">.</span><span class="n">value</span><span class="p">()))</span>
-        <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_upper_bound</span><span class="o">.</span><span class="n">editingFinished</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-            <span class="s2">&quot;cs.current_fit.model.parameters_all_dict[&#39;</span><span class="si">%s</span><span class="s2">&#39;].bounds = (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">widget_lower_bound</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">widget_upper_bound</span><span class="o">.</span><span class="n">value</span><span class="p">()))</span>
-        <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_link</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onLinkFitGroup</span><span class="p">)</span>
-
-<div class="viewcode-block" id="ParameterWidget.onLinkFitGroup"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.ParameterWidget.onLinkFitGroup">[docs]</a>    <span class="k">def</span> <span class="nf">onLinkFitGroup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-        <span class="n">cs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">widget_link</span><span class="o">.</span><span class="n">checkState</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">cs</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="n">t</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">s = cs.current_fit.model.parameters_all_dict[&#39;</span><span class="si">%s</span><span class="s2">&#39;]</span>
-<span class="s2">for f in cs.current_fit:</span>
-<span class="s2">   try:</span>
-<span class="s2">       p = f.model.parameters_all_dict[&#39;</span><span class="si">%s</span><span class="s2">&#39;]</span>
-<span class="s2">       if p is not s:</span>
-<span class="s2">           p.link = s</span>
-<span class="s2">           p.widget_link.setCheckState(QtCore.Qt.Checked)</span>
-<span class="s2">           p.widget_value.setEnabled(False)</span>
-<span class="s2">   except KeyError:</span>
-<span class="s2">       pass</span>
-<span class="s2">            &quot;&quot;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-            <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">cs</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">t</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">s = cs.current_fit.model.parameters_all_dict[&#39;</span><span class="si">%s</span><span class="s2">&#39;]</span>
-<span class="s2">for f in cs.current_fit:</span>
-<span class="s2">   try:</span>
-<span class="s2">       p = f.model.parameters_all_dict[&#39;</span><span class="si">%s</span><span class="s2">&#39;]</span>
-<span class="s2">       p.link = None</span>
-<span class="s2">       p.widget_value.setEnabled(True)</span>
-<span class="s2">       p.widget_link.setCheckState(QtCore.Qt.Unchecked)</span>
-<span class="s2">   except KeyError:</span>
-<span class="s2">       pass</span>
-<span class="s2">            &quot;&quot;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-            <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="ParameterWidget.update"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.ParameterWidget.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-        <span class="c1"># Update value of widget</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_value</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">widget_fix</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">Checked</span><span class="p">)</span>
-
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">widget_fix</span><span class="o">.</span><span class="n">setCheckState</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">Unchecked</span><span class="p">)</span>
-        <span class="c1"># Tooltip</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;bound: (</span><span class="si">%s</span><span class="s2">,</span><span class="si">%s</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds_on</span> <span class="k">else</span> <span class="s2">&quot;bounds: off</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_linked</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;linked to: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">link</span><span class="o">.</span><span class="n">name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">widget_value</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-
-        <span class="c1"># Error-estimate</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">error_estimate</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s2">&quot;NA&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">rel_error</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">error_estimate</span> <span class="o">/</span> <span class="p">(</span><span class="n">value</span> <span class="o">+</span> <span class="mf">1e-12</span><span class="p">)</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%.0f%%</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">rel_error</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span></div></div>
-
-
-<div class="viewcode-block" id="AggregatedParameters"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.AggregatedParameters">[docs]</a><span class="k">class</span> <span class="nc">AggregatedParameters</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">Base</span><span class="p">):</span>
+<div class="viewcode-block" id="ParameterGroup.save_txt"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.ParameterGroup.save_txt">[docs]</a>    <span class="k">def</span> <span class="nf">save_txt</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="n">sep</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span>
+    <span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">for</span> <span class="n">ph</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">:</span>
+                <span class="n">s</span> <span class="o">+=</span> <span class="n">ph</span> <span class="o">+</span> <span class="n">sep</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">T</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">l</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">%.5f%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sep</span><span class="p">)</span>
+                <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span></div>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
-        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span>
-
-    <span class="nd">@name.setter</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="n">re</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parameter</span><span class="p">)</span>
+            <span class="n">re</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">re</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">chi2s</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">]])</span><span class="o">.</span><span class="n">T</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">parameters_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">parameters_all_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">dict</span><span class="p">([(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters_all</span><span class="p">])</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">aggregated_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregated_parameters</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">parameter_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">re</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
-            <span class="n">re</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span>
-        <span class="k">return</span> <span class="n">re</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">parameter_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">]</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">]</span>
-
-    <span class="nd">@parameter_values.setter</span>
-    <span class="k">def</span> <span class="nf">parameter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vs</span><span class="p">):</span>
-        <span class="n">ps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">vs</span><span class="p">):</span>
-            <span class="n">ps</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">v</span>
-
-    <span class="nd">@parameter_names.setter</span>
-    <span class="k">def</span> <span class="nf">parameter_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_parameterNames</span> <span class="o">=</span> <span class="n">v</span>
-
-<div class="viewcode-block" id="AggregatedParameters.to_json"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.AggregatedParameters.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="n">parameters</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="n">s</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">parameters</span>
-        <span class="k">for</span> <span class="n">parameter</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">:</span>
-            <span class="n">parameters</span><span class="p">[</span><span class="n">parameter</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">parameter</span><span class="o">.</span><span class="n">_vd</span>
-        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="AggregatedParameters.from_json"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.AggregatedParameters.from_json">[docs]</a>    <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">find_parameters</span><span class="p">()</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-        <span class="n">parameter_target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters_all_dict</span>
-        <span class="n">parameter</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s1">&#39;parameter&#39;</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">parameter_name</span> <span class="ow">in</span> <span class="n">parameter</span><span class="p">:</span>
-            <span class="n">parameter_target</span><span class="p">[</span><span class="n">parameter_name</span><span class="p">]</span><span class="o">.</span><span class="n">_vd</span> <span class="o">=</span> <span class="n">parameter</span><span class="p">[</span><span class="n">parameter_name</span><span class="p">]</span>
-            <span class="n">parameter_target</span><span class="p">[</span><span class="n">parameter_name</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="AggregatedParameters.find_parameters"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.AggregatedParameters.find_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">find_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter_type</span><span class="o">=</span><span class="n">Parameter</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_aggregated_parameters</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span> <span class="o">=</span> <span class="bp">None</span>
-
-        <span class="n">ag</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">find_objects</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">AggregatedParameters</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_aggregated_parameters</span> <span class="o">=</span> <span class="n">ag</span>
-
-        <span class="n">ap</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">ag</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-                <span class="n">o</span><span class="o">.</span><span class="n">find_parameters</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">o</span>
-                <span class="n">ap</span> <span class="o">+=</span> <span class="n">o</span><span class="o">.</span><span class="n">_parameters</span>
-
-        <span class="n">mp</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">find_objects</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">parameter_type</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">mp</span> <span class="o">+</span> <span class="n">ap</span><span class="p">))</span></div>
-
-<div class="viewcode-block" id="AggregatedParameters.finalize"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.AggregatedParameters.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span></div>
-
-    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">start</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">start</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">key</span><span class="o">.</span><span class="n">start</span>
-            <span class="n">stop</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">key</span><span class="o">.</span><span class="n">stop</span>
-            <span class="n">step</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">step</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">key</span><span class="o">.</span><span class="n">step</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">:</span><span class="n">step</span><span class="p">]</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">Base</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">short</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;short&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fit&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_parameters</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_aggregated_parameters</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span></div>
+    <span class="k">def</span> <span class="nf">chi2s</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_chi2</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="AggregatedParametersWidget"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.AggregatedParametersWidget">[docs]</a><span class="k">class</span> <span class="nc">AggregatedParametersWidget</span><span class="p">(</span><span class="n">AggregatedParameters</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QGroupBox</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">AggregatedParameters</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_col</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n_cols&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;fit_models&#39;</span><span class="p">][</span><span class="s1">&#39;n_columns&#39;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_row</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QGroupBox</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="n">l</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QGridLayout</span><span class="p">()</span>
-        <span class="n">l</span><span class="o">.</span><span class="n">setSpacing</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">l</span><span class="o">.</span><span class="n">setMargin</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
-
-<div class="viewcode-block" id="AggregatedParametersWidget.add_parameter"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.AggregatedParametersWidget.add_parameter">[docs]</a>    <span class="k">def</span> <span class="nf">add_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">layout</span><span class="p">):</span>
-        <span class="n">l</span> <span class="o">=</span> <span class="n">layout</span>
-        <span class="n">col</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_col</span>
-        <span class="n">l</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_row</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">col</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">n_row</span> <span class="o">+=</span> <span class="mi">1</span></div></div>
-
-
-<div class="viewcode-block" id="GlobalParameter"><a class="viewcode-back" href="../../api/mfm.html#mfm.parameter.GlobalParameter">[docs]</a><span class="k">class</span> <span class="nc">GlobalParameter</span><span class="p">(</span><span class="n">FittingParameter</span><span class="p">):</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span>
-        <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">f</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">formula</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">r</span><span class="o">.</span><span class="n">value</span>
-
-    <span class="nd">@value.setter</span>
-    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="k">pass</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">formula</span>
-
-    <span class="nd">@name.setter</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="k">pass</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">formula</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">FittingParameter</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span> <span class="o">=</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">formula</span> <span class="o">=</span> <span class="n">formula</span></div>
 </pre></div>
 
     </div>
@@ -739,7 +351,7 @@
     </p>
     <p>
         &copy; Copyright 2016, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

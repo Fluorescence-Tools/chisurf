@@ -191,12 +191,12 @@ class FittingParameter(mfm.parameter.Parameter):
             self,
             **kwargs
     ) -> mfm.fitting.fitting_widgets.FittingParameterWidget:
-        text = kwargs.get('text', self.name)
+        text = kwargs.get('name', self.name)
         layout = kwargs.get('layout', None)
         update_widget = kwargs.get('update_widget', lambda x: x)
         decimals = kwargs.get('decimals', self.decimals)
         kw = {
-            'text': text,
+            'name': text,
             'decimals': decimals,
             'layout': layout
         }

@@ -416,7 +416,7 @@ class LinePlot(plotbase.Plot):
             y_max = np.log10(y_max)
         self.text.setPos(ub_max * .7, y_max * .9)
         #self.legend.setPos(ub_max * .7, y_max * .3)
-        self.text.setHtml('<div style="text-align: center">'
+        self.text.setHtml('<div style="name-align: center">'
                           '     <span style="color: #FF0; font-size: 10pt;">'
                           '         Fit-range: %s, %s <br />'
                           '         &Chi;<sup>2</sup>=%.4f <br />'

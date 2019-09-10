@@ -1,44 +1,29 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>mfm.fitting.fit &mdash; ChiSurf 0.0.5 documentation</title>
-    
-    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <meta charset="utf-8" />
+    <title>mfm.fitting.fit &#8212; ChiSurf  documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../',
-        VERSION:     '0.0.5',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../index.html" />
-    <link rel="up" title="Module code" href="../../index.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body role="document">
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -51,7 +36,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -67,13 +52,11 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
-</ul>
-<ul class="simple">
 </ul>
 </ul>
 </li>
@@ -118,195 +101,60 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary">
+<form action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
       
   <h1>Source code for mfm.fitting.fit</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">numba</span> <span class="kn">import</span> <span class="n">jit</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">uic</span>
-<span class="kn">from</span> <span class="nn">scipy.linalg</span> <span class="kn">import</span> <span class="n">pinvh</span>
-<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">f</span> <span class="k">as</span> <span class="n">fdist</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.linalg</span>
+<span class="kn">import</span> <span class="nn">scipy.stats</span>
+
 <span class="kn">import</span> <span class="nn">mfm</span>
-<span class="kn">from</span> <span class="nn">mfm</span> <span class="kn">import</span> <span class="n">widgets</span>
-<span class="kn">from</span> <span class="nn">mfm.fitting.optimization.leastsqbound</span> <span class="kn">import</span> <span class="n">leastsqbound</span>
+<span class="kn">import</span> <span class="nn">mfm.base</span>
+<span class="kn">import</span> <span class="nn">mfm.experiments</span>
+<span class="kn">import</span> <span class="nn">mfm.experiments.data</span>
+<span class="kn">import</span> <span class="nn">mfm.fitting.parameter</span>
+<span class="kn">import</span> <span class="nn">mfm.fitting.sample</span>
+<span class="kn">import</span> <span class="nn">mfm.fitting.support_plane</span>
+
+<span class="kn">from</span> <span class="nn">mfm.math.optimization.leastsqbound</span> <span class="k">import</span> <span class="n">leastsqbound</span>
 
 
-<span class="nd">@jit</span>
-<div class="viewcode-block" id="approx_grad"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.approx_grad">[docs]</a><span class="k">def</span> <span class="nf">approx_grad</span><span class="p">(</span><span class="n">xk</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(),</span> <span class="n">f0</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Approximate the derivative of a fit with respect to the parameters</span>
-<span class="sd">    xk. The return value of the function is an array.</span>
+<div class="viewcode-block" id="Fit"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit">[docs]</a><span class="k">class</span> <span class="nc">Fit</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Base</span><span class="p">):</span>
 
-<span class="sd">    :param xk: values around which gradient is estimated. These values should be an array of length of the</span>
-<span class="sd">    free fitting parameters</span>
-<span class="sd">    :param fit: object of type &#39;Fit&#39;</span>
-<span class="sd">    :param epsilon: differential change</span>
-<span class="sd">    :param args: additional arguments passed to &#39;Fit.get_wres&#39;</span>
-<span class="sd">    :param f0: weighted residuals for the values xk</span>
-<span class="sd">    :return:</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">p0</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span>
-    <span class="n">f</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">get_wres</span>
-    <span class="k">if</span> <span class="n">f0</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">f0</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="p">((</span><span class="n">xk</span><span class="p">,)</span> <span class="o">+</span> <span class="n">args</span><span class="p">))</span>
-    <span class="n">i</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">f0</span><span class="p">)</span>
-    <span class="n">grad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">xk</span><span class="p">),</span><span class="n">i</span><span class="p">,</span> <span class="p">),</span> <span class="nb">float</span><span class="p">)</span>
-    <span class="n">ei</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">xk</span><span class="p">),</span> <span class="p">),</span> <span class="nb">float</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xk</span><span class="p">)):</span>
-        <span class="n">ei</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="n">epsilon</span> <span class="o">*</span> <span class="n">ei</span>
-        <span class="n">grad</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="p">((</span><span class="n">xk</span> <span class="o">+</span> <span class="n">d</span><span class="p">,)</span> <span class="o">+</span> <span class="n">args</span><span class="p">))</span> <span class="o">-</span> <span class="n">f0</span><span class="p">)</span> <span class="o">/</span> <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
-        <span class="n">ei</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span> <span class="o">=</span> <span class="n">p0</span>
-    <span class="k">return</span> <span class="n">f0</span><span class="p">,</span> <span class="n">grad</span></div>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">model_class</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Model</span> <span class="o">=</span> <span class="nb">object</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Fit</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="o">=</span> <span class="kc">None</span>
 
-
-<div class="viewcode-block" id="covariance_matrix"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.covariance_matrix">[docs]</a><span class="k">def</span> <span class="nf">covariance_matrix</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Calculate the covariance matrix</span>
-
-<span class="sd">    :param fit:</span>
-<span class="sd">    :param kwargs:</span>
-<span class="sd">    :return:</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span>
-    <span class="n">epsilon</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;epsilon&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
-    <span class="n">xk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span><span class="p">)</span>
-
-    <span class="n">fi_v</span><span class="p">,</span> <span class="n">partial_derivatives</span> <span class="o">=</span> <span class="n">approx_grad</span><span class="p">(</span><span class="n">xk</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">)</span>
-
-    <span class="c1"># find parameters which do not change the model</span>
-    <span class="c1"># use only parameters which change the model</span>
-    <span class="n">important_parameters</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">pd_k</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">partial_derivatives</span><span class="p">):</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">pd_k</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
-            <span class="n">important_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-    <span class="n">pdi</span> <span class="o">=</span> <span class="n">partial_derivatives</span><span class="p">[</span><span class="n">important_parameters</span><span class="p">]</span>
-    <span class="n">n_important_parameters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">important_parameters</span><span class="p">)</span>
-    <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_important_parameters</span><span class="p">,</span> <span class="n">n_important_parameters</span><span class="p">),</span> <span class="nb">float</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">i_alpha</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_important_parameters</span><span class="p">):</span>
-        <span class="n">da_alpha</span> <span class="o">=</span> <span class="n">pdi</span><span class="p">[</span><span class="n">i_alpha</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">i_beta</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_important_parameters</span><span class="p">):</span>
-            <span class="n">da_beta</span> <span class="o">=</span> <span class="n">pdi</span><span class="p">[</span><span class="n">i_beta</span><span class="p">]</span>
-            <span class="n">m</span><span class="p">[</span><span class="n">i_alpha</span><span class="p">,</span> <span class="n">i_beta</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">da_alpha</span> <span class="o">*</span> <span class="n">da_beta</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">cov_m</span> <span class="o">=</span> <span class="n">pinvh</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">m</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-        <span class="n">cov_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">((</span><span class="n">n_important_parameters</span><span class="p">,</span> <span class="n">n_important_parameters</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">cov_m</span><span class="p">,</span> <span class="n">important_parameters</span></div>
-
-
-<div class="viewcode-block" id="durbin_watson"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.durbin_watson">[docs]</a><span class="k">def</span> <span class="nf">durbin_watson</span><span class="p">(</span><span class="n">residuals</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Durbin-Watson parameter (1950,1951)</span>
-
-<span class="sd">    :param residuals:  array</span>
-<span class="sd">    :return:</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">n_res</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">residuals</span><span class="p">)</span>
-    <span class="n">nom</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">denom</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">residuals</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_res</span><span class="p">):</span>
-        <span class="n">nom</span> <span class="o">+=</span> <span class="p">(</span><span class="n">residuals</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">residuals</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
-    <span class="k">return</span> <span class="n">nom</span> <span class="o">/</span> <span class="n">denom</span></div>
-
-
-<div class="viewcode-block" id="get_wres"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.get_wres">[docs]</a><span class="k">def</span> <span class="nf">get_wres</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Returns the weighted residuals for a list of parameters of a model</span>
-
-<span class="sd">    :param parameter:</span>
-<span class="sd">    :param model:</span>
-<span class="sd">    :return:</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span> <span class="o">=</span> <span class="n">parameter</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">update_model</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">weighted_residuals</span></div>
-
-
-<div class="viewcode-block" id="get_chi2"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.get_chi2">[docs]</a><span class="k">def</span> <span class="nf">get_chi2</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">reduced</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Returns either the reduced chi2 or the sum of squares (chi2)</span>
-
-<span class="sd">    :param parameter:</span>
-<span class="sd">    :param model:</span>
-<span class="sd">    :param reduced:</span>
-<span class="sd">    :return:</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">chi2</span> <span class="o">=</span> <span class="p">(</span><span class="n">get_wres</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-    <span class="n">chi2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">chi2</span><span class="p">)</span> <span class="k">else</span> <span class="n">chi2</span>
-    <span class="n">chi2r</span> <span class="o">=</span> <span class="n">chi2</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">n_points</span> <span class="o">-</span> <span class="n">model</span><span class="o">.</span><span class="n">n_free</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">reduced</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">chi2r</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">chi2</span></div>
-
-
-<div class="viewcode-block" id="chi2_max"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.chi2_max">[docs]</a><span class="k">def</span> <span class="nf">chi2_max</span><span class="p">(</span><span class="n">fit</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">conf_level</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Calculate the maximum chi2r of a fit given a certain confidence level</span>
-
-<span class="sd">    :param fit:</span>
-<span class="sd">    :return:</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">npars</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;npars&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span><span class="p">))</span>
-        <span class="n">nu</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;nu&#39;</span><span class="p">,</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">n_points</span><span class="p">)</span>
-        <span class="n">chi2_min</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;chi2_min&#39;</span><span class="p">,</span> <span class="n">fit</span><span class="o">.</span><span class="n">chi2r</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">chi2_min</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">npars</span><span class="p">)</span> <span class="o">/</span> <span class="n">nu</span> <span class="o">*</span> <span class="n">fdist</span><span class="o">.</span><span class="n">isf</span><span class="p">(</span><span class="mf">1.</span> <span class="o">-</span> <span class="n">conf_level</span><span class="p">,</span> <span class="n">npars</span><span class="p">,</span> <span class="n">nu</span><span class="p">))</span>
-    <span class="k">except</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span></div>
-
-
-<div class="viewcode-block" id="get_errors"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.get_errors">[docs]</a><span class="k">def</span> <span class="nf">get_errors</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span> <span class="n">parameter_name</span><span class="p">,</span> <span class="n">scan_range</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span> <span class="n">rel_range</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">n_steps</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Performs a chi2-scan for the parameter</span>
-
-<span class="sd">    :param fit: the fit of type &#39;mfm.fitting.Fit&#39;</span>
-<span class="sd">    :param parameter_name: the name of the parameter (in the parameter dictionary)</span>
-<span class="sd">    :param scan_range: the range within the parameter is scanned if not provided &#39;rel_range&#39; is used</span>
-<span class="sd">    :param rel_range: defines +- values for scanning</span>
-<span class="sd">    :param n_steps: number of steps between +-</span>
-<span class="sd">    :return:</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Store initial values before varying the parameter</span>
-    <span class="n">initial_parameter_values</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span>
-
-    <span class="n">varied_parameter</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters_all_dict</span><span class="p">[</span><span class="n">parameter_name</span><span class="p">]</span>
-    <span class="n">is_fixed</span> <span class="o">=</span> <span class="n">varied_parameter</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;fixed&#39;</span><span class="p">]</span>
-
-    <span class="n">varied_parameter</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;fixed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
-    <span class="n">chi2r_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_steps</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-
-    <span class="c1"># Determine range within the parameter is varied</span>
-    <span class="n">parameter_value</span> <span class="o">=</span> <span class="n">varied_parameter</span><span class="o">.</span><span class="n">value</span>
-    <span class="n">p_min</span><span class="p">,</span> <span class="n">p_max</span> <span class="o">=</span> <span class="n">scan_range</span>
-    <span class="k">if</span> <span class="n">p_min</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">p_max</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">p_min</span> <span class="o">=</span> <span class="n">parameter_value</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">-</span> <span class="n">rel_range</span><span class="p">)</span>
-        <span class="n">p_max</span> <span class="o">=</span> <span class="n">parameter_value</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">+</span> <span class="n">rel_range</span><span class="p">)</span>
-    <span class="n">parameter_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">p_min</span><span class="p">,</span> <span class="n">p_max</span><span class="p">,</span> <span class="n">n_steps</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">parameter_array</span><span class="p">):</span>
-        <span class="n">varied_parameter</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;fixed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">is_fixed</span>
-        <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span> <span class="o">=</span> <span class="n">initial_parameter_values</span>
-        <span class="n">varied_parameter</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;fixed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
-        <span class="n">varied_parameter</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">p</span>
-        <span class="n">fit</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-        <span class="n">chi2r_array</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">chi2r</span>
-
-    <span class="n">varied_parameter</span><span class="o">.</span><span class="n">_vd</span><span class="p">[</span><span class="s1">&#39;fixed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">is_fixed</span>
-    <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span> <span class="o">=</span> <span class="n">initial_parameter_values</span>
-    <span class="n">fit</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
-
-    <span class="k">return</span> <span class="n">parameter_array</span><span class="p">,</span> <span class="n">chi2r_array</span></div>
-
-
-<div class="viewcode-block" id="Fit"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit">[docs]</a><span class="k">class</span> <span class="nc">Fit</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">Base</span><span class="p">):</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">model_class</span><span class="o">=</span><span class="nb">object</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">Base</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s1">&#39;data&#39;</span><span class="p">,</span>
+            <span class="n">mfm</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataCurve</span><span class="p">(</span>
+                <span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span>
+                <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">plots</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_xmin</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;xmin&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_xmax</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;xmax&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xmin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xmax</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;xmin&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;xmax&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_kw</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_kw&#39;</span><span class="p">,</span> <span class="p">{})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model_class</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -323,104 +171,154 @@
         <span class="k">return</span> <span class="n">s</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">xmin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">xmin</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xmin</span>
 
-    <span class="nd">@xmin.setter</span>
-    <span class="k">def</span> <span class="nf">xmin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="nd">@xmin</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">xmin</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_xmin</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">xmax</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">xmax</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xmax</span>
 
-    <span class="nd">@xmax.setter</span>
-    <span class="k">def</span> <span class="nf">xmax</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="nd">@xmax</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">xmax</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_xmax</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">y</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_xmax</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mfm</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataCurve</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
 
-    <span class="nd">@data.setter</span>
-    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="nd">@data</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataCurve</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Model</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span>
 
-    <span class="nd">@model.setter</span>
+    <span class="nd">@model</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_class</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">model_class</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">model_class</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+            <span class="n">kw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_kw</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">weighted_residuals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">weighted_residuals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">weighted_residuals</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">chi2r</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">get_chi2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">chi2</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Unreduced Chi2</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">get_chi2</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">reduced</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
+    <span class="k">def</span> <span class="nf">chi2r</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Reduced Chi2</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">get_chi2</span><span class="p">(</span>
+            <span class="p">[],</span>
+            <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; - &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">name</span>
-        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;no name&quot;</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kw</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; - &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s2">&quot;no name&quot;</span>
 
-    <span class="nd">@name.setter</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">n</span>
+    <span class="nd">@name</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">fit_range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">fit_range</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xmax</span>
 
-    <span class="nd">@fit_range.setter</span>
-    <span class="k">def</span> <span class="nf">fit_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="nd">@fit_range</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">fit_range</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xmax</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">grad</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">grad</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Get the approximate gradient at the current parameter values</span>
 <span class="sd">        :return:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">f0</span><span class="p">,</span> <span class="n">grad</span> <span class="o">=</span> <span class="n">approx_grad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
+        <span class="n">f0</span><span class="p">,</span> <span class="n">grad</span> <span class="o">=</span> <span class="n">approx_grad</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span><span class="p">,</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">mfm</span><span class="o">.</span><span class="n">eps</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">grad</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">covariance_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns the covariance matrix of the fit given the current</span>
-<span class="sd">        model parameter values and returns a list of the &#39;relevant&#39; used</span>
+<span class="sd">        models parameter values and returns a list of the &#39;relevant&#39; used</span>
 <span class="sd">        parameters.</span>
 
 <span class="sd">        :return:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">covariance_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Fit.get_chi2"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit.get_chi2">[docs]</a>    <span class="k">def</span> <span class="nf">get_chi2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">reduced</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_free</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The number of free parameters of the models</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">n_free</span>
+
+<div class="viewcode-block" id="Fit.get_chi2"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit.get_chi2">[docs]</a>    <span class="k">def</span> <span class="nf">get_chi2</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">parameter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">reduced</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
         <span class="k">return</span> <span class="n">get_chi2</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">reduced</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Fit.get_wres"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit.get_wres">[docs]</a>    <span class="k">def</span> <span class="nf">get_wres</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">parameter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+<div class="viewcode-block" id="Fit.get_wres"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit.get_wres">[docs]</a>    <span class="k">def</span> <span class="nf">get_wres</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;models&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">parameter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span> <span class="o">=</span> <span class="n">parameter</span>
             <span class="n">model</span><span class="o">.</span><span class="n">update_model</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">get_wres</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Fit.save"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;txt&#39;</span><span class="p">):</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;.json&#39;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;txt&#39;</span><span class="p">:</span>
+<div class="viewcode-block" id="Fit.save"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="n">file_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;txt&#39;</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span> <span class="o">+</span> <span class="s1">&#39;.json&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s1">&#39;txt&#39;</span><span class="p">:</span>
             <span class="n">csv</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ascii</span><span class="o">.</span><span class="n">Csv</span><span class="p">()</span>
             <span class="n">wr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_residuals</span>
             <span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xmax</span>
@@ -428,33 +326,36 @@
             <span class="n">csv</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">wr</span><span class="p">]),</span> <span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_wr.txt&#39;</span><span class="p">)</span>
             <span class="n">csv</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">[:],</span> <span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_fit.txt&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">Curve</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_data.txt&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_data.txt&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;txt&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_data.json&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;json&#39;</span><span class="p">)</span>
                 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_info.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
                     <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Fit.run"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">find_parameters</span><span class="p">(</span><span class="n">parameter_type</span><span class="o">=</span><span class="n">mfm</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">FittingParameter</span><span class="p">)</span>
-        <span class="n">fitting_options</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fitting&#39;</span><span class="p">][</span><span class="s1">&#39;leastsq&#39;</span><span class="p">]</span>
-        <span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="n">pi</span><span class="o">.</span><span class="n">bounds</span> <span class="k">for</span> <span class="n">pi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">]</span>
-
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">find_parameters</span><span class="p">(</span>
+            <span class="n">parameter_type</span><span class="o">=</span><span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">FittingParameter</span>
+        <span class="p">)</span>
+        <span class="n">fitting_options</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fitting&#39;</span><span class="p">][</span><span class="s1">&#39;leastsq&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">find_parameters</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="o">=</span> <span class="n">leastsqbound</span><span class="p">(</span><span class="n">get_wres</span><span class="p">,</span>
                                     <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span><span class="p">,</span>
                                     <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="p">),</span>
-                                    <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+                                    <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_bounds</span><span class="p">,</span>
                                     <span class="o">**</span><span class="n">fitting_options</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="Fit.update"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
         <span class="c1"># Estimate errors based on gradient</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">cov_m</span><span class="p">,</span> <span class="n">used_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span>
-            <span class="n">err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">cov_m</span><span class="p">))</span> <span class="o">*</span> <span class="mf">3.0</span>
+            <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span>
+            <span class="n">cov_m</span><span class="p">,</span> <span class="n">used_parameters</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">covariance_matrix</span>
+            <span class="n">err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">cov_m</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">used_parameters</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">error_estimate</span> <span class="o">=</span> <span class="n">e</span>
-        <span class="k">except</span><span class="p">:</span>
-            <span class="k">print</span> <span class="s2">&quot;Variance and Co-variance not estimated&quot;</span></div>
+                <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">error_estimate</span> <span class="o">=</span> <span class="n">e</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Problems calculating the covariances&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Fit.chi2_scan"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit.chi2_scan">[docs]</a>    <span class="k">def</span> <span class="nf">chi2_scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter_name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Perform a chi2-scan on a parameter of the fit.</span>
@@ -465,87 +366,106 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">parameter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters_all_dict</span><span class="p">[</span><span class="n">parameter_name</span><span class="p">]</span>
         <span class="n">rel_range</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">parameter</span><span class="o">.</span><span class="n">error_estimate</span> <span class="o">*</span> <span class="mf">3.0</span> <span class="o">/</span> <span class="n">parameter</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">)</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;rel_range&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;rel_range&#39;</span><span class="p">,</span> <span class="n">rel_range</span><span class="p">)</span>
-        <span class="n">parameter</span><span class="o">.</span><span class="n">parameter_scan</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">get_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter_name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;rel_range&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;rel_range&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">rel_range</span><span class="p">,</span> <span class="n">rel_range</span><span class="p">))</span>
+        <span class="n">parameter</span><span class="o">.</span><span class="n">parameter_scan</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">support_plane</span><span class="o">.</span><span class="n">scan_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter_name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">parameter</span><span class="o">.</span><span class="n">parameter_scan</span></div></div>
 
 
 <div class="viewcode-block" id="FitGroup"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FitGroup">[docs]</a><span class="k">class</span> <span class="nc">FitGroup</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">Fit</span><span class="p">):</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">current_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_current_fit</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">selected_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Fit</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_selected_fit_index</span><span class="p">]</span>
 
-    <span class="nd">@current_fit.setter</span>
-    <span class="k">def</span> <span class="nf">current_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_current_fit</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="nd">@selected_fit</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">selected_fit</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_selected_fit_index</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_fit</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_fit</span><span class="o">.</span><span class="n">data</span>
 
-    <span class="nd">@data.setter</span>
-    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">current_fit</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">v</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_fit</span><span class="o">.</span><span class="n">model</span>
-
-    <span class="nd">@model.setter</span>
-    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">current_fit</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="nd">@data</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Data</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selected_fit</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">weighted_residuals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_fit</span><span class="o">.</span><span class="n">weighted_residuals</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_fit</span><span class="o">.</span><span class="n">model</span>
+
+    <span class="nd">@model</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">object</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selected_fit</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">chi2r</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_fit</span><span class="o">.</span><span class="n">chi2r</span>
+    <span class="k">def</span> <span class="nf">weighted_residuals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_fit</span><span class="o">.</span><span class="n">weighted_residuals</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">fit_range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">chi2r</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_fit</span><span class="o">.</span><span class="n">chi2r</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fit_range</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xmax</span>
 
-    <span class="nd">@fit_range.setter</span>
-    <span class="k">def</span> <span class="nf">fit_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="nd">@fit_range</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">fit_range</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="p">):</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
             <span class="n">f</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">xmax</span> <span class="o">=</span> <span class="n">v</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xmax</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">xmin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_fit</span><span class="o">.</span><span class="n">xmin</span>
+    <span class="k">def</span> <span class="nf">xmin</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_fit</span><span class="o">.</span><span class="n">xmin</span>
 
-    <span class="nd">@xmin.setter</span>
-    <span class="k">def</span> <span class="nf">xmin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="nd">@xmin</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">xmin</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
             <span class="n">f</span><span class="o">.</span><span class="n">xmin</span> <span class="o">=</span> <span class="n">v</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_xmin</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">xmax</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_fit</span><span class="o">.</span><span class="n">xmax</span>
+    <span class="k">def</span> <span class="nf">xmax</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_fit</span><span class="o">.</span><span class="n">xmax</span>
 
-    <span class="nd">@xmax.setter</span>
-    <span class="k">def</span> <span class="nf">xmax</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="nd">@xmax</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">xmax</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
             <span class="n">f</span><span class="o">.</span><span class="n">xmax</span> <span class="o">=</span> <span class="n">v</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_xmax</span> <span class="o">=</span> <span class="n">v</span>
 
-<div class="viewcode-block" id="FitGroup.update"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FitGroup.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="FitGroup.update"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FitGroup.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plots</span><span class="p">:</span>
             <span class="n">p</span><span class="o">.</span><span class="n">update_all</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="FitGroup.run"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FitGroup.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;local_first&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fitting&#39;</span><span class="p">][</span><span class="s1">&#39;global&#39;</span><span class="p">][</span><span class="s1">&#39;fit_local_first&#39;</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;local_first&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fitting&#39;</span><span class="p">][</span><span class="s1">&#39;global&#39;</span><span class="p">][</span><span class="s1">&#39;fit_local_first&#39;</span><span class="p">]):</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">find_parameters</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="o">.</span><span class="n">find_parameters</span><span class="p">()</span>
-        <span class="n">fitting_options</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;fitting&#39;</span><span class="p">][</span><span class="s1">&#39;leastsq&#39;</span><span class="p">]</span>
+        <span class="n">fitting_options</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fitting&#39;</span><span class="p">][</span><span class="s1">&#39;leastsq&#39;</span><span class="p">]</span>
         <span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="n">pi</span><span class="o">.</span><span class="n">bounds</span> <span class="k">for</span> <span class="n">pi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="o">.</span><span class="n">parameters</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="o">=</span> <span class="n">leastsqbound</span><span class="p">(</span><span class="n">get_wres</span><span class="p">,</span>
                                     <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="o">.</span><span class="n">parameter_values</span><span class="p">,</span>
@@ -555,166 +475,247 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span></div>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">model_class</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_current_fit</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">data</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">,</span>
+            <span class="n">model_class</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_selected_fit_index</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_fits</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-            <span class="n">fit</span> <span class="o">=</span> <span class="n">Fit</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">model_class</span><span class="o">=</span><span class="n">model_class</span><span class="p">)</span>
+            <span class="n">model_kw</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_kw&#39;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">fit</span> <span class="o">=</span> <span class="n">Fit</span><span class="p">(</span>
+                <span class="n">model_class</span><span class="o">=</span><span class="n">model_class</span><span class="p">,</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
+                <span class="n">model_kw</span><span class="o">=</span><span class="n">model_kw</span>
+            <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_fits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fit</span><span class="p">)</span>
 
-        <span class="nb">list</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fits</span><span class="p">)</span>
-        <span class="n">Fit</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">list</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fits</span><span class="p">)</span>
+        <span class="n">Fit</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">GlobalFitModel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">globalfit</span><span class="o">.</span><span class="n">GlobalFitModel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="o">.</span><span class="n">fits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fits</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
             <span class="n">s</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;---</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="k">return</span> <span class="n">s</span></div>
+        <span class="k">return</span> <span class="n">s</span>
 
-
-<div class="viewcode-block" id="FittingControllerWidget"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FittingControllerWidget">[docs]</a><span class="k">class</span> <span class="nc">FittingControllerWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">selected_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
-
-    <span class="nd">@selected_fit.setter</span>
-    <span class="k">def</span> <span class="nf">selected_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">current_fit_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">currentText</span><span class="p">())</span>
-
-<div class="viewcode-block" id="FittingControllerWidget.change_dataset"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FittingControllerWidget.change_dataset">[docs]</a>    <span class="k">def</span> <span class="nf">change_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curve_select</span><span class="o">.</span><span class="n">selected_dataset</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">dataset</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="FittingControllerWidget.show_selector"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FittingControllerWidget.show_selector">[docs]</a>    <span class="k">def</span> <span class="nf">show_selector</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">curve_select</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">curve_select</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">curve_select</span> <span class="o">=</span> <span class="n">widgets</span><span class="o">.</span><span class="n">CurveSelector</span><span class="p">(</span><span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fit</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
-                                                  <span class="n">change_event</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">change_dataset</span><span class="p">,</span>
-                                                  <span class="n">setup</span><span class="o">=</span><span class="n">fit</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">setup</span><span class="o">.</span><span class="n">__class__</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">curve_select</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-        <span class="n">hide_fit_button</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hide_fit_button&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
-        <span class="n">hide_range</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hide_range&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
-        <span class="n">hide_fitting</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hide_fitting&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span> <span class="o">=</span> <span class="n">fit</span>
-
-        <span class="c1"># decorate the update method of the fit</span>
-        <span class="c1"># after decoration it should also call the update of</span>
-        <span class="c1"># the fitting widget</span>
-        <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
-            <span class="k">def</span> <span class="nf">update_new</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-                <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">update_plots</span><span class="p">(</span><span class="n">only_fit_range</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">update_new</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">run</span> <span class="o">=</span> <span class="n">wrapper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">run</span><span class="p">)</span>
-
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s2">&quot;mfm/ui/fittingWidget.ui&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionFit</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onRunFit</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionFit_range_changed</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onAutoFitRange</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionChange_dataset</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_selector</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actionSelectionChanged</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s1">&#39;triggered()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onDatasetChanged</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">hide_fit_button</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">pushButton_fit</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">hide_range</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">toolButton_2</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">spinBox_2</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">hide_fitting</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">setMaximum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">fit</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">fit</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">onAutoFitRange</span><span class="p">()</span>
-
-<div class="viewcode-block" id="FittingControllerWidget.onDatasetChanged"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FittingControllerWidget.onDatasetChanged">[docs]</a>    <span class="k">def</span> <span class="nf">onDatasetChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;cs.current_fit.model.hide()&quot;</span><span class="p">)</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;cs.current_fit.current_fit = </span><span class="si">%i</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_fit</span><span class="p">)</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;cs.current_fit.update()&quot;</span><span class="p">)</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;cs.current_fit.model.show()&quot;</span><span class="p">)</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="FittingControllerWidget.onRunFit"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FittingControllerWidget.onRunFit">[docs]</a>    <span class="k">def</span> <span class="nf">onRunFit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;cs.current_fit.run()&quot;</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="FittingControllerWidget.onAutoFitRange"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FittingControllerWidget.onAutoFitRange">[docs]</a>    <span class="k">def</span> <span class="nf">onAutoFitRange</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">fit_range</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">setup</span><span class="o">.</span><span class="n">autofitrange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div></div>
-
-
-<div class="viewcode-block" id="FitSubWindow"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FitSubWindow">[docs]</a><span class="k">class</span> <span class="nc">FitSubWindow</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTabWidget</span><span class="p">):</span>
-
-<div class="viewcode-block" id="FitSubWindow.update"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FitSubWindow.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">__args</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QTabWidget</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">__args</span><span class="p">)</span></div>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="n">control_layout</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QTabWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;parent&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="n">fit</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setTabShape</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTabWidget</span><span class="o">.</span><span class="n">Triangular</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setTabPosition</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QTabWidget</span><span class="o">.</span><span class="n">South</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">close_confirm</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;close_confirm&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;gui&#39;</span><span class="p">][</span><span class="s1">&#39;confirm_close_fit&#39;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span> <span class="o">=</span> <span class="n">fit</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fit_widget</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fit_widget&#39;</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">current_plt_ctrl</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">current_plt_ctrl</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-
-        <span class="n">plots</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">plot_class</span><span class="p">,</span> <span class="n">kwargs</span> <span class="ow">in</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">plot_classes</span><span class="p">:</span>
-            <span class="n">plot</span> <span class="o">=</span> <span class="n">plot_class</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="n">plot</span><span class="o">.</span><span class="n">pltControl</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-            <span class="n">plots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">addTab</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="n">plot</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-            <span class="n">control_layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">plot</span><span class="o">.</span><span class="n">pltControl</span><span class="p">)</span>
-
-        <span class="n">fit</span><span class="o">.</span><span class="n">plots</span> <span class="o">=</span> <span class="n">plots</span>
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fit</span><span class="p">:</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">plots</span> <span class="o">=</span> <span class="n">plots</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">currentChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">on_change_plot</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">on_change_plot</span><span class="p">()</span>
-
-<div class="viewcode-block" id="FitSubWindow.on_change_plot"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FitSubWindow.on_change_plot">[docs]</a>    <span class="k">def</span> <span class="nf">on_change_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">current_plt_ctrl</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
-        <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">current_plt_ctrl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">plots</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">pltControl</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">current_plt_ctrl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="FitSubWindow.updateStatusBar"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FitSubWindow.updateStatusBar">[docs]</a>    <span class="k">def</span> <span class="nf">updateStatusBar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">statusBar</span><span class="p">()</span><span class="o">.</span><span class="n">showMessage</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="FitSubWindow.closeEvent"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FitSubWindow.closeEvent">[docs]</a>    <span class="k">def</span> <span class="nf">closeEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">close_confirm</span><span class="p">:</span>
-            <span class="n">reply</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">question</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;Message&#39;</span><span class="p">,</span>
-                                               <span class="s2">&quot;Are you sure to close this fit?:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                                               <span class="n">QtGui</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">Yes</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">No</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="n">reply</span> <span class="o">==</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">Yes</span><span class="p">:</span>
-                <span class="n">mfm</span><span class="o">.</span><span class="n">console</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;cs.close_fit()&#39;</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">event</span><span class="o">.</span><span class="n">ignore</span><span class="p">()</span>
+<div class="viewcode-block" id="FitGroup.next"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FitGroup.next">[docs]</a>    <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_selected_fit_index</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fits</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">event</span><span class="o">.</span><span class="n">accept</span><span class="p">()</span></div></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_selected_fit_index</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fits</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_selected_fit_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span></div></div>
+
+
+<div class="viewcode-block" id="sample_fit"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.sample_fit">[docs]</a><span class="k">def</span> <span class="nf">sample_fit</span><span class="p">(</span>
+        <span class="n">fit</span><span class="p">:</span> <span class="n">Fit</span><span class="p">,</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;method&#39;</span><span class="p">,</span> <span class="s1">&#39;emcee&#39;</span><span class="p">)</span>
+    <span class="n">steps</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;steps&#39;</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">thin</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;thin&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">chi2max</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;chi2max&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+    <span class="n">n_runs</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;n_runs&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="c1"># save initial parameter values</span>
+    <span class="n">pv</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span>
+    <span class="k">for</span> <span class="n">i_run</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_runs</span><span class="p">):</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i_run</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.er4&#39;</span>
+
+        <span class="k">if</span> <span class="n">method</span> <span class="o">!=</span> <span class="s1">&#39;emcee&#39;</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_walkers</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fit</span><span class="o">.</span><span class="n">n_free</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">chi2</span><span class="p">,</span> <span class="n">para</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">sample_emcee</span><span class="p">(</span>
+                    <span class="n">fit</span><span class="p">,</span>
+                    <span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span>
+                    <span class="n">nwalkers</span><span class="o">=</span><span class="n">n_walkers</span><span class="p">,</span>
+                    <span class="n">thin</span><span class="o">=</span><span class="n">thin</span><span class="p">,</span>
+                    <span class="n">chi2max</span><span class="o">=</span><span class="n">chi2max</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">kwargs</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="n">fit</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">parameter_values</span> <span class="o">=</span> <span class="n">pv</span>
+                <span class="n">fit</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">chi2</span><span class="p">))</span>
+        <span class="n">scan</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">chi2</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">para</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">])</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="s2">&quot;chi2</span><span class="se">\t</span><span class="s2">&quot;</span>
+        <span class="n">header</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">)</span>
+        <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ascii</span><span class="o">.</span><span class="n">Csv</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">scan</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;txt&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">header</span><span class="p">)</span>
+    <span class="c1"># restore initial parameter values</span>
+    <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span> <span class="o">=</span> <span class="n">pv</span>
+    <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
+
+
+<span class="c1">#@nb.jit#(nopython=True)</span>
+<div class="viewcode-block" id="approx_grad"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.approx_grad">[docs]</a><span class="k">def</span> <span class="nf">approx_grad</span><span class="p">(</span>
+        <span class="n">xk</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">fit</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">Fit</span><span class="p">,</span>
+        <span class="n">epsilon</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">=</span><span class="p">(),</span>
+        <span class="n">f0</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Approximate the derivative of a fit with respect to the parameters</span>
+<span class="sd">    xk. The return value of the function is an array.</span>
+
+<span class="sd">    :param xk: values around which gradient is estimated. These values should be an array of length of the</span>
+<span class="sd">    free fitting parameters</span>
+<span class="sd">    :param fit: object of type &#39;Fit&#39;</span>
+<span class="sd">    :param epsilon: differential change</span>
+<span class="sd">    :param args: additional arguments passed to &#39;Fit.get_wres&#39;</span>
+<span class="sd">    :param f0: weighted residuals for the values xk</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">p0</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">get_wres</span>
+    <span class="n">n_xk</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xk</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">f0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">f0</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="p">((</span><span class="n">xk</span><span class="p">,)</span> <span class="o">+</span> <span class="n">args</span><span class="p">))</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">f0</span><span class="p">)</span>
+    <span class="n">grad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_xk</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="p">),</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">ei</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_xk</span><span class="p">,</span> <span class="p">),</span> <span class="nb">float</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_xk</span><span class="p">):</span>
+        <span class="n">ei</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">epsilon</span> <span class="o">*</span> <span class="n">ei</span>
+        <span class="n">grad</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="p">((</span><span class="n">xk</span> <span class="o">+</span> <span class="n">d</span><span class="p">,)</span> <span class="o">+</span> <span class="n">args</span><span class="p">))</span> <span class="o">-</span> <span class="n">f0</span><span class="p">)</span> <span class="o">/</span> <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">ei</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span> <span class="o">=</span> <span class="n">p0</span>
+    <span class="k">return</span> <span class="n">f0</span><span class="p">,</span> <span class="n">grad</span></div>
+
+
+<div class="viewcode-block" id="covariance_matrix"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.covariance_matrix">[docs]</a><span class="k">def</span> <span class="nf">covariance_matrix</span><span class="p">(</span>
+        <span class="n">fit</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">Fit</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;Calculate the covariance matrix</span>
+
+<span class="sd">    :param fit:</span>
+<span class="sd">    :param kwargs:</span>
+<span class="sd">    :return: the covariance matrix and a list of of parameter indices which are &quot;important&quot;, i.e.,</span>
+<span class="sd">    have a partial derivative deviating from zero.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span>
+    <span class="n">epsilon</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;epsilon&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
+    <span class="n">xk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span><span class="p">)</span>
+
+    <span class="n">fi_v</span><span class="p">,</span> <span class="n">partial_derivatives</span> <span class="o">=</span> <span class="n">approx_grad</span><span class="p">(</span>
+        <span class="n">xk</span><span class="p">,</span>
+        <span class="n">fit</span><span class="p">,</span>
+        <span class="n">epsilon</span>
+    <span class="p">)</span>
+
+    <span class="c1"># find parameters which do not change the models</span>
+    <span class="c1"># use only parameters which change the models</span>
+    <span class="n">important_parameters</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">pd_k</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">partial_derivatives</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">pd_k</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">important_parameters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+    <span class="n">pdi</span> <span class="o">=</span> <span class="n">partial_derivatives</span><span class="p">[</span><span class="n">important_parameters</span><span class="p">]</span>
+    <span class="n">n_important_parameters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">important_parameters</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_important_parameters</span><span class="p">,</span> <span class="n">n_important_parameters</span><span class="p">),</span> <span class="nb">float</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i_alpha</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_important_parameters</span><span class="p">):</span>
+        <span class="n">da_alpha</span> <span class="o">=</span> <span class="n">pdi</span><span class="p">[</span><span class="n">i_alpha</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i_beta</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_important_parameters</span><span class="p">):</span>
+            <span class="n">da_beta</span> <span class="o">=</span> <span class="n">pdi</span><span class="p">[</span><span class="n">i_beta</span><span class="p">]</span>
+            <span class="n">m</span><span class="p">[</span><span class="n">i_alpha</span><span class="p">,</span> <span class="n">i_beta</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">da_alpha</span> <span class="o">*</span> <span class="n">da_beta</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">cov_m</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinvh</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">m</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">cov_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">((</span><span class="n">n_important_parameters</span><span class="p">,</span> <span class="n">n_important_parameters</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cov_m</span><span class="p">,</span> <span class="n">important_parameters</span></div>
+
+
+<div class="viewcode-block" id="get_wres"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.get_wres">[docs]</a><span class="k">def</span> <span class="nf">get_wres</span><span class="p">(</span>
+        <span class="n">parameter</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Model</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns the weighted residuals for a list of parameters of a models</span>
+
+<span class="sd">    :param parameter: a list of the parameter values / or None. If None the models is not updated</span>
+<span class="sd">    :param model:</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parameter</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span> <span class="o">=</span> <span class="n">parameter</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">update_model</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">weighted_residuals</span></div>
+
+
+<div class="viewcode-block" id="get_chi2"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.get_chi2">[docs]</a><span class="k">def</span> <span class="nf">get_chi2</span><span class="p">(</span>
+        <span class="n">parameter</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span>
+        <span class="n">reduced</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns either the reduced chi2 or the sum of squares (chi2)</span>
+
+<span class="sd">    :param parameter: a list of the parameter values or None. If None the models is not updated</span>
+<span class="sd">    :param model:</span>
+<span class="sd">    :param reduced:</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">chi2</span> <span class="o">=</span> <span class="p">(</span><span class="n">get_wres</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span><span class="o">**</span><span class="mf">2.0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">chi2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">chi2</span><span class="p">)</span> <span class="k">else</span> <span class="n">chi2</span>
+    <span class="n">chi2r</span> <span class="o">=</span> <span class="n">chi2</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">n_points</span> <span class="o">-</span> <span class="n">model</span><span class="o">.</span><span class="n">n_free</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">reduced</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">chi2r</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">chi2</span></div>
+
+
+<div class="viewcode-block" id="lnprior"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.lnprior">[docs]</a><span class="k">def</span> <span class="nf">lnprior</span><span class="p">(</span>
+        <span class="n">parameter_values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">fit</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">Fit</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;The probability determined by the prior which is given by the bounds of the models parameters.</span>
+<span class="sd">    If the models parameters leave the bounds, the ln of the probability is minus infinity otherwise it</span>
+<span class="sd">    is zero.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;bounds&#39;</span><span class="p">,</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_bounds</span><span class="p">)</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">bound</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">parameter_values</span><span class="p">):</span>
+        <span class="n">lb</span><span class="p">,</span> <span class="n">ub</span> <span class="o">=</span> <span class="n">bound</span>
+        <span class="k">if</span> <span class="n">lb</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="n">lb</span><span class="p">:</span>
+                <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="k">if</span> <span class="n">ub</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="n">ub</span><span class="p">:</span>
+                <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="k">return</span> <span class="mf">0.0</span></div>
+
+
+<div class="viewcode-block" id="lnprob"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.lnprob">[docs]</a><span class="k">def</span> <span class="nf">lnprob</span><span class="p">(</span>
+        <span class="n">parameter_values</span><span class="p">,</span>
+        <span class="n">fit</span><span class="p">:</span> <span class="n">Fit</span><span class="p">,</span>
+        <span class="n">chi2max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    :param parameter_values:</span>
+<span class="sd">    :param fit:</span>
+<span class="sd">    :param chi2max:</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">lp</span> <span class="o">=</span> <span class="n">lnprior</span><span class="p">(</span><span class="n">parameter_values</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">lp</span><span class="p">):</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">chi2</span> <span class="o">=</span> <span class="n">get_chi2</span><span class="p">(</span><span class="n">parameter_values</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">reduced</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">lnlike</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">chi2</span> <span class="k">if</span> <span class="n">chi2</span> <span class="o">&lt;</span> <span class="n">chi2max</span> <span class="k">else</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="k">return</span> <span class="n">lnlike</span> <span class="o">+</span> <span class="n">lp</span></div>
+
+
 </pre></div>
 
     </div>
@@ -729,7 +730,7 @@
     </p>
     <p>
         &copy; Copyright 2016, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>

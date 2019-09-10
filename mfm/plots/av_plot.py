@@ -5,15 +5,15 @@ import pyqtgraph.opengl as gl
 from matplotlib import cm
 
 import mfm
+import mfm.math
+import mfm.fluorescence
 from mfm.plots import plotbase
-
-from mfm.settings import pyqtgraph_settings
 
 
 class AvPlotControl(QtWidgets.QWidget):
 
     def __init__(self, *args, **kwargs):
-        QtWidgets.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self, *args, **kwargs)
 
 
 class AvPlot(plotbase.Plot):

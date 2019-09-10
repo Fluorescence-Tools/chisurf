@@ -1,44 +1,29 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>mfm.plots.plot2d &mdash; ChiSurf 0.0.5 documentation</title>
-    
-    <link rel="stylesheet" href="../../../_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <meta charset="utf-8" />
+    <title>mfm.plots.plot2d &#8212; ChiSurf  documentation</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../../',
-        VERSION:     '0.0.5',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="ChiSurf 0.0.5 documentation" href="../../../index.html" />
-    <link rel="up" title="Module code" href="../../index.html" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body role="document">
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -51,7 +36,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5</b></span>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -67,13 +52,11 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
-</ul>
-<ul class="simple">
 </ul>
 </ul>
 </li>
@@ -118,26 +101,37 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary">
+<form action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
       
   <h1>Source code for mfm.plots.plot2d</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">PyQt4</span> <span class="kn">import</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">uic</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">guiqwt.plot</span> <span class="kn">import</span> <span class="n">CurveDialog</span><span class="p">,</span> <span class="n">ImageDialog</span>
-<span class="kn">from</span> <span class="nn">guiqwt.builder</span> <span class="kn">import</span> <span class="n">make</span>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span>  <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="p">,</span> <span class="n">uic</span>
+<span class="kn">from</span> <span class="nn">guiqwt.builder</span> <span class="k">import</span> <span class="n">make</span>
+<span class="kn">from</span> <span class="nn">guiqwt.plot</span> <span class="k">import</span> <span class="n">CurveDialog</span><span class="p">,</span> <span class="n">ImageDialog</span>
 
-<span class="kn">from</span> <span class="nn">mfm.parameter</span> <span class="kn">import</span> <span class="n">ParameterWidget</span>
-<span class="kn">from</span> <span class="nn">mfm.plots.plotbase</span> <span class="kn">import</span> <span class="n">Plot</span>
+<span class="kn">from</span> <span class="nn">mfm.fitting.fitting_widgets</span> <span class="k">import</span> <span class="n">FittingParameterWidget</span>
+<span class="kn">from</span> <span class="nn">mfm.plots.plotbase</span> <span class="k">import</span> <span class="n">Plot</span>
 
 
-<div class="viewcode-block" id="SurfacePlotWidget"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.plot2d.SurfacePlotWidget">[docs]</a><span class="k">class</span> <span class="nc">SurfacePlotWidget</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">parent</span><span class="p">,</span> <span class="n">hide_fix_checkbox</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">hide_link</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">xmax</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">parent</span><span class="p">,</span> <span class="n">hide_fix_checkbox</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">hide_link</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ymin</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">parent</span><span class="p">,</span> <span class="n">hide_fix_checkbox</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">hide_link</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ymax</span> <span class="o">=</span> <span class="n">ParameterWidget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">parent</span><span class="p">,</span> <span class="n">hide_fix_checkbox</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">hide_link</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class="viewcode-block" id="SurfacePlotWidget"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.plot2d.SurfacePlotWidget">[docs]</a><span class="k">class</span> <span class="nc">SurfacePlotWidget</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span> <span class="o">=</span> <span class="n">FittingParameterWidget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">parent</span><span class="p">,</span> <span class="n">hide_fix_checkbox</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">hide_link</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xmax</span> <span class="o">=</span> <span class="n">FittingParameterWidget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">parent</span><span class="p">,</span> <span class="n">hide_fix_checkbox</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">hide_link</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ymin</span> <span class="o">=</span> <span class="n">FittingParameterWidget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">parent</span><span class="p">,</span> <span class="n">hide_fix_checkbox</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">hide_link</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ymax</span> <span class="o">=</span> <span class="n">FittingParameterWidget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">parent</span><span class="p">,</span> <span class="n">hide_fix_checkbox</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">hide_link</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;mfm/ui/plots/chi2Hist.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">horizontalLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">horizontalLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xmax</span><span class="p">)</span>
@@ -146,24 +140,24 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;currentIndexChanged(int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onAutoRangeX</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;currentIndexChanged(int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onAutoRangeY</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pushButton</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;clicked()&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onAddSelection</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pushButton_6</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;clicked()&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onClearSelection</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">currentIndexChanged</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onAutoRangeX</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="o">.</span><span class="n">currentIndexChanged</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onAutoRangeY</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pushButton</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onAddSelection</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pushButton_6</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onClearSelection</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tableWidget</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;cellDoubleClicked (int, int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onSelectionTableClicked</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;stateChanged(int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_2</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;stateChanged(int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_3</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;stateChanged(int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_4</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;stateChanged(int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tableWidget</span><span class="o">.</span><span class="n">cellDoubleClicked</span> <span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onSelectionTableClicked</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="o">.</span><span class="n">stateChanged</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_2</span><span class="o">.</span><span class="n">stateChanged</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_3</span><span class="o">.</span><span class="n">stateChanged</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_4</span><span class="o">.</span><span class="n">stateChanged</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;valueChanged(QString)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox_2</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;valueChanged(QString)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox_3</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;valueChanged(QString)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox_4</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;valueChanged(QString)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">valueChanged</span><span class="p">[</span><span class="s1">&#39;QString&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spinBox_2</span><span class="o">.</span><span class="n">valueChanged</span><span class="p">[</span><span class="s1">&#39;QString&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spinBox_3</span><span class="o">.</span><span class="n">valueChanged</span><span class="p">[</span><span class="s1">&#39;QString&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spinBox_4</span><span class="o">.</span><span class="n">valueChanged</span><span class="p">[</span><span class="s1">&#39;QString&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pushButton_4</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;clicked()&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onAutoRangeX</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pushButton_5</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;clicked()&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">onAutoRangeY</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pushButton_4</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onAutoRangeX</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pushButton_5</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onAutoRangeY</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">selY</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">selection_y</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">selX</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">selection_x</span>
@@ -171,17 +165,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
 
 <div class="viewcode-block" id="SurfacePlotWidget.update"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.plot2d.SurfacePlotWidget.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">QtGui</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">pn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">parameter_names</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span><span class="n">pn</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span><span class="n">pn</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span></div>
 
     <span class="nd">@property</span>
@@ -232,31 +226,31 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">tableWidget</span><span class="o">.</span><span class="n">setRowCount</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SurfacePlotWidget.onAutoRangeX"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.plot2d.SurfacePlotWidget.onAutoRangeX">[docs]</a>    <span class="k">def</span> <span class="nf">onAutoRangeX</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;onAutoRangeX&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;onAutoRangeX&quot;</span><span class="p">)</span>
         <span class="n">xmin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">xmin</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;xmin: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">xmin</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;xmin: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">xmin</span><span class="p">)</span>
         <span class="n">xmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">xmax</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;xmax: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">xmax</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">xmax</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;xmax: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">xmax</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xmax</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">xmin</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">xmax</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">xmax</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">xmax</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xmax</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="SurfacePlotWidget.onAutoRangeY"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.plot2d.SurfacePlotWidget.onAutoRangeY">[docs]</a>    <span class="k">def</span> <span class="nf">onAutoRangeY</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;onAutoRangeY&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;onAutoRangeY&quot;</span><span class="p">)</span>
         <span class="n">ymin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">ymin</span>
         <span class="n">ymax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">ymax</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;ymin: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">ymin</span><span class="p">)</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;ymax: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">ymax</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ymin</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ymax</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ymin: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">ymin</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ymax: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">ymax</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ymin</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ymax</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ymin</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">ymin</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ymax</span><span class="o">.</span><span class="n">setValue</span><span class="p">(</span><span class="n">ymax</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ymin</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ymax</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ymin</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ymax</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="SurfacePlotWidget.onSelectionTableClicked"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.plot2d.SurfacePlotWidget.onSelectionTableClicked">[docs]</a>    <span class="k">def</span> <span class="nf">onSelectionTableClicked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -275,67 +269,67 @@
         <span class="n">row</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">rowCount</span><span class="p">()</span>
         <span class="n">table</span><span class="o">.</span><span class="n">setRowCount</span><span class="p">(</span><span class="n">row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
 
-        <span class="n">tmp</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTableWidgetItem</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">p1Name</span><span class="p">)</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QTableWidgetItem</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">p1Name</span><span class="p">)</span>
         <span class="n">tmp</span><span class="o">.</span><span class="n">setFlags</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">ItemIsEnabled</span><span class="p">)</span>
         <span class="n">tmp</span><span class="o">.</span><span class="n">setData</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">p1Idx</span><span class="p">)</span>
         <span class="n">table</span><span class="o">.</span><span class="n">setItem</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tmp</span><span class="p">)</span>
 
         <span class="n">xmin</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">xsel</span><span class="p">))</span>
         <span class="n">xmax</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">xsel</span><span class="p">))</span>
-        <span class="n">tmp</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTableWidgetItem</span><span class="p">()</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QTableWidgetItem</span><span class="p">()</span>
         <span class="n">tmp</span><span class="o">.</span><span class="n">setData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">xmin</span><span class="p">)</span>
         <span class="n">tmp</span><span class="o">.</span><span class="n">setFlags</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">ItemIsEnabled</span><span class="p">)</span>
         <span class="n">table</span><span class="o">.</span><span class="n">setItem</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tmp</span><span class="p">)</span>
 
-        <span class="n">tmp</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTableWidgetItem</span><span class="p">()</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QTableWidgetItem</span><span class="p">()</span>
         <span class="n">tmp</span><span class="o">.</span><span class="n">setFlags</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">ItemIsEnabled</span><span class="p">)</span>
         <span class="n">tmp</span><span class="o">.</span><span class="n">setData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">xmax</span><span class="p">)</span>
         <span class="n">table</span><span class="o">.</span><span class="n">setItem</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">tmp</span><span class="p">)</span>
 
-        <span class="n">cbe</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QCheckBox</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
-        <span class="n">cbe</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">cbe</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;stateChanged(int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
+        <span class="n">cbe</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QCheckBox</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+        <span class="n">cbe</span><span class="o">.</span><span class="n">stateChanged</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
         <span class="n">table</span><span class="o">.</span><span class="n">setCellWidget</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">cbe</span><span class="p">)</span>
-        <span class="n">cbe</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">cbe</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="n">cbe</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QCheckBox</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
-        <span class="n">cbe</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">cbe</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;stateChanged(int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
+        <span class="n">cbe</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QCheckBox</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+        <span class="n">cbe</span><span class="o">.</span><span class="n">stateChanged</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
         <span class="n">table</span><span class="o">.</span><span class="n">setCellWidget</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">cbe</span><span class="p">)</span>
-        <span class="n">cbe</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">cbe</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
 
         <span class="n">row</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">table</span><span class="o">.</span><span class="n">setRowCount</span><span class="p">(</span><span class="n">row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">ymin</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">ysel</span><span class="p">))</span>
         <span class="n">ymax</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">ysel</span><span class="p">))</span>
 
-        <span class="n">tmp</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTableWidgetItem</span><span class="p">()</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QTableWidgetItem</span><span class="p">()</span>
         <span class="n">tmp</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">p2Name</span><span class="p">)</span>
         <span class="n">tmp</span><span class="o">.</span><span class="n">setData</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">p2Idx</span><span class="p">)</span>
         <span class="n">tmp</span><span class="o">.</span><span class="n">setFlags</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">ItemIsEnabled</span><span class="p">)</span>
         <span class="n">table</span><span class="o">.</span><span class="n">setItem</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tmp</span><span class="p">)</span>
 
-        <span class="n">tmp</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTableWidgetItem</span><span class="p">()</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QTableWidgetItem</span><span class="p">()</span>
         <span class="n">tmp</span><span class="o">.</span><span class="n">setData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ymin</span><span class="p">)</span>
         <span class="n">tmp</span><span class="o">.</span><span class="n">setFlags</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">ItemIsEnabled</span><span class="p">)</span>
         <span class="n">table</span><span class="o">.</span><span class="n">setItem</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tmp</span><span class="p">)</span>
 
-        <span class="n">tmp</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QTableWidgetItem</span><span class="p">()</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QTableWidgetItem</span><span class="p">()</span>
         <span class="n">tmp</span><span class="o">.</span><span class="n">setData</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ymax</span><span class="p">)</span>
         <span class="n">tmp</span><span class="o">.</span><span class="n">setFlags</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">ItemIsEnabled</span><span class="p">)</span>
         <span class="n">table</span><span class="o">.</span><span class="n">setItem</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">tmp</span><span class="p">)</span>
 
-        <span class="n">cbe</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QCheckBox</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
-        <span class="n">cbe</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">cbe</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;stateChanged(int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
+        <span class="n">cbe</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QCheckBox</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+        <span class="n">cbe</span><span class="o">.</span><span class="n">stateChanged</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
         <span class="n">table</span><span class="o">.</span><span class="n">setCellWidget</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">cbe</span><span class="p">)</span>
-        <span class="n">cbe</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">cbe</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="n">cbe</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QCheckBox</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
-        <span class="n">cbe</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">cbe</span><span class="p">,</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s2">&quot;stateChanged(int)&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
+        <span class="n">cbe</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QCheckBox</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+        <span class="n">cbe</span><span class="o">.</span><span class="n">stateChanged</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">)</span>
         <span class="n">table</span><span class="o">.</span><span class="n">setCellWidget</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">cbe</span><span class="p">)</span>
-        <span class="n">cbe</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">cbe</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
 
         <span class="n">table</span><span class="o">.</span><span class="n">resizeRowsToContents</span><span class="p">()</span>
         <span class="n">header</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">horizontalHeader</span><span class="p">()</span>
-        <span class="n">header</span><span class="o">.</span><span class="n">setStretchLastSection</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">header</span><span class="o">.</span><span class="n">setStretchLastSection</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_plots</span><span class="p">()</span></div>
 
@@ -348,7 +342,7 @@
             <span class="n">upper</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">item</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">toFloat</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">enabled</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">cellWidget</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">checkState</span><span class="p">())</span>
             <span class="n">invert</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">cellWidget</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">checkState</span><span class="p">())</span>
-            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;idx: </span><span class="si">%s</span><span class="s2"> l: </span><span class="si">%s</span><span class="s2"> u: </span><span class="si">%s</span><span class="s2"> e: </span><span class="si">%s</span><span class="s2"> i: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">enabled</span><span class="p">,</span> <span class="n">invert</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;idx: </span><span class="si">%s</span><span class="s2"> l: </span><span class="si">%s</span><span class="s2"> u: </span><span class="si">%s</span><span class="s2"> e: </span><span class="si">%s</span><span class="s2"> i: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">enabled</span><span class="p">,</span> <span class="n">invert</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">enabled</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">invert</span><span class="p">:</span>
                     <span class="n">mask</span><span class="p">[:,</span> <span class="p">:]</span> <span class="o">|=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="p">:]</span> <span class="o">&gt;</span> <span class="n">lower</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="p">:]</span> <span class="o">&lt;</span> <span class="n">upper</span><span class="p">)</span>
@@ -357,7 +351,7 @@
         <span class="k">return</span> <span class="n">mask</span></div>
 
 <div class="viewcode-block" id="SurfacePlotWidget.SetLog"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.plot2d.SurfacePlotWidget.SetLog">[docs]</a>    <span class="k">def</span> <span class="nf">SetLog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;SetLog&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SetLog&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">resPlot</span><span class="o">.</span><span class="n">setLogMode</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_3</span><span class="o">.</span><span class="n">isChecked</span><span class="p">(),</span> <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_4</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">dataPlot</span><span class="o">.</span><span class="n">setLogMode</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_2</span><span class="o">.</span><span class="n">isChecked</span><span class="p">(),</span> <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span></div></div>
 
@@ -367,32 +361,32 @@
     <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Surface-Plot&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">):</span>
-        <span class="n">Plot</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">)</span>
+        <span class="n">Plot</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">surface</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">d1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">d2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">])</span>
 
-        <span class="n">top_left</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QFrame</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">top_left</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">top_left</span><span class="o">.</span><span class="n">setMaximumHeight</span><span class="p">(</span><span class="mi">150</span><span class="p">)</span>
-        <span class="n">top_left</span><span class="o">.</span><span class="n">setFrameShape</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">StyledPanel</span><span class="p">)</span>
-        <span class="n">topl</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">top_left</span><span class="p">)</span>
+        <span class="n">top_left</span><span class="o">.</span><span class="n">setFrameShape</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">StyledPanel</span><span class="p">)</span>
+        <span class="n">topl</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">top_left</span><span class="p">)</span>
 
-        <span class="n">top_right</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QFrame</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">top_right</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">top_right</span><span class="o">.</span><span class="n">setMaximumHeight</span><span class="p">(</span><span class="mi">150</span><span class="p">)</span>
-        <span class="n">top_right</span><span class="o">.</span><span class="n">setFrameShape</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">StyledPanel</span><span class="p">)</span>
-        <span class="n">topr</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">top_right</span><span class="p">)</span>
+        <span class="n">top_right</span><span class="o">.</span><span class="n">setFrameShape</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">StyledPanel</span><span class="p">)</span>
+        <span class="n">topr</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">top_right</span><span class="p">)</span>
 
-        <span class="n">bottom</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QFrame</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">bottom</span><span class="o">.</span><span class="n">setFrameShape</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">StyledPanel</span><span class="p">)</span>
-        <span class="n">bot</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">bottom</span><span class="p">)</span>
+        <span class="n">bottom</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">bottom</span><span class="o">.</span><span class="n">setFrameShape</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QFrame</span><span class="o">.</span><span class="n">StyledPanel</span><span class="p">)</span>
+        <span class="n">bot</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="n">bottom</span><span class="p">)</span>
 
-        <span class="n">splitter1</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QSplitter</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">Horizontal</span><span class="p">)</span>
+        <span class="n">splitter1</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QSplitter</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">Horizontal</span><span class="p">)</span>
         <span class="n">splitter1</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">top_left</span><span class="p">)</span>
         <span class="n">splitter1</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">top_right</span><span class="p">)</span>
 
-        <span class="n">splitter2</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QSplitter</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">Vertical</span><span class="p">)</span>
+        <span class="n">splitter2</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QSplitter</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">Vertical</span><span class="p">)</span>
         <span class="n">splitter2</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">splitter1</span><span class="p">)</span>
         <span class="n">splitter2</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">bottom</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">splitter</span> <span class="o">=</span> <span class="n">splitter2</span>
@@ -418,16 +412,16 @@
         <span class="n">topr</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">g_yplot</span><span class="p">)</span>
 
         <span class="c1"># 2D-Histogram</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">g_hist2d_m</span> <span class="o">=</span> <span class="n">make</span><span class="o">.</span><span class="n">histogram2D</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">logscale</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">g_hist2d_a</span> <span class="o">=</span> <span class="n">make</span><span class="o">.</span><span class="n">histogram2D</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">logscale</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">g_hist2d_m</span> <span class="o">=</span> <span class="n">make</span><span class="o">.</span><span class="n">histogram2D</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">g_hist2d_a</span> <span class="o">=</span> <span class="n">make</span><span class="o">.</span><span class="n">histogram2D</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">logscale</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">g_hist2d_m</span><span class="o">.</span><span class="n">set_color_map</span><span class="p">(</span><span class="s1">&#39;hot&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">g_hist2d_a</span><span class="o">.</span><span class="n">set_color_map</span><span class="p">(</span><span class="s1">&#39;Blues&#39;</span><span class="p">)</span>
         <span class="c1">#self.g_hist2d_m.set_interpolation(INTERP_LINEAR)</span>
         <span class="c1">#self.g_hist2d_a.set_interpolation(INTERP_LINEAR)</span>
 
-        <span class="n">win</span> <span class="o">=</span> <span class="n">ImageDialog</span><span class="p">(</span><span class="n">edit</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">toolbar</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">win</span> <span class="o">=</span> <span class="n">ImageDialog</span><span class="p">(</span><span class="n">edit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">toolbar</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">g_xyplot</span> <span class="o">=</span> <span class="n">win</span><span class="o">.</span><span class="n">get_plot</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">g_xyplot</span><span class="o">.</span><span class="n">set_aspect_ratio</span><span class="p">(</span><span class="n">lock</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">g_xyplot</span><span class="o">.</span><span class="n">set_aspect_ratio</span><span class="p">(</span><span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">g_xyplot</span><span class="o">.</span><span class="n">add_item</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">g_hist2d_a</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">g_xyplot</span><span class="o">.</span><span class="n">add_item</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">g_hist2d_m</span><span class="p">)</span>
         <span class="n">bot</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">win</span><span class="p">)</span>
@@ -576,7 +570,7 @@
     </p>
     <p>
         &copy; Copyright 2016, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
 </footer>
