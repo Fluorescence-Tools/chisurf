@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-from qtpy import  QtWidgets, uic
+from qtpy import QtWidgets, uic
 from scipy.stats import f as fdist
 
 import mfm

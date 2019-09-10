@@ -4,8 +4,7 @@ import os
 import tempfile
 
 import mdtraj as md
-from qtpy import  QtWidgets, uic
-from qtpy.QtWidgets import QApplication
+from qtpy import QtWidgets, uic
 
 from mfm.io import pdb
 import mfm.widgets
@@ -147,7 +146,7 @@ class Structure2Transfer(QtWidgets.QWidget, CalculateTransfer):
 if __name__ == "__main__":
     import sys
 
-    app = QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     w = Structure2Transfer()
 
     w.show()

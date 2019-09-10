@@ -1,16 +1,18 @@
+from __future__ import annotations
+
 import json
 import os
 
 import numpy as np
 from qtpy import  QtWidgets, uic
-from parse import ParseModelWidget
+from .parse import ParseModelWidget
 
 import mfm
 import mfm.fitting.fitting_widgets
 from mfm import plots
-from mfm.models import Model
+from mfm.models.model import Model
 from mfm.math.reaction.continuous import ReactionSystem
-from mfm.parameter import FittingParameterWidget
+from mfm.fitting.fitting_widgets import FittingParameterWidget
 
 
 class ParseStoppedFlowWidget(ParseModelWidget):

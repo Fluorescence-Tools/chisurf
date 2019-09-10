@@ -1,35 +1,43 @@
+from __future__ import annotations
+
 from math import exp, log
 
 import numpy as np
-from numba import jit
+import numba as nb
 
 from mfm.math.functions.special import i0
 from .distributions import normal_distribution
 
 
-
-@jit(nopython=True)
-def gaussian_chain_ree(l, n):
+@nb.jit(nopython=True)
+def gaussian_chain_ree(
+        segment_length: float,
+        number_of_segments: int
+) -> float:
     """
     Calculates the root mean square end-to-end distance of a Gaussian chain
 
-    :param l: float
+    :param segment_length: float
         The length of a segment
-    :param n: int
+    :param number_of_segments: int
         The number of segments
     :return:
     """
-    return l * np.sqrt(n)
+    return segment_length * np.sqrt(number_of_segments)
 
 
-@jit(nopython=True)
-def gaussian_chain(r, l, n):
+@nb.jit(nopython=True)
+def gaussian_chain(
+        r,
+        segment_length: float,
+        number_of_segments: int
+) -> float:
     """
     Calculates the radial distribution function of a Gaussian chain in three dimensions
 
-    :param n: int
+    :param number_of_segments: int
         The number of segments
-    :param l: float
+    :param segment_length: float
         The segment length
     :param r: numpy-array
         values of r should be in range [0, 1) - not including 1
@@ -37,19 +45,28 @@ def gaussian_chain(r, l, n):
     ..plot:: plots/rdf-gauss.py
 
     """
-    r2_mean = gaussian_chain_ree(l, n) ** 2
+    r2_mean = gaussian_chain_ree(segment_length, number_of_segments) ** 2
     return 4*np.pi*r**2/(2./3. * np.pi*r2_mean)**(3./2.) * np.exp(-3./2. * r**2 / r2_mean)
 
 
-@jit(nopython=True)
-def Qd(r, kappa):
+@nb.jit(nopython=True)
+def Qd(
+        r,
+        kappa
+) -> float:
     return pow((3.0 / (4.0 * 3.14159265359 * kappa)), (3.0 / 2.0)) * \
            exp(-3.0 / 4.0 * r * r / kappa) * \
            (1.0 - 5.0 / 4.0 * kappa + 2.0 * r * r - 33.0 / 80.0 * r * r * r * r / kappa)
 
 
-@jit(nopython=True)
-def worm_like_chain(rs, kappa, chain_length=0.0, normalize=True, distance=True):
+@nb.jit(nopython=True)
+def worm_like_chain(
+        distances: np.array,
+        kappa: float,
+        chain_length: float = 0.0,
+        normalize: bool = True,
+        distance=True
+):
     """Calculates the radial distribution function of a worm-like-chain given the multiple piece-solution
     according to:
 
@@ -59,7 +76,7 @@ def worm_like_chain(rs, kappa, chain_length=0.0, normalize=True, distance=True):
     
     Parameters
     ----------
-    rs: a vector at which the pdf is evaluated.
+    distances: a vector at which the pdf is evaluated.
     kappa: a parameter describing the stiffness (details see publication)
     chain_length: the total length of the chain.
     normalize: If this is True the sum of the returned pdf vector is normalized to one.
@@ -105,21 +122,21 @@ def worm_like_chain(rs, kappa, chain_length=0.0, normalize=True, distance=True):
 
     """
     if chain_length == 0.0:
-        chain_length = np.max(rs)
+        chain_length = np.max(distances)
 
     k = kappa
     a = 14.054
     b = 0.473
     c = 1.0 - (1.0+(0.38*k**(-0.95))**(-5.))**(-1./5.)
-    pr = np.zeros_like(rs, dtype=np.float64)
+    pr = np.zeros_like(distances, dtype=np.float64)
 
     if k < 0.125:
         d = k + 1.0
     else:
         d = 1.0 - 1.0/(0.177/(k-0.111)+6.4 * exp(0.783 * log(k-0.111)))
 
-    for i in range(len(rs)):
-        r = rs[i]
+    for i in range(len(distances)):
+        r = distances[i]
         if r < chain_length:
             r /= chain_length
 
@@ -139,28 +156,39 @@ def worm_like_chain(rs, kappa, chain_length=0.0, normalize=True, distance=True):
     return pr
 
 
-@jit(nopython=True)
-def distance_between_gaussian(rs, separation, sigma, normalize=False):
+@nb.jit(nopython=True)
+def distance_between_gaussian(
+        distances: np.array,
+        separation_distance: float,
+        sigma: float,
+        normalize: bool = False
+) -> np.array:
     """Calculates the distance distribution between two separated Gaussians a distance
 
-    :param rs:
-    :param separation:
+    :param distances:
+    :param separation_distance:
     :param sigma:
     :param normalize:
     :return:
     """
-    if separation > 0:
-        pr = rs / separation * (normal_distribution(rs, separation, sigma, False) -
-                                normal_distribution(rs, -separation, sigma, False))
+    if separation_distance > 0:
+        pr = distances / separation_distance * (normal_distribution(distances, separation_distance, sigma, False) -
+                                                normal_distribution(distances, -separation_distance, sigma, False))
     else:
-        pr = 2. * rs**2/sigma**2 * normal_distribution(rs, 0.0, sigma, False)
+        pr = 2. * distances ** 2 / sigma ** 2 * normal_distribution(distances, 0.0, sigma, False)
     if normalize:
         pr /= pr.sum()
     return pr
 
 
-@jit(nopython=True)
-def worm_like_chain_linker(rs, kappa, chain_length=0.0, sigma=6.0, normalize=True):
+@nb.jit(nopython=True)
+def worm_like_chain_linker(
+        distances: np.array,
+        kappa: float,
+        chain_length: float = 0.0,
+        sigma: float = 6.0,
+        normalize: bool = True
+) -> np.array:
     """
     Calculates the radial distribution function of a worm-like-chain given the multiple piece-solution
     according to:
@@ -181,10 +209,10 @@ def worm_like_chain_linker(rs, kappa, chain_length=0.0, sigma=6.0, normalize=Tru
        The radial distribution function of worm-like chains.
 
     """
-    pr = worm_like_chain(rs, kappa, chain_length=chain_length)
+    pr = worm_like_chain(distances, kappa, chain_length=chain_length)
     pn = np.zeros_like(pr)
-    for r, p in zip(rs, pr):
-        pn += p * distance_between_gaussian(rs, r, sigma)
+    for r, p in zip(distances, pr):
+        pn += p * distance_between_gaussian(distances, r, sigma)
 
     if normalize:
         pn /= pn.sum()

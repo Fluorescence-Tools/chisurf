@@ -14,7 +14,12 @@ factr = settings['factr']
 reg_scale = settings['reg_scale']
 
 
-def maxent(A, b, nu, **kwargs):
+def maxent(
+        A,
+        b,
+        nu,
+        **kwargs
+):
 
     def func(x, weights, prior, A, b, l2):
         Ax = dot(A, x)

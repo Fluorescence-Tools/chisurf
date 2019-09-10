@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import json
 import os
 import tempfile
 
-import mfm.fluorescence.fps.widgets
 import numpy as np
 from qtpy import  QtWidgets, uic
 from guiqwt.builder import make
@@ -10,6 +11,7 @@ from guiqwt.plot import CurveDialog
 
 import mfm
 import mfm.io.xyz
+import mfm.fluorescence.fps.widgets
 from mfm.fluorescence.simulation.dye_diffusion import DyeDecay
 from mfm.plots.MolView import MolQtWidget
 from mfm.structure.structure import Structure

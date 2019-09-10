@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import json
 import os
@@ -9,7 +11,6 @@ from progressbar import Bar, ETA, ProgressBar, RotatingMarker, Percentage
 import mfm
 from mfm.math.rand import weighted_choice, mc
 from mfm.structure.protein import ProteinCentroid
-from mfm.structure.potential import potentials
 from mfm.structure.trajectory import TrajectoryFile, Universe
 
 verbose = False
