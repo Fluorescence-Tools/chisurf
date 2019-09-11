@@ -209,8 +209,8 @@ class Fit(mfm.base.Base):
             csv.save(np.vstack([x, wr]), filename+'_wr.txt')
             csv.save(self.model[:], filename+'_fit.txt')
             if isinstance(self.data, mfm.curve.Curve):
-                self.data.save(filename+'_data.txt', mode='txt')
-                self.data.save(filename+'_data.json', mode='json')
+                self.data.save(filename +'_data.txt', file_type='txt')
+                self.data.save(filename +'_data.json', file_type='json')
                 with open(filename+'_info.txt', 'w') as fp:
                     fp.write(str(self))
 

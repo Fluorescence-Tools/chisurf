@@ -115,15 +115,23 @@
     <div class="col-md-9 content">
       
   <h1>Source code for mfm.plots.global_fit</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span>  <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtWidgets</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
 
+<span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtWidgets</span>
+
+<span class="kn">import</span> <span class="nn">mfm.fitting</span>
 <span class="kn">from</span> <span class="nn">mfm.plots.plotbase</span> <span class="k">import</span> <span class="n">Plot</span>
 
 
 <div class="viewcode-block" id="GlobalFitPlot"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.global_fit.GlobalFitPlot">[docs]</a><span class="k">class</span> <span class="nc">GlobalFitPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Global-Fits&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="n">logy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">logx</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">fit</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">FitGroup</span><span class="p">,</span>
+            <span class="n">logy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="n">logx</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">GlobalFitPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fit</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pltControl</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">()</span>

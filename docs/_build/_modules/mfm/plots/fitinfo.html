@@ -115,9 +115,12 @@
     <div class="col-md-9 content">
       
   <h1>Source code for mfm.plots.fitinfo</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span>  <span class="n">QtWidgets</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span>  <span class="n">QtWidgets</span>
 
 <span class="kn">import</span> <span class="nn">mfm</span>
+<span class="kn">import</span> <span class="nn">mfm.fitting</span>
 <span class="kn">from</span> <span class="nn">mfm.plots</span> <span class="k">import</span> <span class="n">plotbase</span>
 
 
@@ -128,15 +131,24 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
             <span class="n">fit</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">FitGroup</span><span class="p">,</span>
+            <span class="n">parent</span><span class="p">:</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">plots</span><span class="o">.</span><span class="n">Plot</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FitInfo</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">fit</span><span class="p">,</span>
+            <span class="n">parent</span><span class="o">=</span><span class="n">parent</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pltControl</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">textedit</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QPlainTextEdit</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">textedit</span><span class="p">)</span>
 
-<div class="viewcode-block" id="FitInfo.update_all"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.fitinfo.FitInfo.update_all">[docs]</a>    <span class="k">def</span> <span class="nf">update_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="FitInfo.update_all"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.fitinfo.FitInfo.update_all">[docs]</a>    <span class="k">def</span> <span class="nf">update_all</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
         <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">textedit</span><span class="o">.</span><span class="n">setPlainText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">fit</span><span class="p">))</span></div></div>
 

@@ -158,7 +158,7 @@ In particular three kinds of file-types are handled:</p>
 <dd><p>Tries to guess element from atom name if not recognised.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>atom_name</strong> – string</p>
+<dd class="field-odd"><p><strong>atom_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – string</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
@@ -175,11 +175,11 @@ In particular three kinds of file-types are handled:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>atoms</strong> – </p></li>
-<li><p><strong>chain_identifier</strong> – </p></li>
-<li><p><strong>residue_seq_number</strong> – </p></li>
-<li><p><strong>atom_name</strong> – </p></li>
-<li><p><strong>residue_name</strong> – </p></li>
+<li><p><strong>atoms</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
+<li><p><strong>chain_identifier</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>residue_seq_number</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>atom_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>residue_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
 <li><p><strong>kwargs</strong> – </p></li>
 </ul>
 </dd>
@@ -196,8 +196,8 @@ In particular three kinds of file-types are handled:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> – </p></li>
-<li><p><strong>assign_charge</strong> – </p></li>
+<li><p><strong>filename</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>assign_charge</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -230,11 +230,11 @@ are appended to the existing file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> – target-filename</p></li>
+<li><p><strong>filename</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – target-filename</p></li>
 <li><p><strong>atoms</strong> – structured numpy array</p></li>
-<li><p><strong>append_model</strong> – bool
+<li><p><strong>append_model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool
 If True the atoms are appended as a new models</p></li>
-<li><p><strong>append_coordinates</strong> – If True the coordinates are appended to the file</p></li>
+<li><p><strong>append_coordinates</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True the coordinates are appended to the file</p></li>
 </ul>
 </dd>
 </dl>
@@ -246,9 +246,9 @@ If True the atoms are appended as a new models</p></li>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> – </p></li>
+<li><p><strong>filename</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
 <li><p><strong>points</strong> – </p></li>
-<li><p><strong>verbose</strong> – </p></li>
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
 <li><p><strong>mode</strong> – </p></li>
 <li><p><strong>density</strong> – </p></li>
 </ul>
@@ -264,13 +264,13 @@ If True the atoms are appended as a new models</p></li>
 <span id="tttr-files"></span><h2>TTTR-Files<a class="headerlink" href="#module-mfm.io.photons" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mfm.io.photons.Photons">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.io.photons.</code><code class="sig-name descname">Photons</code><span class="sig-paren">(</span><em class="sig-param">p_object</em>, <em class="sig-param">file_type: Optional[str] = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/photons.html#Photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.photons.Photons" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.io.photons.</code><code class="sig-name descname">Photons</code><span class="sig-paren">(</span><em class="sig-param">p_object</em>, <em class="sig-param">file_type=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/photons.html#Photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.photons.Photons" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>p_object</strong> – Is either a list of filenames or a single string containing the path to one file. If the first argument
 is n</p></li>
-<li><p><strong>file_type</strong> – The file type of the files passed using the first argument (p_object) is specified using the
+<li><p><strong>file_type</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The file type of the files passed using the first argument (p_object) is specified using the
 ‘file_type’ parameter. This string is either ‘hdf’ or ‘bh132’, ‘bh630_x48’, ‘ht3’, ‘iss’. If
 the file type is not an hdf file the files are temporarily converted to hdf-files to guarantee
 a consistent interface.</p></li>
@@ -311,12 +311,22 @@ a consistent interface.</p></li>
 <dt id="mfm.io.photons.Photons.dt">
 <em class="property">property </em><code class="sig-name descname">dt</code><a class="headerlink" href="#mfm.io.photons.Photons.dt" title="Permalink to this definition">¶</a></dt>
 <dd><p>The micro-time calibration</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.photons.Photons.filenames">
 <em class="property">property </em><code class="sig-name descname">filenames</code><a class="headerlink" href="#mfm.io.photons.Photons.filenames" title="Permalink to this definition">¶</a></dt>
 <dd><p>Original filename of the data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -329,6 +339,11 @@ a consistent interface.</p></li>
 <dt id="mfm.io.photons.Photons.measurement_time">
 <em class="property">property </em><code class="sig-name descname">measurement_time</code><a class="headerlink" href="#mfm.io.photons.Photons.measurement_time" title="Permalink to this definition">¶</a></dt>
 <dd><p>Total measurement time in seconds?</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -379,6 +394,11 @@ a consistent interface.</p></li>
 <dt id="mfm.io.photons.Photons.rout">
 <em class="property">property </em><code class="sig-name descname">rout</code><a class="headerlink" href="#mfm.io.photons.Photons.rout" title="Permalink to this definition">¶</a></dt>
 <dd><p>Array containing the routing channel of the photons</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -406,14 +426,17 @@ photons of the burst to be able to use standard Python slicing syntax to select 
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filenames</strong> – filename pointing to a Seidel BID-file</p></li>
+<li><p><strong>filenames</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – filename pointing to a Seidel BID-file</p></li>
 <li><p><strong>stack</strong> – bool
 If stack is True the returned list is stacked and the numbering of the bursts is made continuous.
 This is the default behavior.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>

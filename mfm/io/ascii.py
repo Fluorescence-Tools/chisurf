@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List
+from typing import List, Tuple
 
 import csv
 import os
@@ -75,35 +75,74 @@ class Csv(object):
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            *args,
+            filename: str = '',
+            colspecs: Tuple[int, int, int] = None,
+            use_header: bool = False,
+            x_on: bool = True,
+            y_on: bool = True,
+            col_x: int = 0,
+            col_y: int = 1,
+            col_ex: int = 2,
+            col_ey: int = 3,
+            reverse: bool = False,
+            error_x_on: bool = False,
+            directory: str = '.',
+            skiprows: int = 9,
+            verbose: bool = None,
+            file_type: str = 'csv',
+            **kwargs
+    ):
         """
 
+        :param args:
+        :param filename:
+        :param colspecs:
+        :param use_header:
+        :param x_on:
+        :param y_on:
+        :param col_x:
+        :param col_y:
+        :param col_ex:
+        :param col_ey:
+        :param reverse:
+        :param error_x_on:
+        :param directory:
+        :param skiprows:
+        :param verbose:
+        :param file_type:
         :param kwargs:
-        :return:
         """
-        self._filename = ""
+        self._filename = filename
+        self.use_header = use_header
+        self.x_on = x_on
+        self.error_y_on = y_on
+        self.col_x = col_x
+        self.col_y = col_y
+        self.col_ex = col_ex
+        self.col_ey = col_ey
+        self.reverse = reverse
+        self.error_x_on = error_x_on
+        self.directory = directory
+        self.skiprows = skiprows
+        self.mode = file_type
+
         self._x = kwargs.get('x', None)
         self._y = kwargs.get('y', None)
         self._ex = kwargs.get('ex', None)
         self._ey = kwargs.get('ey', None)
 
-        self.use_header = kwargs.get('use_header', False)
-        self.x_on = kwargs.get('x_on', True)
-        self.error_y_on = kwargs.get('y_on', False)
-        self.col_x = kwargs.get('col_x', 0)
-        self.col_y = kwargs.get('col_y', 1)
-        self.col_ex = kwargs.get('col_ex', 2)
-        self.col_ey = kwargs.get('col_ex', 3)
-        self.reverse = kwargs.get('reverse', False)
-        self.error_x_on = kwargs.get('error_x_on', False)
-        self.directory = kwargs.get('directory', '.')
-        self.skiprows = kwargs.get('skiprows', 9)
-        self.verbose = kwargs.get('verbose', mfm.verbose)
-        self.mode = kwargs.get('mode', 'csv')
-        self.colspecs = kwargs.get('colspecs', [15, 17, 17])
+        if verbose is None:
+            verbose = mfm.verbose
+        self.verbose = verbose
+
+        if colspecs is None:
+            colspecs = [15, 17, 17]
+        self.colspecs = colspecs
 
         self._data = kwargs.get('data', None)
-        self._filename = kwargs.get('filename', "")
 
     @property
     def filename(self) -> str:
@@ -115,6 +154,9 @@ class Csv(object):
     def load(
             self,
             filename: str,
+            skiprows: int = None,
+            use_header: bool = None,
+            verbose: bool = None,
             **kwargs
     ):
         """
@@ -124,11 +166,14 @@ class Csv(object):
         :param verbose: The method is verbose if verbose is set to True of the verbose attribute of the instance is
         True.
         """
-        verbose = kwargs.pop('verbose', self.verbose)
-        use_header = kwargs.pop('use_header', self.use_header)
-        skiprows = kwargs.pop('skiprows', self.skiprows)
+        if verbose is None:
+            verbose = self.verbose
+        if use_header is None:
+            use_header = self.use_header
+        if skiprows is None:
+            skiprows = self.skiprows
+
         header = 'infer' if use_header else None
-        self._filename = kwargs.get('filename', "")
 
         if os.path.isfile(filename):
             self.directory = os.path.dirname(filename)
@@ -178,7 +223,7 @@ class Csv(object):
             s = """Saving
             ------
             filename: %s
-            mode: %s
+            file_type: %s
             delimiter: %s
             Object-type: %s
             """ % (filename, mode, delimiter, type(data))

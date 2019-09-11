@@ -388,7 +388,7 @@
 <li class="toctree-l1"><a class="reference internal" href="mfm.widgets.html">mfm.widgets package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="mfm.widgets.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mfm.widgets.html#module-mfm.widgets.configuration_editor">mfm.widgets.configuration_editor module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.widgets.html#module-mfm.widgets.downloader">mfm.widgets.downloader module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.widgets.html#mfm-widgets-downloader-module">mfm.widgets.downloader module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mfm.widgets.html#module-mfm.widgets.widgets">mfm.widgets.widgets module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mfm.widgets.html#module-mfm.widgets">Module contents</a></li>
 </ul>
@@ -479,6 +479,22 @@ CR - coarse grained Carbon/Calpha</p>
 <dt id="mfm.curve.Curve.cdf">
 <em class="property">property </em><code class="sig-name descname">cdf</code><a class="headerlink" href="#mfm.curve.Curve.cdf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cumulative sum of function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#mfm.curve.Curve" title="mfm.curve.Curve"><code class="xref py py-class docutils literal notranslate"><span class="pre">Curve</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.curve.Curve.dt">
+<em class="property">property </em><code class="sig-name descname">dt</code><a class="headerlink" href="#mfm.curve.Curve.dt" title="Permalink to this definition">¶</a></dt>
+<dd><p>The derivative of the x-axis</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -489,7 +505,12 @@ CR - coarse grained Carbon/Calpha</p>
 <dl class="method">
 <dt id="mfm.curve.Curve.fwhm">
 <em class="property">property </em><code class="sig-name descname">fwhm</code><a class="headerlink" href="#mfm.curve.Curve.fwhm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.curve.Curve.normalize">
@@ -499,7 +520,12 @@ CR - coarse grained Carbon/Calpha</p>
 <dl class="method">
 <dt id="mfm.curve.Curve.to_dict">
 <code class="sig-name descname">to_dict</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'dict'<a class="reference internal" href="../_modules/mfm/curve.html#Curve.to_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.curve.Curve.to_dict" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -508,7 +534,7 @@ CR - coarse grained Carbon/Calpha</p>
 <span id="mfm-parameter-module"></span><h2>mfm.parameter module<a class="headerlink" href="#module-mfm.parameter" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mfm.parameter.Parameter">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.parameter.</code><code class="sig-name descname">Parameter</code><span class="sig-paren">(</span><em class="sig-param">value: float = 1.0</em>, <em class="sig-param">link: Optional[mfm.parameter.Parameter] = None</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/parameter.html#Parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.parameter.Parameter" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.parameter.</code><code class="sig-name descname">Parameter</code><span class="sig-paren">(</span><em class="sig-param">value=1.0</em>, <em class="sig-param">link=None</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/parameter.html#Parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.parameter.Parameter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.base.Base</span></code></p>
 <dl class="method">
 <dt id="mfm.parameter.Parameter.from_dict">
@@ -518,28 +544,48 @@ CR - coarse grained Carbon/Calpha</p>
 <dl class="method">
 <dt id="mfm.parameter.Parameter.getinstances">
 <em class="property">classmethod </em><code class="sig-name descname">getinstances</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; 'List[Parameter]'<a class="reference internal" href="../_modules/mfm/parameter.html#Parameter.getinstances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.parameter.Parameter.getinstances" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="#mfm.parameter.Parameter" title="mfm.parameter.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.parameter.Parameter.to_dict">
 <code class="sig-name descname">to_dict</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'dict'<a class="reference internal" href="../_modules/mfm/parameter.html#Parameter.to_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.parameter.Parameter.to_dict" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.parameter.Parameter.value">
 <em class="property">property </em><code class="sig-name descname">value</code><a class="headerlink" href="#mfm.parameter.Parameter.value" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="mfm.parameter.ParameterGroup">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.parameter.</code><code class="sig-name descname">ParameterGroup</code><span class="sig-paren">(</span><em class="sig-param">fit: mfm.fitting.fit.Fit</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/parameter.html#ParameterGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.parameter.ParameterGroup" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.parameter.</code><code class="sig-name descname">ParameterGroup</code><span class="sig-paren">(</span><em class="sig-param">fit</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/parameter.html#ParameterGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.parameter.ParameterGroup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.base.Base</span></code></p>
 <dl class="method">
 <dt id="mfm.parameter.ParameterGroup.chi2s">
 <em class="property">property </em><code class="sig-name descname">chi2s</code><a class="headerlink" href="#mfm.parameter.ParameterGroup.chi2s" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.parameter.ParameterGroup.clear">
@@ -554,7 +600,12 @@ CR - coarse grained Carbon/Calpha</p>
 <dl class="method">
 <dt id="mfm.parameter.ParameterGroup.values">
 <em class="property">property </em><code class="sig-name descname">values</code><a class="headerlink" href="#mfm.parameter.ParameterGroup.values" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 

@@ -182,8 +182,8 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
             self,
             fit: mfm.fitting.fit.FitGroup,
             model: mfm.models.model.Model,
-            short: str,
-            parameters: List[mfm.fitting.parameter.FittingParameter],
+            short: str = '',
+            parameters: List[mfm.fitting.parameter.FittingParameter] = None,
             n_columns: int = None,
             **kwargs
     ):

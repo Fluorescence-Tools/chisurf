@@ -85,7 +85,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
     def onConvolutionModeChanged(self):
         t = "for f in cs._current_fit:\n" \
-            "   f.models.convolve.mode = '%s'\n" % self.gui_mode
+            "   f.models.convolve.file_type = '%s'\n" % self.gui_mode
         mfm.run(t)
         mfm.run("cs._current_fit.update()")
 
@@ -533,7 +533,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
     def __init__(
             self,
-            title:str = '',
+            title: str = '',
             **kwargs
     ):
         super(LifetimeWidget, self).__init__(**kwargs)

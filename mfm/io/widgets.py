@@ -298,7 +298,7 @@ class CsvWidget(QtWidgets.QWidget):
 
     def changeCsvType(self):
         mode = 'csv' if self.radioButton_2.isChecked() else 'fwf'
-        mfm.run("cs.current_setup.mode = '%s'" % mode)
+        mfm.run("cs.current_setup.file_type = '%s'" % mode)
 
     def load(self, filename=None, **kwargs):
         if filename is None:

@@ -339,7 +339,7 @@ def rmsd(
     --------
 
     >>> import mfm
-    >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', mode='r', stride=1)
+    >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
     >>> s1 = t[10]
     >>> s1
     <mfm.structure.structure.Structure at 0x135f3ad0>
@@ -409,7 +409,7 @@ def find_best(target, reference, atom_indices=None):
     --------
 
     >>> import mfm
-    >>> t = t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', mode='r', stride=1)
+    >>> t = t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
     >>> find_best(t.mdtraj, t.mdtraj[2])
     (2, <mdtraj.Trajectory with 1 frames, 2495 atoms, 164 residues, without unitcells at 0x13570b30>)
     """
@@ -599,7 +599,7 @@ def average(
     --------
 
     >>> import mfm
-    >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', mode='r', stride=1)
+    >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
     >>> avg = t.average
     >>> avg
     <mfm.structure.structure.Structure at 0x117ff770>

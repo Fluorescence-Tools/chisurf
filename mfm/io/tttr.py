@@ -281,8 +281,8 @@ def iss_photons(data, **kwargs):
 
     # CHANNEL PHOTON MODE (first 2 bytes)
     # in brackets int values
-    # H (72)one channel time mode, h (104) one channel photon mode
-    # X (88) two channel time mode, x (120) two channel photon mode
+    # H (72)one channel time file_type, h (104) one channel photon file_type
+    # X (88) two channel time file_type, x (120) two channel photon file_type
 
     :param data:
     :param kwargs:
@@ -292,7 +292,7 @@ def iss_photons(data, **kwargs):
     verbose = kwargs.get('verbose', mfm.verbose)
     step = 1 if (data[1] == 72) or (data[1] == 104) else 2
 
-    #  X (88) two channel time mode, x (120) two channel photon mode
+    #  X (88) two channel time file_type, x (120) two channel photon file_type
     phMode = 0 if (data[1] == 72) or (data[1] == 88) else 1
 
     #  Data is saved as 0: 16-bit or 1: 32-bit
@@ -853,7 +853,7 @@ def read_ptu(filename):
 #         self._binary = list()
 #         self._filename = filename
 #
-#         with mfm.io.zipped.open_maybe_zipped(filename=filename, mode='r') as fp:
+#         with mfm.io.zipped.open_maybe_zipped(filename=filename, file_type='r') as fp:
 #             version, tags, fp = self.read_header(fp)
 #             self.version = version
 #             self.tags = tags

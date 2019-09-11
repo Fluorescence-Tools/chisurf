@@ -115,7 +115,10 @@
     <div class="col-md-9 content">
       
   <h1>Source code for mfm.plots.global_tcspc</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span>  <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="p">,</span> <span class="n">uic</span>
 <span class="kn">from</span> <span class="nn">guiqwt.builder</span> <span class="k">import</span> <span class="n">make</span>
 <span class="kn">from</span> <span class="nn">guiqwt.plot</span> <span class="k">import</span> <span class="n">CurveDialog</span>
@@ -127,11 +130,26 @@
 
 <div class="viewcode-block" id="LinePlotWidget"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.global_tcspc.LinePlotWidget">[docs]</a><span class="k">class</span> <span class="nc">LinePlotWidget</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">d_scalex</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span> <span class="n">d_scaley</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span> <span class="n">r_scalex</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span> <span class="n">r_scaley</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">d_scalex</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+            <span class="n">d_scaley</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span>
+            <span class="n">r_scalex</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+            <span class="n">r_scaley</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LinePlotWidget</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">parent</span><span class="o">=</span><span class="n">parent</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;mfm/ui/plots/linePlotWidget.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span>
+                <span class="s2">&quot;linePlotWidget.ui&quot;</span>
+            <span class="p">),</span>
+            <span class="bp">self</span>
+        <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="o">.</span><span class="n">stateChanged</span> <span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SetLog</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">checkBox_2</span><span class="o">.</span><span class="n">stateChanged</span> <span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SetLog</span><span class="p">)</span>
@@ -198,9 +216,20 @@
 
     <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Fit&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="n">d_scalex</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span> <span class="n">d_scaley</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span> <span class="n">r_scalex</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span> <span class="n">r_scaley</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">fit</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">FitGroup</span><span class="p">,</span>
+            <span class="n">d_scalex</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+            <span class="n">d_scaley</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+            <span class="n">r_scalex</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+            <span class="n">r_scaley</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GlobalAnisotropy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="n">Plot</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fit</span> <span class="o">=</span> <span class="n">fit</span>
 
@@ -276,7 +305,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">autoCorrPlot</span> <span class="o">=</span> <span class="n">plot</span>
         <span class="n">splitter1</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">pltControl</span> <span class="o">=</span> <span class="n">LinePlotWidget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_scalex</span><span class="p">,</span> <span class="n">d_scaley</span><span class="p">,</span> <span class="n">r_scalex</span><span class="p">,</span> <span class="n">r_scaley</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pltControl</span> <span class="o">=</span> <span class="n">LinePlotWidget</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">d_scalex</span><span class="p">,</span>
+            <span class="n">d_scaley</span><span class="p">,</span>
+            <span class="n">r_scalex</span><span class="p">,</span>
+            <span class="n">r_scaley</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="GlobalAnisotropy.update_all"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.global_tcspc.GlobalAnisotropy.update_all">[docs]</a>    <span class="k">def</span> <span class="nf">update_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
@@ -352,9 +387,27 @@
 
     <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;GlobalEt&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="n">f_scalex</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span> <span class="n">f_scaley</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">,</span> <span class="n">e_scalex</span><span class="o">=</span><span class="s1">&#39;log&#39;</span><span class="p">,</span> <span class="n">e_scaley</span><span class="o">=</span><span class="s1">&#39;lin&#39;</span><span class="p">):</span>
-        <span class="n">Plot</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;mfm/ui/plots/et_plot_layout.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">fit</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">FitGroup</span><span class="p">,</span>
+            <span class="n">f_scalex</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;log&#39;</span><span class="p">,</span>
+            <span class="n">f_scaley</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+            <span class="n">e_scalex</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;log&#39;</span><span class="p">,</span>
+            <span class="n">e_scaley</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span>
+            <span class="n">parent</span><span class="p">:</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GlobalEt</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">fit</span><span class="o">=</span><span class="n">fit</span><span class="p">,</span>
+            <span class="n">parent</span><span class="o">=</span><span class="n">parent</span>
+        <span class="p">)</span>
+        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span>
+                <span class="s2">&quot;et_plot_layout.ui&quot;</span>
+            <span class="p">),</span>
+            <span class="bp">self</span>
+        <span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">fit</span> <span class="o">=</span> <span class="n">fit</span>
 
         <span class="c1">## Distance distribution plot</span>

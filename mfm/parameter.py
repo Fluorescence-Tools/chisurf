@@ -30,7 +30,7 @@ class Parameter(mfm.base.Base):
         self._value = float(value)
 
     @classmethod
-    def getinstances(cls) -> List[Parameter]:
+    def get_instances(cls) -> List[Parameter]:
         dead = set()
         for ref in cls._instances:
             obj = ref()

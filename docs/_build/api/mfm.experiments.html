@@ -157,7 +157,7 @@
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.reader.ExperimentReader</span></code>, <a class="reference internal" href="../user_documentation/api/widgets.html#mfm.io.widgets.CsvWidget" title="mfm.io.widgets.CsvWidget"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.io.widgets.CsvWidget</span></code></a></p>
 <dl class="attribute">
 <dt id="mfm.experiments.fcs.FCS.name">
-<code class="sig-name descname">name</code><em class="property"> = 'FCS'</em><a class="headerlink" href="#mfm.experiments.fcs.FCS.name" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">name</code><em class="property"> = 'fcs'</em><a class="headerlink" href="#mfm.experiments.fcs.FCS.name" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -218,7 +218,12 @@ the aquisition time and the count-rate.</p>
 <dl class="method">
 <dt id="mfm.experiments.globalfit.GlobalFitSetup.autofitrange">
 <em class="property">static </em><code class="sig-name descname">autofitrange</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'Tuple[int, int]'<a class="reference internal" href="../_modules/mfm/experiments/globalfit.html#GlobalFitSetup.autofitrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.globalfit.GlobalFitSetup.autofitrange" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.experiments.globalfit.GlobalFitSetup.read">
@@ -226,7 +231,7 @@ the aquisition time and the count-rate.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – A name that will be associated to the data set that is read.</p></li>
+<li><p><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – A name that will be associated to the data set that is read.</p></li>
 <li><p><strong>kwargs</strong> – </p></li>
 </ul>
 </dd>
@@ -277,6 +282,16 @@ the aquisition time and the count-rate.</p>
 <em class="property">static </em><code class="sig-name descname">autofitrange</code><span class="sig-paren">(</span><em class="sig-param">data: 'mfm.experiments.data.Data'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructureFolder.autofitrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructureFolder.autofitrange" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="method">
+<dt id="mfm.experiments.modelling.LoadStructureFolder.get_data">
+<code class="sig-name descname">get_data</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'mfm.experiments.data.ExperimentDataGroup'<a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructureFolder.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructureFolder.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentDataGroup</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="mfm.experiments.modelling.LoadStructureFolder.name">
 <code class="sig-name descname">name</code><em class="property"> = 'Trajectory'</em><a class="headerlink" href="#mfm.experiments.modelling.LoadStructureFolder.name" title="Permalink to this definition">¶</a></dt>
@@ -284,11 +299,11 @@ the aquisition time and the count-rate.</p>
 
 <dl class="method">
 <dt id="mfm.experiments.modelling.LoadStructureFolder.read">
-<em class="property">static </em><code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">data: 'mfm.experiments.data.Data'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructureFolder.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructureFolder.read" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">name: 'str' = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructureFolder.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructureFolder.read" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – A name that will be associated to the data set that is read.</p></li>
+<li><p><strong>name</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – A name that will be associated to the data set that is read.</p></li>
 <li><p><strong>kwargs</strong> – </p></li>
 </ul>
 </dd>
@@ -303,255 +318,6 @@ the aquisition time and the count-rate.</p>
 </div>
 <div class="section" id="module-mfm.experiments.tcspc">
 <span id="mfm-experiments-tcspc-module"></span><h2>mfm.experiments.tcspc module<a class="headerlink" href="#module-mfm.experiments.tcspc" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mfm.experiments.tcspc.CsvTCSPC">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.tcspc.</code><code class="sig-name descname">CsvTCSPC</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">dt: float = 1.0</em>, <em class="sig-param">rep_rate: float = 1.0</em>, <em class="sig-param">is_jordi: bool = False</em>, <em class="sig-param">mode: str = 'vm'</em>, <em class="sig-param">g_factor: float = 1.0</em>, <em class="sig-param">rebin: Tuple[int</em>, <em class="sig-param">int] = (1</em>, <em class="sig-param">1)</em>, <em class="sig-param">matrix_columns: Tuple[int</em>, <em class="sig-param">int] = (0</em>, <em class="sig-param">1)</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#CsvTCSPC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPC" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.experiments.tcspc.CsvTCSPCWidget">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.tcspc.</code><code class="sig-name descname">CsvTCSPCWidget</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#CsvTCSPCWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPCWidget" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mfm.experiments.tcspc.CsvTCSPC" title="mfm.experiments.tcspc.CsvTCSPC"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.tcspc.CsvTCSPC</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
-<dl class="method">
-<dt id="mfm.experiments.tcspc.CsvTCSPCWidget.onDtChanged">
-<code class="sig-name descname">onDtChanged</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#CsvTCSPCWidget.onDtChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPCWidget.onDtChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.CsvTCSPCWidget.onGfactorChanged">
-<code class="sig-name descname">onGfactorChanged</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#CsvTCSPCWidget.onGfactorChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPCWidget.onGfactorChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.CsvTCSPCWidget.onIsjordiChanged">
-<code class="sig-name descname">onIsjordiChanged</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#CsvTCSPCWidget.onIsjordiChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPCWidget.onIsjordiChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.CsvTCSPCWidget.onMatrixColumnsChanged">
-<code class="sig-name descname">onMatrixColumnsChanged</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#CsvTCSPCWidget.onMatrixColumnsChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPCWidget.onMatrixColumnsChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.CsvTCSPCWidget.onPolarizationChange">
-<code class="sig-name descname">onPolarizationChange</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#CsvTCSPCWidget.onPolarizationChange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPCWidget.onPolarizationChange" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.CsvTCSPCWidget.onRebinChanged">
-<code class="sig-name descname">onRebinChanged</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#CsvTCSPCWidget.onRebinChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPCWidget.onRebinChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.CsvTCSPCWidget.onRepratechange">
-<code class="sig-name descname">onRepratechange</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#CsvTCSPCWidget.onRepratechange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.CsvTCSPCWidget.onRepratechange" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.experiments.tcspc.TCSPCReader">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.tcspc.</code><code class="sig-name descname">TCSPCReader</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">skiprows: int = 7</em>, <em class="sig-param">is_jordi: bool = False</em>, <em class="sig-param">rebin: Tuple[int</em>, <em class="sig-param">int] = (1</em>, <em class="sig-param">1)</em>, <em class="sig-param">use_header: bool = True</em>, <em class="sig-param">polarization: str = 'vm'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCReader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCReader" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.reader.ExperimentReader</span></code></p>
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TCSPCReader.autofitrange">
-<em class="property">static </em><code class="sig-name descname">autofitrange</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'Tuple[float, float]'<a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCReader.autofitrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCReader.autofitrange" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TCSPCReader.read">
-<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">*args</em>, <em class="sig-param">filename: 'str' = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'mfm.experiments.data.DataCurveGroup'<a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCReader.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCReader.read" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – A name that will be associated to the data set that is read.</p></li>
-<li><p><strong>kwargs</strong> – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.experiments.tcspc.TCSPCSetupDummy">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.tcspc.</code><code class="sig-name descname">TCSPCSetupDummy</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">n_TAC: int = 4096</em>, <em class="sig-param">dt: float = 0.0141</em>, <em class="sig-param">p0: float = 10000.0</em>, <em class="sig-param">rep_rate: float = 10.0</em>, <em class="sig-param">lifetime: float = 4.1</em>, <em class="sig-param">name: str = 'Dummy'</em>, <em class="sig-param">sample_name: str = 'TCSPC-Dummy'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCSetupDummy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupDummy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mfm.experiments.tcspc.TCSPCReader" title="mfm.experiments.tcspc.TCSPCReader"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.tcspc.TCSPCReader</span></code></a></p>
-<dl class="attribute">
-<dt id="mfm.experiments.tcspc.TCSPCSetupDummy.name">
-<code class="sig-name descname">name</code><em class="property"> = 'Dummy-TCSPC'</em><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupDummy.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TCSPCSetupDummy.read">
-<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename: 'str' = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCSetupDummy.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupDummy.read" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – A name that will be associated to the data set that is read.</p></li>
-<li><p><strong>kwargs</strong> – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.experiments.tcspc.TCSPCSetupDummyWidget">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.tcspc.</code><code class="sig-name descname">TCSPCSetupDummyWidget</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCSetupDummyWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupDummyWidget" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code>, <a class="reference internal" href="#mfm.experiments.tcspc.TCSPCSetupDummy" title="mfm.experiments.tcspc.TCSPCSetupDummy"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.tcspc.TCSPCSetupDummy</span></code></a></p>
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TCSPCSetupDummyWidget.dt">
-<em class="property">property </em><code class="sig-name descname">dt</code><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupDummyWidget.dt" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TCSPCSetupDummyWidget.lifetime">
-<em class="property">property </em><code class="sig-name descname">lifetime</code><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupDummyWidget.lifetime" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TCSPCSetupDummyWidget.n_TAC">
-<em class="property">property </em><code class="sig-name descname">n_TAC</code><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupDummyWidget.n_TAC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TCSPCSetupDummyWidget.p0">
-<em class="property">property </em><code class="sig-name descname">p0</code><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupDummyWidget.p0" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TCSPCSetupDummyWidget.sample_name">
-<em class="property">property </em><code class="sig-name descname">sample_name</code><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupDummyWidget.sample_name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.experiments.tcspc.TCSPCSetupSDTWidget">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.tcspc.</code><code class="sig-name descname">TCSPCSetupSDTWidget</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCSetupSDTWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupSDTWidget" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mfm.experiments.tcspc.TCSPCReader" title="mfm.experiments.tcspc.TCSPCReader"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.tcspc.TCSPCReader</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TCSPCSetupSDTWidget.curve_nbr">
-<em class="property">property </em><code class="sig-name descname">curve_nbr</code><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupSDTWidget.curve_nbr" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TCSPCSetupSDTWidget.dt">
-<em class="property">property </em><code class="sig-name descname">dt</code><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupSDTWidget.dt" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TCSPCSetupSDTWidget.read">
-<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCSetupSDTWidget.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupSDTWidget.read" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – A name that will be associated to the data set that is read.</p></li>
-<li><p><strong>kwargs</strong> – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TCSPCSetupSDTWidget.rep_rate">
-<em class="property">property </em><code class="sig-name descname">rep_rate</code><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupSDTWidget.rep_rate" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.experiments.tcspc.TCSPCSetupWidget">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.tcspc.</code><code class="sig-name descname">TCSPCSetupWidget</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCSetupWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupWidget" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mfm.experiments.tcspc.TCSPCReader" title="mfm.experiments.tcspc.TCSPCReader"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.tcspc.TCSPCReader</span></code></a>, <a class="reference internal" href="mfm.io.html#mfm.io.ascii.Csv" title="mfm.io.ascii.Csv"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.io.ascii.Csv</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TCSPCSetupWidget.read">
-<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">*args</em>, <em class="sig-param">filename: 'str' = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'mfm.experiments.data.DataCurveGroup'<a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TCSPCSetupWidget.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TCSPCSetupWidget.read" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – A name that will be associated to the data set that is read.</p></li>
-<li><p><strong>kwargs</strong> – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.experiments.tcspc.TcspcSDTWidget">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.tcspc.</code><code class="sig-name descname">TcspcSDTWidget</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TcspcSDTWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TcspcSDTWidget.curve">
-<em class="property">property </em><code class="sig-name descname">curve</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.curve" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TcspcSDTWidget.curve_number">
-<em class="property">property </em><code class="sig-name descname">curve_number</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.curve_number" title="Permalink to this definition">¶</a></dt>
-<dd><p>The number of the currently selected curve</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TcspcSDTWidget.filename">
-<em class="property">property </em><code class="sig-name descname">filename</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.filename" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TcspcSDTWidget.n_curves">
-<em class="property">property </em><code class="sig-name descname">n_curves</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.n_curves" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TcspcSDTWidget.name">
-<em class="property">property </em><code class="sig-name descname">name</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TcspcSDTWidget.onOpenFile">
-<code class="sig-name descname">onOpenFile</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/tcspc.html#TcspcSDTWidget.onOpenFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.onOpenFile" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TcspcSDTWidget.ph_counts">
-<em class="property">property </em><code class="sig-name descname">ph_counts</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.ph_counts" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TcspcSDTWidget.rep_rate">
-<em class="property">property </em><code class="sig-name descname">rep_rate</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.rep_rate" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TcspcSDTWidget.sdt">
-<em class="property">property </em><code class="sig-name descname">sdt</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.sdt" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.tcspc.TcspcSDTWidget.times">
-<em class="property">property </em><code class="sig-name descname">times</code><a class="headerlink" href="#mfm.experiments.tcspc.TcspcSDTWidget.times" title="Permalink to this definition">¶</a></dt>
-<dd><p>The time-array in nano-seconds</p>
-</dd></dl>
-
-</dd></dl>
-
 </div>
 <div class="section" id="module-mfm.experiments">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.experiments" title="Permalink to this headline">¶</a></h2>
@@ -562,6 +328,11 @@ different experimental setups. Furthermore, it contains a set of plotting librar
 <dt id="mfm.experiments.get_data">
 <code class="sig-prename descclassname">mfm.experiments.</code><code class="sig-name descname">get_data</code><span class="sig-paren">(</span><em class="sig-param">curve_type: 'str' = 'experiment'</em>, <em class="sig-param">data_set: 'List[data.ExperimentalData]' = None</em><span class="sig-paren">)</span> &#x2192; 'List[data.ExperimentalData]'<a class="reference internal" href="../_modules/mfm/experiments.html#get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.get_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns all curves <cite>mfm.curve.DataCurve</cite> except if the curve is names “Global-fit”</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentalData</span></code>]</p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>

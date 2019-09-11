@@ -390,6 +390,8 @@ class Main(QtWidgets.QMainWindow):
             self
         )
 
+        self.current_fit_widget = None
+
         self.setCentralWidget(self.mdiarea)
         self.init_widgets()
         self.configuration = mfm.widgets.text_editor.CodeEditor(
@@ -408,7 +410,6 @@ class Main(QtWidgets.QMainWindow):
                 "about.ui"
             )
         )
-
         self.about.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.about.hide()
         self.actionHelp_2.triggered.connect(self.about.show)

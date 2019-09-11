@@ -810,7 +810,7 @@ domReady(function enableCssMediaQueries() {
 			}
 		}
 		else if ('width' === feature.substring(l - 5, l)) { // viewport width
-			width = document.documentElement.clientWidth || document.body.clientWidth; // the latter for IE quirks mode
+			width = document.documentElement.clientWidth || document.body.clientWidth; // the latter for IE quirks file_type
 			if (value !== null) {
 				if (valueType === 'length') {
 					return ((min && width >= amount) || (max && width < amount) || (!min && !max && width === amount));
@@ -824,7 +824,7 @@ domReady(function enableCssMediaQueries() {
 			}
 		}
 		else if ('height' === feature.substring(l - 6, l)) { // viewport height
-			height = document.documentElement.clientHeight || document.body.clientHeight; // the latter for IE quirks mode
+			height = document.documentElement.clientHeight || document.body.clientHeight; // the latter for IE quirks file_type
 			if (value !== null) {
 				if (valueType === 'length') {
 					return ((min && height >= amount) || (max && height < amount) || (!min && !max && height === amount));
