@@ -39,46 +39,70 @@ class PDBSelector(QtWidgets.QWidget):
         return self._pdb
 
     @atoms.setter
-    def atoms(self, v):
+    def atoms(
+            self,
+            v
+    ):
         self._pdb = v
         self.update_chain()
 
     @property
-    def chain_id(self):
+    def chain_id(
+            self
+    ) -> str:
         return str(self.comboBox.currentText())
 
     @chain_id.setter
-    def chain_id(self, v):
+    def chain_id(
+            self,
+            v: str
+    ):
         pass
 
     @property
-    def residue_name(self):
+    def residue_name(
+            self
+    ) -> str:
         try:
-            return str(self.atoms[self.atom_number]['res_name'])
+            return str(
+                self.atoms[self.atom_number]['res_name']
+            )
         except ValueError:
-            return 0
+            return "NA"
 
     @property
-    def residue_id(self):
+    def residue_id(
+            self
+    ) -> int:
         try:
             return int(self.comboBox_2.currentText())
         except ValueError:
             return 0
 
     @residue_id.setter
-    def residue_id(self, v):
+    def residue_id(
+            self,
+            v: int
+    ):
         pass
 
     @property
-    def atom_name(self):
+    def atom_name(
+            self
+    ) -> str:
         return str(self.comboBox_3.currentText())
 
     @atom_name.setter
-    def atom_name(self, v):
+    def atom_name(
+            self,
+            v: str
+    ):
         pass
 
     @property
-    def atom_number(self):
+    def atom_number(
+            self
+    ) -> int:
         residue_key = self.residue_id
         atom_name = self.atom_name
         chain = self.chain_id
@@ -88,7 +112,8 @@ class PDBSelector(QtWidgets.QWidget):
             chain,
             residue_key,
             atom_name,
-            None)
+            None
+        )
         return w
 
     def onChainChanged(self):
@@ -136,8 +161,14 @@ class LoadThread(QtCore.QThread):
 
 class PDBFolderLoad(QtWidgets.QWidget):
 
-    def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self, parent=parent)
+    def __init__(
+            self,
+            parent=None
+    ):
+        QtWidgets.QWidget.__init__(
+            self,
+            parent=parent
+        )
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -169,8 +200,8 @@ class PDBFolderLoad(QtWidgets.QWidget):
                      if os.path.isfile(os.path.join(directory, f))]
         filenames.sort()
 
-        pdb_filenames = []
-        for i, filename in enumerate(filenames):
+        pdb_filenames = list()
+        for filename in filenames:
             extension = os.path.splitext(filename)[1][1:]
             if filename.lower().endswith('.pdb') or extension.isdigit():
                 pdb_filenames.append(filename)
@@ -180,48 +211,73 @@ class PDBFolderLoad(QtWidgets.QWidget):
         self.load_thread.read = Structure
         self.load_thread.read_parameter = [self.calc_internal, self.verbose]
         self.load_thread.append_parameter = [self.calc_rmsd]
-        self.trajectory = TrajectoryFile(use_objects=self.use_objects, calc_internal=self.calc_internal,
-                                     verbose=self.verbose)
+        self.trajectory = TrajectoryFile(
+            use_objects=self.use_objects,
+            calc_internal=self.calc_internal,
+            verbose=self.verbose
+        )
         self.load_thread.filenames = pdb_filenames
         self.load_thread.target = self.trajectory
         self.load_thread.start()
 
     @property
-    def calc_rmsd(self):
+    def calc_rmsd(
+            self
+    ) -> bool:
         return self.checkBox_4.isChecked()
 
     @property
-    def n_files(self):
+    def n_files(
+            self
+    ) -> int:
         return int(self.lineEdit_3.text())
 
     @n_files.setter
-    def n_files(self, v):
+    def n_files(
+            self,
+            v: int
+    ):
         self.lineEdit_3.setText(str(v))
 
     @property
-    def verbose(self):
+    def verbose(
+            self
+    ) -> bool:
         return bool(self.checkBox_3.isChecked())
 
     @property
-    def nAtoms(self):
+    def nAtoms(
+            self
+    ) -> int:
         return self.trajectory[0].n_atoms
 
     @property
-    def nResidues(self):
+    def nResidues(
+            self
+    ) -> int:
         return self.trajectory[0].n_residues
 
     @property
-    def folder(self):
+    def folder(
+            self
+    ) -> str:
         return str(self.lineEdit_7.text())
 
     @folder.setter
-    def folder(self, v):
+    def folder(
+            self,
+            v: str
+    ):
         self.lineEdit_7.setText(v)
 
     @property
-    def use_objects(self):
+    def use_objects(
+            self
+    ) -> bool:
         return bool(self.checkBox_2.isChecked())
 
     @property
-    def calc_internal(self):
+    def calc_internal(
+            self
+    ) -> bool:
         return self.checkBox.isChecked()

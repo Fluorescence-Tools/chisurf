@@ -31,9 +31,13 @@ class ResidualPlot(plotbase.Plot):
     def __init__(
             self,
             fit: mfm.fitting.fit.FitGroup,
-            *args, **kwargs
+            *args,
+            **kwargs
     ):
-        mfm.plots.Plot.__init__(self, fit)
+        super(ResidualPlot, self).__init__(
+            fit=fit,
+            **kwargs
+        )
         self.layout = QtWidgets.QVBoxLayout(self)
         self.data_x, self.data_y = None, None
 

@@ -133,13 +133,16 @@ def save_fit():
         except WindowsError:
             pass
 
-        px = QtGui.QPixmap.grabWidget(fww)
         fit_png = os.path.join(target_dir, 'screenshot_fit.png')
-        px.save(fit_png)
+        #px = QtGui.QPixmap.grabWidget(fww)
+        #px.save(fit_png)
+        fww.grab().save(fit_png)
 
-        px = QtGui.QPixmap.grabWidget(cs.current_fit.model)
         model_png = os.path.join(target_dir, 'screenshot_model.png')
-        px.save(model_png)
+        #px = QtGui.QPixmap.grabWidget(cs.current_fit.model)
+        #px.save(model_png)
+        cs.current_fit.model.grab().save(model_png)
+
         document.add_picture(model_png, width=Inches(2.5))
         document.add_picture(fit_png, width=Inches(2.5))
         try:
