@@ -167,7 +167,10 @@ class Main(QtWidgets.QMainWindow):
     def onAddFit(self):
         mfm.run(
             "mfm.cmd.add_fit(model_name='%s', dataset_indices=%s)" %
-            (self.current_model_name, [r.row() for r in self.dataset_selector.selectedIndexes()])
+            (
+                self.current_model_name,
+                [r.row() for r in self.dataset_selector.selectedIndexes()]
+            )
         )
 
     def onExperimentChanged(self):
@@ -463,7 +466,7 @@ if __name__ == "__main__":
     mfm.cs = win
     win.init_setups()
 
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    #app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
     #with open(mfm.settings.style_sheet_file, 'r') as fp:
     #    style_sheet = fp.read()
