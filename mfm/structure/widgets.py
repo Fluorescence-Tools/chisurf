@@ -11,8 +11,15 @@ from mfm.widgets.pdb import LoadThread
 class PDBFolderLoad(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi("mfm/ui/proteinFolderLoad.ui", self)
+        QtWidgets.QWidget.__init__(self, parent=parent)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "proteinFolderLoad.ui"
+            ),
+            self
+        )
+
         self.pushButton_12.clicked.connect(self.onLoadStructure)
         self.updatePBar(0)
         self.load_thread = LoadThread()

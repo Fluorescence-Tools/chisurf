@@ -146,10 +146,11 @@ parameter:
   hide_label: false
 gui:
   editor:
-    MarginsBackgroundColor: "#cccccc"
-    MarkerBackgroundColor: "#eeeeee"
-    CaretLineBackgroundColor: "#ffe4e4"
+    margins_background_color: "#cccccc"
+    marker_background_color: "#eeeeee"
+    caret_line_background_color: "#ffe4e4"
     font_size: 9
+    font_family: Courier
     language: Python
   show_console: true
   show_macro_edit: true
