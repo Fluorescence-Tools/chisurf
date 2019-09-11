@@ -349,7 +349,8 @@ class GlobalFitModel(model.Model, Curve):
             f.model.update()
 
     def update_model(
-            self
+            self,
+            **kwargs
     ) -> None:
         if mfm.settings.cs_settings['fitting']['parallel_fit']:
             threads = [threading.Thread(target=f.model.update_model) for f in self.fits]
@@ -364,9 +365,8 @@ class GlobalFitModel(model.Model, Curve):
     def finalize(
             self
     ) -> None:
-        model.Model.finalize(self)
+        super(GlobalFitModel, self).finalize()
         for fit in self.fits:
-            #fit.finalize()
             fit.model.finalize()
 
 
