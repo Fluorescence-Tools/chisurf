@@ -109,7 +109,7 @@ class FittingControllerWidget(QtWidgets.QWidget):
         mfm.fitting.fit.sample_fit(self.fit, filename, **kw)
 
     def onRunFit(self):
-        mfm.run("cs.current_fit.run()")
+        mfm.run("cs._current_fit.run()")
 
     def onAutoFitRange(self):
         try:
@@ -207,7 +207,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
         def linkcall():
             tooltip = " linked to " + parameter_name
             mfm.run(
-                "cs.current_fit.model.parameters_all_dict['%s'].link = mfm.fits[%s].model.parameters_all_dict['%s']" %
+                "cs._current_fit.model.parameters_all_dict['%s'].link = mfm.fits[%s].model.parameters_all_dict['%s']" %
                 (self.name, fit_idx, parameter_name)
             )
             self.widget_link.setToolTip(tooltip)
@@ -351,29 +351,29 @@ class FittingParameterWidget(QtWidgets.QWidget):
 
         # The variable value
         self.widget_value.editingFinished.connect(lambda: mfm.run(
-            "cs.current_fit.model.parameters_all_dict['%s'].value = %s\n"
-            "cs.current_fit.update()" %
+            "cs._current_fit.model.parameters_all_dict['%s'].value = %s\n"
+            "cs._current_fit.update()" %
             (self.fitting_parameter.name, self.widget_value.value()))
         )
 
         self.widget_fix.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.model.parameters_all_dict['%s'].fixed = %s" %
+            "cs._current_fit.model.parameters_all_dict['%s'].fixed = %s" %
             (self.fitting_parameter.name, self.widget_fix.isChecked()))
         )
 
         # Variable is bounded
         self.widget_bounds_on.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.model.parameters_all_dict['%s'].bounds_on = %s" %
+            "cs._current_fit.model.parameters_all_dict['%s'].bounds_on = %s" %
             (self.fitting_parameter.name, self.widget_bounds_on.isChecked()))
         )
 
         self.widget_lower_bound.editingFinished.connect(lambda: mfm.run(
-            "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
+            "cs._current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
             (self.fitting_parameter.name, self.widget_lower_bound.value(), self.widget_upper_bound.value()))
         )
 
         self.widget_upper_bound.editingFinished.connect(lambda: mfm.run(
-            "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
+            "cs._current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
             (self.fitting_parameter.name, self.widget_lower_bound.value(), self.widget_upper_bound.value()))
         )
 

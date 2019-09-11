@@ -70,10 +70,12 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
         self._rep.make_widget(layout=self.horizontalLayout_3, text='r[MHz]')
 
-        self.irf_select = ExperimentalDataSelector(parent=None,
-                                                   change_event=self.change_irf,
-                                                   fit=self.fit,
-                                                   setup=mfm.experiments.tcspc.TCSPCReader)
+        self.irf_select = ExperimentalDataSelector(
+            parent=None,
+            change_event=self.change_irf,
+            fit=self.fit,
+            setup=mfm.experiments.tcspc.TCSPCReader
+        )
 
         self.actionSelect_IRF.triggered.connect(self.irf_select.show)
         self.radioButton_3.clicked.connect(self.onConvolutionModeChanged)
@@ -82,13 +84,13 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         self.groupBox.toggled.connect(self.onDoConvolutionChanged)
 
     def onConvolutionModeChanged(self):
-        t = "for f in cs.current_fit:\n" \
+        t = "for f in cs._current_fit:\n" \
             "   f.models.convolve.mode = '%s'\n" % self.gui_mode
         mfm.run(t)
-        mfm.run("cs.current_fit.update()")
+        mfm.run("cs._current_fit.update()")
 
     def onDoConvolutionChanged(self):
-        mfm.run("cs.current_fit.models.convolve.do_convolution = %s" % self.groupBox.isChecked())
+        mfm.run("cs._current_fit.models.convolve.do_convolution = %s" % self.groupBox.isChecked())
 
     def change_irf(self):
         idx = self.irf_select.selected_curve_index
@@ -105,7 +107,6 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             self,
             v: float
     ):
-        self._fwhm = v
         self.lineEdit_2.setText("%.3f" % v)
 
     @property
@@ -120,8 +121,18 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
 class CorrectionsWidget(Corrections, QtWidgets.QWidget):
 
-    def __init__(self, fit, **kwargs):
-        super(CorrectionsWidget, self).__init__(fit=fit, threshold=0.9, reverse=False, enabled=False)
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            hide_corrections: bool = False,
+            **kwargs
+    ):
+        super(CorrectionsWidget, self).__init__(
+            fit=fit,
+            threshold=0.9,
+            reverse=False,
+            enabled=False
+        )
         QtWidgets.QWidget.__init__(self)
         uic.loadUi(
             os.path.join(
@@ -133,33 +144,43 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
 
         self.groupBox.setChecked(False)
         self.comboBox.addItems(mfm.math.signal.window_function_types)
-        if kwargs.get('hide_corrections', False):
+        if hide_corrections:
             self.hide()
 
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._dead_time, layout=self.horizontalLayout_2, text='t<sub>dead</sub>[ns]')
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._window_length, layout=self.horizontalLayout_2, text='t<sub>dead</sub>[ns]')
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._dead_time,
+            layout=self.horizontalLayout_2,
+            text='t<sub>dead</sub>[ns]'
+        )
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._window_length,
+            layout=self.horizontalLayout_2,
+            text='t<sub>dead</sub>[ns]'
+        )
 
-        self.lin_select = ExperimentalDataSelector(parent=None,
-                                                   change_event=self.onChangeLin,
-                                                   fit=self.fit,
-                                                   setup=mfm.experiments.tcspc.TCSPCReader)
+        self.lin_select = ExperimentalDataSelector(
+            parent=None,
+            change_event=self.onChangeLin,
+            fit=self.fit,
+            setup=mfm.experiments.tcspc.tcspc.TCSPCReader
+        )
 
         self.actionSelect_lintable.triggered.connect(self.lin_select.show)
 
         self.checkBox_3.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.models.corrections.correct_pile_up = %s\n" % self.checkBox_3.isChecked())
+            "cs._current_fit.models.corrections.correct_pile_up = %s\n" % self.checkBox_3.isChecked())
         )
 
         self.checkBox_2.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.models.corrections.reverse = %s" % self.checkBox_2.isChecked())
+            "cs._current_fit.models.corrections.reverse = %s" % self.checkBox_2.isChecked())
         )
 
         self.checkBox.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.models.corrections.correct_dnl = %s" % self.checkBox.isChecked())
+            "cs._current_fit.models.corrections.correct_dnl = %s" % self.checkBox.isChecked())
         )
 
         self.comboBox.currentIndexChanged.connect(lambda: mfm.run(
-            "cs.current_fit.models.corrections.window_function = '%s'" % self.comboBox.currentText())
+            "cs._current_fit.models.corrections.window_function = '%s'" % self.comboBox.currentText())
         )
 
     def onChangeLin(self):
@@ -188,11 +209,16 @@ class GenericWidget(QtWidgets.QWidget, Generic):
         self.lineedit_nphBg.setText("%i" % self.n_ph_bg)
         self.lineedit_nphFl.setText("%i" % self.n_ph_fl)
 
-    def __init__(self, **kwargs):
+    def __init__(
+            self,
+            hide_generic: bool = False,
+            **kwargs
+    ):
         super(GenericWidget, self).__init__(**kwargs)
 
         self.parent = kwargs.get('parent', None)
-        if kwargs.get('hide_generic', False):
+
+        if hide_generic:
             self.hide()
 
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -247,8 +273,9 @@ class GenericWidget(QtWidgets.QWidget, Generic):
 class AnisotropyWidget(Anisotropy, QtWidgets.QWidget):
 
     def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        Anisotropy.__init__(self, **kwargs)
+        super(AnisotropyWidget, self).__init__(
+            **kwargs
+        )
 
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
@@ -265,16 +292,16 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QWidget):
         self.radioButtonVM = QtWidgets.QRadioButton("VM")
         self.radioButtonVM.setToolTip("Excitation: Vertical\nDetection: Magic-Angle")
         self.radioButtonVM.setChecked(True)
-        self.radioButtonVM.clicked.connect(lambda: mfm.run("cs.current_fit.model.anisotropy.polarization_type = 'vm'"))
+        self.radioButtonVM.clicked.connect(lambda: mfm.run("cs._current_fit.model.anisotropy.polarization_type = 'vm'"))
         self.radioButtonVM.clicked.connect(self.hide_roation_parameters)
 
         self.radioButtonVV = QtWidgets.QRadioButton("VV")
         self.radioButtonVV.setToolTip("Excitation: Vertical\nDetection: Vertical")
-        self.radioButtonVV.clicked.connect(lambda: mfm.run("cs.current_fit.model.anisotropy.polarization_type = 'vv'"))
+        self.radioButtonVV.clicked.connect(lambda: mfm.run("cs._current_fit.model.anisotropy.polarization_type = 'vv'"))
 
         self.radioButtonVH = QtWidgets.QRadioButton("VH")
         self.radioButtonVH.setToolTip("Excitation: Vertical\nDetection: Horizontal")
-        self.radioButtonVH.clicked.connect(lambda: mfm.run("cs.current_fit.model.anisotropy.polarization_type = 'vh'"))
+        self.radioButtonVH.clicked.connect(lambda: mfm.run("cs._current_fit.model.anisotropy.polarization_type = 'vh'"))
 
         layout = QtWidgets.QHBoxLayout()
 
@@ -346,16 +373,16 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QWidget):
             self.gb.hide()
 
     def onAddRotation(self):
-        t = "for f in cs.current_fit:\n" \
+        t = "for f in cs._current_fit:\n" \
             "   f.models.anisotropy.add_rotation()"
         mfm.run(t)
-        mfm.run("cs.current_fit.update()")
+        mfm.run("cs._current_fit.update()")
 
     def onRemoveRotation(self):
-        t = "for f in cs.current_fit:\n" \
+        t = "for f in cs._current_fit:\n" \
             "   f.models.anisotropy.remove_rotation()"
         mfm.run(t)
-        mfm.run("cs.current_fit.update()")
+        mfm.run("cs._current_fit.update()")
 
     def add_rotation(self, **kwargs):
         Anisotropy.add_rotation(self, **kwargs)
@@ -386,25 +413,25 @@ class PDDEMWidget(QtWidgets.QWidget, PDDEM):
             self
         )
 
-        l = QtWidgets.QHBoxLayout()
-        self._fAB = self._fAB.make_widget(layout=l, text='A>B')
-        self._fBA = self._fBA.make_widget(layout=l, text='B>A')
-        self.verticalLayout_3.addLayout(l)
+        layout = QtWidgets.QHBoxLayout()
+        self._fAB = self._fAB.make_widget(layout=layout, text='A>B')
+        self._fBA = self._fBA.make_widget(layout=layout, text='B>A')
+        self.verticalLayout_3.addLayout(layout)
 
-        l = QtWidgets.QHBoxLayout()
-        self._pA = self._pA.make_widget(layout=l)
-        self._pB = self._pB.make_widget(layout=l)
-        self.verticalLayout_3.addLayout(l)
+        layout = QtWidgets.QHBoxLayout()
+        self._pA = self._pA.make_widget(layout=layout)
+        self._pB = self._pB.make_widget(layout=layout)
+        self.verticalLayout_3.addLayout(layout)
 
-        l = QtWidgets.QHBoxLayout()
-        self._pxA = self._pxA.make_widget(layout=l, text='Ex<sub>A</sub>')
-        self._pxB = self._pxB.make_widget(layout=l, text='Ex<sub>B</sub>')
-        self.verticalLayout_3.addLayout(l)
+        layout = QtWidgets.QHBoxLayout()
+        self._pxA = self._pxA.make_widget(layout=layout, text='Ex<sub>A</sub>')
+        self._pxB = self._pxB.make_widget(layout=layout, text='Ex<sub>B</sub>')
+        self.verticalLayout_3.addLayout(layout)
 
-        l = QtWidgets.QHBoxLayout()
-        self._pmA = self._pmA.make_widget(layout=l, text='Em<sub>A</sub>')
-        self._pmB = self._pmB.make_widget(layout=l, text='Em<sub>B</sub>')
-        self.verticalLayout_3.addLayout(l)
+        layout = QtWidgets.QHBoxLayout()
+        self._pmA = self._pmA.make_widget(layout=layout, text='Em<sub>A</sub>')
+        self._pmB = self._pmB.make_widget(layout=layout, text='Em<sub>B</sub>')
+        self.verticalLayout_3.addLayout(layout)
 
 
 class PDDEMModelWidget(ModelWidget, PDDEMModel):
@@ -468,8 +495,8 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         def linkcall():
             for key in self.parameter_dict:
                 v = target.parameters_all_dict[key].value
-                mfm.run("cs.current_fit.model.parameters_all_dict['%s'].value = %s" % (key, v))
-            mfm.run("cs.current_fit.update()")
+                mfm.run("cs._current_fit.model.parameters_all_dict['%s'].value = %s" % (key, v))
+            mfm.run("cs._current_fit.update()")
         return linkcall
 
     def read_menu(self):
@@ -504,7 +531,11 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
                 menu.addMenu(submenu)
         self.linkFrom.setMenu(menu)
 
-    def __init__(self, title='', **kwargs):
+    def __init__(
+            self,
+            title:str = '',
+            **kwargs
+    ):
         super(LifetimeWidget, self).__init__(**kwargs)
 
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -603,7 +634,7 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
     def __init__(
             self,
             fit: mfm.fitting.fit.FitGroup,
-            icon=None,
+            icon: QtGui.QIcon = None,
             hide_nuisances: bool = False,
             **kwargs
     ):
@@ -711,13 +742,13 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
         self.append(1.0, 50.0, 6.0, 0.0)
 
     def onAddGaussian(self):
-        t = "for f in cs.current_fit:\n" \
+        t = "for f in cs._current_fit:\n" \
             "   f.models.%s.append()\n" \
             "   f.models.update()" % self.name
         mfm.run(t)
 
     def onRemoveGaussian(self):
-        t = "for f in cs.current_fit:\n" \
+        t = "for f in cs._current_fit:\n" \
             "   f.models.%s.pop()\n" \
             "   f.models.update()" % self.name
         mfm.run(t)
@@ -750,7 +781,12 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
 
 class DiscreteDistanceWidget(DiscreteDistance, QtWidgets.QWidget):
 
-    def __init__(self, donors, model=None, **kwargs):
+    def __init__(
+            self,
+            donors,
+            model: mfm.models.model.Model = None,
+            **kwargs
+    ):
         DiscreteDistance.__init__(self, donors=donors, model=model, **kwargs)
         QtWidgets.QWidget.__init__(self)
 
@@ -787,14 +823,14 @@ class DiscreteDistanceWidget(DiscreteDistance, QtWidgets.QWidget):
 
     def onAddFRETrate(self):
         t = """
-for f in cs.current_fit:
+for f in cs._current_fit:
     f.models.%s.append()
             """ % self.name
         mfm.run(t)
 
     def onRemoveFRETrate(self):
         t = """
-for f in cs.current_fit:
+for f in cs._current_fit:
     f.models.%s.pop()
             """ % self.name
         mfm.run(t)
@@ -823,31 +859,16 @@ for f in cs.current_fit:
         self._gb.append(gb)
         self._distances.append(m)
         self._amplitudes.append(x)
-        mfm.run("cs.current_fit.update()")
+        mfm.run("cs._current_fit.update()")
 
     def pop(self):
         self._distances.pop().close()
         self._amplitudes.pop().close()
         self._gb.pop().close()
-        mfm.run("cs.current_fit.update()")
+        mfm.run("cs._current_fit.update()")
 
 
 class GaussianModelWidget(GaussianModel, LifetimeModelWidgetBase):
-
-    plot_classes = [
-        (plots.LinePlot, {
-            'd_scalex': 'lin',
-            'd_scaley': 'log',
-            'r_scalex': 'lin',
-            'r_scaley': 'lin',
-            'x_label': 'x',
-            'y_label': 'y',
-            'plot_irf': True
-        }),
-        (plots.FitInfo, {}),
-        (plots.DistributionPlot, {}),
-        (plots.ParameterScanPlot, {})
-    ]
 
     def __init__(self, fit, **kwargs):
         donors = LifetimeWidget(parent=self, model=self, title='Donor(0)')
@@ -867,23 +888,6 @@ class GaussianModelWidget(GaussianModel, LifetimeModelWidgetBase):
 
 
 class FRETrateModelWidget(FRETrateModel, LifetimeModelWidgetBase):
-
-    plot_classes = [
-        (plots.LinePlot,
-         {
-             'd_scalex': 'lin',
-             'd_scaley': 'log',
-             'r_scalex': 'lin',
-             'r_scaley': 'lin',
-             'x_label': 'x',
-             'y_label': 'y',
-             'plot_irf': True
-         }
-         ),
-        (plots.FitInfo, {}),
-        (plots.DistributionPlot, {}),
-        (plots.ParameterScanPlot, {})
-    ]
 
     def __init__(
             self,
@@ -922,30 +926,24 @@ class FRETrateModelWidget(FRETrateModel, LifetimeModelWidgetBase):
 
 class WormLikeChainModelWidget(WormLikeChainModel, LifetimeModelWidgetBase):
 
-    plot_classes = [
-        (plots.LinePlot,
-         {'d_scalex': 'lin',
-          'd_scaley': 'log',
-          'r_scalex': 'lin',
-          'r_scaley': 'lin',
-          'x_label': 'x',
-          'y_label': 'y',
-          'plot_irf': True}
-         ),
-        (plots.FitInfo, {}),
-        (plots.DistributionPlot, {}),
-        (plots.ParameterScanPlot, {})
-    ]
-
     @property
-    def use_dye_linker(self):
+    def use_dye_linker(
+            self
+    ) -> bool:
         return bool(self._use_dye_linker.isChecked())
 
     @use_dye_linker.setter
-    def use_dye_linker(self, v):
+    def use_dye_linker(
+            self,
+            v: bool
+    ):
         self._use_dye_linker.setChecked(v)
 
-    def __init__(self, fit, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            **kwargs
+    ):
         donors = LifetimeWidget(parent=self, model=self, title='Donor(0)', name='donors')
         WormLikeChainModel.__init__(self, fit=fit, lifetimes=donors, **kwargs)
 
@@ -967,13 +965,16 @@ class WormLikeChainModelWidget(WormLikeChainModel, LifetimeModelWidgetBase):
 
 class SingleDistanceModelWidget(ModelWidget, SingleDistanceModel):
 
-    def __init__(self, fit, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            **kwargs
+    ):
         self.anisotropy = AnisotropyWidget(model=self, short='rL', **kwargs)
         self.convolve = ConvolveWidget(fit=fit, model=self, **kwargs)
         self.donors = LifetimeWidget(parent=self, model=self, title='Donor(0)')
         self.generic = GenericWidget(fit=fit, model=self, parent=self, **kwargs)
         self.fitting_widget = QtWidgets.QLabel() if kwargs.get('disable_fit', False) else FittingControllerWidget(fit=fit, **kwargs)
-        #self.errors = ErrorWidget(fit, **kwargs)
         self.corrections = CorrectionsWidget(fit, model=self, **kwargs)
 
         ModelWidget.__init__(self, fit=fit, icon=QtGui.QIcon(":/icons/icons/TCSPC.png"), **kwargs)
@@ -1119,18 +1120,18 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
 
         layout = QtWidgets.QVBoxLayout(self)
 
-        l = QtWidgets.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
 
         self.model_selector = QtWidgets.QComboBox()
         self.model_selector.addItems([m.name for m in self.model_types])
-        l.addWidget(self.model_selector)
+        layout.addWidget(self.model_selector)
 
         self.add_button = QtWidgets.QPushButton('Add')
-        l.addWidget(self.add_button)
+        layout.addWidget(self.add_button)
 
         self.clear_button = QtWidgets.QPushButton('Clear')
-        l.addWidget(self.clear_button)
-        layout.addLayout(l)
+        layout.addWidget(self.clear_button)
+        layout.addLayout(layout)
 
         self.add_button.clicked.connect(self.add_model)
         self.clear_button.clicked.connect(self.clear_models)

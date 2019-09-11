@@ -73,7 +73,7 @@ def change_irf(
         )
     cs.current_fit.update()
     current_fit = mfm.cs.current_fit
-    for f in current_fit[current_fit._selected_fit:]:
+    for f in current_fit[current_fit.selected_fit_index:]:
         f.model.convolve.lineEdit.setText(irf_name)
 
 
@@ -314,7 +314,7 @@ def tcspc_set_linearization(
 ):
     cs = mfm.cs
     lin_table = cs.current_fit.model.corrections.lin_select.datasets[idx]
-    for f in cs.current_fit[cs.current_fit._selected_fit:]:
+    for f in cs.current_fit[cs.current_fit.selected_fit_index:]:
         f.model.corrections.lintable = mfm.experiments.data.DataCurve(
             x=lin_table.x,
             y=lin_table.y
@@ -322,7 +322,7 @@ def tcspc_set_linearization(
         f.model.corrections.correct_dnl = True
 
     lin_name = curve_name
-    for f in cs.current_fit[cs.current_fit._selected_fit:]:
+    for f in cs.current_fit[cs.current_fit.selected_fit_index:]:
         f.model.corrections.lineEdit.setText(lin_name)
         f.model.corrections.checkBox.setChecked(True)
     cs.current_fit.update()

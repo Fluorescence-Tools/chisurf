@@ -34,7 +34,7 @@
 
 SDT files are produced by Becker & Hickl SPCM software. They contain time
 correlated single photon counting instrumentation parameters and measurement
-data. Currently only the "Setup & Data" and "FCS Data" formats are supported.
+data. Currently only the "Setup & Data" and "fcs Data" formats are supported.
 
 `Becker & Hickl GmbH <http://www.becker-hickl.de/>`_ is a manufacturer of
 equipment for photon counting.
@@ -93,7 +93,7 @@ b'SPC Setup & Data File'
 
 >>> sdt = SdtFile("fcs.sdt")
 >>> sdt.info.id[1:-1]
-b'SPC FCS Data File'
+b'SPC fcs Data File'
 >>> sdt.data[0].shape
 (512, 512, 256)
 
@@ -157,7 +157,7 @@ class SdtFile(object):
         self.info = FileInfo(fh.read(self.header.info_length))
         try:
             if self.info.id not in (b"SPC Setup & Data File",
-                                    b"SPC FCS Data File"):
+                                    b"SPC fcs Data File"):
                 raise NotImplementedError(
                     "currently not supported:", self.info.id)
         except AttributeError:
@@ -458,8 +458,8 @@ INFO_IDS = {
     b"SPC Setup & Data File": "Normal mode: setup + data",
     b"SPC DLL Data File": "DLL created: no setup, only data",
     b"SPC Flow Data File": "Continuous Flow mode: no setup, only data",
-    b"SPC FCS Data File":
-    "FIFO mode: setup, data blocks = Decay, FCS, FIDA, FILDA & MCS "
+    b"SPC fcs Data File":
+    "FIFO mode: setup, data blocks = Decay, fcs, FIDA, FILDA & MCS "
     "curves for each used routing channel"}
 
 if sys.version_info[0] > 2:

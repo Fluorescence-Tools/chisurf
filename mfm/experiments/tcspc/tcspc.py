@@ -45,7 +45,14 @@ class CsvTCSPCWidget(CsvTCSPC, QtWidgets.QWidget):
     def __init__(self, **kwargs):
         QtWidgets.QWidget.__init__(self)
         self.parent = kwargs.get('parent', None)
-        uic.loadUi('mfm/ui/experiments/csvTCSPCWidget.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "csvTCSPCWidget.ui"
+            ),
+            self
+        )
+
         self.actionDtChanged.triggered.connect(self.onDtChanged)
         self.actionRebinChanged.triggered.connect(self.onRebinChanged)
         self.actionRepratechange.triggered.connect(self.onRepratechange)
@@ -362,8 +369,14 @@ class TcspcSDTWidget(QtWidgets.QWidget):
         self.textBrowser.setPlainText(str(self.sdt.info))
 
     def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/experiments/sdtfile.ui', self)
+        super(TcspcSDTWidget, self).__init__()
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "sdtfile.ui"
+            ),
+            self
+        )
         self._sdt = None
         self.actionOpen_SDT_file.triggered.connect(self.onOpenFile)
 
@@ -433,23 +446,29 @@ class TCSPCSetupDummy(TCSPCReader):
     def __init__(
             self,
             *args,
-            n_TAC: int = 4096,
+            n_tac: int = 4096,
             dt: float = 0.0141,
             p0: float = 10000.0,
             rep_rate: float = 10.0,
             lifetime: float = 4.1,
             name: str = 'Dummy',
             sample_name: str = 'TCSPC-Dummy',
+            parent: QtWidgets.QWidget = None,
+            verbose: bool = None,
             **kwargs
     ):
         super(TCSPCSetupDummy, self).__init__(*args, **kwargs)
         TCSPCReader.__init__(self, **kwargs)
-        self.parent = kwargs.get('parent', None)
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        self.parent = parent
+
+        if verbose is None:
+            verbose = mfm.verbose
+        self.verbose = verbose
+
         self.sample_name = sample_name
         self.name = name
         self.lifetime = lifetime
-        self.n_TAC = n_TAC
+        self.n_tac = n_tac
         self.dt = dt
         self.p0 = p0
         self.rep_rate = rep_rate
@@ -461,12 +480,14 @@ class TCSPCSetupDummy(TCSPCReader):
     ):
         if filename is None:
             filename = self.sample_name
-        x = np.arange(self.n_TAC) * self.dt
+
+        x = np.arange(self.n_tac) * self.dt
         y = np.exp(-x/self.lifetime) * self.p0
         ey = 1./weights(y)
 
         d = mfm.experiments.data.DataCurve(
-            x=x, y=y,
+            x=x,
+            y=y,
             ey=ey,
             setup=self,
             name=filename
@@ -483,48 +504,79 @@ class TCSPCSetupDummy(TCSPCReader):
 class TCSPCSetupDummyWidget(QtWidgets.QWidget, TCSPCSetupDummy):
 
     @property
-    def sample_name(self) -> str:
+    def sample_name(
+            self
+    ) -> str:
         name = str(self.lineEdit.text())
         return name
 
     @sample_name.setter
-    def sample_name(self, v):
+    def sample_name(
+            self,
+            v: str
+    ):
         pass
 
     @property
-    def p0(self) -> int:
+    def p0(
+            self
+    ) -> int:
         return self.spinBox_2.value()
 
     @p0.setter
-    def p0(self, v):
+    def p0(
+            self,
+            v: int
+    ):
         pass
 
     @property
-    def lifetime(self) -> float:
+    def lifetime(
+            self
+    ) -> float:
         return self.doubleSpinBox_2.value()
 
     @lifetime.setter
-    def lifetime(self, v):
+    def lifetime(
+            self,
+            v: float
+    ):
         pass
 
     @property
-    def n_TAC(self) -> int:
+    def n_tac(
+            self
+    ) -> int:
         return self.spinBox.value()
 
-    @n_TAC.setter
-    def n_TAC(self, v):
+    @n_tac.setter
+    def n_tac(
+            self,
+            v: int
+    ):
         pass
 
     @property
-    def dt(self) -> float:
+    def dt(
+            self
+    ) -> float:
         return self.doubleSpinBox.value()
 
     @dt.setter
-    def dt(self, v):
+    def dt(
+            self,
+            v: float
+    ):
         pass
 
     def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        TCSPCSetupDummy.__init__(self, **kwargs)
-        uic.loadUi('mfm/ui/experiments/tcspcDummy.ui', self)
+        super(TCSPCSetupDummyWidget, self).__init__(**kwargs)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "tcspcDummy.ui"
+            ),
+            self
+        )
+
 

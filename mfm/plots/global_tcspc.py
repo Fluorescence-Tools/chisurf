@@ -99,9 +99,20 @@ class GlobalAnisotropy(Plot):
 
     name = "Fit"
 
-    def __init__(self, fit, d_scalex='lin', d_scaley='lin', r_scalex='lin', r_scaley='lin', **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            d_scalex: str = 'lin',
+            d_scaley: str = 'lin',
+            r_scalex: str = 'lin',
+            r_scaley: str = 'lin',
+            **kwargs
+    ):
+        super(GlobalAnisotropy, self).__init__(
+            fit=fit,
+            **kwargs
+        )
         self.verbose = kwargs.get('verbose', mfm.verbose)
-        Plot.__init__(self)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.fit = fit
 
@@ -177,7 +188,13 @@ class GlobalAnisotropy(Plot):
         self.autoCorrPlot = plot
         splitter1.addWidget(plot)
 
-        self.pltControl = LinePlotWidget(self, d_scalex, d_scaley, r_scalex, r_scaley)
+        self.pltControl = LinePlotWidget(
+            self,
+            d_scalex,
+            d_scaley,
+            r_scalex,
+            r_scaley
+        )
 
     def update_all(self):
         if self.verbose:
