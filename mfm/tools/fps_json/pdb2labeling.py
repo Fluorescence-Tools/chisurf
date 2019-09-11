@@ -41,9 +41,9 @@ class PDB2Label(QtWidgets.QWidget):
         #self.listWidget.itemDoubleClicked[QListWidgetItem].connect(self.onLabelingListDoubleClicked)
         #self.listWidget_2.itemDoubleClicked[QListWidgetItem].connect(self.onDistanceListDoubleClicked)
 
-        self.atom_select = mfm.widgets.pdb.PDBSelector()
+        self.atom_select = mfm.widgets.pdb.pdb.PDBSelector()
         self.verticalLayout_3.addWidget(self.atom_select)
-        self.av_properties = mfm.widgets.accessible_volume.AVProperties()
+        self.av_properties = mfm.widgets.accessible_volume.accessible_volume.AVProperties()
         self.verticalLayout_4.addWidget(self.av_properties)
 
         self.structure = None

@@ -7,13 +7,16 @@ as well as some customized parameter types
 """
 from __future__ import annotations
 
-import re
-from collections import OrderedDict
+import sys
 
-import yaml
-from pyqtgraph.Qt import QtGui, QtWidgets
+from qtpy import QtGui, QtWidgets
 from pyqtgraph.parametertree import Parameter, ParameterTree
 from pyqtgraph.parametertree.parameterTypes import ListParameter
+import qdarkstyle
+
+import yaml
+import re
+from collections import OrderedDict
 
 import mfm
 
@@ -81,23 +84,41 @@ def pt2dict(
 
 class ParameterEditor(QtWidgets.QWidget):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            *args,
+            target: dict = None,
+            json_file: str = None,
+            windows_title: str = None,
+            **kwargs
+    ):
         super(ParameterEditor, self).__init__()
+        if json_file is None:
+            json_file = mfm.widgets.get_filename()
+        if target is None:
+            target = mfm
 
-        self._json_file = ""
-        self._dict = dict()
-        self._p = None
-        self._target = kwargs.get('target', mfm)
+        if windows_title is None:
+            windows_title = "Configuration: %s" % json_file
 
-        self.json_file = kwargs.get('json_file', None)
-
-        self.setWindowTitle("Configuration: %s" % self.json_file)
-        self._p = Parameter.create(name='params', type='group', children=self.parameter_dict, expanded=True)
+        self._p = Parameter.create(
+            name='params',
+            type='group',
+            children=self.parameter_dict,
+            expanded=True
+        )
         self._p.param('Save').sigActivated.connect(self.save)
+
+        self._json_file = json_file
+        self._dict = dict()
+        self._target = target
+        self.json_file = json_file
+        self._p = None
 
         t = ParameterTree()
         t.setParameters(self._p, showTop=False)
 
+        self.setWindowTitle(windows_title)
         win = QtWidgets.QWidget()
         layout = QtWidgets.QGridLayout()
         win.setLayout(layout)
@@ -109,8 +130,12 @@ class ParameterEditor(QtWidgets.QWidget):
         layout.addWidget(t, 1, 0, 1, 1)
         self.resize(450, 400)
 
-    def save(self, **kwargs):
-        filename = kwargs.get('filename', self._json_file)
+    def save(
+            self,
+            filename: str = None,
+    ):
+        if filename is None:
+            filename = self._json_file
         with open(filename, 'w+') as fp:
             obj = self.dict
             yaml.dump(obj, fp, indent=4)
@@ -148,3 +173,10 @@ class ParameterEditor(QtWidgets.QWidget):
             self._dict = yaml.safe_load(fp)
         self._json_file = v
 
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    win = ParameterEditor()
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    win.show()
+    sys.exit(app.exec_())
