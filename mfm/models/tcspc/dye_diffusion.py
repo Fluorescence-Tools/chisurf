@@ -632,7 +632,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         convolve = mfm.models.tcspc.widgets.ConvolveWidget(fit=fit, model=self, dt=fit.data.dt, **kwargs)
         corrections = mfm.models.tcspc.widgets.CorrectionsWidget(fit, model=self, **kwargs)
 
-        fn = os.path.join(mfm.package_directory, 'settings/dye_diffusion.json')
+        fn = os.path.join(mfm.package_directory, 'settings/sample.json')
         settings_file = kwargs.get('dye_diffusion_settings_file', fn)
         settings = json.load(open(settings_file))
         DyeDecay.__init__(self, fit=fit, convolve=convolve, generic=generic, corrections=corrections, **settings)
