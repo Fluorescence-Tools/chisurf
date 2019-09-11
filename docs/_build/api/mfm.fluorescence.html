@@ -291,12 +291,15 @@ replaced by zero-rates</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>distance</strong> – DA-distance</p></li>
-<li><p><strong>forster_radius</strong> – Forster-radius</p></li>
+<li><p><strong>distance</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – DA-distance</p></li>
+<li><p><strong>forster_radius</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Forster-radius</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -309,13 +312,16 @@ replaced by zero-rates</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>r</strong> – donor-acceptor distance</p></li>
-<li><p><strong>forster_radius</strong> – Forster-radius</p></li>
-<li><p><strong>tau0</strong> – lifetime</p></li>
-<li><p><strong>kappa2</strong> – orientation factor</p></li>
+<li><p><strong>forster_radius</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Forster-radius</p></li>
+<li><p><strong>tau0</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – lifetime</p></li>
+<li><p><strong>kappa2</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – orientation factor</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -335,9 +341,9 @@ replaced by zero-rates</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>distribution</strong> – </p></li>
-<li><p><strong>tau0</strong> – </p></li>
+<li><p><strong>tau0</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
 <li><p><strong>kappa2</strong> – a interleaved list of orientation factors (orientation factor spectrum)</p></li>
-<li><p><strong>forster_radius</strong> – </p></li>
+<li><p><strong>forster_radius</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -346,7 +352,12 @@ replaced by zero-rates</p>
 <dl class="attribute">
 <dt id="mfm.fluorescence.general.e1ti2">
 <code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">e1ti2</code><span class="sig-paren">(</span><em class="sig-param">e1: 'np.array'</em>, <em class="sig-param">e2: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../_modules/mfm/fluorescence/general.html#e1ti2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.e1ti2" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.fluorescence.general.e1tn">
@@ -355,9 +366,9 @@ replaced by zero-rates</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>e1</strong> – array-like
+<li><p><strong>e1</strong> (<em>&lt;built-in function array&gt;</em>) – array-like
 Rate spectrum</p></li>
-<li><p><strong>n</strong> – float</p></li>
+<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float</p></li>
 </ul>
 </dd>
 </dl>
@@ -367,6 +378,11 @@ Rate spectrum</p></li>
 <span class="go">array([2, 2, 6, 4])</span>
 </pre></div>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
@@ -377,14 +393,17 @@ and return a new spectrum of lifetimes of the form (a11*a21, 1/(1/l11+1/l21), a1
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>e1</strong> – array-like
+<li><p><strong>e1</strong> (<em>&lt;built-in function array&gt;</em>) – array-like
 Lifetime spectrum 1</p></li>
-<li><p><strong>e2</strong> – array-like
+<li><p><strong>e2</strong> (<em>&lt;built-in function array&gt;</em>) – array-like
 Lifetime spectrum 2</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>array-like
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>array-like
 Lifetime-spectrum</p>
 </dd>
 </dl>
@@ -407,14 +426,17 @@ and return a new spectrum of lifetimes of the form (a11*a21, r11+r21), a12*a22, 
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>e1</strong> – array-like
+<li><p><strong>e1</strong> (<em>&lt;built-in function array&gt;</em>) – array-like
 Lifetime spectrum 1</p></li>
-<li><p><strong>e2</strong> – array-like
+<li><p><strong>e2</strong> (<em>&lt;built-in function array&gt;</em>) – array-like
 Lifetime spectrum 2</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>array-like
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>array-like
 Lifetime-spectrum</p>
 </dd>
 </dl>
@@ -476,13 +498,16 @@ These parameters can be provided by <em>kwargs</em></p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fluorescence</strong> – interleaved lifetime spectrum</p></li>
-<li><p><strong>taux</strong> – float
+<li><p><strong>taux</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – float
 The species averaged lifetime. If this value is not provided it is calculated based
 on th lifetime spectrum</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -496,12 +521,15 @@ on th lifetime spectrum</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fret_efficiency</strong> – Transfer-efficency</p></li>
-<li><p><strong>forster_radius</strong> – Forster-radius</p></li>
+<li><p><strong>fret_efficiency</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Transfer-efficency</p></li>
+<li><p><strong>forster_radius</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Forster-radius</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -514,12 +542,15 @@ on th lifetime spectrum</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fret_efficiency</strong> – </p></li>
-<li><p><strong>tau0</strong> – </p></li>
+<li><p><strong>fret_efficiency</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
+<li><p><strong>tau0</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -594,17 +625,21 @@ to the amplitudes the second to the rates.</p>
 <dt id="mfm.fluorescence.general.interleaved_to_two_columns">
 <code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">interleaved_to_two_columns</code><span class="sig-paren">(</span><em class="sig-param">ls: 'np.array'</em>, <em class="sig-param">sort: 'bool' = False</em><span class="sig-paren">)</span> &#x2192; 'Tuple[np.array, np.array]'<a class="reference internal" href="../_modules/mfm/fluorescence/general.html#interleaved_to_two_columns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.interleaved_to_two_columns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts an interleaved spectrum to two column-data
+:type ls: &lt;built-in function array&gt;
 :param ls: numpy array</p>
 <blockquote>
 <div><p>The interleaved spectrum (amplitude, lifetime)</p>
 </div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>sort</strong> – bool
+<dd class="field-odd"><p><strong>sort</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool
 if True sort by the size of the lifetimes</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>two arrays (amplitudes), (lifetimes)</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[&lt;built-in function array&gt;, &lt;built-in function array&gt;]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>two arrays (amplitudes), (lifetimes)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -615,7 +650,7 @@ if True sort by the size of the lifetimes</p>
 <dd><p>Converts interleaved lifetime to rate spectra and vice versa</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>interleaved_spectrum</strong> – array-like
+<dd class="field-odd"><p><strong>interleaved_spectrum</strong> (<em>&lt;built-in function array&gt;</em>) – array-like
 Lifetime/rate spectrum</p>
 </dd>
 </dl>
@@ -626,6 +661,11 @@ Lifetime/rate spectrum</p>
 <span class="go">array([ 1.  ,  0.5 ,  3.  ,  0.25])</span>
 </pre></div>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
@@ -636,12 +676,15 @@ Lifetime/rate spectrum</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>tau</strong> – fluorescence lifetime in the presence of FRET</p></li>
-<li><p><strong>tau0</strong> – fluorescence lifetime in the absence of FRET</p></li>
+<li><p><strong>tau</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – fluorescence lifetime in the presence of FRET</p></li>
+<li><p><strong>tau0</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – fluorescence lifetime in the absence of FRET</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -722,12 +765,15 @@ given an interleaved donor spectrum and the fraction of donor-only</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fluorescence</strong> – either a inter-leaved lifetime-spectrum (if is_lifetime_spectrum is True) or a 
 fluorescence decay (times, fluorescence intensity)</p></li>
-<li><p><strong>normalize</strong> – </p></li>
-<li><p><strong>is_lifetime_spectrum</strong> – </p></li>
+<li><p><strong>normalize</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
+<li><p><strong>is_lifetime_spectrum</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -752,13 +798,13 @@ are normalized to one.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>transfer_efficiency_min</strong> – float
+<li><p><strong>transfer_efficiency_min</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
 minimum transfer efficency</p></li>
-<li><p><strong>transfer_efficiency_max</strong> – float
+<li><p><strong>transfer_efficiency_max</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
 maximum transfer efficency</p></li>
-<li><p><strong>n_steps</strong> – int
+<li><p><strong>n_steps</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – int
 number of distances</p></li>
-<li><p><strong>forster_radius</strong> – float
+<li><p><strong>forster_radius</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
 Forster-radius</p></li>
 </ul>
 </dd>
@@ -773,6 +819,7 @@ Forster-radius</p></li>
 <code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">two_column_to_interleaved</code><span class="sig-paren">(</span><em class="sig-param">x: 'np.array'</em>, <em class="sig-param">t: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../_modules/mfm/fluorescence/general.html#two_column_to_interleaved"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.two_column_to_interleaved" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts two column lifetime spectra to interleaved lifetime spectra
 :param ls: The
+:rtype: &lt;built-in function array&gt;
 :return:</p>
 </dd></dl>
 

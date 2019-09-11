@@ -603,7 +603,12 @@
 <dl class="method">
 <dt id="mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget.trajectory_filename">
 <em class="property">property </em><code class="sig-name descname">trajectory_filename</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget.trajectory_filename" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget.translation_vector">
@@ -643,7 +648,7 @@ min distance.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>xyz</strong> – numpy array
-The coordinates (frame nbr, atom nbr, coord)</p></li>
+The coordinates (frame fit_index, atom fit_index, coord)</p></li>
 <li><p><strong>min_distance</strong> – float
 Minimum distance if a distance</p></li>
 </ul>
@@ -664,7 +669,7 @@ it is False.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>xyz</strong> – numpy array
-The coordinates (frame nbr, atom nbr, coord)</p></li>
+The coordinates (frame fit_index, atom fit_index, coord)</p></li>
 <li><p><strong>rm</strong> – numpy array 3x3 dtpye np.float32 - the rotation matrix</p></li>
 </ul>
 </dd>
@@ -691,7 +696,7 @@ The coordinates (frame nbr, atom nbr, coord)</p></li>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>xyz</strong> – numpy array
-(frame nbr, atom_number, coord)</p></li>
+(frame fit_index, atom_number, coord)</p></li>
 <li><p><strong>vector</strong> – </p></li>
 </ul>
 </dd>

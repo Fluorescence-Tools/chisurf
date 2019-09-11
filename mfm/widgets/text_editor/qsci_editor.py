@@ -9,8 +9,6 @@ import qdarkstyle
 
 import mfm
 
-#editor_settings = mfm.settings.cs_settings['gui']['editor']
-
 
 class SimplePythonEditor(QsciScintilla):
 

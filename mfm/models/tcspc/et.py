@@ -269,7 +269,7 @@ class EtModelFree(Model, Phasor, LCurve, DistanceDistribution):
     @property
     def t_mode(self):
         """
-        Calculation mode of the time-axis (either 'lin' or 'log')
+        Calculation file_type of the time-axis (either 'lin' or 'log')
         """
         return self._t_mode
 

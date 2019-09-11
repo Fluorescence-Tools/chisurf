@@ -152,7 +152,12 @@
 <dl class="function">
 <dt id="mfm.math.functions.datatools.align_x_spacing">
 <code class="sig-prename descclassname">mfm.math.functions.datatools.</code><code class="sig-name descname">align_x_spacing</code><span class="sig-paren">(</span><em class="sig-param">dataset1: 'Tuple[np.array</em>, <em class="sig-param">np.array]'</em>, <em class="sig-param">dataset2: 'Tuple[np.array</em>, <em class="sig-param">np.array]'</em>, <em class="sig-param">method: 'str' = 'linear-close'</em><span class="sig-paren">)</span> &#x2192; 'Tuple[Tuple[np.array, np.array], Tuple[np.array, np.array]]'<a class="reference internal" href="../_modules/mfm/math/functions/datatools.html#align_x_spacing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.functions.datatools.align_x_spacing" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[&lt;built-in function array&gt;, &lt;built-in function array&gt;], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[&lt;built-in function array&gt;, &lt;built-in function array&gt;]]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="function">
 <dt id="mfm.math.functions.datatools.binCount">
@@ -222,10 +227,10 @@ of a histogram has to be changed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>new_bin_edges</strong> – array</p></li>
-<li><p><strong>counts</strong> – array
+<li><p><strong>new_bin_edges</strong> (<em>&lt;built-in function array&gt;</em>) – array</p></li>
+<li><p><strong>counts</strong> (<em>&lt;built-in function array&gt;</em>) – array
 Histogram values</p></li>
-<li><p><strong>bin_edges</strong> – array
+<li><p><strong>bin_edges</strong> (<em>&lt;built-in function array&gt;</em>) – array
 The bin edges of the histogram</p></li>
 </ul>
 </dd>
@@ -404,7 +409,12 @@ is passed to the dist_function.</p>
 <dl class="attribute">
 <dt id="mfm.math.functions.rdf.Qd">
 <code class="sig-prename descclassname">mfm.math.functions.rdf.</code><code class="sig-name descname">Qd</code><span class="sig-paren">(</span><em class="sig-param">r</em>, <em class="sig-param">kappa</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/math/functions/rdf.html#Qd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.functions.rdf.Qd" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.math.functions.rdf.distance_between_gaussian">
@@ -413,14 +423,17 @@ is passed to the dist_function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>distances</strong> – </p></li>
-<li><p><strong>separation_distance</strong> – </p></li>
-<li><p><strong>sigma</strong> – </p></li>
-<li><p><strong>normalize</strong> – </p></li>
+<li><p><strong>distances</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
+<li><p><strong>separation_distance</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
+<li><p><strong>sigma</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
+<li><p><strong>normalize</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -432,9 +445,9 @@ is passed to the dist_function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>number_of_segments</strong> – int
+<li><p><strong>number_of_segments</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – int
 The number of segments</p></li>
-<li><p><strong>segment_length</strong> – float
+<li><p><strong>segment_length</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
 The segment length</p></li>
 <li><p><strong>r</strong> – numpy-array
 values of r should be in range [0, 1) - not including 1</p></li>
@@ -442,6 +455,11 @@ values of r should be in range [0, 1) - not including 1</p></li>
 </dd>
 </dl>
 <p>..plot:: plots/rdf-gauss.py</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
@@ -451,14 +469,17 @@ values of r should be in range [0, 1) - not including 1</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>segment_length</strong> – float
+<li><p><strong>segment_length</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
 The length of a segment</p></li>
-<li><p><strong>number_of_segments</strong> – int
+<li><p><strong>number_of_segments</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – int
 The number of segments</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -535,15 +556,20 @@ Eur Phys J E, 32, 53-69 (2010)</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>r</strong> – numpy-array
 values of r should be in range [0, 1) - not including 1</p></li>
-<li><p><strong>kappa</strong> – float</p></li>
+<li><p><strong>kappa</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float</p></li>
 </ul>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
 <dl class="citation">
-<dt class="label" id="r763935c16989-1"><span class="brackets">1</span></dt>
+<dt class="label" id="r763935c16989-1"><span class="brackets">R763935c16989-1</span></dt>
 <dd><p>Becker NB, Rosa A, Everaers R, Eur Phys J E Soft Matter, 2010 May;32(1):53-69,
 The radial distribution function of worm-like chains.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
 </dd>
 </dl>
 </dd></dl>

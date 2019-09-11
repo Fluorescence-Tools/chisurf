@@ -512,10 +512,10 @@ maybe later use this…: <a class="reference external" href="http://www.plosone.
 <span id="mfm-plots-lineplot-module"></span><h2>mfm.plots.lineplot module<a class="headerlink" href="#module-mfm.plots.lineplot" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mfm.plots.lineplot.LinePlot">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.plots.lineplot.</code><code class="sig-name descname">LinePlot</code><span class="sig-paren">(</span><em class="sig-param">fit: mfm.fitting.fit.FitGroup</em>, <em class="sig-param">scale_x: str = 'lin'</em>, <em class="sig-param">d_scaley: str = 'lin'</em>, <em class="sig-param">r_scaley: str = 'lin'</em>, <em class="sig-param">reference_curve: bool = False</em>, <em class="sig-param">x_label: str = 'x'</em>, <em class="sig-param">y_label: str = 'y'</em>, <em class="sig-param">plot_irf: bool = False</em>, <em class="sig-param">data_x: Optional[numpy.array] = None</em>, <em class="sig-param">data_y: Optional[numpy.array] = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/lineplot.html#LinePlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.lineplot.LinePlot" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.plots.lineplot.</code><code class="sig-name descname">LinePlot</code><span class="sig-paren">(</span><em class="sig-param">fit</em>, <em class="sig-param">scale_x='lin'</em>, <em class="sig-param">d_scaley='lin'</em>, <em class="sig-param">r_scaley='lin'</em>, <em class="sig-param">reference_curve=False</em>, <em class="sig-param">x_label='x'</em>, <em class="sig-param">y_label='y'</em>, <em class="sig-param">plot_irf=False</em>, <em class="sig-param">data_x=None</em>, <em class="sig-param">data_y=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/lineplot.html#LinePlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.lineplot.LinePlot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#mfm.plots.plotbase.Plot" title="mfm.plots.plotbase.Plot"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.plots.plotbase.Plot</span></code></a></p>
 <p>Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
-and the autocorrelation of the residuals. Now it is also used also for FCS-data.</p>
+and the autocorrelation of the residuals. Now it is also used also for fcs-data.</p>
 <p>In case the models is a <code class="xref py py-class docutils literal notranslate"><span class="pre">LifetimeModel</span></code> it takes the irf and displays it:</p>
 <blockquote>
 <div><p>irf = fit.models.convolve.irf
@@ -560,66 +560,126 @@ wres_y = fit.weighted_residuals</p>
 <dl class="method">
 <dt id="mfm.plots.lineplot.LinePlotControl.data_is_log_x">
 <em class="property">property </em><code class="sig-name descname">data_is_log_x</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.data_is_log_x" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.plots.lineplot.LinePlotControl.data_is_log_y">
 <em class="property">property </em><code class="sig-name descname">data_is_log_y</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.data_is_log_y" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.plots.lineplot.LinePlotControl.data_logy">
 <em class="property">property </em><code class="sig-name descname">data_logy</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.data_logy" title="Permalink to this definition">¶</a></dt>
 <dd><p>y-data is plotted logarithmically</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.plots.lineplot.LinePlotControl.is_density">
 <em class="property">property </em><code class="sig-name descname">is_density</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.is_density" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.plots.lineplot.LinePlotControl.res_is_log_y">
 <em class="property">property </em><code class="sig-name descname">res_is_log_y</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.res_is_log_y" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.plots.lineplot.LinePlotControl.res_logy">
 <em class="property">property </em><code class="sig-name descname">res_logy</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.res_logy" title="Permalink to this definition">¶</a></dt>
 <dd><p>y-residuals is plotted logarithmically</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.plots.lineplot.LinePlotControl.scale_x">
 <em class="property">property </em><code class="sig-name descname">scale_x</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.scale_x" title="Permalink to this definition">¶</a></dt>
 <dd><p>x-data is plotted logarithmically</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.plots.lineplot.LinePlotControl.use_reference">
 <em class="property">property </em><code class="sig-name descname">use_reference</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.use_reference" title="Permalink to this definition">¶</a></dt>
 <dd><p>If true use a reference curve for plotting</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.plots.lineplot.LinePlotControl.x_shift">
 <em class="property">property </em><code class="sig-name descname">x_shift</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.x_shift" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.plots.lineplot.LinePlotControl.xmin">
 <em class="property">property </em><code class="sig-name descname">xmin</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.xmin" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.plots.lineplot.LinePlotControl.y_shift">
 <em class="property">property </em><code class="sig-name descname">y_shift</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.y_shift" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.plots.lineplot.LinePlotControl.ymin">
 <em class="property">property </em><code class="sig-name descname">ymin</code><a class="headerlink" href="#mfm.plots.lineplot.LinePlotControl.ymin" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -631,7 +691,7 @@ wres_y = fit.weighted_residuals</p>
 <em class="property">class </em><code class="sig-prename descclassname">mfm.plots.parameter_scan.</code><code class="sig-name descname">ParameterScanPlot</code><span class="sig-paren">(</span><em class="sig-param">fit</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/parameter_scan.html#ParameterScanPlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanPlot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#mfm.plots.plotbase.Plot" title="mfm.plots.plotbase.Plot"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.plots.plotbase.Plot</span></code></a></p>
 <p>Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
-and the autocorrelation of the residuals. Now it is also used also for FCS-data.</p>
+and the autocorrelation of the residuals. Now it is also used also for fcs-data.</p>
 <p>In case the model is a <code class="xref py py-class docutils literal notranslate"><span class="pre">LifetimeModel</span></code> it takes the irf and displays it:</p>
 <blockquote>
 <div><p>irf = fit.model.convolve.irf
@@ -649,8 +709,13 @@ wres_y = fit.weighted_residuals</p>
 
 <dl class="method">
 <dt id="mfm.plots.parameter_scan.ParameterScanPlot.update_all">
-<code class="sig-name descname">update_all</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/parameter_scan.html#ParameterScanPlot.update_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanPlot.update_all" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname">update_all</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'None'<a class="reference internal" href="../_modules/mfm/plots/parameter_scan.html#ParameterScanPlot.update_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanPlot.update_all" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -666,22 +731,42 @@ wres_y = fit.weighted_residuals</p>
 <dl class="method">
 <dt id="mfm.plots.parameter_scan.ParameterScanWidget.parameter">
 <em class="property">property </em><code class="sig-name descname">parameter</code><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanWidget.parameter" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="mfm.html#mfm.parameter.Parameter" title="mfm.parameter.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.plots.parameter_scan.ParameterScanWidget.scan_parameter">
-<code class="sig-name descname">scan_parameter</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/parameter_scan.html#ParameterScanWidget.scan_parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanWidget.scan_parameter" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname">scan_parameter</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'None'<a class="reference internal" href="../_modules/mfm/plots/parameter_scan.html#ParameterScanWidget.scan_parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanWidget.scan_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.plots.parameter_scan.ParameterScanWidget.selected_parameter">
 <em class="property">property </em><code class="sig-name descname">selected_parameter</code><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanWidget.selected_parameter" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.plots.parameter_scan.ParameterScanWidget.update">
 <code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">self) update(self</em>, <em class="sig-param">QRect) update(self</em>, <em class="sig-param">QRegion) update(self</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/parameter_scan.html#ParameterScanWidget.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.parameter_scan.ParameterScanWidget.update" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -854,13 +939,23 @@ wres_y = fit.weighted_residuals</p>
 
 <dl class="method">
 <dt id="mfm.plots.plotbase.Plot.update_all">
-<code class="sig-name descname">update_all</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plotbase.html#Plot.update_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plotbase.Plot.update_all" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname">update_all</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'None'<a class="reference internal" href="../_modules/mfm/plots/plotbase.html#Plot.update_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plotbase.Plot.update_all" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.plots.plotbase.Plot.update_widget">
-<code class="sig-name descname">update_widget</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/plotbase.html#Plot.update_widget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plotbase.Plot.update_widget" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname">update_widget</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'None'<a class="reference internal" href="../_modules/mfm/plots/plotbase.html#Plot.update_widget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.plotbase.Plot.update_widget" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 

@@ -340,13 +340,13 @@
       success: function(data, textStatus, request) {
         var div = $('#cd' + id);
         if (data == 'delete') {
-          // Moderator mode: remove the comment and all children immediately
+          // Moderator file_type: remove the comment and all children immediately
           div.slideUp('fast', function() {
             div.remove();
           });
           return;
         }
-        // User mode: only mark the comment as deleted
+        // User file_type: only mark the comment as deleted
         div
           .find('span.user-id:first')
           .text('[deleted]').end()

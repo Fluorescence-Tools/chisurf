@@ -490,7 +490,7 @@ class Convolve(FittingParameterGroup):
             print("Irf: %s" % irf.name)
             print("Stop: %s" % stop)
             print("dt: %s" % dt)
-            print("Convolution mode: %s" % mode)
+            print("Convolution file_type: %s" % mode)
 
         decay += (scatter * irf_y)
         return decay
