@@ -1,3 +1,8 @@
+from __future__ import annotations
+from typing import Tuple
+
+import os
+
 import numpy as np
 import pyqtgraph as pg
 from qtpy import  QtWidgets, uic
@@ -14,9 +19,20 @@ lw = plot_settings['line_width']
 
 
 class ParameterScanWidget(QtWidgets.QWidget):
-    def __init__(self, model, parent):
+    def __init__(
+            self,
+            model: mfm.models.model.Model,
+            parent
+    ):
         super(ParameterScanWidget, self).__init__()
-        uic.loadUi('mfm/ui/plots/parameter_scan.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "parameter_scan.ui"
+            ),
+            self
+        )
+
         self.model = model
         self.parent = parent
 
@@ -29,7 +45,9 @@ class ParameterScanWidget(QtWidgets.QWidget):
     def onParameterChanged(self):
         self.parent.update_all()
 
-    def update(self):
+    def update(
+            self
+    ) -> None:
         QtWidgets.QWidget.update(self)
         self.comboBox.blockSignals(True)
 
@@ -40,7 +58,9 @@ class ParameterScanWidget(QtWidgets.QWidget):
         self.comboBox.blockSignals(False)
         self.model.update_plots()
 
-    def scan_parameter(self):
+    def scan_parameter(
+            self
+    ) -> None:
         p_min = float(self.doubleSpinBox.value())
         p_max = float(self.doubleSpinBox_2.value())
         n_steps = int(self.spinBox.value())
@@ -54,17 +74,21 @@ class ParameterScanWidget(QtWidgets.QWidget):
         self.parent.update_all()
 
     @property
-    def selected_parameter(self):
+    def selected_parameter(
+            self
+    ) -> Tuple[int, str]:
         idx = self.comboBox.currentIndex()
         name = self.comboBox.currentText()
         return idx, str(name)
 
     @property
-    def parameter(self):
+    def parameter(
+            self
+    ) -> mfm.parameter.Parameter:
         idx, name = self.selected_parameter
         try:
             return self.model.parameters_all_dict[name]
-        except:
+        except AttributeError:
             return None
 
 
@@ -87,11 +111,19 @@ class ParameterScanPlot(plotbase.Plot):
 
     name = "Parameter scan"
 
-    def __init__(self, fit, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            **kwargs
+    ):
         super(ParameterScanPlot, self).__init__(fit)
+
         self.layout = QtWidgets.QVBoxLayout(self)
         self.data_x, self.data_y = None, None
-        self.pltControl = ParameterScanWidget(fit.model, self)
+        self.pltControl = ParameterScanWidget(
+            fit.model,
+            self
+        )
 
         area = DockArea()
         self.layout.addWidget(area)
@@ -110,7 +142,11 @@ class ParameterScanPlot(plotbase.Plot):
         self.distribution_plot = distribution_plot
         self.distribution_curve = distribution_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['data'], width=lw), name='Data')
 
-    def update_all(self, *args, **kwargs):
+    def update_all(
+            self,
+            *args,
+            **kwargs
+    ) -> None:
         pass
         try:
             p = self.pltControl.parameter

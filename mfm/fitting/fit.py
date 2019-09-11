@@ -279,7 +279,7 @@ class FitGroup(list, Fit):
         self.selected_fit.data = v
 
     @property
-    def model(self) -> object:
+    def model(self) -> mfm.models.model.Model:
         return self.selected_fit.model
 
     @model.setter

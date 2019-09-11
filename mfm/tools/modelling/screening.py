@@ -362,7 +362,7 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
                     chi2s.append(chi2)
                     rmsds.append(self.tableWidget_2.item(r, 6).data(0).toDouble()[0])
                     candidates.append(self.tableWidget_2.item(r, 2).data(0).toInt()[0])
-        print("selected nbr/Total nbr.: %s/%s" % (len(candidates), len(chi2s)))
+        print("selected fit_index/Total fit_index.: %s/%s" % (len(candidates), len(chi2s)))
         weights = self.chi2_weights
         if not withWeights:
             print("Printing weights:")

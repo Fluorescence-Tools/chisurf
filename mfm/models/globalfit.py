@@ -1,11 +1,13 @@
 from __future__ import annotations
+from typing import List, Tuple, Dict
 
+import os
 import pickle
 import threading
 from collections import OrderedDict
-from typing import List
+from qtpy import QtCore, QtWidgets, uic
+
 import numpy as np
-from qtpy import  QtCore, QtWidgets, uic
 
 import mfm
 from mfm import plots
@@ -35,82 +37,109 @@ class GlobalFitModel(model.Model, Curve):
     def weighted_residuals(
             self,
             flatten: bool = True
-    ):
+    ) -> List[np.array]:
         re = list()
         for f in self.fits:
             re.append(f.model.weighted_residuals.flatten())
         if flatten:
-            return np.concatenate(re)
+            return [np.concatenate(re)]
         else:
             return re
 
     @property
-    def fit_names(self):
+    def fit_names(
+            self
+    ) -> List[str]:
         return [f.name for f in self.fits]
 
     @property
-    def links(self):
+    def links(
+            self
+    ) -> List[mfm.fitting.parameter.FittingParameter]:
         return self._links
 
     @links.setter
-    def links(self, v):
+    def links(
+            self,
+            v: List[mfm.fitting.parameter.FittingParameter]
+    ):
         self._links = v if type(v) is list else []
 
     @property
-    def n_points(self):
+    def n_points(self) -> int:
         nbr_points = 0
         for f in self.fits:
             nbr_points += f.model.n_points
         return nbr_points
 
     @property
-    def global_parameters_all(self):
+    def global_parameters_all(
+            self
+    ) -> List[mfm.fitting.parameter.FittingParameter]:
         return list(self._global_parameters.values())
 
     @property
-    def global_parameters_all_names(self):
+    def global_parameters_all_names(
+            self
+    ) -> List[str]:
         return [p.name for p in self.global_parameters_all]
 
     @property
-    def global_parameters(self):
+    def global_parameters(
+            self
+    ) -> List[mfm.fitting.parameter.FittingParameter]:
         return [p for p in self.global_parameters_all if not p.fixed]
 
     @property
-    def global_parameters_names(self):
+    def global_parameters_names(
+            self
+    ) -> List[str]:
         return [p.name for p in self.global_parameters]
 
     @property
-    def global_parameters_bound_all(self):
+    def global_parameters_bound_all(
+            self
+    ) -> List[
+        Tuple[float, float]
+    ]:
         return [pi.bounds for pi in self.global_parameters_all]
 
     @property
-    def global_parameter_linked_all(self):
+    def global_parameter_linked_all(
+            self
+    ) -> List[bool]:
         return [p.is_linked for p in self.global_parameters_all]
 
     @property
-    def parameters(self):
-        p = []
+    def parameters(
+            self
+    ) -> List[mfm.fitting.parameter.FittingParameter]:
+        p = list()
         for f in self.fits:
             p += f.model.parameters
         p += self.global_parameters
         return p
 
     @property
-    def parameter_names(self):
+    def parameter_names(
+            self
+    ) -> List[str]:
         try:
-            re = []
+            re = list()
             for i, f in enumerate(self.fits):
                 if f.model is not None:
                     re += ["%i:%s" % (i + 1, p.name) for p in f.model.parameters]
             re += self.global_parameters_names
             return re
         except AttributeError:
-            return []
+            return list()
 
     @property
-    def parameters_all(self):
+    def parameters_all(
+            self
+    ) -> List[mfm.fitting.parameter.FittingParameter]:
         try:
-            re = []
+            re = list()
             for i, f in enumerate(self.fits):
                 if f.model is not None:
                     re += [p for p in f.model._parameters]
@@ -120,17 +149,23 @@ class GlobalFitModel(model.Model, Curve):
             return []
 
     @property
-    def global_parameters_values_all(self):
+    def global_parameters_values_all(
+            self
+    ) -> List[float]:
         return [g.value for g in self.global_parameters_all]
 
     @property
-    def global_parameters_fixed_all(self):
+    def global_parameters_fixed_all(
+            self
+    ) -> List[bool]:
         return [p.fixed for p in self.global_parameters_all]
 
     @property
-    def parameter_names_all(self):
+    def parameter_names_all(
+            self
+    ) -> List[str]:
         try:
-            re = []
+            re = list()
             for i, f in enumerate(self.fits):
                 if f.model is not None:
                     re += ["%i:%s" % (i + 1, p.name) for p in f.model._parameters]
@@ -140,7 +175,9 @@ class GlobalFitModel(model.Model, Curve):
             return []
 
     @property
-    def parameter_dict(self):
+    def parameter_dict(
+            self
+    ) -> Dict:
         re = dict()
         for i, f in enumerate(self.fits):
             d = f.model.parameter_dict
@@ -150,7 +187,13 @@ class GlobalFitModel(model.Model, Curve):
         return re
 
     @property
-    def data(self):
+    def data(
+            self
+    ) -> Tuple[
+        np.array,
+        np.array,
+        np.array
+    ]:
         d = list()
         w = list()
         for f in self.fits:
@@ -165,12 +208,16 @@ class GlobalFitModel(model.Model, Curve):
     def get_wres(
             self,
             fit: mfm.fitting.fit.Fit,
+            xmin: int = None,
+            xmax: int = None,
             **kwargs
-    ):
+    ) -> np.array:
         try:
             f = fit
-            xmin = kwargs.get('xmin', f.xmin)
-            xmax = kwargs.get('xmax', f.xmax)
+            if xmin is None:
+                xmin = f.xmin
+            if xmax is None:
+                xmax = f.xmax
             x, m = f.model[xmin:xmax]
             x, d, w = f.model.data[xmin:xmax]
             ml = min([len(m), len(d)])
@@ -182,25 +229,25 @@ class GlobalFitModel(model.Model, Curve):
     def append_fit(
             self,
             fit: mfm.fitting.fit.Fit
-    ):
-        if not fit in self.fits:
+    ) -> None:
+        if fit not in self.fits:
             self.fits.append(fit)
 
     def append_global_parameter(
             self,
             parameter: mfm.parameter.Parameter
-    ):
+    ) -> None:
         variable_name = parameter.name
         if variable_name not in list(self._global_parameters.keys()):
             self._global_parameters[parameter.name] = parameter
 
     def setLinks(self):
-        self.parameters_calculated = []
+        self.parameters_calculated = list()
         if self.clear_on_update:
             self.clear_all_links()
         f = [fit.model.parameters_all_dict for fit in self.fits]
         g = self._global_parameters
-        for i, link in enumerate(self.links):
+        for link in self.links:
             en, origin_fit, origin_name, formula = link
             if not en:
                 continue
@@ -213,23 +260,33 @@ class GlobalFitModel(model.Model, Curve):
             except IndexError:
                 print("not enough fits index out of range")
 
-    def autofitrange(self, fit):
+    def autofitrange(
+            self,
+            fit: mfm.fitting.fit.FitGroup
+    ):
         self.xmin, self.xmax = None, None
         return self.xmin, self.xmax
 
-    def clear_local_fits(self):
-        self.fits = []
+    def clear_local_fits(
+            self
+    ) -> None:
+        self.fits = list()
 
-    def remove_local_fit(self, nbr):
-        del self.fits[nbr]
+    def remove_local_fit(
+            self,
+            fit_index: int
+    ):
+        del self.fits[fit_index]
 
-    def clear_all_links(self):
+    def clear_all_links(
+            self
+    ) -> None:
         for fit in self.fits:
             for p in fit.model.parameters_all:
                 p.link = None
 
     def clear_listed_links(self):
-        self.links = []
+        self.links = list()
 
     def __str__(self):
         s = "\n"
@@ -249,7 +306,9 @@ class GlobalFitModel(model.Model, Curve):
         return s
 
     @property
-    def _x(self):
+    def _x(
+            self
+    ) -> np.array:
         x = list()
         for f in self.fits:
             x.append(f.model._x)
@@ -260,7 +319,9 @@ class GlobalFitModel(model.Model, Curve):
         pass
 
     @property
-    def _y(self):
+    def _y(
+            self
+    ) -> np.array:
         y = list()
         for f in self.fits:
             y.append(f.model._y)
@@ -280,12 +341,16 @@ class GlobalFitModel(model.Model, Curve):
         x, y = self._x[start:stop:step], self._y[start:stop:step]
         return x, y
 
-    def update(self):
+    def update(
+            self
+    ) -> None:
         model.Model.update(self)
         for f in self.fits:
             f.model.update()
 
-    def update_model(self):
+    def update_model(
+            self
+    ) -> None:
         if mfm.settings.cs_settings['fitting']['parallel_fit']:
             threads = [threading.Thread(target=f.model.update_model) for f in self.fits]
             for thread in threads:
@@ -296,7 +361,9 @@ class GlobalFitModel(model.Model, Curve):
             for f in self.fits:
                 f.model.update_model()
 
-    def finalize(self):
+    def finalize(
+            self
+    ) -> None:
         model.Model.finalize(self)
         for fit in self.fits:
             #fit.finalize()
@@ -316,7 +383,13 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
             fit: mfm.fitting.fit.Fit
     ):
         super(GlobalFitModelWidget, self).__init__(fit)
-        uic.loadUi("mfm/ui/fitting/models/globalfit_2.ui", self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "globalfit_2.ui"
+            ),
+            self
+        )
 
         self.actionOnAddToLocalFitList.triggered.connect(self.onAddToLocalFitList)
         self.actionOn_clear_local_fits.triggered.connect(self.onClearLocalFits)
@@ -451,7 +524,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     @property
     def origin_fit_number(self):
-        return int(self.comboBox_gfOriginFit.currentIndex())  # origin fit nbr
+        return int(self.comboBox_gfOriginFit.currentIndex())  # origin fit fit_index
 
     @property
     def origin_fit(self):
@@ -468,7 +541,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     @property
     def target_fit_number(self):
-        return int(self.comboBox_gfTargetFit.currentIndex())  # target fit nbr
+        return int(self.comboBox_gfTargetFit.currentIndex())  # target fit fit_index
 
     @property
     def target_fit(self):

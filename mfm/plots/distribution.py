@@ -1,5 +1,5 @@
 import pyqtgraph as pg
-from qtpy import  QtWidgets
+from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
 import mfm
