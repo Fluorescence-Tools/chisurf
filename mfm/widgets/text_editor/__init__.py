@@ -1,1 +1,1 @@
-from . import qsci_editor
+from .qsci_editor import CodeEditor

@@ -378,7 +378,7 @@ class Main(QtWidgets.QMainWindow):
 
         self.init_widgets()
 
-        self.configuration = mfm.widgets.CodeEditor(
+        self.configuration = mfm.widgets.text_editor.CodeEditor(
             filename=mfm.settings.settings_file,
             language='YAML',
             can_load=False
@@ -419,7 +419,7 @@ class Main(QtWidgets.QMainWindow):
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetFits)
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
-        self.editor = mfm.widgets.CodeEditor()
+        self.editor = mfm.widgets.text_editor.CodeEditor()
         self.verticalLayout_10.addWidget(self.editor)
 
         self.modelLayout.setAlignment(QtCore.Qt.AlignTop)

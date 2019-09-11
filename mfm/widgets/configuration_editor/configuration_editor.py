@@ -6,6 +6,7 @@ as well as some customized parameter types
 
 """
 from __future__ import annotations
+from typing import Dict
 
 import sys
 
@@ -66,7 +67,7 @@ def pt2dict(
     :return:
     """
     children = parameter_tree.children()
-    for i, child in enumerate(children):
+    for child in children:
         if child.type() == "action":
             continue
         if not child.children():
@@ -86,13 +87,12 @@ class ParameterEditor(QtWidgets.QWidget):
 
     def __init__(
             self,
-            *args,
-            target: dict = None,
+            target: Dict = None,
             json_file: str = None,
             windows_title: str = None,
-            **kwargs
     ):
         super(ParameterEditor, self).__init__()
+
         if json_file is None:
             json_file = mfm.widgets.get_filename()
         if target is None:

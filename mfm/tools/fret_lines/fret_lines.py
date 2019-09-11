@@ -675,9 +675,15 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
     def parameter_range(self):
         return float(self.doubleSpinBox.value()), float(self.doubleSpinBox_2.value())
 
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi('./mfm/ui/tools/fret_line.ui', self)
+    def __init__(self, *args, **kwargs):
+        super(FRETLineGeneratorWidget, self).__init__(*args, **kwargs)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "fret_line.ui"
+            ),
+            self
+        )
         win = CurveDialog(edit=False, toolbar=True)
 
         # Make Plot
