@@ -18,9 +18,12 @@ def add_fit(
         **kwargs
 ):
     cs = mfm.cs
+
     if dataset_indices is None:
         dataset_indices = [cs.dataset_selector.selected_curve_index]
-    datasets = [cs.dataset_selector.datasets[i] for i in dataset_indices]
+    datasets = [
+        cs.dataset_selector.datasets[i] for i in dataset_indices
+    ]
 
     if model_name is None:
         model_name = cs.current_model_name
@@ -47,9 +50,11 @@ def add_fit(
             cs.modelLayout.addWidget(fit_control_widget)
             for f in fit:
                 cs.modelLayout.addWidget(f.model)
-            fit_window = mfm.fitting.fitting_widgets.FitSubWindow(fit,
-                                                                  control_layout=cs.plotOptionsLayout,
-                                                                  fit_widget=fit_control_widget)
+            fit_window = mfm.fitting.fitting_widgets.FitSubWindow(
+                fit,
+                control_layout=cs.plotOptionsLayout,
+                fit_widget=fit_control_widget
+            )
             fit_window = cs.mdiarea.addSubWindow(fit_window)
             mfm.fit_windows.append(fit_window)
             fit_window.show()
@@ -62,10 +67,13 @@ def change_irf(
     cs = mfm.cs
     irf = cs.current_fit.model.convolve.irf_select.datasets[dataset_idx]
     for f in cs.current_fit[cs.current_fit._selected_fit:]:
-        f.model.convolve._irf = mfm.experiments.data.DataCurve(x=irf.x, y=irf.y)
+        f.model.convolve._irf = mfm.experiments.data.DataCurve(
+            x=irf.x,
+            y=irf.y
+        )
     cs.current_fit.update()
     current_fit = mfm.cs.current_fit
-    for f in current_fit[current_fit._selected_fit:]:
+    for f in current_fit[current_fit.selected_fit_index:]:
         f.model.convolve.lineEdit.setText(irf_name)
 
 
@@ -122,7 +130,9 @@ def save_fit():
     for i, f in enumerate(fs):
 
         fit_control_widget.selected_fit = i
-        filename = slugify(os.path.basename(f.data.name)[0])
+        filename = slugify(
+            os.path.basename(f.data.name)[0]
+        )
         document.add_paragraph(
             filename, style='ListNumber'
         )
@@ -133,13 +143,12 @@ def save_fit():
         except WindowsError:
             pass
 
-        px = QtGui.QPixmap.grabWidget(fww)
         fit_png = os.path.join(target_dir, 'screenshot_fit.png')
-        px.save(fit_png)
+        fww.grab().save(fit_png)
 
-        px = QtGui.QPixmap.grabWidget(cs.current_fit.model)
         model_png = os.path.join(target_dir, 'screenshot_model.png')
-        px.save(model_png)
+        cs.current_fit.model.grab().save(model_png)
+
         document.add_picture(model_png, width=Inches(2.5))
         document.add_picture(fit_png, width=Inches(2.5))
         try:
@@ -149,6 +158,7 @@ def save_fit():
             cs.current_fit.save(target_dir, 'fit')
 
     document.add_heading('Summary', level=1)
+
     p = document.add_paragraph('Parameters which are fitted are given in ')
     p.add_run('bold').bold = True
     p.add_run(', linked parameters in ')
@@ -204,7 +214,9 @@ def group_datasets(
         dataset_indices: List[int]
 ):
     #selected_data = mfm.data_sets[dataset_numbers]
-    selected_data = [mfm.imported_datasets[i] for i in dataset_indices]
+    selected_data = [
+        mfm.imported_datasets[i] for i in dataset_indices
+    ]
     if isinstance(selected_data[0], mfm.experiments.data.DataCurve):
         # TODO: check for double names!!!
         dg = mfm.experiments.data.ExperimentDataCurveGroup(selected_data, name="Data-Group")
@@ -221,14 +233,16 @@ def group_datasets(
 def remove_datasets(
         dataset_indices: List[int]
 ):
-    dataset_indices = [dataset_indices] if not isinstance(dataset_indices, list) else dataset_indices
-    l = list()
+    if not isinstance(dataset_indices, list):
+        dataset_indices = [dataset_indices]
+
+    imported_datasets = list()
     for i, d in enumerate(mfm.imported_datasets):
         if d.name == 'Global-fit':
-            l.append(d)
+            imported_datasets.append(d)
             continue
         if i not in dataset_indices:
-            l.append(d)
+            imported_datasets.append(d)
         else:
             fw = list()
             for fit_window in mfm.fit_windows:
@@ -238,7 +252,8 @@ def remove_datasets(
                 else:
                     fw.append(fit_window)
             mfm.fit_windows = fw
-    mfm.imported_datasets = l
+
+    mfm.imported_datasets = imported_datasets
 
 
 def add_dataset(
@@ -299,7 +314,7 @@ def tcspc_set_linearization(
 ):
     cs = mfm.cs
     lin_table = cs.current_fit.model.corrections.lin_select.datasets[idx]
-    for f in cs.current_fit[cs.current_fit._selected_fit:]:
+    for f in cs.current_fit[cs.current_fit.selected_fit_index:]:
         f.model.corrections.lintable = mfm.experiments.data.DataCurve(
             x=lin_table.x,
             y=lin_table.y
@@ -307,7 +322,7 @@ def tcspc_set_linearization(
         f.model.corrections.correct_dnl = True
 
     lin_name = curve_name
-    for f in cs.current_fit[cs.current_fit._selected_fit:]:
+    for f in cs.current_fit[cs.current_fit.selected_fit_index:]:
         f.model.corrections.lineEdit.setText(lin_name)
         f.model.corrections.checkBox.setChecked(True)
     cs.current_fit.update()

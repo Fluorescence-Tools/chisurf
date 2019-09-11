@@ -13,7 +13,11 @@ from mfm.curve import Curve
 
 class Model(mfm.fitting.parameter.FittingParameterGroup):
 
-    def __init__(self, fit,  **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            **kwargs
+    ):
         super(Model, self).__init__(model=self, **kwargs)
         self.fit = fit
         self.flatten_weighted_residuals = True
@@ -100,7 +104,9 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
     def update_model(self, **kwargs):
         pass
 
-    def update(self):
+    def update(
+            self
+    ) -> None:
         #self.find_parameters()
         self.update_model()
 
@@ -165,7 +171,6 @@ class ModelWidget(Model, QtWidgets.QWidget):
         (mfm.plots.FitInfo, {}),
         (mfm.plots.ParameterScanPlot, {}),
         (mfm.plots.ResidualPlot, {})
-        #(plots.FitInfo, {}), (plots.AvPlot, {})
     ]
 
     def update_plots(self, *args, **kwargs):
@@ -173,20 +178,31 @@ class ModelWidget(Model, QtWidgets.QWidget):
             p.update_all(*args, **kwargs)
             p.update()
 
-    def update_widgets(self):
-        #[p.update() for p in self._aggregated_parameters if isinstance(p, AggregatedParameters)]
-        [p.update() for p in self._parameters if isinstance(p, mfm.fitting.fitting_widgets.FittingParameterWidget)]
+    def update_widgets(self) -> None:
+        for p in self._parameters:
+            if isinstance(p, mfm.fitting.fitting_widgets.FittingParameterWidget):
+                p.update()
 
-    def update(self, *args, **kwargs):
-        QtWidgets.QWidget.update(self, *args)
+    def update(
+            self
+    ) -> None:
+        super(ModelWidget, self).update()
         self.update_widgets()
-        Model.update(self)
         self.update_plots()
 
     def __getattr__(self, item):
         pass
 
-    def __init__(self, fit, *args, **kwargs):
-        super(ModelWidget, self).__init__(fit, *args, **kwargs)
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            *args,
+            **kwargs
+    ):
+        super(ModelWidget, self).__init__(
+            fit,
+            *args,
+            **kwargs
+        )
         self.plots = list()
         self.icon = kwargs.get('icon', QtGui.QIcon(":/icons/document-open.png"))

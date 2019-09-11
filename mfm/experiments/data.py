@@ -18,13 +18,21 @@ class Data(Base):
             *args,
             filename: str = None,
             data: mfm.experiments.data.Data = None,
+            embed_data: bool = None,
+            read_file_size_limit: int = None,
             **kwargs
     ):
         super(Data, self).__init__(*args, **kwargs)
         self._filename = filename
         self._data = data
-        self._embed_data = mfm.settings.cs_settings['database']['embed_data']
-        self._max_file_size = mfm.settings.cs_settings['database']['read_file_size_limit']
+
+        if embed_data is None:
+            embed_data = mfm.settings.cs_settings['database']['embed_data']
+        if read_file_size_limit is None:
+            read_file_size_limit = mfm.settings.cs_settings['database']['read_file_size_limit']
+
+        self._embed_data = embed_data
+        self._max_file_size = read_file_size_limit
 
     @property
     def data(self) -> mfm.experiments.data.Data:
@@ -172,7 +180,7 @@ class DataCurve(Curve, ExperimentalData):
                 s += "{0:<12.3e}\t".format(ex)
                 s += "{0:<12.3e}\t".format(ey)
                 s += "\n"
-        except:
+        except (AttributeError, KeyError):
             s += "This curve does not 'own' data..."
         return s
 
@@ -257,13 +265,6 @@ class DataCurve(Curve, ExperimentalData):
         x, y = super(DataCurve, self).__getitem__(key)
         return x, y, self.ey[key]
 
-    @property
-    def dt(self) -> np.array:
-        """
-        The derivative of the x-axis
-        """
-        return np.diff(self.x)
-
 
 class DataGroup(list, Base):
 
@@ -276,7 +277,10 @@ class DataGroup(list, Base):
         return self[self._current_dataset]
 
     @current_dataset.setter
-    def current_dataset(self, i):
+    def current_dataset(
+            self,
+            i: int
+    ):
         self._current_dataset = i
 
     @property

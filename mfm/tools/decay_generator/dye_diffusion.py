@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import sys
 import json
 import os
 import tempfile
 
 import numpy as np
-from qtpy import  QtWidgets, uic
+from qtpy import QtWidgets, uic
 from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
+import qdarkstyle
 
 import mfm
 import mfm.io.xyz
@@ -23,38 +25,50 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
     name = "Decay Generator"
 
     @property
-    def n_curves(self):
+    def n_curves(self) -> int:
         return int(self.spinBox_4.value())
 
     @n_curves.setter
-    def n_curves(self, v):
+    def n_curves(
+            self,
+            v: int
+    ):
         self.spinBox_4.setValue(v)
 
     @property
-    def nTAC(self):
+    def nTAC(self) -> int:
         return int(self.spinBox_2.value())
 
     @nTAC.setter
-    def nTAC(self, v):
+    def nTAC(
+            self,
+            v: int
+    ):
         return self.spinBox_2.setValue(v)
 
     @property
-    def dtTAC(self):
+    def dtTAC(self) -> float:
         return float(self.doubleSpinBox_18.value())
 
     @dtTAC.setter
-    def dtTAC(self, v):
+    def dtTAC(
+            self,
+            v: float
+    ):
         return self.doubleSpinBox_18.setValue(v)
 
     @property
-    def decay_mode(self):
+    def decay_mode(self) -> str:
         if self.radioButton_3.isChecked():
             return 'photon'
         if self.radioButton_4.isChecked():
             return 'curve'
 
     @decay_mode.setter
-    def decay_mode(self, v):
+    def decay_mode(
+            self,
+            v: str
+    ):
         if v == 'photon':
             self.radioButton_4.setChecked(True)
             self.radioButton_3.setChecked(False)
@@ -63,103 +77,133 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
             self.radioButton_4.setChecked(False)
 
     @property
-    def settings_file(self):
+    def settings_file(self) -> str:
         return self._settings_file
 
     @settings_file.setter
-    def settings_file(self, v):
+    def settings_file(
+            self,
+            v: str
+    ):
         return self.lineEdit_2.setText(v)
 
     @property
-    def all_quencher_atoms(self):
+    def all_quencher_atoms(self) -> bool:
         return not bool(self.groupBox_5.isChecked())
 
     @all_quencher_atoms.setter
-    def all_quencher_atoms(self, v):
+    def all_quencher_atoms(
+            self,
+            v: bool
+    ):
         self.groupBox_5.setChecked(not v)
 
     @property
-    def filename_prefix(self):
+    def filename_prefix(self) -> str:
         return str(self.lineEdit_5.text())
 
     @property
-    def skip_frame(self):
+    def skip_frame(self) -> int:
         return int(self.spinBox_3.value())
 
     @property
-    def n_frames(self):
+    def n_frames(self) -> int:
         return int(self.spinBox.value())
 
     @property
-    def nBins(self):
+    def nBins(self) -> int:
         return int(self.spinBox_2.value())
 
     @property
-    def n_photons(self):
+    def n_photons(self) -> int:
         return int(self.doubleSpinBox_11.value() * 1e6)
 
     @n_photons.setter
-    def n_photons(self, v):
+    def n_photons(
+            self,
+            v: int
+    ):
         return self.doubleSpinBox_11.setValue(v / 1e6)
 
     @property
-    def critical_distance(self):
+    def critical_distance(self) -> float:
         return self.dye_parameter.critical_distance
 
     @critical_distance.setter
-    def critical_distance(self, v):
+    def critical_distance(
+            self,
+            v: float
+    ):
         self.dye_parameter.critical_distance = v
 
     @property
-    def t_max(self):
+    def t_max(self) -> float:
         """
         simulation time in nano-seconds
         """
         return float(self.doubleSpinBox_6.value()) * 1000.0
 
     @t_max.setter
-    def t_max(self, v):
+    def t_max(
+            self,
+            v: float
+    ):
         self.onSimulationTimeChanged()
         self.doubleSpinBox_6.setValue(float(v / 1000.0))
 
     @property
-    def t_step(self):
+    def t_step(self) -> float:
         """
         time-step in picoseconds
         """
         return float(self.doubleSpinBox_7.value()) / 1000.0
 
     @t_step.setter
-    def t_step(self, v):
+    def t_step(
+            self,
+            v: float
+    ):
         self.onSimulationTimeChanged()
-        return self.doubleSpinBox_7.setValue(float(v * 1000.0))
+        self.doubleSpinBox_7.setValue(float(v * 1000.0))
 
     @property
-    def attachment_chain(self):
+    def attachment_chain(self) -> str:
         return self.pdb_selector.chain_id
 
     @attachment_chain.setter
-    def attachment_chain(self, v):
+    def attachment_chain(
+            self,
+            v: str
+    ):
         self.pdb_selector.chain_id = v
 
     @property
-    def attachment_residue(self):
+    def attachment_residue(self) -> int:
         return self.pdb_selector.residue_id
 
     @attachment_residue.setter
-    def attachment_residue(self, v):
+    def attachment_residue(
+            self,
+            v: int
+    ):
         self.pdb_selector.residue_id = v
 
     @property
-    def attachment_atom_name(self):
+    def attachment_atom_name(self) -> str:
         return self.pdb_selector.atom_name
 
     @attachment_atom_name.setter
-    def attachment_atom_name(self, v):
+    def attachment_atom_name(
+            self,
+            v: str
+    ):
         self.pdb_selector.atom_name = v
 
-    def __init__(self, **kwargs):
-        fn = os.path.join(mfm.package_directory, './settings/dye_diffusion.json')
+    def __init__(
+            self,
+            **kwargs
+    ):
+        fn = os.path.join(mfm.package_directory, './settings/sample.json')
         dye_diffusion_settings_file = kwargs.get('dye_diffusion_settings_file', fn)
         self.verbose = kwargs.get('verbose', mfm.verbose)
         settings = json.load(open(dye_diffusion_settings_file))
@@ -303,7 +347,11 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
         self.update_decay_histogram()
         self.update_trajectory_curve()
 
-    def onSaveAV(self, directory=None, verbose=True):
+    def onSaveAV(
+            self,
+            directory: str = None,
+            verbose: bool = True
+    ):
         """
         Saves the accessible volumes to a directory. If no directory is provided a dialog-window
         is opned in which the user chooses the target-directory.
@@ -360,4 +408,9 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
         self.save_photons(filename)
 
 
-
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    win = TransientDecayGenerator()
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    win.show()
+    sys.exit(app.exec_())

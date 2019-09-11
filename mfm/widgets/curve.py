@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import List, Callable
 
-from qtpy import  QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 import mfm.fitting
 import mfm.widgets
@@ -105,13 +105,12 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         menu.exec_(event.globalPos())
 
     def update(self, *args, **kwargs):
-        QtWidgets.QTreeWidget.update(self, *args, **kwargs)
+        super(ExperimentalDataSelector, self).update(*args, **kwargs)
         try:
             window_title = self.fit.name
             self.setWindowTitle(window_title)
         except AttributeError:
             self.setWindowTitle("")
-
         self.clear()
 
         for d in self.datasets:

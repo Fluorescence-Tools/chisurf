@@ -105,6 +105,12 @@ class Main(QtWidgets.QMainWindow):
     def current_model_name(self) -> str:
         return str(self.comboBox_Model.currentText())
 
+    @property
+    def current_fit(
+            self
+    ) -> mfm.fitting.fit.FitGroup:
+        return self._current_fit
+
     def closeEvent(self, event):
         if mfm.settings.cs_settings['gui']['confirm_close_program']:
             reply = QtWidgets.QMessageBox.question(self,
@@ -124,20 +130,20 @@ class Main(QtWidgets.QMainWindow):
         if subwindow is not None:
             for f in mfm.fits:
                 if f == subwindow.fit:
-                    if self.current_fit is not mfm.fits[self.fit_idx]:
-                        mfm.run("cs.current_fit = mfm.fits[%s]" % self.fit_idx)
+                    if self._current_fit is not mfm.fits[self.fit_idx]:
+                        mfm.run("cs._current_fit = mfm.fits[%s]" % self.fit_idx)
                         break
 
             self.current_fit_widget = subwindow.fit_widget
-            fit_name = self.current_fit.name
+            fit_name = self._current_fit.name
             window_title = mfm.__name__ + "(" + mfm.__version__ + "): " + fit_name
 
             self.setWindowTitle(window_title)
 
             mfm.widgets.hide_items_in_layout(self.modelLayout)
             mfm.widgets.hide_items_in_layout(self.plotOptionsLayout)
-            self.current_fit.model.update()
-            self.current_fit.model.show()
+            self._current_fit.model.update()
+            self._current_fit.model.show()
             self.current_fit_widget.show()
             subwindow.current_plt_ctrl.show()
 
@@ -167,7 +173,10 @@ class Main(QtWidgets.QMainWindow):
     def onAddFit(self):
         mfm.run(
             "mfm.cmd.add_fit(model_name='%s', dataset_indices=%s)" %
-            (self.current_model_name, [r.row() for r in self.dataset_selector.selectedIndexes()])
+            (
+                self.current_model_name,
+                [r.row() for r in self.dataset_selector.selectedIndexes()]
+            )
         )
 
     def onExperimentChanged(self):
@@ -337,7 +346,7 @@ class Main(QtWidgets.QMainWindow):
         )
         mfm.experiment.append(tcspc)
 
-        fcs = mfm.experiments.experiment.Experiment('FCS')
+        fcs = mfm.experiments.experiment.Experiment('fcs')
         fcs.add_setups(
             [
                 mfm.experiments.fcs.FCSKristine(
@@ -367,18 +376,23 @@ class Main(QtWidgets.QMainWindow):
         self.experiment_names = [b.name for b in mfm.experiment if b.name is not 'Global']
         self.comboBox_experimentSelect.addItems(self.experiment_names)
 
-        self.current_fit = None
+        self._current_fit = None
         mfm.cmd.add_dataset(setup=global_setup)
         #self.onAddDataset(experiment=global_fit, setup=global_setup)  # Add Global-Dataset by default
 
     def __init__(self, *args, **kwargs):
-        QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
-        uic.loadUi("mfm/ui/mainwindow.ui", self)
+        super(Main, self).__init__(*args, **kwargs)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "gui.ui"
+            ),
+            self
+        )
+
         self.setCentralWidget(self.mdiarea)
-
         self.init_widgets()
-
-        self.configuration = mfm.widgets.CodeEditor(
+        self.configuration = mfm.widgets.text_editor.CodeEditor(
             filename=mfm.settings.settings_file,
             language='YAML',
             can_load=False
@@ -388,7 +402,13 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #      Help and About widgets                            #
         ##########################################################
-        self.about = uic.loadUi("mfm/ui/about.ui")
+        self.about = uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "about.ui"
+            )
+        )
+
         self.about.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.about.hide()
         self.actionHelp_2.triggered.connect(self.about.show)
@@ -399,8 +419,8 @@ class Main(QtWidgets.QMainWindow):
         #      Push variables to console and add it to           #
         #      user interface                                    #
         ##########################################################
-        self.dockWidgetScriptEdit.setVisible(mfm.settings.cs_settings['gui']['show_macro_edit'])
-        self.dockWidget_console.setVisible(mfm.settings.cs_settings['gui']['show_console'])
+        self.dockWidgetScriptEdit.setVisible(mfm.settings.gui['show_macro_edit'])
+        self.dockWidget_console.setVisible(mfm.settings.gui['show_console'])
         self.init_console()
 
         ##########################################################
@@ -419,7 +439,7 @@ class Main(QtWidgets.QMainWindow):
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetFits)
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
-        self.editor = mfm.widgets.CodeEditor()
+        self.editor = mfm.widgets.text_editor.CodeEditor()
         self.verticalLayout_10.addWidget(self.editor)
 
         self.modelLayout.setAlignment(QtCore.Qt.AlignTop)
@@ -430,7 +450,6 @@ class Main(QtWidgets.QMainWindow):
         self.actionTab_windows.triggered.connect(self.onTabWindows)
         self.actionCascade.triggered.connect(self.onCascadeWindows)
         self.mdiarea.subWindowActivated.connect(self.subWindowActivated)
-        self.groupBox_FileParameters.setChecked(True)
 
         ##########################################################
         #    Connect changes in User-interface to actions like:  #
@@ -448,7 +467,8 @@ class Main(QtWidgets.QMainWindow):
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
         self.dataset_selector = mfm.widgets.curve.ExperimentalDataSelector(
-            click_close=False, curve_types='all',
+            click_close=False,
+            curve_types='all',
             change_event=self.onCurrentDatasetChanged,
             drag_enabled=True
         )
@@ -462,6 +482,12 @@ if __name__ == "__main__":
     mfm.console.history_widget = win.plainTextEditHistory
     mfm.cs = win
     win.init_setups()
+
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+
+    #with open(mfm.settings.style_sheet_file, 'r') as fp:
+    #    style_sheet = fp.read()
+    #    app.setStyleSheet(style_sheet)
+
     win.show()
     sys.exit(app.exec_())

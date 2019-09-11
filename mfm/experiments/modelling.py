@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from qtpy import  QtWidgets
+from qtpy import QtWidgets
 
 import mfm
-import mfm.structure.widgets
+import mfm.widgets.pdb.pdb
 from mfm.experiments.reader import ExperimentReader
 from mfm.io.widgets import PDBLoad
 
@@ -42,24 +42,28 @@ class LoadStructureFolder(ExperimentReader, QtWidgets.QWidget):
 
     def __init__(self, *args, **kwargs):
         super(LoadStructureFolder, self).__init__(*args, **kwargs)
-
         self.parent = kwargs.get('parent', None)
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
-        self.pdbWidget = mfm.structure.widgets.PDBFolderLoad(self)
+        self.pdbWidget = mfm.widgets.pdb.PDBFolderLoad(self)
         self.layout.addWidget(self.pdbWidget)
 
-    @staticmethod
     def read(
             self,
-            data: mfm.experiments.data.Data,
+            name: str = None,
             **kwargs
     ):
-        return [self.pdbWidget.trajectory]
+        pass
 
     def __str__(self):
         s = 'ProteinMC\n'
         return s
+
+    def get_data(
+            self,
+            **kwargs
+    ) -> mfm.experiments.data.ExperimentDataGroup:
+        return [self.pdbWidget.trajectory]
 
     @staticmethod
     def autofitrange(

@@ -1,12 +1,20 @@
-from qtpy import  QtCore, QtWidgets
+from __future__ import annotations
 
+from qtpy import QtCore, QtWidgets
+
+import mfm.fitting
 from mfm.plots.plotbase import Plot
 
 
 class GlobalFitPlot(Plot):
     name = "Global-Fits"
 
-    def __init__(self, fit, logy=False, logx=False):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            logy: bool = False,
+            logx: bool = False
+    ):
         super(GlobalFitPlot, self).__init__(fit)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.pltControl = QtWidgets.QWidget()

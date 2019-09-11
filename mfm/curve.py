@@ -30,6 +30,13 @@ class Curve(Base):
             y=np.cumsum(self.y)
         )
 
+    @property
+    def dt(self) -> np.array:
+        """
+        The derivative of the x-axis
+        """
+        return np.diff(self.x)
+
     def to_dict(self) -> dict:
         d = Base.to_dict(self)
         d['x'] = list(self.x)
