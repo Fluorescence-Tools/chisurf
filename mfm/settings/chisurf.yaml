@@ -157,9 +157,7 @@ gui:
   show_macro_edit: true
   confirm_close_fit: true
   confirm_close_program: true
-  RubberBandResize: true
-  RubberBandMove: true
-  fit_windows_size: [200, 200]
+  fit_windows_size: [300, 300]
   console:
     style: 'linux' # options are linux, lightbg, or nocolor
     init: |
