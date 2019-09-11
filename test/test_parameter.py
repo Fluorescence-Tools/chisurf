@@ -49,6 +49,14 @@ class Tests(unittest.TestCase):
         p3 = p1 ** p2
         self.assertEqual(p3.value, 2. ** 3.)
 
+    def test_linking(self):
+        p1 = mfm.parameter.Parameter(value=2.0)
+        p2 = mfm.parameter.Parameter(value=3.0)
+        self.assertEqual(p1.value, 2.0)
+        self.assertEqual(p2.value, 3.0)
+        p2.link = p1
+        self.assertEqual(p2.value, 2.0)
+
 
 if __name__ == '__main__':
     unittest.main()

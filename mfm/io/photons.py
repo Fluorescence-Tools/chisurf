@@ -22,7 +22,7 @@ def read_burst_ids(
 
     :param filenames:
         filename pointing to a Seidel BID-file
-    :param stack: bool
+    :param stack_files: bool
         If stack is True the returned list is stacked and the numbering of the bursts is made continuous.
         This is the default behavior.
     :return:
@@ -33,7 +33,7 @@ def read_burst_ids(
     >>> import mfm, glob
     >>> directory = "./sample_data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\BID"
     >>> files = glob.glob(directory+'/*.bst')
-    >>> bids = mfm.io.photons.read_BIDs(files)
+    >>> bids = mfm.io.photons.read_burst_ids(files)
     >>> bids[1]
     array([20384, 20385, 20386, 20387, 20388, 20389, 20390, 20391, 20392,
        20393, 20394, 20395, 20396, 20397, 20398, 20399, 20400, 20401,
@@ -162,8 +162,8 @@ class Photons(object):
         self._sample_name = None
         self._cr_filter = None
         self._selection = None
-        self._nTAC = None
-        self._nROUT = None
+        self._number_of_tac_channels = None
+        self._number_of_routing_channels = None
         self._MTCLK = None
 
     @property
@@ -214,79 +214,107 @@ class Photons(object):
         return self.mt[-1] * self.mt_clk / 1000.0
 
     @property
-    def cr_filter(self):
+    def cr_filter(self) -> np.array:
         if self._cr_filter is None:
             return np.ones(self.rout.shape, dtype=np.float32)
         else:
             return self._cr_filter[self.selection]
 
     @cr_filter.setter
-    def cr_filter(self, v):
+    def cr_filter(
+            self,
+            v: np.array
+    ):
         self._cr_filter = v
 
     @property
-    def shape(self):
+    def shape(
+            self
+    ) -> int:
         return self.rout.shape
 
     @property
-    def nPh(self):
+    def nPh(
+            self
+    ) -> int:
         """
         Total number of photons
         """
         return self.rout.shape[0]
 
     @property
-    def rout(self) -> np.array:
+    def rout(
+            self
+    ) -> np.array:
         """
         Array containing the routing channel of the photons
         """
         return self.photon_array['ROUT']
 
     @property
-    def tac(self):
+    def tac(
+            self
+    ) -> np.array:
         """
         Array containing the micro-time clock counts (TAC) of the photons
         """
         return self.photon_array['TAC']
 
     @property
-    def mt(self):
+    def mt(
+            self
+    ) -> np.array:
         """
         Array containing the macros-time clock counts of the photons
         """
         return self.photon_array['MT']
 
     @property
-    def n_tac(self):
+    def n_tac(
+            self
+    ) -> int:
         """
         Number of TAC channels
         """
-        return self.sample.header[0]['nTAC'] if self._nTAC is None else self._nTAC
+        return self.sample.header[0]['nTAC'] if self._number_of_tac_channels is None else self._number_of_tac_channels
 
     @n_tac.setter
-    def n_tac(self, v):
-        self._nTAC = v
+    def n_tac(
+            self,
+            v: int
+    ):
+        self._number_of_tac_channels = v
 
     @property
-    def n_rout(self):
+    def n_rout(
+            self
+    ) -> int:
         """
         Number of routing channels
         """
-        return self.sample.header[0]['NROUT'] if self._nROUT is None else self._nROUT
+        return self.sample.header[0]['NROUT'] if self._number_of_routing_channels is None else self._number_of_routing_channels
 
     @n_rout.setter
-    def n_rout(self, v):
-        self._nROUT = v
+    def n_rout(
+            self,
+            v: int
+    ):
+        self._number_of_routing_channels = v
 
     @property
-    def mt_clk(self):
+    def mt_clk(
+            self
+    ) -> float:
         """
         Macro-time clock of the data (time between the macrotime events in milli-seconds)
         """
         return self.sample.header[0]['MTCLK'] * 1e-6 if self._MTCLK is None else self._MTCLK
 
     @mt_clk.setter
-    def mt_clk(self, v):
+    def mt_clk(
+            self,
+            v: float
+    ):
         self._MTCLK = v
 
     @property
@@ -334,8 +362,8 @@ class Photons(object):
         self._sample_name = self._sample_name
         self._cr_filter = self._cr_filter
         self._selection = self._selection
-        self._nTAC = self._nTAC
-        self._nROUT = self._nROUT
+        self._number_of_tac_channels = self._number_of_tac_channels
+        self._number_of_routing_channels = self._number_of_routing_channels
         self._MTCLK = self._MTCLK
 
         return re
@@ -354,8 +382,8 @@ class Photons(object):
         self._sample_name = self._sample_name
         self._cr_filter = self._cr_filter
         self._selection = self._selection
-        self._nTAC = self._nTAC
-        self._nROUT = self._nROUT
+        self._number_of_tac_channels = self._number_of_tac_channels
+        self._number_of_routing_channels = self._number_of_routing_channels
         self._MTCLK = self._MTCLK
 
         return re
