@@ -104,7 +104,9 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
     def update_model(self, **kwargs):
         pass
 
-    def update(self):
+    def update(
+            self
+    ) -> None:
         #self.find_parameters()
         self.update_model()
 
@@ -182,13 +184,10 @@ class ModelWidget(Model, QtWidgets.QWidget):
                 p.update()
 
     def update(
-            self,
-            *args,
-            **kwargs
+            self
     ) -> None:
-        super(ModelWidget, self).update(*args, **kwargs)
+        super(ModelWidget, self).update()
         self.update_widgets()
-        Model.update(self)
         self.update_plots()
 
     def __getattr__(self, item):

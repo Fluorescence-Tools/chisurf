@@ -1051,7 +1051,7 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
 
         fn = os.path.join(mfm.package_directory, 'settings/tcspc.models.json')
         pw = parse.ParseFormulaWidget(
-            self,
+            fit=fit,
             model=self,
             model_file=fn
         )
@@ -1145,8 +1145,11 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
         self.layout_parameter.addWidget(self._current_model)
         self.layout_parameter.addLayout(layout)
 
-    def add_model(self, fit=None):
-        l = QtWidgets.QHBoxLayout()
+    def add_model(
+            self,
+            fit: mfm.fitting.fit.FitGroup = None
+    ):
+        layout = QtWidgets.QHBoxLayout()
 
         if fit is None:
             model = self.selected_fit.model
@@ -1160,13 +1163,13 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
             model=self,
             ub=1.0,
             lb=0.0,
-            layout=l
+            layout=layout
         )
-        l.addWidget(fraction)
+        layout.addWidget(fraction)
         model_label = QtWidgets.QLabel(fit.name)
-        l.addWidget(model_label)
+        layout.addWidget(model_label)
 
-        self.model_layout.addLayout(l)
+        self.model_layout.addLayout(layout)
         self.append(model, fraction)
 
     def clear_models(self):
