@@ -46,11 +46,11 @@ class LinePlotControl(QtWidgets.QWidget):
         self.ymin = ymin
 
         self.actionUpdate_Plot.triggered.connect(parent.update_all)
-        self.checkBox.stateChanged [int].connect(self.SetLog)
-        self.checkBox_2.stateChanged [int].connect(self.SetLog)
-        self.checkBox_4.stateChanged [int].connect(self.SetLog)
-        self.checkBox_5.stateChanged [int].connect(self.SetReference)
-        self.checkBox_3.stateChanged [int].connect(self.SetDensity)
+        self.checkBox.stateChanged[int].connect(self.SetLog)
+        self.checkBox_2.stateChanged[int].connect(self.SetLog)
+        self.checkBox_4.stateChanged[int].connect(self.SetLog)
+        self.checkBox_5.stateChanged[int].connect(self.SetReference)
+        self.checkBox_3.stateChanged[int].connect(self.SetDensity)
 
     @property
     def data_logy(
@@ -157,7 +157,7 @@ class LinePlotControl(QtWidgets.QWidget):
             self,
             v: float
     ):
-        return self.doubleSpinBox_2.setValue(v)
+        self.doubleSpinBox_2.setValue(v)
 
     @property
     def xmin(
@@ -170,7 +170,7 @@ class LinePlotControl(QtWidgets.QWidget):
             self,
             v: float
     ):
-        return self.doubleSpinBox.setValue(v)
+        self.doubleSpinBox.setValue(v)
 
     @property
     def x_shift(

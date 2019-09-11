@@ -28,11 +28,12 @@ def make_extension(ext):
         library_dirs=["."],
         language="c++")
 
+
 # and build up the set of Extension objects
 eList = [
     [
-       './mfm/fluorescence/simulation/_simulation.pyx',
-       './mfm/math/rand/mt19937cok.cpp'
+        './mfm/fluorescence/simulation/_simulation.pyx',
+        './mfm/math/rand/mt19937cok.cpp'
     ],
     [
         './mfm/fluorescence/fps/_fps.pyx',

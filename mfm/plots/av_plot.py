@@ -39,7 +39,6 @@ class AvPlot(plotbase.Plot):
         mfm.plots.Plot.__init__(self, fit)
         # plot control dialog
         self.pltControl = AvPlotControl(self, **kwargs)
-
         self.layout = QtWidgets.QVBoxLayout(self)
 
         area = DockArea()

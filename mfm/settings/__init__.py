@@ -21,20 +21,20 @@ colors = yaml.safe_load(
     open(
         os.path.join(
             package_directory,
-            '/gui/colors.yaml'
+            './gui/colors.yaml'
         )
     )
 )
 
 style_sheet_file = os.path.join(
     package_directory,
-    '/gui/styles/',
+    './gui/styles/',
     cs_settings['gui']['style_sheet']
 )
 structure_data = json.load(
     open(os.path.join(
         package_directory,
-        'structure.json')
+        './constants/structure.json')
     )
 )
 

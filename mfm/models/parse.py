@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing  import List
 
 import tempfile
 from collections import defaultdict, OrderedDict
@@ -16,14 +17,28 @@ from mfm.fitting.parameter import FittingParameter, FittingParameterGroup
 
 
 class GenerateSymbols(defaultdict):
+
     def __missing__(self, key):
         return sympy.Symbol(key)
 
 
 class ParseFormula(FittingParameterGroup):
 
-    def __init__(self, **kwargs):
-        FittingParameterGroup.__init__(self, **kwargs)
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.Fit = None,
+            model: mfm.models.model.Model = None,
+            short: str = '',
+            parameters: List[mfm.fitting.parameter.FittingParameter] = None,
+            **kwargs
+    ):
+        super(ParseFormula, self).__init__(
+            fit=fit,
+            model=model,
+            short=short,
+            parameters=parameters,
+            **kwargs
+        )
 
         self._keys = list()
         self._model_file = None
@@ -69,7 +84,11 @@ class ParseFormula(FittingParameterGroup):
         self._func = v
         self.parse_code()
 
-    def var_found(self, scanner, name):
+    def var_found(
+            self,
+            scanner,
+            name: str
+    ):
         if name in ['caller', 'e', 'pi']:
             return name
         if name not in self._keys:
@@ -131,9 +150,21 @@ class ParseModel(ModelCurve):
 
     name = "Parse-Model"
 
-    def __init__(self, fit, **kwargs):
-        ModelCurve.__init__(self, fit, **kwargs)
-        self.parse = kwargs.get('parse', ParseFormula())
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            *args,
+            parse: object = None,
+            **kwargs
+    ):
+        super(ParseModel, self).__init__(
+            fit,
+            *args,
+            **kwargs
+        )
+        if parse is None:
+            parse = ParseFormula()
+        self.parse = parse
 
     def update_model(self, **kwargs):
         a = [p.value for p in self.parse.parameters]
@@ -147,11 +178,32 @@ class ParseModel(ModelCurve):
 
 class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
 
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/models/parseWidget.ui', self)
-        ParseFormula.__init__(self, **kwargs)
-        self.n_columns = kwargs.get('n_columns', mfm.settings.cs_settings['gui']['fit_models']['n_columns'])
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            model: mfm.models.model.Model,
+            short: str,
+            parameters: List[mfm.fitting.parameter.FittingParameter],
+            n_columns: int = None,
+            **kwargs
+    ):
+        super(ParseFormulaWidget, self).__init__(
+            fit=fit,
+            model=model,
+            short=short,
+            parameters=parameters,
+            **kwargs
+        )
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "parseWidget.ui"
+            ),
+            self
+        )
+        if n_columns is None:
+            n_columns = mfm.settings.cs_settings['gui']['fit_models']['n_columns']
+        self.n_columns = n_columns
 
         #self.webview = QWebView()
         #self.verticalLayout_4.addWidget(self.webview)
@@ -195,11 +247,14 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
         self.comboBox.addItems(list(v.keys()))
 
     @property
-    def model_name(self):
+    def model_name(self) -> List[str]:
         return list(self.models.keys())[self.comboBox.currentIndex()]
 
     @model_name.setter
-    def model_name(self, v):
+    def model_name(
+            self,
+            v: str
+    ):
         idx = self.comboBox.findText(v)
         self.comboBox.setCurrentIndex(idx)
 
@@ -248,7 +303,11 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
 
 class ParseModelWidget(ParseModel, ModelWidget):
 
-    def __init__(self, fit, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            **kwargs
+    ):
         ModelWidget.__init__(self, fit, **kwargs)
         parse = ParseFormulaWidget(**kwargs)
         ParseModel.__init__(self, fit=fit, parse=parse)
