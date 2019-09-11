@@ -2,7 +2,7 @@ from __future__ import annotations
 import os
 
 import pyqtgraph as pg
-from qtpy import  QtWidgets, uic, QtCore
+from qtpy import QtWidgets, uic, QtCore, QtGui
 
 import mfm
 import mfm.widgets
@@ -109,7 +109,7 @@ class FittingControllerWidget(QtWidgets.QWidget):
         mfm.fitting.fit.sample_fit(self.fit, filename, **kw)
 
     def onRunFit(self):
-        mfm.run("cs.current_fit.run()")
+        mfm.run("cs._current_fit.run()")
 
     def onAutoFitRange(self):
         try:
@@ -134,21 +134,19 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             fit_widget: mfm.fitting.fitting_widgets.FittingControllerWidget = None,
             **kwargs
     ):
+        super(FitSubWindow, self).__init__(**kwargs)
         self.fit = fit
         self.fit_widget = fit_widget
-
-        super(FitSubWindow, self).__init__(**kwargs)
+        if close_confirm is None:
+            close_confirm = mfm.settings.cs_settings['gui']['confirm_close_fit']
+        self.close_confirm = close_confirm
 
         layout = self.layout()
         self.tw = QtWidgets.QTabWidget()
         self.tw.setTabShape(QtWidgets.QTabWidget.Triangular)
         self.tw.setTabPosition(QtWidgets.QTabWidget.South)
         self.tw.currentChanged.connect(self.on_change_plot)
-
         layout.addWidget(self.tw)
-        if close_confirm is None:
-            close_confirm = mfm.settings.cs_settings['gui']['confirm_close_fit']
-        self.close_confirm = close_confirm
 
         self.current_plt_ctrl = QtWidgets.QWidget(self)
         self.current_plt_ctrl.hide()
@@ -181,7 +179,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
 
     def closeEvent(
             self,
-            event: QtCore.QCloseEvent
+            event: QtCore.QEvent
     ):
         if self.close_confirm:
             reply = QtWidgets.QMessageBox.question(
@@ -209,7 +207,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
         def linkcall():
             tooltip = " linked to " + parameter_name
             mfm.run(
-                "cs.current_fit.model.parameters_all_dict['%s'].link = mfm.fits[%s].model.parameters_all_dict['%s']" %
+                "cs._current_fit.model.parameters_all_dict['%s'].link = mfm.fits[%s].model.parameters_all_dict['%s']" %
                 (self.name, fit_idx, parameter_name)
             )
             self.widget_link.setToolTip(tooltip)
@@ -219,7 +217,10 @@ class FittingParameterWidget(QtWidgets.QWidget):
         self.update()
         return linkcall
 
-    def contextMenuEvent(self, event):
+    def contextMenuEvent(
+            self,
+            event: QtGui.QCloseEvent
+    ):
 
         menu = QtWidgets.QMenu(self)
         menu.setTitle("Link " + self.fitting_parameter.name + " to:")
@@ -350,29 +351,29 @@ class FittingParameterWidget(QtWidgets.QWidget):
 
         # The variable value
         self.widget_value.editingFinished.connect(lambda: mfm.run(
-            "cs.current_fit.model.parameters_all_dict['%s'].value = %s\n"
-            "cs.current_fit.update()" %
+            "cs._current_fit.model.parameters_all_dict['%s'].value = %s\n"
+            "cs._current_fit.update()" %
             (self.fitting_parameter.name, self.widget_value.value()))
         )
 
         self.widget_fix.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.model.parameters_all_dict['%s'].fixed = %s" %
+            "cs._current_fit.model.parameters_all_dict['%s'].fixed = %s" %
             (self.fitting_parameter.name, self.widget_fix.isChecked()))
         )
 
         # Variable is bounded
         self.widget_bounds_on.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.model.parameters_all_dict['%s'].bounds_on = %s" %
+            "cs._current_fit.model.parameters_all_dict['%s'].bounds_on = %s" %
             (self.fitting_parameter.name, self.widget_bounds_on.isChecked()))
         )
 
         self.widget_lower_bound.editingFinished.connect(lambda: mfm.run(
-            "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
+            "cs._current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
             (self.fitting_parameter.name, self.widget_lower_bound.value(), self.widget_upper_bound.value()))
         )
 
         self.widget_upper_bound.editingFinished.connect(lambda: mfm.run(
-            "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
+            "cs._current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
             (self.fitting_parameter.name, self.widget_lower_bound.value(), self.widget_upper_bound.value()))
         )
 
@@ -394,14 +395,16 @@ class FittingParameterWidget(QtWidgets.QWidget):
         self.blockSignals(False)
 
     def finalize(self, *args):
-        QtWidgets.QWidget.update(self, *args)
+        super(FittingParameterWidget, self).update(*args)
         self.blockSignals(True)
+
         # Update value of widget
         self.widget_value.setValue(float(self.fitting_parameter.value))
         if self.fitting_parameter.fixed:
             self.widget_fix.setCheckState(QtCore.Qt.Checked)
         else:
             self.widget_fix.setCheckState(QtCore.Qt.Unchecked)
+
         # Tooltip
         s = "bound: (%s,%s)\n" % self.fitting_parameter.bounds if self.fitting_parameter.bounds_on else "bounds: off\n"
         if self.fitting_parameter.is_linked:
@@ -415,6 +418,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
         else:
             rel_error = abs(self.fitting_parameter.error_estimate / (value + 1e-12) * 100.0)
             self.lineEdit.setText("%.0f%%" % rel_error)
+
         #link
         if self.fitting_parameter.link is not None:
             tooltip = " linked to " + self.fitting_parameter.link.name
@@ -429,21 +433,23 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
 
     def __init__(
             self,
-            parameter_group,
+            parameter_group: mfm.fitting.parameter.FittingParameterGroup,
             n_col: int = None,
             *args,
             **kwargs
     ):
+        super(FittingParameterGroupWidget, self).__init__(*args, **kwargs)
+
         if n_col is None:
             n_col = mfm.settings.cs_settings['gui']['fit_models']['n_columns']
 
-        super(FittingParameterGroupWidget, self).__init__(*args, **kwargs)
         self.parameter_group = parameter_group
         self.n_col = n_col
         self.n_row = 0
 
         self.setTitle(parameter_group.name)
         layout = QtWidgets.QGridLayout()
+
         self.setLayout(layout)
         for i, p in enumerate(parameter_group.parameters_all):
             pw = p.make_widget()

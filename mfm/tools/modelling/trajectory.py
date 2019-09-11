@@ -19,7 +19,7 @@ def translate(xyz, vector):
     """ Translate a trajectory by an vector
 
     :param xyz: numpy array
-        (frame nbr, atom_number, coord)
+        (frame fit_index, atom_number, coord)
     :param vector:
     :return:
     """
@@ -37,7 +37,7 @@ def rotate(xyz, rm):
     """ Rotates a trajectory (frame, atom, coord)
 
     :param xyz: numpy array
-        The coordinates (frame nbr, atom nbr, coord)
+        The coordinates (frame fit_index, atom fit_index, coord)
 
     :param rm: numpy array 3x3 dtpye np.float32 - the rotation matrix
     :return:
@@ -78,7 +78,7 @@ def below_min_distance(xyz, min_distance, atom_list=np.empty(0, dtype=np.int32))
     min distance.
 
     :param xyz: numpy array
-        The coordinates (frame nbr, atom nbr, coord)
+        The coordinates (frame fit_index, atom fit_index, coord)
 
     :param min_distance: float
         Minimum distance if a distance

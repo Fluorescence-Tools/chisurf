@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import os
 import numpy as np
 from qtpy import  QtCore, QtWidgets, uic
 from guiqwt.builder import make
@@ -10,11 +13,26 @@ from mfm.plots.plotbase import Plot
 
 class LinePlotWidget(QtWidgets.QWidget):
 
-    def __init__(self, parent=None, d_scalex='lin', d_scaley='log', r_scalex='lin', r_scaley='lin', **kwargs):
+    def __init__(
+            self,
+            parent=None,
+            d_scalex='lin',
+            d_scaley='log',
+            r_scalex='lin',
+            r_scaley='lin',
+            **kwargs
+    ):
+        super(LinePlotWidget, self).__init__(
+            parent=parent
+        )
         self.verbose = kwargs.get('verbose', mfm.verbose)
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/plots/linePlotWidget.ui', self)
-        self.parent = parent
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "linePlotWidget.ui"
+            ),
+            self
+        )
 
         self.checkBox.stateChanged [int].connect(self.SetLog)
         self.checkBox_2.stateChanged [int].connect(self.SetLog)
@@ -81,9 +99,20 @@ class GlobalAnisotropy(Plot):
 
     name = "Fit"
 
-    def __init__(self, fit, d_scalex='lin', d_scaley='lin', r_scalex='lin', r_scaley='lin', **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            d_scalex: str = 'lin',
+            d_scaley: str = 'lin',
+            r_scalex: str = 'lin',
+            r_scaley: str = 'lin',
+            **kwargs
+    ):
+        super(GlobalAnisotropy, self).__init__(
+            fit=fit,
+            **kwargs
+        )
         self.verbose = kwargs.get('verbose', mfm.verbose)
-        Plot.__init__(self)
         self.layout = QtWidgets.QVBoxLayout(self)
         self.fit = fit
 
@@ -159,7 +188,13 @@ class GlobalAnisotropy(Plot):
         self.autoCorrPlot = plot
         splitter1.addWidget(plot)
 
-        self.pltControl = LinePlotWidget(self, d_scalex, d_scaley, r_scalex, r_scaley)
+        self.pltControl = LinePlotWidget(
+            self,
+            d_scalex,
+            d_scaley,
+            r_scalex,
+            r_scaley
+        )
 
     def update_all(self):
         if self.verbose:
@@ -235,9 +270,27 @@ class GlobalEt(Plot):
 
     name = "GlobalEt"
 
-    def __init__(self, fit, f_scalex='log', f_scaley='lin', e_scalex='log', e_scaley='lin'):
-        Plot.__init__(self)
-        uic.loadUi('mfm/ui/plots/et_plot_layout.ui', self)
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            f_scalex: str = 'log',
+            f_scaley: str = 'lin',
+            e_scalex: str = 'log',
+            e_scaley: str = 'lin',
+            parent: QtWidgets.QWidget = None
+    ):
+        super(GlobalEt, self).__init__(
+            fit=fit,
+            parent=parent
+        )
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "et_plot_layout.ui"
+            ),
+            self
+        )
+
         self.fit = fit
 
         ## Distance distribution plot

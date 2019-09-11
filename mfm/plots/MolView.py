@@ -1,4 +1,3 @@
-__author__ = 'thomas'
 import os
 import sys
 

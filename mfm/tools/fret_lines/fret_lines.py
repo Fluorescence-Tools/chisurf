@@ -1,7 +1,14 @@
-import numpy as np
-from qtpy import  QtWidgets, uic
+from __future__ import annotations
+
+import sys
+import os
+
+from qtpy import QtWidgets, uic
 from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
+import qdarkstyle
+
+import numpy as np
 
 import mfm
 import mfm.experiments
@@ -10,7 +17,7 @@ import mfm.models.tcspc
 import mfm.models.tcspc as fret_models
 import mfm.models.tcspc.lifetime
 import mfm.models.tcspc.widgets
-from mfm.models import WormLikeChainModelWidget
+#from mfm.models import WormLikeChainModelWidget
 
 
 class FRETLineGenerator(object):
@@ -626,14 +633,6 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
                                                           'hide_error': True,
                                                            'hide_donor': True
                                                               }),
-              (WormLikeChainModelWidget, {'hide_corrections': True,
-                                                          'hide_fit': True,
-                                                          'hide_generic': True,
-                                                          'hide_convolve': True,
-                                                          'hide_rotation': True,
-                                                          'hide_error': True,
-                                                          'hide_donor': True
-                                                         }),
               (mfm.models.tcspc.mix_model.LifetimeMixModelWidget, {'hide_corrections': True,
                                                           'hide_fit': True,
                                                           'hide_generic': True,
@@ -676,9 +675,15 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
     def parameter_range(self):
         return float(self.doubleSpinBox.value()), float(self.doubleSpinBox_2.value())
 
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi('./mfm/ui/tools/fret_line.ui', self)
+    def __init__(self, *args, **kwargs):
+        super(FRETLineGeneratorWidget, self).__init__(*args, **kwargs)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "fret_line.ui"
+            ),
+            self
+        )
         win = CurveDialog(edit=False, toolbar=True)
 
         # Make Plot
@@ -729,3 +734,11 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
         self.model.close()
         self.model = self.current_model_index
         self.verticalLayout.addWidget(self.model)
+
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    win = FRETLineGeneratorWidget()
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    win.show()
+    sys.exit(app.exec_())

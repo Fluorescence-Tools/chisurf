@@ -46,11 +46,11 @@ class LinePlotControl(QtWidgets.QWidget):
         self.ymin = ymin
 
         self.actionUpdate_Plot.triggered.connect(parent.update_all)
-        self.checkBox.stateChanged [int].connect(self.SetLog)
-        self.checkBox_2.stateChanged [int].connect(self.SetLog)
-        self.checkBox_4.stateChanged [int].connect(self.SetLog)
-        self.checkBox_5.stateChanged [int].connect(self.SetReference)
-        self.checkBox_3.stateChanged [int].connect(self.SetDensity)
+        self.checkBox.stateChanged[int].connect(self.SetLog)
+        self.checkBox_2.stateChanged[int].connect(self.SetLog)
+        self.checkBox_4.stateChanged[int].connect(self.SetLog)
+        self.checkBox_5.stateChanged[int].connect(self.SetReference)
+        self.checkBox_3.stateChanged[int].connect(self.SetDensity)
 
     @property
     def data_logy(
@@ -157,7 +157,7 @@ class LinePlotControl(QtWidgets.QWidget):
             self,
             v: float
     ):
-        return self.doubleSpinBox_2.setValue(v)
+        self.doubleSpinBox_2.setValue(v)
 
     @property
     def xmin(
@@ -170,7 +170,7 @@ class LinePlotControl(QtWidgets.QWidget):
             self,
             v: float
     ):
-        return self.doubleSpinBox.setValue(v)
+        self.doubleSpinBox.setValue(v)
 
     @property
     def x_shift(
@@ -227,7 +227,7 @@ class LinePlotControl(QtWidgets.QWidget):
 class LinePlot(plotbase.Plot):
     """
     Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
-    and the autocorrelation of the residuals. Now it is also used also for FCS-data.
+    and the autocorrelation of the residuals. Now it is also used also for fcs-data.
 
     In case the models is a :py:class:`~experiment.models.tcspc.LifetimeModel` it takes the irf and displays it:
 
@@ -324,7 +324,7 @@ class LinePlot(plotbase.Plot):
 
                 lb_i = np.searchsorted(data_x, lb, side='right')
                 ub_i = np.searchsorted(data_x, ub, side='left')
-                mfm.run("cs.current_fit.fit_range = (%s, %s)" % (lb_i - 1, ub_i))
+                mfm.run("cs._current_fit.fit_range = (%s, %s)" % (lb_i - 1, ub_i))
                 self.update_all(only_fit_range=True)
 
             region.sigRegionChangeFinished.connect(update_region)

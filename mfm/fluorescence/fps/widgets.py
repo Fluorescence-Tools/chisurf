@@ -40,8 +40,6 @@ class ProteinQuenchingWidget(ProteinQuenching, QtWidgets.QGroupBox):
         self.lineEdit_6 = QtWidgets.QLineEdit()
         self.lineEdit_6.setText('CA C HA N')
         layout = QtWidgets.QGridLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
         self.setLayout(layout)
         self.lineEdit_3 = QtWidgets.QLineEdit()
         lab = QtWidgets.QLabel('Quenching AA')
@@ -99,8 +97,6 @@ class DyeWidget(Dye, QtWidgets.QGroupBox):
         layout.addWidget(gb)
 
         gl = QtWidgets.QGridLayout()
-        gl.setSpacing(0)
-        gl.setContentsMargins(0, 0, 0, 0)
         gb.setLayout(gl)
 
         self.critical_distance = critical_distance

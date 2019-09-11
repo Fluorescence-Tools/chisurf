@@ -52,7 +52,7 @@ def c(
     Example
     -------
     >>> mfm.c(self.checkBox.stateChanged, models", self.checkBox.isChecked)
-    >>> cs.current_fit.model.update_rmsd=True
+    >>> cs._current_fit.model.update_rmsd=True
 
     :param t: The signal of the qt-widget
     :param st: The string passed to the mfm-commandline

@@ -317,8 +317,6 @@ class CSVFileWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
-        #self.layout.setMargin(0)
-        #self.layout.setSpacing(0)
         self.csvWidget = CsvWidget(**kwargs)
         self.layout.addWidget(self.csvWidget)
 

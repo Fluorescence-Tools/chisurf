@@ -28,11 +28,12 @@ def make_extension(ext):
         library_dirs=["."],
         language="c++")
 
+
 # and build up the set of Extension objects
 eList = [
     [
-       './mfm/fluorescence/simulation/_simulation.pyx',
-       './mfm/math/rand/mt19937cok.cpp'
+        './mfm/fluorescence/simulation/_simulation.pyx',
+        './mfm/math/rand/mt19937cok.cpp'
     ],
     [
         './mfm/fluorescence/fps/_fps.pyx',
@@ -45,15 +46,10 @@ eList = [
 
 extensions = [make_extension(extension) for extension in eList]
 
-long_description = "ChiSurf"
-with open("README.md", "r") as fh:
-    long_description = fh.read()
-
 
 setup(
     version="18.9.1",
     description="Fluorescence-Fitting",
-    long_description=long_description,
     author="Thomas-Otavio Peulen",
     author_email='thomas.otavio.peulen@gmail.com',
     url='www.fret.at',

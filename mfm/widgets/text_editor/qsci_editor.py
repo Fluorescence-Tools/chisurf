@@ -5,6 +5,7 @@ import sys
 from PyQt5.Qsci import QsciScintilla, QsciLexerPython
 from qtpy.QtGui import *
 from qtpy.QtWidgets import *
+import qdarkstyle
 
 import mfm
 
@@ -12,18 +13,38 @@ import mfm
 
 
 class SimplePythonEditor(QsciScintilla):
+
     ARROW_MARKER_NUM = 8
 
-    def __init__(self, parent=None, **kwargs):
+    def __init__(
+            self,
+            parent=None,
+            font_family: str = None,
+            font_point_size: float = 10.0,
+            margins_background_color: str = None,
+            marker_background_color: str = None,
+            caret_line_background_color: str = None,
+            caret_line_visible: bool = True,
+            **kwargs
+    ):
         super(SimplePythonEditor, self).__init__(parent)
+        if font_point_size is None:
+            font_point_size = mfm.settings.cs_settings['gui']['editor']['font_size']
+        if font_family is None:
+            font_family = mfm.settings.cs_settings['gui']['editor']['font_family']
+        if margins_background_color is None:
+            margins_background_color = mfm.settings.cs_settings['gui']['editor']['margins_background_color']
+        if marker_background_color is None:
+            marker_background_color = mfm.settings.cs_settings['gui']['editor']['marker_background_color']
+        if caret_line_background_color is None:
+            caret_line_background_color = mfm.settings.cs_settings['gui']['editor']['caret_line_background_color']
 
         # Set the default font
         font = QFont()
-        font.setFamily('Courier')
+        font.setFamily(font_family)
         font.setFixedPitch(True)
-        font.setPointSize(
-            mfm.settings.cs_settings['gui']['editor']['font_size']
-        )
+        font.setPointSize(font_point_size)
+
         self.setFont(font)
         self.setMarginsFont(font)
 
@@ -33,9 +54,7 @@ class SimplePythonEditor(QsciScintilla):
         self.setMarginWidth(0, fontmetrics.width("0000") + 6)
         self.setMarginLineNumbers(0, True)
         self.setMarginsBackgroundColor(
-            QColor(
-                mfm.settings.cs_settings['gui']['editor']['MarginsBackgroundColor']
-            )
+            QColor(margins_background_color)
         )
 
         # Clickable margin 1 for showing markers
@@ -43,10 +62,12 @@ class SimplePythonEditor(QsciScintilla):
 #        self.connect(self,
 #            SIGNAL('marginClicked(int, int, Qt::KeyboardModifiers)'),
 #            self.on_margin_clicked)
-        self.markerDefine(QsciScintilla.RightArrow,
-            self.ARROW_MARKER_NUM)
-        self.setMarkerBackgroundColor(QColor(mfm.settings.cs_settings['gui']['editor']['MarkerBackgroundColor']),
-            self.ARROW_MARKER_NUM)
+        self.markerDefine(QsciScintilla.RightArrow, self.ARROW_MARKER_NUM)
+
+        self.setMarkerBackgroundColor(
+            QColor(marker_background_color),
+            self.ARROW_MARKER_NUM
+        )
 
         # Brace matching: enable for a brace immediately before or after
         # the current position
@@ -54,8 +75,10 @@ class SimplePythonEditor(QsciScintilla):
         self.setBraceMatching(QsciScintilla.SloppyBraceMatch)
 
         # Current line visible with special background color
-        self.setCaretLineVisible(True)
-        self.setCaretLineBackgroundColor(QColor(mfm.settings.cs_settings['gui']['editor']['CaretLineBackgroundColor']))
+        self.setCaretLineVisible(caret_line_visible)
+        self.setCaretLineBackgroundColor(
+            QColor(caret_line_background_color)
+        )
 
         # Set Python lexer
         # Set style for Python comments (style number 1) to a fixed-width
@@ -66,7 +89,7 @@ class SimplePythonEditor(QsciScintilla):
         self.setLexer(lexer)
 
         text = bytearray(str.encode("Arial"))
-# 32, "Courier New"
+        # 32, "Courier New"
         self.SendScintilla(QsciScintilla.SCI_STYLESETFONT, 1, text)
 
         # Don't want to see the horizontal scrollbar at all
@@ -87,9 +110,12 @@ class SimplePythonEditor(QsciScintilla):
 
 class CodeEditor(QWidget):
 
-    def load_file(self, **kwargs):
-        filename = kwargs.get('filename', None)
-        if filename is None or filename is False:
+    def load_file(
+            self,
+            filename: str = None,
+            **kwargs
+    ):
+        if filename is None:
             filename = mfm.widgets.get_filename()
         self.filename = filename
         try:
@@ -114,18 +140,21 @@ class CodeEditor(QWidget):
             fp.write(text)
             self.line_edit.setText(self.filename)
 
-    def __init__(self, *args, **kwargs):
-        filename = kwargs.pop('filename', None)
-        language = kwargs.pop('language', 'Python')
-        can_load = kwargs.pop('can_load', True)
-        QWidget.__init__(self, *args, **kwargs)
-        layout = QVBoxLayout()
+    def __init__(
+            self,
+            *args,
+            filename: str = None,
+            language: str = 'Python',
+            can_load: bool = True,
+            **kwargs
+    ):
+        super(CodeEditor, self).__init__(*args, **kwargs)
 
+        layout = QVBoxLayout()
         self.filename = None
         self.setLayout(layout)
         self.line_edit = QLineEdit()
         self.editor = SimplePythonEditor(parent=self, language=language)
-
         layout.addWidget(self.editor)
         h_layout = QHBoxLayout()
 
@@ -154,6 +183,7 @@ class CodeEditor(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     editor = CodeEditor()
     editor.show()
     app.exec_()

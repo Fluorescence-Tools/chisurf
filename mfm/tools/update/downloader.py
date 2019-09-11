@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 import urllib
 
@@ -10,9 +11,20 @@ import mfm
 
 class UpdateDialog(QtWidgets.QWidget):
 
-    def __init__(self):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi("mfm/ui/update_form.ui", self)
+    def __init__(
+            self,
+            parent: QtWidgets.QLayout = None,
+            installed_version: str = None
+    ):
+        super(UpdateDialog, self).__init__(parent=parent)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "update_form.ui"
+            ),
+            self
+        )
+
         online_version = None
         self.filedownloadthread = None
         self.download_file = None
@@ -30,7 +42,9 @@ class UpdateDialog(QtWidgets.QWidget):
             print("Problems getting update.")
         #online = urllib.urlopen().readlines()
 
-        installed_version = mfm.settings.cs_settings['version']
+        if installed_version is None:
+            installed_version = mfm.settings.cs_settings['version']
+
         self.lineEdit.setText(installed_version)
         changes = urllib.urlopen(mfm.settings.cs_settings['updates']['changes']).read()
         self.textEdit.setText(changes)
@@ -41,7 +55,10 @@ class UpdateDialog(QtWidgets.QWidget):
                 self.show()
 
     def start_download(self):
-        target = mfm.widgets.save_file(working_path="setup_current.exe", file_type='exe (*.exe)')
+        target = mfm.widgets.save_file(
+            working_path="setup_current.exe",
+            file_type='exe (*.exe)'
+        )
         self.filedownloadthread = FileDownloadThread(progbar=self.progressBar, url=self.download_file, target=target)
         self.filedownloadthread.signal.connect(self.update)
         self.filedownloadthread.start()

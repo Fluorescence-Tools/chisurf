@@ -260,6 +260,10 @@ class FitGroup(list, Fit):
     def selected_fit(self) -> Fit:
         return self[self._selected_fit_index]
 
+    @property
+    def selected_fit_index(self) -> int:
+        return self._selected_fit_index
+
     @selected_fit.setter
     def selected_fit(
             self,
@@ -279,7 +283,7 @@ class FitGroup(list, Fit):
         self.selected_fit.data = v
 
     @property
-    def model(self) -> object:
+    def model(self) -> mfm.models.model.Model:
         return self.selected_fit.model
 
     @model.setter

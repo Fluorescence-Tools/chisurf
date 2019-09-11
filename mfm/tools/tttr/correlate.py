@@ -395,7 +395,7 @@ class CrFilterWidget(QtWidgets.QWidget):
 
 class FCStttr(QtWidgets.QWidget):
 
-    name = 'FCS-tttr'
+    name = 'fcs-tttr'
 
     def __init__(self, parent=None):
         super(FCStttr, self).__init__(parent)
