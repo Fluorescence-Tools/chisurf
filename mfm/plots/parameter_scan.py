@@ -64,7 +64,7 @@ class ParameterScanWidget(QtWidgets.QWidget):
         p_min = float(self.doubleSpinBox.value())
         p_max = float(self.doubleSpinBox_2.value())
         n_steps = int(self.spinBox.value())
-        s = "cs.current_fit.model.parameters_all_dict['%s'].scan(cs.current_fit, rel_range=(%s, %s), n_steps=%s)" % (
+        s = "cs._current_fit.model.parameters_all_dict['%s'].scan(cs._current_fit, rel_range=(%s, %s), n_steps=%s)" % (
             self.parameter.name,
             p_min,
             p_max,
@@ -95,7 +95,7 @@ class ParameterScanWidget(QtWidgets.QWidget):
 class ParameterScanPlot(plotbase.Plot):
     """
     Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
-    and the autocorrelation of the residuals. Now it is also used also for FCS-data.
+    and the autocorrelation of the residuals. Now it is also used also for fcs-data.
 
     In case the model is a :py:class:`~experiment.model.tcspc.LifetimeModel` it takes the irf and displays it:
 

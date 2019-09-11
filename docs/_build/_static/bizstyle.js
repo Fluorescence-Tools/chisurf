@@ -17,14 +17,14 @@ $(document).ready(function(){
 
     $("div.related:first ul li:not(.right) a").slice(1).each(function(i, item){
         if (item.text.length > 20) {
-            var tmpstr = item.text
+            var tmpstr = item.text;
             $(item).attr("title", tmpstr);
             $(item).text(tmpstr.substr(0, 17) + "...");
         }
     });
     $("div.related:last ul li:not(.right) a").slice(1).each(function(i, item){
         if (item.text.length > 20) {
-            var tmpstr = item.text
+            var tmpstr = item.text;
             $(item).attr("title", tmpstr);
             $(item).text(tmpstr.substr(0, 17) + "...");
         }

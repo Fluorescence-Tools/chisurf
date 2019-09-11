@@ -14,7 +14,7 @@ from mfm.experiments.reader import ExperimentReader
 
 class FCS(ExperimentReader, CsvWidget):
 
-    name = "FCS"
+    name = "fcs"
 
     def __init__(
             self,

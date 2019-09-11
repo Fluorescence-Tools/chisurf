@@ -290,7 +290,7 @@ class DyeDecay(Curve):
     def get_decay(self, **kwargs):
         verbose = kwargs.get('verbose', self.verbose)
         n_curves = kwargs.get('n_curves', self.decay_parameter.n_curves)
-        n_tac = kwargs.get('n_TAC', self.decay_parameter.n_tac)
+        n_tac = kwargs.get('n_tac', self.decay_parameter.n_tac)
         kq_array = kwargs.get('quenching', self.diffusion.quenching_trajectory)
         tau0 = kwargs.get('tau0', self.diffusion.dye.tauD0)
         t_step = kwargs.get('t_step', self.diffusion.simulation_parameter.t_step)

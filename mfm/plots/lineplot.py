@@ -227,7 +227,7 @@ class LinePlotControl(QtWidgets.QWidget):
 class LinePlot(plotbase.Plot):
     """
     Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
-    and the autocorrelation of the residuals. Now it is also used also for FCS-data.
+    and the autocorrelation of the residuals. Now it is also used also for fcs-data.
 
     In case the models is a :py:class:`~experiment.models.tcspc.LifetimeModel` it takes the irf and displays it:
 
@@ -324,7 +324,7 @@ class LinePlot(plotbase.Plot):
 
                 lb_i = np.searchsorted(data_x, lb, side='right')
                 ub_i = np.searchsorted(data_x, ub, side='left')
-                mfm.run("cs.current_fit.fit_range = (%s, %s)" % (lb_i - 1, ub_i))
+                mfm.run("cs._current_fit.fit_range = (%s, %s)" % (lb_i - 1, ub_i))
                 self.update_all(only_fit_range=True)
 
             region.sigRegionChangeFinished.connect(update_region)

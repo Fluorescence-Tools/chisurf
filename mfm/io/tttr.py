@@ -187,7 +187,7 @@ def ht3_sf(b, stage=0):
 @nb.jit()
 def iss_16(b, can, tac, mt, length, step, phMode, offset):
     """
-    Reading of ISS-photon format (FCS-measurements)
+    Reading of ISS-photon format (fcs-measurements)
 
     :param b:
     :return:
@@ -232,7 +232,7 @@ def iss_16(b, can, tac, mt, length, step, phMode, offset):
 @nb.jit()
 def iss_32(b, can, tac, mt, length, step, phMode, offset):
     """
-    Reading of ISS-photon format (FCS-measurements)
+    Reading of ISS-photon format (fcs-measurements)
 
     :param data:
     :return:
@@ -558,7 +558,7 @@ filetypes = OrderedDict([
         'read': pq_photons
     }),
     ("iss", {
-        'name': "ISS-FCS",
+        'name': "ISS-fcs",
         'ending': '.fcs',
         'nTAC': 1,
         'nROUT': 2,

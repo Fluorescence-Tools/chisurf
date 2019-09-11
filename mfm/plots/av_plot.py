@@ -19,7 +19,7 @@ class AvPlotControl(QtWidgets.QWidget):
 class AvPlot(plotbase.Plot):
     """
     Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
-    and the autocorrelation of the residuals. Now it is also used also for FCS-data.
+    and the autocorrelation of the residuals. Now it is also used also for fcs-data.
 
     In case the models is a :py:class:`~experiment.models.tcspc.LifetimeModel` it takes the irf and displays it:
 

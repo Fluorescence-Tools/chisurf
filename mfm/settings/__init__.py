@@ -43,6 +43,8 @@ for setting in pyqtgraph_settings:
     pg.setConfigOption(setting, cs_settings['gui']['plot']['pyqtgraph'][setting])
 
 verbose = cs_settings['verbose']
+gui = cs_settings['gui']
+
 __version__ = cs_settings['version']
 __name__ = cs_settings['name']
 working_path = ''
