@@ -287,7 +287,7 @@ def get_filename(
         description: str = '',
         file_type: str = 'All files (*.*)',
         working_path: str = None
-):
+) -> str:
     """Open a file within a working path. If no path is specified the last
     path is used. After using this function the current working path of the
     running program (ChiSurf) is updated according to the folder of the opened

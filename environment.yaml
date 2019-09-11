@@ -28,7 +28,6 @@ dependencies:
     - pyopengl
     - qtconsole
     - python-docx
-    - chinet
     - labellib
     - deprecation
     - pyopencl
