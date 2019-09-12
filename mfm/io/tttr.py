@@ -12,8 +12,6 @@ import tables
 
 import mfm
 
-#photon_settings = mfm.settings.cs_settings['photons']
-
 
 class Photon(tables.IsDescription):
     ROUT = tables.UInt8Col()

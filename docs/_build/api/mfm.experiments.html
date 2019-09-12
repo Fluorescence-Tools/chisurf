@@ -162,7 +162,7 @@
 
 <dl class="method">
 <dt id="mfm.experiments.fcs.FCS.read">
-<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCS.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCS.read" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename: 'str' = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCS.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCS.read" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -189,14 +189,15 @@
 
 <dl class="method">
 <dt id="mfm.experiments.fcs.FCSKristine.read">
-<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCSKristine.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCSKristine.read" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uses eihter the error provided by the correlator (4. column)
+<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename: 'str' = None</em>, <em class="sig-param">verbose: 'bool' = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCSKristine.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCSKristine.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses either the error provided by the correlator (4. column)
 or calculates the error based on the correlation curve,
 the aquisition time and the count-rate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> – </p></li>
+<li><p><strong>filename</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – </p></li>
+<li><p><strong>verbose</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]) – </p></li>
 <li><p><strong>kwargs</strong> – </p></li>
 </ul>
 </dd>
@@ -350,7 +351,7 @@ different experimental setups. Furthermore, it contains a set of plotting librar
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

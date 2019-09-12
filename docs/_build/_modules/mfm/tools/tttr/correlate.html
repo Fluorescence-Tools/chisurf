@@ -340,9 +340,23 @@
 
 <div class="viewcode-block" id="CorrelatorWidget"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.CorrelatorWidget">[docs]</a><span class="k">class</span> <span class="nc">CorrelatorWidget</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">photon_source</span><span class="p">,</span> <span class="n">ch1</span><span class="o">=</span><span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="n">ch2</span><span class="o">=</span><span class="s1">&#39;8&#39;</span><span class="p">,</span> <span class="n">setup</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">parent</span><span class="p">,</span>
+            <span class="n">photon_source</span><span class="p">,</span>
+            <span class="n">ch1</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="s1">&#39;0&#39;</span><span class="p">,</span>
+            <span class="n">ch2</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="s1">&#39;8&#39;</span><span class="p">,</span>
+            <span class="n">setup</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
         <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;mfm/ui/experiments/correlatorWidget.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span>
+                <span class="s2">&quot;correlatorWidget.ui&quot;</span>
+            <span class="p">),</span>
+            <span class="bp">self</span>
+        <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">nCasc</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;nCasc&#39;</span><span class="p">,</span> <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;nCasc&#39;</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">B</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;B&#39;</span><span class="p">])</span>
@@ -447,7 +461,13 @@
 
 <div class="viewcode-block" id="CrFilterWidget"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.CrFilterWidget">[docs]</a><span class="k">class</span> <span class="nc">CrFilterWidget</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">photon_source</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">parent</span><span class="p">,</span>
+            <span class="n">photon_source</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">CrFilterWidget</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span>
             <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
@@ -552,7 +572,7 @@
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

@@ -326,8 +326,8 @@
             <span class="n">csv</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">wr</span><span class="p">]),</span> <span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_wr.txt&#39;</span><span class="p">)</span>
             <span class="n">csv</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">[:],</span> <span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_fit.txt&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">Curve</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_data.txt&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;txt&#39;</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_data.json&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;json&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span> <span class="o">+</span><span class="s1">&#39;_data.txt&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;txt&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span> <span class="o">+</span><span class="s1">&#39;_data.json&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;json&#39;</span><span class="p">)</span>
                 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_info.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
                     <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
 
@@ -733,7 +733,7 @@
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

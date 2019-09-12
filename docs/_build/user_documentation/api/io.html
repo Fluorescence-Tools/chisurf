@@ -143,10 +143,14 @@
 <p>The <a class="reference internal" href="#module-mfm.io" title="mfm.io"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io</span></code></a> module contains all classes, functions and modules relevant for file input and outputs.
 In particular three kinds of file-types are handled:</p>
 <ol class="arabic simple">
-<li><p>Comma-separated files <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.csv_file</span></code></p></li>
-<li><p>PDB-file <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.pdb_file</span></code></p></li>
+<li><p>Comma-separated files <a class="reference internal" href="../../api/mfm.io.html#module-mfm.io.ascii" title="mfm.io.ascii"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.ascii</span></code></a></p></li>
+<li><p>PDB-file <a class="reference internal" href="#module-mfm.io.pdb" title="mfm.io.pdb"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.pdb</span></code></a></p></li>
 <li><p>TTTR-files containing photon data <a class="reference internal" href="#module-mfm.io.photons" title="mfm.io.photons"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.photons</span></code></a></p></li>
+<li><p>XYZ-files containing coordinates <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.xyz</span></code></p></li>
 </ol>
+<p>5. PQR-files containing coordinates <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.pqr</span></code>
+5. DX-files containing densities <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.dx</span></code>
+6. SDT-files containing time-resolved fluorescence decays <a class="reference internal" href="../../api/mfm.io.html#module-mfm.io.sdtfile" title="mfm.io.sdtfile"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.sdtfile</span></code></a></p>
 <div class="section" id="csv-files">
 <h2>CSV-Files<a class="headerlink" href="#csv-files" title="Permalink to this headline">¶</a></h2>
 </div>
@@ -350,30 +354,55 @@ a consistent interface.</p></li>
 <dt id="mfm.io.photons.Photons.mt">
 <em class="property">property </em><code class="sig-name descname">mt</code><a class="headerlink" href="#mfm.io.photons.Photons.mt" title="Permalink to this definition">¶</a></dt>
 <dd><p>Array containing the macros-time clock counts of the photons</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.photons.Photons.mt_clk">
 <em class="property">property </em><code class="sig-name descname">mt_clk</code><a class="headerlink" href="#mfm.io.photons.Photons.mt_clk" title="Permalink to this definition">¶</a></dt>
 <dd><p>Macro-time clock of the data (time between the macrotime events in milli-seconds)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.photons.Photons.nPh">
 <em class="property">property </em><code class="sig-name descname">nPh</code><a class="headerlink" href="#mfm.io.photons.Photons.nPh" title="Permalink to this definition">¶</a></dt>
 <dd><p>Total number of photons</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.photons.Photons.n_rout">
 <em class="property">property </em><code class="sig-name descname">n_rout</code><a class="headerlink" href="#mfm.io.photons.Photons.n_rout" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of routing channels</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.photons.Photons.n_tac">
 <em class="property">property </em><code class="sig-name descname">n_tac</code><a class="headerlink" href="#mfm.io.photons.Photons.n_tac" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of TAC channels</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -411,6 +440,11 @@ a consistent interface.</p></li>
 <dt id="mfm.io.photons.Photons.tac">
 <em class="property">property </em><code class="sig-name descname">tac</code><a class="headerlink" href="#mfm.io.photons.Photons.tac" title="Permalink to this definition">¶</a></dt>
 <dd><p>Array containing the micro-time clock counts (TAC) of the photons</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -427,7 +461,7 @@ photons of the burst to be able to use standard Python slicing syntax to select 
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>filenames</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – filename pointing to a Seidel BID-file</p></li>
-<li><p><strong>stack</strong> – bool
+<li><p><strong>stack_files</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool
 If stack is True the returned list is stacked and the numbering of the bursts is made continuous.
 This is the default behavior.</p></li>
 </ul>
@@ -443,7 +477,7 @@ This is the default behavior.</p></li>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span><span class="o">,</span> <span class="nn">glob</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">directory</span> <span class="o">=</span> <span class="s2">&quot;./sample_data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\BID&quot;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">directory</span><span class="o">+</span><span class="s1">&#39;/*.bst&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">bids</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">photons</span><span class="o">.</span><span class="n">read_BIDs</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bids</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">photons</span><span class="o">.</span><span class="n">read_burst_ids</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">bids</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 <span class="go">array([20384, 20385, 20386, 20387, 20388, 20389, 20390, 20391, 20392,</span>
 <span class="go">   20393, 20394, 20395, 20396, 20397, 20398, 20399, 20400, 20401,</span>
@@ -495,7 +529,7 @@ This is the default behavior.</p></li>
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

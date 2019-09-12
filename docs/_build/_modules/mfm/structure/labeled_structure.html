@@ -281,7 +281,7 @@
 <span class="sd">    Now the trajectory of the transition using the crystal-structure as intermediate state was simulated. Using this</span>
 <span class="sd">    trajectory weights are associated to each frame which correspond to the first and the second state.</span>
 
-<span class="sd">    &gt;&gt;&gt; traj = mfm.structure.TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, mode=&#39;r&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; traj = mfm.structure.TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, file_type=&#39;r&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; d_av = {&#39;residue_seq_number&#39;: 12, &#39;atom_name&#39;: &#39;CB&#39;}  # the resiude numbers are slightly shifted</span>
 <span class="sd">    &gt;&gt;&gt; a_av = {&#39;residue_seq_number&#39;: 567, &#39;atom_name&#39;: &#39;CB&#39;}</span>
 <span class="sd">    &gt;&gt;&gt; weights = [av_filtered_fcs_weights(s, lifetime_filters=lf, time_axis=t, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av) for s in traj]</span>
@@ -452,7 +452,7 @@
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

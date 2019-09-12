@@ -517,7 +517,7 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">sticky_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;If this value is set to `quencher` only the quencher slow down the dye if it is `surface` the C-beta</span>
-<span class="sd">        atoms of all amino-acids slow down the dye. If the `quencher` mode is used the `quenching_parameter`</span>
+<span class="sd">        atoms of all amino-acids slow down the dye. If the `quencher` file_type is used the `quenching_parameter`</span>
 <span class="sd">        parameter has to be passed upon initialization of the class.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sticky_mode</span>
@@ -546,7 +546,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_slow_radius</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Rs&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;slow_radius&#39;</span><span class="p">,</span> <span class="mf">8.5</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_slow_fact</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;slow fact&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;slow_fact&#39;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">))</span>
-        <span class="c1"># sticking mode is either surface quencher</span>
+        <span class="c1"># sticking file_type is either surface quencher</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sticky_mode</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sticky_mode&#39;</span><span class="p">,</span> <span class="s1">&#39;surface&#39;</span><span class="p">)</span></div>
 
 
@@ -698,7 +698,7 @@
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

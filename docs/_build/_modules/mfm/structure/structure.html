@@ -456,7 +456,7 @@
 <span class="sd">    --------</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; t = mfm.TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, mode=&#39;r&#39;, stride=1)</span>
+<span class="sd">    &gt;&gt;&gt; t = mfm.TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
 <span class="sd">    &gt;&gt;&gt; s1 = t[10]</span>
 <span class="sd">    &gt;&gt;&gt; s1</span>
 <span class="sd">    &lt;mfm.structure.structure.Structure at 0x135f3ad0&gt;</span>
@@ -526,7 +526,7 @@
 <span class="sd">    --------</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; t = t = mfm.TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, mode=&#39;r&#39;, stride=1)</span>
+<span class="sd">    &gt;&gt;&gt; t = t = mfm.TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
 <span class="sd">    &gt;&gt;&gt; find_best(t.mdtraj, t.mdtraj[2])</span>
 <span class="sd">    (2, &lt;mdtraj.Trajectory with 1 frames, 2495 atoms, 164 residues, without unitcells at 0x13570b30&gt;)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -716,7 +716,7 @@
 <span class="sd">    --------</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; t = mfm.TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, mode=&#39;r&#39;, stride=1)</span>
+<span class="sd">    &gt;&gt;&gt; t = mfm.TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
 <span class="sd">    &gt;&gt;&gt; avg = t.average</span>
 <span class="sd">    &gt;&gt;&gt; avg</span>
 <span class="sd">    &lt;mfm.structure.structure.Structure at 0x117ff770&gt;</span>
@@ -751,7 +751,7 @@
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
