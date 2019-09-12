@@ -1,3 +1,30 @@
+"""Read TTTR files.
+
+TTTR files contain time-tagged-time-resolved records typically recorded
+in single-molecule experiments and on confocal laser scanning setups.
+
+:Author:
+  `Thomas-Otavio Peulen <http://tpeulen.github.io>`_
+
+Requirements
+------------
+
+Revisions
+---------
+
+Notes
+-----
+The API is not stable yet and might change between revisions.
+
+References
+----------
+
+Examples
+--------
+
+"""
+
+
 from __future__ import annotations
 from typing import List
 

@@ -139,7 +139,7 @@
 
 <span class="sd">    :param filenames:</span>
 <span class="sd">        filename pointing to a Seidel BID-file</span>
-<span class="sd">    :param stack: bool</span>
+<span class="sd">    :param stack_files: bool</span>
 <span class="sd">        If stack is True the returned list is stacked and the numbering of the bursts is made continuous.</span>
 <span class="sd">        This is the default behavior.</span>
 <span class="sd">    :return:</span>
@@ -150,7 +150,7 @@
 <span class="sd">    &gt;&gt;&gt; import mfm, glob</span>
 <span class="sd">    &gt;&gt;&gt; directory = &quot;./sample_data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\BID&quot;</span>
 <span class="sd">    &gt;&gt;&gt; files = glob.glob(directory+&#39;/*.bst&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; bids = mfm.io.photons.read_BIDs(files)</span>
+<span class="sd">    &gt;&gt;&gt; bids = mfm.io.photons.read_burst_ids(files)</span>
 <span class="sd">    &gt;&gt;&gt; bids[1]</span>
 <span class="sd">    array([20384, 20385, 20386, 20387, 20388, 20389, 20390, 20391, 20392,</span>
 <span class="sd">       20393, 20394, 20395, 20396, 20397, 20398, 20399, 20400, 20401,</span>
@@ -279,8 +279,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_sample_name</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_nTAC</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_nROUT</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
@@ -331,79 +331,107 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mt</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">mt_clk</span> <span class="o">/</span> <span class="mf">1000.0</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">cr_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">cr_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rout</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">selection</span><span class="p">]</span>
 
     <span class="nd">@cr_filter</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">cr_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">cr_filter</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rout</span><span class="o">.</span><span class="n">shape</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">nPh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">nPh</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Total number of photons</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rout</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">rout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">rout</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Array containing the routing channel of the photons</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_array</span><span class="p">[</span><span class="s1">&#39;ROUT&#39;</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">tac</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">tac</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Array containing the micro-time clock counts (TAC) of the photons</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_array</span><span class="p">[</span><span class="s1">&#39;TAC&#39;</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">mt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">mt</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Array containing the macros-time clock counts of the photons</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_array</span><span class="p">[</span><span class="s1">&#39;MT&#39;</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">n_tac</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">n_tac</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Number of TAC channels</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;nTAC&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nTAC</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nTAC</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;nTAC&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span>
 
     <span class="nd">@n_tac</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">n_tac</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_nTAC</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">def</span> <span class="nf">n_tac</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">n_rout</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">n_rout</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Number of routing channels</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;NROUT&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nROUT</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nROUT</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;NROUT&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span>
 
     <span class="nd">@n_rout</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">n_rout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_nROUT</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">def</span> <span class="nf">n_rout</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">mt_clk</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">mt_clk</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Macro-time clock of the data (time between the macrotime events in milli-seconds)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;MTCLK&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-6</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span>
 
     <span class="nd">@mt_clk</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">mt_clk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">mt_clk</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
@@ -451,8 +479,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_sample_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_nTAC</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nTAC</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_nROUT</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nROUT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span>
 
         <span class="k">return</span> <span class="n">re</span></div>
@@ -471,8 +499,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_sample_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_nTAC</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nTAC</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_nROUT</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nROUT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span>
 
         <span class="k">return</span> <span class="n">re</span></div>
@@ -526,7 +554,7 @@
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

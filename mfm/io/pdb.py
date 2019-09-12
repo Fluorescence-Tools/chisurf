@@ -1,3 +1,31 @@
+"""Read PDB files.
+
+PDB files contain atomic coordinates.
+
+`PDB <http://www.wwpdb.org/documentation/file-format>`_
+
+:Author:
+  `Thomas-Otavio Peulen <http://tpeulen.github.io>`_
+
+Requirements
+------------
+
+
+Revisions
+---------
+
+Notes
+-----
+The API is not stable yet and might change between revisions.
+
+References
+----------
+
+Examples
+--------
+
+"""
+
 from __future__ import annotations
 
 import os
@@ -144,7 +172,7 @@ def read(
         if filename.endswith('.pdb'):
             atoms = parse_string_pdb(string, assign_charge, **kwargs)
         elif filename.endswith('.pqr'):
-            atoms = parse_string_pqr(string, **kwargs)
+            atoms = mfm.io.pqr.parse_string_pqr(string, **kwargs)
     return atoms
 
 
@@ -210,7 +238,7 @@ def write_points(
             atoms['bfactor'] = density
         write_pdb(filename, atoms, verbose=verbose)
     else:
-        write_xyz(filename, points, verbose=verbose)
+        mfm.io.xyz.write_xyz(filename, points, verbose=verbose)
 
 
 def get_atom_index(

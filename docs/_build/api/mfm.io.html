@@ -171,7 +171,7 @@
 <span id="mfm-io-ascii-module"></span><h2>mfm.io.ascii module<a class="headerlink" href="#module-mfm.io.ascii" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mfm.io.ascii.Csv">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.io.ascii.</code><code class="sig-name descname">Csv</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/ascii.html#Csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.ascii.Csv" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.io.ascii.</code><code class="sig-name descname">Csv</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">filename=''</em>, <em class="sig-param">colspecs=None</em>, <em class="sig-param">use_header=False</em>, <em class="sig-param">x_on=True</em>, <em class="sig-param">y_on=True</em>, <em class="sig-param">col_x=0</em>, <em class="sig-param">col_y=1</em>, <em class="sig-param">col_ex=2</em>, <em class="sig-param">col_ey=3</em>, <em class="sig-param">reverse=False</em>, <em class="sig-param">error_x_on=False</em>, <em class="sig-param">directory='.'</em>, <em class="sig-param">skiprows=9</em>, <em class="sig-param">verbose=None</em>, <em class="sig-param">file_type='csv'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/ascii.html#Csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.ascii.Csv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Csv is a class to handle coma separated value files.</p>
 <dl class="field-list simple">
@@ -242,11 +242,13 @@
 
 <dl class="method">
 <dt id="mfm.io.ascii.Csv.load">
-<code class="sig-name descname">load</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename: 'str'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/ascii.html#Csv.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.ascii.Csv.load" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename: 'str'</em>, <em class="sig-param">skiprows: 'int' = None</em>, <em class="sig-param">use_header: 'bool' = None</em>, <em class="sig-param">verbose: 'bool' = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/ascii.html#Csv.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.ascii.Csv.load" title="Permalink to this definition">¶</a></dt>
 <dd><p>This method loads a filename to the <cite>Csv</cite> object
 :type filename: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>
 :param filename: string specifying the file
+:type skiprows: <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]
 :param skiprows: number of rows to skip in the file. By default the value of the instance is used
+:type verbose: <code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]
 :param verbose: The method is verbose if verbose is set to True of the verbose attribute of the instance is
 True.</p>
 </dd></dl>
@@ -493,7 +495,12 @@ a consistent interface.</p></li>
 <dl class="method">
 <dt id="mfm.io.photons.Photons.cr_filter">
 <em class="property">property </em><code class="sig-name descname">cr_filter</code><a class="headerlink" href="#mfm.io.photons.Photons.cr_filter" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.photons.Photons.dt">
@@ -538,30 +545,55 @@ a consistent interface.</p></li>
 <dt id="mfm.io.photons.Photons.mt">
 <em class="property">property </em><code class="sig-name descname">mt</code><a class="headerlink" href="#mfm.io.photons.Photons.mt" title="Permalink to this definition">¶</a></dt>
 <dd><p>Array containing the macros-time clock counts of the photons</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.photons.Photons.mt_clk">
 <em class="property">property </em><code class="sig-name descname">mt_clk</code><a class="headerlink" href="#mfm.io.photons.Photons.mt_clk" title="Permalink to this definition">¶</a></dt>
 <dd><p>Macro-time clock of the data (time between the macrotime events in milli-seconds)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.photons.Photons.nPh">
 <em class="property">property </em><code class="sig-name descname">nPh</code><a class="headerlink" href="#mfm.io.photons.Photons.nPh" title="Permalink to this definition">¶</a></dt>
 <dd><p>Total number of photons</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.photons.Photons.n_rout">
 <em class="property">property </em><code class="sig-name descname">n_rout</code><a class="headerlink" href="#mfm.io.photons.Photons.n_rout" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of routing channels</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.photons.Photons.n_tac">
 <em class="property">property </em><code class="sig-name descname">n_tac</code><a class="headerlink" href="#mfm.io.photons.Photons.n_tac" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of TAC channels</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -623,12 +655,22 @@ a consistent interface.</p></li>
 <dl class="method">
 <dt id="mfm.io.photons.Photons.shape">
 <em class="property">property </em><code class="sig-name descname">shape</code><a class="headerlink" href="#mfm.io.photons.Photons.shape" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.photons.Photons.tac">
 <em class="property">property </em><code class="sig-name descname">tac</code><a class="headerlink" href="#mfm.io.photons.Photons.tac" title="Permalink to this definition">¶</a></dt>
 <dd><p>Array containing the micro-time clock counts (TAC) of the photons</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -650,7 +692,7 @@ photons of the burst to be able to use standard Python slicing syntax to select 
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>filenames</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – filename pointing to a Seidel BID-file</p></li>
-<li><p><strong>stack</strong> – bool
+<li><p><strong>stack_files</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool
 If stack is True the returned list is stacked and the numbering of the bursts is made continuous.
 This is the default behavior.</p></li>
 </ul>
@@ -666,7 +708,7 @@ This is the default behavior.</p></li>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span><span class="o">,</span> <span class="nn">glob</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">directory</span> <span class="o">=</span> <span class="s2">&quot;./sample_data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\BID&quot;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">directory</span><span class="o">+</span><span class="s1">&#39;/*.bst&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">bids</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">photons</span><span class="o">.</span><span class="n">read_BIDs</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bids</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">photons</span><span class="o">.</span><span class="n">read_burst_ids</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">bids</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 <span class="go">array([20384, 20385, 20386, 20387, 20388, 20389, 20390, 20391, 20392,</span>
 <span class="go">   20393, 20394, 20395, 20396, 20397, 20398, 20399, 20400, 20401,</span>
@@ -821,22 +863,30 @@ data within the file.</p>
 <span id="mfm-io-tttr-module"></span><h2>mfm.io.tttr module<a class="headerlink" href="#module-mfm.io.tttr" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="mfm.io.tttr.bh123_header">
-<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">bh123_header</code><span class="sig-paren">(</span><em class="sig-param">b</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#bh123_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.bh123_header" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">bh123_header</code><span class="sig-paren">(</span><em class="sig-param">b: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'Tuple[float, bool]'<a class="reference internal" href="../_modules/mfm/io/tttr.html#bh123_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.bh123_header" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.io.tttr.bh132_photons">
-<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">bh132_photons</code><span class="sig-paren">(</span><em class="sig-param">b</em>, <em class="sig-param">invert_tac=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#bh132_photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.bh132_photons" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">bh132_photons</code><span class="sig-paren">(</span><em class="sig-param">b: 'np.array'</em>, <em class="sig-param">invert_tac: 'bool' = True</em><span class="sig-paren">)</span> &#x2192; 'Tuple[np.array, np.array, np.array, np.array]'<a class="reference internal" href="../_modules/mfm/io/tttr.html#bh132_photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.bh132_photons" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the macros-time, micro-time and the routing channel number of a BH132-file contained in a
 binary numpy-array of 8-bit chars.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>b</strong> – numpy-array
+<dd class="field-odd"><p><strong>b</strong> (<em>&lt;built-in function array&gt;</em>) – numpy-array
 a numpy array of chars containing the binary information of a
 BH132-file</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>list
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[&lt;built-in function array&gt;, &lt;built-in function array&gt;, &lt;built-in function array&gt;, &lt;built-in function array&gt;]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>list
 a list containing the number of photons, numpy-array of macros-time (64-bit unsigned integers),
 numpy-array of TAC-values (32-bit unsigned integers), numpy-array of channel numbers (8-bit unsigned integers)</p>
 </dd>
@@ -845,36 +895,54 @@ numpy-array of TAC-values (32-bit unsigned integers), numpy-array of channel num
 
 <dl class="function">
 <dt id="mfm.io.tttr.ht3_header">
-<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">ht3_header</code><span class="sig-paren">(</span><em class="sig-param">b</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#ht3_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.ht3_header" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">ht3_header</code><span class="sig-paren">(</span><em class="sig-param">b</em><span class="sig-paren">)</span> &#x2192; 'Tuple[float, bool]'<a class="reference internal" href="../_modules/mfm/io/tttr.html#ht3_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.ht3_header" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.io.tttr.ht3_photons">
-<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">ht3_photons</code><span class="sig-paren">(</span><em class="sig-param">b</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#ht3_photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.ht3_photons" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">ht3_photons</code><span class="sig-paren">(</span><em class="sig-param">b: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'Tuple[np.array, np.array, np.array, np.array]'<a class="reference internal" href="../_modules/mfm/io/tttr.html#ht3_photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.ht3_photons" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[&lt;built-in function array&gt;, &lt;built-in function array&gt;, &lt;built-in function array&gt;, &lt;built-in function array&gt;]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.io.tttr.ht3_sf">
-<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">ht3_sf</code><span class="sig-paren">(</span><em class="sig-param">b</em>, <em class="sig-param">stage=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#ht3_sf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.ht3_sf" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">ht3_sf</code><span class="sig-paren">(</span><em class="sig-param">b: 'np.array'</em>, <em class="sig-param">stage=0</em><span class="sig-paren">)</span> &#x2192; 'Tuple[np.array, np.array, np.array, np.array]'<a class="reference internal" href="../_modules/mfm/io/tttr.html#ht3_sf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.ht3_sf" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[&lt;built-in function array&gt;, &lt;built-in function array&gt;, &lt;built-in function array&gt;, &lt;built-in function array&gt;]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.io.tttr.iss_16">
-<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">iss_16</code><span class="sig-paren">(</span><em class="sig-param">b</em>, <em class="sig-param">can</em>, <em class="sig-param">tac</em>, <em class="sig-param">mt</em>, <em class="sig-param">length</em>, <em class="sig-param">step</em>, <em class="sig-param">phMode</em>, <em class="sig-param">offset</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#iss_16"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.iss_16" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">iss_16</code><span class="sig-paren">(</span><em class="sig-param">b: 'np.array'</em>, <em class="sig-param">can</em>, <em class="sig-param">tac</em>, <em class="sig-param">mt</em>, <em class="sig-param">length</em>, <em class="sig-param">step</em>, <em class="sig-param">phMode</em>, <em class="sig-param">offset</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../_modules/mfm/io/tttr.html#iss_16"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.iss_16" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reading of ISS-photon format (fcs-measurements)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>b</strong> – </p>
+<dd class="field-odd"><p><strong>b</strong> (<em>&lt;built-in function array&gt;</em>) – </p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.io.tttr.iss_32">
-<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">iss_32</code><span class="sig-paren">(</span><em class="sig-param">b</em>, <em class="sig-param">can</em>, <em class="sig-param">tac</em>, <em class="sig-param">mt</em>, <em class="sig-param">length</em>, <em class="sig-param">step</em>, <em class="sig-param">phMode</em>, <em class="sig-param">offset</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#iss_32"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.iss_32" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">iss_32</code><span class="sig-paren">(</span><em class="sig-param">b</em>, <em class="sig-param">can</em>, <em class="sig-param">tac</em>, <em class="sig-param">mt</em>, <em class="sig-param">length</em>, <em class="sig-param">step</em>, <em class="sig-param">phMode: 'bool'</em>, <em class="sig-param">offset</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#iss_32"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.iss_32" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reading of ISS-photon format (fcs-measurements)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -888,16 +956,21 @@ numpy-array of TAC-values (32-bit unsigned integers), numpy-array of channel num
 
 <dl class="function">
 <dt id="mfm.io.tttr.iss_header">
-<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">iss_header</code><span class="sig-paren">(</span><em class="sig-param">b</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#iss_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.iss_header" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">iss_header</code><span class="sig-paren">(</span><em class="sig-param">b</em><span class="sig-paren">)</span> &#x2192; 'Tuple[float, bool]'<a class="reference internal" href="../_modules/mfm/io/tttr.html#iss_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.iss_header" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="function">
 <dt id="mfm.io.tttr.iss_photons">
-<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">iss_photons</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#iss_photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.iss_photons" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">iss_photons</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'Tuple[np.array, np.array, np.array, np.array]'<a class="reference internal" href="../_modules/mfm/io/tttr.html#iss_photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.iss_photons" title="Permalink to this definition">¶</a></dt>
 <dd><p># CHANNEL PHOTON MODE (first 2 bytes)
 # in brackets int values
-# H (72)one channel time mode, h (104) one channel photon mode
-# X (88) two channel time mode, x (120) two channel photon mode</p>
+# H (72)one channel time file_type, h (104) one channel photon file_type
+# X (88) two channel time file_type, x (120) two channel photon file_type</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -905,8 +978,11 @@ numpy-array of TAC-values (32-bit unsigned integers), numpy-array of channel num
 <li><p><strong>kwargs</strong> – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[&lt;built-in function array&gt;, &lt;built-in function array&gt;, &lt;built-in function array&gt;, &lt;built-in function array&gt;]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -930,19 +1006,24 @@ numpy-array of TAC-values (32-bit unsigned integers), numpy-array of channel num
 
 <dl class="attribute">
 <dt id="mfm.io.tttr.pq_photons">
-<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">pq_photons</code><span class="sig-paren">(</span><em class="sig-param">b</em>, <em class="sig-param">invert_tac=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#pq_photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.pq_photons" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">pq_photons</code><span class="sig-paren">(</span><em class="sig-param">b: 'np.array'</em>, <em class="sig-param">invert_tac: 'bool' = True</em><span class="sig-paren">)</span> &#x2192; 'Tuple[np.array, np.array, np.array, np.array]'<a class="reference internal" href="../_modules/mfm/io/tttr.html#pq_photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.pq_photons" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[&lt;built-in function array&gt;, &lt;built-in function array&gt;, &lt;built-in function array&gt;, &lt;built-in function array&gt;]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="function">
 <dt id="mfm.io.tttr.read_header">
-<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">read_header</code><span class="sig-paren">(</span><em class="sig-param">binary</em>, <em class="sig-param">routine_name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#read_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.read_header" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">read_header</code><span class="sig-paren">(</span><em class="sig-param">binary: 'np.array'</em>, <em class="sig-param">routine_name: 'str'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#read_header"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.read_header" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reads the header-information of binary TTTR-files. The TTTR-files have to be
 passed as numpy array of type numpy.uint8</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>binary</strong> – A numpy array containing the data of the SPC or HT3 files</p></li>
-<li><p><strong>routine_name</strong> – either bh132 or ht3</p></li>
+<li><p><strong>binary</strong> (<em>&lt;built-in function array&gt;</em>) – A numpy array containing the data of the SPC or HT3 files</p></li>
+<li><p><strong>routine_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – either bh132 or ht3</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -964,38 +1045,41 @@ passed as numpy array of type numpy.uint8</p>
 
 <dl class="attribute">
 <dt id="mfm.io.tttr.read_hht3">
-<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">read_hht3</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">n_rec</em>, <em class="sig-param">version=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#read_hht3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.read_hht3" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">read_hht3</code><span class="sig-paren">(</span><em class="sig-param">data: 'np.array'</em>, <em class="sig-param">n_rec: 'int'</em>, <em class="sig-param">version: 'int' = 1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#read_hht3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.read_hht3" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.io.tttr.read_pht3">
-<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">read_pht3</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">n_rec</em>, <em class="sig-param">version=1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#read_pht3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.read_pht3" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">read_pht3</code><span class="sig-paren">(</span><em class="sig-param">data: 'np.array'</em>, <em class="sig-param">n_rec: 'int'</em>, <em class="sig-param">version: 'int' = 1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#read_pht3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.read_pht3" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="mfm.io.tttr.read_ptu">
-<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">read_ptu</code><span class="sig-paren">(</span><em class="sig-param">filename</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#read_ptu"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.read_ptu" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">read_ptu</code><span class="sig-paren">(</span><em class="sig-param">filename: 'str'</em><span class="sig-paren">)</span> &#x2192; 'Dict'<a class="reference internal" href="../_modules/mfm/io/tttr.html#read_ptu"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.read_ptu" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reads a PicoQuant PTU-file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>filename</strong> – </p>
+<dd class="field-odd"><p><strong>filename</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[~KT, ~VT]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.io.tttr.spc2hdf">
-<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">spc2hdf</code><span class="sig-paren">(</span><em class="sig-param">spc_files</em>, <em class="sig-param">routine_name='bh132'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#spc2hdf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.spc2hdf" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.io.tttr.</code><code class="sig-name descname">spc2hdf</code><span class="sig-paren">(</span><em class="sig-param">spc_files: 'List[str]'</em>, <em class="sig-param">routine_name: 'str' = 'bh132'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/tttr.html#spc2hdf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.tttr.spc2hdf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts BH-SPC files into hdf file format</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spc_files</strong> – list
+<li><p><strong>spc_files</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – list
 A list of spc-files</p></li>
-<li><p><strong>routine_name</strong> – Name of the used reading routine by default “bh132” alternatively “bh630_x48”</p></li>
+<li><p><strong>routine_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name of the used reading routine by default “bh132” alternatively “bh630_x48”</p></li>
 <li><p><strong>verbose</strong> – bool
 By default False</p></li>
 <li><p><strong>kwargs</strong> – If the parameter ‘filename’ is not provided only a temporary hdf (.h5) file is created
@@ -1172,7 +1256,12 @@ Otherwise the default ‘title’ spc is used to store the data within the HDF-F
 <dl class="method">
 <dt id="mfm.io.widgets.SpcFileWidget.count_rate">
 <em class="property">property </em><code class="sig-name descname">count_rate</code><a class="headerlink" href="#mfm.io.widgets.SpcFileWidget.count_rate" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.widgets.SpcFileWidget.dt">
@@ -1187,32 +1276,62 @@ Otherwise the default ‘title’ spc is used to store the data within the HDF-F
 <dl class="method">
 <dt id="mfm.io.widgets.SpcFileWidget.fileType">
 <em class="property">property </em><code class="sig-name descname">fileType</code><a class="headerlink" href="#mfm.io.widgets.SpcFileWidget.fileType" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.widgets.SpcFileWidget.filename">
 <em class="property">property </em><code class="sig-name descname">filename</code><a class="headerlink" href="#mfm.io.widgets.SpcFileWidget.filename" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.widgets.SpcFileWidget.measurement_time">
 <em class="property">property </em><code class="sig-name descname">measurement_time</code><a class="headerlink" href="#mfm.io.widgets.SpcFileWidget.measurement_time" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.widgets.SpcFileWidget.nROUT">
 <em class="property">property </em><code class="sig-name descname">nROUT</code><a class="headerlink" href="#mfm.io.widgets.SpcFileWidget.nROUT" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.widgets.SpcFileWidget.nTAC">
 <em class="property">property </em><code class="sig-name descname">nTAC</code><a class="headerlink" href="#mfm.io.widgets.SpcFileWidget.nTAC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.widgets.SpcFileWidget.number_of_photons">
 <em class="property">property </em><code class="sig-name descname">number_of_photons</code><a class="headerlink" href="#mfm.io.widgets.SpcFileWidget.number_of_photons" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.widgets.SpcFileWidget.onFileTypeChanged">
@@ -1221,8 +1340,13 @@ Otherwise the default ‘title’ spc is used to store the data within the HDF-F
 
 <dl class="method">
 <dt id="mfm.io.widgets.SpcFileWidget.onLoadSample">
-<code class="sig-name descname">onLoadSample</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/widgets.html#SpcFileWidget.onLoadSample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.widgets.SpcFileWidget.onLoadSample" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname">onLoadSample</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'None'<a class="reference internal" href="../_modules/mfm/io/widgets.html#SpcFileWidget.onLoadSample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.widgets.SpcFileWidget.onLoadSample" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.widgets.SpcFileWidget.onSampleChanged">
@@ -1232,12 +1356,22 @@ Otherwise the default ‘title’ spc is used to store the data within the HDF-F
 <dl class="method">
 <dt id="mfm.io.widgets.SpcFileWidget.photons">
 <em class="property">property </em><code class="sig-name descname">photons</code><a class="headerlink" href="#mfm.io.widgets.SpcFileWidget.photons" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="../user_documentation/api/io.html#mfm.io.photons.Photons" title="mfm.io.photons.Photons"><code class="xref py py-class docutils literal notranslate"><span class="pre">Photons</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.widgets.SpcFileWidget.rep_rate">
 <em class="property">property </em><code class="sig-name descname">rep_rate</code><a class="headerlink" href="#mfm.io.widgets.SpcFileWidget.rep_rate" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.io.widgets.SpcFileWidget.sample_name">
@@ -1257,10 +1391,14 @@ Otherwise the default ‘title’ spc is used to store the data within the HDF-F
 <p>The <a class="reference internal" href="../user_documentation/api/io.html#module-mfm.io" title="mfm.io"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io</span></code></a> module contains all classes, functions and modules relevant for file input and outputs.
 In particular three kinds of file-types are handled:</p>
 <ol class="arabic simple">
-<li><p>Comma-separated files <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.csv_file</span></code></p></li>
-<li><p>PDB-file <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.pdb_file</span></code></p></li>
+<li><p>Comma-separated files <a class="reference internal" href="#module-mfm.io.ascii" title="mfm.io.ascii"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.ascii</span></code></a></p></li>
+<li><p>PDB-file <a class="reference internal" href="../user_documentation/api/io.html#module-mfm.io.pdb" title="mfm.io.pdb"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.pdb</span></code></a></p></li>
 <li><p>TTTR-files containing photon data <a class="reference internal" href="../user_documentation/api/io.html#module-mfm.io.photons" title="mfm.io.photons"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.photons</span></code></a></p></li>
+<li><p>XYZ-files containing coordinates <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.xyz</span></code></p></li>
 </ol>
+<p>5. PQR-files containing coordinates <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.pqr</span></code>
+5. DX-files containing densities <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.dx</span></code>
+6. SDT-files containing time-resolved fluorescence decays <a class="reference internal" href="#module-mfm.io.sdtfile" title="mfm.io.sdtfile"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.sdtfile</span></code></a></p>
 </div>
 </div>
 
@@ -1276,7 +1414,7 @@ In particular three kinds of file-types are handled:</p>
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

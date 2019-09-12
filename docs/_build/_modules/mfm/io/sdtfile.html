@@ -542,7 +542,7 @@
     <span class="p">(</span><span class="s1">&#39;lblock_no&#39;</span><span class="p">,</span> <span class="s1">&#39;u4&#39;</span><span class="p">),</span>
     <span class="p">(</span><span class="s1">&#39;block_length&#39;</span><span class="p">,</span> <span class="s1">&#39;u4&#39;</span><span class="p">)]</span>
 
-<span class="n">BLOCK_CREATION</span> <span class="o">=</span> <span class="p">{</span>  <span class="c1"># mode of creation</span>
+<span class="n">BLOCK_CREATION</span> <span class="o">=</span> <span class="p">{</span>  <span class="c1"># file_type of creation</span>
     <span class="mi">0</span><span class="p">:</span> <span class="s1">&#39;NOT_USED&#39;</span><span class="p">,</span>
     <span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;MEAS_DATA&#39;</span><span class="p">,</span>
     <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;FLOW_DATA&#39;</span><span class="p">,</span>
@@ -571,12 +571,12 @@
     <span class="mh">0x5555</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
 <span class="n">INFO_IDS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="sa">b</span><span class="s2">&quot;SPC Setup Script File&quot;</span><span class="p">:</span> <span class="s2">&quot;Setup script mode: setup only&quot;</span><span class="p">,</span>
-    <span class="sa">b</span><span class="s2">&quot;SPC Setup &amp; Data File&quot;</span><span class="p">:</span> <span class="s2">&quot;Normal mode: setup + data&quot;</span><span class="p">,</span>
+    <span class="sa">b</span><span class="s2">&quot;SPC Setup Script File&quot;</span><span class="p">:</span> <span class="s2">&quot;Setup script file_type: setup only&quot;</span><span class="p">,</span>
+    <span class="sa">b</span><span class="s2">&quot;SPC Setup &amp; Data File&quot;</span><span class="p">:</span> <span class="s2">&quot;Normal file_type: setup + data&quot;</span><span class="p">,</span>
     <span class="sa">b</span><span class="s2">&quot;SPC DLL Data File&quot;</span><span class="p">:</span> <span class="s2">&quot;DLL created: no setup, only data&quot;</span><span class="p">,</span>
-    <span class="sa">b</span><span class="s2">&quot;SPC Flow Data File&quot;</span><span class="p">:</span> <span class="s2">&quot;Continuous Flow mode: no setup, only data&quot;</span><span class="p">,</span>
+    <span class="sa">b</span><span class="s2">&quot;SPC Flow Data File&quot;</span><span class="p">:</span> <span class="s2">&quot;Continuous Flow file_type: no setup, only data&quot;</span><span class="p">,</span>
     <span class="sa">b</span><span class="s2">&quot;SPC fcs Data File&quot;</span><span class="p">:</span>
-    <span class="s2">&quot;FIFO mode: setup, data blocks = Decay, fcs, FIDA, FILDA &amp; MCS &quot;</span>
+    <span class="s2">&quot;FIFO file_type: setup, data blocks = Decay, fcs, FIDA, FILDA &amp; MCS &quot;</span>
     <span class="s2">&quot;curves for each used routing channel&quot;</span><span class="p">}</span>
 
 <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
@@ -601,7 +601,7 @@
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
