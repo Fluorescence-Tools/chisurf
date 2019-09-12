@@ -184,15 +184,20 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> – The time series. If multidimensional, set the time axis using the
+<li><p><strong>x</strong> (<em>&lt;built-in function array&gt;</em>) – The time series. If multidimensional, set the time axis using the
 <code class="docutils literal notranslate"><span class="pre">axis</span></code> keyword argument and the function will be computed for every
 other axis.</p></li>
-<li><p><strong>axis</strong> – (optional)
+<li><p><strong>axis</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – (optional)
 The time axis of <code class="docutils literal notranslate"><span class="pre">x</span></code>. Assumed to be the first axis if not specified.</p></li>
-<li><p><strong>fast</strong> – (optional)
+<li><p><strong>fast</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – (optional)
 If <code class="docutils literal notranslate"><span class="pre">True</span></code>, only use the largest <code class="docutils literal notranslate"><span class="pre">2^n</span></code> entries for efficiency.
 (default: False)</p></li>
 </ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
 </dd>
 </dl>
 </dd></dl>
@@ -203,10 +208,13 @@ If <code class="docutils literal notranslate"><span class="pre">True</span></cod
 <dd><p>Calculates the FWHM using a linear-search from both sides of the curve</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>curve</strong> – </p>
+<dd class="field-odd"><p><strong>curve</strong> (<a class="reference internal" href="mfm.html#mfm.curve.Curve" title="mfm.curve.Curve"><code class="xref py py-class docutils literal notranslate"><span class="pre">Curve</span></code></a>) – </p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>a tupel containing the FWHM and the indices and the x-values of the used positions</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a tupel containing the FWHM and the indices and the x-values of the used positions</p>
 </dd>
 </dl>
 </dd></dl>
@@ -225,13 +233,16 @@ scipy.signal.lfilter</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> – 1D numpy-array (data)</p></li>
-<li><p><strong>window_len</strong> – the dimension of the smoothing window; should be an odd integer</p></li>
-<li><p><strong>window_function_type</strong> – the type of window from ‘flat’, ‘hanning’, ‘hamming’, ‘bartlett’, ‘blackman’                   flat window will produce a moving average smoothing.</p></li>
+<li><p><strong>data</strong> (<em>&lt;built-in function array&gt;</em>) – 1D numpy-array (data)</p></li>
+<li><p><strong>window_len</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – the dimension of the smoothing window; should be an odd integer</p></li>
+<li><p><strong>window_function_type</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the type of window from ‘flat’, ‘hanning’, ‘hamming’, ‘bartlett’, ‘blackman’                   flat window will produce a moving average smoothing.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>1D numpy-array (smoothed data)</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>1D numpy-array (smoothed data)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -246,8 +257,11 @@ scipy.signal.lfilter</p>
 <li><p><strong>b</strong> – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -270,7 +284,7 @@ scipy.signal.lfilter</p>
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

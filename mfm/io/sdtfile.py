@@ -425,7 +425,7 @@ BLOCK_HEADER = [
     ('lblock_no', 'u4'),
     ('block_length', 'u4')]
 
-BLOCK_CREATION = {  # mode of creation
+BLOCK_CREATION = {  # file_type of creation
     0: 'NOT_USED',
     1: 'MEAS_DATA',
     2: 'FLOW_DATA',
@@ -454,12 +454,12 @@ HEADER_VALID = {
     0x5555: True}
 
 INFO_IDS = {
-    b"SPC Setup Script File": "Setup script mode: setup only",
-    b"SPC Setup & Data File": "Normal mode: setup + data",
+    b"SPC Setup Script File": "Setup script file_type: setup only",
+    b"SPC Setup & Data File": "Normal file_type: setup + data",
     b"SPC DLL Data File": "DLL created: no setup, only data",
-    b"SPC Flow Data File": "Continuous Flow mode: no setup, only data",
+    b"SPC Flow Data File": "Continuous Flow file_type: no setup, only data",
     b"SPC fcs Data File":
-    "FIFO mode: setup, data blocks = Decay, fcs, FIDA, FILDA & MCS "
+    "FIFO file_type: setup, data blocks = Decay, fcs, FIDA, FILDA & MCS "
     "curves for each used routing channel"}
 
 if sys.version_info[0] > 2:

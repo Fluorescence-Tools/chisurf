@@ -5,7 +5,7 @@ from qtpy import  QtWidgets
 import mfm
 from mfm.plots import plotbase
 
-pyqtgraph_settings = mfm.settings.cs_settings['gui']['plot']["pyqtgraph"]
+pyqtgraph_settings = mfm.settings.gui['plot']["pyqtgraph"]
 color_scheme = mfm.settings.colors
 
 
@@ -42,7 +42,7 @@ class ResidualPlot(plotbase.Plot):
         self.data_x, self.data_y = None, None
 
         curves = list()
-        lw = mfm.settings.cs_settings['gui']['plot']['line_width']
+        lw = mfm.settings.gui['plot']['line_width']
         self.curves = curves
 
         p = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])

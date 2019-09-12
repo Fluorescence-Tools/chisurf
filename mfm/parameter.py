@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, TypeVar
+from typing import List, TypeVar, Tuple
 
 import weakref
 import numpy as np
@@ -10,9 +10,38 @@ import mfm.base
 T = TypeVar('T', bound='Parameter')
 
 
-class Parameter(mfm.base.Base):
+class Parameter(
+    mfm.base.Base
+):
 
     _instances = set()
+
+    @property
+    def bounds(
+            self
+    ) -> Tuple[float, float]:
+        if self.bounds_on:
+            return self._lb, self._ub
+        else:
+            return float("-inf"), float("inf")
+
+    @bounds.setter
+    def bounds(
+            self,
+            b: Tuple[float, float]
+    ):
+        self._lb, self._ub = b
+
+    @property
+    def bounds_on(self) -> bool:
+        return self._bounds_on
+
+    @bounds_on.setter
+    def bounds_on(
+            self,
+            v: bool
+    ):
+        self._bounds_on = bool(v)
 
     @property
     def value(self) -> float:
@@ -20,17 +49,49 @@ class Parameter(mfm.base.Base):
         if callable(v):
             return v()
         else:
-            return v
+            if self.is_linked:
+                return self.link.value
+            else:
+                if self.bounds_on:
+                    lb, ub = self.bounds
+                    if lb is not None:
+                        v = max(lb, v)
+                    if ub is not None:
+                        v = min(ub, v)
+                    return v
+                else:
+                    return v
 
     @value.setter
-    def value(
-            self,
-            value: float
-    ):
+    def value(self, value):
         self._value = float(value)
+        if self.is_linked:
+            self.link.value = value
+
+    @property
+    def link(self):
+        return self._link
+
+    @link.setter
+    def link(
+            self,
+            link: Parameter
+    ):
+        if isinstance(link, Parameter):
+            self._link = link
+        elif link is None:
+            try:
+                self._value = self._link.value
+            except AttributeError:
+                pass
+            self._link = None
+
+    @property
+    def is_linked(self) -> bool:
+        return isinstance(self._link, Parameter)
 
     @classmethod
-    def getinstances(cls) -> List[Parameter]:
+    def get_instances(cls) -> List[Parameter]:
         dead = set()
         for ref in cls._instances:
             obj = ref()
@@ -149,18 +210,26 @@ class Parameter(mfm.base.Base):
             self,
             value: float = 1.0,
             link: Parameter = None,
+            lb: float = float("-inf"),
+            ub: float = float("inf"),
+            bounds_on: bool = False,
             *args,
             **kwargs
     ):
         super(Parameter, self).__init__(*args, **kwargs)
+        self._bounds_on = bounds_on
         self._instances.add(weakref.ref(self))
         self._link = link
         self._value = value
+        self._lb = lb
+        self._ub = ub
 
     def to_dict(self) -> dict:
         v = super(Parameter, self).to_dict()
         v['value'] = self.value
         v['decimals'] = self.decimals
+        v['lb'], v['ub'] = self.bounds
+        v['bounds_on'] = self.bounds_on
         return v
 
     def from_dict(
@@ -169,6 +238,8 @@ class Parameter(mfm.base.Base):
     ):
         super(Parameter, self).from_dict(v)
         self._value = v['value']
+        self._lb, self._ub = v['lb'], v['ub']
+        self._bounds_on = v['bounds_on']
 
 
 class ParameterGroup(mfm.base.Base):

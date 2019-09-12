@@ -22,9 +22,9 @@ def make_extension(ext):
         name,
         sources=sources,
         include_dirs=[numpy.get_include(), "."],
-        extra_compile_args=[],
-        extra_link_args=[],
-        libraries=[],
+        extra_compile_args=list(),
+        extra_link_args=list(),
+        libraries=list(),
         library_dirs=["."],
         language="c++")
 

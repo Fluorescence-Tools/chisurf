@@ -37,7 +37,8 @@ extensions = [
     'numpydoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.mathjax',
-    'matplotlib.sphinxext.plot_directive'
+    'matplotlib.sphinxext.plot_directive',
+    'sphinx_autodoc_typehints'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -55,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'ChiSurf'
-copyright = u'2016, Thomas Peulen'
+copyright = u'2019, Thomas Peulen'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -197,7 +198,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'ChiSurfdoc'
+htmlhelp_basename = 'doc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -217,8 +218,13 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'ChiSurf.tex', u'ChiSurf Documentation',
-   u'Thomas Peulen', 'manual'),
+    (
+        'index',
+        'ChiSurf.tex',
+        u'ChiSurf Documentation',
+        u'Thomas Peulen',
+        'manual'
+    ),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -247,8 +253,13 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'chisurf', u'ChiSurf Documentation',
-     [u'Thomas Peulen'], 1)
+    (
+        'index',
+        'chisurf',
+        u'ChiSurf Documentation',
+        [u'Thomas Peulen'],
+        1
+    )
 ]
 
 # If true, show URL addresses after external links.
@@ -261,9 +272,15 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'ChiSurf', u'ChiSurf Documentation',
-   u'Thomas Peulen', 'ChiSurf', 'One line description of project.',
-   'Miscellaneous'),
+    (
+        'index',
+        'ChiSurf',
+        u'ChiSurf Documentation',
+        u'Thomas Peulen',
+        'ChiSurf',
+        'One line description of project.',
+        'Miscellaneous'
+    ),
 ]
 
 # Documents to append as an appendix to all manuals.

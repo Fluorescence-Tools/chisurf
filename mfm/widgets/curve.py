@@ -170,7 +170,6 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
 
     def __init__(
             self,
-            *args,
             fit: mfm.fitting.fit.Fit = None,
             setup=None,
             drag_enabled: bool = False,

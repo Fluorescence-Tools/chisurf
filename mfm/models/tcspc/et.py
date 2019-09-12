@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import os
 import numpy as np
-from qtpy import  QtCore, QtGui, QtWidgets, uic
+from qtpy import QtCore, QtGui, QtWidgets, uic
 
 import mfm
 import mfm.fluorescence
@@ -18,59 +19,84 @@ from mfm.models.tcspc.lifetime import LifetimeModel
 
 class LCurve(object):
 
-    def __init__(self, **kwargs):
+    def __init__(
+            self,
+            **kwargs
+    ):
         self._l_curve_start = 0.0
         self._l_curve_stop = 1.0
         self._l_curve_steps = 512
         self._l_curve_chi2 = np.array([1.0], dtype=np.float64)
         self._l_curve_sol_norm = np.array([1.0], dtype=np.float64)
 
-
     @property
-    def l_curve_start(self):
+    def l_curve_start(
+            self
+    ) -> float:
         """
         The smallest regularization value
         """
         return self._l_curve_start
 
     @l_curve_start.setter
-    def l_curve_start(self, v):
+    def l_curve_start(
+            self,
+            v: float
+    ):
         """
         The smallest regularization value
         """
         self._l_curve_start = v
 
     @property
-    def l_curve_stop(self):
+    def l_curve_stop(
+            self
+    ) -> float:
         """
         The largest regularization value
         """
         return self._l_curve_stop
 
     @l_curve_stop.setter
-    def l_curve_stop(self, v):
+    def l_curve_stop(
+            self,
+            v: float
+    ):
         self._l_curve_stop = v
 
     @property
-    def l_curve_steps(self):
+    def l_curve_steps(
+            self
+    ) -> int:
         """
         The number of points of the l-curve
         """
         return self._l_curve_steps
 
     @l_curve_steps.setter
-    def l_curve_steps(self, v):
+    def l_curve_steps(
+            self,
+            v: int
+    ):
         self._l_curve_steps = v
 
     @property
-    def l_curve_reg(self):
+    def l_curve_reg(
+            self
+    ) -> np.array:
         """
         The regulariation parameters of the calculated l-curve
         """
-        return np.linspace(self.l_curve_start, self.l_curve_stop, self.l_curve_steps)
+        return np.linspace(
+            self.l_curve_start,
+            self.l_curve_stop,
+            self.l_curve_steps
+        )
 
     @property
-    def l_curve_chi2(self):
+    def l_curve_chi2(
+            self
+    ):
         """
         The chi2r of the l-curve
         """
@@ -106,73 +132,111 @@ class LCurve(object):
 class DistanceDistribution(object):
 
     @property
-    def r_DA_min(self):
+    def r_DA_min(
+            self
+    ) -> float:
         return self._r_DA_min
 
     @r_DA_min.setter
-    def r_DA_min(self, v):
+    def r_DA_min(
+            self,
+            v: float
+    ):
         self._r_DA_min = v
 
     @property
-    def r_DA_max(self):
+    def r_DA_max(self) -> float:
         return self._r_DA_max
 
     @r_DA_max.setter
-    def r_DA_max(self, v):
+    def r_DA_max(
+            self,
+            v: float
+    ):
         self._r_DA_max = v
 
     @property
-    def r_DA_npoints(self):
+    def r_DA_npoints(
+            self
+    ) -> int:
         return self._r_DA_npoints
 
     @r_DA_npoints.setter
-    def r_DA_npoints(self, v):
+    def r_DA_npoints(
+            self,
+            v: int
+    ):
         self._r_DA_npoints = v
 
     @property
-    def kappa2(self):
+    def kappa2(
+            self
+    ) -> float:
         return self._kappa2
 
     @kappa2.setter
-    def kappa2(self, v):
+    def kappa2(
+            self,
+            v: float
+    ):
         self._kappa2 = v
 
     @property
-    def tau0(self):
+    def tau0(
+            self
+    ) -> float:
         return self._tau0
 
     @tau0.setter
-    def tau0(self, v):
+    def tau0(
+            self,
+            v: float
+    ):
         self._tau0 = v
 
     @property
-    def R0(self):
+    def R0(
+            self
+    ) -> float:
         return self._R0
 
     @R0.setter
-    def R0(self, v):
+    def R0(
+            self,
+            v: float
+    ):
         self._R0 = v
 
     @property
-    def p_rDA(self):
+    def p_rDA(
+            self
+    ) -> np.array:
         """
         The the probability distribution of the distances
         """
         return self._p_rDA
 
     @p_rDA.setter
-    def p_rDA(self, v):
+    def p_rDA(
+            self,
+            v: np.array
+    ):
         self._p_rDA = v
 
     @property
-    def r_DA(self):
+    def r_DA(
+            self
+    ) -> np.array:
         """
         The array of donor acceptor distances
         """
         return np.linspace(self.r_DA_min, self.r_DA_max, self.r_DA_npoints)
 
     @r_DA.setter
-    def r_DA(self, v):
+    def r_DA(
+            self,
+            v: np.array
+    ):
         self._r_DA = v
 
     def __init__(self, **kwargs):
@@ -185,7 +249,12 @@ class DistanceDistribution(object):
         self._R0 = 52.0
 
 
-class EtModelFree(Model, Phasor, LCurve, DistanceDistribution):
+class EtModelFree(
+    Model,
+    Phasor,
+    LCurve,
+    DistanceDistribution
+):
     """
     This models deconvolutes the distance distribution given the two fits of the type
     :py:class:`~.mfm.models.tcspc.tcspc.LifetimeModel`.
@@ -213,7 +282,6 @@ class EtModelFree(Model, Phasor, LCurve, DistanceDistribution):
 
         self._chi2r = 1000.0
         self.t_matrix = None
-
 
     @property
     def fda_model(self):
@@ -269,7 +337,7 @@ class EtModelFree(Model, Phasor, LCurve, DistanceDistribution):
     @property
     def t_mode(self):
         """
-        Calculation mode of the time-axis (either 'lin' or 'log')
+        Calculation file_type of the time-axis (either 'lin' or 'log')
         """
         return self._t_mode
 
@@ -352,7 +420,10 @@ class EtModelFree(Model, Phasor, LCurve, DistanceDistribution):
         else:
             return np.array([1.0, 1.0], dtype=np.float64)
 
-    def get_pRDA(self, **kwargs):
+    def get_pRDA(
+            self,
+            **kwargs
+    ):
         """
         This re-calculates the probability distribution of the distances
 
@@ -429,7 +500,10 @@ class EtModelFree(Model, Phasor, LCurve, DistanceDistribution):
         re = np.vstack([species.ravel(), lifetimes.ravel()]).ravel(-1)
         return re
 
-    def update(self, update_matrix=True):
+    def update(
+            self,
+            update_matrix=True
+    ):
         if update_matrix:
             self.update_matrix()
             self.p_rDA = self.get_pRDA()
@@ -451,22 +525,40 @@ class EtModelFree(Model, Phasor, LCurve, DistanceDistribution):
 
 
 class EtModelFreeWidget(EtModelFree, QtWidgets.QWidget):
+
     model_update = QtCore.pyqtSignal()
-    plot_classes = [(plots.GlobalEt, {'f_scalex': 'log',
-                                                  'f_scaley': 'lin',
-                                                  'e_scalex': 'log',
-                                                  'e_scaley': 'lin'}),
-                    (plots.SurfacePlot, {})
+
+    plot_classes = [
+        (plots.global_tcspc.GlobalEt,
+         {
+             'f_scalex': 'log',
+             'f_scaley': 'lin',
+             'e_scalex': 'log',
+             'e_scaley': 'lin'
+         }
+         ),
+        (plots.SurfacePlot, {})
     ]
 
-    def __init__(self, fit, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            **kwargs
+    ):
         # TODO, refactor L-Curve (make L-Curve widget)
         # TODO, refactor Phasor (make Phasor widget)
         QtWidgets.QWidget.__init__(self)
         self.icon = QtGui.QIcon(":/icons/icons/TCSPC.ico")
 
         EtModelFree.__init__(self, fit)
-        uic.loadUi('mfm/ui/fitting/models/tcspc/et_model_free.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "et_model_free.ui"
+            ),
+            self
+        )
+
         phasor = PhasorWidget()
         self.verticalLayout_2.addWidget(phasor)
         self.fits = []
@@ -617,19 +709,29 @@ class EtModelFreeWidget(EtModelFree, QtWidgets.QWidget):
         pass
 
     @property
-    def fd0_index(self):
+    def fd0_index(
+            self
+    ) -> int:
         return int(self.comboBox.currentIndex())
 
     @fd0_index.setter
-    def fd0_index(self, v):
+    def fd0_index(
+            self,
+            v: int
+    ):
         pass
 
     @property
-    def chi2r(self):
+    def chi2r(
+            self
+    ) -> float:
         return float(self.lineEdit_2.text())
 
     @chi2r.setter
-    def chi2r(self, v):
+    def chi2r(
+            self,
+            v: float
+    ):
         self.lineEdit_2.setText(str(v))
 
     def update(self):

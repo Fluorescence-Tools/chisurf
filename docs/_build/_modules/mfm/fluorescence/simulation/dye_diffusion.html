@@ -307,7 +307,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_n_curves</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">n_curves</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;n curves&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_n_photons</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">n_photons</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;n photons&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_tac_range</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tac_range&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">50</span><span class="p">))</span>
-        <span class="c1"># decay mode has to be either photons or curve</span>
+        <span class="c1"># decay file_type has to be either photons or curve</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_decay_mode</span> <span class="o">=</span> <span class="n">decay_mode</span></div>
 
 
@@ -407,7 +407,7 @@
 <div class="viewcode-block" id="DyeDecay.get_decay"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.get_decay">[docs]</a>    <span class="k">def</span> <span class="nf">get_decay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
         <span class="n">n_curves</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n_curves&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay_parameter</span><span class="o">.</span><span class="n">n_curves</span><span class="p">)</span>
-        <span class="n">n_tac</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n_TAC&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay_parameter</span><span class="o">.</span><span class="n">n_tac</span><span class="p">)</span>
+        <span class="n">n_tac</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n_tac&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay_parameter</span><span class="o">.</span><span class="n">n_tac</span><span class="p">)</span>
         <span class="n">kq_array</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;quenching&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">quenching_trajectory</span><span class="p">)</span>
         <span class="n">tau0</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tau0&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">dye</span><span class="o">.</span><span class="n">tauD0</span><span class="p">)</span>
         <span class="n">t_step</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;t_step&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">simulation_parameter</span><span class="o">.</span><span class="n">t_step</span><span class="p">)</span>
@@ -439,7 +439,7 @@
         <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Making histogram&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;================&quot;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Decay-mode: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">decay_mode</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Decay-file_type: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">decay_mode</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">decay_mode</span> <span class="o">==</span> <span class="s1">&#39;photon&#39;</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
@@ -609,7 +609,7 @@
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

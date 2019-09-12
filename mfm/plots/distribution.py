@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import pyqtgraph as pg
 from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
 import mfm
+import mfm.fluorescence
 from mfm.plots import plotbase
 
-plot_settings = mfm.settings.cs_settings['gui']['plot']
+plot_settings = mfm.settings.gui['plot']
 pyqtgraph_settings = mfm.settings.pyqtgraph_settings
 colors = plot_settings['colors']
 color_scheme = mfm.settings.colors
@@ -18,28 +21,47 @@ class DistributionPlotControl(QtWidgets.QWidget):
     def distribution_type(self):
         return str(self.selector.currentText())
 
-    def __init__(self, *args, **kwargs):
-        QtWidgets.QWidget.__init__(self)
+    def __init__(
+            self,
+            *args,
+            parent: QtWidgets.QWidget = None,
+            **kwargs
+    ):
+        super(DistributionPlotControl, self).__init__(
+            *args,
+            **kwargs
+        )
         self.layout = QtWidgets.QVBoxLayout()
         self.setLayout(self.layout)
-        self.parent = kwargs.get('parent', None)
         self.selector = QtWidgets.QComboBox()
         self.layout.addWidget(self.selector)
         self.selector.addItems(['Distance', 'Lifetime', 'FRET-rate'])
 
-        self.selector.currentIndexChanged[int].connect(self.parent.update_all)
+        self.selector.currentIndexChanged[int].connect(parent.update_all)
 
 
 class DistributionPlot(plotbase.Plot):
 
     name = "Distribution"
 
-    def __init__(self, fit, **kwargs):
-        mfm.plots.Plot.__init__(self, fit)
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            parent: QtWidgets.QWidget,
+            **kwargs
+    ):
+        super(DistributionPlot, self).__init__(
+            fit=fit,
+            parent=parent
+        )
         self.layout = QtWidgets.QVBoxLayout(self)
         self.data_x, self.data_y = None, None
 
-        self.pltControl = DistributionPlotControl(self, parent=self, **kwargs)
+        self.pltControl = DistributionPlotControl(
+            self,
+            parent=self,
+            **kwargs
+        )
 
         area = DockArea()
         self.layout.addWidget(area)
@@ -64,9 +86,18 @@ class DistributionPlot(plotbase.Plot):
             y = d[0][0]
             x = d[0][1]
         elif self.pltControl.distribution_type == 'Lifetime':
-            ls = self.fit.model.lifetime_spectrum
-            y, x = mfm.fluorescence.interleaved_to_two_columns(ls, sort=True)
+            lifetime_spectrum = self.fit.model.lifetime_spectrum
+            y, x = mfm.fluorescence.general.interleaved_to_two_columns(
+                lifetime_spectrum,
+                sort=True
+            )
         elif self.pltControl.distribution_type == 'FRET-rate':
-            ls = self.fit.model.fret_rate_spectrum
-            y, x = mfm.fluorescence.interleaved_to_two_columns(ls, sort=True)
-        self.distribution_curve.setData(x=x, y=y)
+            lifetime_spectrum = self.fit.model.fret_rate_spectrum
+            y, x = mfm.fluorescence.general.interleaved_to_two_columns(
+                lifetime_spectrum,
+                sort=True
+            )
+        self.distribution_curve.setData(
+            x=x,
+            y=y
+        )

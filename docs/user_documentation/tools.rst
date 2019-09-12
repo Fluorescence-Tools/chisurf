@@ -39,7 +39,7 @@ Transfer-calculator
 Anisotropy
 ==========
 
-kappa2-distributions
+Kappa2-Distributions
 --------------------
 
 Structural-Models

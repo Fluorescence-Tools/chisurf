@@ -1,15 +1,16 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+from typing import Tuple, List, Dict
+
 import fnmatch
 import tempfile
 from collections import OrderedDict
+import struct
 
 import numba as nb
 import numpy as np
 import tables
 
 import mfm
-
-#photon_settings = mfm.settings.cs_settings['photons']
 
 
 class Photon(tables.IsDescription):
@@ -30,8 +31,16 @@ class Header(tables.IsDescription):
 
 
 @nb.jit
-def pq_photons(b, invert_tac=True):
-    length = (b.shape[0] - 4) / 4
+def pq_photons(
+        b: np.array,
+        invert_tac: bool = True
+) -> Tuple[
+    np.array,
+    np.array,
+    np.array,
+    np.array
+]:
+    length = (b.shape[0] - 4) // 4
     event = np.zeros(length, dtype=np.uint64)
     mt = np.zeros(length, dtype=np.uint64)
     tac = np.zeros(length, dtype=np.uint16)
@@ -65,7 +74,15 @@ def pq_photons(b, invert_tac=True):
 
 
 @nb.jit
-def bh132_photons(b, invert_tac=True):
+def bh132_photons(
+        b: np.array,
+        invert_tac: bool = True
+) -> Tuple[
+    np.array,
+    np.array,
+    np.array,
+    np.array
+]:
     """Get the macros-time, micro-time and the routing channel number of a BH132-file contained in a
     binary numpy-array of 8-bit chars.
 
@@ -76,7 +93,7 @@ def bh132_photons(b, invert_tac=True):
         a list containing the number of photons, numpy-array of macros-time (64-bit unsigned integers),
         numpy-array of TAC-values (32-bit unsigned integers), numpy-array of channel numbers (8-bit unsigned integers)
     """
-    length = (b.shape[0] - 4) / 4
+    length = (b.shape[0] - 4) // 4
     event = np.zeros(length, dtype=np.uint64)
     mt = np.zeros(length, dtype=np.uint64)
     tac = np.zeros(length, dtype=np.uint32)
@@ -115,8 +132,15 @@ def bh132_photons(b, invert_tac=True):
 
 
 @nb.jit
-def ht3_photons(b):
-    length = (b.shape[0]) / 4
+def ht3_photons(
+        b: np.array
+) -> Tuple[
+    np.array,
+    np.array,
+    np.array,
+    np.array
+]:
+    length = (b.shape[0]) // 4
     event = np.zeros(length, dtype=np.uint64)
     mt = np.zeros(length, dtype=np.uint64)
     tac = np.zeros(length, dtype=np.uint32)
@@ -146,8 +170,16 @@ def ht3_photons(b):
 
 
 @nb.jit
-def ht3_sf(b, stage=0):
-    length = (b.shape[0]) / 4
+def ht3_sf(
+        b: np.array,
+        stage=0
+) -> Tuple[
+    np.array,
+    np.array,
+    np.array,
+    np.array
+]:
+    length = (b.shape[0]) // 4
     event = np.zeros(length, dtype=np.uint64)
     mt = np.zeros(length, dtype=np.uint64)
     tac = np.zeros(length, dtype=np.uint32)
@@ -185,7 +217,16 @@ def ht3_sf(b, stage=0):
 
 
 @nb.jit()
-def iss_16(b, can, tac, mt, length, step, phMode, offset):
+def iss_16(
+        b: np.array,
+        can,
+        tac,
+        mt,
+        length,
+        step,
+        phMode,
+        offset
+) -> np.array:
     """
     Reading of ISS-photon format (fcs-measurements)
 
@@ -230,7 +271,16 @@ def iss_16(b, can, tac, mt, length, step, phMode, offset):
 
 
 @nb.jit()
-def iss_32(b, can, tac, mt, length, step, phMode, offset):
+def iss_32(
+        b,
+        can,
+        tac,
+        mt,
+        length,
+        step,
+        phMode: bool,
+        offset
+):
     """
     Reading of ISS-photon format (fcs-measurements)
 
@@ -276,13 +326,21 @@ def iss_32(b, can, tac, mt, length, step, phMode, offset):
     return k
 
 
-def iss_photons(data, **kwargs):
+def iss_photons(
+        data,
+        **kwargs
+) -> Tuple[
+    np.array,
+    np.array,
+    np.array,
+    np.array
+]:
     """
 
     # CHANNEL PHOTON MODE (first 2 bytes)
     # in brackets int values
-    # H (72)one channel time mode, h (104) one channel photon mode
-    # X (88) two channel time mode, x (120) two channel photon mode
+    # H (72)one channel time file_type, h (104) one channel photon file_type
+    # X (88) two channel time file_type, x (120) two channel photon file_type
 
     :param data:
     :param kwargs:
@@ -292,7 +350,7 @@ def iss_photons(data, **kwargs):
     verbose = kwargs.get('verbose', mfm.verbose)
     step = 1 if (data[1] == 72) or (data[1] == 104) else 2
 
-    #  X (88) two channel time mode, x (120) two channel photon mode
+    #  X (88) two channel time file_type, x (120) two channel photon file_type
     phMode = 0 if (data[1] == 72) or (data[1] == 88) else 1
 
     #  Data is saved as 0: 16-bit or 1: 32-bit
@@ -328,7 +386,9 @@ def iss_photons(data, **kwargs):
     return k, mt[:k], tac[:k], can[:k]
 
 
-def bh123_header(b):
+def bh123_header(
+        b: np.array
+) -> Tuple[float, bool]:
     bHeader = np.unpackbits(b[0:4])
     conv8le = np.array([128, 64, 32, 16, 8, 4, 2, 1])
     conv24be = np.array([1, 256, 65536])
@@ -337,18 +397,22 @@ def bh123_header(b):
     b1 = np.dot(bMTclock[8:16], conv8le)
     b2 = np.dot(bMTclock[16:24], conv8le)
     MTclock = np.dot(np.array([b0, b1, b2]), conv24be) / 10.
-    DataInvalid = int(bHeader[31])
+    DataInvalid = bool(bHeader[31])
     return MTclock, DataInvalid
 
 
-def iss_header(b):
+def iss_header(
+        b
+) -> Tuple[float, bool]:
     # acquisition frequency in Hz
     frequency = b[2:6].view(dtype=np.uint32)[0]
     MTclock = 1. / float(frequency) * 1.e9
     return MTclock, False
 
 
-def ht3_header(b):
+def ht3_header(
+        b
+) -> Tuple[float, bool]:
     # TODO doesnt read header properly!!!!!
     frequency = b[2:6].view(dtype=np.uint32)[0]
     MTclock = 1. / float(frequency) * 1.e9
@@ -356,7 +420,9 @@ def ht3_header(b):
     return MTclock, DataInvalid
 
 
-def make_hdf(**kwargs):
+def make_hdf(
+        **kwargs
+):
     """
     Creates a new h5-file/h5-handle for photons
 
@@ -384,7 +450,11 @@ def make_hdf(**kwargs):
     return h5
 
 
-def spc2hdf(spc_files, routine_name="bh132", **kwargs):
+def spc2hdf(
+        spc_files: List[str],
+        routine_name: str = "bh132",
+        **kwargs
+):
     """
     Converts BH-SPC files into hdf file format
 
@@ -430,7 +500,7 @@ def spc2hdf(spc_files, routine_name="bh132", **kwargs):
     if verbose:
         print("===========================================")
         print(" Reading routine - %s" % name)
-    spcs = []
+    spcs = list()
 
     fn_ending = filetypes[routine_name]['ending']
     for i, spc_file in enumerate(fnmatch.filter(spc_files, "*" + fn_ending)):
@@ -485,7 +555,10 @@ def spc2hdf(spc_files, routine_name="bh132", **kwargs):
     return h5
 
 
-def read_header(binary, routine_name):
+def read_header(
+        binary: np.array,
+        routine_name: str
+):
     """
     Reads the header-information of binary TTTR-files. The TTTR-files have to be
     passed as numpy array of type numpy.uint8
@@ -569,7 +642,11 @@ filetypes = OrderedDict([
 
 
 @nb.jit(nopython=True)
-def read_hht3(data, n_rec, version=1):
+def read_hht3(
+        data: np.array,
+        n_rec: int,
+        version: int = 1
+):
 
     sb = np.zeros(n_rec, dtype=np.uint8)
     mt = np.zeros(n_rec, dtype=np.uint64)
@@ -611,7 +688,11 @@ def read_hht3(data, n_rec, version=1):
 
 
 @nb.jit(nopython=True)
-def read_pht3(data, n_rec, version=1):
+def read_pht3(
+        data: np.array,
+        n_rec: int,
+        version: int = 1
+):
 
     sb = np.zeros(n_rec, dtype=np.uint8)
     mt = np.zeros(n_rec, dtype=np.uint64)
@@ -769,13 +850,12 @@ pq_hardware = {
 }
 
 
-import struct
-
-
-def read_ptu(filename):
+def read_ptu(
+        filename: str
+) -> Dict:
     """Reads a PicoQuant PTU-file
     
-    :param filename: 
+    :param filename:
     :return: 
     
     Example
@@ -832,32 +912,4 @@ def read_ptu(filename):
         else:
             raise ValueError("No PTU file")
     raise ValueError("File not found.")
-#
-#
-# class PQReader(object):
-#
-#     def read_header(self, filename='C://temp/PQSpcm_2017-04-20_13-23-53.ptu'):
-#
-#         y, x = np.histogram(dt, bins=range(0, 4096))
-#         p.semilogy(x[1:], y+1)
-#         p.show()
-#
-#         self._mt = mt
-#         self._sp = sp
-#         self._mi = dt
-#         self._cn = cn
-#
-#         return version, tags, fp
-#
-#     def __init__(self, filename):
-#         self._binary = list()
-#         self._filename = filename
-#
-#         with mfm.io.zipped.open_maybe_zipped(filename=filename, mode='r') as fp:
-#             version, tags, fp = self.read_header(fp)
-#             self.version = version
-#             self.tags = tags
-#             self._binary = np.fromfile(fp, dtype=np.uint8)
-#
-#
-#
+

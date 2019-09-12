@@ -400,7 +400,7 @@ class Sticking(ParameterGroup):
     @property
     def sticky_mode(self):
         """If this value is set to `quencher` only the quencher slow down the dye if it is `surface` the C-beta
-        atoms of all amino-acids slow down the dye. If the `quencher` mode is used the `quenching_parameter`
+        atoms of all amino-acids slow down the dye. If the `quencher` file_type is used the `quenching_parameter`
         parameter has to be passed upon initialization of the class.
         """
         return self._sticky_mode
@@ -429,7 +429,7 @@ class Sticking(ParameterGroup):
         self.model = kwargs.get('model', None)
         self._slow_radius = FittingParameter(name='Rs', value=kwargs.get('slow_radius', 8.5))
         self._slow_fact = FittingParameter(name='slow fact', value=kwargs.get('slow_fact', 0.1))
-        # sticking mode is either surface quencher
+        # sticking file_type is either surface quencher
         self._sticky_mode = kwargs.get('sticky_mode', 'surface')
 
 

@@ -1,51 +1,27 @@
 Installation
 ============
 
-Windows
--------
+Major releases
+--------------
 
-The easy way
-~~~~~~~~~~~~
+Major releases are distributed using pre-packed installation files for Windows
+and MacOS. These installation files can be downloaded from the GitHub repository.
 
-Most libraries are already included in these *Python Scientific Distributions*:
+`The Python language <https://github.com/Fluorescence-Tools/ChiSurf/releases>`_
 
-#. `Python(x,y) <https://code.google.com/p/pythonxy>`_
-#. `WinPython <https://code.google.com/p/winpython>`_
-#. `Anaconda <http://continuum.io/downloads.html>`_
+Conda releases
+--------------
 
-You can start using it immediately after installing one of them (you only need
-to install one!).
+Alternatively the software can be installed using the Conda
 
-Recommended: WinPython 2.7 (32-bit)
+`Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_
 
-The hard way
-~~~~~~~~~~~~
-
-If you want to install Spyder directly, you need to follow these steps:
-
-#. Install the essential requirements:
-
-   * `The Python language <http://www.python.org/>`_
-   * `PyQt4 <http://www.riverbankcomputing.co.uk/software/pyqt/download>`_
+distribution system from the conda channel `fluorescence-tools`.
 
 
-Linux
------
+Current release
+---------------
 
-Dependencies
-~~~~~~~~~~~~
-
-   * `numpy <http://numpy.scipy.org/>`_
-   * `scipy <http://www.scipy.org/>`_
-   * `matplotlib <http://matplotmfm.sourceforge.net/>`_
-   * `pytables >= 3.0 <http://www.pytables.org/>`_
-   * `pymol >= 1.6 <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_
-   * `mdtraj <http://www.mdtraj.org>`_
-   * `emcee <http://dan.iel.fm/emcee/current/>`_
-   * `sympy <http://sympy.org/en/index.html>`_
-   * `guiqwt <https://pythonhosted.org/guiqwt/>`_
-
-
-MacOS X
--------
+The current release / the development version of the software can be installed
+directly from the GitHub repository.
 

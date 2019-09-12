@@ -181,7 +181,7 @@
 <span class="sd">    structure : string / mfm.structure.Structure</span>
 <span class="sd">        determines the topology</span>
 <span class="sd">        is either a string containing the filename of a PDB-File or an instance of mfm.structure.Structure()</span>
-<span class="sd">        Obligatory in write mode, not needed in reading mode</span>
+<span class="sd">        Obligatory in write file_type, not needed in reading file_type</span>
 
 <span class="sd">    filename_hdf : string</span>
 <span class="sd">        the filename of the HDF5-file</span>
@@ -209,7 +209,7 @@
 
 <span class="sd">import mfm.structure    &gt;&gt;&gt; import mfm</span>
 <span class="sd">    &gt;&gt;&gt; s = mfm.structure.mfm.structure.Structure(&#39;./sample_data/modelling/trajectory/h5-file/T4L_Topology.pdb&#39;, verbose=True, make_coarse=False)</span>
-<span class="sd">    &gt;&gt;&gt; t = mfm.structure.TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, s, mode=&#39;w&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; t = mfm.structure.TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, s, file_type=&#39;w&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; t[0]</span>
 <span class="sd">    &lt;mfm.structure.structure.mfm.structure.Structure at 0x11f34e10&gt;</span>
 <span class="sd">    &gt;&gt;&gt; print(t[0])</span>
@@ -223,7 +223,7 @@
 <span class="sd">    Opening h5-Trajectory file</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; t = mfm.structure.TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, mode=&#39;r&#39;, stride=1)</span>
+<span class="sd">    &gt;&gt;&gt; t = mfm.structure.TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
 <span class="sd">    &gt;&gt;&gt; print(t[0:3])</span>
 <span class="sd">    [&lt;mfm.structure.structure.mfm.structure.Structure at 0x1345d5d0&gt;,</span>
 <span class="sd">    &lt;mfm.structure.structure.mfm.structure.Structure at 0x1345d610&gt;,</span>
@@ -237,7 +237,7 @@
 <span class="sd">    initialize with mdtraj.Trajectory</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; t = mfm.structure.TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, mode=&#39;r&#39;, stride=1)</span>
+<span class="sd">    &gt;&gt;&gt; t = mfm.structure.TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
 <span class="sd">    &gt;&gt;&gt; t2 = mfm.structure.TrajectoryFile(t.mdtraj, filename=&#39;test.h5&#39;)</span>
 
 <span class="sd">    Attributes:</span>
@@ -272,7 +272,7 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">p_object</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mode&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;file_type&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">atom_indices</span> <span class="o">=</span> <span class="n">atom_indices</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">make_coarse</span> <span class="o">=</span> <span class="n">make_coarse</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stride</span> <span class="o">=</span> <span class="n">stride</span>
@@ -451,7 +451,7 @@
 <span class="sd">        --------</span>
 
 <span class="sd">        &gt;&gt;&gt; import mfm</span>
-<span class="sd">        &gt;&gt;&gt; t = mfm.TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, mode=&#39;r&#39;, stride=1)</span>
+<span class="sd">        &gt;&gt;&gt; t = mfm.TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
 <span class="sd">        &gt;&gt;&gt; t</span>
 <span class="sd">        &lt;mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x117f3b70&gt;</span>
 <span class="sd">        &gt;&gt;&gt; t.values</span>
@@ -495,7 +495,7 @@
 <span class="sd">        --------</span>
 
 <span class="sd">        &gt;&gt;&gt; import mfm</span>
-<span class="sd">        &gt;&gt;&gt; t = mfm.TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, mode=&#39;r&#39;, stride=1)</span>
+<span class="sd">        &gt;&gt;&gt; t = mfm.TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
 <span class="sd">        &gt;&gt;&gt; t</span>
 <span class="sd">        &lt;mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x11762b70&gt;</span>
 <span class="sd">        &gt;&gt;&gt; t.append(t[0])</span>
@@ -536,7 +536,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Implements iterator</span>
 <span class="sd">        &gt;&gt;&gt; import mfm</span>
-<span class="sd">        &gt;&gt;&gt; t = mfm.TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, mode=&#39;r&#39;, stride=1)</span>
+<span class="sd">        &gt;&gt;&gt; t = mfm.TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
 <span class="sd">        &gt;&gt;&gt; for s in t:</span>
 <span class="sd">        &gt;&gt;&gt;     print(s)</span>
 <span class="sd">        [&lt;mfm.structure.structure.mfm.structure.Structure object at 0x12FAE330&gt;, &lt;mfm.structure.structure.mfm.structure.Structure object at 0x12FAE3B0&gt;, &lt;li</span>
@@ -560,7 +560,7 @@
 <span class="sd">        -------</span>
 
 <span class="sd">        &gt;&gt;&gt; import mfm</span>
-<span class="sd">        &gt;&gt;&gt; t = mfm.structure.TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, mode=&#39;r&#39;, stride=1)</span>
+<span class="sd">        &gt;&gt;&gt; t = mfm.structure.TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
 <span class="sd">        &gt;&gt;&gt; s = str(t.next())</span>
 <span class="sd">        &gt;&gt;&gt; print(s[:500])</span>
 <span class="sd">        ATOM      1    N MET A   1       7.332 -10.706 -15.034  0.00  0.00             N</span>
@@ -631,7 +631,7 @@
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

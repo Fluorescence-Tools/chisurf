@@ -115,7 +115,12 @@
     <div class="col-md-9 content">
       
   <h1>Source code for mfm.plots.parameter_scan</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pyqtgraph</span> <span class="k">as</span> <span class="nn">pg</span>
 <span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span>  <span class="n">QtWidgets</span><span class="p">,</span> <span class="n">uic</span>
 <span class="kn">from</span> <span class="nn">pyqtgraph.dockarea</span> <span class="k">import</span> <span class="n">DockArea</span><span class="p">,</span> <span class="n">Dock</span>
@@ -131,9 +136,20 @@
 
 
 <div class="viewcode-block" id="ParameterScanWidget"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.parameter_scan.ParameterScanWidget">[docs]</a><span class="k">class</span> <span class="nc">ParameterScanWidget</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">model</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span>
+            <span class="n">parent</span>
+    <span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">ParameterScanWidget</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;mfm/ui/plots/parameter_scan.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span>
+                <span class="s2">&quot;parameter_scan.ui&quot;</span>
+            <span class="p">),</span>
+            <span class="bp">self</span>
+        <span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
 
@@ -146,7 +162,9 @@
 <div class="viewcode-block" id="ParameterScanWidget.onParameterChanged"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.parameter_scan.ParameterScanWidget.onParameterChanged">[docs]</a>    <span class="k">def</span> <span class="nf">onParameterChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_all</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="ParameterScanWidget.update"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.parameter_scan.ParameterScanWidget.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="ParameterScanWidget.update"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.parameter_scan.ParameterScanWidget.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 
@@ -157,11 +175,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">blockSignals</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">update_plots</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="ParameterScanWidget.scan_parameter"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.parameter_scan.ParameterScanWidget.scan_parameter">[docs]</a>    <span class="k">def</span> <span class="nf">scan_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="ParameterScanWidget.scan_parameter"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.parameter_scan.ParameterScanWidget.scan_parameter">[docs]</a>    <span class="k">def</span> <span class="nf">scan_parameter</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">p_min</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
         <span class="n">p_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox_2</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
         <span class="n">n_steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;cs.current_fit.model.parameters_all_dict[&#39;</span><span class="si">%s</span><span class="s2">&#39;].scan(cs.current_fit, rel_range=(</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">), n_steps=</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;cs._current_fit.model.parameters_all_dict[&#39;</span><span class="si">%s</span><span class="s2">&#39;].scan(cs._current_fit, rel_range=(</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">), n_steps=</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">p_min</span><span class="p">,</span>
             <span class="n">p_max</span><span class="p">,</span>
@@ -171,24 +191,28 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">update_all</span><span class="p">()</span></div>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">selected_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">selected_parameter</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">()</span>
         <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">idx</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">parameter</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mfm</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">Parameter</span><span class="p">:</span>
         <span class="n">idx</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_parameter</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters_all_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-        <span class="k">except</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span></div>
 
 
 <div class="viewcode-block" id="ParameterScanPlot"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.parameter_scan.ParameterScanPlot">[docs]</a><span class="k">class</span> <span class="nc">ParameterScanPlot</span><span class="p">(</span><span class="n">plotbase</span><span class="o">.</span><span class="n">Plot</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals</span>
-<span class="sd">    and the autocorrelation of the residuals. Now it is also used also for FCS-data.</span>
+<span class="sd">    and the autocorrelation of the residuals. Now it is also used also for fcs-data.</span>
 
 <span class="sd">    In case the model is a :py:class:`~experiment.model.tcspc.LifetimeModel` it takes the irf and displays it:</span>
 
@@ -204,11 +228,19 @@
 
     <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Parameter scan&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">fit</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">FitGroup</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">ParameterScanPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">fit</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_y</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pltControl</span> <span class="o">=</span> <span class="n">ParameterScanWidget</span><span class="p">(</span><span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pltControl</span> <span class="o">=</span> <span class="n">ParameterScanWidget</span><span class="p">(</span>
+            <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="bp">self</span>
+        <span class="p">)</span>
 
         <span class="n">area</span> <span class="o">=</span> <span class="n">DockArea</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">area</span><span class="p">)</span>
@@ -227,7 +259,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">distribution_plot</span> <span class="o">=</span> <span class="n">distribution_plot</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">distribution_curve</span> <span class="o">=</span> <span class="n">distribution_plot</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">pen</span><span class="o">=</span><span class="n">pg</span><span class="o">.</span><span class="n">mkPen</span><span class="p">(</span><span class="n">colors</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="n">lw</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Data&#39;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="ParameterScanPlot.update_all"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.parameter_scan.ParameterScanPlot.update_all">[docs]</a>    <span class="k">def</span> <span class="nf">update_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="ParameterScanPlot.update_all"><a class="viewcode-back" href="../../../api/mfm.plots.html#mfm.plots.parameter_scan.ParameterScanPlot.update_all">[docs]</a>    <span class="k">def</span> <span class="nf">update_all</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">pass</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pltControl</span><span class="o">.</span><span class="n">parameter</span>
@@ -251,7 +287,7 @@
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

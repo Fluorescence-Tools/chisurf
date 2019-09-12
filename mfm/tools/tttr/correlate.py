@@ -21,7 +21,7 @@ import mfm.widgets.curve
 from mfm.io.widgets import SpcFileWidget
 
 settings = mfm.settings.cs_settings['correlator']
-plot_settings = mfm.settings.cs_settings['gui']['plot']
+plot_settings = mfm.settings.gui['plot']
 pyqtgraph_settings = plot_settings["pyqtgraph"]
 lw = plot_settings['line_width']
 
@@ -128,7 +128,7 @@ class Correlator(QtCore.QThread):
         self.p = parent
         self.exiting = False
         self._data = None
-        self._results = []
+        self._results = list()
         self._dt1 = 0
         self._dt2 = 0
 
@@ -164,7 +164,7 @@ class Correlator(QtCore.QThread):
         print("Nbr. of correlations: %s" % self.p.split)
         photons = self.p.photon_source.photons
 
-        self._results = []
+        self._results = list()
         n = len(photons)
         nGroup = n / self.p.split
         self.partDone.emit(0.0)
@@ -186,9 +186,9 @@ class Correlator(QtCore.QThread):
             self.partDone.emit(float(nbr) / self.p.split * 100)
 
         # Calculate average correlations
-        cors = []
-        taus = []
-        weights = []
+        cors = list()
+        taus = list()
+        weights = list()
         for c in self._results:
             cr, dur, tau, corr = c
             weight = self.weight(tau, corr, dur, cr)
@@ -223,9 +223,23 @@ class Correlator(QtCore.QThread):
 
 class CorrelatorWidget(QtWidgets.QWidget):
 
-    def __init__(self, parent, photon_source, ch1='0', ch2='8', setup=None, **kwargs):
+    def __init__(
+            self,
+            parent,
+            photon_source,
+            ch1: int = '0',
+            ch2: int = '8',
+            setup=None,
+            **kwargs
+    ):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/experiments/correlatorWidget.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "correlatorWidget.ui"
+            ),
+            self
+        )
 
         self.nCasc = kwargs.get('nCasc', settings['nCasc'])
         self.B = kwargs.get('B', settings['B'])
@@ -330,7 +344,13 @@ class CorrelatorWidget(QtWidgets.QWidget):
 
 class CrFilterWidget(QtWidgets.QWidget):
 
-    def __init__(self, parent, photon_source, *args, **kwargs):
+    def __init__(
+            self,
+            parent,
+            photon_source,
+            *args,
+            **kwargs
+    ):
         super(CrFilterWidget, self).__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(

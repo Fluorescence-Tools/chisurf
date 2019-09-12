@@ -7,3 +7,5 @@ from .parameter_scan import ParameterScanPlot
 from .plotbase import *
 from .proteinMC import *
 from .wr_plot import ResidualPlot
+from . import global_fit
+from . import global_tcspc

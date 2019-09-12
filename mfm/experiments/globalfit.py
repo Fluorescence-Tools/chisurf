@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Tuple
 
 from collections import OrderedDict
-from qtpy import  QtWidgets
+from qtpy import QtWidgets
 
 import mfm
 import mfm.experiments

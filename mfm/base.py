@@ -30,7 +30,8 @@ class Base(object):
     def save(
             self,
             filename: str,
-            file_type: str = 'json'
+            file_type: str = 'json',
+            **kwargs
     ) -> None:
         if file_type == "yaml":
             txt = self.to_yaml()
@@ -42,7 +43,8 @@ class Base(object):
     def load(
             self,
             filename: str,
-            file_type: str = 'json'
+            file_type: str = 'json',
+            **kwargs
     ) -> None:
         if file_type == "json":
             self.from_json(filename=filename)
