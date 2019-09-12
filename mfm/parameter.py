@@ -17,11 +17,13 @@ class Parameter(
     _instances = set()
 
     @property
-    def bounds(self) -> Tuple[float, float]:
+    def bounds(
+            self
+    ) -> Tuple[float, float]:
         if self.bounds_on:
             return self._lb, self._ub
         else:
-            return None, None
+            return float("-inf"), float("inf")
 
     @bounds.setter
     def bounds(
@@ -208,8 +210,8 @@ class Parameter(
             self,
             value: float = 1.0,
             link: Parameter = None,
-            lb: float = -10000,
-            ub: float = 10000,
+            lb: float = float("-inf"),
+            ub: float = float("inf"),
             bounds_on: bool = False,
             *args,
             **kwargs
@@ -236,6 +238,8 @@ class Parameter(
     ):
         super(Parameter, self).from_dict(v)
         self._value = v['value']
+        self._lb, self._ub = v['lb'], v['ub']
+        self._bounds_on = v['bounds_on']
 
 
 class ParameterGroup(mfm.base.Base):
