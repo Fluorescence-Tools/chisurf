@@ -37,6 +37,8 @@ structure_data = json.load(
         './constants/structure.json')
     )
 )
+parameter = cs_settings['parameter']
+fitting = cs_settings['fitting']
 
 pyqtgraph_settings = gui['plot']["pyqtgraph"]
 for setting in pyqtgraph_settings:

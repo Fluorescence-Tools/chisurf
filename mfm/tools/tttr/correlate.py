@@ -128,7 +128,7 @@ class Correlator(QtCore.QThread):
         self.p = parent
         self.exiting = False
         self._data = None
-        self._results = []
+        self._results = list()
         self._dt1 = 0
         self._dt2 = 0
 
@@ -164,7 +164,7 @@ class Correlator(QtCore.QThread):
         print("Nbr. of correlations: %s" % self.p.split)
         photons = self.p.photon_source.photons
 
-        self._results = []
+        self._results = list()
         n = len(photons)
         nGroup = n / self.p.split
         self.partDone.emit(0.0)
@@ -186,9 +186,9 @@ class Correlator(QtCore.QThread):
             self.partDone.emit(float(nbr) / self.p.split * 100)
 
         # Calculate average correlations
-        cors = []
-        taus = []
-        weights = []
+        cors = list()
+        taus = list()
+        weights = list()
         for c in self._results:
             cr, dur, tau, corr = c
             weight = self.weight(tau, corr, dur, cr)

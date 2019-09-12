@@ -74,7 +74,7 @@ def r2i(coord_i, a1, a2, a3, a4, ai):
     coord_i[ai] = a4['i'], a3['i'], a2['i'], a1['i'], b, a, d
     return ai + 1
 
-#@nb.vectorize(['float64[:,:](float64[:,:], int32[:,:], float64[:,:], int32)'])
+
 @nb.jit('float64[:,:](float64[:,:], int32[:,:], float64[:,:], int32)', nogil=True, nopython=True)
 def atom_dist(aDist, resLookUp, xyz, aID):
     n_residues = resLookUp.shape[0]
@@ -101,7 +101,7 @@ def atom_dist(aDist, resLookUp, xyz, aID):
 
 
 def move_center_of_mass(
-        structure: mfm.structure.mfm.structure.Structure,
+        structure: mfm.structure.structure.Structure,
         all_atoms
 ):
     for i, res in enumerate(structure.residue_ids):
@@ -121,7 +121,7 @@ def move_center_of_mass(
 
 
 def make_residue_lookup_table(
-        structure: mfm.structure.mfm.structure.Structure
+        structure: mfm.structure.structure.Structure
 ):
     l_residue = np.zeros((structure.n_residues, structure.max_atom_residue), dtype=np.int32) - 1
     n = 0
@@ -212,10 +212,18 @@ def internal_to_cartesian(
             r[ans[i], 2] = r[i_b[i], 2] + v3 * p[i * 3 + 0] + u3 * p[i * 3 + 1] - ab3 * p[i * 3 + 2]
 
 
-def calc_internal_coordinates_bb(structure, **kwargs):
-    verbose = kwargs.get('verbose', mfm.verbose)
+def calc_internal_coordinates_bb(
+        structure: mfm.structure.structure.Structure,
+        verbose: bool = None,
+        **kwargs
+):
+    if verbose is None:
+        verbose = mfm.verbose
 
-    structure.coord_i = np.zeros(structure.atoms.shape[0], dtype={'names': internal_keys, 'formats': internal_formats})
+    structure.coord_i = np.zeros(
+        structure.atoms.shape[0],
+        dtype={'names': internal_keys, 'formats': internal_formats}
+    )
     rp, ai = None, 0
     res_nr = 0
     for rn in list(structure.residue_dict.values()):
@@ -257,7 +265,7 @@ def calc_internal_coordinates_bb(structure, **kwargs):
     structure._chi_indices = [list(structure.coord_i['i']).index(x) for x in structure.l_cb if x >= 0]
 
 
-class ProteinCentroid(Structure):
+class ProteinCentroid(mfm.structure.structure.Structure):
     """
 
     Examples
@@ -359,21 +367,40 @@ class ProteinCentroid(Structure):
 
         return new
 
-    def __init__(self, *args, **kwargs):
-        mfm.structure.Structure.__init__(self, *args, **kwargs)
-        self.auto_update = kwargs.get('auto_update', True)
-        self.coord_i = np.zeros(self.atoms.shape[0], dtype={'names': internal_keys, 'formats': internal_formats})
-        self.dist_ca = np.zeros((self.n_residues, self.n_residues), dtype=np.float64)
-        self._phi_indices = []
-        self._omega_indices = []
-        self._psi_indices = []
-        self._chi_indices = []
-        self._temp = np.empty(self.n_atoms * 3, dtype=np.float64)  # used to convert internal to cartesian coordinates
+    def __init__(
+            self,
+            *args,
+            auto_update: bool = True,
+            make_lookup: bool = True,
+            **kwargs
+    ):
+        mfm.structure.structure.Structure.__init__(
+            self,
+            *args,
+            **kwargs
+        )
+        self.coord_i = np.zeros(
+            self.atoms.shape[0],
+            dtype={'names': internal_keys, 'formats': internal_formats}
+        )
+        self.dist_ca = np.zeros(
+            (self.n_residues, self.n_residues),
+            dtype=np.float64
+        )
+        self._phi_indices = list()
+        self._omega_indices = list()
+        self._psi_indices = list()
+        self._chi_indices = list()
+        self._temp = np.empty(
+            self.n_atoms * 3,
+            dtype=np.float64
+        )  # used to convert internal to cartesian coordinates
+
         self.to_coarse()
         ####################################################
         #              LOOKUP TABLES                       #
         ####################################################
-        if kwargs.get('make_lookup', True):
+        if make_lookup:
             self.l_res, self.l_ca, self.l_cb, self.l_c, self.l_n, self.l_h = make_residue_lookup_table(self)
             self.residue_types = np.array([res2id[res] for res in list(self.atoms['res_name'])
                                            if res in list(res2id.keys())], dtype=np.int32)
@@ -381,7 +408,10 @@ class ProteinCentroid(Structure):
     def update_dist(self):
         atom_dist(self.dist_ca, self.l_res, self.xyz, a2id['CA'])
 
-    def update(self, start_point=0):
+    def update(
+            self,
+            start_point: int = 0
+    ):
         ic = self.internal_coordinates
         n_atoms = ic.shape[0]
 
@@ -459,7 +489,7 @@ class ProteinCentroid(Structure):
 class ProteinBead(Structure):
 
     """
-    >>> s_aa = mfm.structure.ProteinBead('./sample_data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True)
+    >>> s_aa = mfm.structure.protein.ProteinBead('./sample_data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True)
     """
 
     max_atom_residue = 2
@@ -468,13 +498,28 @@ class ProteinBead(Structure):
     def internal_coordinates(self):
         return self.coord_i
 
-    def __init__(self, *args, **kwargs):
-        mfm.structure.Structure.__init__(self, *args, **kwargs)
-        self.coord_i = np.zeros(self.atoms.shape[0], dtype={'names': internal_keys,
-                                                            'formats': internal_formats})
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super(ProteinBead, self).__init__(*args, **kwargs)
+        self.coord_i = np.zeros(
+            self.atoms.shape[0],
+            dtype={
+                'names': internal_keys,
+                'formats': internal_formats
+            }
+        )
 
-        self.dist_ca = np.zeros((self.n_residues, self.n_residues), dtype=np.float64)
-        self._temp = np.empty(self.n_atoms * 3, dtype=np.float64)  # used to convert internal to cartesian coordinates
+        self.dist_ca = np.zeros(
+            (self.n_residues, self.n_residues),
+            dtype=np.float64
+        )
+        self._temp = np.empty(
+            self.n_atoms * 3,
+            dtype=np.float64
+        )  # used to convert internal to cartesian coordinates
         self.to_coarse()
         self.coord_i_initial = np.copy(self.coord_i)
 
@@ -511,7 +556,10 @@ class ProteinBead(Structure):
 
         def internal_coordinates_bead(structure):
             s = structure
-            coord_i = np.zeros(s.atoms.shape[0], dtype={'names': internal_keys, 'formats': internal_formats})
+            coord_i = np.zeros(
+                s.atoms.shape[0],
+                dtype={'names': internal_keys, 'formats': internal_formats}
+            )
             r_1, r_2, r_3, r_4, ai = None, None, None, None, 0
             rd = s.residue_dict.values()
 

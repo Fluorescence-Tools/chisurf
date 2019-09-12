@@ -9,7 +9,7 @@ import mfm.base
 import mfm.parameter
 import mfm.decorators
 
-parameter_settings = mfm.settings.cs_settings['parameter']
+parameter_settings = mfm.settings.parameter
 
 
 class FittingParameter(mfm.parameter.Parameter):
