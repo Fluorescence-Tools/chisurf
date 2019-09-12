@@ -202,7 +202,7 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
             self
         )
         if n_columns is None:
-            n_columns = mfm.settings.cs_settings['gui']['fit_models']['n_columns']
+            n_columns = mfm.settings.gui['fit_models']['n_columns']
         self.n_columns = n_columns
 
         #self.webview = QWebView()

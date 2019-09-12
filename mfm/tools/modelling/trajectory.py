@@ -6,12 +6,12 @@ import glob
 import numba as nb
 import mfm
 import numpy as np
-from qtpy import  QtCore, QtGui, QtWidgets, uic
+from qtpy import QtWidgets, uic
 import mdtraj as md
 import tables
 import mdtraj.scripts.mdconvert as mdconvert
 
-from mfm.widgets import MyMessageBox
+from mfm.widgets.widgets import MyMessageBox
 
 
 @nb.jit

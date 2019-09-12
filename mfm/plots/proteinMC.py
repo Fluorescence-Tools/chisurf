@@ -9,8 +9,8 @@ from pyqtgraph.dockarea import DockArea, Dock
 import mfm
 from mfm.plots.plotbase import Plot
 
-pyqtgraph_settings = mfm.settings.cs_settings['gui']['plot']["pyqtgraph"]
-colors = mfm.settings.cs_settings['gui']['plot']['colors']
+pyqtgraph_settings = mfm.settings.gui['plot']["pyqtgraph"]
+colors = mfm.settings.gui['plot']['colors']
 color_scheme = mfm.settings.colors
 
 
@@ -27,7 +27,7 @@ class ProteinMCPlot(Plot):
         self.layout = QtWidgets.QVBoxLayout(self)
         area = DockArea()
         self.layout.addWidget(area)
-        hide_title = mfm.settings.cs_settings['gui']['plot']['hideTitle']
+        hide_title = mfm.settings.gui['plot']['hideTitle']
         d1 = Dock("RMSD")
         d2 = Dock("dRMSD")
         d3 = Dock("Energy")
@@ -54,7 +54,7 @@ class ProteinMCPlot(Plot):
         self.energy_plot = p3.getPlotItem()
         self.fret_plot = p4.getPlotItem()
 
-        lw = mfm.settings.cs_settings['gui']['plot']['line_width']
+        lw = mfm.settings.gui['plot']['line_width']
         self.rmsd_curve = self.rmsd_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['irf'], width=lw), name='rmsd')
         self.drmsd_curve = self.drmsd_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['data'], width=lw), name='drmsd')
         self.energy_curve = self.energy_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['models'], width=lw), name='energy')

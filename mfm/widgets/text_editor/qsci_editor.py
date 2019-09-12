@@ -27,15 +27,15 @@ class SimplePythonEditor(QsciScintilla):
     ):
         super(SimplePythonEditor, self).__init__(parent)
         if font_point_size is None:
-            font_point_size = mfm.settings.cs_settings['gui']['editor']['font_size']
+            font_point_size = mfm.settings.gui['editor']['font_size']
         if font_family is None:
-            font_family = mfm.settings.cs_settings['gui']['editor']['font_family']
+            font_family = mfm.settings.gui['editor']['font_family']
         if margins_background_color is None:
-            margins_background_color = mfm.settings.cs_settings['gui']['editor']['margins_background_color']
+            margins_background_color = mfm.settings.gui['editor']['margins_background_color']
         if marker_background_color is None:
-            marker_background_color = mfm.settings.cs_settings['gui']['editor']['marker_background_color']
+            marker_background_color = mfm.settings.gui['editor']['marker_background_color']
         if caret_line_background_color is None:
-            caret_line_background_color = mfm.settings.cs_settings['gui']['editor']['caret_line_background_color']
+            caret_line_background_color = mfm.settings.gui['editor']['caret_line_background_color']
 
         # Set the default font
         font = QFont()

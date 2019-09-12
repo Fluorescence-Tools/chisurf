@@ -44,7 +44,7 @@ class AvPlot(plotbase.Plot):
         area = DockArea()
         self.layout.addWidget(area)
 
-        hide_title = mfm.settings.cs_settings['gui']['plot']['hideTitle']
+        hide_title = mfm.settings.gui['plot']['hideTitle']
         d1 = Dock("quenching", size=(300, 300), hideTitle=hide_title)
         d2 = Dock("diffusion", size=(300, 300), hideTitle=hide_title)
         d3 = Dock("equilibrium", size=(300, 300), hideTitle=hide_title)

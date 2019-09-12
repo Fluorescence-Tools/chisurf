@@ -112,12 +112,12 @@ class Main(QtWidgets.QMainWindow):
         return self._current_fit
 
     def closeEvent(self, event):
-        if mfm.settings.cs_settings['gui']['confirm_close_program']:
-            reply = QtWidgets.QMessageBox.question(self,
-                                                   'Message',
-                                                   "Are you sure to quit?",
-                                                   QtWidgets.QMessageBox.Yes,
-                                                   QtWidgets.QMessageBox.No)
+        if mfm.settings.gui['confirm_close_program']:
+            reply = mfm.widgets.widgets.MyMessageBox.question(self,
+                                                              'Message',
+                                                              "Are you sure to quit?",
+                                                              QtWidgets.QMessageBox.Yes,
+                                                              QtWidgets.QMessageBox.No)
             if reply == QtWidgets.QMessageBox.Yes:
                 event.accept()
             else:
@@ -310,7 +310,7 @@ class Main(QtWidgets.QMainWindow):
         mfm.console.pushVariables({'QtCore': QtCore})
         mfm.console.pushVariables({'QtGui': QtGui})
         mfm.run = mfm.console.execute
-        mfm.run(str(mfm.settings.cs_settings['gui']['console']['init']))
+        mfm.run(str(mfm.settings.gui['console']['init']))
 
     def init_setups(self):
         ##########################################################
