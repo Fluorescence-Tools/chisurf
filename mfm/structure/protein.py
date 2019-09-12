@@ -6,7 +6,6 @@ from copy import copy, deepcopy
 import numpy as np
 import numba as nb
 
-import mfm.structure.structure
 import mfm.math.linalg as la
 from mfm.structure.structure import Structure
 
@@ -101,7 +100,7 @@ def atom_dist(aDist, resLookUp, xyz, aID):
 
 
 def move_center_of_mass(
-        structure: mfm.structure.structure.Structure,
+        structure: Structure,
         all_atoms
 ):
     for i, res in enumerate(structure.residue_ids):
@@ -121,7 +120,7 @@ def move_center_of_mass(
 
 
 def make_residue_lookup_table(
-        structure: mfm.structure.structure.Structure
+        structure: Structure
 ):
     l_residue = np.zeros((structure.n_residues, structure.max_atom_residue), dtype=np.int32) - 1
     n = 0
@@ -213,7 +212,7 @@ def internal_to_cartesian(
 
 
 def calc_internal_coordinates_bb(
-        structure: mfm.structure.structure.Structure,
+        structure: Structure,
         verbose: bool = None,
         **kwargs
 ):
@@ -265,14 +264,14 @@ def calc_internal_coordinates_bb(
     structure._chi_indices = [list(structure.coord_i['i']).index(x) for x in structure.l_cb if x >= 0]
 
 
-class ProteinCentroid(mfm.structure.structure.Structure):
+class ProteinCentroid(Structure):
     """
 
     Examples
     --------
 
     >>> import mfm
-    >>> sp = mfm.structure.ProteinCentroid('../sample_data/structure/HM_1FN5_Naming.pdb', verbose=True, make_coarse=True)
+    >>> sp = mfm.structure.protein.ProteinCentroid('../sample_data/structure/HM_1FN5_Naming.pdb', verbose=True, make_coarse=True)
     ======================================
     Filename: /sample_data/structure/HM_1FN5_Naming.pdb
     Path: /sample_data/structure
@@ -289,7 +288,7 @@ class ProteinCentroid(mfm.structure.structure.Structure):
     ATOM   2273    C ALA   386      47.799  59.970  21.123  0.00  0.00             C
     ATOM   2274    O ALA   386      47.600  59.096  20.280  0.00  0.00             O
     >>> sp.write('test_out.pdb')
-    >>> s_aa = mfm.structure.ProteinCentroid('/sample_data/structure/HM_1FN5_Naming.pdb', verbose=True, make_coarse=False)
+    >>> s_aa = mfm.structure.protein.ProteinCentroid('/sample_data/structure/HM_1FN5_Naming.pdb', verbose=True, make_coarse=False)
     >>> print(s_aa)
     ATOM   9312    H MET   583      40.848  10.075  17.847  0.00  0.00             H
     ATOM   9313   HA MET   583      40.666   8.204  15.667  0.00  0.00             H
@@ -370,15 +369,12 @@ class ProteinCentroid(mfm.structure.structure.Structure):
     def __init__(
             self,
             *args,
-            auto_update: bool = True,
             make_lookup: bool = True,
             **kwargs
     ):
-        mfm.structure.structure.Structure.__init__(
-            self,
+        super(ProteinCentroid).__init__(
             *args,
-            **kwargs
-        )
+            **kwargs)
         self.coord_i = np.zeros(
             self.atoms.shape[0],
             dtype={'names': internal_keys, 'formats': internal_formats}
