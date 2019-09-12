@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Tuple
 
 import gc
 import json
@@ -393,7 +394,15 @@ class DyeDecay(Model, Curve):
         dt2 = dts.take(np.where(phs > 0)[0])
         self._photon_trace = dt2
 
-    def get_histogram(self, **kwargs):
+    def get_histogram(
+            self,
+            irf = None,
+            decay_mode: str = None,
+            **kwargs
+    ) -> Tuple[
+        np.array,
+        np.array
+    ]:
         """
         Returns two arrays one is the time axis and one is the photon-counts
 
@@ -404,8 +413,10 @@ class DyeDecay(Model, Curve):
         """
         nbins = kwargs.get('nbins', self.nTAC)
         r = kwargs.get('range', (0, 50, 0.0141))
-        decay_mode = kwargs.get('decay_mode', self.decay_mode)
-        irf = kwargs.get('irf', None)
+
+        if decay_mode is None:
+            decay_mode = self.decay_mode
+
         if decay_mode == 'photon':
             dts = self.photon_trace
             y, x = np.histogram(dts, bins=np.arange(r[0], r[1] + r[2], self.dtTAC))
@@ -415,6 +426,7 @@ class DyeDecay(Model, Curve):
             y = self._curve_y
             if isinstance(irf, np.ndarray):
                 y = np.convolve(irf, y, mode='full')[:len(x)]
+
         return x, y
 
     def save_histogram(self, filename='hist.txt', verbose=False, nbins=4096, range=(0, 50)):
@@ -427,7 +439,7 @@ class DyeDecay(Model, Curve):
         :param range:
         """
         verbose = verbose or self.verbose
-        x, y, = self.get_histogram(nbins, range)
+        x, y = self.get_histogram(nbins, range)
         mfm.io.ascii.save_xy(filename, x, y, verbose, header_string="time\tcount")
 
     def update_decay_curve(self):

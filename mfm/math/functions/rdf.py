@@ -73,7 +73,6 @@ def worm_like_chain(
     The radial distribution function of worm-like chain
     Eur Phys J E, 32, 53-69 (2010)
 
-    
     Parameters
     ----------
     distances: a vector at which the pdf is evaluated.

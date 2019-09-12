@@ -855,7 +855,7 @@ def read_ptu(
 ) -> Dict:
     """Reads a PicoQuant PTU-file
     
-    :param filename: 
+    :param filename:
     :return: 
     
     Example
