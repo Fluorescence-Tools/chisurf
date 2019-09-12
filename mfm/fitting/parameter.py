@@ -9,7 +9,7 @@ import mfm.base
 import mfm.parameter
 import mfm.decorators
 
-parameter_settings = mfm.settings.cs_settings['parameter']
+parameter_settings = mfm.settings.parameter
 
 
 class FittingParameter(mfm.parameter.Parameter):
@@ -18,10 +18,7 @@ class FittingParameter(mfm.parameter.Parameter):
             self,
             link: FittingParameter = None,
             model: mfm.models.model.Model = None,
-            lb: float = -10000,
-            ub: float = 10000,
             fixed: bool = False,
-            bounds_on: bool = False,
             error_estimate: bool = None,
             **kwargs
     ):
@@ -29,10 +26,7 @@ class FittingParameter(mfm.parameter.Parameter):
         self._link = link
         self.model = model
 
-        self._lb = lb
-        self._ub = ub
         self._fixed = fixed
-        self._bounds_on = bounds_on
         self._error_estimate = error_estimate
 
         self._chi2s = None
@@ -64,56 +58,6 @@ class FittingParameter(mfm.parameter.Parameter):
         self._error_estimate = v
 
     @property
-    def bounds(self) -> Tuple[float, float]:
-        if self.bounds_on:
-            return self._lb, self._ub
-        else:
-            return None, None
-
-    @bounds.setter
-    def bounds(
-            self,
-            b: Tuple[float, float]
-    ):
-        self._lb, self._ub = b
-
-    @property
-    def bounds_on(self) -> bool:
-        return self._bounds_on
-
-    @bounds_on.setter
-    def bounds_on(
-            self,
-            v: bool
-    ):
-        self._bounds_on = bool(v)
-
-    @property
-    def value(self) -> float:
-        v = self._value
-        if callable(v):
-            return v()
-        else:
-            if self.is_linked:
-                return self.link.value
-            else:
-                if self.bounds_on:
-                    lb, ub = self.bounds
-                    if lb is not None:
-                        v = max(lb, v)
-                    if ub is not None:
-                        v = min(ub, v)
-                    return v
-                else:
-                    return v
-
-    @value.setter
-    def value(self, value):
-        self._value = float(value)
-        if self.is_linked:
-            self.link.value = value
-
-    @property
     def fixed(self) -> bool:
         return self._fixed
 
@@ -124,50 +68,25 @@ class FittingParameter(mfm.parameter.Parameter):
     ):
         self._fixed = v
 
-    @property
-    def link(self):
-        return self._link
-
-    @link.setter
-    def link(
-            self,
-            link: mfm.fitting.parameter.FittingParameter
-    ):
-        if isinstance(link, FittingParameter):
-            self._link = link
-        elif link is None:
-            try:
-                self._value = self._link.value
-            except AttributeError:
-                pass
-            self._link = None
-
-    @property
-    def is_linked(self) -> bool:
-        return isinstance(self._link, FittingParameter)
-
     def to_dict(self) -> dict:
         d = mfm.parameter.Parameter.to_dict(self)
-        d['lb'], d['ub'] = self.bounds
         d['fixed'] = self.fixed
-        d['bounds_on'] = self.bounds_on
         d['error_estimate'] = self.error_estimate
         return d
 
     def from_dict(
             self,
             d: dict
-    ):
+    ) -> None:
         mfm.parameter.Parameter.from_dict(self, d)
-        self._lb, self._ub = d['lb'], d['ub']
         self._fixed = d['fixed']
-        self._bounds_on = d['bounds_on']
         self._error_estimate = d['error_estimate']
 
     def scan(
             self,
             fit: mfm.fitting.fit.Fit,
-            **kwargs) -> None:
+            **kwargs
+    ) -> None:
         fit.chi2_scan(self.name, **kwargs)
 
     def __str__(self):

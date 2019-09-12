@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 import os
 from qtpy import  QtWidgets, uic
 
@@ -22,6 +21,7 @@ class SpcFileWidget(QtWidgets.QWidget):
             self
         )
 
+        self._photons = None
         self.parent = parent
         self.filenames = list()
         self.filetypes = filetypes
@@ -59,43 +59,68 @@ class SpcFileWidget(QtWidgets.QWidget):
         self.lineEdit_7.setText("%.2f" % self.count_rate)
 
     @property
-    def measurement_time(self):
+    def measurement_time(
+            self
+    ) -> float:
         return float(self._photons.measurement_time)
 
     @measurement_time.setter
-    def measurement_time(self, v):
+    def measurement_time(
+            self,
+            v: float
+    ):
         self.lineEdit_6.setText("%.1f" % v)
 
     @property
-    def number_of_photons(self):
+    def number_of_photons(
+            self
+    ) -> int:
         return int(self.lineEdit_5.value())
 
     @number_of_photons.setter
-    def number_of_photons(self, v):
+    def number_of_photons(
+            self,
+            v: int
+    ):
         self.lineEdit_5.setText(str(v))
 
     @property
-    def rep_rate(self):
+    def rep_rate(
+            self
+    ) -> float:
         return float(self.doubleSpinBox_2.value())
 
     @rep_rate.setter
-    def rep_rate(self, v):
+    def rep_rate(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_2.setValue(v)
 
     @property
-    def nROUT(self):
+    def nROUT(
+            self
+    ) -> int:
         return int(self.lineEdit_3.text())
 
     @nROUT.setter
-    def nROUT(self, v):
+    def nROUT(
+            self,
+            v: int
+    ):
         self.lineEdit_3.setText(str(v))
 
     @property
-    def nTAC(self):
+    def nTAC(
+            self
+    ) -> int:
         return int(self.lineEdit.text())
 
     @nTAC.setter
-    def nTAC(self, v):
+    def nTAC(
+            self,
+            v: int
+    ):
         self.lineEdit.setText(str(v))
 
     """
@@ -110,7 +135,9 @@ class SpcFileWidget(QtWidgets.QWidget):
     """
 
     @property
-    def count_rate(self):
+    def count_rate(
+            self
+    ) -> float:
         return self._photons.nPh / float(self._photons.measurement_time) / 1000.0
 
     def onFileTypeChanged(self):
@@ -122,18 +149,24 @@ class SpcFileWidget(QtWidgets.QWidget):
         #    self.comboBox.setDisabled(True)
 
     @property
-    def fileType(self):
+    def fileType(
+            self
+    ) -> str:
         return "hdf"
         #return str(self.comboBox_2.currentText())
 
     @property
-    def filename(self):
+    def filename(
+            self
+    ) -> str:
         try:
             return self.filenames[0]
         except:
             return "--"
 
-    def onLoadSample(self):
+    def onLoadSample(
+            self
+    ) -> None:
         if self.fileType in ("hdf"):
             filename = mfm.widgets.get_filename('Open Photon-HDF', 'Photon-HDF (*.photon.h5)')
             filenames = [filename]
@@ -152,14 +185,23 @@ class SpcFileWidget(QtWidgets.QWidget):
         self.onSampleChanged()
 
     @property
-    def photons(self):
+    def photons(
+            self
+    ) -> Photons:
         return self._photons
 
 
 class PDBLoad(QtWidgets.QWidget):
     def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi("mfm/ui/proteinMCLoad.ui", self)
+        super(PDBLoad, self).__init__()
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "proteinMCLoad.ui"
+            ),
+            self
+        )
+
         self._data = None
         self._filename = ''
 
@@ -197,7 +239,14 @@ class CsvWidget(QtWidgets.QWidget):
 
     def __init__(self, **kwargs):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/experiments/csvInput.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "csvInput.ui"
+            ),
+            self
+        )
+
         #Csv.__init__(self, **kwargs)
         #self.connect(self.spinBox, QtCore.SIGNAL("valueChanged(int)"), self.reload_csv)
         self.actionUseHeader.triggered.connect(self.changeUseHeader)
@@ -298,7 +347,7 @@ class CsvWidget(QtWidgets.QWidget):
 
     def changeCsvType(self):
         mode = 'csv' if self.radioButton_2.isChecked() else 'fwf'
-        mfm.run("cs.current_setup.mode = '%s'" % mode)
+        mfm.run("cs.current_setup.file_type = '%s'" % mode)
 
     def load(self, filename=None, **kwargs):
         if filename is None:

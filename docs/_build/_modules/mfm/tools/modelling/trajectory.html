@@ -136,7 +136,7 @@
     <span class="sd">&quot;&quot;&quot; Translate a trajectory by an vector</span>
 
 <span class="sd">    :param xyz: numpy array</span>
-<span class="sd">        (frame nbr, atom_number, coord)</span>
+<span class="sd">        (frame fit_index, atom_number, coord)</span>
 <span class="sd">    :param vector:</span>
 <span class="sd">    :return:</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -154,7 +154,7 @@
     <span class="sd">&quot;&quot;&quot; Rotates a trajectory (frame, atom, coord)</span>
 
 <span class="sd">    :param xyz: numpy array</span>
-<span class="sd">        The coordinates (frame nbr, atom nbr, coord)</span>
+<span class="sd">        The coordinates (frame fit_index, atom fit_index, coord)</span>
 
 <span class="sd">    :param rm: numpy array 3x3 dtpye np.float32 - the rotation matrix</span>
 <span class="sd">    :return:</span>
@@ -195,7 +195,7 @@
 <span class="sd">    min distance.</span>
 
 <span class="sd">    :param xyz: numpy array</span>
-<span class="sd">        The coordinates (frame nbr, atom nbr, coord)</span>
+<span class="sd">        The coordinates (frame fit_index, atom fit_index, coord)</span>
 
 <span class="sd">    :param min_distance: float</span>
 <span class="sd">        Minimum distance if a distance</span>
@@ -757,7 +757,7 @@
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

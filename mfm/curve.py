@@ -55,8 +55,8 @@ class Curve(Base):
         try:
             x, y = args[0], args[1]
         except IndexError:
-            x = np.array([], dtype=np.float64)
-            y = np.array([], dtype=np.float64)
+            x = np.array(list(), dtype=np.float64)
+            y = np.array(list(), dtype=np.float64)
         if len(y) != len(x):
             raise ValueError("length of x (%s) and y (%s) differ" % (len(self._x), len(self._y)))
         kwargs['x'] = np.copy(kwargs.get('x', x))

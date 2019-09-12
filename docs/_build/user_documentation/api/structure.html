@@ -295,7 +295,7 @@ if filename not provided makes new “average.pdb” file in temp-folder
 of the system</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">avg</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">average</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">avg</span>
 <span class="go">&lt;mfm.structure.structure.Structure at 0x117ff770&gt;</span>
@@ -328,7 +328,7 @@ reference is of length 1, target of arbitrary length</p>
 <p>returns a Structure object and the index within the trajectory</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">find_best</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">mdtraj</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">mdtraj</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
 <span class="go">(2, &lt;mdtraj.Trajectory with 1 frames, 2495 atoms, 164 residues, without unitcells at 0x13570b30&gt;)</span>
 </pre></div>
@@ -472,8 +472,8 @@ for a given set of structures. The structures do not have to be aligned.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>structures</strong> – </p></li>
-<li><p><strong>selectedNbrs</strong> – </p></li>
-<li><p><strong>atomName</strong> – </p></li>
+<li><p><strong>selectedNbrs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – </p></li>
+<li><p><strong>atomName</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – </p></li>
 <li><p><strong>weights</strong> – </p></li>
 </ul>
 </dd>
@@ -491,8 +491,8 @@ provided only the, respective atoms are used to calculate the RMSD.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>structure_a</strong> – </p></li>
-<li><p><strong>structure_b</strong> – </p></li>
+<li><p><strong>structure_a</strong> (<a class="reference internal" href="#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></a>) – </p></li>
+<li><p><strong>structure_b</strong> (<a class="reference internal" href="#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></a>) – </p></li>
 <li><p><strong>atom_indices</strong> – </p></li>
 </ul>
 </dd>
@@ -502,7 +502,7 @@ provided only the, respective atoms are used to calculate the RMSD.</p>
 </dl>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">s1</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">s1</span>
 <span class="go">&lt;mfm.structure.structure.Structure at 0x135f3ad0&gt;</span>
@@ -533,8 +533,8 @@ provided only the, respective atoms are used to calculate the RMSD.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>structure_ref</strong> – </p></li>
-<li><p><strong>structure_align</strong> – </p></li>
+<li><p><strong>structure_ref</strong> (<a class="reference internal" href="#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></a>) – </p></li>
+<li><p><strong>structure_align</strong> (<a class="reference internal" href="#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></a>) – </p></li>
 <li><p><strong>atom_indices</strong> – </p></li>
 </ul>
 </dd>
@@ -549,7 +549,7 @@ provided only the, respective atoms are used to calculate the RMSD.</p>
 <span id="trajectory"></span><h2>Trajectory<a class="headerlink" href="#module-mfm.structure.trajectory" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mfm.structure.trajectory.TrajectoryFile">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.trajectory.</code><code class="sig-name descname">TrajectoryFile</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">filename: Optional[str] = None</em>, <em class="sig-param">make_coarse: bool = False</em>, <em class="sig-param">rmsd_ref_state: int = 0</em>, <em class="sig-param">stride: int = 1</em>, <em class="sig-param">inverse_trajectory: bool = False</em>, <em class="sig-param">center: bool = False</em>, <em class="sig-param">verbose: bool = False</em>, <em class="sig-param">atom_indices: Optional[List[int]] = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/structure/trajectory.html#TrajectoryFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.trajectory.</code><code class="sig-name descname">TrajectoryFile</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">make_coarse=False</em>, <em class="sig-param">rmsd_ref_state=0</em>, <em class="sig-param">stride=1</em>, <em class="sig-param">inverse_trajectory=False</em>, <em class="sig-param">center=False</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">atom_indices=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/structure/trajectory.html#TrajectoryFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
 <div><p>Creates an Trajectory of mfm.structure.Structures given a HDF5-File using mdtraj.HDF5TrajectoryFile</p>
 </div></blockquote>
@@ -559,7 +559,7 @@ provided only the, respective atoms are used to calculate the RMSD.</p>
 <dt><strong>structure</strong><span class="classifier">string / mfm.structure.Structure</span></dt><dd><blockquote>
 <div><p>determines the topology
 is either a string containing the filename of a PDB-File or an instance of mfm.structure.Structure()
-Obligatory in write mode, not needed in reading mode</p>
+Obligatory in write file_type, not needed in reading file_type</p>
 </div></blockquote>
 <dl class="simple">
 <dt>filename_hdf<span class="classifier">string</span></dt><dd><p>the filename of the HDF5-file</p>
@@ -583,7 +583,7 @@ is loaded.</p>
 </dl>
 <dl>
 <dt>import mfm.structure    &gt;&gt;&gt; import mfm</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/T4L_Topology.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="go">&lt;mfm.structure.structure.mfm.structure.Structure at 0x11f34e10&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -597,7 +597,7 @@ is loaded.</p>
 </div>
 <p>Opening h5-Trajectory file</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">])</span>
 <span class="go">[&lt;mfm.structure.structure.mfm.structure.Structure at 0x1345d5d0&gt;,</span>
 <span class="go">&lt;mfm.structure.structure.mfm.structure.Structure at 0x1345d610&gt;,</span>
@@ -611,7 +611,7 @@ is loaded.</p>
 </div>
 <p>initialize with mdtraj.Trajectory</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">t2</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">mdtraj</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;test.h5&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -625,19 +625,19 @@ is loaded.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>structure</strong> – mfm.structure.Structure</p></li>
-<li><p><strong>update_rmsd</strong> – bool</p></li>
-<li><p><strong>energy</strong> – float
+<li><p><strong>update_rmsd</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool</p></li>
+<li><p><strong>energy</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
 Energy of the system</p></li>
-<li><p><strong>energy_fret</strong> – float
+<li><p><strong>energy_fret</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
 Energy of the FRET-potential</p></li>
-<li><p><strong>verbose</strong> – bool
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool
 By default True. If True energy, energy_fret, RMSD and dRMSD are printed to std-out.</p></li>
 </ul>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">t</span>
 <span class="go">&lt;mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x11762b70&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -656,24 +656,44 @@ By default True. If True energy, energy_fret, RMSD and dRMSD are printed to std-
 <dt id="mfm.structure.trajectory.TrajectoryFile.directory">
 <em class="property">property </em><code class="sig-name descname">directory</code><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile.directory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Directory in which the filename of the trajectory is located in</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.trajectory.TrajectoryFile.filename">
 <em class="property">property </em><code class="sig-name descname">filename</code><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile.filename" title="Permalink to this definition">¶</a></dt>
 <dd><p>The filename of the trajectory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.trajectory.TrajectoryFile.invert">
 <em class="property">property </em><code class="sig-name descname">invert</code><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile.invert" title="Permalink to this definition">¶</a></dt>
 <dd><p>If True the oder of the trajectory is inverted (by default False)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.trajectory.TrajectoryFile.name">
 <em class="property">property </em><code class="sig-name descname">name</code><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>The name of the trajectory composed of the directory and the filename</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -687,6 +707,11 @@ of the reference state :py:attribute`.rmsd_ref_state`</p>
 <dt id="mfm.structure.trajectory.TrajectoryFile.rmsd_ref_state">
 <em class="property">property </em><code class="sig-name descname">rmsd_ref_state</code><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile.rmsd_ref_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>The index (frame number) of the reference state used for the RMSD calculation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -716,7 +741,7 @@ point to the same data.</p>
 <dd><p>A 2D-numpy array containing the RMSD, dRMSD, energy and the chi2 values of the trajectory</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">t</span>
 <span class="go">&lt;mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x117f3b70&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">values</span>
@@ -754,7 +779,7 @@ point to the same data.</p>
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

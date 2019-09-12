@@ -610,7 +610,7 @@ class DynamicFRETLineSteps(DynamicFRETLine):
 
     def calc(self, parameter_name=None, parameter_range=None, **kwargs):
         mean_distances = self.mean_distances
-        conversion_functions = []
+        conversion_functions = list()
         for i in range(len(mean_distances)-1):
             self.mean_distance_1 = mean_distances[i]
             self.mean_distance_2 = mean_distances[i + 1]

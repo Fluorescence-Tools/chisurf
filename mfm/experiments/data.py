@@ -206,13 +206,19 @@ class DataCurve(Curve, ExperimentalData):
     def save(
             self,
             filename: str = None,
-            mode: str = 'json'
+            file_type: str = 'json',
+            **kwargs
     ) -> None:
         if filename is None:
-            filename = os.path.join(self.name + '_data.txt')
-
-        if mode == 'txt':
-            mfm.io.ascii.Csv().save(self, filename)
+            filename = os.path.join(
+                self.name,
+                '_data.txt'
+            )
+        if file_type == 'txt':
+            mfm.io.ascii.Csv().save(
+                self,
+                filename
+            )
         else:
             with open(filename, 'w') as fp:
                 fp.write(self.to_json())
@@ -221,11 +227,10 @@ class DataCurve(Curve, ExperimentalData):
             self,
             filename: str,
             skiprows: int = 9,
-            mode: str = 'txt',
+            file_type: str = 'txt',
             **kwargs
     ) -> None:
-
-        if mode == 'txt':
+        if file_type == 'txt':
             csv = mfm.io.ascii.Csv()
             csv.load(filename, skiprows=skiprows)
             self._kw['x'] = csv.data[0]

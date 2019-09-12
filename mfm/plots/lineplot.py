@@ -276,7 +276,7 @@ class LinePlot(plotbase.Plot):
 
         area = DockArea()
         self.layout.addWidget(area)
-        hide_title = mfm.settings.cs_settings['gui']['plot']['hideTitle']
+        hide_title = mfm.settings.gui['plot']['hideTitle']
         d1 = Dock("residuals", size=(300, 80), hideTitle=hide_title)
         d2 = Dock("a.corr.", size=(300, 80), hideTitle=hide_title)
         d3 = Dock("Fit", size=(300, 300), hideTitle=hide_title)
@@ -304,10 +304,10 @@ class LinePlot(plotbase.Plot):
         # Labels
         self.text = pg.TextItem(text='', border='w', fill=(0, 0, 255, 100), anchor=(0, 0))
         self.data_plot.addItem(self.text)
-        colors = mfm.settings.cs_settings['gui']['plot']['colors']
+        colors = mfm.settings.gui['plot']['colors']
 
         # Fitting-region selector
-        if mfm.settings.cs_settings['gui']['plot']['enable_region_selector']:
+        if mfm.settings.gui['plot']['enable_region_selector']:
             ca = list(mpl_colors.hex2color(colors["region_selector"]))
             co = [ca[0] * 255, ca[1] * 255, ca[2] * 255, colors["region_selector_alpha"]]
             region = pg.LinearRegionItem(brush=co)
@@ -330,26 +330,26 @@ class LinePlot(plotbase.Plot):
             region.sigRegionChangeFinished.connect(update_region)
 
         # Grid
-        if mfm.settings.cs_settings['gui']['plot']['enable_grid']:
-            if mfm.settings.cs_settings['gui']['plot']['show_data_grid']:
+        if mfm.settings.gui['plot']['enable_grid']:
+            if mfm.settings.gui['plot']['show_data_grid']:
                 data_plot.showGrid(True, True, 0.5)
-            if mfm.settings.cs_settings['gui']['plot']['show_residual_grid']:
+            if mfm.settings.gui['plot']['show_residual_grid']:
                 residuals_plot.showGrid(True, True, 1.0)
-            if mfm.settings.cs_settings['gui']['plot']['show_acorr_grid']:
+            if mfm.settings.gui['plot']['show_acorr_grid']:
                 auto_corr_plot.showGrid(True, True, 1.0)
 
         # Labels
         self.residuals_plot = residuals_plot
         self.auto_corr_plot = auto_corr_plot
 
-        if mfm.settings.cs_settings['gui']['plot']['label_axis']:
+        if mfm.settings.gui['plot']['label_axis']:
             residuals_plot.setLabel('left', "w.res.")
             auto_corr_plot.setLabel('left', "a.corr.")
             data_plot.setLabel('left', y_label)
             data_plot.setLabel('bottom', x_label)
 
         # Plotted lines
-        lw = mfm.settings.cs_settings['gui']['plot']['line_width']
+        lw = mfm.settings.gui['plot']['line_width']
         if self.plot_irf:
             self.irf_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['irf'], width=lw), name='IRF')
         self.data_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['data'], width=lw), name='Data')
@@ -458,8 +458,8 @@ class LinePlot(plotbase.Plot):
         self.residuals_plot.clear()
         self.auto_corr_plot.clear()
 
-        colors = mfm.settings.cs_settings['gui']['plot']['colors']
-        lw = mfm.settings.cs_settings['gui']['plot']['line_width']
+        colors = mfm.settings.gui['plot']['colors']
+        lw = mfm.settings.gui['plot']['line_width']
 
         for i, w in enumerate(wres_y):
             self.residuals_plot.plot(x=model_x,

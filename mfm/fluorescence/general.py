@@ -408,19 +408,19 @@ def distribution2rates(
             0.66667
         )
     return rate_dist
-
-    k2 = kappa2.reshape((len(kappa2)/2, 2))
-    k2_amp = k2[:, 0]
-    k2_val = k2[:, 1]
-    rate_const = np.outer(k2_val, rate_dist[:, 0]).flatten()
-    amplitudes = np.outer(k2_amp, rate_dist[:, 1]).flatten()
-
-    c = np.empty((1, 2, rate_const.size), dtype=rate_const.dtype)
-    c[:, 0] = amplitudes
-    c[:, 1] = rate_const
-    print("c-shape")
-    print(c.shape)
-    return c
+    #
+    # k2 = kappa2.reshape((len(kappa2)/2, 2))
+    # k2_amp = k2[:, 0]
+    # k2_val = k2[:, 1]
+    # rate_const = np.outer(k2_val, rate_dist[:, 0]).flatten()
+    # amplitudes = np.outer(k2_amp, rate_dist[:, 1]).flatten()
+    #
+    # c = np.empty((1, 2, rate_const.size), dtype=rate_const.dtype)
+    # c[:, 0] = amplitudes
+    # c[:, 1] = rate_const
+    # print("c-shape")
+    # print(c.shape)
+    # return c
 
 
 def gaussian2rates(means, sigmas, amplitudes, tau0=4.0, kappa2=0.667, R0=52.0,

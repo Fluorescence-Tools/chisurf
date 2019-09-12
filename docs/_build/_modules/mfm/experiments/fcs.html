@@ -131,7 +131,7 @@
 
 <div class="viewcode-block" id="FCS"><a class="viewcode-back" href="../../../api/mfm.experiments.html#mfm.experiments.fcs.FCS">[docs]</a><span class="k">class</span> <span class="nc">FCS</span><span class="p">(</span><span class="n">ExperimentReader</span><span class="p">,</span> <span class="n">CsvWidget</span><span class="p">):</span>
 
-    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;FCS&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;fcs&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
@@ -150,8 +150,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;parent&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">groupBox</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
 
-<div class="viewcode-block" id="FCS.read"><a class="viewcode-back" href="../../../api/mfm.experiments.html#mfm.experiments.fcs.FCS.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataCurve</span><span class="p">(</span><span class="n">setup</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+<div class="viewcode-block" id="FCS.read"><a class="viewcode-back" href="../../../api/mfm.experiments.html#mfm.experiments.fcs.FCS.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataCurve</span><span class="p">(</span>
+            <span class="n">setup</span><span class="o">=</span><span class="bp">self</span>
+        <span class="p">)</span>
         <span class="n">d</span><span class="o">.</span><span class="n">setup</span> <span class="o">=</span> <span class="bp">self</span>
 
         <span class="n">CsvWidget</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
@@ -173,27 +179,46 @@
 
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Kristine&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">FCS</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">experiment</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="n">FCS</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">experiment</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
         <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ascii</span><span class="o">.</span><span class="n">Csv</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="FCSKristine.read"><a class="viewcode-back" href="../../../api/mfm.experiments.html#mfm.experiments.fcs.FCSKristine.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Uses eihter the error provided by the correlator (4. column)</span>
+<div class="viewcode-block" id="FCSKristine.read"><a class="viewcode-back" href="../../../api/mfm.experiments.html#mfm.experiments.fcs.FCSKristine.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Uses either the error provided by the correlator (4. column)</span>
 <span class="sd">        or calculates the error based on the correlation curve,</span>
 <span class="sd">        the aquisition time and the count-rate.</span>
 
 <span class="sd">        :param filename:</span>
+<span class="sd">        :param verbose:</span>
 <span class="sd">        :param kwargs:</span>
 <span class="sd">        :return:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataCurve</span><span class="p">(</span><span class="n">setup</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">d</span><span class="o">.</span><span class="n">setup</span> <span class="o">=</span> <span class="bp">self</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;filename&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">get_filename</span><span class="p">(</span><span class="s1">&#39;Kristine-Correlation file&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;All files (*.cor)&#39;</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">use_header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+            <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+            <span class="n">skiprows</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">use_header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span>
+        <span class="p">)</span>
 
         <span class="c1"># In Kristine file-type</span>
         <span class="c1"># First try to use experimental errors</span>
@@ -235,7 +260,7 @@
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

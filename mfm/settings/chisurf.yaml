@@ -57,7 +57,6 @@ mc_settings:
   - weight: 1
     name: Iso-UNRES
 fortune:
-  fortunepath: "./mfm/ui/fortune/"
   min_length: 0
   max_length: 300
   attempts: 1000

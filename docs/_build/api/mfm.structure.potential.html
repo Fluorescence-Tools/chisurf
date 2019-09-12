@@ -244,12 +244,17 @@ otherwise the value is set to epsilon*nnFraction (non-native interaction).</p>
 <span id="mfm-structure-potential-potentials-module"></span><h2>mfm.structure.potential.potentials module<a class="headerlink" href="#module-mfm.structure.potential.potentials" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mfm.structure.potential.potentials.ASA">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">ASA</code><span class="sig-paren">(</span><em class="sig-param">structure: mfm.structure.structure.Structure</em>, <em class="sig-param">probe: float = 1.0</em>, <em class="sig-param">n_sphere_point: int = 590</em>, <em class="sig-param">radius: float = 2.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#ASA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.ASA" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">ASA</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">probe=1.0</em>, <em class="sig-param">n_sphere_point=590</em>, <em class="sig-param">radius=2.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#ASA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.ASA" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="mfm.structure.potential.potentials.ASA.getEnergy">
 <code class="sig-name descname">getEnergy</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#ASA.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.ASA.getEnergy" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.structure.potential.potentials.ASA.name">
@@ -289,10 +294,10 @@ dictionaries.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>structure</strong> – Structure
+<li><p><strong>structure</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></a>]) – Structure
 If this object is provided the attributes regarding dye-attachment are kept constant
 and the structure is changed prior calculation of the distances.</p></li>
-<li><p><strong>verbose</strong> – bool
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool
 If this is True output to stdout is generated</p></li>
 </ul>
 </dd>
@@ -303,6 +308,11 @@ If this is True output to stdout is generated</p></li>
 <dt id="mfm.structure.potential.potentials.AvPotential.chi2">
 <em class="property">property </em><code class="sig-name descname">chi2</code><a class="headerlink" href="#mfm.structure.potential.potentials.AvPotential.chi2" title="Permalink to this definition">¶</a></dt>
 <dd><p>The current unreduced chi2 (recalculated at each call)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -311,12 +321,12 @@ If this is True output to stdout is generated</p></li>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>structure</strong> – Structure
+<li><p><strong>structure</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></a>]) – Structure
 A Structure object if provided the attributes regarding dye-attachment are kept constant
 and the structure is changed prior calculation of the distances.</p></li>
-<li><p><strong>reduced</strong> – bool
+<li><p><strong>reduced</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool
 If True the reduced chi2 is calculated (by default False)</p></li>
-<li><p><strong>verbose</strong> – bool
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool
 Output to stdout</p></li>
 </ul>
 </dd>
@@ -345,13 +355,18 @@ Output to stdout</p></li>
 <dt id="mfm.structure.potential.potentials.AvPotential.structure">
 <em class="property">property </em><code class="sig-name descname">structure</code><a class="headerlink" href="#mfm.structure.potential.potentials.AvPotential.structure" title="Permalink to this definition">¶</a></dt>
 <dd><p>The Structure object used for the calculation of the accessible volumes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="mfm.structure.potential.potentials.CEPotential">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">CEPotential</code><span class="sig-paren">(</span><em class="sig-param">structure: mfm.structure.structure.Structure</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#CEPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.CEPotential" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">CEPotential</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#CEPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.CEPotential" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.structure</span>
@@ -367,12 +382,22 @@ Output to stdout</p></li>
 <dl class="method">
 <dt id="mfm.structure.potential.potentials.CEPotential.getEnergy">
 <code class="sig-name descname">getEnergy</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">cutoff=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#CEPotential.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.CEPotential.getEnergy" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.potential.potentials.CEPotential.getNbrContacts">
 <code class="sig-name descname">getNbrContacts</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'int'<a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#CEPotential.getNbrContacts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.CEPotential.getNbrContacts" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.structure.potential.potentials.CEPotential.name">
@@ -393,7 +418,12 @@ Output to stdout</p></li>
 <dl class="method">
 <dt id="mfm.structure.potential.potentials.ClashPotential.getEnergy">
 <code class="sig-name descname">getEnergy</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#ClashPotential.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.ClashPotential.getEnergy" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.structure.potential.potentials.ClashPotential.name">
@@ -409,7 +439,12 @@ Output to stdout</p></li>
 <dl class="method">
 <dt id="mfm.structure.potential.potentials.Electrostatics.getEnergy">
 <code class="sig-name descname">getEnergy</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#Electrostatics.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.Electrostatics.getEnergy" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -497,13 +532,18 @@ Output to stdout</p></li>
 <dl class="method">
 <dt id="mfm.structure.potential.potentials.LJ_Bead.getEnergy">
 <code class="sig-name descname">getEnergy</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#LJ_Bead.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.LJ_Bead.getEnergy" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="mfm.structure.potential.potentials.MJPotential">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">MJPotential</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">filename='./mfm/structure/potential/database/mj.csv'</em>, <em class="sig-param">ca_cutcoff: float = 6.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#MJPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.MJPotential" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">MJPotential</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">filename='./mfm/structure/potential/database/mj.csv'</em>, <em class="sig-param">ca_cutcoff=6.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#MJPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.MJPotential" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="mfm.structure.potential.potentials.MJPotential.getEnergy">
@@ -529,12 +569,17 @@ Output to stdout</p></li>
 
 <dl class="class">
 <dt id="mfm.structure.potential.potentials.Ramachandran">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">Ramachandran</code><span class="sig-paren">(</span><em class="sig-param">structure: mfm.structure.structure.Structure</em>, <em class="sig-param">filename='./mfm/structure/potential/database/rama_ala_pro_gly.npy'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#Ramachandran"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.Ramachandran" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">Ramachandran</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">filename='./mfm/structure/potential/database/rama_ala_pro_gly.npy'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#Ramachandran"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.Ramachandran" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="mfm.structure.potential.potentials.Ramachandran.getEnergy">
 <code class="sig-name descname">getEnergy</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#Ramachandran.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.Ramachandran.getEnergy" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -583,10 +628,15 @@ supplied and depends on the provided pre-calculated potential file.</p>
 <code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">gb</code><span class="sig-paren">(</span><em class="sig-param">xyz: 'np.array'</em>, <em class="sig-param">epsilon: 'float' = 4.0</em>, <em class="sig-param">epsilon0: 'float' = 80.1</em>, <em class="sig-param">cutoff: 'float' = 12.0</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#gb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.gb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generalized Born <a class="reference external" href="http://en.wikipedia.org/wiki/Implicit_solvation">http://en.wikipedia.org/wiki/Implicit_solvation</a>
 with cutoff-potential potential shifted by value at cutoff to smooth the energy
+:type xyz: &lt;built-in function array&gt;
 :param xyz: atom-list
+:type epsilon: <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>
 :param epsilon: dielectric constant of proteins: 2-40
+:type epsilon0: <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>
 :param epsilon0: dielectric constant of water 80.1
+:type cutoff: <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>
 :param cutoff: cutoff-distance in Angstrom
+:rtype: <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>
 :return:</p>
 </dd></dl>
 
@@ -598,9 +648,9 @@ with cutoff-potential potential shifted by value at cutoff to smooth the energy
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>resLookUp</strong> – </p></li>
-<li><p><strong>ca_dist</strong> – </p></li>
-<li><p><strong>energy_matrix</strong> – </p></li>
-<li><p><strong>rm_matrix</strong> – </p></li>
+<li><p><strong>ca_dist</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
+<li><p><strong>energy_matrix</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
+<li><p><strong>rm_matrix</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
 <li><p><strong>cutoff</strong> – </p></li>
 </ul>
 </dd>
@@ -614,6 +664,11 @@ with cutoff-potential potential shifted by value at cutoff to smooth the energy
 <dt id="mfm.structure.potential.potentials.internal_potential">
 <code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">internal_potential</code><span class="sig-paren">(</span><em class="sig-param">internal_coordinates</em>, <em class="sig-param">equilibrium_internal=None</em>, <em class="sig-param">k_bond: 'float' = 0.5</em>, <em class="sig-param">k_angle: 'float' = 0.1</em>, <em class="sig-param">k_dihedral: 'float' = 0.05</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#internal_potential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.internal_potential" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simple potential based internal coordinates for C-alpha bead model</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
@@ -624,12 +679,15 @@ to a reference structure.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>structure</strong> – </p></li>
+<li><p><strong>structure</strong> (<a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></a>) – </p></li>
 <li><p><strong>kwargs</strong> – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -640,8 +698,8 @@ to a reference structure.</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>structure</strong> – a structure object</p></li>
-<li><p><strong>rm</strong> – is the C-alpha equilibrium distance</p></li>
+<li><p><strong>structure</strong> (<a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></a>) – a structure object</p></li>
+<li><p><strong>rm</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – is the C-alpha equilibrium distance</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -657,13 +715,16 @@ to a reference structure.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ca_coordinates</strong> – </p></li>
+<li><p><strong>ca_coordinates</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
 <li><p><strong>epsilon</strong> – </p></li>
-<li><p><strong>rm</strong> – </p></li>
+<li><p><strong>rm</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -686,7 +747,7 @@ to a reference structure.</p>
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

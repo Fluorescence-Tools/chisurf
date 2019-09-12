@@ -2,7 +2,7 @@ import numpy as np
 
 import mfm.math.linalg
 from .leastsqbound import leastsqbound
-
+from .mem import maxent
 
 def solve_richardson_lucy(
         A: np.array,

@@ -8,7 +8,7 @@ import mfm
 import mfm.widgets
 import mfm.widgets.curve
 
-parameter_settings = mfm.settings.cs_settings['parameter']
+parameter_settings = mfm.settings.parameter
 
 
 class FittingControllerWidget(QtWidgets.QWidget):
@@ -138,7 +138,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         self.fit = fit
         self.fit_widget = fit_widget
         if close_confirm is None:
-            close_confirm = mfm.settings.cs_settings['gui']['confirm_close_fit']
+            close_confirm = mfm.settings.gui['confirm_close_fit']
         self.close_confirm = close_confirm
 
         layout = self.layout()
@@ -182,7 +182,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             event: QtCore.QEvent
     ):
         if self.close_confirm:
-            reply = QtWidgets.QMessageBox.question(
+            reply = mfm.widgets.MyMessageBox.question(
                 self,
                 'Message',
                 "Are you sure to close this fit?:\n%s" % self.fit.name,
@@ -441,7 +441,7 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
         super(FittingParameterGroupWidget, self).__init__(*args, **kwargs)
 
         if n_col is None:
-            n_col = mfm.settings.cs_settings['gui']['fit_models']['n_columns']
+            n_col = mfm.settings.gui['fit_models']['n_columns']
 
         self.parameter_group = parameter_group
         self.n_col = n_col

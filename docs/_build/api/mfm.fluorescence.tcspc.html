@@ -153,11 +153,11 @@
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>decay</strong> – numpy-array
+<li><p><strong>decay</strong> (<em>&lt;built-in function array&gt;</em>) – numpy-array
 the content of this array is overwritten by the y-values after convolution</p></li>
-<li><p><strong>lifetime_spectrum</strong> – vector of amplitdes and lifetimes in form: amplitude, lifetime</p></li>
-<li><p><strong>irf</strong> – </p></li>
-<li><p><strong>stop</strong> – </p></li>
+<li><p><strong>lifetime_spectrum</strong> (<em>&lt;built-in function array&gt;</em>) – vector of amplitdes and lifetimes in form: amplitude, lifetime</p></li>
+<li><p><strong>irf</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
+<li><p><strong>stop</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
 <li><p><strong>dt</strong> – </p></li>
 </ul>
 </dd>
@@ -178,23 +178,23 @@ the content of this array is overwritten by the y-values after convolution</p></
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>decay</strong> – array of doubles
+<li><p><strong>decay</strong> (<em>&lt;built-in function array&gt;</em>) – array of doubles
 Here the convolved fit is stored</p></li>
-<li><p><strong>lifetime_spectrum</strong> – array of doubles
+<li><p><strong>lifetime_spectrum</strong> (<em>&lt;built-in function array&gt;</em>) – array of doubles
 Lifetime-spectrum of the form (amplitude, lifetime, amplitude, lifetime, …)</p></li>
-<li><p><strong>irf</strong> – array-doubles
+<li><p><strong>irf</strong> (<em>&lt;built-in function array&gt;</em>) – array-doubles
 The instrument response function</p></li>
-<li><p><strong>start</strong> – int
+<li><p><strong>start</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – int
 Start channel of convolution (position in array of IRF)</p></li>
-<li><p><strong>stop</strong> – int
+<li><p><strong>stop</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – int
 Stop channel of convolution (position in array of IRF)</p></li>
-<li><p><strong>n_points</strong> – int
+<li><p><strong>n_points</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – int
 Number of points in fit and lamp</p></li>
-<li><p><strong>period</strong> – double
+<li><p><strong>period</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – double
 Period of repetition in nano-seconds</p></li>
-<li><p><strong>dt</strong> – double
+<li><p><strong>dt</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – double
 Channel-width in nano-seconds</p></li>
-<li><p><strong>conv_stop</strong> – int
+<li><p><strong>conv_stop</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – int
 Stopping channel of convolution</p></li>
 </ul>
 </dd>
@@ -221,14 +221,17 @@ Stopping channel of convolution</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>lifetime_spectrum</strong> – interleaved lifetime spectrum</p></li>
-<li><p><strong>n_lifetimes</strong> – </p></li>
-<li><p><strong>discriminate</strong> – </p></li>
+<li><p><strong>lifetime_spectrum</strong> (<em>&lt;built-in function array&gt;</em>) – interleaved lifetime spectrum</p></li>
+<li><p><strong>n_lifetimes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>discriminate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
 <li><p><strong>discriminator</strong> – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>lifetime_spectrum</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>lifetime_spectrum</p>
 </dd>
 </dl>
 </dd></dl>
@@ -243,16 +246,19 @@ agree</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fit</strong> – </p></li>
-<li><p><strong>data</strong> – </p></li>
-<li><p><strong>data_weight</strong> – </p></li>
-<li><p><strong>bg</strong> – </p></li>
-<li><p><strong>start</strong> – </p></li>
-<li><p><strong>stop</strong> – </p></li>
+<li><p><strong>fit</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
+<li><p><strong>data</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
+<li><p><strong>data_weight</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
+<li><p><strong>bg</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
+<li><p><strong>start</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>stop</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>scaling factor (float)</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>scaling factor (float)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -290,7 +296,12 @@ Spectrochim. Acta A, 58 (2002) 1087-1097.</p>
 <dl class="attribute">
 <dt id="mfm.fluorescence.tcspc.tcspc.rescale_w_bg">
 <code class="sig-prename descclassname">mfm.fluorescence.tcspc.tcspc.</code><code class="sig-name descname">rescale_w_bg</code><span class="sig-paren">(</span><em class="sig-param">fit: 'np.array'</em>, <em class="sig-param">decay: 'np.array'</em>, <em class="sig-param">w_res: 'np.array'</em>, <em class="sig-param">bg: 'float'</em>, <em class="sig-param">start: 'int'</em>, <em class="sig-param">stop: 'int'</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/tcspc.html#rescale_w_bg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.tcspc.rescale_w_bg" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 </div>
 <div class="section" id="module-mfm.fluorescence.tcspc">
@@ -304,16 +315,19 @@ Spectrochim. Acta A, 58 (2002) 1087-1097.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>y</strong> – numpy-array
 a numpy array containing the photon counts</p></li>
-<li><p><strong>threshold</strong> – float
+<li><p><strong>threshold</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
 a threshold value. Lowest index of the fitting range is the first encountered bin with a photon count
 higher than the threshold.</p></li>
-<li><p><strong>area</strong> – float
+<li><p><strong>area</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
 The area which should be considered for fitting. Here 1.0 corresponds to all measured photons. 0.9 to 90%
 of the total measured photons.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -322,13 +336,17 @@ of the total measured photons.</p></li>
 <dt id="mfm.fluorescence.tcspc.weights">
 <code class="sig-prename descclassname">mfm.fluorescence.tcspc.</code><code class="sig-name descname">weights</code><span class="sig-paren">(</span><em class="sig-param">y: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../_modules/mfm/fluorescence/tcspc.html#weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.weights" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculated the weights used in TCSPC. Poissonian noise (sqrt of counts)
+:type y: &lt;built-in function array&gt;
 :param y: numpy-array</p>
 <blockquote>
 <div><p>the photon counts</p>
 </div></blockquote>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>numpy-array
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>numpy-array
 an weighting array for fittin</p>
 </dd>
 </dl>
@@ -341,13 +359,16 @@ an weighting array for fittin</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>p</strong> – parallel decay</p></li>
-<li><p><strong>s</strong> – perpendicular decay</p></li>
-<li><p><strong>fs</strong> – weight of perpendicular decay</p></li>
+<li><p><strong>p</strong> (<em>&lt;built-in function array&gt;</em>) – parallel decay</p></li>
+<li><p><strong>s</strong> (<em>&lt;built-in function array&gt;</em>) – perpendicular decay</p></li>
+<li><p><strong>fs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – weight of perpendicular decay</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>err(p + fs * fs)</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>err(p + fs * fs)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -367,7 +388,7 @@ an weighting array for fittin</p>
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

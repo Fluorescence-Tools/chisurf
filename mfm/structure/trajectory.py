@@ -14,16 +14,26 @@ import mfm.structure
 
 class Universe(object):
 
-    def __init__(self, structure=None):
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure = None
+    ):
         self.structures = [] if structure is None else [structure]
-        self.potentials = []
-        self.scaling = []
+        self.potentials = list()
+        self.scaling = list()
 
-    def addPotential(self, potential, scale=1.0):
+    def addPotential(
+            self,
+            potential,
+            scale: float = 1.0
+    ):
         self.potentials.append(potential)
         self.scaling.append(scale)
 
-    def removePotential(self, potentialNbr=None):
+    def removePotential(
+            self,
+            potentialNbr: int = None
+    ):
         if potentialNbr == -1:
             self.potentials.pop()
             self.scaling.pop()
@@ -32,10 +42,13 @@ class Universe(object):
             self.scaling.pop(potentialNbr)
 
     def clearPotentials(self):
-        self.potentials = []
-        self.scaling = []
+        self.potentials = list()
+        self.scaling = list()
 
-    def getEnergy(self, structure=None):
+    def getEnergy(
+            self,
+            structure: mfm.structure.structure.Structure = None
+    ):
         if isinstance(structure, mfm.structure.Structure):
             for p in self.potentials:
                 p.structure = structure
@@ -43,8 +56,11 @@ class Universe(object):
         E = Es.sum()
         return E
 
-    def getEnergies(self, structure=None):
-        if isinstance(structure, mfm.structure.Structure):
+    def getEnergies(
+            self,
+            structure: mfm.structure.structure.Structure = None
+    ):
+        if isinstance(structure, mfm.structure.structure.Structure):
             for p in self.potentials:
                 p.structure = structure
 
@@ -64,7 +80,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
     structure : string / mfm.structure.Structure
         determines the topology
         is either a string containing the filename of a PDB-File or an instance of mfm.structure.Structure()
-        Obligatory in write mode, not needed in reading mode
+        Obligatory in write file_type, not needed in reading file_type
 
     filename_hdf : string
         the filename of the HDF5-file
@@ -92,7 +108,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
 
 import mfm.structure    >>> import mfm
     >>> s = mfm.structure.mfm.structure.Structure('./sample_data/modelling/trajectory/h5-file/T4L_Topology.pdb', verbose=True, make_coarse=False)
-    >>> t = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', s, mode='w')
+    >>> t = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', s, file_type='w')
     >>> t[0]
     <mfm.structure.structure.mfm.structure.Structure at 0x11f34e10>
     >>> print(t[0])
@@ -106,7 +122,7 @@ import mfm.structure    >>> import mfm
     Opening h5-Trajectory file
 
     >>> import mfm
-    >>> t = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', mode='r', stride=1)
+    >>> t = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
     >>> print(t[0:3])
     [<mfm.structure.structure.mfm.structure.Structure at 0x1345d5d0>,
     <mfm.structure.structure.mfm.structure.Structure at 0x1345d610>,
@@ -120,7 +136,7 @@ import mfm.structure    >>> import mfm
     initialize with mdtraj.Trajectory
 
     >>> import mfm
-    >>> t = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', mode='r', stride=1)
+    >>> t = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
     >>> t2 = mfm.structure.TrajectoryFile(t.mdtraj, filename='test.h5')
 
     Attributes:
@@ -155,7 +171,7 @@ import mfm.structure    >>> import mfm
 
         """
         p_object = args[0]
-        self.mode = kwargs.get('mode', 'r')
+        self.mode = kwargs.get('file_type', 'r')
         self.atom_indices = atom_indices
         self.make_coarse = make_coarse
         self.stride = stride
@@ -334,7 +350,7 @@ import mfm.structure    >>> import mfm
         --------
 
         >>> import mfm
-        >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', mode='r', stride=1)
+        >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
         >>> t
         <mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x117f3b70>
         >>> t.values
@@ -378,7 +394,7 @@ import mfm.structure    >>> import mfm
         --------
 
         >>> import mfm
-        >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', mode='r', stride=1)
+        >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
         >>> t
         <mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x11762b70>
         >>> t.append(t[0])
@@ -419,7 +435,7 @@ import mfm.structure    >>> import mfm
         """
         Implements iterator
         >>> import mfm
-        >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', mode='r', stride=1)
+        >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
         >>> for s in t:
         >>>     print(s)
         [<mfm.structure.structure.mfm.structure.Structure object at 0x12FAE330>, <mfm.structure.structure.mfm.structure.Structure object at 0x12FAE3B0>, <li
@@ -443,7 +459,7 @@ import mfm.structure    >>> import mfm
         -------
 
         >>> import mfm
-        >>> t = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', mode='r', stride=1)
+        >>> t = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
         >>> s = str(t.next())
         >>> print(s[:500])
         ATOM      1    N MET A   1       7.332 -10.706 -15.034  0.00  0.00             N

@@ -739,7 +739,7 @@
 <span class="sd">        &gt;&gt;&gt; data = mfm.experiments.c.DataCurve(filename=&#39;./sample_data/tcspc/ibh_sample/Decay_577D.txt&#39;, skiprows=9)</span>
 <span class="sd">        &gt;&gt;&gt; irf.x *= t_step; data.x *= t_step</span>
 <span class="sd">        &gt;&gt;&gt; convolve = mfm.fluorescence.tcspc.convolve.Convolve(fit=None, dt=t_step, rep_rate=10, irf=irf, data=data)</span>
-<span class="sd">        &gt;&gt;&gt; decay = convolve.convolve(counts, mode=&#39;full&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; decay = convolve.convolve(counts, file_type=&#39;full&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; p.semilogy(times, decay)</span>
 <span class="sd">        </span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -814,7 +814,7 @@
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>

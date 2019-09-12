@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Tuple
 
 import gc
 import json
@@ -393,7 +394,15 @@ class DyeDecay(Model, Curve):
         dt2 = dts.take(np.where(phs > 0)[0])
         self._photon_trace = dt2
 
-    def get_histogram(self, **kwargs):
+    def get_histogram(
+            self,
+            irf = None,
+            decay_mode: str = None,
+            **kwargs
+    ) -> Tuple[
+        np.array,
+        np.array
+    ]:
         """
         Returns two arrays one is the time axis and one is the photon-counts
 
@@ -404,8 +413,10 @@ class DyeDecay(Model, Curve):
         """
         nbins = kwargs.get('nbins', self.nTAC)
         r = kwargs.get('range', (0, 50, 0.0141))
-        decay_mode = kwargs.get('decay_mode', self.decay_mode)
-        irf = kwargs.get('irf', None)
+
+        if decay_mode is None:
+            decay_mode = self.decay_mode
+
         if decay_mode == 'photon':
             dts = self.photon_trace
             y, x = np.histogram(dts, bins=np.arange(r[0], r[1] + r[2], self.dtTAC))
@@ -415,9 +426,16 @@ class DyeDecay(Model, Curve):
             y = self._curve_y
             if isinstance(irf, np.ndarray):
                 y = np.convolve(irf, y, mode='full')[:len(x)]
+
         return x, y
 
-    def save_histogram(self, filename='hist.txt', verbose=False, nbins=4096, range=(0, 50)):
+    def save_histogram(
+            self,
+            filename: str = 'hist.txt',
+            verbose: bool = False,
+            nbins:int = 4096,
+            range: Tuple[int, int] = (0, 50)
+    ):
         """
         Used to save the current histogram to a file.
 
@@ -427,16 +445,23 @@ class DyeDecay(Model, Curve):
         :param range:
         """
         verbose = verbose or self.verbose
-        x, y, = self.get_histogram(nbins, range)
+        x, y = self.get_histogram(nbins, range)
         mfm.io.ascii.save_xy(filename, x, y, verbose, header_string="time\tcount")
 
     def update_decay_curve(self):
         self._curve_y = np.zeros(self.nTAC, dtype=np.float64)
-        photon.simulate_decay_kQ(self.n_curves, self._curve_y, self.dtTAC,
-                                 self.diffusion.collided, kQ=self.protein_quenching.kQ_scale, t_step=self.t_step,
-                                 tau0=self.tau0)
+        photon.simulate_decay_kQ(
+            self.n_curves, self._curve_y, self.dtTAC,
+            self.diffusion.collided,
+            kQ=self.protein_quenching.kQ_scale,
+            t_step=self.t_step,
+            tau0=self.tau0
+        )
 
-    def update_model(self, **kwargs):
+    def update_model(
+            self,
+            **kwargs
+    ):
         verbose = kwargs.get('verbose', self.verbose)
         lintable = kwargs.get('lintable', self.corrections.lintable)
 
@@ -489,39 +514,59 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
     name = "Dye-diffusion"
 
     @property
-    def n_curves(self):
+    def n_curves(
+            self
+    ) -> int:
         return int(self.spinBox_4.value())
 
     @n_curves.setter
-    def n_curves(self, v):
+    def n_curves(
+            self,
+            v: int
+    ):
         self.spinBox_4.setValue(v)
 
     @property
-    def nTAC(self):
+    def nTAC(
+            self
+    ) -> int:
         return self.nBins
 
     @nTAC.setter
-    def nTAC(self, v):
+    def nTAC(
+            self,
+            v: int
+    ):
         # TODO remove this option
         pass
 
     @property
-    def dtTAC(self):
+    def dtTAC(
+            self
+    ) -> float:
         return self.convolve.dt
 
     @dtTAC.setter
-    def dtTAC(self, v):
+    def dtTAC(
+            self,
+            v
+    ) -> float:
         self.convolve.dt = v
 
     @property
-    def decay_mode(self):
+    def decay_mode(
+            self
+    ) -> str:
         if self.radioButton_3.isChecked():
             return 'photon'
         if self.radioButton_4.isChecked():
             return 'curve'
 
     @decay_mode.setter
-    def decay_mode(self, v):
+    def decay_mode(
+            self,
+            v: str
+    ):
         if v == 'photon':
             self.radioButton_4.setChecked(True)
             self.radioButton_3.setChecked(False)
@@ -530,103 +575,160 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
             self.radioButton_4.setChecked(False)
 
     @property
-    def settings_file(self):
+    def settings_file(
+            self
+    ) -> str:
         return str(self.lineEdit_2.text())
 
     @settings_file.setter
-    def settings_file(self, v):
+    def settings_file(
+            self,
+            v: str
+    ):
         return self.lineEdit_2.setText(v)
 
     @property
-    def all_quencher_atoms(self):
+    def all_quencher_atoms(
+            self
+    ) -> bool:
         return not bool(self.groupBox_5.isChecked())
 
     @all_quencher_atoms.setter
-    def all_quencher_atoms(self, v):
+    def all_quencher_atoms(
+            self,
+            v: bool
+    ):
         self.groupBox_5.setChecked(not v)
 
     @property
-    def filename_prefix(self):
+    def filename_prefix(
+            self
+    ) -> str:
         return str(self.lineEdit_5.text())
 
     @property
-    def skip_frame(self):
+    def skip_frame(
+            self
+    ) -> int:
         return int(self.spinBox_3.value())
 
     @property
-    def n_frames(self):
+    def n_frames(
+            self
+    ) -> int:
         return int(self.spinBox.value())
 
     @property
-    def nBins(self):
+    def nBins(
+            self
+    ) -> int:
         nbin = self.fitting_widget.xmax - self.fitting_widget.xmin
         return int(nbin)
 
     @property
-    def n_photons(self):
+    def n_photons(
+            self
+    ) -> int:
         return int(self.doubleSpinBox_11.value() * 1e6)
 
     @n_photons.setter
-    def n_photons(self, v):
-        return self.doubleSpinBox_11.setValue(v / 1e6)
+    def n_photons(
+            self,
+            v: float
+    ):
+        self.doubleSpinBox_11.setValue(v / 1e6)
 
     @property
-    def critical_distance(self):
+    def critical_distance(
+            self
+    ) -> float:
         return self.dye_parameter.critical_distance
 
     @critical_distance.setter
-    def critical_distance(self, v):
+    def critical_distance(
+            self,
+            v: float
+    ):
         self.dye_parameter.critical_distance = v
 
     @property
-    def t_max(self):
+    def t_max(
+            self
+    ) -> float:
         """
         simulation time in nano-seconds
         """
         return float(self.doubleSpinBox_6.value()) * 1000.0
 
     @t_max.setter
-    def t_max(self, v):
+    def t_max(
+            self,
+            v: float
+    ):
         self.onSimulationTimeChanged()
         self.doubleSpinBox_6.setValue(float(v / 1000.0))
 
     @property
-    def t_step(self):
+    def t_step(
+            self
+    ) -> float:
         """
         time-step in picoseconds
         """
         return float(self.doubleSpinBox_7.value()) / 1000.0
 
     @t_step.setter
-    def t_step(self, v):
+    def t_step(
+            self,
+            v: float
+    ):
         self.onSimulationTimeChanged()
         return self.doubleSpinBox_7.setValue(float(v * 1000.0))
 
     @property
-    def attachment_chain(self):
+    def attachment_chain(
+            self
+    ) -> str:
         return self.pdb_selector.chain_id
 
     @attachment_chain.setter
-    def attachment_chain(self, v):
+    def attachment_chain(
+            self,
+            v: str
+    ):
         self.pdb_selector.chain_id = v
 
     @property
-    def attachment_residue(self):
+    def attachment_residue(
+            self
+    ) -> int:
         return self.pdb_selector.residue_id
 
     @attachment_residue.setter
-    def attachment_residue(self, v):
+    def attachment_residue(
+            self,
+            v: int
+    ):
         self.pdb_selector.residue_id = v
 
     @property
-    def attachment_atom_name(self):
+    def attachment_atom_name(
+            self
+    ) -> str:
         return self.pdb_selector.atom_name
 
     @attachment_atom_name.setter
-    def attachment_atom_name(self, v):
+    def attachment_atom_name(
+            self,
+            v: str
+    ):
         self.pdb_selector.atom_name = v
 
-    def __init__(self, fit, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            **kwargs
+    ):
         self.verbose = kwargs.get('verbose', mfm.verbose)
         generic = mfm.models.tcspc.widgets.GenericWidget(fit=fit, parent=self, model=self, **kwargs)
         convolve = mfm.models.tcspc.widgets.ConvolveWidget(fit=fit, model=self, dt=fit.data.dt, **kwargs)
@@ -647,7 +749,13 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.fitting_widget = fitting_widget
 
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/fitting/models/tcspc/dye_diffusion3.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "dye_diffusion3.ui"
+            ),
+            self
+        )
 
         self.pdb_selector = PDBSelector()
         self.verticalLayout_10.addWidget(self.pdb_selector)
@@ -684,7 +792,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.diff_file = None
         self.av_slow_file = None
         self.av_fast_file = None
-        self.fitting_widget = mfm.FittingWidget(fit=self.fit)
+        self.fitting_widget = mfm.fitting.fitting_widgets.FittingWidget(fit=self.fit)
 
         self.hide()
 

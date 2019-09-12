@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
-from qtpy import  QtWidgets
+from qtpy import QtWidgets
 
 import mfm
 import mfm.widgets
@@ -33,8 +33,14 @@ class FCS(ExperimentReader, CsvWidget):
         self.parent = kwargs.get('parent', None)
         self.groupBox.hide()
 
-    def read(self, filename=None, **kwargs):
-        d = mfm.experiments.data.DataCurve(setup=self)
+    def read(
+            self,
+            filename: str = None,
+            **kwargs
+    ):
+        d = mfm.experiments.data.DataCurve(
+            setup=self
+        )
         d.setup = self
 
         CsvWidget.load(
@@ -56,27 +62,46 @@ class FCSKristine(mfm.io.ascii.Csv, FCS):
 
     name = 'Kristine'
 
-    def __init__(self, experiment, **kwargs):
-        FCS.__init__(self, experiment, **kwargs)
+    def __init__(
+            self,
+            experiment,
+            **kwargs
+    ):
+        FCS.__init__(
+            self,
+            experiment,
+            **kwargs
+        )
         QtWidgets.QWidget.__init__(self)
         mfm.io.ascii.Csv.__init__(self, **kwargs)
 
-    def read(self, **kwargs):
-        """Uses eihter the error provided by the correlator (4. column)
+    def read(
+            self,
+            filename: str = None,
+            verbose: bool = None,
+            **kwargs
+    ):
+        """Uses either the error provided by the correlator (4. column)
         or calculates the error based on the correlation curve,
         the aquisition time and the count-rate.
 
         :param filename:
+        :param verbose:
         :param kwargs:
         :return:
         """
         d = mfm.experiments.data.DataCurve(setup=self)
         d.setup = self
-        filename = kwargs.get('filename', None)
         if filename is None:
             filename = mfm.widgets.get_filename('Kristine-Correlation file', file_type='All files (*.cor)')
+
         self.filename = filename
-        self.load(filename=filename, skiprows=0, use_header=None, verbose=mfm.verbose)
+        self.load(
+            filename=filename,
+            skiprows=0,
+            use_header=None,
+            verbose=verbose
+        )
 
         # In Kristine file-type
         # First try to use experimental errors

@@ -622,7 +622,7 @@ class DynamicAV(BasicAV):
         >>> data = mfm.experiments.c.DataCurve(filename='./sample_data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)
         >>> irf.x *= t_step; data.x *= t_step
         >>> convolve = mfm.fluorescence.tcspc.convolve.Convolve(fit=None, dt=t_step, rep_rate=10, irf=irf, data=data)
-        >>> decay = convolve.convolve(counts, mode='full')
+        >>> decay = convolve.convolve(counts, file_type='full')
         >>> p.semilogy(times, decay)
         
         """

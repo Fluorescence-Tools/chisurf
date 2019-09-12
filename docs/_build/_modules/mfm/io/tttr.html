@@ -115,10 +115,13 @@
     <div class="col-md-9 content">
       
   <h1>Source code for mfm.io.tttr</h1><div class="highlight"><pre>
-<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span>
+
 <span class="kn">import</span> <span class="nn">fnmatch</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+<span class="kn">import</span> <span class="nn">struct</span>
 
 <span class="kn">import</span> <span class="nn">numba</span> <span class="k">as</span> <span class="nn">nb</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -147,8 +150,16 @@
 
 
 <div class="viewcode-block" id="pq_photons"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.pq_photons">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span>
-<span class="k">def</span> <span class="nf">pq_photons</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">invert_tac</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">4</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span>
+<span class="k">def</span> <span class="nf">pq_photons</span><span class="p">(</span>
+        <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">invert_tac</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span>
+<span class="p">]:</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">4</span><span class="p">)</span> <span class="o">//</span> <span class="mi">4</span>
     <span class="n">event</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
     <span class="n">mt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
     <span class="n">tac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span>
@@ -182,7 +193,15 @@
 
 
 <div class="viewcode-block" id="bh132_photons"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.bh132_photons">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span>
-<span class="k">def</span> <span class="nf">bh132_photons</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">invert_tac</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">bh132_photons</span><span class="p">(</span>
+        <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">invert_tac</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span>
+<span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;Get the macros-time, micro-time and the routing channel number of a BH132-file contained in a</span>
 <span class="sd">    binary numpy-array of 8-bit chars.</span>
 
@@ -193,7 +212,7 @@
 <span class="sd">        a list containing the number of photons, numpy-array of macros-time (64-bit unsigned integers),</span>
 <span class="sd">        numpy-array of TAC-values (32-bit unsigned integers), numpy-array of channel numbers (8-bit unsigned integers)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">4</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">4</span><span class="p">)</span> <span class="o">//</span> <span class="mi">4</span>
     <span class="n">event</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
     <span class="n">mt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
     <span class="n">tac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
@@ -232,8 +251,15 @@
 
 
 <div class="viewcode-block" id="ht3_photons"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.ht3_photons">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span>
-<span class="k">def</span> <span class="nf">ht3_photons</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
-    <span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="mi">4</span>
+<span class="k">def</span> <span class="nf">ht3_photons</span><span class="p">(</span>
+        <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span>
+<span class="p">]:</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">//</span> <span class="mi">4</span>
     <span class="n">event</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
     <span class="n">mt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
     <span class="n">tac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
@@ -263,8 +289,16 @@
 
 
 <div class="viewcode-block" id="ht3_sf"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.ht3_sf">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span>
-<span class="k">def</span> <span class="nf">ht3_sf</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">stage</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="mi">4</span>
+<span class="k">def</span> <span class="nf">ht3_sf</span><span class="p">(</span>
+        <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">stage</span><span class="o">=</span><span class="mi">0</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span>
+<span class="p">]:</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">//</span> <span class="mi">4</span>
     <span class="n">event</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
     <span class="n">mt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
     <span class="n">tac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
@@ -302,9 +336,18 @@
 
 
 <div class="viewcode-block" id="iss_16"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.iss_16">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">iss_16</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">can</span><span class="p">,</span> <span class="n">tac</span><span class="p">,</span> <span class="n">mt</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">phMode</span><span class="p">,</span> <span class="n">offset</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">iss_16</span><span class="p">(</span>
+        <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">can</span><span class="p">,</span>
+        <span class="n">tac</span><span class="p">,</span>
+        <span class="n">mt</span><span class="p">,</span>
+        <span class="n">length</span><span class="p">,</span>
+        <span class="n">step</span><span class="p">,</span>
+        <span class="n">phMode</span><span class="p">,</span>
+        <span class="n">offset</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Reading of ISS-photon format (FCS-measurements)</span>
+<span class="sd">    Reading of ISS-photon format (fcs-measurements)</span>
 
 <span class="sd">    :param b:</span>
 <span class="sd">    :return:</span>
@@ -347,9 +390,18 @@
 
 
 <div class="viewcode-block" id="iss_32"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.iss_32">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">iss_32</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">can</span><span class="p">,</span> <span class="n">tac</span><span class="p">,</span> <span class="n">mt</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">phMode</span><span class="p">,</span> <span class="n">offset</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">iss_32</span><span class="p">(</span>
+        <span class="n">b</span><span class="p">,</span>
+        <span class="n">can</span><span class="p">,</span>
+        <span class="n">tac</span><span class="p">,</span>
+        <span class="n">mt</span><span class="p">,</span>
+        <span class="n">length</span><span class="p">,</span>
+        <span class="n">step</span><span class="p">,</span>
+        <span class="n">phMode</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">offset</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Reading of ISS-photon format (FCS-measurements)</span>
+<span class="sd">    Reading of ISS-photon format (fcs-measurements)</span>
 
 <span class="sd">    :param data:</span>
 <span class="sd">    :return:</span>
@@ -393,13 +445,21 @@
     <span class="k">return</span> <span class="n">k</span></div>
 
 
-<div class="viewcode-block" id="iss_photons"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.iss_photons">[docs]</a><span class="k">def</span> <span class="nf">iss_photons</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="iss_photons"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.iss_photons">[docs]</a><span class="k">def</span> <span class="nf">iss_photons</span><span class="p">(</span>
+        <span class="n">data</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span>
+<span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    # CHANNEL PHOTON MODE (first 2 bytes)</span>
 <span class="sd">    # in brackets int values</span>
-<span class="sd">    # H (72)one channel time mode, h (104) one channel photon mode</span>
-<span class="sd">    # X (88) two channel time mode, x (120) two channel photon mode</span>
+<span class="sd">    # H (72)one channel time file_type, h (104) one channel photon file_type</span>
+<span class="sd">    # X (88) two channel time file_type, x (120) two channel photon file_type</span>
 
 <span class="sd">    :param data:</span>
 <span class="sd">    :param kwargs:</span>
@@ -409,7 +469,7 @@
     <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
     <span class="n">step</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">72</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">104</span><span class="p">)</span> <span class="k">else</span> <span class="mi">2</span>
 
-    <span class="c1">#  X (88) two channel time mode, x (120) two channel photon mode</span>
+    <span class="c1">#  X (88) two channel time file_type, x (120) two channel photon file_type</span>
     <span class="n">phMode</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">72</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">88</span><span class="p">)</span> <span class="k">else</span> <span class="mi">1</span>
 
     <span class="c1">#  Data is saved as 0: 16-bit or 1: 32-bit</span>
@@ -445,7 +505,9 @@
     <span class="k">return</span> <span class="n">k</span><span class="p">,</span> <span class="n">mt</span><span class="p">[:</span><span class="n">k</span><span class="p">],</span> <span class="n">tac</span><span class="p">[:</span><span class="n">k</span><span class="p">],</span> <span class="n">can</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="bh123_header"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.bh123_header">[docs]</a><span class="k">def</span> <span class="nf">bh123_header</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+<div class="viewcode-block" id="bh123_header"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.bh123_header">[docs]</a><span class="k">def</span> <span class="nf">bh123_header</span><span class="p">(</span>
+        <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
     <span class="n">bHeader</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unpackbits</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">])</span>
     <span class="n">conv8le</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">128</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
     <span class="n">conv24be</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">65536</span><span class="p">])</span>
@@ -454,18 +516,22 @@
     <span class="n">b1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">bMTclock</span><span class="p">[</span><span class="mi">8</span><span class="p">:</span><span class="mi">16</span><span class="p">],</span> <span class="n">conv8le</span><span class="p">)</span>
     <span class="n">b2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">bMTclock</span><span class="p">[</span><span class="mi">16</span><span class="p">:</span><span class="mi">24</span><span class="p">],</span> <span class="n">conv8le</span><span class="p">)</span>
     <span class="n">MTclock</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">b0</span><span class="p">,</span> <span class="n">b1</span><span class="p">,</span> <span class="n">b2</span><span class="p">]),</span> <span class="n">conv24be</span><span class="p">)</span> <span class="o">/</span> <span class="mf">10.</span>
-    <span class="n">DataInvalid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">bHeader</span><span class="p">[</span><span class="mi">31</span><span class="p">])</span>
+    <span class="n">DataInvalid</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">bHeader</span><span class="p">[</span><span class="mi">31</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">MTclock</span><span class="p">,</span> <span class="n">DataInvalid</span></div>
 
 
-<div class="viewcode-block" id="iss_header"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.iss_header">[docs]</a><span class="k">def</span> <span class="nf">iss_header</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+<div class="viewcode-block" id="iss_header"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.iss_header">[docs]</a><span class="k">def</span> <span class="nf">iss_header</span><span class="p">(</span>
+        <span class="n">b</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
     <span class="c1"># acquisition frequency in Hz</span>
     <span class="n">frequency</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">MTclock</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">frequency</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1.e9</span>
     <span class="k">return</span> <span class="n">MTclock</span><span class="p">,</span> <span class="kc">False</span></div>
 
 
-<div class="viewcode-block" id="ht3_header"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.ht3_header">[docs]</a><span class="k">def</span> <span class="nf">ht3_header</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+<div class="viewcode-block" id="ht3_header"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.ht3_header">[docs]</a><span class="k">def</span> <span class="nf">ht3_header</span><span class="p">(</span>
+        <span class="n">b</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
     <span class="c1"># TODO doesnt read header properly!!!!!</span>
     <span class="n">frequency</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">MTclock</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">frequency</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1.e9</span>
@@ -473,7 +539,9 @@
     <span class="k">return</span> <span class="n">MTclock</span><span class="p">,</span> <span class="n">DataInvalid</span></div>
 
 
-<div class="viewcode-block" id="make_hdf"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.make_hdf">[docs]</a><span class="k">def</span> <span class="nf">make_hdf</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="make_hdf"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.make_hdf">[docs]</a><span class="k">def</span> <span class="nf">make_hdf</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates a new h5-file/h5-handle for photons</span>
 
@@ -501,7 +569,11 @@
     <span class="k">return</span> <span class="n">h5</span></div>
 
 
-<div class="viewcode-block" id="spc2hdf"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.spc2hdf">[docs]</a><span class="k">def</span> <span class="nf">spc2hdf</span><span class="p">(</span><span class="n">spc_files</span><span class="p">,</span> <span class="n">routine_name</span><span class="o">=</span><span class="s2">&quot;bh132&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="spc2hdf"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.spc2hdf">[docs]</a><span class="k">def</span> <span class="nf">spc2hdf</span><span class="p">(</span>
+        <span class="n">spc_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">routine_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;bh132&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Converts BH-SPC files into hdf file format</span>
 
@@ -602,7 +674,10 @@
     <span class="k">return</span> <span class="n">h5</span></div>
 
 
-<div class="viewcode-block" id="read_header"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.read_header">[docs]</a><span class="k">def</span> <span class="nf">read_header</span><span class="p">(</span><span class="n">binary</span><span class="p">,</span> <span class="n">routine_name</span><span class="p">):</span>
+<div class="viewcode-block" id="read_header"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.read_header">[docs]</a><span class="k">def</span> <span class="nf">read_header</span><span class="p">(</span>
+        <span class="n">binary</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">routine_name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reads the header-information of binary TTTR-files. The TTTR-files have to be</span>
 <span class="sd">    passed as numpy array of type numpy.uint8</span>
@@ -675,7 +750,7 @@
         <span class="s1">&#39;read&#39;</span><span class="p">:</span> <span class="n">pq_photons</span>
     <span class="p">}),</span>
     <span class="p">(</span><span class="s2">&quot;iss&quot;</span><span class="p">,</span> <span class="p">{</span>
-        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s2">&quot;ISS-FCS&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s2">&quot;ISS-fcs&quot;</span><span class="p">,</span>
         <span class="s1">&#39;ending&#39;</span><span class="p">:</span> <span class="s1">&#39;.fcs&#39;</span><span class="p">,</span>
         <span class="s1">&#39;nTAC&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
         <span class="s1">&#39;nROUT&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
@@ -686,7 +761,11 @@
 
 
 <div class="viewcode-block" id="read_hht3"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.read_hht3">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">read_hht3</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">n_rec</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">read_hht3</span><span class="p">(</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">n_rec</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="p">):</span>
 
     <span class="n">sb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_rec</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
     <span class="n">mt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_rec</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
@@ -728,7 +807,11 @@
 
 
 <div class="viewcode-block" id="read_pht3"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.read_pht3">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">read_pht3</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">n_rec</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">read_pht3</span><span class="p">(</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">n_rec</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="p">):</span>
 
     <span class="n">sb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_rec</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
     <span class="n">mt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_rec</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
@@ -886,10 +969,9 @@
 <span class="p">}</span>
 
 
-<span class="kn">import</span> <span class="nn">struct</span>
-
-
-<div class="viewcode-block" id="read_ptu"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.read_ptu">[docs]</a><span class="k">def</span> <span class="nf">read_ptu</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<div class="viewcode-block" id="read_ptu"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.read_ptu">[docs]</a><span class="k">def</span> <span class="nf">read_ptu</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Reads a PicoQuant PTU-file</span>
 <span class="sd">    </span>
 <span class="sd">    :param filename: </span>
@@ -949,35 +1031,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No PTU file&quot;</span><span class="p">)</span>
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;File not found.&quot;</span><span class="p">)</span></div>
-<span class="c1">#</span>
-<span class="c1">#</span>
-<span class="c1"># class PQReader(object):</span>
-<span class="c1">#</span>
-<span class="c1">#     def read_header(self, filename=&#39;C://temp/PQSpcm_2017-04-20_13-23-53.ptu&#39;):</span>
-<span class="c1">#</span>
-<span class="c1">#         y, x = np.histogram(dt, bins=range(0, 4096))</span>
-<span class="c1">#         p.semilogy(x[1:], y+1)</span>
-<span class="c1">#         p.show()</span>
-<span class="c1">#</span>
-<span class="c1">#         self._mt = mt</span>
-<span class="c1">#         self._sp = sp</span>
-<span class="c1">#         self._mi = dt</span>
-<span class="c1">#         self._cn = cn</span>
-<span class="c1">#</span>
-<span class="c1">#         return version, tags, fp</span>
-<span class="c1">#</span>
-<span class="c1">#     def __init__(self, filename):</span>
-<span class="c1">#         self._binary = list()</span>
-<span class="c1">#         self._filename = filename</span>
-<span class="c1">#</span>
-<span class="c1">#         with mfm.io.zipped.open_maybe_zipped(filename=filename, mode=&#39;r&#39;) as fp:</span>
-<span class="c1">#             version, tags, fp = self.read_header(fp)</span>
-<span class="c1">#             self.version = version</span>
-<span class="c1">#             self.tags = tags</span>
-<span class="c1">#             self._binary = np.fromfile(fp, dtype=np.uint8)</span>
-<span class="c1">#</span>
-<span class="c1">#</span>
-<span class="c1">#</span>
+
 </pre></div>
 
     </div>
@@ -991,7 +1045,7 @@
       
     </p>
     <p>
-        &copy; Copyright 2016, Thomas Peulen.<br/>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
     </p>
   </div>
