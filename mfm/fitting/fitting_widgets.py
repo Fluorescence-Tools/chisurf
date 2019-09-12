@@ -8,7 +8,7 @@ import mfm
 import mfm.widgets
 import mfm.widgets.curve
 
-parameter_settings = mfm.settings.cs_settings['parameter']
+parameter_settings = mfm.settings.parameter
 
 
 class FittingControllerWidget(QtWidgets.QWidget):

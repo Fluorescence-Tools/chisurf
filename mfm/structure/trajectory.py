@@ -14,16 +14,26 @@ import mfm.structure
 
 class Universe(object):
 
-    def __init__(self, structure=None):
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure = None
+    ):
         self.structures = [] if structure is None else [structure]
-        self.potentials = []
-        self.scaling = []
+        self.potentials = list()
+        self.scaling = list()
 
-    def addPotential(self, potential, scale=1.0):
+    def addPotential(
+            self,
+            potential,
+            scale: float = 1.0
+    ):
         self.potentials.append(potential)
         self.scaling.append(scale)
 
-    def removePotential(self, potentialNbr=None):
+    def removePotential(
+            self,
+            potentialNbr: int = None
+    ):
         if potentialNbr == -1:
             self.potentials.pop()
             self.scaling.pop()
@@ -32,10 +42,13 @@ class Universe(object):
             self.scaling.pop(potentialNbr)
 
     def clearPotentials(self):
-        self.potentials = []
-        self.scaling = []
+        self.potentials = list()
+        self.scaling = list()
 
-    def getEnergy(self, structure=None):
+    def getEnergy(
+            self,
+            structure: mfm.structure.structure.Structure = None
+    ):
         if isinstance(structure, mfm.structure.Structure):
             for p in self.potentials:
                 p.structure = structure
@@ -43,8 +56,11 @@ class Universe(object):
         E = Es.sum()
         return E
 
-    def getEnergies(self, structure=None):
-        if isinstance(structure, mfm.structure.Structure):
+    def getEnergies(
+            self,
+            structure: mfm.structure.structure.Structure = None
+    ):
+        if isinstance(structure, mfm.structure.structure.Structure):
             for p in self.potentials:
                 p.structure = structure
 

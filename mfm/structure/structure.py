@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Dict
 
 import copy
 import os
@@ -86,15 +87,23 @@ class Structure(object):
 
     """
 
-    def __init__(self, p_object, *args, **kwargs):
+    def __init__(
+            self,
+            p_object,
+            *args,
+            auto_update: bool = False,
+            filename: str = None,
+            verbose: bool = False,
+            **kwargs
+    ):
         super(Structure, self).__init__(*args, **kwargs)
-        self.auto_update = kwargs.get('auto_update', False)
-        self._filename = kwargs.get('filename', None)
+        self.auto_update = auto_update
+        self._filename = filename
         self._atoms = None
         self._residue_dict = None
         self._potentials = list()
         self._sequence = None
-        self.verbose = kwargs.get('verbose', False)
+        self.verbose = verbose
 
         self.io = mfm.io.pdb
         self.pdbid = None
@@ -116,7 +125,7 @@ class Structure(object):
                 self.pdbid = p_object
 
     @property
-    def sequence(self):
+    def sequence(self) -> Dict:
         if self._sequence is None:
             self._sequence = mfm.structure.structure.sequence(self)
         return self._sequence
@@ -126,44 +135,63 @@ class Structure(object):
         return None
 
     @property
-    def energy(self):
+    def energy(
+            self
+    ) -> float:
         energies = [e(self, **kwargs) for e, kwargs in self._potentials]
-        return np.sum(energies)
+        return sum(energies)
 
     @property
-    def atoms(self):
+    def atoms(
+            self
+    ) -> np.array:
         if isinstance(self._atoms, np.ndarray):
             return self._atoms
         else:
             return np.zeros(1, dtype={'names': mfm.io.pdb.keys, 'formats': mfm.io.pdb.formats})
 
     @atoms.setter
-    def atoms(self, v):
+    def atoms(
+            self,
+            v: np.array
+    ):
         if isinstance(v, np.ndarray):
             self._atoms = v
 
     @property
-    def xyz(self):
+    def xyz(
+            self
+    ) -> np.array:
         """Cartesian coordinates of all atoms
         """
         return self.atoms['coord']
 
     @xyz.setter
-    def xyz(self, v):
+    def xyz(
+            self,
+            v: np.array
+    ):
         self.atoms['coord'] = v
 
     @property
-    def vdw(self):
+    def vdw(
+            self
+    ) -> np.array:
         """Van der Waals radii of all atoms
         """
         return self.atoms['radius']
 
     @vdw.setter
-    def vdw(self, v):
+    def vdw(
+            self,
+            v: np.array
+    ):
         self.atoms['radius'] = v
 
     @property
-    def residue_names(self):
+    def residue_names(
+            self
+    ) -> List[str]:
         res_name = list(set(self.atoms['res_name']))
         res_name.sort()
         return res_name
@@ -175,24 +203,33 @@ class Structure(object):
             self._residue_dict = residue_dict
         return self._residue_dict
 
-    @property  # OK
-    def n_atoms(self):
+    @property
+    def n_atoms(
+            self
+    ) -> int:
         return len(self.atoms)
 
-    @property  # OK
-    def n_residues(self):
+    @property
+    def n_residues(
+            self
+    ) -> int:
         return len(self.residue_ids)
 
-    @property  # OK
+    @property
     def atom_types(self):
         return set(self.atoms['atom_name'])
 
-    @property  # OK
-    def residue_ids(self):
+    @property
+    def residue_ids(
+            self
+    ) -> List[int]:
         residue_ids = list(set(self.atoms['res_id']))
         return residue_ids
 
-    def get_atom_index(self, atom_names):
+    def get_atom_index(
+            self,
+            atom_names
+    ):
         """Returns a list of the indeces with a given atom name
 
         :param atom_names: list of string of the atom-names
@@ -201,7 +238,9 @@ class Structure(object):
         mfm.structure.structure.get_atom_index_by_name(self.atoms, atom_names)
 
     @property
-    def b_factors(self):
+    def b_factors(
+            self
+    ):
         """B-factors of the C-alpha atoms
         """
         sel = mfm.structure.structure.get_atom_index_by_name(self.atoms, ['CA'])[0]
@@ -222,7 +261,11 @@ class Structure(object):
         rG = (np.sqrt((coord - rM) ** 2).sum(axis=1)).distance()
         return float(rG)
 
-    def append_potential(self, function, kwargs=dict()):
+    def append_potential(
+            self,
+            function,
+            kwargs: Dict = None
+    ):
         """
 
         :param function:
@@ -240,13 +283,21 @@ class Structure(object):
 
         >>> structure.append_potential(mfm.structure.potential.internal_potential_calpha, kwargs={})
         """
-        self._potentials.append([function, kwargs])
+        if kwargs is None:
+            kwargs = dict()
+        self._potentials.append(
+            [function, kwargs]
+        )
 
     def update_coordinates(self):
         if self.auto_update:
             self.update()
 
-    def write(self, *args, **kwargs):
+    def write(
+            self,
+            *args,
+            **kwargs
+    ):
         """
         Write the structure to a filename. By default it uses PDB files
 
@@ -474,7 +525,11 @@ def get_coordinates_of_residues(atoms, quencher, verbose=False):
     return coordinates
 
 
-def get_atom_index_of_residue_types(pdb, res_types, verbose=False):
+def get_atom_index_of_residue_types(
+        pdb,
+        res_types,
+        verbose: bool = False
+):
     """
     Returns atom-indices given a selection of residue types and atom names as OrderedDict.
     The selection is based on dictionaries. For each residue-type only the atoms within a
@@ -518,7 +573,11 @@ def get_atom_index_of_residue_types(pdb, res_types, verbose=False):
     return atom_idx
 
 
-def get_atom_index_by_name(pdb, atom_names, verbose=False):
+def get_atom_index_by_name(
+        pdb,
+        atom_names,
+        verbose: bool = False
+):
     """
     Returns atom-indices given a an atomic name as list.
 
@@ -554,7 +613,9 @@ def get_atom_index_by_name(pdb, atom_names, verbose=False):
     return atoms
 
 
-def sequence(structure_obj):
+def sequence(
+        structure_obj
+) -> Dict:
     """Return dictionary of sequences keyed to chain and type of sequence used.
 
     :param structure_obj: Structure
@@ -599,7 +660,7 @@ def average(
     --------
 
     >>> import mfm
-    >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+    >>> t = mfm.structure.trajectory.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
     >>> avg = t.average
     >>> avg
     <mfm.structure.structure.Structure at 0x117ff770>
@@ -611,7 +672,7 @@ def average(
         weights /= weights.sum()
     else:
         weights = np.array(weights)
-    avg = mfm.structure.Structure()
+    avg = mfm.structure.structure.Structure()
     avg.atoms = np.copy(structures[0].atoms)
     avg.xyz *= 0.0
     for i, s in enumerate(structures):

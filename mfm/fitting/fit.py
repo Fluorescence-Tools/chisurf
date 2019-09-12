@@ -22,6 +22,8 @@ class Fit(mfm.base.Base):
     def __init__(
             self,
             model_class: mfm.models.model.Model = object,
+            xmin: int = 0,
+            xmax: int = 0,
             **kwargs
     ):
         super(Fit, self).__init__(**kwargs)
@@ -36,7 +38,7 @@ class Fit(mfm.base.Base):
             )
         )
         self.plots = list()
-        self._xmin, self._xmax = kwargs.get('xmin', 0), kwargs.get('xmax', 0)
+        self._xmin, self._xmax = xmin, xmax
         self._model_kw = kwargs.get('model_kw', {})
         self.model = model_class
 
@@ -54,7 +56,9 @@ class Fit(mfm.base.Base):
         return s
 
     @property
-    def xmin(self) -> int:
+    def xmin(
+            self
+    ) -> int:
         return self._xmin
 
     @xmin.setter
@@ -65,7 +69,9 @@ class Fit(mfm.base.Base):
         self._xmin = max(0, v)
 
     @property
-    def xmax(self) -> int:
+    def xmax(
+            self
+    ) -> int:
         return self._xmax
 
     @xmax.setter
@@ -79,7 +85,9 @@ class Fit(mfm.base.Base):
             self._xmax = v
 
     @property
-    def data(self) -> mfm.experiments.data.DataCurve:
+    def data(
+            self
+    ) -> mfm.experiments.data.DataCurve:
         return self._data
 
     @data.setter
@@ -90,21 +98,30 @@ class Fit(mfm.base.Base):
         self._data = v
 
     @property
-    def model(self) -> mfm.models.model.Model:
+    def model(
+            self
+    ) -> mfm.models.model.Model:
         return self._model
 
     @model.setter
-    def model(self, model_class):
+    def model(
+            self,
+            model_class
+    ):
         if issubclass(model_class, mfm.models.model.Model):
             kw = self._model_kw
             self._model = model_class(self, **kw)
 
     @property
-    def weighted_residuals(self) -> np.array:
+    def weighted_residuals(
+            self
+    ) -> np.array:
         return self.model.weighted_residuals
 
     @property
-    def chi2(self) -> float:
+    def chi2(
+            self
+    ) -> float:
         """Unreduced Chi2
         """
         return get_chi2(
@@ -114,16 +131,20 @@ class Fit(mfm.base.Base):
         )
 
     @property
-    def chi2r(self) -> float:
+    def chi2r(
+            self
+    ) -> float:
         """Reduced Chi2
         """
         return get_chi2(
-            [],
+            list(),
             model=self.model
         )
 
     @property
-    def name(self) -> str:
+    def name(
+            self
+    ) -> str:
         try:
             return self._kw['name']
         except KeyError:
@@ -140,7 +161,9 @@ class Fit(mfm.base.Base):
         self._name = name
 
     @property
-    def fit_range(self) -> Tuple[int, int]:
+    def fit_range(
+            self
+    ) -> Tuple[int, int]:
         return self.xmin, self.xmax
 
     @fit_range.setter
@@ -151,7 +174,9 @@ class Fit(mfm.base.Base):
         self.xmin, self.xmax = v
 
     @property
-    def grad(self) -> np.array:
+    def grad(
+            self
+    ) -> np.array:
         """Get the approximate gradient at the current parameter values
         :return:
         """
@@ -163,7 +188,9 @@ class Fit(mfm.base.Base):
         return grad
 
     @property
-    def covariance_matrix(self):
+    def covariance_matrix(
+            self
+    ):
         """Returns the covariance matrix of the fit given the current
         models parameter values and returns a list of the 'relevant' used
         parameters.
@@ -173,7 +200,9 @@ class Fit(mfm.base.Base):
         return covariance_matrix(self)
 
     @property
-    def n_free(self) -> int:
+    def n_free(
+            self
+    ) -> int:
         """The number of free parameters of the models
         """
         return self.model.n_free
@@ -181,14 +210,18 @@ class Fit(mfm.base.Base):
     def get_chi2(
             self,
             parameter=None,
-            model=None,
-            reduced=True
+            model: mfm.models.model.Model = None,
+            reduced: bool = True
     ) -> float:
         if model is None:
             model = self.model
         return get_chi2(parameter, model, reduced)
 
-    def get_wres(self, parameter=None, **kwargs):
+    def get_wres(
+            self,
+            parameter=None,
+            **kwargs
+    ):
         model = kwargs.get('models', self.model)
         if parameter is not None:
             model.parameter_values = parameter
@@ -198,7 +231,8 @@ class Fit(mfm.base.Base):
     def save(
             self,
             filename: str,
-            file_type: str = 'txt'
+            file_type: str = 'txt',
+            **kwargs
     ):
         self.model.save(filename + '.json')
         if file_type == 'txt':
@@ -214,7 +248,10 @@ class Fit(mfm.base.Base):
                 with open(filename+'_info.txt', 'w') as fp:
                     fp.write(str(self))
 
-    def run(self, **kwargs):
+    def run(
+            self,
+            **kwargs
+    ):
         self.model.find_parameters(
             parameter_type=mfm.fitting.parameter.FittingParameter
         )
@@ -228,7 +265,9 @@ class Fit(mfm.base.Base):
         self.model.finalize()
         self.update()
 
-    def update(self):
+    def update(
+            self
+    ) -> None:
         self.model.update()
         # Estimate errors based on gradient
         try:
@@ -240,7 +279,12 @@ class Fit(mfm.base.Base):
         except ValueError:
             print("Problems calculating the covariances")
 
-    def chi2_scan(self, parameter_name, **kwargs):
+    def chi2_scan(
+            self,
+            parameter_name: str,
+            rel_range: float = None,
+            **kwargs
+    ) -> None:
         """Perform a chi2-scan on a parameter of the fit.
 
         :param parameter_name: the parameter name
@@ -248,20 +292,30 @@ class Fit(mfm.base.Base):
         :return: an list containing arrays of the chi2 and the parameter-values
         """
         parameter = self.model.parameters_all_dict[parameter_name]
-        rel_range = max(parameter.error_estimate * 3.0 / parameter.value, 0.25)
-        kwargs['rel_range'] = kwargs.get('rel_range', (rel_range, rel_range))
-        parameter.parameter_scan = mfm.fitting.support_plane.scan_parameter(self, parameter_name, **kwargs)
+        if rel_range is None:
+            rel_range = max(parameter.error_estimate * 3.0 / parameter.value, 0.25)
+            rel_range = (rel_range, rel_range)
+        kwargs['rel_range'] = (rel_range, rel_range)
+        parameter.parameter_scan = mfm.fitting.support_plane.scan_parameter(
+            self,
+            parameter_name,
+            **kwargs
+        )
         return parameter.parameter_scan
 
 
 class FitGroup(list, Fit):
 
     @property
-    def selected_fit(self) -> Fit:
+    def selected_fit(
+            self
+    ) -> Fit:
         return self[self._selected_fit_index]
 
     @property
-    def selected_fit_index(self) -> int:
+    def selected_fit_index(
+            self
+    ) -> int:
         return self._selected_fit_index
 
     @selected_fit.setter
@@ -272,7 +326,9 @@ class FitGroup(list, Fit):
         self._selected_fit_index = v
 
     @property
-    def data(self):
+    def data(
+            self
+    ) -> mfm.experiments.data.DataCurve:
         return self.selected_fit.data
 
     @data.setter
@@ -283,7 +339,9 @@ class FitGroup(list, Fit):
         self.selected_fit.data = v
 
     @property
-    def model(self) -> mfm.models.model.Model:
+    def model(
+            self
+    ) -> mfm.models.model.Model:
         return self.selected_fit.model
 
     @model.setter
@@ -294,15 +352,21 @@ class FitGroup(list, Fit):
         self.selected_fit.model = v
 
     @property
-    def weighted_residuals(self) -> List[np.array]:
+    def weighted_residuals(
+            self
+    ) -> List[np.array]:
         return [self.selected_fit.weighted_residuals]
 
     @property
-    def chi2r(self) -> float:
+    def chi2r(
+            self
+    ) -> float:
         return self.selected_fit.chi2r
 
     @property
-    def fit_range(self) -> Tuple[int, int]:
+    def fit_range(
+            self
+    ) -> Tuple[int, int]:
         return self.xmin, self.xmax
 
     @fit_range.setter
@@ -315,7 +379,9 @@ class FitGroup(list, Fit):
         self.xmin, self.xmax = v
 
     @property
-    def xmin(self) -> int:
+    def xmin(
+            self
+    ) -> int:
         return self.selected_fit.xmin
 
     @xmin.setter
@@ -328,7 +394,9 @@ class FitGroup(list, Fit):
         self._xmin = v
 
     @property
-    def xmax(self) -> int:
+    def xmax(
+            self
+    ) -> int:
         return self.selected_fit.xmax
 
     @xmax.setter
@@ -340,25 +408,37 @@ class FitGroup(list, Fit):
             f.xmax = v
         self._xmax = v
 
-    def update(self) -> None:
+    def update(
+            self
+    ) -> None:
         self.global_model.update()
         for p in self.plots:
             p.update_all()
 
-    def run(self, **kwargs):
-        if kwargs.get('local_first', mfm.settings.cs_settings['fitting']['global']['fit_local_first']):
+    def run(
+            self,
+            local_first: bool = None,
+            **kwargs
+    ):
+        if local_first is None:
+            local_first = mfm.settings.cs_settings['fitting']['global']['fit_local_first']
+
+        if local_first:
             for f in self:
                 f.run(**kwargs)
         for f in self:
             f.model.find_parameters()
+
         self.global_model.find_parameters()
-        fitting_options = mfm.settings.cs_settings['fitting']['leastsq']
+        fitting_options = mfm.settings.fitting['leastsq']
         bounds = [pi.bounds for pi in self.global_model.parameters]
-        self.results = leastsqbound(get_wres,
-                                    self.global_model.parameter_values,
-                                    args=(self.global_model, ),
-                                    bounds=bounds,
-                                    **fitting_options)
+        self.results = leastsqbound(
+            get_wres,
+            self.global_model.parameter_values,
+            args=(self.global_model,),
+            bounds=bounds,
+            **fitting_options
+        )
         self.update()
         self.global_model.finalize()
 
@@ -370,6 +450,7 @@ class FitGroup(list, Fit):
     ):
         self._selected_fit_index = 0
         self._fits = list()
+
         for d in data:
             model_kw = kwargs.get('model_kw', {})
             fit = Fit(
@@ -403,13 +484,13 @@ class FitGroup(list, Fit):
 def sample_fit(
         fit: Fit,
         filename: str,
+        method: str = 'emcee',
+        steps: int = 1000,
+        thin: int = 1,
+        chi2max: float = float("inf"),
+        n_runs: int = 10,
         **kwargs
 ):
-    method = kwargs.pop('method', 'emcee')
-    steps = kwargs.pop('steps', 1000)
-    thin = kwargs.pop('thin', 1)
-    chi2max = kwargs.pop('chi2max', np.inf)
-    n_runs = kwargs.pop('n_runs', 10)
     # save initial parameter values
     pv = fit.model.parameter_values
     for i_run in range(n_runs):
@@ -482,6 +563,7 @@ def approx_grad(
 
 def covariance_matrix(
         fit: mfm.fitting.fit.Fit,
+        epsilon: float = mfm.eps,
         **kwargs
 ) -> Tuple[np.array, List[int]]:
     """Calculate the covariance matrix
@@ -492,9 +574,7 @@ def covariance_matrix(
     have a partial derivative deviating from zero.
     """
     model = fit.model
-    epsilon = kwargs.get('epsilon', mfm.eps)
     xk = np.array(model.parameter_values)
-
     fi_v, partial_derivatives = approx_grad(
         xk,
         fit,
@@ -507,6 +587,7 @@ def covariance_matrix(
     for k, pd_k in enumerate(partial_derivatives):
         if (pd_k**2).sum() > 0.0:
             important_parameters.append(k)
+
     pdi = partial_derivatives[important_parameters]
     n_important_parameters = len(important_parameters)
     m = np.zeros((n_important_parameters, n_important_parameters), float)
@@ -596,7 +677,7 @@ def lnprob(
     """
     lp = lnprior(parameter_values, fit, **kwargs)
     if not np.isfinite(lp):
-        return -np.inf
+        return float("-inf")
     else:
         chi2 = get_chi2(parameter_values, model=fit.model, reduced=False)
         lnlike = -0.5 * chi2 if chi2 < chi2max else -np.inf

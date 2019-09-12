@@ -500,7 +500,7 @@ def spc2hdf(
     if verbose:
         print("===========================================")
         print(" Reading routine - %s" % name)
-    spcs = []
+    spcs = list()
 
     fn_ending = filetypes[routine_name]['ending']
     for i, spc_file in enumerate(fnmatch.filter(spc_files, "*" + fn_ending)):

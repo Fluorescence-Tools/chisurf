@@ -6,7 +6,12 @@ import mfm
 from mfm.structure.structure import Structure
 
 
-def av_distance_distribution(structure, donor_av_parameter, acceptor_av_parameter, **kwargs):
+def av_distance_distribution(
+        structure: mfm.structure.structure.Structure,
+        donor_av_parameter,
+        acceptor_av_parameter,
+        **kwargs
+):
     """Get the distance distribution between two accessible volumes defined by the parameters passed as
     an argument.
 
@@ -31,7 +36,12 @@ import mfm.structure    >>> structure = mfm.structure.Structure('./sample_data/m
     return amplitude, distance
 
 
-def av_fret_rate_spectrum(structure, donor_av_parameter, acceptor_av_parameter, **kwargs):
+def av_fret_rate_spectrum(
+        structure: mfm.structure.structure.Structure,
+        donor_av_parameter,
+        acceptor_av_parameter,
+        **kwargs
+):
     """Get FRET-rate spectrum for a given donor and acceptor attachment point
 
     :param donor_av_parameter: parameters describing the donor accessible volume (see AV-class)
@@ -62,7 +72,11 @@ import mfm.structure    >>> structure = mfm.structure.Structure('./sample_data/m
         return rs
 
 
-def av_lifetime_spectrum(structure, donor_lifetime_spectrum, **kwargs):
+def av_lifetime_spectrum(
+        structure: mfm.structure.structure.Structure,
+        donor_lifetime_spectrum: np.array,
+        **kwargs
+):
     """Get an interleaved lifetime spectrum for a given donor lifetime spectrum given two definitions of
     a donor and an acceptor accessible volume. This function uses :py:meth:`~Structure.av_fret_rate_spectrum`
     to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the lifetime spectrum.
@@ -87,7 +101,12 @@ import mfm.structure    >>> structure = mfm.structure.Structure('./sample_data/m
     return mfm.fluorescence.rates2lifetimes(rs, donor_lifetime_spectrum, x_donly=donly)
 
 
-def av_filtered_fcs_weights(structure, lifetime_filters, time_axis, **kwargs):
+def av_filtered_fcs_weights(
+        structure: mfm.structure.structure.Structure,
+        lifetime_filters,
+        time_axis: np.array,
+        **kwargs
+):
     """Passes all ``kwargs`` parameters to the method in :py:meth:`~Structure.av_lifetime_spectrum` and
     calculates the filters weights for a set of lifetime filters ``lifetime_filters``.
 
@@ -183,7 +202,7 @@ import mfm.structure    >>> structure_1 = mfm.structure.Structure('./sample_data
     return weights
 
 
-class LabeledStructure(Structure):
+class LabeledStructure(mfm.structure.structure.Structure):
     """This class is handles FRET-labeled molecule (so far only a single donor, and single acceptor) and provides
     convenience Attributes which only apply to FRET-samples
 
@@ -221,11 +240,16 @@ class LabeledStructure(Structure):
     """
 
     @property
-    def donor_lifetime_spectrum(self):
+    def donor_lifetime_spectrum(
+            self
+    ) -> np.array:
         return self._ds
 
     @donor_lifetime_spectrum.setter
-    def donor_lifetime_spectrum(self, v):
+    def donor_lifetime_spectrum(
+            self,
+            v: np.array
+    ):
         self._ds = v
 
     @property
@@ -311,8 +335,12 @@ class LabeledStructure(Structure):
         self._acceptor_av = mfm.fluorescence.fps.ACV(self, **self._acceptor_description)
         self._donor_av = mfm.fluorescence.fps.ACV(self, **self._donor_description)
 
-    def __init__(self, *args, **kwargs):
-        Structure.__init__(self, *args, **kwargs)
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super(LabeledStructure, self).__init__(*args, **kwargs)
         self._donor_description = kwargs.get('donor_av_parameter', None)
         self._acceptor_description = kwargs.get('acceptor_av_parameter', None)
         self._ds = np.array([1.0, 4.0], dtype=np.float64)
