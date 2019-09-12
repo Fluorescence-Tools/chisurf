@@ -79,9 +79,7 @@ class FittingParameter(mfm.parameter.Parameter):
             d: dict
     ) -> None:
         mfm.parameter.Parameter.from_dict(self, d)
-        self._lb, self._ub = d['lb'], d['ub']
         self._fixed = d['fixed']
-        self._bounds_on = d['bounds_on']
         self._error_estimate = d['error_estimate']
 
     def scan(
