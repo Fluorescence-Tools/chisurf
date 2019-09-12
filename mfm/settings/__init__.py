@@ -16,7 +16,7 @@ settings_file = os.path.join(
 cs_settings = yaml.safe_load(
     open(settings_file)
 )
-
+gui = cs_settings['gui']
 colors = yaml.safe_load(
     open(
         os.path.join(
@@ -29,7 +29,7 @@ colors = yaml.safe_load(
 style_sheet_file = os.path.join(
     package_directory,
     './gui/styles/',
-    cs_settings['gui']['style_sheet']
+    gui['style_sheet']
 )
 structure_data = json.load(
     open(os.path.join(
@@ -38,12 +38,11 @@ structure_data = json.load(
     )
 )
 
-pyqtgraph_settings = cs_settings['gui']['plot']["pyqtgraph"]
+pyqtgraph_settings = gui['plot']["pyqtgraph"]
 for setting in pyqtgraph_settings:
-    pg.setConfigOption(setting, cs_settings['gui']['plot']['pyqtgraph'][setting])
+    pg.setConfigOption(setting, gui['plot']['pyqtgraph'][setting])
 
 verbose = cs_settings['verbose']
-gui = cs_settings['gui']
 
 __version__ = cs_settings['version']
 __name__ = cs_settings['name']

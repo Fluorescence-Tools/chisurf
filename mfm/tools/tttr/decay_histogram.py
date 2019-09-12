@@ -16,7 +16,7 @@ import mfm.experiments.data
 from mfm.fluorescence.tcspc import weights
 from mfm.io.widgets import SpcFileWidget
 
-plot_settings = mfm.settings.cs_settings['gui']['plot']
+plot_settings = mfm.settings.gui['plot']
 pyqtgraph_settings = plot_settings["pyqtgraph"]
 lw = plot_settings['line_width']
 
