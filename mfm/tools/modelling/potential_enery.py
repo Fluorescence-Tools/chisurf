@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import os
+import sys
 
-from qtpy import  QtCore, QtGui, QtWidgets, uic
+from qtpy import QtCore, QtWidgets, uic
+import qdarkstyle
 
 import mdtraj
 import mfm
-from mfm.structure.potential import potentials
+from mfm.structure.potential import potentials, potentialDict
 from mfm.structure.trajectory import TrajectoryFile, Universe
 
 
@@ -25,7 +27,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         )
         self._trajectory_file = ''
         self.potential_weight = 1.0
-        self.energies = []
+        self.energies = list()
 
         self.verbose = kwargs.get('verbose', mfm.verbose)
         self.structure = kwargs.get('structure', None)
@@ -37,7 +39,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         self.tableWidget.cellDoubleClicked [int, int].connect(self.onRemovePotential)
         self.actionCurrent_potential_changed.triggered.connect(self.onSelectedPotentialChanged)
 
-        self.comboBox_2.addItems(list(potentials.potentialDict.keys()))
+        self.comboBox_2.addItems(list(potentialDict))
 
     @property
     def potential_number(self):
@@ -45,11 +47,14 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
 
     @property
     def potential_name(self):
-        return list(potentials.potentialDict.keys())[self.potential_number]
+        return list(potentialDict)[self.potential_number]
 
     def onProcessTrajectory(self):
         print("onProcessTrajectory")
-        energy_file = str(QtWidgets.QFileDialog.getSaveFileName(self, 'Save energies', '.txt', 'CSV-name file (*.txt)'))[0]
+        energy_file = mfm.widgets.save_file(
+            'Save energies',
+            'CSV-name file (*.txt)'
+        )
 
         s = 'FrameNbr\t'
         for p in self.universe.potentials:
@@ -75,7 +80,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         layout = self.verticalLayout_2
         for i in range(layout.count()):
             layout.itemAt(i).widget().close()
-        self.potential = potentials.potentialDict[self.potential_name](structure=self.structure, parent=self)
+        self.potential = potentialDict[self.potential_name](structure=self.structure, parent=self)
         layout.addWidget(self.potential)
 
     def onAddPotential(self):
@@ -109,8 +114,10 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         return int(self.spinBox.value())
 
     def onLoadTrajectory(self):
-        #self.trajectory_file = str(QtGui.QFileDialog.getOpenFileName(self, 'Open Trajectory-File', '.h5', 'H5-Trajectory-Files (*.h5)'))
-        filename = mfm.widgets.get_filename('Open Trajectory-File', 'H5-Trajectory-Files (*.h5)')
+        filename = mfm.widgets.get_filename(
+            'Open Trajectory-File',
+            'H5-Trajectory-Files (*.h5)'
+        )
         self.trajectory_file = filename
         self.lineEdit.setText(self.trajectory_file)
 
@@ -118,3 +125,10 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
     def energy(self):
         return self.universe.getEnergy(self.structure)
 
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    win = PotentialEnergyWidget()
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    win.show()
+    sys.exit(app.exec_())

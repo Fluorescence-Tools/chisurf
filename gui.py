@@ -274,8 +274,8 @@ class Main(QtWidgets.QMainWindow):
         self.trajectory_rot_trans = mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget()
         self.actionRotate_Translate_trajectory.triggered.connect(self.trajectory_rot_trans.show)
 
-        #self.calculate_potential = mfm.tools.PotentialEnergyWidget()
-        #self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
+        self.calculate_potential = mfm.tools.PotentialEnergyWidget()
+        self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
 
         self.pdb2label = mfm.tools.fps_json.pdb2labeling.PDB2Label()
         self.actionPDB2Label.triggered.connect(self.pdb2label.show)
@@ -377,7 +377,7 @@ class Main(QtWidgets.QMainWindow):
             name='Global-Fit',
             experiment=global_fit
         )
-        global_fit.add_model(mfm.models.global_model.GlobalFitModelWidget)
+        global_fit.add_model(mfm.models.global_model.globalfit.GlobalFitModelWidget)
         global_fit.add_setup(global_setup)
         mfm.experiment.append(global_fit)
 
@@ -485,9 +485,7 @@ class Main(QtWidgets.QMainWindow):
 
 
 if __name__ == "__main__":
-
     app = QtWidgets.QApplication(sys.argv)
-
     mfm.console = mfm.widgets.QIPythonWidget()
     win = Main(parent=None)
     mfm.console.history_widget = win.plainTextEditHistory

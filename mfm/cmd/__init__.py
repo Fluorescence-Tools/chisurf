@@ -13,21 +13,18 @@ from . import tcspc
 
 def add_fit(
         dataset_indices: List[int] = None,
-        model_name: str = None,
-        **kwargs
+        model_name: str = None
 ):
     cs = mfm.cs
 
     if dataset_indices is None:
         dataset_indices = [cs.dataset_selector.selected_curve_index]
-    data_sets = [
-        cs.dataset_selector.datasets[i] for i in dataset_indices
-    ]
-
     if model_name is None:
         model_name = cs.current_model_name
 
+    data_sets = [cs.dataset_selector.datasets[i] for i in dataset_indices]
     model_names = data_sets[0].experiment.model_names
+
     model_class = data_sets[0].experiment.model_classes[0]
     for model_idx, mn in enumerate(model_names):
         if mn == model_name:
@@ -36,24 +33,29 @@ def add_fit(
 
     for data_set in data_sets:
         if data_set.experiment is data_sets[0].experiment:
+
+            # Make sure the data set is a DataGroup
             if not isinstance(data_set, mfm.experiments.data.DataGroup):
                 data_set = mfm.experiments.data.ExperimentDataCurveGroup(data_set)
-            fit = mfm.fitting.fit.FitGroup(
+
+            # Create the fit
+            fit_group = mfm.fitting.fit.FitGroup(
                 data=data_set,
                 model_class=model_class
             )
+            mfm.fits.append(fit_group)
 
-            mfm.fits.append(fit)
-            fit_control_widget = mfm.fitting.fitting_widgets.FittingControllerWidget(fit)
-
+            fit_control_widget = mfm.fitting.fitting_widgets.FittingControllerWidget(fit_group)
             cs.modelLayout.addWidget(fit_control_widget)
-            for f in fit:
-                cs.modelLayout.addWidget(f.model)
+            for fit in fit_group:
+                cs.modelLayout.addWidget(fit.model)
+
             fit_window = mfm.fitting.fitting_widgets.FitSubWindow(
-                fit,
+                fit_group,
                 control_layout=cs.plotOptionsLayout,
                 fit_widget=fit_control_widget
             )
+
             fit_window = cs.mdiarea.addSubWindow(fit_window)
             mfm.fit_windows.append(fit_window)
             fit_window.show()
@@ -77,7 +79,7 @@ def save_fit():
     document.add_heading('Fit-Results', level=1)
     for i, f in enumerate(fs):
 
-        fit_control_widget.selected_fit = i
+        fit_control_widget.selected_fit_index = i
         filename = mfm.base.clean_string(os.path.basename(f.data.name)[0])
         document.add_paragraph(
             filename, style='ListNumber'

@@ -5,9 +5,6 @@ from math import floor, pow
 import numba as nb
 import numpy as np
 
-weightCalculations = ['Koppel', 'none']
-correlationMethods = ['tp']
-
 
 @nb.jit(nopython=True, nogil=True)
 def correlate(

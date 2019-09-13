@@ -16,6 +16,6 @@ from . import model
 from . import parse
 from . import fcs
 from . import tcspc
-from . import global_model
+from mfm.models.global_model import globalfit
 
 

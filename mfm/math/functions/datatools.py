@@ -215,7 +215,12 @@ if __name__ == "__main__":
     p.show()    
 
 
-def binCount(data, binWidth=16, binMin=0, binMax=4095):
+def binCount(
+        data,
+        binWidth: int = 16,
+        binMin: int = 0,
+        binMax: int = 4095
+):
     """
     Count number of occurrences of each value in array of non-negative ints.
 
@@ -240,7 +245,10 @@ def binCount(data, binWidth=16, binMin=0, binMax=4095):
 
 
 @nb.jit(nopython=True, nogil=True)
-def minmax(x, ignore_zero=False):
+def minmax(
+        x,
+        ignore_zero: bool = False
+):
     """Minimum and maximum value of an array
 
     :param x: array or list
@@ -259,7 +267,11 @@ def minmax(x, ignore_zero=False):
 
 
 @nb.jit(nopython=True, nogil=True)
-def histogram1D(values, weights, n_bins=101):
+def histogram1D(
+        values,
+        weights,
+        n_bins: int = 101
+):
     """ Creates a histogram of the values the histogram is linear between the minium and the maximum value
 
     :param values: the values to be binned
@@ -310,7 +322,11 @@ def discriminate(values, weights, discriminator):
     return v_r[:n_v], w_r[:n_v]
 
 
-def histogram1D(pos, data=None, nbPt=100):
+def histogram1D(
+        pos,
+        data=None,
+        nbPt: int = 100
+):
     """
     Calculates histogram of pos weighted by weights.
 
