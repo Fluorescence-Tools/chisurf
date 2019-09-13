@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Tuple
 
 import numpy as np
 
@@ -11,7 +12,7 @@ def scan_parameter(
         scan_range=(None, None),
         rel_range: float = 0.2,
         n_steps: int = 30
-):
+) -> Tuple[np.array, np.array]:
     """Performs a chi2-scan for the parameter
 
     :param fit: the fit of type 'mfm.fitting.Fit'
@@ -34,8 +35,8 @@ def scan_parameter(
     parameter_value = varied_parameter.value
     p_min, p_max = scan_range
     if p_min is None or p_max is None:
-        p_min = parameter_value * (1. - rel_range[0])
-        p_max = parameter_value * (1. + rel_range[1])
+        p_min = parameter_value * (1. - rel_range)
+        p_max = parameter_value * (1. + rel_range)
     parameter_array = np.linspace(p_min, p_max, n_steps)
 
     for i, p in enumerate(parameter_array):

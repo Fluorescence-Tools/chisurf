@@ -9,17 +9,21 @@ from mfm.models.parse import ParseModelWidget
 
 
 class ParseFCSWidget(ParseModelWidget):
+    """
+    fcs
+    """
 
     plot_classes = [
         (
             plots.LinePlot, {
-                'd_scalex': 'log',
-                'd_scaley': 'lin',
-                'r_scalex': 'log',
+                'scale_x': 'lin',
+                'd_scaley': 'log',
                 'r_scaley': 'lin',
-                'x_label': 'tc [ms]',
-                'y_label': 'G(tc)'
-            }),
+                'x_label': 'x',
+                'y_label': 'y',
+                'plot_irf': True
+            }
+        ),
         (plots.FitInfo, {}),
         (plots.ParameterScanPlot, {})
     ]
@@ -44,4 +48,5 @@ class ParseFCSWidget(ParseModelWidget):
             model_file=fn,
             **kwargs
         )
+
 

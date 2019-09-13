@@ -288,7 +288,6 @@ class Fit(mfm.base.Base):
         """Perform a chi2-scan on a parameter of the fit.
 
         :param parameter_name: the parameter name
-        :param rel_range:
         :param kwargs:
         :return: an list containing arrays of the chi2 and the parameter-values
         """
@@ -464,7 +463,7 @@ class FitGroup(list, Fit):
         list.__init__(self, self._fits)
         Fit.__init__(self, data=data, **kwargs)
 
-        self.global_model = mfm.models.global_model.GlobalFitModel(self)
+        self.global_model = mfm.models.global_model.globalfit.GlobalFitModel(self)
         self.global_model.fits = self._fits
 
     def __str__(self):

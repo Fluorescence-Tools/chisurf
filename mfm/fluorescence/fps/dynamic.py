@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import Tuple
 
 from collections import OrderedDict
 import time
@@ -45,7 +44,6 @@ def simulate_trajectory(
 
     http://labs.physics.berkeley.edu/mediawiki/index.php/Simulating_Brownian_Motion
     """
-    # (pos - (ng - 1) / 2) * dg, accepted, n_accepted, n_rejected
     return _fps.simulate_traj_point(d, ds, dg, t_max, t_step, diffusion_coefficient, slow_fact)
 
 
@@ -77,9 +75,9 @@ class DiffusionSimulationParameter(ParameterGroup):
 
     def __init__(
             self,
-            t_max=2000,
-            t_step=0.05,
-            n_simulations=4
+            t_max: float = 2000,
+            t_step: float = 0.05,
+            n_simulations: int = 4
     ):
         super(DiffusionSimulationParameter, self).__init__()
         self._t_max = FittingParameter(value=t_max, name='t-max')
@@ -529,7 +527,7 @@ class ProteinQuenching(ParameterGroup):
 
     @property
     def all_atoms_quench(self):
-        return self._all_atoms_quench
+        self._all_atoms_quench
 
     @all_atoms_quench.setter
     def all_atoms_quench(self, v):

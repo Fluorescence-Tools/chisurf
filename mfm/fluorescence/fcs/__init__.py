@@ -6,6 +6,10 @@ from . import filtered
 
 from mfm import settings
 
+weightCalculations = ['Koppel', 'none']
+correlationMethods = ['tp']
+
+
 def weights(
         times: np.array,
         correlation: np.array,

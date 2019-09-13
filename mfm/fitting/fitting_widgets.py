@@ -53,7 +53,7 @@ class FittingControllerWidget(QtWidgets.QWidget):
         self.fit = fit
         self.curve_select = mfm.widgets.curve.ExperimentalDataSelector(
             parent=None,
-            fit=self.fit,
+            fit=fit,
             change_event=self.change_dataset,
             setup=fit.data.setup.__class__
         )
@@ -73,12 +73,15 @@ class FittingControllerWidget(QtWidgets.QWidget):
         # after decoration it should also call the update of
         # the fitting widget
         def wrapper(f):
+
             def update_new(*args, **kwargs):
                 f(*args, **kwargs)
                 self.update(*args)
+
                 self.fit.model.update_plots(
                     only_fit_range=True
                 )
+
             return update_new
 
         self.fit.run = wrapper(self.fit.run)

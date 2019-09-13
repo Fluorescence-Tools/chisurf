@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
-import mfm.fluorescence.general
+
 
 def da_a0_to_ad(
         times: np.array,
@@ -28,8 +28,7 @@ def da_a0_to_ad(
         decay_DA,
         a0,
         mode='full'
-    )[:len(da)]
-    #ds = da.sum()
+    )[:len(decay_DA)]
     return ad
 
 
