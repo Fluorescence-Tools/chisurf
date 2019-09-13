@@ -9,9 +9,6 @@ from mfm.models.parse import ParseModelWidget
 
 
 class ParseFCSWidget(ParseModelWidget):
-    """
-    fcs
-    """
 
     plot_classes = [
         (
@@ -30,14 +27,21 @@ class ParseFCSWidget(ParseModelWidget):
     def __init__(
             self,
             fit: mfm.fitting.fit.FitGroup,
+            icon: QtGui.QIcon = None,
             **kwargs
     ):
-        self.icon = QtGui.QIcon(":/icons/icons/fcs.png")
-        fn = os.path.join(mfm.package_directory, 'settings/models.yaml')
-        ParseModelWidget.__init__(self, fit, model_file=fn, **kwargs)
-        super(ParseFCSWidget, self).__init__(
-            fit,
-            **kwargs
+        if icon is None:
+            icon = QtGui.QIcon(":/icons/icons/fcs.png")
+        self.icon = icon
+
+        fn = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'models.yaml'
         )
 
+        super(ParseFCSWidget, self).__init__(
+            fit=fit,
+            model_file=fn,
+            **kwargs
+        )
 

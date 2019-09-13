@@ -191,13 +191,13 @@ class MyMessageBox(QtWidgets.QMessageBox):
         self.setMaximumWidth(16777215)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
-        textEdit = self.findChild(QtWidgets.QTextEdit)
-        if textEdit != None :
-            textEdit.setMinimumHeight(0)
-            textEdit.setMaximumHeight(16777215)
-            textEdit.setMinimumWidth(0)
-            textEdit.setMaximumWidth(16777215)
-            textEdit.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        text_edit = self.findChild(QtWidgets.QTextEdit)
+        if text_edit is not None:
+            text_edit.setMinimumHeight(0)
+            text_edit.setMaximumHeight(16777215)
+            text_edit.setMinimumWidth(0)
+            text_edit.setMaximumWidth(16777215)
+            text_edit.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
         return result
 
