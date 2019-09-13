@@ -48,10 +48,9 @@ class Universe(object):
     def getEnergy(
             self,
             structure: mfm.structure.structure.Structure = None
-    ):
-        if isinstance(structure, mfm.structure.Structure):
-            for p in self.potentials:
-                p.structure = structure
+    ) -> float:
+        for p in self.potentials:
+            p.structure = structure
         Es = self.getEnergies()
         E = Es.sum()
         return E
@@ -60,10 +59,8 @@ class Universe(object):
             self,
             structure: mfm.structure.structure.Structure = None
     ):
-        if isinstance(structure, mfm.structure.structure.Structure):
-            for p in self.potentials:
-                p.structure = structure
-
+        for p in self.potentials:
+            p.structure = structure
         scales = np.array(self.scaling)
         Es = np.array([pot.getEnergy() for pot in self.potentials])
         return scales * Es
