@@ -179,7 +179,10 @@ class Lifetime(FittingParameterGroup):
             link: FittingParameter = None,
             **kwargs
     ):
-        super(Lifetime, self).__init__(**kwargs)
+        super(Lifetime, self).__init__(
+            name=name,
+            **kwargs
+        )
         self.short = short
         self._abs_amplitudes = absolute_amplitudes
         self._normalize_amplitudes = normalize_amplitudes
@@ -339,17 +342,33 @@ class DecayModel(ModelCurve):
 
     def update_model(
             self,
+            verbose: bool = None,
+            scatter: float = None,
+            background: float = None,
+            shift_bg_with_irf: bool = None,
+            background_curve: mfm.experiments.data.Curve = None,
             **kwargs
     ):
-        verbose = kwargs.get('verbose', mfm.verbose)
-        scatter = kwargs.get('scatter', self.generic.scatter)
-        background = kwargs.get('background', self.generic.background)
-        shift_bg_with_irf = kwargs.get('shift_bg_with_irf', mfm.settings.cs_settings['tcspc']['shift_bg_with_irf'])
+        if verbose is None:
+            verbose = mfm.verbose
+        if scatter is None:
+            scatter = self.generic.scatter
+        if background is None:
+            background = self.generic.background
+        if shift_bg_with_irf is None:
+            shift_bg_with_irf = mfm.settings.cs_settings['tcspc']['shift_bg_with_irf']
+        if background_curve is None:
+            background_curve = self.generic.background_curve
+
         decay = self.decay
-        convolved_decay = self.convolve.convolve(decay, verbose=verbose, scatter=scatter, mode='full')
+        convolved_decay = self.convolve.convolve(
+            decay,
+            verbose=verbose,
+            scatter=scatter,
+            mode='full'
+        )
 
         # Calculate background curve from reference measurement
-        background_curve = kwargs.get('background_curve', self.generic.background_curve)
         if isinstance(background_curve, mfm.curve.Curve):
             if shift_bg_with_irf:
                 background_curve = background_curve << self.convolve.timeshift
@@ -361,7 +380,10 @@ class DecayModel(ModelCurve):
             convolved_decay *= self.generic.n_ph_fl
             decay += bg_y
 
-        convolved_decay = self.convolve.scale(convolved_decay, bg=self.generic.background)
+        convolved_decay = self.convolve.scale(
+            convolved_decay,
+            bg=self.generic.background
+        )
         self.corrections.pileup(convolved_decay)
         convolved_decay += background
         convolved_decay = self.corrections.linearize(convolved_decay)

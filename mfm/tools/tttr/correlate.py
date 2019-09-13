@@ -97,7 +97,10 @@ class CorrelateTTTR(QtWidgets.QWidget):
         self.verticalLayout.addWidget(w)
         w.show()
 
-        self.cs = mfm.widgets.curve.ExperimentalDataSelector(get_data_curves=self.get_data_curves, click_close=False)
+        self.cs = mfm.widgets.curve.ExperimentalDataSelector(
+            get_data_sets=self.get_data_curves,
+            click_close=False
+        )
         self.verticalLayout_6.addWidget(self.cs)
 
         w.correlator.pushButton_3.clicked.connect(w.correlator.correlator_thread.start)
@@ -257,8 +260,8 @@ class CorrelatorWidget(QtWidgets.QWidget):
         self.correlator_thread = Correlator(self)
 
         # fill widgets
-        self.comboBox_3.addItems(mfm.fluorescence.fcs.weightCalculations)
-        self.comboBox_2.addItems(mfm.fluorescence.fcs.correlationMethods)
+        self.comboBox_3.addItems(mfm.fluorescence.fcs.correlate.weightCalculations)
+        self.comboBox_2.addItems(mfm.fluorescence.fcs.correlate.correlationMethods)
         self.checkBox.setChecked(True)
         self.checkBox.setChecked(False)
         self.progressBar.setValue(0.0)

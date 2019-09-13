@@ -288,6 +288,7 @@ class Fit(mfm.base.Base):
         """Perform a chi2-scan on a parameter of the fit.
 
         :param parameter_name: the parameter name
+        :param rel_range:
         :param kwargs:
         :return: an list containing arrays of the chi2 and the parameter-values
         """
@@ -644,13 +645,14 @@ def get_chi2(
 def lnprior(
         parameter_values: List[float],
         fit: mfm.fitting.fit.Fit,
-        **kwargs
+        bounds: List[Tuple[float, float]] = None
 ) -> float:
     """The probability determined by the prior which is given by the bounds of the models parameters.
     If the models parameters leave the bounds, the ln of the probability is minus infinity otherwise it
     is zero.
     """
-    bounds = kwargs.get('bounds', fit.model.parameter_bounds)
+    if bounds is None:
+        bounds = fit.model.parameter_bounds
     for (bound, value) in zip(bounds, parameter_values):
         lb, ub = bound
         if lb is not None:
@@ -663,9 +665,9 @@ def lnprior(
 
 
 def lnprob(
-        parameter_values,
+        parameter_values: List[float],
         fit: Fit,
-        chi2max: float = np.inf,
+        chi2max: float = float("inf"),
         **kwargs
 ) -> float:
     """

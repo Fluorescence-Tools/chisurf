@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Tuple
 
 import numpy as np
 import numba as nb
@@ -12,7 +13,10 @@ def vm_rt_to_vv_vh(
         g_factor: float = 1.0,
         l1: float = 0.0,
         l2: float = 0.0
-):
+) -> Tuple[
+    np.array,
+    np.array
+]:
     """Get the VV, VH decay from an VM decay given an anisotropy spectrum
 
     :param times: time-axis
@@ -29,14 +33,14 @@ def vm_rt_to_vv_vh(
     >>> import numpy as np
     >>> import mfm.fluorescence
     >>> import pylab as p
-    >>> t = np.linspace(0, 50, 4096)
+    >>> times = np.linspace(0, 50, 4096)
     >>> lifetime_spectrum = np.array([1., 4], dtype=np.float)
-    >>> t, vm = mfm.fluorescence.general.calculate_fluorescence_decay(lifetime_spectrum=lifetime_spectrum, time_axis=t)
+    >>> times, vm = mfm.fluorescence.general.calculate_fluorescence_decay(lifetime_spectrum=lifetime_spectrum, time_axis=times)
     >>> anisotropy_spectrum = [0.1, 8.0, 0.38-0.1, 10.0]
-    >>> vv, vh = vm_rt_to_vv_vh(t, vm, anisotropy_spectrum)
-    >>> p.plot(t, vv)
-    >>> p.plot(t, vh)
-    >>> p.plot(t, vm)
+    >>> vv, vh = vm_rt_to_vv_vh(times, vm, anisotropy_spectrum)
+    >>> p.plot(times, vv)
+    >>> p.plot(times, vh)
+    >>> p.plot(times, vm)
     >>> p.show()
 
     """

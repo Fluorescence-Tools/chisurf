@@ -14,4 +14,5 @@ from . import structure
 from . import trajectory
 from . import protein
 from . import potential
+from . import labeled_structure
 

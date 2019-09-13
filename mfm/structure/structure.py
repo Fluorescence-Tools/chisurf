@@ -21,7 +21,7 @@ cartesian_formats = ['i4', '|S1', 'i4', '|S5', 'i4', '|S5', '|S1', '3f8', 'f4int
 clusterCriteria = ['maxclust', 'inconsistent', 'distance']
 
 
-class Structure(object):
+class Structure(mfm.base.Base):
     """
 
     Attributes
@@ -89,7 +89,7 @@ class Structure(object):
 
     def __init__(
             self,
-            p_object,
+            p_object=None,
             *args,
             auto_update: bool = False,
             filename: str = None,
@@ -118,7 +118,10 @@ class Structure(object):
             self._filename = None
         else:
             try:
-                self._atoms = self.io.read(p_object, verbose=self.verbose)
+                self._atoms = self.io.read(
+                    p_object,
+                    verbose=self.verbose
+                )
                 self.filename = p_object
             except:
                 self._atoms = self.io.fetch_pdb(p_object)
@@ -314,7 +317,10 @@ class Structure(object):
         aw['coord'] = self.xyz
         self.io.write_pdb(filename, aw, append_model=append_model, append_coordinates=append_coordinates)
 
-    def update(self):
+    def update(
+            self,
+            **kwargs
+    ):
         pass
 
     def __str__(self):
@@ -390,11 +396,11 @@ def rmsd(
     --------
 
     >>> import mfm
-    >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
-    >>> s1 = t[10]
+    >>> times = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+    >>> s1 = times[10]
     >>> s1
     <mfm.structure.structure.Structure at 0x135f3ad0>
-    >>> s2 = t[0]
+    >>> s2 = times[0]
     >>> s2
     <mfm.structure.structure.Structure at 0x1348fbb0>
     >>> rmsd(s1, s2)
@@ -460,8 +466,8 @@ def find_best(target, reference, atom_indices=None):
     --------
 
     >>> import mfm
-    >>> t = t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
-    >>> find_best(t.mdtraj, t.mdtraj[2])
+    >>> times = times = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+    >>> find_best(times.mdtraj, times.mdtraj[2])
     (2, <mdtraj.Trajectory with 1 frames, 2495 atoms, 164 residues, without unitcells at 0x13570b30>)
     """
     rmsds = md.rmsd(target, reference, atom_indices=atom_indices)
@@ -660,8 +666,8 @@ def average(
     --------
 
     >>> import mfm
-    >>> t = mfm.structure.trajectory.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
-    >>> avg = t.average
+    >>> times = mfm.structure.trajectory.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+    >>> avg = times.average
     >>> avg
     <mfm.structure.structure.Structure at 0x117ff770>
     >>> avg.labeling_file

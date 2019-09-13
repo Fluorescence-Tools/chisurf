@@ -14,7 +14,7 @@ from mfm.experiments.reader import ExperimentReader
 
 class FCS(ExperimentReader, CsvWidget):
 
-    name = "fcs"
+    name = "FCS"
 
     def __init__(
             self,
@@ -24,7 +24,11 @@ class FCS(ExperimentReader, CsvWidget):
             skiprows: int = 0,
             **kwargs
     ):
-        super(FCS, self).__init__(*args, **kwargs)
+        super(FCS, self).__init__(
+            *args,
+            **kwargs
+        )
+
         self.experiment = experiment
         self.hide()
         self.skiprows = skiprows

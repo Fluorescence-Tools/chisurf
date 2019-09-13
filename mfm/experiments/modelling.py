@@ -5,7 +5,6 @@ from qtpy import QtWidgets
 import mfm
 import mfm.widgets.pdb.pdb
 from mfm.experiments.reader import ExperimentReader
-from mfm.io.widgets import PDBLoad
 
 
 class LoadStructure(ExperimentReader, QtWidgets.QWidget):
@@ -15,7 +14,7 @@ class LoadStructure(ExperimentReader, QtWidgets.QWidget):
 
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
-        self.pdbWidget = PDBLoad(self)
+        self.pdbWidget = mfm.io.widgets.PDBLoad(self)
         self.layout.addWidget(self.pdbWidget)
 
     def read(

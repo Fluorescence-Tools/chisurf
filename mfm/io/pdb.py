@@ -36,18 +36,18 @@ import mfm
 import mfm.common as common
 
 keys_formats = [
-    ('i4', 'i'),
-    ('|U1', 'chain'),
-    ('i4', 'res_id'),
-    ('|U5', 'res_name'),
-    ('i4', 'atom_id'),
-    ('|U5', 'atom_name'),
-    ('|U1', 'element'),
-    ('3f8', 'coord'),
-    ('f8', 'charge'),
-    ('f8', 'radius'),
-    ('f8', 'bfactor'),
-    ('f8', 'mass')
+    ('i', 'i4'),
+    ('chain', '|U1'),
+    ('res_id', 'i4'),
+    ('res_name', '|U5'),
+    ('atom_id', 'i4'),
+    ('atom_name', '|U5'),
+    ('element', '|U1'),
+    ('coord', '3f8'),
+    ('charge', 'f8'),
+    ('radius', 'f8'),
+    ('bfactor', 'f8'),
+    ('mass', 'f8')
 ]
 
 keys, formats = list(zip(*keys_formats))

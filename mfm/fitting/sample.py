@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Tuple
 
 import emcee
 import numpy as np
@@ -46,7 +47,7 @@ def walk_mcmc(
             np.copyto(state_prev, state_next)
             np.copyto(lnp_prev, lnp_next)
             n_accepted += 1
-    return [lnp, parameter]
+    return lnp, parameter
 
 
 def sample_emcee(
@@ -56,7 +57,10 @@ def sample_emcee(
         thin: int = 10,
         std: float = 1e-4,
         chi2max: float = np.inf
-):
+) -> Tuple[
+    np.array,
+    np.array
+]:
     """Sample the parameter space by emcee using a number of 'walkers'
 
     :param fit: the fit to be samples
@@ -83,4 +87,5 @@ def sample_emcee(
     pos = [fit.model.parameter_values + std * np.random.randn(ndim) for i in range(nwalkers)]
     sampler.run_mcmc(pos, steps, thin=thin)
     chi2 = -2. * sampler.flatlnprobability / float(model.n_points - model.n_free - 1.0)
+
     return chi2, sampler.flatchain

@@ -459,7 +459,7 @@ var cssHelper = function () {
 
 	var parseEmbedded = function (el, s) {
 	    return;
-	    // This function doesn't work because of a bug in IE, where innerHTML gives us parsed css instead of raw literal.
+	    // This function doesn'times work because of a bug in IE, where innerHTML gives us parsed css instead of raw literal.
 		el.cssHelperText = sanitize(s || el.innerHTML);
 		return parseText(el);
 	};
@@ -719,7 +719,7 @@ domReady(function enableCssMediaQueries() {
 		var el = document.createElement('div');
 		el.id = id;
 		var style = cssHelper.addStyle('@media all and (width) { #' + id +
-			' { width: 1px !important; } }', [], false); // false means don't parse this temp style
+			' { width: 1px !important; } }', [], false); // false means don'times parse this temp style
 		document.body.appendChild(el);
 		var ret = el.offsetWidth === 1;
 		style.parentNode.removeChild(style);
@@ -1070,7 +1070,7 @@ domReady(function enableCssMediaQueries() {
 	}, 5000);
 
 	return function () {
-		if (!nativeSupport()) { // if browser doesn't support media queries
+		if (!nativeSupport()) { // if browser doesn'times support media queries
 			cssHelper.addListener('newStyleParsed', function (el) {
 				testStylesheet(el.cssHelperParsed.stylesheet);
 			});
