@@ -13,7 +13,6 @@ from mfm.structure.potential.potentials import HPotential, GoPotential, MJPotent
 class HPotentialWidget(HPotential, QtWidgets.QWidget):
 
     def __init__(self, structure, parent, cutoff_ca=8.0, cutoff_hbond=3.0):
-        super(HPotentialWidget, self).__init__(structure, cutoff_ca, cutoff_hbond)
         QtWidgets.QWidget.__init__(self, parent=parent)
         uic.loadUi(
             os.path.join(
@@ -29,6 +28,7 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
         self.actionLoad_potential.triggered.connect(self.onOpenFile)
         self.cutoffCA = cutoff_ca
         self.cutoffH = cutoff_hbond
+        super(HPotentialWidget, self).__init__(structure, cutoff_ca, cutoff_hbond)
 
     def onOpenFile(self):
         filename = mfm.widgets.get_filename('Open File', 'CSV data files (*.csv)')

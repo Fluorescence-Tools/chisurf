@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import os
 import json
 import math
 from collections import OrderedDict
 import copy
+
 import numpy as np
 import numba as nb
 import scipy.stats
@@ -288,7 +290,7 @@ class Ramachandran(object):
     def __init__(
             self,
             structure: mfm.structure.structure.Structure,
-            filename='./mfm/structure/potential/database/rama_ala_pro_gly.npy'
+            filename: str = './mfm/structure/potential/database/rama_ala_pro_gly.npy'
     ):
         """
         :param filename:
@@ -308,7 +310,10 @@ class Ramachandran(object):
 
 class Electrostatics(object):
 
-    def __init__(self, structure, type='gb'):
+    def __init__(
+            self,
+            structure,
+            type: str = 'gb'):
         """
         :param type:
         :return:
@@ -328,13 +333,16 @@ class Electrostatics(object):
 
 class LJ_Bead(object):
 
-    def __init__(self, structure):
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure
+    ):
         self.structure = structure
         self.name = 'LJ_bead'
 
     def getEnergy(self) -> float:
         structure = self.structure
-        self.E = lennard_jones_calpha(self.structure.atoms['coord'])
+        self.E = lennard_jones_calpha(structure.atoms['coord'])
         return self.E
 
 
@@ -342,11 +350,21 @@ class HPotential(object):
 
     name = 'H-Bond'
 
-    def __init__(self, structure, cutoff_ca=8.0, cutoff_hbond=3.0, **kwargs):
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure,
+            cutoff_ca: float = 8.0,
+            cutoff_hbond: float = 3.0,
+            **kwargs
+    ):
         self.structure = structure
         self.cutoffH = cutoff_hbond
         self.cutoffCA = cutoff_ca
-        self.potential = kwargs.get('potential', './mfm/structure/potential/database/hb.csv')
+        self.potential = kwargs.get(
+            'potential',
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), './database/hb.csv')
+        )
         self.oh = kwargs.get('oh', 1.0)
         self.on = kwargs.get('on', 1.0)
         self.cn = kwargs.get('cn', 1.0)
