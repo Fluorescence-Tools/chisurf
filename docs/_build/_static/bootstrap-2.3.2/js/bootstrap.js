@@ -691,7 +691,7 @@
 
       if (!isActive) {
         if ('ontouchstart' in document.documentElement) {
-          // if mobile we we use a backdrop because click events don't delegate
+          // if mobile we we use a backdrop because click events don'times delegate
           $('<div class="dropdown-backdrop"/>').insertBefore($(this)).on('click', clearMenus)
         }
         $parent.toggleClass('open')
@@ -864,7 +864,7 @@
           var transition = $.support.transition && that.$element.hasClass('fade')
 
           if (!that.$element.parent().length) {
-            that.$element.appendTo(document.body) //don't move modals dom position
+            that.$element.appendTo(document.body) //don'times move modals dom position
           }
 
           that.$element.show()

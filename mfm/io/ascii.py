@@ -17,8 +17,7 @@ def save_xy(
         header_string: str = None
 ) -> None:
     """
-    Saves data x, y to file in format (csv). x and y
-    should have the same lenght.
+    Saves data x, y to file in format (csv). x and y should have the same length.
 
     :param filename: string
         Target filename
@@ -79,7 +78,7 @@ class Csv(object):
             self,
             *args,
             filename: str = '',
-            colspecs: Tuple[int, int, int] = None,
+            colspecs: List[int] = None,
             use_header: bool = False,
             x_on: bool = True,
             y_on: bool = True,
@@ -139,7 +138,7 @@ class Csv(object):
         self.verbose = verbose
 
         if colspecs is None:
-            colspecs = [15, 17, 17]
+            colspecs = (15, 17, 17)
         self.colspecs = colspecs
 
         self._data = kwargs.get('data', None)

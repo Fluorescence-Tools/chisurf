@@ -3,11 +3,12 @@ from __future__ import annotations
 import numpy as np
 
 import mfm
+import mfm.fluorescence
 from mfm.structure.structure import Structure
 
 
 def av_distance_distribution(
-        structure: mfm.structure.structure.Structure,
+        structure: Structure,
         donor_av_parameter,
         acceptor_av_parameter,
         **kwargs
@@ -37,7 +38,7 @@ import mfm.structure    >>> structure = mfm.structure.Structure('./sample_data/m
 
 
 def av_fret_rate_spectrum(
-        structure: mfm.structure.structure.Structure,
+        structure: Structure,
         donor_av_parameter,
         acceptor_av_parameter,
         **kwargs
@@ -65,7 +66,7 @@ import mfm.structure    >>> structure = mfm.structure.Structure('./sample_data/m
 
     p_rda, rda = av_distance_distribution(structure, donor_av_parameter=donor_av_parameter, acceptor_av_parameter=acceptor_av_parameter, **kwargs)
     d = np.array([[p_rda, rda]])
-    rs = mfm.fluorescence.distribution2rates(d, tau0=tau0, kappa2=kappa2, R0=forster_radius)
+    rs = mfm.fluorescence.general.distribution2rates(d, tau0=tau0, kappa2=kappa2, R0=forster_radius)
     if interleave:
         return np.hstack(rs).ravel([-1])
     else:
@@ -73,7 +74,7 @@ import mfm.structure    >>> structure = mfm.structure.Structure('./sample_data/m
 
 
 def av_lifetime_spectrum(
-        structure: mfm.structure.structure.Structure,
+        structure: Structure,
         donor_lifetime_spectrum: np.array,
         **kwargs
 ):
@@ -98,11 +99,11 @@ import mfm.structure    >>> structure = mfm.structure.Structure('./sample_data/m
     """
     donly = kwargs.get('donly', 0.0)
     rs = av_fret_rate_spectrum(structure, **kwargs)
-    return mfm.fluorescence.rates2lifetimes(rs, donor_lifetime_spectrum, x_donly=donly)
+    return mfm.fluorescence.general.rates2lifetimes(rs, donor_lifetime_spectrum, x_donly=donly)
 
 
 def av_filtered_fcs_weights(
-        structure: mfm.structure.structure.Structure,
+        structure: Structure,
         lifetime_filters,
         time_axis: np.array,
         **kwargs
@@ -120,8 +121,10 @@ def av_filtered_fcs_weights(
     for these structures. Using these structures fluorescence filters are constructed and the weight of an
     intermediate structure with respect to the two lifetime filters is calculated.
 
-    >>> from mfm.fluorescence.fcs.fcs import calc_lifetime_filter
+    >>> from mfm.fluorescence.fcs.filtered import calc_lifetime_filter
     >>> from mfm.fluorescence.general import calculate_fluorescence_decay
+    >>> from mfm.structure.structure import Structure
+    >>> from mfm.structure.trajectory import TrajectoryFile
 
     Define where the donor and the acceptor are attached to
 
@@ -131,9 +134,9 @@ def av_filtered_fcs_weights(
 
     Load a set of structures
 
-import mfm.structure    >>> structure_closed = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
-    >>> structure_open = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_open.pdb')
-    >>> structure_middle = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_middle.pdb')
+    >>> structure_closed = Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+    >>> structure_open = Structure('./sample_data/modelling/pdb_files/hGBP1_open.pdb')
+    >>> structure_middle = Structure('./sample_data/modelling/pdb_files/hGBP1_middle.pdb')
     >>> ls_closed = av_lifetime_spectrum(structure_closed, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)
     >>> ls_open = av_lifetime_spectrum(structure_open, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)
     >>> ls_middle = av_lifetime_spectrum(structure_middle, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)
@@ -142,10 +145,10 @@ import mfm.structure    >>> structure_closed = mfm.structure.Structure('./sample
     filters. The calculated fluorescence lifetime filters are later used to determine weights of the structures.
     These weights could can later be auto-correlated and cross-correlated.
 
-    >>> t = np.linspace(0, 20, num=50)
-    >>> t, d_closed = calculate_fluorescence_decay(ls_closed, time_axis=t)
-    >>> t, d_open = calculate_fluorescence_decay(ls_open, time_axis=t)
-    >>> t, d_middle = calculate_fluorescence_decay(ls_middle, time_axis=t)
+    >>> times = np.linspace(0, 20, num=50)
+    >>> times, d_closed = calculate_fluorescence_decay(ls_closed, time_axis=times)
+    >>> times, d_open = calculate_fluorescence_decay(ls_open, time_axis=times)
+    >>> times, d_middle = calculate_fluorescence_decay(ls_middle, time_axis=times)
     >>> fraction_closed = 0.33
     >>> fraction_middle = 0.33
     >>> fraction_open = 0.33
@@ -155,11 +158,11 @@ import mfm.structure    >>> structure_closed = mfm.structure.Structure('./sample
 
     The fluorescence lifetime filter correctly identifies the open, semi-open and closed conformation.
 
-    >>> av_filtered_fcs_weights(structure_closed, lifetime_filters=lf, time_axis=t, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)
+    >>> av_filtered_fcs_weights(structure_closed, lifetime_filters=lf, time_axis=times, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)
     array([ 0.97265041,  0.03609784, -0.00888892])
-    >>> av_filtered_fcs_weights(structure_middle, lifetime_filters=lf, time_axis=t, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)
+    >>> av_filtered_fcs_weights(structure_middle, lifetime_filters=lf, time_axis=times, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)
     array([ 0.01791727,  0.97488255,  0.00726864])
-    >>> av_filtered_fcs_weights(structure_open, lifetime_filters=lf, time_axis=t, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)
+    >>> av_filtered_fcs_weights(structure_open, lifetime_filters=lf, time_axis=times, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)
     array([ 0.00831755, -0.01459384,  1.00628016])
 
 
@@ -168,12 +171,14 @@ import mfm.structure    >>> structure_closed = mfm.structure.Structure('./sample
     models of these limiting states fluorescence decays are calculated and the filters are determined.
 
 import mfm.structure    >>> structure_1 = mfm.structure.Structure('./sample_data/modelling/trajectory/h5-file/steps/0_major.pdb')
-    >>> structure_2 = mfm.structure.Structure('./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb')
+
+    >>> structure_1 = Structure('./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb')
+    >>> structure_2 = Structure('./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb')
     >>> ls_1 = av_lifetime_spectrum(structure_1, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)
     >>> ls_2 = av_lifetime_spectrum(structure_2, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)
-    >>> t = np.linspace(0, 20, num=50)
-    >>> t, d_1 = calculate_fluorescence_decay(ls_1, time_axis=t)
-    >>> t, d_2 = calculate_fluorescence_decay(ls_2, time_axis=t)
+    >>> times = np.linspace(0, 20, num=50)
+    >>> times, d_1 = calculate_fluorescence_decay(ls_1, time_axis=times)
+    >>> times, d_2 = calculate_fluorescence_decay(ls_2, time_axis=times)
     >>> fraction_1 = 0.66
     >>> fraction_2 = 0.33
     >>> experimental_decay = fraction_1 * d_1 + fraction_2 * d_2
@@ -183,10 +188,10 @@ import mfm.structure    >>> structure_1 = mfm.structure.Structure('./sample_data
     Now the trajectory of the transition using the crystal-structure as intermediate state was simulated. Using this
     trajectory weights are associated to each frame which correspond to the first and the second state.
 
-    >>> traj = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r')
+    >>> traj = TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r')
     >>> d_av = {'residue_seq_number': 12, 'atom_name': 'CB'}  # the resiude numbers are slightly shifted
     >>> a_av = {'residue_seq_number': 567, 'atom_name': 'CB'}
-    >>> weights = [av_filtered_fcs_weights(s, lifetime_filters=lf, time_axis=t, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av) for s in traj]
+    >>> weights = [av_filtered_fcs_weights(s, lifetime_filters=lf, time_axis=times, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av) for s in traj]
 
     Using the weights which were calculated for each frame species auto-correlations and species cross-correlations
     can be calculated.
@@ -202,7 +207,7 @@ import mfm.structure    >>> structure_1 = mfm.structure.Structure('./sample_data
     return weights
 
 
-class LabeledStructure(mfm.structure.structure.Structure):
+class LabeledStructure(Structure):
     """This class is handles FRET-labeled molecule (so far only a single donor, and single acceptor) and provides
     convenience Attributes which only apply to FRET-samples
 
@@ -231,7 +236,7 @@ class LabeledStructure(mfm.structure.structure.Structure):
     --------
 
     >>> import mfm
-    >>> structure = mfm.structure.LabeledStructure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True)
+    >>> structure = mfm.structure.structure.LabeledStructure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True)
     >>> donor_description = {'residue_seq_number': 18, 'atom_name': 'CB'}
     >>> acceptor_description = {'residue_seq_number': 577, 'atom_name': 'CB'}
     >>> structure.donor_label = donor_description

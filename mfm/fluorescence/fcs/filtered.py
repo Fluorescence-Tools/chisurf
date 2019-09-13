@@ -17,9 +17,9 @@ def calc_lifetime_filter(
 
     >>> lifetime_1 = 1.0
     >>> lifetime_2 = 3.0
-    >>> t = np.linspace(0, 20, num=10)
-    >>> d1 = np.exp(-t/lifetime_1)
-    >>> d2 = np.exp(-t/lifetime_2)
+    >>> times = np.linspace(0, 20, num=10)
+    >>> d1 = np.exp(-times/lifetime_1)
+    >>> d2 = np.exp(-times/lifetime_2)
     >>> decays = [d1, d2]
     >>> w1 = 0.8  # weight of first component
     >>> experimental_decay = w1 * d1 + (1.0 - w1) * d2
@@ -43,13 +43,13 @@ def calc_lifetime_filter(
     >>> acceptor_description = {'residue_seq_number': 496, 'atom_name': 'CB'}
     >>> donor_lifetime_spectrum = np.array([1., 4.])
     >>> lifetime_spectrum = structure.av_lifetime_spectrum(donor_lifetime_spectrum, donor_description, acceptor_description)
-    >>> t, decay_1 = calculate_fluorescence_decay(lifetime_spectrum, time_axis)
+    >>> times, decay_1 = calculate_fluorescence_decay(lifetime_spectrum, time_axis)
 
     >>> donor_description = {'residue_seq_number': 18, 'atom_name': 'CB'}
     >>> acceptor_description = {'residue_seq_number': 577, 'atom_name': 'CB'}
     >>> donor_lifetime_spectrum = np.array([1., 4.])
     >>> lifetime_spectrum = structure.av_lifetime_spectrum(donor_lifetime_spectrum, donor_description, acceptor_description)
-    >>> t, decay_2 = calculate_fluorescence_decay(lifetime_spectrum, time_axis)
+    >>> times, decay_2 = calculate_fluorescence_decay(lifetime_spectrum, time_axis)
 
     >>> fraction_1 = 0.1
     >>> experimental_decay = fraction_1 * decay_1 + (1. - fraction_1) * decay_2

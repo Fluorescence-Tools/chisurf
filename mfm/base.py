@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import json
-import re
-from typing import ValuesView
+from collections.abc import Iterable
 
 import yaml
 from slugify import slugify
@@ -190,15 +189,14 @@ class Base(object):
         auf
         """
         super(Base, self).__init__()
+
         if len(args) > 0 and isinstance(args[0], dict):
             kwargs = args[0]
 
         # clean up the keys (no spaces etc)
         d = dict()
-        regex_pattern = r'[^-a-z0-9_]+'
         for key in kwargs:
-            r = slugify(key, separator='_', regex_pattern=regex_pattern)
-            d[r] = kwargs[key]
+            d[clean_string(key)] = kwargs[key]
 
         # Assign the the names and set standard values
         name = kwargs.pop('name', self.__class__.__name__)
@@ -217,14 +215,13 @@ def clean_string(
     :param s:
     :return:
     """
-    s = re.sub('[^0-9a-zA-Z_]', '', s)
-    # Remove leading characters until we find a letter or underscore
-    s = re.sub('^[^a-zA-Z_]+', '', s)
-    return s
+    regex_pattern = r'[^-a-z0-9_]+'
+    r = slugify(s, separator='_', regex_pattern=regex_pattern)
+    return r
 
 
 def find_objects(
-        search_list: ValuesView,
+        search_list: Iterable,
         object_type,
         remove_double: bool = True):
     """Traverse a list recursively a an return all objects of type `object_type` as
@@ -239,7 +236,7 @@ def find_objects(
     for value in search_list:
         if isinstance(value, object_type):
             re.append(value)
-        elif isinstance(value, list):
+        elif isinstance(value, Iterable):
             re += find_objects(value, object_type)
     if remove_double:
         return list(set(re))

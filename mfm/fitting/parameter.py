@@ -2,6 +2,8 @@ from __future__ import annotations
 from typing import Tuple, List
 import deprecation
 
+from qtpy import QtWidgets
+
 import numpy as np
 
 import mfm
@@ -54,11 +56,16 @@ class FittingParameter(mfm.parameter.Parameter):
                 return float('nan')
 
     @error_estimate.setter
-    def error_estimate(self, v):
+    def error_estimate(
+            self,
+            v: float
+    ):
         self._error_estimate = v
 
     @property
-    def fixed(self) -> bool:
+    def fixed(
+            self
+    ) -> bool:
         return self._fixed
 
     @fixed.setter
@@ -87,7 +94,10 @@ class FittingParameter(mfm.parameter.Parameter):
             fit: mfm.fitting.fit.Fit,
             **kwargs
     ) -> None:
-        fit.chi2_scan(self.name, **kwargs)
+        fit.chi2_scan(
+            self.name,
+            **kwargs
+        )
 
     def __str__(self):
         s = "\nVariable\n"
@@ -108,18 +118,23 @@ class FittingParameter(mfm.parameter.Parameter):
     )
     def make_widget(
             self,
+            text: str = None,
+            layout: QtWidgets.QLayout = None,
+            decimals: int = 4,
             **kwargs
     ) -> mfm.fitting.fitting_widgets.FittingParameterWidget:
-        text = kwargs.get('name', self.name)
-        layout = kwargs.get('layout', None)
+        if text is None:
+            text = self.name
         update_widget = kwargs.get('update_widget', lambda x: x)
-        decimals = kwargs.get('decimals', self.decimals)
         kw = {
             'name': text,
             'decimals': decimals,
             'layout': layout
         }
-        widget = mfm.fitting.fitting_widgets.FittingParameterWidget(self, **kw)
+        widget = mfm.fitting.fitting_widgets.FittingParameterWidget(
+            self,
+            **kw
+        )
         self.controller = widget
         return widget
 
@@ -164,10 +179,12 @@ class GlobalFittingParameter(FittingParameter):
         self.formula = formula
 
 
-class FittingParameterGroup(mfm.base.Base):
+class FittingParameterGroup(mfm.parameter.ParameterGroup):
 
     @property
-    def parameters_all(self) -> List[mfm.fitting.parameter.FittingParameter]:
+    def parameters_all(
+            self
+    ) -> List[mfm.fitting.parameter.FittingParameter]:
         return self._parameters
 
     @property

@@ -20,8 +20,8 @@ class ParseFCSWidget(ParseModelWidget):
                 'd_scaley': 'lin',
                 'r_scalex': 'log',
                 'r_scaley': 'lin',
-                'x_label': 't [ms]',
-                'y_label': 'G(t)'
+                'x_label': 'tc [ms]',
+                'y_label': 'G(tc)'
             }),
         (plots.FitInfo, {}),
         (plots.ParameterScanPlot, {})

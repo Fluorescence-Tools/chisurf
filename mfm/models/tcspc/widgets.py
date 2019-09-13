@@ -95,7 +95,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
     def change_irf(self):
         idx = self.irf_select.selected_curve_index
         name = self.irf_select.curve_name
-        mfm.run("mfm.cmd.change_irf(%s, '%s')" % (idx, name))
+        mfm.run("mfm.cmd.tcspc.change_irf(%s, '%s')" % (idx, name))
         self.fwhm = self._irf.fwhm
 
     @property
@@ -593,34 +593,46 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
     def onNormalizeAmplitudes(self):
         mfm.run(
-            "mfm.cmd.normalize_lifetime_amplitudes(%s)",
+            "mfm.cmd.tcspc.normalize_lifetime_amplitudes(%s)",
             self.normalize_amplitude.isChecked()
         )
 
     def onAbsoluteAmplitudes(self):
         mfm.run(
-            "mfm.cmd.absolute_amplitudes(%s)",
+            "mfm.cmd.tcspc.absolute_amplitudes(%s)",
             self.absolute_amplitude.isChecked()
         )
 
     def onAddLifetime(self):
-        mfm.run(
-            "mfm.cmd.add_lifetime('%s')" % self.name
-        )
+        mfm.run("mfm.cmd.tcspc.add_lifetime('%s')" % self.name)
 
     def onRemoveLifetime(self):
-        mfm.run(
-            "mfm.cmd.remove_lifetime('%s')" % self.name
-        )
+        mfm.run("mfm.cmd.tcspc.remove_lifetime('%s')" % self.name)
 
     def append(self, *args, **kwargs):
         Lifetime.append(self, *args, **kwargs)
-        l = QtWidgets.QHBoxLayout()
-        a = self._amplitudes[-1].make_widget(layout=l)
-        t = self._lifetimes[-1].make_widget(layout=l)
-        self._amp_widgets.append(a)
-        self._lifetime_widgets.append(t)
-        self.lh.addLayout(l)
+        layout = QtWidgets.QHBoxLayout()
+        #amplitude = self._amplitudes[-1].make_widget(layout=layout)
+        #self._amp_widgets.append(amplitude)
+
+        self._amp_widgets.append(
+            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+                self._amplitudes[-1],
+                layout=layout
+            )
+        )
+
+        #lifetime = self._lifetimes[-1].make_widget(layout=layout)
+        #self._lifetime_widgets.append(lifetime)
+
+        self._lifetime_widgets.append(
+            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+                self._lifetimes[-1],
+                layout=layout
+            )
+        )
+
+        self.lh.addLayout(layout)
 
     def pop(self):
         self._amplitudes.pop()

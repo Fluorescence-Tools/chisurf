@@ -11,7 +11,12 @@ import mfm.experiments.data
 class ExperimentReader(mfm.base.Base):
 
     def __init__(self, *args, **kwargs):
-        super(ExperimentReader, self).__init__(self, *args, **kwargs)
+
+        super(ExperimentReader, self).__init__(
+            self,
+            *args,
+            **kwargs
+        )
 
     @staticmethod
     @abstractmethod

@@ -3,6 +3,7 @@ from typing import List, TypeVar, Tuple
 
 import weakref
 import numpy as np
+import uuid
 
 import mfm
 import mfm.base
@@ -100,6 +101,17 @@ class Parameter(
             else:
                 dead.add(ref)
         cls._instances -= dead
+
+    @property
+    def unique_identifier(self):
+        return self._unique_identifier
+
+    @unique_identifier.setter
+    def unique_identifier(
+            self,
+            v: str
+    ):
+        self._unique_identifier = v
 
     def __add__(
             self,
@@ -213,16 +225,23 @@ class Parameter(
             lb: float = float("-inf"),
             ub: float = float("inf"),
             bounds_on: bool = False,
+            unique_identifier: str = None,
             *args,
             **kwargs
     ):
-        super(Parameter, self).__init__(*args, **kwargs)
+        super(Parameter, self).__init__(
+            *args,
+            **kwargs
+        )
         self._bounds_on = bounds_on
         self._instances.add(weakref.ref(self))
         self._link = link
         self._value = value
         self._lb = lb
         self._ub = ub
+        if unique_identifier is None:
+            unique_identifier = uuid.uuid4()
+        self._unique_identifier = unique_identifier
 
     def to_dict(self) -> dict:
         v = super(Parameter, self).to_dict()
@@ -230,6 +249,7 @@ class Parameter(
         v['decimals'] = self.decimals
         v['lb'], v['ub'] = self.bounds
         v['bounds_on'] = self.bounds_on
+        v['unique_identifier'] = self.unique_identifier
         return v
 
     def from_dict(
@@ -240,25 +260,50 @@ class Parameter(
         self._value = v['value']
         self._lb, self._ub = v['lb'], v['ub']
         self._bounds_on = v['bounds_on']
+        self._unique_identifier = v['unique_identifier']
 
 
 class ParameterGroup(mfm.base.Base):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
             *args,
             **kwargs
     ):
-        super(ParameterGroup, self).__init__(*args, **kwargs)
-        self.fit = fit
-        self._activeRuns = list()
-        self._chi2 = list()
+        super(ParameterGroup, self).__init__(
+            *args,
+            **kwargs
+        )
         self._parameter = list()
-        self.parameter_names = list()
+
+    def append(
+            self,
+            parameter: Parameter
+    ):
+        self._parameter.append(parameter)
+
+    @property
+    def parameters(
+            self
+    ) -> List[Parameter]:
+        return self._parameter
+
+    @property
+    def parameter_names(
+            self
+    ) -> List[str]:
+        return [p.name for p in self.parameters]
+
+    @property
+    def values(self) -> np.array:
+        try:
+            re = np.vstack(self._parameter)
+            re = np.column_stack((re, self.chi2s))
+            return re.T
+        except ValueError:
+            return np.array([[0], [0]]).T
 
     def clear(self):
-        self._chi2 = list()
         self._parameter = list()
 
     def save_txt(
@@ -276,18 +321,5 @@ class ParameterGroup(mfm.base.Base):
                     s += "%.5f%s" % (p, sep)
                 s += "\n"
             fp.write(s)
-
-    @property
-    def values(self) -> np.array:
-        try:
-            re = np.vstack(self._parameter)
-            re = np.column_stack((re, self.chi2s))
-            return re.T
-        except ValueError:
-            return np.array([[0], [0]]).T
-
-    @property
-    def chi2s(self) -> np.array:
-        return np.hstack(self._chi2)
 
 

@@ -319,10 +319,18 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         # This needs to move to the QtApplication or it needs to be
         # independent as new Widgets can only be created once a QApplication has been created
-
-        structure_setups = [
-            mfm.experiments.modelling.PDBLoad()
-        ]
+        structure = mfm.experiments.experiment.Experiment('Modelling')
+        structure.add_setups(
+            [
+                mfm.experiments.modelling.LoadStructure()
+            ]
+        )
+        structure.add_models(
+            [
+                mfm.models.tcspc.widgets.LifetimeModelWidget
+            ]
+        )
+        mfm.experiment.append(structure)
 
         tcspc = mfm.experiments.experiment.Experiment('TCSPC')
         tcspc.add_setups(
@@ -477,7 +485,9 @@ class Main(QtWidgets.QMainWindow):
 
 
 if __name__ == "__main__":
+
     app = QtWidgets.QApplication(sys.argv)
+
     mfm.console = mfm.widgets.QIPythonWidget()
     win = Main(parent=None)
     mfm.console.history_widget = win.plainTextEditHistory

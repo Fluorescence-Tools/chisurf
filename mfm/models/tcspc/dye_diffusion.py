@@ -406,13 +406,13 @@ class DyeDecay(Model, Curve):
         """
         Returns two arrays one is the time axis and one is the photon-counts
 
-        :param kwargs: Takes *nbins* the number of histogram bins, *range* the histogram range, *decay_mode* the
+        :param kwargs: Takes *nbins* the number of histogram bins, *tac_range* the histogram tac_range, *decay_mode* the
         way the histogram gets generated: either *photon* or *curve*. If this parameter is *photon* the histogram
         will be the result of the simulation of a Poisson process. If it is *curve* the sum of smooth curves will be
         returned based on several integrated quenched rates.
         """
         nbins = kwargs.get('nbins', self.nTAC)
-        r = kwargs.get('range', (0, 50, 0.0141))
+        r = kwargs.get('tac_range', (0, 50, 0.0141))
 
         if decay_mode is None:
             decay_mode = self.decay_mode
@@ -434,7 +434,7 @@ class DyeDecay(Model, Curve):
             filename: str = 'hist.txt',
             verbose: bool = False,
             nbins:int = 4096,
-            range: Tuple[int, int] = (0, 50)
+            tac_range: Tuple[int, int] = (0, 50)
     ):
         """
         Used to save the current histogram to a file.
@@ -442,10 +442,10 @@ class DyeDecay(Model, Curve):
         :param filename:
         :param verbose:
         :param nbins:
-        :param range:
+        :param tac_range:
         """
         verbose = verbose or self.verbose
-        x, y = self.get_histogram(nbins, range)
+        x, y = self.get_histogram(nbins, tac_range)
         mfm.io.ascii.save_xy(filename, x, y, verbose, header_string="time\tcount")
 
     def update_decay_curve(self):

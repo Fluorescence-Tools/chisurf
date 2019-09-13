@@ -274,11 +274,15 @@ class DataCurve(Curve, ExperimentalData):
 class DataGroup(list, Base):
 
     @property
-    def names(self) -> List[str]:
+    def names(
+            self
+    ) -> List[str]:
         return [d.name for d in self]
 
     @property
-    def current_dataset(self):
+    def current_dataset(
+            self
+    ) -> mfm.experiments.data.Data:
         return self[self._current_dataset]
 
     @current_dataset.setter
@@ -289,7 +293,9 @@ class DataGroup(list, Base):
         self._current_dataset = i
 
     @property
-    def name(self) -> str:
+    def name(
+            self
+    ) -> str:
         try:
             return self._kw['name']
         except KeyError:
@@ -299,7 +305,7 @@ class DataGroup(list, Base):
     def name(
             self,
             v: str
-    ):
+    ) -> None:
         self._name = v
 
     def append(
@@ -313,12 +319,13 @@ class DataGroup(list, Base):
                 if isinstance(d, ExperimentalData):
                     list.append(self, d)
 
-    def __init__(self, *args, **kwargs):
-        if isinstance(args[0], list):
-            list.__init__(self, args[0])
-        else:
-            list.__init__(self, [args[0]])
-        Base.__init__(self, *args[1:], **kwargs)
+    def __init__(
+            self,
+            seq: List,
+            *args,
+            **kwargs
+    ):
+        super(DataGroup, self).__init__(seq)
         self._current_dataset = 0
 
 
@@ -386,7 +393,7 @@ class ExperimentDataGroup(DataGroup):
         pass
 
     def __init__(self, *args, **kwargs):
-        DataGroup.__init__(self, *args, **kwargs)
+        super(ExperimentDataGroup, self).__init__(*args, **kwargs)
 
 
 class ExperimentDataCurveGroup(ExperimentDataGroup, DataCurveGroup):
@@ -400,5 +407,6 @@ class ExperimentDataCurveGroup(ExperimentDataGroup, DataCurveGroup):
         pass
 
     def __init__(self, *args, **kwargs):
-        ExperimentDataGroup.__init__(self, *args, **kwargs)
-        DataCurveGroup.__init__(self, *args, **kwargs)
+        super(ExperimentDataCurveGroup, self).__init__(
+            *args, **kwargs
+        )

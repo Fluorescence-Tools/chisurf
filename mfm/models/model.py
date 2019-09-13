@@ -105,7 +105,8 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
         pass
 
     def update(
-            self
+            self,
+            **kwargs
     ) -> None:
         #self.find_parameters()
         self.update_model()

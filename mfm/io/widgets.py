@@ -192,6 +192,7 @@ class SpcFileWidget(QtWidgets.QWidget):
 
 
 class PDBLoad(QtWidgets.QWidget):
+
     def __init__(self, parent=None):
         super(PDBLoad, self).__init__()
         uic.loadUi(

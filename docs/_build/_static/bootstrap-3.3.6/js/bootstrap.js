@@ -811,7 +811,7 @@ if (typeof (window.$jqTheme || window.jQuery) === 'undefined') {
 
     if (!isActive) {
       if ('ontouchstart' in document.documentElement && !$parent.closest('.navbar-nav').length) {
-        // if mobile we use a backdrop because click events don't delegate
+        // if mobile we use a backdrop because click events don'times delegate
         $(document.createElement('div'))
           .addClass('dropdown-backdrop')
           .insertAfter($(this))
@@ -987,7 +987,7 @@ if (typeof (window.$jqTheme || window.jQuery) === 'undefined') {
       var transition = $.support.transition && that.$element.hasClass('fade');
 
       if (!that.$element.parent().length) {
-        that.$element.appendTo(that.$body) // don't move modals dom position
+        that.$element.appendTo(that.$body) // don'times move modals dom position
       }
 
       that.$element
@@ -1510,7 +1510,7 @@ if (typeof (window.$jqTheme || window.jQuery) === 'undefined') {
     offset.top  += marginTop;
     offset.left += marginLeft;
 
-    // $.fn.offset doesn't round pixel values
+    // $.fn.offset doesn'times round pixel values
     // so we use setOffset directly with our own function B-0
     $.offset.setOffset($tip[0], $.extend({
       using: function (props) {
@@ -1815,7 +1815,7 @@ if (typeof (window.$jqTheme || window.jQuery) === 'undefined') {
 
     $tip.removeClass('fade top bottom left right in');
 
-    // IE8 doesn't accept hiding via the `:empty` pseudo selector, we have to do
+    // IE8 doesn'times accept hiding via the `:empty` pseudo selector, we have to do
     // this manually by checking the contents.
     if (!$tip.find('.popover-title').html()) $tip.find('.popover-title').hide()
   };

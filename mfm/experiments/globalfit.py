@@ -19,7 +19,7 @@ class GlobalFitSetup(ExperimentReader, QtWidgets.QWidget):
     ):
         super(GlobalFitSetup, self).__init__(*args, **kwargs)
         self.hide()
-        self.parameterWidgets = []
+        self.parameterWidgets = list()
         self.parameters = OrderedDict([])
 
     @staticmethod

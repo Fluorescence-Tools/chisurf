@@ -20,7 +20,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
 
     @property
     def datasets(self) -> List[mfm.experiments.data.ExperimentalData]:
-        data_curves = self.get_curves(curve_type=self.curve_type)
+        data_curves = self.get_data_sets(curve_type=self.curve_type)
         if self.setup is not None:
             return [
                 d for d in data_curves if isinstance(d.setup, self.setup)
@@ -104,7 +104,11 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         menu.addAction("Ungroup").triggered.connect(self.onUnGroupDatasets)
         menu.exec_(event.globalPos())
 
-    def update(self, *args, **kwargs):
+    def update(
+            self,
+            *args,
+            **kwargs
+    ):
         super(ExperimentalDataSelector, self).update(*args, **kwargs)
         try:
             window_title = self.fit.name
@@ -130,21 +134,33 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
                     i2.setToolTip(0, fn)
                     i2.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 
-    def dragMoveEvent(self, event):
+    def dragMoveEvent(
+            self,
+            event
+    ):
         super(ExperimentalDataSelector, self).dragMoveEvent(event)
 
-    def dragEnterEvent(self, event):
+    def dragEnterEvent(
+            self,
+            event
+    ):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
         else:
             super(ExperimentalDataSelector, self).dragEnterEvent(event)
 
-    def startDrag(self, supportedActions):
+    def startDrag(
+            self,
+            supportedActions
+    ):
         #self.drag_item = self.currentItem()
         #self.drag_row = self.row(self.drag_item)
         super(ExperimentalDataSelector, self).startDrag(supportedActions)
 
-    def dropEvent(self, event):
+    def dropEvent(
+            self,
+            event
+    ):
         if event.mimeData().hasUrls():
             paths = [str(url.toLocalFile()) for url in event.mimeData().urls()]
             paths.sort()
@@ -176,18 +192,22 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
             click_close: bool = True,
             change_event: Callable = None,
             curve_types: str = 'experiment',
-            **kwargs
+            get_data_sets: Callable = None
     ):
-        def get_curves(**kwargs):
-            return mfm.experiments.get_data(
-                data_set=mfm.imported_datasets,
-                **kwargs
-            )
+        if get_data_sets is None:
 
-        self.get_curves = get_curves
+            def get_data_sets(**kwargs):
+                return mfm.experiments.get_data(
+                    data_set=mfm.imported_datasets,
+                    **kwargs
+                )
+            self.get_data_sets = get_data_sets
+        else:
+            self.get_data_sets = get_data_sets
 
         if change_event is not None:
             self.change_event = change_event
+
         self.curve_type = curve_types
         self.click_close = click_close
         self.fit = fit
