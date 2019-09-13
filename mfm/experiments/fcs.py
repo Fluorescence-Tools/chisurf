@@ -97,9 +97,11 @@ class FCSKristine(mfm.io.ascii.Csv, FCS):
         d = mfm.experiments.data.DataCurve(setup=self)
         d.setup = self
         if filename is None:
-            filename = mfm.widgets.get_filename('Kristine-Correlation file', file_type='All files (*.cor)')
+            filename = mfm.widgets.get_filename(
+                'Kristine-Correlation file',
+                file_type='All files (*.cor)'
+            )
 
-        self.filename = filename
         self.load(
             filename=filename,
             skiprows=0,

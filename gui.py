@@ -354,7 +354,7 @@ class Main(QtWidgets.QMainWindow):
         )
         mfm.experiment.append(tcspc)
 
-        fcs = mfm.experiments.experiment.Experiment('fcs')
+        fcs = mfm.experiments.experiment.Experiment('FCS')
         fcs.add_setups(
             [
                 mfm.experiments.fcs.FCSKristine(
@@ -367,7 +367,7 @@ class Main(QtWidgets.QMainWindow):
         )
         fcs.add_models(
             models=[
-                mfm.models.fcs.ParseFCSWidget
+                mfm.models.fcs.fcs.ParseFCSWidget
             ]
         )
         mfm.experiment.append(fcs)
@@ -377,7 +377,7 @@ class Main(QtWidgets.QMainWindow):
             name='Global-Fit',
             experiment=global_fit
         )
-        global_fit.add_model(mfm.models.globalfit.GlobalFitModelWidget)
+        global_fit.add_model(mfm.models.global_model.GlobalFitModelWidget)
         global_fit.add_setup(global_setup)
         mfm.experiment.append(global_fit)
 

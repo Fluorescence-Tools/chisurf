@@ -38,7 +38,9 @@ class Experiment(mfm.base.Base):
     def __init__(
             self,
             name: str,
-            *args, **kwargs):
+            *args,
+            **kwargs
+    ):
         super(Experiment, self).__init__(name, *args, **kwargs)
         self.name = name
         self.model_classes = list()

@@ -464,7 +464,7 @@ class FitGroup(list, Fit):
         list.__init__(self, self._fits)
         Fit.__init__(self, data=data, **kwargs)
 
-        self.global_model = mfm.models.globalfit.GlobalFitModel(self)
+        self.global_model = mfm.models.global_model.GlobalFitModel(self)
         self.global_model.fits = self._fits
 
     def __str__(self):

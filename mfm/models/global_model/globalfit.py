@@ -13,7 +13,7 @@ import mfm
 from mfm import plots
 from mfm.curve import Curve
 import mfm.fitting.fit
-from . import model
+from mfm.models import model
 from mfm.fitting.parameter import GlobalFittingParameter
 
 

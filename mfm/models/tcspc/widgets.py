@@ -18,7 +18,7 @@ from mfm.models.tcspc.fret import Gaussians, DiscreteDistance, fret_settings, Ga
 from mfm.models.tcspc.lifetime import Lifetime, LifetimeModel
 from mfm.models.tcspc.mix_model import LifetimeMixModel
 from mfm.models.tcspc.nusiance import Convolve, Corrections, Generic
-from mfm.models.tcspc.parse import ParseDecayModel
+from mfm.models.parse.tcspc.tcspc_parse import ParseDecayModel
 from mfm.models.tcspc.pddem import PDDEM, PDDEMModel
 from mfm.widgets import clear_layout
 from mfm.widgets.curve import ExperimentalDataSelector
