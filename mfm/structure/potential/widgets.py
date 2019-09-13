@@ -28,7 +28,11 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
         self.actionLoad_potential.triggered.connect(self.onOpenFile)
         self.cutoffCA = cutoff_ca
         self.cutoffH = cutoff_hbond
-        super(HPotentialWidget, self).__init__(structure, cutoff_ca, cutoff_hbond)
+        super(HPotentialWidget, self).__init__(
+            structure,
+            cutoff_ca,
+            cutoff_hbond
+        )
 
     def onOpenFile(self):
         filename = mfm.widgets.get_filename('Open File', 'CSV data files (*.csv)')
@@ -131,9 +135,13 @@ class GoPotentialWidget(GoPotential, QtWidgets.QWidget):
 
 class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
 
-    def __init__(self, structure, parent, filename='./mfm/structure/potential/database/mj.csv', ca_cutoff=6.5):
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure,
+            filename: str ='./mfm/structure/potential/database/mj.csv',
+            ca_cutoff: float =6.5
+    ):
         super(MJPotentialWidget, self).__init__(structure, filename, ca_cutoff)
-        QtWidgets.QWidget.__init__(self, parent=None)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -154,16 +162,24 @@ class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
         return self.mjPot
 
     @potential.setter
-    def potential(self, v):
+    def potential(
+            self,
+            v: str
+    ):
         self.mjPot = np.loadtxt(v)
         self.lineEdit.setText(v)
 
     @property
-    def ca_cutoff(self):
+    def ca_cutoff(
+            self
+    ) -> float:
         return float(self.lineEdit_2.text())
 
     @ca_cutoff.setter
-    def ca_cutoff(self, v):
+    def ca_cutoff(
+            self,
+            v: float
+    ):
         self.lineEdit_2.setText(str(v))
 
 
@@ -214,15 +230,22 @@ class CEPotentialWidget(CEPotential, QtWidgets.QWidget):
 
 class ClashPotentialWidget(ClashPotential, QtWidgets.QWidget):
 
-    def __init__(self, **kwargs):
-        super(ClashPotentialWidget, self).__init__(**kwargs)
-        QtWidgets.QWidget.__init__(self)
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure = None,
+            **kwargs
+    ):
+        super(QtWidgets.QWidget, self).__init__(**kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
                 "potential-clash.ui"
             ),
             self
+        )
+        super(ClashPotentialWidget, self).__init__(
+            structure=structure,
+            **kwargs
         )
 
     @property
@@ -243,7 +266,12 @@ class ClashPotentialWidget(ClashPotential, QtWidgets.QWidget):
 
 
 class AvPotentialWidget(AvPotential, QtWidgets.QWidget):
-    def __init__(self, parent=None):
+
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure = None,
+            parent=None
+    ):
         super(AvPotentialWidget, self).__init__()
         QtWidgets.QWidget.__init__(self, parent=parent)
         uic.loadUi(
@@ -290,8 +318,15 @@ class AvPotentialWidget(AvPotential, QtWidgets.QWidget):
 
 class AsaWidget(ASA, QtWidgets.QWidget):
 
-    def __init__(self, structure, **kwargs):
-        super(AsaWidget, self).__init__(structure, **kwargs)
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure,
+            parent: QtWidgets.QWidget = None,
+            **kwargs
+    ):
+        super(QtWidgets.QWidget, self).__init__(
+            parent=parent
+        )
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -302,9 +337,13 @@ class AsaWidget(ASA, QtWidgets.QWidget):
 
         self.lineEdit.textChanged['QString'].connect(self.setParameterSphere)
         self.lineEdit_2.textChanged['QString'].connect(self.setParameterProbe)
-
         self.lineEdit.setText('590')
         self.lineEdit_2.setText('3.5')
+
+        super(AsaWidget, self).__init__(
+            structure,
+            **kwargs
+        )
 
     def setParameterSphere(self):
         self.n_sphere_point = int(self.lineEdit.text())
@@ -317,7 +356,11 @@ class RadiusGyrationWidget(QtWidgets.QWidget):
 
     name = 'Radius-Gyration'
 
-    def __init__(self, structure, parent=None):
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure,
+            parent=None
+    ):
         super(RadiusGyrationWidget, self).__init__(parent)
         self.structure = structure
         self.parent = parent

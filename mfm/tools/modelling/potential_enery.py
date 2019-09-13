@@ -16,7 +16,12 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
 
     name = "Potential-Energy calculator"
 
-    def __init__(self, **kwargs):
+    def __init__(
+            self,
+            verbose: bool = False,
+            structure: mfm.structure.structure.Structure = None,
+            **kwargs
+    ):
         QtWidgets.QWidget.__init__(self)
         uic.loadUi(
             os.path.join(
@@ -29,8 +34,8 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         self.potential_weight = 1.0
         self.energies = list()
 
-        self.verbose = kwargs.get('verbose', mfm.verbose)
-        self.structure = kwargs.get('structure', None)
+        self.verbose = verbose
+        self.structure = structure
         self.universe = Universe()
 
         self.actionOpen_trajectory.triggered.connect(self.onLoadTrajectory)
@@ -42,11 +47,11 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         self.comboBox_2.addItems(list(potentialDict))
 
     @property
-    def potential_number(self):
+    def potential_number(self) -> int:
         return int(self.comboBox_2.currentIndex())
 
     @property
-    def potential_name(self):
+    def potential_name(self) -> str:
         return list(potentialDict)[self.potential_number]
 
     def onProcessTrajectory(self):
@@ -76,14 +81,18 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
                 i += 1
                 open(energy_file, 'a').write(s)
 
-    def onSelectedPotentialChanged(self):
+    def onSelectedPotentialChanged(self) -> None:
         layout = self.verticalLayout_2
-        for i in range(layout.count()):
-            layout.itemAt(i).widget().close()
-        self.potential = potentialDict[self.potential_name](structure=self.structure, parent=self)
+        mfm.widgets.hide_items_in_layout(layout)
+
+        self.potential = potentialDict[self.potential_name](
+            structure=self.structure,
+            parent=self
+        )
+
         layout.addWidget(self.potential)
 
-    def onAddPotential(self):
+    def onAddPotential(self) -> None:
         print("onAddPotential")
         self.universe.addPotential(self.potential, self.potential_weight)
         # update table
@@ -98,7 +107,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         table.setItem(rc, 1, tmp)
         table.resizeRowsToContents()
 
-    def onRemovePotential(self):
+    def onRemovePotential(self) -> None:
         print("onRemovePotential")
         table = self.tableWidget
         rc = table.rowCount()
@@ -110,10 +119,10 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
             self.universe.removePotential(idx)
 
     @property
-    def stride(self):
+    def stride(self) -> int:
         return int(self.spinBox.value())
 
-    def onLoadTrajectory(self):
+    def onLoadTrajectory(self) -> None:
         filename = mfm.widgets.get_filename(
             'Open Trajectory-File',
             'H5-Trajectory-Files (*.h5)'
@@ -122,7 +131,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         self.lineEdit.setText(self.trajectory_file)
 
     @property
-    def energy(self):
+    def energy(self) -> float:
         return self.universe.getEnergy(self.structure)
 
 
