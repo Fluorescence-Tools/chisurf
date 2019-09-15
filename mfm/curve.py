@@ -10,7 +10,7 @@ import mfm
 import mfm.io
 import mfm.decorators
 from mfm.base import Base
-from mfm.math.signal import get_fwhm
+from mfm.math.signal import calculate_fwhm
 
 T = TypeVar('T', bound='Curve')
 
@@ -19,7 +19,7 @@ class Curve(Base):
 
     @property
     def fwhm(self) -> float:
-        return get_fwhm(self)[0]
+        return calculate_fwhm(self)[0]
 
     @property
     def cdf(self) -> Curve:
@@ -31,14 +31,14 @@ class Curve(Base):
         )
 
     @property
-    def dt(self) -> np.array:
+    def dx(self) -> np.array:
         """
         The derivative of the x-axis
         """
         return np.diff(self.x)
 
     def to_dict(self) -> dict:
-        d = Base.to_dict(self)
+        d = super(Curve, self).to_dict()
         d['x'] = list(self.x)
         d['y'] = list(self.y)
         return d
@@ -51,17 +51,21 @@ class Curve(Base):
         v['x'] = np.array(v['x'], dtype=np.float64)
         Base.from_dict(self, v)
 
-    def __init__(self, *args, **kwargs):
-        try:
-            x, y = args[0], args[1]
-        except IndexError:
+    def __init__(
+            self,
+            x: np.array = None,
+            y: np.array = None,
+            **kwargs
+    ):
+        if x is None:
             x = np.array(list(), dtype=np.float64)
+        if y is None:
             y = np.array(list(), dtype=np.float64)
         if len(y) != len(x):
             raise ValueError("length of x (%s) and y (%s) differ" % (len(self._x), len(self._y)))
-        kwargs['x'] = np.copy(kwargs.get('x', x))
-        kwargs['y'] = np.copy(kwargs.get('y', y))
-        super(Curve, self).__init__(*args, **kwargs)
+        self.x = np.copy(x)
+        self.y = np.copy(y)
+        super(Curve, self).__init__(**kwargs)
 
     def normalize(
             self,
@@ -144,8 +148,7 @@ class Curve(Base):
                 ysh[:tsi] = 0.0
             elif ts < 0:
                 ysh[tsi:] = 0.0
-            c = self.__class__(x=self.x, y=ysh)
-            return c
+            return self.__class__(x=self.x, y=ysh)
         else:
             return self
 

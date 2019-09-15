@@ -6,6 +6,7 @@ from docx import Document
 from docx.shared import Inches
 
 import mfm
+import mfm.base
 import mfm.widgets
 import mfm.experiments.data
 from . import tcspc
@@ -206,7 +207,7 @@ def remove_datasets(
 
 def add_dataset(
         setup,
-        dataset: mfm.experiments.data.Data = None,
+        dataset: mfm.base.Data = None,
         **kwargs
 ) -> None:
     cs = mfm.cs

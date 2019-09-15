@@ -3,6 +3,7 @@ from __future__ import annotations
 from qtpy import QtWidgets
 
 import mfm
+import mfm.base
 import mfm.widgets.pdb.pdb
 from mfm.experiments.reader import ExperimentReader
 
@@ -29,7 +30,7 @@ class LoadStructure(ExperimentReader, QtWidgets.QWidget):
 
     @staticmethod
     def autofitrange(
-            data: mfm.experiments.data.Data,
+            data: mfm.base.Data,
             **kwargs
     ):
         return None, None
@@ -66,7 +67,7 @@ class LoadStructureFolder(ExperimentReader, QtWidgets.QWidget):
 
     @staticmethod
     def autofitrange(
-            data: mfm.experiments.data.Data,
+            data: mfm.base.Data,
             **kwargs
     ):
         return None, None

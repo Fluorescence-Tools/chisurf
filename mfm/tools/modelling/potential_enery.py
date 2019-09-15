@@ -8,7 +8,7 @@ import qdarkstyle
 
 import mdtraj
 import mfm
-from mfm.structure.potential import potentials, potentialDict
+from mfm.structure.potential import potentialDict
 from mfm.structure.trajectory import TrajectoryFile, Universe
 
 

@@ -3,9 +3,7 @@ from typing import List, TypeVar, Tuple
 
 import weakref
 import numpy as np
-import uuid
 
-import mfm
 import mfm.base
 
 T = TypeVar('T', bound='Parameter')
@@ -101,17 +99,6 @@ class Parameter(
             else:
                 dead.add(ref)
         cls._instances -= dead
-
-    @property
-    def unique_identifier(self):
-        return self._unique_identifier
-
-    @unique_identifier.setter
-    def unique_identifier(
-            self,
-            v: str
-    ):
-        self._unique_identifier = v
 
     def __add__(
             self,
@@ -225,7 +212,6 @@ class Parameter(
             lb: float = float("-inf"),
             ub: float = float("inf"),
             bounds_on: bool = False,
-            unique_identifier: str = None,
             *args,
             **kwargs
     ):
@@ -239,9 +225,6 @@ class Parameter(
         self._value = value
         self._lb = lb
         self._ub = ub
-        if unique_identifier is None:
-            unique_identifier = uuid.uuid4()
-        self._unique_identifier = unique_identifier
 
     def to_dict(self) -> dict:
         v = super(Parameter, self).to_dict()

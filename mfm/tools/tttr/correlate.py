@@ -260,8 +260,8 @@ class CorrelatorWidget(QtWidgets.QWidget):
         self.correlator_thread = Correlator(self)
 
         # fill widgets
-        self.comboBox_3.addItems(mfm.fluorescence.fcs.correlate.weightCalculations)
-        self.comboBox_2.addItems(mfm.fluorescence.fcs.correlate.correlationMethods)
+        self.comboBox_3.addItems(mfm.fluorescence.fcs.weightCalculations)
+        self.comboBox_2.addItems(mfm.fluorescence.fcs.correlationMethods)
         self.checkBox.setChecked(True)
         self.checkBox.setChecked(False)
         self.progressBar.setValue(0.0)

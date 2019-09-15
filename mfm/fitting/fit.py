@@ -146,7 +146,7 @@ class Fit(mfm.base.Base):
             self
     ) -> str:
         try:
-            return self._kw['name']
+            return self.name
         except KeyError:
             try:
                 return self.model.name + " - " + self._data.name
@@ -334,7 +334,7 @@ class FitGroup(list, Fit):
     @data.setter
     def data(
             self,
-            v: mfm.experiments.data.Data
+            v: mfm.base.Data
     ):
         self.selected_fit.data = v
 

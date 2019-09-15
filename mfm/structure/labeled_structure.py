@@ -283,23 +283,32 @@ class LabeledStructure(Structure):
         return amplitude, distance
 
     @property
-    def fret_rate_spectrum(self):
+    def fret_rate_spectrum(
+            self
+    ) -> np.array:
         forster_radius = self.forster_radius
         kappa2 = self.kappa2
         tau0 = self.tau0
         p_rda, rda = self.distance_distribution
         d = np.array([[p_rda, rda]])
-        rs = mfm.fluorescence.distribution2rates(d, tau0=tau0, kappa2=kappa2, R0=forster_radius)
+        rs = mfm.fluorescence.general.distribution2rates(
+            d,
+            tau0=tau0,
+            kappa2=kappa2,
+            forster_radius=forster_radius
+        )
         return np.hstack(rs).ravel([-1])
 
     @property
-    def lifetime_spectrum(self):
+    def lifetime_spectrum(
+            self
+    ) -> np.array:
         rs = self.fret_rate_spectrum
         ds = self.donor_lifetime_spectrum
-        return mfm.fluorescence.rates2lifetimes(rs, ds)
+        return mfm.fluorescence.general.rates2lifetimes(rs, ds)
 
     @property
-    def transfer_efficency(self):
+    def transfer_efficency(self) -> float:
         tau_x_da = mfm.fluorescence.general.species_averaged_lifetime(self.lifetime_spectrum)
         tau_x_d0 = mfm.fluorescence.general.species_averaged_lifetime(self.donor_lifetime_spectrum)
         return 1. - tau_x_da / tau_x_d0
