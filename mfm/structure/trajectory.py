@@ -151,6 +151,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
 
     def __init__(
             self,
+            p_object,
             *args,
             filename: str = None,
             make_coarse: bool = False,
@@ -171,7 +172,6 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
             the models number of the pdb (optional argument). By default the first models in the PDB-File is used.
 
         """
-        p_object = args[0]
         self.mode = kwargs.get('file_type', 'r')
         self.atom_indices = atom_indices
         self.make_coarse = make_coarse
@@ -200,12 +200,13 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
                     self._mdtraj.save_hdf5(p_object)
                     self._filename = p_object
                     mdtraj.Trajectory.__init__(self, self._mdtraj.xyz, self._mdtraj.topology)
-        if isinstance(p_object, mdtraj.Trajectory):
+
+        elif isinstance(p_object, mdtraj.Trajectory):
             self._mdtraj = p_object
             mdtraj.Trajectory.__init__(self, xyz=p_object.xyz, topology=p_object.topology)
             self._filename = kwargs.get('filename', tempfile.mkstemp(".h5"))
 
-        if isinstance(p_object, mfm.structure.structure.Structure):
+        elif isinstance(p_object, mfm.structure.structure.Structure):
             self._filename = kwargs.get('filename', tempfile.mkstemp(".h5"))
             p_object.write(pdb_tmp)
             self._mdtraj = mdtraj.Trajectory.load(pdb_tmp)
@@ -215,6 +216,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
         else:
             self._mdtraj[0].save_pdb(pdb_tmp)
             structure = mfm.structure.structure.Structure(pdb_tmp, verbose=self.verbose)
+
         self.structure = kwargs.get('structure', structure)
 
         if self.center:
@@ -341,7 +343,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
         """
         The average structure (:py:class:`~mfm.structure.mfm.structure.Structure`) of the trajectory
         """
-        return mfm.structure.average(self[:len(self)])
+        return mfm.structure.structure.average(self[:len(self)])
 
     @property
     def values(self):
@@ -463,7 +465,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
         -------
 
         >>> import mfm
-        >>> traj = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
+        >>> traj = mfm.structure.trajectory.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
         >>> s = str(traj.next())
         >>> print(s[:500])
         ATOM      1    N MET A   1       7.332 -10.706 -15.034  0.00  0.00             N
@@ -489,8 +491,8 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
         return element
 
     def slice(self, key, copy=True):
-        s = self.mdtraj.slice(self, key, copy=True)
-        t = TrajectoryFile(p_object=s)
+        s = self.mdtraj.slice(key, copy=True)
+        return TrajectoryFile(p_object=s)
 
     def __getitem__(self, key):
         # TODO: do sth. about the evaluation speed (maybe lazy evaluation)

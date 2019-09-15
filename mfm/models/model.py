@@ -124,25 +124,25 @@ class ModelCurve(Model, mfm.curve.Curve):
 
     @property
     def x(self) -> np.array:
-        return self._kw['x']
+        return self.__dict__['x']
 
     @x.setter
     def x(
             self,
             v: np.array
     ):
-        self._kw['x'] = v
+        self.__dict__['x'] = v
 
     @property
     def y(self) -> np.array:
-        return self._kw['y']
+        return self.__dict__['y']
 
     @y.setter
     def y(
             self,
             v: np.array
     ):
-        self._kw['y'] = v
+        self.__dict__['y'] = v
 
     def __init__(
             self,

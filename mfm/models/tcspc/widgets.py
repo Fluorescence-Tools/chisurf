@@ -458,8 +458,14 @@ class PDDEMModelWidget(ModelWidget, PDDEMModel):
             **kwargs
         )
 
-        self.convolve = ConvolveWidget(name='convolve', fit=fit, model=self, dt=fit.data.dt, hide_curve_convolution=True,
-                                       **kwargs)
+        self.convolve = ConvolveWidget(
+            name='convolve',
+            fit=fit,
+            model=self,
+            dt=fit.data.dx,
+            hide_curve_convolution=True,
+            **kwargs
+        )
 
         self.corrections = CorrectionsWidget(fit=fit, model=self, **kwargs)
         self.generic = GenericWidget(fit=fit, model=self, parent=self, **kwargs)
@@ -1051,7 +1057,7 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
             fit=fit,
             model=self,
             show_convolution_mode=False,
-            dt=fit.data.dt,
+            dt=fit.data.dx,
             **kwargs
         )
         generic = mfm.models.tcspc.widgets.GenericWidget(

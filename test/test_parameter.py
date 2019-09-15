@@ -12,13 +12,16 @@ class Tests(unittest.TestCase):
 
     def test_get_instances(self):
         p1 = mfm.parameter.Parameter()
-        instances = list(p1.get_instances())
-        self.assertEqual(len(instances), 1)
-        self.assertEqual(p1 in instances, True)
+        self.assertEqual(
+            len(list(p1.get_instances())), 1
+        )
+        self.assertEqual(p1 in p1.get_instances(), True)
 
         p2 = mfm.parameter.Parameter()
-        self.assertEqual(len(instances), 2)
-        self.assertEqual(p2 in instances, True)
+        self.assertEqual(
+            len(list(p1.get_instances())), 2
+        )
+        self.assertEqual(p2 in p1.get_instances(), True)
 
     def test_create(self):
         p1 = mfm.parameter.Parameter()
@@ -71,9 +74,14 @@ class Tests(unittest.TestCase):
         self.assertEqual(p2.value, 2.0)
         self.assertEqual(p2.is_linked, True)
 
+        # The original value is overwritten with the
+        # linked value once the parameters are unlinked
         p2.link = None
-        self.assertEqual(p2.value, 3.0)
+        self.assertEqual(p2.value, 2.0)
         self.assertEqual(p2.is_linked, False)
+
+        p2.value = 3
+        self.assertEqual(p2.value, 3.0)
 
     def test_bounds(self):
         p1 = mfm.parameter.Parameter(

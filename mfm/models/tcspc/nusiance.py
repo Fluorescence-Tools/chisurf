@@ -510,7 +510,7 @@ class Convolve(FittingParameterGroup):
         self._data = None
         try:
             data = kwargs.get('data', fit.data)
-            dt = data.dt[0]
+            dt = data.dx[0]
             rep_rate = data.setup.rep_rate
             stop = len(data) * dt
             self.data = data

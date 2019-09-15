@@ -9,8 +9,10 @@ import qdarkstyle
 import numpy as np
 
 import mfm
+import mfm.base
 import mfm.cmd
 import mfm.experiments
+import mfm.tools.modelling.remove_clashed_frames
 import mfm.widgets
 import mfm.tools
 import mfm.ui.resource
@@ -19,7 +21,7 @@ import mfm.ui.resource
 class Main(QtWidgets.QMainWindow):
 
     @property
-    def current_dataset(self) -> mfm.experiments.data.Data:
+    def current_dataset(self) -> mfm.base.Data:
         return self.dataset_selector.selected_dataset
 
     @current_dataset.setter
@@ -274,7 +276,7 @@ class Main(QtWidgets.QMainWindow):
         self.trajectory_rot_trans = mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget()
         self.actionRotate_Translate_trajectory.triggered.connect(self.trajectory_rot_trans.show)
 
-        self.calculate_potential = mfm.tools.PotentialEnergyWidget()
+        self.calculate_potential = mfm.tools.modelling.potential_enery.PotentialEnergyWidget()
         self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
 
         self.pdb2label = mfm.tools.fps_json.pdb2labeling.PDB2Label()
@@ -289,8 +291,8 @@ class Main(QtWidgets.QMainWindow):
         self.traj_save_topol = mfm.tools.modelling.trajectory.SaveTopology()
         self.actionSave_topology.triggered.connect(self.traj_save_topol.show)
 
-        #self.remove_clashes = mfm.tools.RemoveClashedFrames()
-        #self.actionRemove_clashes.triggered.connect(self.remove_clashes.show)
+        self.remove_clashes = mfm.tools.modelling.remove_clashed_frames.RemoveClashedFrames()
+        self.actionRemove_clashes.triggered.connect(self.remove_clashes.show)
 
         self.align_trajectory = mfm.tools.modelling.trajectory.AlignTrajectoryWidget()
         self.actionAlign_trajectory.triggered.connect(self.align_trajectory.show)
@@ -357,11 +359,11 @@ class Main(QtWidgets.QMainWindow):
         fcs = mfm.experiments.experiment.Experiment('FCS')
         fcs.add_setups(
             [
-                mfm.experiments.fcs.FCSKristine(
-                    experiment=mfm.experiments.fcs
+                mfm.experiments.fcs.fcs.FCSKristine(
+                    experiment=mfm.experiments.fcs.fcs
                 ),
-                mfm.experiments.fcs.FCS(
-                    experiment=mfm.experiments.fcs
+                mfm.experiments.fcs.fcs.FCS(
+                    experiment=mfm.experiments.fcs.fcs
                 )
             ]
         )
@@ -377,7 +379,11 @@ class Main(QtWidgets.QMainWindow):
             name='Global-Fit',
             experiment=global_fit
         )
-        global_fit.add_model(mfm.models.global_model.globalfit.GlobalFitModelWidget)
+        global_fit.add_models(
+            models=[
+                mfm.models.global_model.GlobalFitModelWidget
+            ]
+        )
         global_fit.add_setup(global_setup)
         mfm.experiment.append(global_fit)
 

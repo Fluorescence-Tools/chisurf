@@ -21,7 +21,7 @@ class ExperimentReader(mfm.base.Base):
     @staticmethod
     @abstractmethod
     def autofitrange(
-            data: mfm.experiments.data.Data,
+            data: mfm.base.Data,
             **kwargs
     ) -> Tuple[float, float]:
         return 0, len(data.y) - 1
@@ -31,7 +31,7 @@ class ExperimentReader(mfm.base.Base):
             self,
             name: str = None,
             **kwargs
-    ) -> mfm.experiments.data.Data:
+    ) -> mfm.base.Data:
         """
 
         :param name: A name that will be associated to the data set that is read.

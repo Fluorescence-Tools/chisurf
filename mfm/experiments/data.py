@@ -1,99 +1,17 @@
 from __future__ import annotations
 
 import os.path
-import zlib
 from typing import List
 import numpy as np
 
 import mfm
+import mfm.base
 from mfm.base import Base
 from mfm.curve import Curve
 import mfm.experiments.experiment
 
 
-class Data(Base):
-
-    def __init__(
-            self,
-            *args,
-            filename: str = None,
-            data: mfm.experiments.data.Data = None,
-            embed_data: bool = None,
-            read_file_size_limit: int = None,
-            **kwargs
-    ):
-        super(Data, self).__init__(*args, **kwargs)
-        self._filename = filename
-        self._data = data
-
-        if embed_data is None:
-            embed_data = mfm.settings.cs_settings['database']['embed_data']
-        if read_file_size_limit is None:
-            read_file_size_limit = mfm.settings.cs_settings['database']['read_file_size_limit']
-
-        self._embed_data = embed_data
-        self._max_file_size = read_file_size_limit
-
-    @property
-    def data(self) -> mfm.experiments.data.Data:
-        return self._data
-
-    @data.setter
-    def data(
-            self,
-            v: mfm.experiments.data.Data
-    ):
-        self._data = v
-
-    @property
-    def name(self) -> str:
-        try:
-            return self._kw['name']
-        except KeyError:
-            return self.filename
-
-    @name.setter
-    def name(
-            self,
-            v: str
-    ):
-        self._kw['name'] = v
-
-    @property
-    def filename(self) -> str:
-        try:
-            return os.path.normpath(self._filename)
-        except (AttributeError, TypeError):
-            return 'No file'
-
-    @filename.setter
-    def filename(
-            self,
-            v: str
-    ) -> None:
-        self._filename = os.path.normpath(v)
-        file_size = os.path.getsize(self._filename)
-        if file_size < self._max_file_size and self._embed_data:
-            data = open(self._filename).read()
-            if len(data) > mfm.settings.cs_settings['database']['compression_data_limit']:
-                data = zlib.compress(data)
-            if len(data) < mfm.settings.cs_settings['database']['embed_data_limit']:
-                self._data = data
-            else:
-                self._data = None
-        else:
-            self._data = None
-        if mfm.verbose:
-            print("Filename: %s" % self._filename)
-            print("File size [byte]: %s" % file_size)
-
-    def __str__(self):
-        s = super(Data, self).__str__()
-        s += "filename: %s\n" % self.filename
-        return s
-
-
-class ExperimentalData(Data):
+class ExperimentalData(mfm.base.Data):
 
     def __init__(
             self,
@@ -134,19 +52,30 @@ class DataCurve(Curve, ExperimentalData):
     def __init__(
             self,
             *args,
+            x: np.array = None,
+            y: np.array = None,
+            ex: np.array = None,
+            ey: np.array = None,
             filename: str = '',
             **kwargs
     ):
-        super(DataCurve, self).__init__(*args, **kwargs)
+        super(DataCurve, self).__init__(
+            *args,
+            x=x,
+            y=y,
+            **kwargs
+        )
         if os.path.isfile(filename):
-            self.load(filename, **kwargs)
-        try:
-            ex, ey = args[2], args[3]
-        except IndexError:
-            ex = kwargs.get('ex', np.ones_like(kwargs.get('x', None)))
-            ey = kwargs.get('ey', np.ones_like(kwargs.get('y', None)))
-        kwargs['ex'] = ex
-        kwargs['ey'] = ey
+            self.load(
+                filename,
+                **kwargs
+            )
+        if ex is None:
+            ex = np.ones_like(self.x)
+        if ey is None:
+            ey = np.ones_like(self.y)
+        self.ex = ex
+        self.ey = ey
 
     def __str__(self):
         s = "Dataset:\n"
@@ -200,8 +129,8 @@ class DataCurve(Curve, ExperimentalData):
             v: dict
     ) -> None:
         super(DataCurve, self).from_dict(v)
-        self._kw['ex'] = np.array(v['ex'], dtype=np.float64)
-        self._kw['ey'] = np.array(v['ey'], dtype=np.float64)
+        self.ex = np.array(v['ex'], dtype=np.float64)
+        self.__dict__['ey'] = np.array(v['ey'], dtype=np.float64)
 
     def save(
             self,
@@ -233,10 +162,10 @@ class DataCurve(Curve, ExperimentalData):
         if file_type == 'txt':
             csv = mfm.io.ascii.Csv()
             csv.load(filename, skiprows=skiprows)
-            self._kw['x'] = csv.data[0]
-            self._kw['y'] = csv.data[1]
-            self._kw['ey'] = csv.data[2]
-            self._kw['ex'] = csv.data[3]
+            self.x = csv.data[0]
+            self.y = csv.data[1]
+            self.ex = csv.data[2]
+            self.ex = csv.data[3]
 
     def set_data(
             self,
@@ -247,21 +176,21 @@ class DataCurve(Curve, ExperimentalData):
             ey: np.array = None,
     ) -> None:
         self.filename = filename
-        self._kw['x'] = x
-        self._kw['y'] = y
+        self.x = x
+        self.y = y
 
         if ex is None:
             ex = np.ones_like(x)
         if ey is None:
             ey = np.ones_like(y)
-        self._kw['ex'] = ex
-        self._kw['ey'] = ey
+        self.ex = ex
+        self.ey = ey
 
     def set_weights(
             self,
             w: np.array
     ):
-        self._kw['weights'] = w
+        self.ey = 1. / w
 
     def __getitem__(
             self,
@@ -282,7 +211,7 @@ class DataGroup(list, Base):
     @property
     def current_dataset(
             self
-    ) -> mfm.experiments.data.Data:
+    ) -> mfm.base.Data:
         return self[self._current_dataset]
 
     @current_dataset.setter
@@ -297,7 +226,7 @@ class DataGroup(list, Base):
             self
     ) -> str:
         try:
-            return self._kw['name']
+            return self.__dict__['name']
         except KeyError:
             return self.names[0]
 
@@ -310,7 +239,7 @@ class DataGroup(list, Base):
 
     def append(
             self,
-            dataset: Data
+            dataset: mfm.base.Data
     ):
         if isinstance(dataset, ExperimentalData):
             list.append(self, dataset)
