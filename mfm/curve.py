@@ -102,8 +102,17 @@ class Curve(Base):
     def normalize(
             self,
             mode: str = "max",
-            curve: mfm.curve.Curve = None
-    ):
+            curve: mfm.curve.Curve = None,
+            inplace: bool = True
+    ) -> float:
+        """Calculates a scaling parameter for the Curve object and (optionally) scales the Curve object.
+
+        :param mode: either 'max' to normalize the maximum to one, or 'sum' to normalize to sum to one
+        :param curve:
+        :param inplace: if True the Curve object is modified in place. Otherwise, only the scaling parameter
+        is returned
+        :return: the parameter that scales the Curve object
+        """
         factor = 1.0
         if not isinstance(curve, Curve):
             if mode == "sum":
@@ -116,85 +125,78 @@ class Curve(Base):
             elif mode == "max":
                 if max(self.y) != 0:
                     factor = max(self.y) * max(curve.y)
-        self.y /= factor
+        if inplace:
+            self.y /= factor
         return factor
 
     def __add__(
             self,
             c: T
     ) -> Type[Curve]:
-        y = copy(np.array(self.y, dtype=np.float64))
-        if isinstance(c, numbers.Real):
-            y += c
-        elif isinstance(c, Curve):
-            y += np.array(c.y, dtype=np.float64)
-        x = copy(self.x)
+        if isinstance(c, Curve):
+            if not np.array_equal(self.x, c.x):
+                raise ValueError("The x-axis differ")
+            c = c.y
         return self.__class__(
-            x=x,
-            y=y
+            x=copy(self.x),
+            y=copy(self.y).__add__(c)
         )
 
     def __sub__(
             self,
             c: T
     ) -> Type[Curve]:
-        y = copy(np.array(self.y, dtype=np.float64))
-        if isinstance(c, numbers.Real):
-            y -= c
-        elif isinstance(c, Curve):
-            y -= np.array(c.y, dtype=np.float64)
-        x = copy(self.x)
-        return self.__class__(x=x, y=y)
+        if isinstance(c, Curve):
+            if not np.array_equal(self.x, c.x):
+                raise ValueError("The x-axis differ")
+            c = c.y
+        return self.__class__(
+            x=copy(self.x),
+            y=copy(self.y).__sub__(c)
+        )
 
     def __mul__(
             self,
             c: T
     ) -> Type[Curve]:
-        y = copy(np.array(self.y, dtype=np.float64))
-        if isinstance(c, numbers.Real):
-            y *= c
-        elif isinstance(c, Curve):
-            y *= np.array(c.y, dtype=np.float64)
-        x = copy(self.x)
-        return self.__class__(x=x, y=y)
+        if isinstance(c, Curve):
+            if not np.array_equal(self.x, c.x):
+                raise ValueError("The x-axis differ")
+            c = c.y
+        return self.__class__(
+            x=copy(self.x),
+            y=copy(self.y).__mul__(c)
+        )
 
-    def __div__(
+    def __truediv__(
             self,
             c: T
     ) -> Type[Curve]:
-        y = copy(np.array(self.y, dtype=np.float64))
-        if isinstance(c, numbers.Real):
-            y /= c
-        elif isinstance(c, Curve):
-            y /= np.array(c.y, dtype=np.float64)
-        x = copy(self.x)
+        if isinstance(c, Curve):
+            if not np.array_equal(self.x, c.x):
+                raise ValueError("The x-axis differ")
+            c = c.y
         return self.__class__(
-            x=x,
-            y=y
+            x=copy(self.x),
+            y=copy(self.y).__truediv__(c)
         )
 
     def __lshift__(
             self,
-            c: T
+            c: float
     ) -> Type[Curve]:
-        if isinstance(c, numbers.Real):
-            ts = -c
-            tsi = int(np.floor(ts))
-            tsf = c - tsi
-            ysh = np.roll(self.y, tsi) * (1 - tsf) + np.roll(self.y, tsi + 1) * tsf
-            if ts > 0:
-                ysh[:tsi] = 0.0
-            elif ts < 0:
-                ysh[tsi:] = 0.0
-            return self.__class__(
-                x=self.x,
-                y=ysh
-            )
-        else:
-            return self.__class__(
-                x=self.x,
-                y=self.y
-            )
+        ts = -c
+        tsi = int(np.floor(ts))
+        tsf = c - tsi
+        ysh = np.roll(self.y, tsi) * (1 - tsf) + np.roll(self.y, tsi + 1) * tsf
+        if ts > 0:
+            ysh[:tsi] = 0.0
+        elif ts < 0:
+            ysh[tsi:] = 0.0
+        return self.__class__(
+            x=self.x,
+            y=ysh
+        )
 
     def __len__(self) -> int:
         return len(self.y)

@@ -107,7 +107,79 @@ class Tests(unittest.TestCase):
         )
 
     def test_normalize(self):
-        pass
+        import scipy.stats
+
+        x = np.linspace(0, 10, 11)
+        c1 = mfm.curve.Curve(
+            x,
+            scipy.stats.distributions.norm.pdf(x, loc=2, scale=1)
+        )
+        factor = c1.normalize()
+        self.assertAlmostEqual(
+            max(c1.y),
+            1.0
+        )
+        self.assertAlmostEqual(
+            factor,
+            0.3989422804014327
+        )
+
+        factor = c1.normalize(
+            mode='sum'
+        )
+        self.assertAlmostEqual(
+            sum(c1.y),
+            1.0
+        )
+
+    def test_calc(self):
+        import scipy.stats
+
+        x = np.linspace(0, 10, 11)
+        c1 = mfm.curve.Curve(
+            x,
+            scipy.stats.distributions.norm.pdf(x, loc=5, scale=2)
+        )
+        c2 = mfm.curve.Curve(
+            x,
+            scipy.stats.distributions.norm.pdf(x, loc=2, scale=1)
+        )
+
+        c3 = c1 + c2
+        self.assertEqual(
+            np.array_equal(
+                c3.y,
+                c1.y + c2.y
+            ),
+            True
+        )
+
+        c3 = c1 - c2
+        self.assertEqual(
+            np.array_equal(
+                c3.y,
+                c1.y - c2.y
+            ),
+            True
+        )
+
+        c3 = c1 * c2
+        self.assertEqual(
+            np.array_equal(
+                c3.y,
+                c1.y * c2.y
+            ),
+            True
+        )
+
+        c3 = c1 / c2
+        self.assertEqual(
+            np.array_equal(
+                c3.y,
+                c1.y / c2.y
+            ),
+            True
+        )
 
 
 if __name__ == '__main__':
