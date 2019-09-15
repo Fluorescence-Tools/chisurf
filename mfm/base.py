@@ -33,11 +33,14 @@ class Base(object):
             self,
             filename: str,
             file_type: str = 'yaml',
+            verbose: bool = False
     ) -> None:
         if file_type == "yaml":
             txt = self.to_yaml()
         else:
             txt = self.to_json()
+        if verbose:
+            print(txt)
         with open(filename, 'w') as fp:
             fp.write(txt)
 
@@ -45,11 +48,18 @@ class Base(object):
             self,
             filename: str,
             file_type: str = 'json',
+            verbose: bool = True
     ) -> None:
         if file_type == "json":
-            self.from_json(filename=filename)
+            self.from_json(
+                filename=filename,
+                verbose=verbose
+            )
         else:
-            self.from_yaml(filename=filename)
+            self.from_yaml(
+                filename=filename,
+                verbose=verbose
+            )
 
     def to_dict(self) -> dict:
         return self.__dict__
@@ -73,7 +83,8 @@ class Base(object):
         )
 
     def to_yaml(self) -> str:
-        return yaml.dump(self.to_dict())
+        d = self.to_dict()
+        return yaml.dump(d)
 
     def from_yaml(
             self,
@@ -81,6 +92,13 @@ class Base(object):
             filename: str = None,
             verbose: bool = False
     ) -> None:
+        """
+
+        :param yaml_string:
+        :param filename:
+        :param verbose:
+        :return:
+        """
         if filename is not None:
             with open(filename, 'r') as fp:
                 j = yaml.safe_load(fp)
@@ -114,6 +132,8 @@ class Base(object):
             A string containing the JSON file
         filename: str
             The filename to be opened
+        verbose: bool
+            If True additional output is printed to stdout
 
         """
         if filename is not None:

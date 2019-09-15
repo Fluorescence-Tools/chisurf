@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TypeVar, Tuple
+from typing import TypeVar, Tuple, Optional, Type
 
 import numbers
 from copy import copy
@@ -22,7 +22,7 @@ class Curve(Base):
         return calculate_fwhm(self)[0]
 
     @property
-    def cdf(self) -> Curve:
+    def cdf(self) -> Type[Curve]:
         """Cumulative sum of function
         """
         return self.__class__(
@@ -37,19 +37,49 @@ class Curve(Base):
         """
         return np.diff(self.x)
 
+    @property
+    def x(self) -> np.array:
+        return self._x
+
+    @x.setter
+    def x(self, v) -> None:
+        self._x = v
+
+    @property
+    def y(self) -> np.array:
+        return self._y
+
+    @y.setter
+    def y(self, v) -> None:
+        self._y = v
+
     def to_dict(self) -> dict:
-        d = super(Curve, self).to_dict()
-        d['x'] = list(self.x)
-        d['y'] = list(self.y)
+        d = dict()
+        d.update(super(Curve, self).to_dict())
+        d['_x'] = d.pop('_x').tolist()
+        d['_y'] = d.pop('_y').tolist()
         return d
+
+    def to_json(
+            self,
+            indent: int = 4,
+            sort_keys: bool = True
+    ) -> str:
+        return super(Curve, self).to_json(
+            indent,
+            sort_keys
+        )
+
+    def to_yaml(self) -> str:
+        return super(Curve, self).to_yaml()
 
     def from_dict(
             self,
             v: dict
     ):
-        v['y'] = np.array(v['y'], dtype=np.float64)
-        v['x'] = np.array(v['x'], dtype=np.float64)
-        Base.from_dict(self, v)
+        v['_y'] = np.array(v['_y'], dtype=np.float64)
+        v['_x'] = np.array(v['_x'], dtype=np.float64)
+        super(Curve, self).from_dict(v)
 
     def __init__(
             self,
@@ -62,9 +92,11 @@ class Curve(Base):
         if y is None:
             y = np.array(list(), dtype=np.float64)
         if len(y) != len(x):
-            raise ValueError("length of x (%s) and y (%s) differ" % (len(self._x), len(self._y)))
-        self.x = np.copy(x)
-        self.y = np.copy(y)
+            raise ValueError(
+                "length of x (%s) and y (%s) differ" % (len(self._x), len(self._y))
+            )
+        self._x = np.copy(x)
+        self._y = np.copy(y)
         super(Curve, self).__init__(**kwargs)
 
     def normalize(
@@ -90,19 +122,22 @@ class Curve(Base):
     def __add__(
             self,
             c: T
-    ) -> Curve:
+    ) -> Type[Curve]:
         y = copy(np.array(self.y, dtype=np.float64))
         if isinstance(c, numbers.Real):
             y += c
         elif isinstance(c, Curve):
             y += np.array(c.y, dtype=np.float64)
         x = copy(self.x)
-        return self.__class__(x=x, y=y)
+        return self.__class__(
+            x=x,
+            y=y
+        )
 
     def __sub__(
             self,
             c: T
-    ) -> Curve:
+    ) -> Type[Curve]:
         y = copy(np.array(self.y, dtype=np.float64))
         if isinstance(c, numbers.Real):
             y -= c
@@ -114,7 +149,7 @@ class Curve(Base):
     def __mul__(
             self,
             c: T
-    ) -> Curve:
+    ) -> Type[Curve]:
         y = copy(np.array(self.y, dtype=np.float64))
         if isinstance(c, numbers.Real):
             y *= c
@@ -126,19 +161,22 @@ class Curve(Base):
     def __div__(
             self,
             c: T
-    ) -> Curve:
+    ) -> Type[Curve]:
         y = copy(np.array(self.y, dtype=np.float64))
         if isinstance(c, numbers.Real):
             y /= c
         elif isinstance(c, Curve):
             y /= np.array(c.y, dtype=np.float64)
         x = copy(self.x)
-        return self.__class__(x=x, y=y)
+        return self.__class__(
+            x=x,
+            y=y
+        )
 
     def __lshift__(
             self,
             c: T
-    ) -> Curve:
+    ) -> Type[Curve]:
         if isinstance(c, numbers.Real):
             ts = -c
             tsi = int(np.floor(ts))
@@ -148,9 +186,15 @@ class Curve(Base):
                 ysh[:tsi] = 0.0
             elif ts < 0:
                 ysh[tsi:] = 0.0
-            return self.__class__(x=self.x, y=ysh)
+            return self.__class__(
+                x=self.x,
+                y=ysh
+            )
         else:
-            return self
+            return self.__class__(
+                x=self.x,
+                y=self.y
+            )
 
     def __len__(self) -> int:
         return len(self.y)
