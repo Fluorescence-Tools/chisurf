@@ -18,19 +18,18 @@ class FittingParameter(mfm.parameter.Parameter):
 
     def __init__(
             self,
-            link: FittingParameter = None,
             model: mfm.models.model.Model = None,
             fixed: bool = False,
-            error_estimate: bool = None,
+            *args,
             **kwargs
     ):
-        super(FittingParameter, self).__init__(**kwargs)
-        self._link = link
+        super(FittingParameter, self).__init__(
+            *args,
+            **kwargs
+        )
         self.model = model
-
         self._fixed = fixed
-        self._error_estimate = error_estimate
-
+        self._error_estimate = None
         self._chi2s = None
         self._values = None
 
@@ -74,20 +73,6 @@ class FittingParameter(mfm.parameter.Parameter):
             v: bool
     ):
         self._fixed = v
-
-    def to_dict(self) -> dict:
-        d = mfm.parameter.Parameter.to_dict(self)
-        d['fixed'] = self.fixed
-        d['error_estimate'] = self.error_estimate
-        return d
-
-    def from_dict(
-            self,
-            d: dict
-    ) -> None:
-        mfm.parameter.Parameter.from_dict(self, d)
-        self._fixed = d['fixed']
-        self._error_estimate = d['error_estimate']
 
     def scan(
             self,

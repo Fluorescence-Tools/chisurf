@@ -108,12 +108,12 @@ class TCSPCReader(ExperimentReader):
 
     def __init__(
             self,
-            *args,
             skiprows: int = 7,
             is_jordi: bool = False,
             rebin: Tuple[int, int] = (1, 1),
             use_header: bool = True,
             polarization: str = 'vm',
+            *args,
             **kwargs
     ):
         super(TCSPCReader, self).__init__(self, *args, **kwargs)
@@ -260,7 +260,11 @@ class TCSPCSetupWidget(TCSPCReader, mfm.io.ascii.Csv, QtWidgets.QWidget):
         else:
             return None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
         super(TCSPCSetupWidget, self).__init__()
         QtWidgets.QWidget.__init__(self)
         #TCSPCReader.__init__(self, *args, **kwargs)
