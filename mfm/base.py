@@ -180,10 +180,10 @@ class Base(object):
 
     def __init__(
             self,
-            *args,
             name: object = None,
             verbose: bool = False,
             unique_identifier: str = None,
+            *args,
             **kwargs
     ):
         """The class saves all passed keyword arguments in dictionary and makes

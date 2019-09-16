@@ -12,14 +12,12 @@ class Tests(unittest.TestCase):
 
     def test_get_instances(self):
         p1 = mfm.parameter.Parameter()
-        self.assertEqual(
-            len(list(p1.get_instances())), 1
-        )
+        initial_instances = len(list(p1.get_instances()))
         self.assertEqual(p1 in p1.get_instances(), True)
 
         p2 = mfm.parameter.Parameter()
         self.assertEqual(
-            len(list(p1.get_instances())), 2
+            len(list(p1.get_instances())), initial_instances + 1
         )
         self.assertEqual(p2 in p1.get_instances(), True)
 
@@ -83,6 +81,13 @@ class Tests(unittest.TestCase):
         p2.value = 3
         self.assertEqual(p2.value, 3.0)
 
+        p2.link = p1
+        p3 = mfm.parameter.Parameter()
+        p3.from_dict(
+            p2.to_dict()
+        )
+        self.assertEqual(p3.value, 2.0)
+
     def test_bounds(self):
         p1 = mfm.parameter.Parameter(
             value=2.0,
@@ -99,7 +104,10 @@ class Tests(unittest.TestCase):
 
     def test_rep_str(self):
         p1 = mfm.parameter.Parameter(22)
-        p2 = mfm.parameter.Parameter(11)
+        self.assertEqual(
+            p1.__repr__(),
+            "22"
+        )
 
     def test_dict(self):
         d1 = {
@@ -167,6 +175,53 @@ class Tests(unittest.TestCase):
             pg.values,
             [22, 11]
         )
+
+    def test_fitting_parameter(self):
+        p1 = mfm.fitting.parameter.FittingParameter(value=22)
+
+        value = 11
+        link = p1
+        lower_bound = 11
+        upper_bound = 33
+        bounds_on = True
+        name = 'Name_P1'
+        verbose = True
+        unique_identifier = None
+        model = None
+        fixed = True
+        p2 = mfm.fitting.parameter.FittingParameter(
+            model,
+            fixed,
+            value,
+            link,
+            lower_bound,
+            upper_bound,
+            bounds_on,
+            name,
+            verbose,
+            unique_identifier
+        )
+
+        self.assertEqual(
+            p1.value,
+            p2.value
+        )
+
+        p3 = mfm.fitting.parameter.FittingParameter()
+        p3.from_dict(
+            p2.to_dict()
+        )
+        self.assertEqual(
+            p3.link,
+            p1
+        )
+
+        self.assertEqual(
+            p2.fixed,
+            fixed
+        )
+
+
 
 
 if __name__ == '__main__':

@@ -203,6 +203,27 @@ class Parameter(
         s = self.value.__repr__()
         return s
 
+    def to_dict(self) -> dict:
+        d = super(Parameter, self).to_dict()
+        if self.link is not None:
+            d['_link'] = self.link.unique_identifier
+        return d
+
+    def from_dict(
+            self,
+            v: dict
+    ) -> None:
+        if v['_link'] is not None:
+            unique_identifier = v['_link']
+            for o in self.get_instances():
+                if unique_identifier == o.unique_identifier:
+                    v['_link'] = o
+            super(Parameter, self).from_dict(v)
+            if isinstance(v['_link'], str):
+                raise ValueError(
+                    "The linked parameter %s is not instantiated." % unique_identifier
+                )
+
     def __init__(
             self,
             value: float = 1.0,
