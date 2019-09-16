@@ -48,7 +48,7 @@ class Base(object):
             self,
             filename: str,
             file_type: str = 'json',
-            verbose: bool = True
+            verbose: bool = False
     ) -> None:
         if file_type == "json":
             self.from_json(

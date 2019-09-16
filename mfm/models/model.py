@@ -96,7 +96,7 @@ class Model(
             self,
             **kwargs
     ) -> None:
-        #self.find_parameters()
+        self.find_parameters()
         self.update_model()
 
     def __str__(self):

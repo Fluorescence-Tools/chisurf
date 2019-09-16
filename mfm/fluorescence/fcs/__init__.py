@@ -4,7 +4,7 @@ import numpy as np
 from . import correlate
 from . import filtered
 
-from mfm import settings
+from mfm.settings import cs_settings
 
 weightCalculations = ['Koppel', 'none']
 correlationMethods = ['tp']
@@ -15,16 +15,18 @@ def weights(
         correlation: np.array,
         measurement_duration,
         mean_count_rate,
-        **kwargs
+        weight_type: str = None
 ) -> np.array:
     """
     :param times: correlation times [ms]
     :param correlation: correlation amplitude
     :param measurement_duration: measurement duration [s]
     :param mean_count_rate: count-rate [kHz]
-    :param kwargs: optional weight type 'type' either 'suren' or 'uniform' for uniform weighting or Suren-weighting
+    :param weight_type: weight type 'type' either 'suren' or 'uniform' for uniform weighting or Suren-weighting
     """
-    weight_type = kwargs.get('type', settings['fcs']['weight_type'])
+    if weight_type is None:
+        weight_type = cs_settings['fcs']['weight_type']
+
     if weight_type == 'suren':
         dt = np.diff(times)
         dt = np.hstack([dt, dt[-1]])

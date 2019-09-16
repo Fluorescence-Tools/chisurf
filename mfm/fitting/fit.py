@@ -410,6 +410,12 @@ class FitGroup(list, Fit):
             local_first: bool = None,
             **kwargs
     ):
+        """Optimizes the free parameters
+
+        :param local_first: if True the local parameters of a global-fit in a fit group are optimized first
+        :param kwargs:
+        :return:
+        """
         if local_first is None:
             local_first = mfm.settings.cs_settings['fitting']['global']['fit_local_first']
 
