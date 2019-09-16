@@ -97,6 +97,77 @@ class Tests(unittest.TestCase):
         p1.bounds_on = False
         self.assertEqual(p1.value, 5.0)
 
+    def test_rep_str(self):
+        p1 = mfm.parameter.Parameter(22)
+        p2 = mfm.parameter.Parameter(11)
+
+    def test_dict(self):
+        d1 = {
+            'value': 2.0,
+            'bounds_on': True,
+            'lb': 1.,
+            'ub': 2.5,
+            'unique_identifier': 'b671b0b3-3009-42df-824a-6d690c2b3e54'
+        }
+        p1 = mfm.parameter.Parameter(**d1)
+        d3 = {
+            'name': 'Parameter',
+            'verbose': False,
+            'unique_identifier': 'b671b0b3-3009-42df-824a-6d690c2b3e54',
+            '_bounds_on': True,
+            '_link': None,
+            '_value': 2.0,
+            '_lb': 1.0,
+            '_ub': 2.5
+        }
+        self.assertEqual(
+            p1.to_dict(),
+            d3
+        )
+
+    def test_save_load(self):
+
+        import tempfile
+
+        file = tempfile.NamedTemporaryFile(
+            suffix='.json'
+        )
+        filename = file.name
+        p1 = mfm.parameter.Parameter(
+            value=2.0,
+            bounds_on=True,
+            lb=1.,
+            ub=2.5
+        )
+        p1.save(
+            filename,
+            file_type='json'
+        )
+
+        p2 = mfm.parameter.Parameter()
+        p2.load(
+            filename=filename,
+            file_type='json'
+        )
+
+    def test_parameter_group(self):
+        p1 = mfm.parameter.Parameter(22)
+        p2 = mfm.parameter.Parameter(11)
+        group_name = 'Parameter Gruppe'
+        pg = mfm.parameter.ParameterGroup(
+            name=group_name
+        )
+        self.assertEqual(
+            pg.name,
+            group_name
+        )
+        pg.append(p1)
+        pg.append(p2)
+        self.assertEqual(
+            pg.values,
+            [22, 11]
+        )
+
 
 if __name__ == '__main__':
     unittest.main()

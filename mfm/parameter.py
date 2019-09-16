@@ -200,9 +200,7 @@ class Parameter(
         return super(Parameter, self).__hash__()
 
     def __repr__(self):
-        s = super(Parameter, self).__repr__()
-        s += "\n"
-        s += self.__str__()
+        s = self.value.__repr__()
         return s
 
     def __init__(
@@ -226,25 +224,6 @@ class Parameter(
         self._lb = lb
         self._ub = ub
 
-    def to_dict(self) -> dict:
-        v = super(Parameter, self).to_dict()
-        v['value'] = self.value
-        v['decimals'] = self.decimals
-        v['lb'], v['ub'] = self.bounds
-        v['bounds_on'] = self.bounds_on
-        v['unique_identifier'] = self.unique_identifier
-        return v
-
-    def from_dict(
-            self,
-            v: dict
-    ):
-        super(Parameter, self).from_dict(v)
-        self._value = v['value']
-        self._lb, self._ub = v['lb'], v['ub']
-        self._bounds_on = v['bounds_on']
-        self._unique_identifier = v['unique_identifier']
-
 
 class ParameterGroup(mfm.base.Base):
 
@@ -265,6 +244,9 @@ class ParameterGroup(mfm.base.Base):
     ):
         self._parameter.append(parameter)
 
+    def clear(self):
+        self._parameter = list()
+
     @property
     def parameters(
             self
@@ -279,30 +261,22 @@ class ParameterGroup(mfm.base.Base):
 
     @property
     def values(self) -> np.array:
-        try:
-            re = np.vstack(self._parameter)
-            re = np.column_stack((re, self.chi2s))
-            return re.T
-        except ValueError:
-            return np.array([[0], [0]]).T
+        return [p.value for p in self.parameters]
 
-    def clear(self):
-        self._parameter = list()
-
-    def save_txt(
-            self,
-            filename: str,
-            sep: str = '\t'
-    ):
-        with open(filename, 'w') as fp:
-            s = ""
-            for ph in self.parameter_names:
-                s += ph + sep
-            s += "\n"
-            for l in self.values.T:
-                for p in l:
-                    s += "%.5f%s" % (p, sep)
-                s += "\n"
-            fp.write(s)
-
+    # def save_txt(
+    #         self,
+    #         filename: str,
+    #         sep: str = '\t'
+    # ):
+    #     with open(filename, 'w') as fp:
+    #         s = ""
+    #         for ph in self.parameter_names:
+    #             s += ph + sep
+    #         s += "\n"
+    #         for l in self.values:
+    #             for p in l:
+    #                 s += "%.5f%s" % (p, sep)
+    #             s += "\n"
+    #         fp.write(s)
+    #
 
