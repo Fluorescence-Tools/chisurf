@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os.path
-from typing import List
+from typing import List, Type
 import numpy as np
 
 import mfm

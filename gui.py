@@ -113,6 +113,13 @@ class Main(QtWidgets.QMainWindow):
     ) -> mfm.fitting.fit.FitGroup:
         return self._current_fit
 
+    @current_fit.setter
+    def current_fit(
+            self,
+            v: mfm.fitting.fit.FitGroup
+    ) -> None:
+        self._current_fit = v
+
     def closeEvent(self, event):
         if mfm.settings.gui['confirm_close_program']:
             reply = mfm.widgets.widgets.MyMessageBox.question(self,
@@ -132,20 +139,19 @@ class Main(QtWidgets.QMainWindow):
         if subwindow is not None:
             for f in mfm.fits:
                 if f == subwindow.fit:
-                    if self._current_fit is not mfm.fits[self.fit_idx]:
-                        mfm.run("cs._current_fit = mfm.fits[%s]" % self.fit_idx)
+                    if self.current_fit is not mfm.fits[self.fit_idx]:
+                        mfm.run("cs.current_fit = mfm.fits[%s]" % self.fit_idx)
                         break
 
             self.current_fit_widget = subwindow.fit_widget
-            fit_name = self._current_fit.name
-            window_title = mfm.__name__ + "(" + mfm.__version__ + "): " + fit_name
+            window_title = mfm.__name__ + "(" + mfm.__version__ + "): " + str(self.current_fit.name)
 
             self.setWindowTitle(window_title)
 
             mfm.widgets.hide_items_in_layout(self.modelLayout)
             mfm.widgets.hide_items_in_layout(self.plotOptionsLayout)
-            self._current_fit.model.update()
-            self._current_fit.model.show()
+            self.current_fit.model.update()
+            self.current_fit.model.show()
             self.current_fit_widget.show()
             subwindow.current_plt_ctrl.show()
 
@@ -162,7 +168,7 @@ class Main(QtWidgets.QMainWindow):
 
     def onCascadeWindows(self):
         self.mdiarea.setViewMode(QtWidgets.QMdiArea.SubWindowView)
-        self.mdiarea.cascadeSubWindows ()
+        self.mdiarea.cascadeSubWindows()
 
     def onCurrentDatasetChanged(self):
         #mfm.run("cs.current_dataset = %s" % self.curve_selector.selected_curve_index)
@@ -390,7 +396,6 @@ class Main(QtWidgets.QMainWindow):
         self.experiment_names = [b.name for b in mfm.experiment if b.name is not 'Global']
         self.comboBox_experimentSelect.addItems(self.experiment_names)
 
-        self._current_fit = None
         mfm.cmd.add_dataset(setup=global_setup)
         #self.onAddDataset(experiment=global_fit, setup=global_setup)  # Add Global-Dataset by default
 
@@ -405,6 +410,7 @@ class Main(QtWidgets.QMainWindow):
         )
 
         self.current_fit_widget = None
+        self._current_fit = None
 
         self.setCentralWidget(self.mdiarea)
         self.init_widgets()

@@ -300,14 +300,14 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
 
     def onUpdateFunc(self):
         function_str = str(self.plainTextEdit.toPlainText())
-        mfm.run("cs._current_fit.model.parse.func = '%s'" % function_str)
-        mfm.run("cs._current_fit.update()")
+        mfm.run("cs.current_fit.model.parse.func = '%s'" % function_str)
+        mfm.run("cs.current_fit.update()")
         self.onUpdateEquation()
 
     def onModelChanged(self):
-        mfm.run("cs._current_fit.model.parse.model_name = '%s'" % self.model_name)
-        mfm.run("cs._current_fit.model.parse.func = '%s'" % self.models[self.model_name]['equation'])
-        mfm.run("cs._current_fit.update()")
+        mfm.run("cs.current_fit.model.parse.model_name = '%s'" % self.model_name)
+        mfm.run("cs.current_fit.model.parse.func = '%s'" % self.models[self.model_name]['equation'])
+        mfm.run("cs.current_fit.update()")
         self.onUpdateEquation()
 
     def onLoadModelFile(
@@ -319,7 +319,7 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
                 'Open models-file',
                 'link file (*.yaml)'
             )
-        mfm.run("cs._current_fit.model.parse.load_model_file(%s)" % filename)
+        mfm.run("cs.current_fit.model.parse.load_model_file(%s)" % filename)
 
 
 class ParseModelWidget(ParseModel, ModelWidget):

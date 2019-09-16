@@ -85,6 +85,7 @@ class Curve(Base):
             self,
             x: np.array = None,
             y: np.array = None,
+            *args,
             **kwargs
     ):
         if x is None:
@@ -97,7 +98,10 @@ class Curve(Base):
             )
         self._x = np.copy(x)
         self._y = np.copy(y)
-        super(Curve, self).__init__(**kwargs)
+        super(Curve, self).__init__(
+            *args,
+            **kwargs
+        )
 
     def normalize(
             self,

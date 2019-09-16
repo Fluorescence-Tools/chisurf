@@ -37,11 +37,13 @@ def add_fit(
 
             # Make sure the data set is a DataGroup
             if not isinstance(data_set, mfm.experiments.data.DataGroup):
-                data_set = mfm.experiments.data.ExperimentDataCurveGroup(data_set)
+                data_group = mfm.experiments.data.ExperimentDataCurveGroup([data_set])
+            else:
+                data_group = data_set
 
             # Create the fit
             fit_group = mfm.fitting.fit.FitGroup(
-                data=data_set,
+                data=data_group,
                 model_class=model_class
             )
             mfm.fits.append(fit_group)

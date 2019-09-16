@@ -192,7 +192,9 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
             click_close: bool = True,
             change_event: Callable = None,
             curve_types: str = 'experiment',
-            get_data_sets: Callable = None
+            get_data_sets: Callable = None,
+            parent: QtWidgets.QWidget = None,
+            icon: QtGui.QIcon = None
     ):
         if get_data_sets is None:
 
@@ -208,13 +210,16 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         if change_event is not None:
             self.change_event = change_event
 
+        if icon is None:
+            icon = QtGui.QIcon(":/icons/icons/list-add.png")
+
         self.curve_type = curve_types
         self.click_close = click_close
         self.fit = fit
         self.setup = setup
 
-        super(ExperimentalDataSelector, self).__init__()
-        self.setWindowIcon(QtGui.QIcon(":/icons/icons/list-add.png"))
+        super(ExperimentalDataSelector, self).__init__(parent=parent)
+        self.setWindowIcon(icon)
         self.setWordWrap(True)
         self.setHeaderHidden(True)
         self.setAlternatingRowColors(True)
