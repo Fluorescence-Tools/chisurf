@@ -10,7 +10,13 @@ import mfm.experiments.data
 
 class ExperimentReader(mfm.base.Base):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        print(args)
+        print(kwargs)
         super(ExperimentReader, self).__init__(
             self,
             *args,
