@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List
+from typing import List, Type
 
 import mfm.base
 
@@ -54,7 +54,7 @@ class Experiment(mfm.base.Base):
 
     def add_models(
             self,
-            models: List[mfm.models.model.Model]
+            models: List[Type[mfm.models.model.Model]]
     ):
         for model in models:
             self.model_classes.append(model)
@@ -67,13 +67,13 @@ class Experiment(mfm.base.Base):
 
     def add_setups(
             self,
-            setups: List[mfm.experiments.reader.ExperimentReader]
+            setups: List
     ):
         self._setups += setups
         for s in setups:
             s.experiment = self
 
-    def get_setups(self) -> List[mfm.experiments.reader.ExperimentReader]:
+    def get_setups(self) -> List:
         return self._setups
 
     def get_setup_names(self) -> List[str]:

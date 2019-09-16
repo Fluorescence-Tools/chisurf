@@ -124,25 +124,25 @@ class ModelCurve(Model, mfm.curve.Curve):
 
     @property
     def x(self) -> np.array:
-        return self.__dict__['x']
+        return self.__dict__['_x']
 
     @x.setter
     def x(
             self,
             v: np.array
     ):
-        self.__dict__['x'] = v
+        self.__dict__['_x'] = v
 
     @property
     def y(self) -> np.array:
-        return self.__dict__['y']
+        return self.__dict__['_y']
 
     @y.setter
     def y(
             self,
             v: np.array
     ):
-        self.__dict__['y'] = v
+        self.__dict__['_y'] = v
 
     def __init__(
             self,
@@ -152,9 +152,9 @@ class ModelCurve(Model, mfm.curve.Curve):
         Model.__init__(self, fit, **kwargs)
         Curve.__init__(
             self,
-            *args,
             x=fit.data.x,
             y=np.zeros_like(fit.data.y),
+            *args,
             **kwargs
         )
 
@@ -199,9 +199,10 @@ class ModelWidget(Model, QtWidgets.QWidget):
     def update_widgets(
             self
     ) -> None:
-        for p in self._parameters:
-            if isinstance(p, mfm.fitting.fitting_widgets.FittingParameterWidget):
-                p.update()
+        for p in self.parameters:
+            p.update()
+            #if isinstance(p, mfm.fitting.fitting_widgets.FittingParameterWidget):
+            #    p.update()
 
     def update(
             self

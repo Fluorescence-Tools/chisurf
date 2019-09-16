@@ -335,7 +335,6 @@ class FittingParameterGroup(mfm.parameter.ParameterGroup):
             parameters = list()
         self._parameters = parameters
         self._aggregated_parameters = list()
-        self._parameter_names = None
 
         # Copy parameters from provided ParameterGroup
         if len(args) > 0:

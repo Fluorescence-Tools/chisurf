@@ -109,8 +109,7 @@ class Fit(mfm.base.Base):
             model_class
     ):
         if issubclass(model_class, mfm.models.model.Model):
-            kw = self._model_kw
-            self._model = model_class(self, **kw)
+            self._model = model_class(self, **self._model_kw)
 
     @property
     def weighted_residuals(
@@ -146,19 +145,9 @@ class Fit(mfm.base.Base):
             self
     ) -> str:
         try:
-            return self.name
-        except KeyError:
-            try:
-                return self.model.name + " - " + self._data.name
-            except AttributeError:
-                return "no name"
-
-    @name.setter
-    def name(
-            self,
-            name: str
-    ):
-        self._name = name
+            return self.model.name + " - " + self._data.name
+        except AttributeError:
+            return "no name"
 
     @property
     def fit_range(
@@ -190,7 +179,7 @@ class Fit(mfm.base.Base):
     @property
     def covariance_matrix(
             self
-    ):
+    ) -> Tuple[np.array, List[int]]:
         """Returns the covariance matrix of the fit given the current
         models parameter values and returns a list of the 'relevant' used
         parameters.
@@ -220,9 +209,11 @@ class Fit(mfm.base.Base):
     def get_wres(
             self,
             parameter=None,
+            model=None,
             **kwargs
     ):
-        model = kwargs.get('models', self.model)
+        if model is None:
+            model = self.model
         if parameter is not None:
             model.parameter_values = parameter
             model.update_model()
@@ -233,7 +224,7 @@ class Fit(mfm.base.Base):
             filename: str,
             file_type: str = 'txt',
             **kwargs
-    ):
+    ) -> None:
         self.model.save(filename + '.json')
         if file_type == 'txt':
             csv = mfm.io.ascii.Csv()
@@ -251,12 +242,11 @@ class Fit(mfm.base.Base):
     def run(
             self,
             **kwargs
-    ):
+    ) -> None:
+        fitting_options = mfm.settings.cs_settings['fitting']['leastsq']
         self.model.find_parameters(
             parameter_type=mfm.fitting.parameter.FittingParameter
         )
-        fitting_options = mfm.settings.cs_settings['fitting']['leastsq']
-        self.model.find_parameters()
         self.results = leastsqbound(get_wres,
                                     self.model.parameter_values,
                                     args=(self.model, ),
@@ -284,7 +274,7 @@ class Fit(mfm.base.Base):
             parameter_name: str,
             rel_range: float = None,
             **kwargs
-    ) -> None:
+    ) -> Tuple[np.array, np.array]:
         """Perform a chi2-scan on a parameter of the fit.
 
         :param parameter_name: the parameter name
