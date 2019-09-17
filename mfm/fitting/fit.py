@@ -430,6 +430,7 @@ class FitGroup(list, Fit):
         self.global_model.find_parameters()
         fitting_options = mfm.settings.fitting['leastsq']
         bounds = [pi.bounds for pi in self.global_model.parameters]
+
         self.results = leastsqbound(
             get_wres,
             self.global_model.parameter_values,
@@ -437,6 +438,7 @@ class FitGroup(list, Fit):
             bounds=bounds,
             **fitting_options
         )
+
         self.update()
         self.global_model.finalize()
 
