@@ -346,7 +346,7 @@ def find_objects(
     for value in search_list:
         if isinstance(value, object_type):
             re.append(value)
-        elif isinstance(value, Iterable):
+        elif isinstance(value, list):
             re += find_objects(value, object_type)
     if remove_double:
         return list(set(re))
