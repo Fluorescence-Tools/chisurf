@@ -1,7 +1,11 @@
 import numpy as np
 
 
-def nusiance(f, *args, **kwargs):
+def nusiance(
+        f,
+        *args,
+        **kwargs
+):
     """Scatter-corrected anisotropy
 
     :param Ss: perpenticular signal
@@ -38,7 +42,11 @@ def nusiance(f, *args, **kwargs):
 
 
 @nusiance
-def r_scatter(Ss, Sp, **kwargs):
+def r_scatter(
+        Ss,
+        Sp,
+        **kwargs
+):
     Fp = (Sp - Bp) * Gfactor
     Fs = Ss - Bs
     return (Fp-Fs)/(Fp*(1. - 3. * l2) + Fs*(2. - 3. * l1))

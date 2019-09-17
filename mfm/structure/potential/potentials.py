@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import os
 import json
 import math
 from collections import OrderedDict
 import copy
+
 import numpy as np
 import numba as nb
 import scipy.stats
@@ -288,7 +290,7 @@ class Ramachandran(object):
     def __init__(
             self,
             structure: mfm.structure.structure.Structure,
-            filename='./mfm/structure/potential/database/rama_ala_pro_gly.npy'
+            filename: str = './mfm/structure/potential/database/rama_ala_pro_gly.npy'
     ):
         """
         :param filename:
@@ -308,7 +310,10 @@ class Ramachandran(object):
 
 class Electrostatics(object):
 
-    def __init__(self, structure, type='gb'):
+    def __init__(
+            self,
+            structure,
+            type: str = 'gb'):
         """
         :param type:
         :return:
@@ -328,13 +333,16 @@ class Electrostatics(object):
 
 class LJ_Bead(object):
 
-    def __init__(self, structure):
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure
+    ):
         self.structure = structure
         self.name = 'LJ_bead'
 
     def getEnergy(self) -> float:
         structure = self.structure
-        self.E = lennard_jones_calpha(self.structure.atoms['coord'])
+        self.E = lennard_jones_calpha(structure.atoms['coord'])
         return self.E
 
 
@@ -342,11 +350,21 @@ class HPotential(object):
 
     name = 'H-Bond'
 
-    def __init__(self, structure, cutoff_ca=8.0, cutoff_hbond=3.0, **kwargs):
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure,
+            cutoff_ca: float = 8.0,
+            cutoff_hbond: float = 3.0,
+            **kwargs
+    ):
         self.structure = structure
         self.cutoffH = cutoff_hbond
         self.cutoffCA = cutoff_ca
-        self.potential = kwargs.get('potential', './mfm/structure/potential/database/hb.csv')
+        self.potential = kwargs.get(
+            'potential',
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), './database/hb.csv')
+        )
         self.oh = kwargs.get('oh', 1.0)
         self.on = kwargs.get('on', 1.0)
         self.cn = kwargs.get('cn', 1.0)
@@ -434,10 +452,14 @@ class MJPotential(object):
 
     def __init__(
             self,
-            structure,
-            filename='./mfm/structure/potential/database/mj.csv',
+            structure: mfm.structure.structure.Structure,
+            filename: str = None,
             ca_cutcoff: float = 6.5
     ):
+        if filename is None:
+            filename = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), '.database/mj.csv'
+            )
         self.filename = filename
         self.structure = structure
         self.potential = filename
@@ -481,6 +503,7 @@ class CEPotential(object):
     def __init__(
             self,
             structure: mfm.structure.structure.Structure,
+            potential: str = None,
             **kwargs
     ):
         """
@@ -490,7 +513,12 @@ class CEPotential(object):
         self.structure = structure
         self.ca_cutoff = kwargs.get('ca_cutoff', 15.0)
         self._potential = None
-        potential = kwargs.get('potential', './mfm/structure/potential/database/unres.npy')
+
+        if potential is None:
+            potential = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), '.database/unres.npy'
+            )
+
         self.potential = potential
         self.scaling_factor = scaling_factor
         # the number of the atom in the lookup table
@@ -569,7 +597,13 @@ class ClashPotential(object):
 
     name = 'Clash-Potential'
 
-    def __init__(self, **kwargs):
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure = None,
+            clash_tolerance: float = 2.0,
+            covalent_radius: float = 1.5,
+            **kwargs
+    ):
         """
         :param kwargs:
         :return:
@@ -585,13 +619,18 @@ class ClashPotential(object):
         >>> pce.getEnergy()
 
         """
-        self.structure = kwargs.get('structure', None)
-        self.clash_tolerance = kwargs.get('clash_tolerance', 2.0)
-        self.covalent_radius = kwargs.get('covalent_radius', 1.5)
+        self.structure = structure
+        self.clash_tolerance = clash_tolerance
+        self.covalent_radius = covalent_radius
 
     def getEnergy(self) -> float:
         c = self.structure
-        return cPotentials.clash_potential(c.xyz, c.vdw, self.clash_tolerance, self.covalent_radius)
+        return cPotentials.clash_potential(
+            c.xyz,
+            c.vdw,
+            self.clash_tolerance,
+            self.covalent_radius
+        )
 
 
 class AvPotential(object):
@@ -618,17 +657,30 @@ class AvPotential(object):
 
     def __init__(
             self,
+            labeling_file: str = None,
+            structure: mfm.structure.structure.Structure = None,
+            verbose: bool = False,
+            rda_axis: np.array = None,
+            av_samples: int = None,
+            min_av: int = 150,
             **kwargs
     ):
-        self._labeling_file = kwargs.get('labeling_file', None)
-        self._structure = kwargs.get('structure', None)
+        self._labeling_file = labeling_file
+        self._structure = structure
+        self.verbose = verbose
 
-        self.verbose = kwargs.get('verbose', mfm.verbose)
-        self.rda_axis = kwargs.get('rda_axis', mfm.fluorescence.rda_axis)
+        if rda_axis is None:
+            rda_axis = mfm.fluorescence.rda_axis
+        self.rda_axis = rda_axis
+
         self.distances = kwargs.get("Distances", None)
         self.positions = kwargs.get("Positions", None)
-        self.n_av_samples = kwargs.get('av_samples', mfm.settings["fps"]["distance_samples"])
-        self.min_av = kwargs.get('min_av', 150)
+
+        if av_samples is None:
+            av_samples = mfm.settings["fps"]["distance_samples"]
+        self.n_av_samples = av_samples
+        self.min_av = min_av
+
         self.avs = OrderedDict()
 
     @property

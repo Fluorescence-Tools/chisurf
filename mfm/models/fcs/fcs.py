@@ -16,13 +16,14 @@ class ParseFCSWidget(ParseModelWidget):
     plot_classes = [
         (
             plots.LinePlot, {
-                'd_scalex': 'log',
-                'd_scaley': 'lin',
-                'r_scalex': 'log',
+                'scale_x': 'lin',
+                'd_scaley': 'log',
                 'r_scaley': 'lin',
-                'x_label': 't [ms]',
-                'y_label': 'G(t)'
-            }),
+                'x_label': 'x',
+                'y_label': 'y',
+                'plot_irf': True
+            }
+        ),
         (plots.FitInfo, {}),
         (plots.ParameterScanPlot, {})
     ]
@@ -30,13 +31,21 @@ class ParseFCSWidget(ParseModelWidget):
     def __init__(
             self,
             fit: mfm.fitting.fit.FitGroup,
+            icon: QtGui.QIcon = None,
             **kwargs
     ):
-        self.icon = QtGui.QIcon(":/icons/icons/fcs.png")
-        fn = os.path.join(mfm.package_directory, 'settings/models.yaml')
-        ParseModelWidget.__init__(self, fit, model_file=fn, **kwargs)
+        if icon is None:
+            icon = QtGui.QIcon(":/icons/icons/fcs.png")
+        self.icon = icon
+
+        fn = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'models.yaml'
+        )
+
         super(ParseFCSWidget, self).__init__(
-            fit,
+            fit=fit,
+            model_file=fn,
             **kwargs
         )
 

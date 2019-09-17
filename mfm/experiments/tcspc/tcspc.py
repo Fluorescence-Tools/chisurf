@@ -1,8 +1,8 @@
 from __future__ import annotations
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np
-from qtpy import  QtWidgets, uic
+from qtpy import QtWidgets, uic
 import os
 
 import mfm
@@ -108,25 +108,36 @@ class TCSPCReader(ExperimentReader):
 
     def __init__(
             self,
-            *args,
             skiprows: int = 7,
             is_jordi: bool = False,
             rebin: Tuple[int, int] = (1, 1),
             use_header: bool = True,
             polarization: str = 'vm',
+            dt: float = None,
+            rep_rate: float = None,
+            g_factor: float = None,
+            matrix_columns: List = None,
+            *args,
             **kwargs
     ):
-        super(TCSPCReader, self).__init__(self, *args, **kwargs)
+        super(TCSPCReader, self).__init__(*args, **kwargs)
         self.csvSetup = kwargs.pop('csvSetup', Csv(*args, **kwargs))
         self.skiprows = skiprows
         self.is_jordi = is_jordi
         self.rebin = rebin
         self.use_header = use_header
         self.polarization = polarization
-        self.dt = kwargs.get('dt', mfm.settings.cs_settings['tcspc']['dt'])
-        self.rep_rate = kwargs.get('rep_rate', mfm.settings.cs_settings['tcspc']['rep_rate'])
-        self.g_factor = kwargs.get('g_factor', mfm.settings.cs_settings['tcspc']['g_factor'])
-        self.matrix_columns = kwargs.get('matrix_columns', None)
+
+        if dt is None:
+            dt = mfm.settings.cs_settings['tcspc']['dt']
+        self.dt = dt
+        if rep_rate is None:
+            rep_rate = mfm.settings.cs_settings['tcspc']['rep_rate']
+        self.rep_rate = rep_rate
+        if g_factor is None:
+            g_factor = mfm.settings.cs_settings['tcspc']['g_factor']
+        self.g_factor = g_factor
+        self.matrix_columns = matrix_columns
 
     @staticmethod
     def autofitrange(
@@ -240,7 +251,11 @@ class TCSPCReader(ExperimentReader):
         return data_group
 
 
-class TCSPCSetupWidget(TCSPCReader, mfm.io.ascii.Csv, QtWidgets.QWidget):
+class TCSPCSetupWidget(
+    TCSPCReader,
+    mfm.io.ascii.Csv,
+    QtWidgets.QWidget
+):
 
     def read(
             self,
@@ -260,8 +275,12 @@ class TCSPCSetupWidget(TCSPCReader, mfm.io.ascii.Csv, QtWidgets.QWidget):
         else:
             return None
 
-    def __init__(self, *args, **kwargs):
-        super(TCSPCSetupWidget, self).__init__()
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super(TCSPCSetupWidget, self).__init__(*args, **kwargs)
         QtWidgets.QWidget.__init__(self)
         #TCSPCReader.__init__(self, *args, **kwargs)
 
@@ -274,7 +293,7 @@ class TCSPCSetupWidget(TCSPCReader, mfm.io.ascii.Csv, QtWidgets.QWidget):
         self.layout.addWidget(csvTCSPC)
         self.layout.addWidget(csvSetup)
 
-        TCSPCReader.__init__(self, *args, **kwargs)
+        #TCSPCReader.__init__(self, *args, **kwargs)
         # Overwrite non-widget attributes by widgets
         self.csvTCSPC = csvTCSPC
 

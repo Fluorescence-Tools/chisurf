@@ -513,12 +513,21 @@ class EtModelFree(
             self.update_plots()
 
     def update_matrix(self):
-        self.t_matrix, x = mfm.fluorescence.calc_transfer_matrix(self.times, r_DA=self.r_DA, kappa2=self.kappa2,
-                                                                tau0=self.tau0, R0=self.R0)
+        self.t_matrix, x = mfm.fluorescence.general.calc_transfer_matrix(
+            self.times,
+            r_DA=self.r_DA,
+            kappa2=self.kappa2,
+            tau0=self.tau0,
+            R0=self.R0
+        )
 
     def get_chi2r(self, lifetime_spectrum):
         if self.fda_model is not None:
-            self.fda_model.update_model(lifetime_spectrum=lifetime_spectrum, verbose=self.verbose, autoscale=True)
+            self.fda_model.update_model(
+                lifetime_spectrum=lifetime_spectrum,
+                verbose=self.verbose,
+                autoscale=True
+            )
             chi2r = self.fda_model.chi2r(self.fda_model.fit.data)
             self.fda_model.update_model()
             return chi2r

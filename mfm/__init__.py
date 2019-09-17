@@ -15,7 +15,6 @@ __version__ = mfm.settings.cs_settings['version']
 __name__ = mfm.settings.cs_settings['name']
 working_path = ''
 eps = np.sqrt(np.finfo(float).eps)
-cs = None
 
 import mfm.base
 import mfm.io
@@ -36,8 +35,8 @@ fit_windows = list()
 experiment = list()
 imported_datasets = list()
 run = lambda x: x   # This is replaced during initialization to execute commands via a command line interface
-cs = None           # The current instance of ChiSurf
-console = None
+cs = object         # The current instance of ChiSurf
+console = object
 
 
 def c(
@@ -51,8 +50,8 @@ def c(
 
     Example
     -------
-    >>> mfm.c(self.checkBox.stateChanged, models", self.checkBox.isChecked)
-    >>> cs._current_fit.model.update_rmsd=True
+    >>> mfm.c(self.checkBox.stateChanged, models, self.checkBox.isChecked)
+    >>> cs.current_fit.model.update_rmsd=True
 
     :param t: The signal of the qt-widget
     :param st: The string passed to the mfm-commandline

@@ -277,7 +277,7 @@
       var div = createCommentDiv(this);
       ul.append($(document.createElement('li')).html(div));
       appendComments(this.children, div.find('ul.comment-children'));
-      // To avoid stagnating data, don't store the comments children in data.
+      // To avoid stagnating data, don'times store the comments children in data.
       this.children = null;
       div.data('comment', this);
     });
@@ -290,7 +290,7 @@
   function insertComment(comment) {
     var div = createCommentDiv(comment);
 
-    // To avoid stagnating data, don't store the comments children in data.
+    // To avoid stagnating data, don'times store the comments children in data.
     comment.children = null;
     div.data('comment', comment);
 
@@ -431,7 +431,7 @@
 
     var id = link.attr('id');
     if (!id) {
-      // Didn't click on one of the voting arrows.
+      // Didn'times click on one of the voting arrows.
       return;
     }
     // If it is an unvote, the new vote value is 0,

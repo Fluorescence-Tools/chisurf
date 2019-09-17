@@ -25,7 +25,10 @@ rmt.seedMT()
 
 @cython.cdivision(True)
 @cython.boundscheck(False)
-cdef inline c_random_distances(av1, av2, double* distances, uint32_t nSamples):
+cdef inline c_random_distances(
+        av1,
+        av2,
+        double* distances, uint32_t nSamples):
 
     cdef uint32_t i, i1, i2
     cdef int32_t lp1, lp2
@@ -53,7 +56,13 @@ def random_distances(av1, av2, uint32_t nSamples=10000):
 
 
 @cython.boundscheck(False)
-cdef inline rotate_translate_vector(double psi, double theta, double phi, double[:] vec, double[:] trans):
+cdef inline rotate_translate_vector(
+        double psi,
+        double theta,
+        double phi,
+        double[:] vec,
+        double[:] trans
+):
     """This rotates a vector according to the euler angles psi, theta and phi followed by a translation.
     (This function modifies the vector vec)
 

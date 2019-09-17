@@ -115,7 +115,7 @@ class GridModel(FRETModel):
         :param pu: probability of unlabeled
         :return:
 
-        >>> from mfm.fitting.models.tcspc.membrane import GridModel
+        >>> from mfm.models.tcspc.membrane import GridModel
         >>> forster_radius = 50
         >>> tau0 = 4.0
         >>> n_cols, n_rows = 100, 100

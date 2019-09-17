@@ -1,0 +1,158 @@
+---
+3D Gauss:
+  equation: b+1/abs(N)*(1+x/td)**(-1)/sqrt(1+1/s**2*x/td)
+  initial:
+    N: 1
+    s: 3.5
+    td: 0.5
+    b: 1
+  description: "<html><head /><body><h1>3D Gauss</h1><p></p></body></html>"
+3D Gauss, 1 bunching:
+  equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba+ba*exp(-x/bt))
+  initial:
+    N: 1
+    s: 3.5
+    td: 0.5
+    b: 1
+    bt: 0.002
+    ba: 0.1
+  description: "<html><head /><body><h1>3D Gauss, 1 bunching</h1><p>Da von einem
+    Molekül im Triplettzustand keine Fluoreszenz mehr beobachtet werden kann, und
+    die Phosphoreszenz als vernachlässigbar klein betrachtet bzw. durch geeignete
+    Filterwahl abgeblockt werden kann, führt der Übergang eines Fluoreszenzmoleküls
+    in den Triplettzustand zu Fluoreszenzschwankungen, die in der Fluoreszenzkorrelationsfunktion
+    einen charakteristischen Zeitverlauf zeigen. Dieser Zeitverlauf wird durch einen
+    Ausdruck beschrieben, der von den photochemischen Parametern des Moleküls abhängt.
+    WIDENGREN, METS, RIGLER [101] leiteten einen Ausdruck für die Fluoreszenzkorrelationsfunktion
+    her, der die translative Diffusion und den Triplettzustand einschloß:</p></body></html>"
+3D Gauss, 2 bunching:
+  equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2))
+  initial:
+    N: 1
+    s: 3.5
+    td: 0.5
+    b: 1
+    bt1: 0.002
+    ba1: 0.05
+    bt2: 0.01
+    ba2: 0.05
+  description: "<html><head /><body><h1>3D Gauss, 2 bunching</h1><p></p></body></html>"
+3D Gauss, 3 bunching:
+  equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3))
+  initial:
+    N: 1
+    s: 3.5
+    td: 0.5
+    b: 1
+    bt1: 0.002
+    ba1: 0.05
+    bt2: 0.01
+    ba2: 0.05
+    bt3: 0.1
+    ba3: 0.1
+  description: "<html><head /><body><h1>3D Gauss, 3 bunching</h1><p></p></body></html>"
+3D Gauss, 7 bunching:
+  equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3)-ba4+ba4*exp(-x/bt4)-ba5+ba5*exp(-x/bt5))*(1-ba6+ba6*exp(-x/bt6))*(1-ba7+ba7*exp(-x/bt7))
+  initial:
+    N: 1
+    s: 3.5
+    td: 0.5
+    b: 1
+    bt1: 0.002
+    ba1: 0.05
+    bt2: 0.01
+    ba2: 0.05
+    bt3: 0.1
+    ba3: 0.1
+    bt4: 0.1
+    ba4: 0.1
+    bt5: 0.1
+    ba5: 0.1
+    bt6: 0.1
+    ba6: 0.1
+    bt7: 0.1
+    ba7: 0.1
+  description: "<html><head /><body><h1>3D Gauss, 7 bunching (Suren fit31)</h1><p></p></body></html>"
+3D Gauss, 1 bunching + 1+5 anti-bunching:
+  equation: b+1/abs(N)*(1+x/td)**(-1)/sqrt(1+1/s**2*x/td)*(1-abs(ba1)+abs(ba1)*exp(-x/abs(bt1)))*(1-abs(aba)*exp(-x/abs(abt)))*(1-
+    abs(abf)*(abs(aba1)*exp(-x/abs(abt1))+abs(aba2)*exp(-x/abs(abt2))+abs(aba3)*exp(-x/abs(abt3))+abs(aba4)*exp(-x/abs(abt4))+abs(1-abs(aba1)-abs(aba2)-abs(aba3)-abs(aba4))*exp(-x/abs(abt5))))
+  initial:
+    N: 1
+    s: 3.5
+    td: 0.5
+    b: 1
+    bt1: 0.002
+    ba1: 0.05
+    aba: 0.1
+    abt: 0.1
+    abf: 0.5
+    aba1: 0.1
+    abt1: 0.1
+    aba2: 0.05
+    abt2: 0.2
+    aba3: 0.1
+    abt3: 0.05
+    aba4: 0.1
+    abt4: 0.5
+    abt5: 1
+  description: "<html><head /><body><h1>3D Gauss, 1 bunching + 1+5 anti-bunching
+    (Suren fit85)</h1><p></p></body></html>"
+2 comp 3D Gauss, 3 individual bunch:
+  equation: b+1/abs(N)*(a1*(1+x/abs(td1))**(-1)/sqrt(1+1/s**2*x/abs(td1))*(1-abs(ba11)+abs(ba11)*exp(-x/abs(bt11))-abs(ba21)+abs(ba21)*exp(-x/abs(bt21))-abs(ba31)+abs(ba31)*exp(-x/abs(bt31)))+(1-a1)
+    * (1+x/abs(td2))**(-1)*(1+1/s**2*x/abs(td2))**(-0.5)*(1-abs(ba12)+abs(ba12)*exp(-x/abs(bt12))-abs(ba22)+abs(ba22)*exp(-x/abs(bt22))-abs(ba32)+abs(ba32)*exp(-x/abs(bt32))))
+  initial:
+    N: 1
+    s: 3.5
+    td1: 0.5
+    td2: 0.5
+    b: 1
+    a1: 0.5
+    ba11: 0.05
+    ba12: 0.05
+    ba21: 0.05
+    ba22: 0.05
+    ba32: 0.05
+    ba31: 0.05
+    bt11: 0.1
+    bt12: 0.1
+    bt21: 0.1
+    bt22: 0.1
+    bt31: 0.1
+    bt32: 0.1
+  description: "<html><head /><body><h1>2 comp 3D Gauss, 3 individual bunch</h1><p></p></body></html>"
+3D Gauss, 1 exp. bunch, 1 stretched exp. bunch:
+  equation: b+1/abs(N)*(1+x/abs(td))**(-1)*(1+1/s**2*x/abs(td))**(-0.5)*(1-abs(ba1)+abs(ba1)*exp(-x/abs(bt1))-abs(ba2)+abs(ba2)*exp(-(x/abs(bt2))**bs2))
+  initial:
+    N: 1
+    s: 3.5
+    td: 0.5
+    b: 1
+    ba1: 0.05
+    ba2: 0.05
+    bt1: 0.1
+    bt2: 0.1
+    bs2: 1
+  description: "<html><head /><body><h1>3D Gauss, 1 exp. bunch, 1 stretched exp.
+    bunch</h1><p></p></body></html>"
+2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp.:
+  equation: b+1/abs(N) * (a1 * (1+x/abs(td1))**(-1)*(1+1/s**2*x/abs(td1))**(-0.5)*(1-abs(ba11)+abs(ba11)*exp(-x/abs(bt11))-abs(ba21)+abs(ba21)*exp(-(x/abs(bt21))**bs21))+(1-a1)
+    * (1+x/abs(td2))**(-1)*(1+1/s**2*x/abs(td2))**(-0.5)*(1-abs(ba12)+abs(ba12)*exp(-x/abs(bt12))-abs(ba22)+abs(ba22)*exp(-(x/abs(bt22))**bs22)))
+  initial:
+    N: 1
+    s: 3.5
+    td1: 0.5
+    td2: 0.5
+    b: 1
+    a1: 0.5
+    ba11: 0.05
+    ba21: 0.05
+    bt11: 0.1
+    bt21: 0.1
+    bs21: 1
+    ba12: 0.05
+    ba22: 0.05
+    bt12: 0.1
+    bt22: 0.1
+    bs22: 1
+  description: "<html><head /><body><h1>2 comp 3D Gauss, ind. 1 exp. + 1 stretched
+    exp.</h1><p></p></body></html>"

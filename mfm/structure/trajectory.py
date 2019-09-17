@@ -48,10 +48,9 @@ class Universe(object):
     def getEnergy(
             self,
             structure: mfm.structure.structure.Structure = None
-    ):
-        if isinstance(structure, mfm.structure.Structure):
-            for p in self.potentials:
-                p.structure = structure
+    ) -> float:
+        for p in self.potentials:
+            p.structure = structure
         Es = self.getEnergies()
         E = Es.sum()
         return E
@@ -60,10 +59,8 @@ class Universe(object):
             self,
             structure: mfm.structure.structure.Structure = None
     ):
-        if isinstance(structure, mfm.structure.structure.Structure):
-            for p in self.potentials:
-                p.structure = structure
-
+        for p in self.potentials:
+            p.structure = structure
         scales = np.array(self.scaling)
         Es = np.array([pot.getEnergy() for pot in self.potentials])
         return scales * Es
@@ -106,12 +103,14 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
 
     Making new h5-Trajectory file
 
-import mfm.structure    >>> import mfm
-    >>> s = mfm.structure.mfm.structure.Structure('./sample_data/modelling/trajectory/h5-file/T4L_Topology.pdb', verbose=True, make_coarse=False)
-    >>> t = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', s, file_type='w')
-    >>> t[0]
+    >>> import mfm
+    >>> import mfm.structure
+    >>> from mfm.structure.trajectory import TrajectoryFile
+    >>> s = mfm.structure.structure.Structure('./sample_data/modelling/trajectory/h5-file/T4L_Topology.pdb', verbose=True, make_coarse=False)
+    >>> traj = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', s, file_type='w')
+    >>> traj[0]
     <mfm.structure.structure.mfm.structure.Structure at 0x11f34e10>
-    >>> print(t[0])
+    >>> print(traj[0])
     ATOM      1    N MET     1     -10.750  14.401  -5.002  0.00  0.00             N
     ATOM      2   H1 MET     1     -11.310  14.080  -4.226  0.00  0.00             H
     ATOM      3   H2 MET     1     -11.333  14.344  -5.825  0.00  0.00             H
@@ -122,22 +121,24 @@ import mfm.structure    >>> import mfm
     Opening h5-Trajectory file
 
     >>> import mfm
-    >>> t = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
-    >>> print(t[0:3])
+    >>> from mfm.structure.trajectory import TrajectoryFile
+    >>> traj = TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
+    >>> print(traj[0:3])
     [<mfm.structure.structure.mfm.structure.Structure at 0x1345d5d0>,
     <mfm.structure.structure.mfm.structure.Structure at 0x1345d610>,
     <mfm.structure.structure.mfm.structure.Structure at 0x132d2230>]
 
     Name of the trajectory
 
-    >>> print(t.name)
+    >>> print(traj.name)
     '/ sample_data/ structure/ sample_data/ structure/ T4L_Trajectory.h5'
 
     initialize with mdtraj.Trajectory
 
     >>> import mfm
-    >>> t = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
-    >>> t2 = mfm.structure.TrajectoryFile(t.mdtraj, filename='test.h5')
+    >>> from mfm.structure.trajectory import TrajectoryFile
+    >>> traj = TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
+    >>> t2 = TrajectoryFile(traj.mdtraj, filename='test.h5')
 
     Attributes:
     -----------
@@ -150,6 +151,7 @@ import mfm.structure    >>> import mfm
 
     def __init__(
             self,
+            p_object,
             *args,
             filename: str = None,
             make_coarse: bool = False,
@@ -170,7 +172,6 @@ import mfm.structure    >>> import mfm
             the models number of the pdb (optional argument). By default the first models in the PDB-File is used.
 
         """
-        p_object = args[0]
         self.mode = kwargs.get('file_type', 'r')
         self.atom_indices = atom_indices
         self.make_coarse = make_coarse
@@ -199,12 +200,13 @@ import mfm.structure    >>> import mfm
                     self._mdtraj.save_hdf5(p_object)
                     self._filename = p_object
                     mdtraj.Trajectory.__init__(self, self._mdtraj.xyz, self._mdtraj.topology)
-        if isinstance(p_object, mdtraj.Trajectory):
+
+        elif isinstance(p_object, mdtraj.Trajectory):
             self._mdtraj = p_object
             mdtraj.Trajectory.__init__(self, xyz=p_object.xyz, topology=p_object.topology)
             self._filename = kwargs.get('filename', tempfile.mkstemp(".h5"))
 
-        if isinstance(p_object, mfm.structure.structure.Structure):
+        elif isinstance(p_object, mfm.structure.structure.Structure):
             self._filename = kwargs.get('filename', tempfile.mkstemp(".h5"))
             p_object.write(pdb_tmp)
             self._mdtraj = mdtraj.Trajectory.load(pdb_tmp)
@@ -214,6 +216,7 @@ import mfm.structure    >>> import mfm
         else:
             self._mdtraj[0].save_pdb(pdb_tmp)
             structure = mfm.structure.structure.Structure(pdb_tmp, verbose=self.verbose)
+
         self.structure = kwargs.get('structure', structure)
 
         if self.center:
@@ -340,7 +343,7 @@ import mfm.structure    >>> import mfm
         """
         The average structure (:py:class:`~mfm.structure.mfm.structure.Structure`) of the trajectory
         """
-        return mfm.structure.average(self[:len(self)])
+        return mfm.structure.structure.average(self[:len(self)])
 
     @property
     def values(self):
@@ -350,16 +353,17 @@ import mfm.structure    >>> import mfm
         --------
 
         >>> import mfm
-        >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
-        >>> t
+        >>> from mfm.structure.trajectory import TrajectoryFile
+        >>> traj = TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+        >>> traj
         <mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x117f3b70>
-        >>> t.values
+        >>> traj.values
         array([], shape=(4, 0), dtype=float64)
-        >>> t.append(t[0])
+        >>> traj.append(times[0])
         inf     inf     0.0000  0.6678
-        >>> t.append(t[0])
+        >>> traj.append(times[0])
         inf     inf     0.0000  0.0000
-        >>> t.values
+        >>> traj.values
         array([ [  5.96507968e-09,   5.96508192e-09],
                 [  6.67834069e-01,   5.96507944e-09],
                 [             inf,              inf],
@@ -394,10 +398,11 @@ import mfm.structure    >>> import mfm
         --------
 
         >>> import mfm
-        >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
-        >>> t
+        >>> from mfm.structure.trajectory import TrajectoryFile
+        >>> traj = TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+        >>> traj
         <mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x11762b70>
-        >>> t.append(t[0])
+        >>> t.append(traj[0])
         <mdtraj.Trajectory with 93 frames, 2495 atoms, 164 residues, without unitcells at 0x11762b70>
         """
         verbose = verbose or self.verbose
@@ -435,8 +440,9 @@ import mfm.structure    >>> import mfm
         """
         Implements iterator
         >>> import mfm
-        >>> t = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
-        >>> for s in t:
+        >>> from mfm.structure.trajectory import TrajectoryFile
+        >>> traj = TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+        >>> for s in traj:
         >>>     print(s)
         [<mfm.structure.structure.mfm.structure.Structure object at 0x12FAE330>, <mfm.structure.structure.mfm.structure.Structure object at 0x12FAE3B0>, <li
         b.structure.mfm.structure.Structure.mfm.structure.Structure object at 0x11852070>, <mfm.structure.structure.mfm.structure.Structure object at 0x131052D0>, <mfm.st
@@ -459,8 +465,8 @@ import mfm.structure    >>> import mfm
         -------
 
         >>> import mfm
-        >>> t = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
-        >>> s = str(t.next())
+        >>> traj = mfm.structure.trajectory.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
+        >>> s = str(traj.next())
         >>> print(s[:500])
         ATOM      1    N MET A   1       7.332 -10.706 -15.034  0.00  0.00             N
         ATOM      2    H MET A   1       7.280 -10.088 -15.830  0.00  0.00             H
@@ -468,7 +474,7 @@ import mfm.structure    >>> import mfm
         ATOM      4   H3 MET A   1       8.267 -10.697 -14.653  0.00  0.00             H
         ATOM      5   CA MET A   1       6.341 -10.257 -14.033  0.00  0.00             C
         ATOM      6   HA MET A   1       5.441  -9.927 -14.551  0.00  0.00             H
-        >>> s = str(t.next())
+        >>> s = str(traj.next())
         >>> print(s[:500])
         ATOM      1    N MET A   1      12.234  -5.443 -11.675  0.00  0.00             N
         ATOM      2    H MET A   1      12.560  -5.462 -10.719  0.00  0.00             H
@@ -485,8 +491,8 @@ import mfm.structure    >>> import mfm
         return element
 
     def slice(self, key, copy=True):
-        s = self.mdtraj.slice(self, key, copy=True)
-        t = TrajectoryFile(p_object=s)
+        s = self.mdtraj.slice(key, copy=True)
+        return TrajectoryFile(p_object=s)
 
     def __getitem__(self, key):
         # TODO: do sth. about the evaluation speed (maybe lazy evaluation)

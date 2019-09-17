@@ -1,15 +1,17 @@
 from __future__ import annotations
-from typing  import List
+from typing import List
 
+import os
 import tempfile
 from collections import defaultdict, OrderedDict
 import sympy
 import yaml
-from qtpy import  QtCore, QtWidgets, uic
-from qtpy.QtCore import QFile, QFileInfo, QTextStream, QUrl
 from numpy import *
 from sympy.printing.latex import latex
 from re import Scanner
+
+from qtpy import QtCore, QtWidgets, uic, QtWebEngineWidgets
+from qtpy.QtCore import QFile, QFileInfo, QTextStream, QUrl
 
 import mfm
 from mfm.models.model import ModelWidget, ModelCurve
@@ -30,6 +32,8 @@ class ParseFormula(FittingParameterGroup):
             model: mfm.models.model.Model = None,
             short: str = '',
             parameters: List[mfm.fitting.parameter.FittingParameter] = None,
+            model_file: str = None,
+            model_name: str = None,
             **kwargs
     ):
         super(ParseFormula, self).__init__(
@@ -46,8 +50,16 @@ class ParseFormula(FittingParameterGroup):
         self._count = 0
         self._func = "x*0"
 
-        self.model_file = kwargs.get('model_file', os.path.join(mfm.package_directory, 'settings/models.yaml'))
-        self.model_name = kwargs.get('model_name', self.models.keys()[0])
+        if model_file is None:
+            model_file = os.path.join(
+                mfm.package_directory, 'models.yaml'
+            )
+        self.model_file = model_file
+
+        if model_name is None:
+            model_name = list(self.models)[0]
+        self.model_name = model_name
+
         self.code = self._func
 
     @property
@@ -84,29 +96,28 @@ class ParseFormula(FittingParameterGroup):
         self._func = v
         self.parse_code()
 
-    def var_found(
-            self,
-            scanner,
-            name: str
-    ):
-        if name in ['caller', 'e', 'pi']:
-            return name
-        if name not in self._keys:
-            self._keys.append(name)
-            ret = 'a[%d]' % self._count
-            self._count += 1
-        else:
-            ret = 'a[%d]' % (self._keys.index(name))
-        return ret
-
     def parse_code(self):
+
+        def var_found(
+                scanner,
+                name: str
+        ):
+            if name in ['caller', 'e', 'pi']:
+                return name
+            if name not in self._keys:
+                self._keys.append(name)
+                ret = 'a[%d]' % self._count
+                self._count += 1
+            else:
+                ret = 'a[%d]' % (self._keys.index(name))
+            return ret
 
         code = self._func
         scanner = Scanner([
             (r"x", lambda y, x: x),
             (r"[a-zA-Z]+\.", lambda y, x: x),
-            (r"[a-z]+\(", lambda y ,x: x),
-            (r"[a-zA-Z_]\w*", self.var_found),
+            (r"[a-z]+\(", lambda y, x: x),
+            (r"[a-zA-Z_]\w*", var_found),
             (r"\d+\.\d*", lambda y, x: x),
             (r"\d+", lambda y, x: x),
             (r"\+|-|\*|/", lambda y, x: x),
@@ -114,9 +125,9 @@ class ParseFormula(FittingParameterGroup):
             (r"\)+", lambda y, x: x),
             (r"\(+", lambda y, x: x),
             (r",", lambda y, x: x),
-            ])
+        ])
         self._count = 0
-        self._keys = []
+        self._keys = list()
         parsed, rubbish = scanner.scan(code)
         parsed = ''.join(parsed)
         if rubbish != '':
@@ -187,6 +198,12 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
             n_columns: int = None,
             **kwargs
     ):
+        self.widget = uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "parseWidget.ui"
+            )
+        )
         super(ParseFormulaWidget, self).__init__(
             fit=fit,
             model=model,
@@ -194,34 +211,32 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
             parameters=parameters,
             **kwargs
         )
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "parseWidget.ui"
-            ),
-            self
-        )
         if n_columns is None:
             n_columns = mfm.settings.gui['fit_models']['n_columns']
         self.n_columns = n_columns
 
-        #self.webview = QWebView()
-        #self.verticalLayout_4.addWidget(self.webview)
+        self.webview = QtWebEngineWidgets.QWebEngineView()
+        self.widget.verticalLayout_4.addWidget(self.webview)
 
-        self.comboBox.currentIndexChanged[int].connect(self.onModelChanged)
-        self.toolButton.clicked.connect(self.onUpdateFunc)
-        self.func = self.models[self.model_name]['equation']
+        self.widget.comboBox.currentIndexChanged[int].connect(self.onModelChanged)
+        self.widget.toolButton.clicked.connect(self.onUpdateFunc)
+        self._func = self.models[self.model_name]['equation']
+        layout = QtWidgets.QHBoxLayout()
+        self.setLayout(
+            layout
+        )
+        layout.addWidget(self.widget)
 
     @property
     def func(self):
-        return ParseFormula.func.fget(self)
+        return super(ParseFormulaWidget, self.__class__).func
 
     @func.setter
     def func(self, v):
-        ParseFormula.func.fset(self, v)
+        super(ParseFormulaWidget, self.__class__).func = v
 
-        self.plainTextEdit.setPlainText(v)
-        layout = self.gridLayout_2
+        self.widget.plainTextEdit.setPlainText(v)
+        layout = self.widget.gridLayout_2
         mfm.widgets.clear_layout(layout)
         n_columns = self.n_columns
 
@@ -243,20 +258,20 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
     @models.setter
     def models(self, v):
         ParseFormula.models.fset(self, v)
-        self.comboBox.clear()
-        self.comboBox.addItems(list(v.keys()))
+        self.widget.comboBox.clear()
+        self.widget.comboBox.addItems(list(v.keys()))
 
     @property
     def model_name(self) -> List[str]:
-        return list(self.models.keys())[self.comboBox.currentIndex()]
+        return list(self.models.keys())[self.widget.comboBox.currentIndex()]
 
     @model_name.setter
     def model_name(
             self,
             v: str
     ):
-        idx = self.comboBox.findText(v)
-        self.comboBox.setCurrentIndex(idx)
+        idx = self.widget.comboBox.findText(v)
+        self.widget.comboBox.setCurrentIndex(idx)
 
     def onUpdateEquation(self):
         s = """<html><head>
@@ -275,7 +290,7 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
         s += "$$</mathjax></p>"
         s += self.models[self.model_name]['description']
         s += "</body></html>"
-        tempFile = QFile(tempfile.mkstemp('.html'))
+        tempFile = QFile(tempfile.mktemp('.html'))
         tempFile.open(QFile.WriteOnly)
         stream = QTextStream(tempFile)
         stream << s
@@ -285,20 +300,26 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
 
     def onUpdateFunc(self):
         function_str = str(self.plainTextEdit.toPlainText())
-        mfm.run("cs._current_fit.model.parse.func = '%s'" % function_str)
-        mfm.run("cs._current_fit.update()")
+        mfm.run("cs.current_fit.model.parse.func = '%s'" % function_str)
+        mfm.run("cs.current_fit.update()")
         self.onUpdateEquation()
 
     def onModelChanged(self):
-        mfm.run("cs._current_fit.model.parse.model_name = '%s'" % self.model_name)
-        mfm.run("cs._current_fit.model.parse.func = '%s'" % self.models[self.model_name]['equation'])
-        mfm.run("cs._current_fit.update()")
+        mfm.run("cs.current_fit.model.parse.model_name = '%s'" % self.model_name)
+        mfm.run("cs.current_fit.model.parse.func = '%s'" % self.models[self.model_name]['equation'])
+        mfm.run("cs.current_fit.update()")
         self.onUpdateEquation()
 
-    def onLoadModelFile(self, filename=None):
+    def onLoadModelFile(
+            self,
+            filename: str = None
+    ):
         if filename is None:
-            filename = mfm.widgets.get_filename('Open models-file', 'link file (*.yaml)')
-        mfm.run("cs._current_fit.model.parse.load_model_file(%s)" % filename)
+            filename = mfm.widgets.get_filename(
+                'Open models-file',
+                'link file (*.yaml)'
+            )
+        mfm.run("cs.current_fit.model.parse.load_model_file(%s)" % filename)
 
 
 class ParseModelWidget(ParseModel, ModelWidget):
@@ -309,13 +330,21 @@ class ParseModelWidget(ParseModel, ModelWidget):
             **kwargs
     ):
         ModelWidget.__init__(self, fit, **kwargs)
-        parse = ParseFormulaWidget(**kwargs)
-        ParseModel.__init__(self, fit=fit, parse=parse)
+        parse = ParseFormulaWidget(
+            fit=fit,
+            model=self,
+            **kwargs
+        )
+        ParseModel.__init__(
+            self,
+            fit=fit,
+            parse=parse
+        )
         #self.update()
 
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setAlignment(QtCore.Qt.AlignTop)
-        self.layout.addWidget(self.parse)
+        #self.layout = QtWidgets.QVBoxLayout(self)
+        #self.layout.setAlignment(QtCore.Qt.AlignTop)
+        #self.layout.addWidget(self.parse)
 
     def update_model(self, **kwargs):
         ParseModel.update_model(self, **kwargs)

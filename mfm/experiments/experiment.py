@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List
+from typing import List, Type
 
 import mfm.base
 
@@ -12,25 +12,35 @@ class Experiment(mfm.base.Base):
     """
 
     @property
-    def setups(self):
+    def setups(
+            self
+    ) -> List[mfm.experiments.reader.ExperimentReader]:
         return self.get_setups()
 
     @property
-    def setup_names(self) -> List[str]:
+    def setup_names(
+            self
+    ) -> List[str]:
         return self.get_setup_names()
 
     @property
-    def models(self) -> List:
+    def models(
+            self
+    ) -> List:
         return self.model_classes
 
     @property
-    def model_names(self) -> List[str]:
+    def model_names(
+            self
+    ) -> List[str]:
         return self.get_model_names()
 
     def __init__(
             self,
             name: str,
-            *args, **kwargs):
+            *args,
+            **kwargs
+    ):
         super(Experiment, self).__init__(name, *args, **kwargs)
         self.name = name
         self.model_classes = list()
@@ -38,20 +48,20 @@ class Experiment(mfm.base.Base):
 
     def add_model(
             self,
-            model
+            model: mfm.models.model.Model
     ):
         self.model_classes.append(model)
 
     def add_models(
             self,
-            models: List
+            models: List[Type[mfm.models.model.Model]]
     ):
         for model in models:
             self.model_classes.append(model)
 
     def add_setup(
             self,
-            setup
+            setup: mfm.experiments.reader.ExperimentReader
     ):
         self.setups.append(setup)
 

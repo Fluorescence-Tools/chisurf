@@ -97,7 +97,10 @@ class CorrelateTTTR(QtWidgets.QWidget):
         self.verticalLayout.addWidget(w)
         w.show()
 
-        self.cs = mfm.widgets.curve.ExperimentalDataSelector(get_data_curves=self.get_data_curves, click_close=False)
+        self.cs = mfm.widgets.curve.ExperimentalDataSelector(
+            get_data_sets=self.get_data_curves,
+            click_close=False
+        )
         self.verticalLayout_6.addWidget(self.cs)
 
         w.correlator.pushButton_3.clicked.connect(w.correlator.correlator_thread.start)

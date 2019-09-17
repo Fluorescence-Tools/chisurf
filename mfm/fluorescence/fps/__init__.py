@@ -499,7 +499,7 @@ class DynamicAV(BasicAV):
         >>> av.update_equilibrium()#t_max=100.)
         >>> p.imshow(av.density[:,:,20])
         >>> p.show()
-        >>> y, x = np.histogram(av.diffusion_map.flatten(), range=(0.01, 10), bins=20, weights=av.density.flatten())
+        >>> y, x = np.histogram(av.diffusion_map.flatten(), tac_range=(0.01, 10), bins=20, weights=av.density.flatten())
         >>> p.plot(x[1:], y)
 
         """
@@ -565,7 +565,7 @@ class DynamicAV(BasicAV):
         >>> av_d.update_fret_map(av_a)
         #
         >>> rda = (av_d._fret_rate_map.flatten() * av_d.fluorescence_lifetime) ** (-1./6.) * 52.
-        >>> y, x = np.histogram(rda, range=(0.0, 100), bins=100, weights=av_d.density.flatten())
+        >>> y, x = np.histogram(rda, tac_range=(0.0, 100), bins=100, weights=av_d.density.flatten())
         >>> p.plot(x[1:], y)
         >>> y, x = av_d.pRDA(av=av_a)
         >>> p.plot(x, y)

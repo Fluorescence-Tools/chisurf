@@ -150,18 +150,24 @@ class Lifetime(FittingParameterGroup):
             **kwargs
     ):
         n = len(self)
-        a = FittingParameter(
-            lb=lower_bound_amplitude, ub=upper_bound_amplitude,
-            value=amplitude, name='x%s%i' % (self.short, n + 1),
-            fixed=fixed, bounds_on=bound_on
+        amplitude = FittingParameter(
+            lb=lower_bound_amplitude,
+            ub=upper_bound_amplitude,
+            value=amplitude,
+            name='x%s%i' % (self.short, n + 1),
+            fixed=fixed,
+            bounds_on=bound_on
         )
-        t = FittingParameter(
-            lb=lower_bound_lifetime, ub=upper_bound_lifetime,
-            value=lifetime, name='t%s%i' % (self.short, n + 1),
-            fixed=fixed, bounds_on=bound_on
+        lifetime = FittingParameter(
+            lb=lower_bound_lifetime,
+            ub=upper_bound_lifetime,
+            value=lifetime,
+            name='t%s%i' % (self.short, n + 1),
+            fixed=fixed,
+            bounds_on=bound_on
         )
-        self._amplitudes.append(a)
-        self._lifetimes.append(t)
+        self._amplitudes.append(amplitude)
+        self._lifetimes.append(lifetime)
 
     def pop(self) -> Tuple[float, float]:
         amplitude = self._amplitudes.pop()
@@ -179,7 +185,10 @@ class Lifetime(FittingParameterGroup):
             link: FittingParameter = None,
             **kwargs
     ):
-        super(Lifetime, self).__init__(**kwargs)
+        super(Lifetime, self).__init__(
+            name=name,
+            **kwargs
+        )
         self.short = short
         self._abs_amplitudes = absolute_amplitudes
         self._normalize_amplitudes = normalize_amplitudes
@@ -208,7 +217,10 @@ class LifetimeModel(ModelCurve):
         s += "\nLifetimes"
         s += "\n------------------\n"
         s += "\nAverage Lifetimes:\n"
-        s += "<tau>x: %.3f\n<tau>F: %.3f\n" % (self.species_averaged_lifetime, self.fluorescence_averaged_lifetime)
+        s += "<tau>x: %.3f\n<tau>F: %.3f\n" % (
+            self.species_averaged_lifetime,
+            self.fluorescence_averaged_lifetime
+        )
         return s
 
     def __init__(
@@ -257,7 +269,10 @@ class LifetimeModel(ModelCurve):
 
     @property
     def fluorescence_averaged_lifetime(self) -> float:
-        return fluorescence_averaged_lifetime(self.lifetime_spectrum, self.species_averaged_lifetime)
+        return fluorescence_averaged_lifetime(
+            self.lifetime_spectrum,
+            self.species_averaged_lifetime
+        )
 
     @property
     def lifetime_spectrum(self) -> np.array:
@@ -271,23 +286,35 @@ class LifetimeModel(ModelCurve):
             self,
             time: np.array
     ) -> np.array:
-        amplitudes, lifetimes = mfm.fluorescence.general.interleaved_to_two_columns(self.lifetime_spectrum)
+        amplitudes, lifetimes = mfm.fluorescence.general.interleaved_to_two_columns(
+            self.lifetime_spectrum
+        )
         return np.array([np.dot(amplitudes, np.exp(- t / lifetimes)) for t in time])
 
     def update_model(
             self,
+            shift_bg_with_irf: bool = None,
             **kwargs
     ):
         verbose = kwargs.get('verbose', mfm.verbose)
         lifetime_spectrum = kwargs.get('lifetime_spectrum', self.lifetime_spectrum)
         scatter = kwargs.get('scatter', self.generic.scatter)
         background = kwargs.get('background', self.generic.background)
-        shift_bg_with_irf = kwargs.get('shift_bg_with_irf', mfm.settings.cs_settings['tcspc']['shift_bg_with_irf'])
-        lt = self.anisotropy.get_decay(lifetime_spectrum)
-        decay = self.convolve.convolve(lt, verbose=verbose, scatter=scatter)
+        if shift_bg_with_irf is None:
+            shift_bg_with_irf = mfm.settings.cs_settings['tcspc']['shift_bg_with_irf']
+
+        lifetime_spectrum = self.anisotropy.get_decay(
+            lifetime_spectrum
+        )
+        decay = self.convolve.convolve(
+            lifetime_spectrum,
+            verbose=verbose,
+            scatter=scatter
+        )
 
         # Calculate background curve from reference measurement
         background_curve = kwargs.get('background_curve', self.generic.background_curve)
+
         if isinstance(background_curve, mfm.curve.Curve):
             if shift_bg_with_irf:
                 background_curve = background_curve << self.convolve.timeshift
@@ -339,17 +366,33 @@ class DecayModel(ModelCurve):
 
     def update_model(
             self,
+            verbose: bool = None,
+            scatter: float = None,
+            background: float = None,
+            shift_bg_with_irf: bool = None,
+            background_curve: mfm.experiments.data.Curve = None,
             **kwargs
     ):
-        verbose = kwargs.get('verbose', mfm.verbose)
-        scatter = kwargs.get('scatter', self.generic.scatter)
-        background = kwargs.get('background', self.generic.background)
-        shift_bg_with_irf = kwargs.get('shift_bg_with_irf', mfm.settings.cs_settings['tcspc']['shift_bg_with_irf'])
+        if verbose is None:
+            verbose = mfm.verbose
+        if scatter is None:
+            scatter = self.generic.scatter
+        if background is None:
+            background = self.generic.background
+        if shift_bg_with_irf is None:
+            shift_bg_with_irf = mfm.settings.cs_settings['tcspc']['shift_bg_with_irf']
+        if background_curve is None:
+            background_curve = self.generic.background_curve
+
         decay = self.decay
-        convolved_decay = self.convolve.convolve(decay, verbose=verbose, scatter=scatter, mode='full')
+        convolved_decay = self.convolve.convolve(
+            decay,
+            verbose=verbose,
+            scatter=scatter,
+            mode='full'
+        )
 
         # Calculate background curve from reference measurement
-        background_curve = kwargs.get('background_curve', self.generic.background_curve)
         if isinstance(background_curve, mfm.curve.Curve):
             if shift_bg_with_irf:
                 background_curve = background_curve << self.convolve.timeshift
@@ -361,7 +404,10 @@ class DecayModel(ModelCurve):
             convolved_decay *= self.generic.n_ph_fl
             decay += bg_y
 
-        convolved_decay = self.convolve.scale(convolved_decay, bg=self.generic.background)
+        convolved_decay = self.convolve.scale(
+            convolved_decay,
+            bg=self.generic.background
+        )
         self.corrections.pileup(convolved_decay)
         convolved_decay += background
         convolved_decay = self.corrections.linearize(convolved_decay)

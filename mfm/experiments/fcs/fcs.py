@@ -14,7 +14,7 @@ from mfm.experiments.reader import ExperimentReader
 
 class FCS(ExperimentReader, CsvWidget):
 
-    name = "fcs"
+    name = "FCS"
 
     def __init__(
             self,
@@ -24,7 +24,11 @@ class FCS(ExperimentReader, CsvWidget):
             skiprows: int = 0,
             **kwargs
     ):
-        super(FCS, self).__init__(*args, **kwargs)
+        super(FCS, self).__init__(
+            *args,
+            **kwargs
+        )
+
         self.experiment = experiment
         self.hide()
         self.skiprows = skiprows
@@ -93,9 +97,11 @@ class FCSKristine(mfm.io.ascii.Csv, FCS):
         d = mfm.experiments.data.DataCurve(setup=self)
         d.setup = self
         if filename is None:
-            filename = mfm.widgets.get_filename('Kristine-Correlation file', file_type='All files (*.cor)')
+            filename = mfm.widgets.get_filename(
+                'Kristine-Correlation file',
+                file_type='All files (*.cor)'
+            )
 
-        self.filename = filename
         self.load(
             filename=filename,
             skiprows=0,

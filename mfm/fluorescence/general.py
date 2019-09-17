@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple
+from typing import Tuple, List
 
 from itertools import tee
 import numba as nb
@@ -230,11 +230,19 @@ def transfer_space(
     return rdas
 
 
-def calc_transfer_matrix(t, rDA_min=1.0, rDA_max=200.0, n_steps=200.0, kappa2=0.667, space='lin', **kwargs):
+def calc_transfer_matrix(
+        times: np.array,
+        rDA_min: float = 1.0,
+        rDA_max: float = 200.0,
+        n_steps: int =200,
+        kappa2: float = 0.667,
+        space: str = 'lin',
+        **kwargs
+):
     """
     Calculates a matrix converting a distance distribution to an E(t)-decay
 
-    :param t:
+    :param times:
     :param rDA_min:
     :param rDA_max:
     :param n_steps:
@@ -250,8 +258,8 @@ def calc_transfer_matrix(t, rDA_min=1.0, rDA_max=200.0, n_steps=200.0, kappa2=0.
     Examples
     --------
 
-    >>> t = np.arange(0, 20, 0.0141)
-    >>> m, r_da = calc_transfer_matrix(t)
+    >>> times = np.arange(0, 20, 0.0141)
+    >>> m, r_da = calc_transfer_matrix(times)
 
     .. plot:: plots/e_transfer_matrix.py
 
@@ -278,12 +286,18 @@ def calc_transfer_matrix(t, rDA_min=1.0, rDA_max=200.0, n_steps=200.0, kappa2=0.
     )
     # Use the last bins for D-Only
     rates[-1:-n_donor_bins] = 0.0
-    m = np.outer(rates, t)
+    m = np.outer(rates, times)
     M = np.nan_to_num(np.exp(-m))
     return M, r_DA
 
 
-def calc_decay_matrix(t, tau_min=0.01, tau_max=200.0, n_steps=200.0, space='lin'):
+def calc_decay_matrix(
+        times: np.array,
+        tau_min: float = 0.01,
+        tau_max: float = 200.0,
+        n_steps: int = 200,
+        space: str = 'lin'
+):
     """
     Calculates a fluorescence decay matrix converting probabilities of lifetimes to a time-resolved
     fluorescence intensity
@@ -297,8 +311,8 @@ def calc_decay_matrix(t, tau_min=0.01, tau_max=200.0, n_steps=200.0, space='lin'
     Examples
     --------
 
-    >>> t = np.arange(0, 20, 0.0141)
-    >>> m, r_da = calc_decay_matrix(t)
+    >>> times = np.arange(0, 20, 0.0141)
+    >>> m, r_da = calc_decay_matrix(times)
 
     Now plot the decay matrix
 
@@ -313,12 +327,18 @@ def calc_decay_matrix(t, tau_min=0.01, tau_max=200.0, n_steps=200.0, space='lin'
         lmax = np.log10(tau_max)
         taus = np.logspace(lmin, lmax, n_steps)
     rates = 1. / taus
-    m = np.outer(rates, t)
+    m = np.outer(rates, times)
     M = np.nan_to_num(np.exp(-m))
     return M, taus
 
 
-def et2pRDA(ts, et, t_matrix=None, r_DA=None, **kwargs):
+def et2pRDA(
+        ts,
+        et,
+        t_matrix=None,
+        r_DA=None,
+        **kwargs
+):
     """Calculates the distance distribution given an E(t) decay
     Here the amplitudes of E(t) are passed as well as the time-axis. If no transfer-matrix is provided it will
     be calculated in a range from 5 Ang to 200 Ang assuming a lifetime of 4 ns with a Forster-radius of 52 Ang.
@@ -343,7 +363,7 @@ def et2pRDA(ts, et, t_matrix=None, r_DA=None, **kwargs):
     >>> a = rates[:,0]
     >>> kFRET = rates[:,1]
     >>> ts = np.logspace(0.1, 3, 18000)
-    >>> et = np.array([np.dot(a, np.exp(-kFRET * t)) for t in ts])
+    >>> et = np.array([np.dot(a, np.exp(-kFRET * times)) for times in ts])
 
     """
     if t_matrix is None or r_DA is None:
@@ -353,7 +373,11 @@ def et2pRDA(ts, et, t_matrix=None, r_DA=None, **kwargs):
     return r_DA, p_rDA
 
 
-def stack_lifetime_spectra(lifetime_spectra, fractions, normalize_fractions=True):
+def stack_lifetime_spectra(
+        lifetime_spectra,
+        fractions,
+        normalize_fractions: bool = True
+):
     """
     Takes an array of lifetime spectra and an array of fractions and returns an mixed array of lifetimes
     whereas the amplitudes are multiplied by the fractions. `normalize_fractions` is True the fractions
@@ -363,7 +387,7 @@ def stack_lifetime_spectra(lifetime_spectra, fractions, normalize_fractions=True
 
     """
     fn = np.array(fractions, dtype=np.float64) / sum(fractions) if normalize_fractions else fractions
-    re = []
+    re = list()
     for i, ls in enumerate(lifetime_spectra):
         ls = np.copy(ls)
         ls[::2] = ls[::2] * fn[i]
@@ -423,20 +447,31 @@ def distribution2rates(
     # return c
 
 
-def gaussian2rates(means, sigmas, amplitudes, tau0=4.0, kappa2=0.667, R0=52.0,
-                   n_points=64, m_sigma=1.5, interleaved=True):
+def gaussian2rates(
+        means: List[float],
+        sigmas: List[float],
+        amplitudes: List[float],
+        tau0: float = 4.0,
+        kappa2: float = 0.667,
+        R0: float = 52.0,
+        n_points: int = 64,
+        m_sigma: float = 1.5,
+        interleaved: bool = True
+):
     """
     Calculate distribution of FRET-rates given a list of normal/Gaussian distributed
     distances.
 
-    :param means: array
-    :param sigmas: array
-    :param amplitudes: array
-    :param tau0: float
-    :param kappa2: float
-    :param R0: float
-    :param n_points: int
-    :param m_sigma: float
+    :param means:
+    :param sigmas:
+    :param amplitudes:
+    :param tau0:
+    :param kappa2:
+    :param R0:
+    :param n_points:
+    :param m_sigma:
+    :param interleaved:
+    :return:
 
     :return: either an interleaved rate-spectrum, or a 2D-array stack
 
@@ -495,7 +530,11 @@ def gaussian2rates(means, sigmas, amplitudes, tau0=4.0, kappa2=0.667, R0=52.0,
         return np.dstack((ps, ls))[0]
 
 
-def rates2lifetimes_old(rates, donors, x_donly=0.0):
+def rates2lifetimes_old(
+        rates,
+        donors,
+        x_donly: float = 0.0
+):
     """
     Converts an interleaved rate spectrum to an interleaved lifetime spectrum
     given an interleaved donor spectrum and the fraction of donor-only
@@ -531,7 +570,11 @@ def rates2lifetimes_old(rates, donors, x_donly=0.0):
         return gl
 
 
-def rates2lifetimes_new(fret_rate_spectrum, donor_rate_spectrum, x_donly=0.0):
+def rates2lifetimes_new(
+        fret_rate_spectrum: np.array,
+        donor_rate_spectrum: np.array,
+        x_donly: float = 0.0
+):
     """Converts an interleaved rate spectrum to an interleaved lifetime spectrum
     given an interleaved donor spectrum and the fraction of donor-only
 
