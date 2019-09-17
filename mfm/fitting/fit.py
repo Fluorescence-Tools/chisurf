@@ -278,6 +278,8 @@ class Fit(mfm.base.Base):
         """Perform a chi2-scan on a parameter of the fit.
 
         :param parameter_name: the parameter name
+        :param rel_range: defines the scanning range as a fraction of the current value, e.g., for a
+        value of 2.0 a rel_range of 0.5 scans from (2.0 - 2.0*0.5) to (2.0 + 2.0*0.5)
         :param kwargs:
         :return: an list containing arrays of the chi2 and the parameter-values
         """

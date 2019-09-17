@@ -47,8 +47,10 @@ class FittingControllerWidget(QtWidgets.QWidget):
             hide_fit_button: bool = False,
             hide_range: bool = False,
             hide_fitting: bool = False,
+            *args,
+            **kwargs
     ):
-        super(FittingControllerWidget, self).__init__()
+        super(FittingControllerWidget, self).__init__(*args, **kwargs)
 
         self.fit = fit
         self.curve_select = mfm.widgets.curve.ExperimentalDataSelector(

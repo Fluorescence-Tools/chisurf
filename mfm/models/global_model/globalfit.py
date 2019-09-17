@@ -344,7 +344,7 @@ class GlobalFitModel(model.Model, Curve):
     def update(
             self
     ) -> None:
-        model.Model.update(self)
+        super(GlobalFitModel, self).update()
         for f in self.fits:
             f.model.update()
 

@@ -27,7 +27,9 @@ def add_fit(
     model_names = data_sets[0].experiment.model_names
 
     model_class = data_sets[0].experiment.model_classes[0]
-    for model_idx, mn in enumerate(model_names):
+    for model_idx, mn in enumerate(
+            model_names
+    ):
         if mn == model_name:
             model_class = data_sets[0].experiment.model_classes[model_idx]
             break
@@ -48,7 +50,9 @@ def add_fit(
             )
             mfm.fits.append(fit_group)
 
-            fit_control_widget = mfm.fitting.fitting_widgets.FittingControllerWidget(fit_group)
+            fit_control_widget = mfm.fitting.fitting_widgets.FittingControllerWidget(
+                fit_group
+            )
             cs.modelLayout.addWidget(fit_control_widget)
             for fit in fit_group:
                 cs.modelLayout.addWidget(fit.model)
