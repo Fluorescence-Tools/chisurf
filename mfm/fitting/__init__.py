@@ -11,7 +11,7 @@ import mfm.fitting.fitting_widgets
 def find_fit_idx_of_model(
         model: mfm.models.model.Model,
         fits: List[mfm.fitting.fit.Fit]
-):
+) -> int:
     """Returns index of the fit of a model in mfm.fits array
 
     :param model:

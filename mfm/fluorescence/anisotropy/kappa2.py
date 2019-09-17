@@ -14,10 +14,12 @@ def kappasqAllDelta(
         n_bins: int = 31
 ):
     """
+
     :param delta:
     :param sD2:
     :param sA2:
-    :param step: step in degree
+    :param step: step-size in degree
+    :param n_bins:
     :return:
     """
     #beta angles
@@ -50,7 +52,11 @@ def kappasq_all(
         sA2: float,
         n: int = 100,
         m: int = 100
-) -> Tuple[np.array, np.array, np.array]:
+) -> Tuple[
+    np.array,
+    np.array,
+    np.array
+]:
     """
 
     :param sD2:

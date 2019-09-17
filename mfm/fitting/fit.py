@@ -109,8 +109,7 @@ class Fit(mfm.base.Base):
             model_class
     ):
         if issubclass(model_class, mfm.models.model.Model):
-            kw = self._model_kw
-            self._model = model_class(self, **kw)
+            self._model = model_class(self, **self._model_kw)
 
     @property
     def weighted_residuals(
@@ -146,19 +145,9 @@ class Fit(mfm.base.Base):
             self
     ) -> str:
         try:
-            return self._kw['name']
-        except KeyError:
-            try:
-                return self.model.name + " - " + self._data.name
-            except AttributeError:
-                return "no name"
-
-    @name.setter
-    def name(
-            self,
-            name: str
-    ):
-        self._name = name
+            return self.model.name + " - " + self._data.name
+        except AttributeError:
+            return "no name"
 
     @property
     def fit_range(
@@ -190,7 +179,7 @@ class Fit(mfm.base.Base):
     @property
     def covariance_matrix(
             self
-    ):
+    ) -> Tuple[np.array, List[int]]:
         """Returns the covariance matrix of the fit given the current
         models parameter values and returns a list of the 'relevant' used
         parameters.
@@ -220,9 +209,11 @@ class Fit(mfm.base.Base):
     def get_wres(
             self,
             parameter=None,
+            model=None,
             **kwargs
     ):
-        model = kwargs.get('models', self.model)
+        if model is None:
+            model = self.model
         if parameter is not None:
             model.parameter_values = parameter
             model.update_model()
@@ -233,7 +224,7 @@ class Fit(mfm.base.Base):
             filename: str,
             file_type: str = 'txt',
             **kwargs
-    ):
+    ) -> None:
         self.model.save(filename + '.json')
         if file_type == 'txt':
             csv = mfm.io.ascii.Csv()
@@ -251,12 +242,11 @@ class Fit(mfm.base.Base):
     def run(
             self,
             **kwargs
-    ):
+    ) -> None:
+        fitting_options = mfm.settings.cs_settings['fitting']['leastsq']
         self.model.find_parameters(
             parameter_type=mfm.fitting.parameter.FittingParameter
         )
-        fitting_options = mfm.settings.cs_settings['fitting']['leastsq']
-        self.model.find_parameters()
         self.results = leastsqbound(get_wres,
                                     self.model.parameter_values,
                                     args=(self.model, ),
@@ -284,10 +274,12 @@ class Fit(mfm.base.Base):
             parameter_name: str,
             rel_range: float = None,
             **kwargs
-    ) -> None:
+    ) -> Tuple[np.array, np.array]:
         """Perform a chi2-scan on a parameter of the fit.
 
         :param parameter_name: the parameter name
+        :param rel_range: defines the scanning range as a fraction of the current value, e.g., for a
+        value of 2.0 a rel_range of 0.5 scans from (2.0 - 2.0*0.5) to (2.0 + 2.0*0.5)
         :param kwargs:
         :return: an list containing arrays of the chi2 and the parameter-values
         """
@@ -334,7 +326,7 @@ class FitGroup(list, Fit):
     @data.setter
     def data(
             self,
-            v: mfm.experiments.data.Data
+            v: mfm.base.Data
     ):
         self.selected_fit.data = v
 
@@ -420,6 +412,12 @@ class FitGroup(list, Fit):
             local_first: bool = None,
             **kwargs
     ):
+        """Optimizes the free parameters
+
+        :param local_first: if True the local parameters of a global-fit in a fit group are optimized first
+        :param kwargs:
+        :return:
+        """
         if local_first is None:
             local_first = mfm.settings.cs_settings['fitting']['global']['fit_local_first']
 
@@ -463,7 +461,7 @@ class FitGroup(list, Fit):
         list.__init__(self, self._fits)
         Fit.__init__(self, data=data, **kwargs)
 
-        self.global_model = mfm.models.globalfit.GlobalFitModel(self)
+        self.global_model = mfm.models.global_model.globalfit.GlobalFitModel(self)
         self.global_model.fits = self._fits
 
     def __str__(self):
@@ -644,13 +642,14 @@ def get_chi2(
 def lnprior(
         parameter_values: List[float],
         fit: mfm.fitting.fit.Fit,
-        **kwargs
+        bounds: List[Tuple[float, float]] = None
 ) -> float:
     """The probability determined by the prior which is given by the bounds of the models parameters.
     If the models parameters leave the bounds, the ln of the probability is minus infinity otherwise it
     is zero.
     """
-    bounds = kwargs.get('bounds', fit.model.parameter_bounds)
+    if bounds is None:
+        bounds = fit.model.parameter_bounds
     for (bound, value) in zip(bounds, parameter_values):
         lb, ub = bound
         if lb is not None:
@@ -663,9 +662,9 @@ def lnprior(
 
 
 def lnprob(
-        parameter_values,
+        parameter_values: List[float],
         fit: Fit,
-        chi2max: float = np.inf,
+        chi2max: float = float("inf"),
         **kwargs
 ) -> float:
     """

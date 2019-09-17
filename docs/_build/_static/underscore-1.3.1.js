@@ -417,7 +417,7 @@
     return results;
   };
 
-  // If the browser doesn't supply us with indexOf (I'm looking at you, **MSIE**),
+  // If the browser doesn'times supply us with indexOf (I'm looking at you, **MSIE**),
   // we need this function. Return the position of the first occurrence of an
   // item in an array, or -1 if the item is not included in the array.
   // Delegates to **ECMAScript 5**'s native `indexOf` if available.
@@ -667,7 +667,7 @@
 
   // Internal recursive comparison function.
   function eq(a, b, stack) {
-    // Identical objects are equal. `0 === -0`, but they aren't identical.
+    // Identical objects are equal. `0 === -0`, but they aren'times identical.
     // See the Harmony `egal` proposal: http://wiki.ecmascript.org/doku.php?id=harmony:egal.
     if (a === b) return a !== 0 || 1 / a == 1 / b;
     // A strict comparison is necessary because `null == undefined`.
@@ -892,7 +892,7 @@
     escape      : /<%-([\s\S]+?)%>/g
   };
 
-  // When customizing `templateSettings`, if you don't want to define an
+  // When customizing `templateSettings`, if you don'times want to define an
   // interpolation, evaluation or escaping regex, we need one that is
   // guaranteed not to match.
   var noMatch = /.^/;
@@ -923,7 +923,7 @@
          })
          .replace(/\r/g, '\\r')
          .replace(/\n/g, '\\n')
-         .replace(/\t/g, '\\t')
+         .replace(/\t/g, '\\times')
          + "');}return __p.join('');";
     var func = new Function('obj', '_', tmpl);
     if (data) return func(data, _);

@@ -133,13 +133,17 @@ class QIPythonWidget(RichJupyterWidget):
         self._execute(command, mfm.settings.cs_settings['show_commands'])
 
 
-def get_widgets_in_layout(layout):
+def get_widgets_in_layout(
+        layout: QtWidgets.QLayout
+):
     """Returns a list of all widgets within a layout
     """
     return (layout.itemAt(i) for i in range(layout.count()))
 
 
-def clear_layout(layout):
+def clear_layout(
+        layout: QtWidgets.QLayout
+):
     """Clears all widgets within a layout
     """
     while layout.count():
@@ -150,7 +154,9 @@ def clear_layout(layout):
             clear_layout(child.layout())
 
 
-def hide_items_in_layout(layout):
+def hide_items_in_layout(
+        layout: QtWidgets.QLayout
+):
     """Hides all items within a Qt-layout
     """
     for i in range(layout.count()):
@@ -191,13 +197,13 @@ class MyMessageBox(QtWidgets.QMessageBox):
         self.setMaximumWidth(16777215)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
-        textEdit = self.findChild(QtWidgets.QTextEdit)
-        if textEdit != None :
-            textEdit.setMinimumHeight(0)
-            textEdit.setMaximumHeight(16777215)
-            textEdit.setMinimumWidth(0)
-            textEdit.setMaximumWidth(16777215)
-            textEdit.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        text_edit = self.findChild(QtWidgets.QTextEdit)
+        if text_edit is not None:
+            text_edit.setMinimumHeight(0)
+            text_edit.setMaximumHeight(16777215)
+            text_edit.setMinimumWidth(0)
+            text_edit.setMaximumWidth(16777215)
+            text_edit.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
         return result
 
@@ -238,7 +244,8 @@ class FileList(QtWidgets.QListWidget):
     def __init__(
             self,
             accept_drops: bool = True,
-            filename_ending: str = "*"
+            filename_ending: str = "*",
+            icon: QtGui.QIcon = None
     ):
         """
         :param accept_drops: if True accepts files that are dropped into the list
@@ -253,7 +260,10 @@ class FileList(QtWidgets.QListWidget):
             self.setAcceptDrops(True)
             self.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
 
-        self.setWindowIcon(QtGui.QIcon(":/icons/icons/list-add.png"))
+        if icon is None:
+            icon = QtGui.QIcon(":/icons/icons/list-add.png")
+
+        self.setWindowIcon(icon)
 
 
 def get_filename(
@@ -340,7 +350,11 @@ def save_file(
     return filename
 
 
-def get_directory(**kwargs):
+def get_directory(
+        filename_ending: str = None,
+        get_files: bool = False,
+        directory: str = None
+):
     """Opens a new window where you can choose a directory. The current working path
     is updated to this directory.
 
@@ -349,9 +363,9 @@ def get_directory(**kwargs):
 
     :return: directory str
     """
-    fn_ending = kwargs.get('filename_ending', None)
-    directory = kwargs.get('directory', mfm.working_path)
-    get_files = kwargs.get('get_files', False)
+    fn_ending = filename_ending
+    if directory is None:
+        directory = mfm.working_path
     if isinstance(directory, str):
         directory = str(QtWidgets.QFileDialog.getExistingDirectory(None, "Select Directory", directory))
     else:

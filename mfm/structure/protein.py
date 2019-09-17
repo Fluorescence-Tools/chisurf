@@ -519,7 +519,10 @@ class ProteinBead(Structure):
         self.to_coarse()
         self.coord_i_initial = np.copy(self.coord_i)
 
-    def update(self, start_point=0):
+    def update(
+            self,
+            start_point: int = 0
+    ):
         internal_coordinates = self.internal_coordinates
         n_atoms = internal_coordinates.shape[0]
 

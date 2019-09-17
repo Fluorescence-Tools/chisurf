@@ -324,7 +324,7 @@ class LinePlot(plotbase.Plot):
 
                 lb_i = np.searchsorted(data_x, lb, side='right')
                 ub_i = np.searchsorted(data_x, ub, side='left')
-                mfm.run("cs._current_fit.fit_range = (%s, %s)" % (lb_i - 1, ub_i))
+                mfm.run("cs.current_fit.fit_range = (%s, %s)" % (lb_i - 1, ub_i))
                 self.update_all(only_fit_range=True)
 
             region.sigRegionChangeFinished.connect(update_region)

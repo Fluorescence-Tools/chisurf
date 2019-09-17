@@ -499,6 +499,7 @@ class Convolve(FittingParameterGroup):
             self,
             fit: mfm.fitting.fit.Fit,
             name: str = 'Convolution',
+            irf: mfm.curve.Curve = None,
             **kwargs
     ):
         super(Convolve, self).__init__(
@@ -510,7 +511,7 @@ class Convolve(FittingParameterGroup):
         self._data = None
         try:
             data = kwargs.get('data', fit.data)
-            dt = data.dt[0]
+            dt = data.dx[0]
             rep_rate = data.setup.rep_rate
             stop = len(data) * dt
             self.data = data
@@ -521,20 +522,46 @@ class Convolve(FittingParameterGroup):
             data = kwargs.get('data', None)
         self.data = data
 
-        self._n0 = FittingParameter(value=mfm.settings.cs_settings['tcspc']['n0'],
-                                    name='n0',
-                                    fixed=mfm.settings.cs_settings['tcspc']['autoscale'],
-                                    decimals=2)
-        self._dt = FittingParameter(value=dt, name='dt', fixed=True, digits=4)
-        self._rep = FittingParameter(value=rep_rate, name='rep', fixed=True)
-        self._start = FittingParameter(value=0.0, name='start', fixed=True)
-        self._stop = FittingParameter(value=stop, name='stop', fixed=True)
-        self._lb = FittingParameter(value=0.0, name='lb')
-        self._ts = FittingParameter(value=0.0, name='ts')
+        self._n0 = FittingParameter(
+            value=mfm.settings.cs_settings['tcspc']['n0'],
+            name='n0',
+            fixed=mfm.settings.cs_settings['tcspc']['autoscale'],
+            decimals=2
+        )
+        self._dt = FittingParameter(
+            value=dt,
+            name='dt',
+            fixed=True,
+            digits=4
+        )
+        self._rep = FittingParameter(
+            value=rep_rate,
+            name='rep',
+            fixed=True
+        )
+        self._start = FittingParameter(
+            value=0.0,
+            name='start',
+            fixed=True
+        )
+        self._stop = FittingParameter(
+            value=stop,
+            name='stop',
+            fixed=True
+        )
+        self._lb = FittingParameter(
+            value=0.0,
+            name='lb'
+        )
+        self._ts = FittingParameter(
+            value=0.0,
+            name='ts'
+        )
         self._do_convolution = mfm.settings.cs_settings['tcspc']['convolution_on_by_default']
         self.mode = mfm.settings.cs_settings['tcspc']['default_convolution_mode']
         self.n_photons_irf = 1.0
-        self.__irf = kwargs.get('irf', None)
+
+        self.__irf = irf
         if self.__irf is not None:
             self._irf = self.__irf
 

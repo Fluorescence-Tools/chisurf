@@ -136,36 +136,32 @@ def xcorr_fft(
         return acf
 
 
-def get_fwhm(
+def calculate_fwhm(
         curve: mfm.curve.Curve,
-        **kwargs
+        background: float = 0.0,
+        verbose: bool = False
 ) -> Tuple[float, Tuple[int, int], Tuple[float, float]]:
-    """Calculates the FWHM using a linear-search from both sides of the curve
+    """Calculates the full-width-half-maximum (FWHM) using a linear-search from both sides of the curve
 
     :param curve:
-    :return: a tupel containing the FWHM and the indices and the x-values of the used positions
+    :param background:
+    :param verbose:
+    :return: Tuple containing the FWHM, the indices and the x-values of the used positions
     """
-    background = kwargs.get('background', 0.0)
-    verbose = kwargs.get('verbose', mfm.verbose)
+    y_values = curve.y - background
+    x_values = curve.x
 
-    fwhm = None
-    lb_i, ub_i = 0, 0
-    x_left, x_right = 0.0, 0.0
-    if isinstance(curve, mfm.curve.Curve):
-        y_values = curve.y - background
-        x_values = curve.x
+    half_maximum = max(y_values) / 2
+    smaller = np.where(y_values > half_maximum)[0]
+    lb_i = smaller[0]
+    ub_i = smaller[-1]
 
-        half_maximum = max(y_values) / 2
-        smaller = np.where(y_values > half_maximum)[0]
-        lb_i = smaller[0]
-        ub_i = smaller[-1]
+    x_left = x_values[lb_i]
+    x_right = x_values[ub_i]
+    fwhm = x_right - x_left
 
-        x_left = x_values[lb_i]
-        x_right = x_values[ub_i]
-        fwhm = x_right - x_left
-
-        if verbose:
-            print("FWHM:")
-            print("lb, ub    : (%s, %s)" % (x_left, x_right))
-            print("fwhm: %s" % fwhm)
+    if verbose:
+        print("FWHM:")
+        print("lb, ub    : (%s, %s)" % (x_left, x_right))
+        print("fwhm: %s" % fwhm)
     return fwhm, (lb_i, ub_i), (x_left, x_right)

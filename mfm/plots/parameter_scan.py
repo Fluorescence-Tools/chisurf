@@ -64,7 +64,7 @@ class ParameterScanWidget(QtWidgets.QWidget):
         p_min = float(self.doubleSpinBox.value())
         p_max = float(self.doubleSpinBox_2.value())
         n_steps = int(self.spinBox.value())
-        s = "cs._current_fit.model.parameters_all_dict['%s'].scan(cs._current_fit, rel_range=(%s, %s), n_steps=%s)" % (
+        s = "cs.current_fit.model.parameters_all_dict['%s'].scan(cs.current_fit, rel_range=(%s, %s), n_steps=%s)" % (
             self.parameter.name,
             p_min,
             p_max,

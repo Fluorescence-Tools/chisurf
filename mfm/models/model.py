@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List, Tuple
 
 import numpy as np
-from qtpy import  QtWidgets, QtGui
+from qtpy import QtWidgets, QtGui
 
 import mfm.curve
 import mfm.fitting.parameter
@@ -11,42 +11,28 @@ import mfm.plots
 from mfm.curve import Curve
 
 
-class Model(mfm.fitting.parameter.FittingParameterGroup):
+class Model(
+    mfm.fitting.parameter.FittingParameterGroup
+):
 
     def __init__(
             self,
             fit: mfm.fitting.fit.FitGroup,
+            model_number: int = 0,
             **kwargs
     ):
-        super(Model, self).__init__(model=self, **kwargs)
+        super(Model, self).__init__(
+            model=self,
+            **kwargs
+        )
         self.fit = fit
         self.flatten_weighted_residuals = True
-        self.model_number = kwargs.get('model_number', 0)
+        self.model_number = model_number
 
     @property
-    def x(self) -> np.array:
-        return self._kw['x']
-
-    @x.setter
-    def x(
-            self,
-            v: np.array
-    ):
-        self._kw['x'] = v
-
-    @property
-    def y(self) -> np.array:
-        return self._kw['y']
-
-    @y.setter
-    def y(
-            self,
-            v: np.array
-    ):
-        self._kw['y'] = v
-
-    @property
-    def parameters(self) -> List[mfm.fitting.parameter.FittingParameter]:
+    def parameters(
+            self
+    ) -> List[mfm.fitting.parameter.FittingParameter]:
         return [p for p in self.parameters_all if not (p.fixed or p.is_linked)]
 
     @property
@@ -58,7 +44,9 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
         return [pi.bounds for pi in self.parameters]
 
     @property
-    def n_free(self) -> int:
+    def n_free(
+            self
+    ) -> int:
         return len(self.parameters)
 
     def finalize(self):
@@ -68,11 +56,11 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
                 a.finalize()
         for pa in mfm.fitting.parameter.FittingParameter.get_instances():
             pa.finalize()
-        #for p in self.parameters_all:
-        #    p.finalize()
 
     @property
-    def weighted_residuals(self) -> np.array:
+    def weighted_residuals(
+            self
+    ) -> np.array:
         return self.get_wres(self.fit)
 
     @property
@@ -101,13 +89,17 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
         wr = np.array((d[:ml] - m[:ml]) / e[:ml], dtype=np.float64)
         return wr
 
-    def update_model(self, **kwargs):
+    def update_model(
+            self,
+            **kwargs
+    ):
         pass
 
     def update(
-            self
+            self,
+            **kwargs
     ) -> None:
-        #self.find_parameters()
+        self.find_parameters()
         self.update_model()
 
     def __str__(self):
@@ -125,29 +117,61 @@ class Model(mfm.fitting.parameter.FittingParameterGroup):
         return s
 
 
-class ModelCurve(Model, mfm.curve.Curve):
+class ModelCurve(
+    Model,
+    mfm.curve.Curve
+):
 
     @property
-    def n_points(self) -> int:
+    def n_points(
+            self
+    ) -> int:
         return self.fit.xmax - self.fit.xmin
+
+    @property
+    def x(self) -> np.array:
+        return self.__dict__['_x']
+
+    @x.setter
+    def x(
+            self,
+            v: np.array
+    ):
+        self.__dict__['_x'] = v
+
+    @property
+    def y(self) -> np.array:
+        return self.__dict__['_y']
+
+    @y.setter
+    def y(
+            self,
+            v: np.array
+    ):
+        self.__dict__['_y'] = v
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: mfm.fitting.fit.FitGroup,
             *args, **kwargs
     ):
-        x = fit.data.x
-        y = np.zeros_like(fit.data.y)
-        Model.__init__(self, fit, **kwargs)
+        super(ModelCurve, self).__init__(
+            fit,
+            *args,
+            **kwargs
+        )
         Curve.__init__(
             self,
+            x=fit.data.x,
+            y=np.zeros_like(fit.data.y),
             *args,
-            x=x,
-            y=y,
             **kwargs
         )
 
-    def __getitem__(self, key):
+    def __getitem__(
+            self,
+            key
+    ):
         start = key.start
         stop = key.stop
         step = 1 if key.step is None else key.step
@@ -173,15 +197,27 @@ class ModelWidget(Model, QtWidgets.QWidget):
         (mfm.plots.ResidualPlot, {})
     ]
 
-    def update_plots(self, *args, **kwargs):
+    def update_plots(
+            self,
+            *args,
+            **kwargs
+    ) -> None:
         for p in self.fit.plots:
-            p.update_all(*args, **kwargs)
+            p.update_all(
+                *args,
+                **kwargs
+            )
             p.update()
 
-    def update_widgets(self) -> None:
-        for p in self._parameters:
-            if isinstance(p, mfm.fitting.fitting_widgets.FittingParameterWidget):
-                p.update()
+    def update_widgets(
+            self
+    ) -> None:
+        for parameter in self.parameters:
+            if isinstance(
+                    parameter,
+                    mfm.fitting.fitting_widgets.FittingParameterWidget
+            ):
+                parameter.update()
 
     def update(
             self
@@ -196,6 +232,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
     def __init__(
             self,
             fit: mfm.fitting.fit.FitGroup,
+            icon: QtGui.QIcon = None,
             *args,
             **kwargs
     ):
@@ -205,4 +242,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
             **kwargs
         )
         self.plots = list()
-        self.icon = kwargs.get('icon', QtGui.QIcon(":/icons/document-open.png"))
+
+        if icon is None:
+            icon = QtGui.QIcon(":/icons/document-open.png")
+        self.icon = icon

@@ -13,7 +13,7 @@ import mfm
 from mfm import plots
 from mfm.curve import Curve
 import mfm.fitting.fit
-from . import model
+from mfm.models import model
 from mfm.fitting.parameter import GlobalFittingParameter
 
 
@@ -344,7 +344,7 @@ class GlobalFitModel(model.Model, Curve):
     def update(
             self
     ) -> None:
-        model.Model.update(self)
+        super(GlobalFitModel, self).update()
         for f in self.fits:
             f.model.update()
 
@@ -467,10 +467,10 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
     def onRemoveLocalFit(self):
         row = self.tableWidget.currentRow()
         self.tableWidget.removeRow(row)
-        mfm.run("cs._current_fit.model.remove_local_fit(%s)" % row)
+        mfm.run("cs.current_fit.model.remove_local_fit(%s)" % row)
 
     def onClearLocalFits(self):
-        mfm.run("cs._current_fit.model.clear_local_fits()")
+        mfm.run("cs.current_fit.model.clear_local_fits()")
         self.tableWidget.setRowCount(0)
 
     def onTableGlobalLinksDoubleClicked(self):
@@ -480,7 +480,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
     def onAddGlobalVariable(self):
         variable_name = self.current_global_variable_name
         if len(variable_name) > 0 and variable_name not in list(self._global_parameters.keys()):
-            mfm.run("cs._current_fit.model.append_global_parameter(mfm.parameter.FittingParameterWidget(name='%s'))" % self.current_global_variable_name)
+            mfm.run("cs.current_fit.model.append_global_parameter(mfm.parameter.FittingParameterWidget(name='%s'))" % self.current_global_variable_name)
             l = self.verticalLayout
             l.addWidget(self._global_parameters.values()[-1])
         else:
@@ -498,7 +498,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         local_fits_idx = self.local_fit_idx
         fit_indeces = range(len(local_fits)) if self.add_all_fits else [self.current_fit_index]
         for fitIndex in fit_indeces:
-            mfm.run("cs._current_fit.model.append_fit(mfm.fits[%s])" % local_fits_idx[fitIndex])
+            mfm.run("cs.current_fit.model.append_fit(mfm.fits[%s])" % local_fits_idx[fitIndex])
 
     def append_fit(
             self,

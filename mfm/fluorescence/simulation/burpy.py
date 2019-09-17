@@ -129,7 +129,7 @@ double I, Iex,			// intensity at current x,y,z; I = Iex * det. eff
 lambda,				// emission rate / diffusion in
 k_off,				// i->(everything else) rate
 tau_off,			// 1/k_off
-t,				// time of emission / diffusion in
+times,				// time of emission / diffusion in
 t_tr,				// time of transition
 t_shift,			// time of previous transition or 0
 r,				// a random number
@@ -161,8 +161,8 @@ if (T0 == 0) {				// first call?
     for (i=0; i<N_species; i++) {
       if (M[i] < LOW_PROBABILITY) continue;
 
-      t = 0.;
-      while ((t -= log(rmt1.random0e1e())/M[i]) < 1.) {
+      times = 0.;
+      while ((times -= log(rmt1.random0e1e())/M[i]) < 1.) {
         do {
           x[n] = 2.*rmt1.random0i1e()-1.;
           y[n] = 2.*rmt1.random0i1e()-1.;
@@ -178,9 +178,9 @@ if (T0 == 0) {				// first call?
     for (i=0; i<N_species; i++) {
       if (M[i] < LOW_PROBABILITY) continue;
 
-      t = M[i]/4./box_xy_sq/box_z*
+      times = M[i]/4./box_xy_sq/box_z*
          focus_param[0]*focus_param[0]*focus_param[1]*3.*sqrt_pi;
-      while (t-- > 0.5) {
+      while (times-- > 0.5) {
         x[n] = 0.; y[n] = 0.; z[n] = 0.;
         x[n] *= box_xy; y[n] *= box_xy; z[n] *= box_z;
         species[n++] = i;
@@ -367,10 +367,10 @@ while (N_ph<N_ph_max) {
       if (lambda > LOW_PROBABILITY) {
 
         /* arrival time of the first photon */
-        t = t_shift-log(rmt2.random0e1e())/lambda;
+        times = t_shift-log(rmt2.random0e1e())/lambda;
 
         /* more photons? */
-        while ((t<t_tr) && (t<dt)) {
+        while ((times<t_tr) && (times<dt)) {
           /* determine number of channel */
           r = 1. - rmt2.random0i1e();
           j = -1;
@@ -380,10 +380,10 @@ while (N_ph<N_ph_max) {
           }
           buf_N[N_ph_buf] = j;
 
-          buf_t[N_ph_buf] = t;
+          buf_t[N_ph_buf] = times;
           buf_species[N_ph_buf] = i;
           buf_molecule[N_ph_buf++] = n;
-          t -= log(rmt2.random0e1e())/lambda; /* arrival time of the next photon */
+          times -= log(rmt2.random0e1e())/lambda; /* arrival time of the next photon */
         }
       }
 
@@ -444,7 +444,7 @@ while (N_ph<N_ph_max) {
     }
   }
 
-  /* sorting buffer according to t and copying it to the data */
+  /* sorting buffer according to times and copying it to the data */
   if (N_ph_buf >= 2) shell4(N_ph_buf, buf_t, buf_N, buf_species, buf_molecule);
 
   for (j=0; j<N_ph_buf; j++) {

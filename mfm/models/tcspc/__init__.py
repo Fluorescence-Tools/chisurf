@@ -6,7 +6,6 @@ This module contains all time-resolved fluorescence models (TCSPC)
 """
 from . import lifetime
 from . import fret
-from . import parse
 from . import pddem
 from . import widgets
 # import dye_diffusion

@@ -5,7 +5,7 @@ import os
 
 import numpy as np
 from qtpy import  QtWidgets, uic
-from .parse import ParseModelWidget
+from mfm.models.parse import ParseModelWidget
 
 import mfm
 import mfm.fitting.fitting_widgets

@@ -9,8 +9,10 @@ import qdarkstyle
 import numpy as np
 
 import mfm
+import mfm.base
 import mfm.cmd
 import mfm.experiments
+import mfm.tools.modelling.remove_clashed_frames
 import mfm.widgets
 import mfm.tools
 import mfm.ui.resource
@@ -19,7 +21,7 @@ import mfm.ui.resource
 class Main(QtWidgets.QMainWindow):
 
     @property
-    def current_dataset(self) -> mfm.experiments.data.Data:
+    def current_dataset(self) -> mfm.base.Data:
         return self.dataset_selector.selected_dataset
 
     @current_dataset.setter
@@ -111,6 +113,13 @@ class Main(QtWidgets.QMainWindow):
     ) -> mfm.fitting.fit.FitGroup:
         return self._current_fit
 
+    @current_fit.setter
+    def current_fit(
+            self,
+            v: mfm.fitting.fit.FitGroup
+    ) -> None:
+        self._current_fit = v
+
     def closeEvent(self, event):
         if mfm.settings.gui['confirm_close_program']:
             reply = mfm.widgets.widgets.MyMessageBox.question(self,
@@ -130,20 +139,19 @@ class Main(QtWidgets.QMainWindow):
         if subwindow is not None:
             for f in mfm.fits:
                 if f == subwindow.fit:
-                    if self._current_fit is not mfm.fits[self.fit_idx]:
-                        mfm.run("cs._current_fit = mfm.fits[%s]" % self.fit_idx)
+                    if self.current_fit is not mfm.fits[self.fit_idx]:
+                        mfm.run("cs.current_fit = mfm.fits[%s]" % self.fit_idx)
                         break
 
             self.current_fit_widget = subwindow.fit_widget
-            fit_name = self._current_fit.name
-            window_title = mfm.__name__ + "(" + mfm.__version__ + "): " + fit_name
+            window_title = mfm.__name__ + "(" + mfm.__version__ + "): " + str(self.current_fit.name)
 
             self.setWindowTitle(window_title)
 
             mfm.widgets.hide_items_in_layout(self.modelLayout)
             mfm.widgets.hide_items_in_layout(self.plotOptionsLayout)
-            self._current_fit.model.update()
-            self._current_fit.model.show()
+            self.current_fit.model.update()
+            self.current_fit.model.show()
             self.current_fit_widget.show()
             subwindow.current_plt_ctrl.show()
 
@@ -160,7 +168,7 @@ class Main(QtWidgets.QMainWindow):
 
     def onCascadeWindows(self):
         self.mdiarea.setViewMode(QtWidgets.QMdiArea.SubWindowView)
-        self.mdiarea.cascadeSubWindows ()
+        self.mdiarea.cascadeSubWindows()
 
     def onCurrentDatasetChanged(self):
         #mfm.run("cs.current_dataset = %s" % self.curve_selector.selected_curve_index)
@@ -274,8 +282,8 @@ class Main(QtWidgets.QMainWindow):
         self.trajectory_rot_trans = mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget()
         self.actionRotate_Translate_trajectory.triggered.connect(self.trajectory_rot_trans.show)
 
-        #self.calculate_potential = mfm.tools.PotentialEnergyWidget()
-        #self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
+        self.calculate_potential = mfm.tools.modelling.potential_enery.PotentialEnergyWidget()
+        self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
 
         self.pdb2label = mfm.tools.fps_json.pdb2labeling.PDB2Label()
         self.actionPDB2Label.triggered.connect(self.pdb2label.show)
@@ -289,8 +297,8 @@ class Main(QtWidgets.QMainWindow):
         self.traj_save_topol = mfm.tools.modelling.trajectory.SaveTopology()
         self.actionSave_topology.triggered.connect(self.traj_save_topol.show)
 
-        #self.remove_clashes = mfm.tools.RemoveClashedFrames()
-        #self.actionRemove_clashes.triggered.connect(self.remove_clashes.show)
+        self.remove_clashes = mfm.tools.modelling.remove_clashed_frames.RemoveClashedFrames()
+        self.actionRemove_clashes.triggered.connect(self.remove_clashes.show)
 
         self.align_trajectory = mfm.tools.modelling.trajectory.AlignTrajectoryWidget()
         self.actionAlign_trajectory.triggered.connect(self.align_trajectory.show)
@@ -319,16 +327,23 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         # This needs to move to the QtApplication or it needs to be
         # independent as new Widgets can only be created once a QApplication has been created
-
-        structure_setups = [
-            mfm.experiments.modelling.PDBLoad()
-        ]
+        structure = mfm.experiments.experiment.Experiment('Modelling')
+        structure.add_setups(
+            [
+                mfm.experiments.modelling.LoadStructure()
+            ]
+        )
+        structure.add_models(
+            [
+                mfm.models.tcspc.widgets.LifetimeModelWidget
+            ]
+        )
+        mfm.experiment.append(structure)
 
         tcspc = mfm.experiments.experiment.Experiment('TCSPC')
         tcspc.add_setups(
             [
                 mfm.experiments.tcspc.TCSPCSetupWidget(
-                    name="CSV/PQ/IBH",
                     **mfm.settings.cs_settings['tcspc_csv']
                 ),
                 mfm.experiments.tcspc.TCSPCSetupSDTWidget(),
@@ -346,20 +361,20 @@ class Main(QtWidgets.QMainWindow):
         )
         mfm.experiment.append(tcspc)
 
-        fcs = mfm.experiments.experiment.Experiment('fcs')
+        fcs = mfm.experiments.experiment.Experiment('FCS')
         fcs.add_setups(
             [
-                mfm.experiments.fcs.FCSKristine(
-                    experiment=mfm.experiments.fcs
+                mfm.experiments.fcs.fcs.FCSKristine(
+                    experiment=mfm.experiments.fcs.fcs
                 ),
-                mfm.experiments.fcs.FCS(
-                    experiment=mfm.experiments.fcs
+                mfm.experiments.fcs.fcs.FCS(
+                    experiment=mfm.experiments.fcs.fcs
                 )
             ]
         )
         fcs.add_models(
             models=[
-                mfm.models.fcs.ParseFCSWidget
+                mfm.models.fcs.fcs.ParseFCSWidget
             ]
         )
         mfm.experiment.append(fcs)
@@ -369,14 +384,17 @@ class Main(QtWidgets.QMainWindow):
             name='Global-Fit',
             experiment=global_fit
         )
-        global_fit.add_model(mfm.models.globalfit.GlobalFitModelWidget)
+        global_fit.add_models(
+            models=[
+                mfm.models.global_model.GlobalFitModelWidget
+            ]
+        )
         global_fit.add_setup(global_setup)
         mfm.experiment.append(global_fit)
 
         self.experiment_names = [b.name for b in mfm.experiment if b.name is not 'Global']
         self.comboBox_experimentSelect.addItems(self.experiment_names)
 
-        self._current_fit = None
         mfm.cmd.add_dataset(setup=global_setup)
         #self.onAddDataset(experiment=global_fit, setup=global_setup)  # Add Global-Dataset by default
 
@@ -391,6 +409,7 @@ class Main(QtWidgets.QMainWindow):
         )
 
         self.current_fit_widget = None
+        self._current_fit = None
 
         self.setCentralWidget(self.mdiarea)
         self.init_widgets()

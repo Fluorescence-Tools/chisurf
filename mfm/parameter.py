@@ -4,7 +4,6 @@ from typing import List, TypeVar, Tuple
 import weakref
 import numpy as np
 
-import mfm
 import mfm.base
 
 T = TypeVar('T', bound='Parameter')
@@ -201,10 +200,29 @@ class Parameter(
         return super(Parameter, self).__hash__()
 
     def __repr__(self):
-        s = super(Parameter, self).__repr__()
-        s += "\n"
-        s += self.__str__()
+        s = self.value.__repr__()
         return s
+
+    def to_dict(self) -> dict:
+        d = super(Parameter, self).to_dict()
+        if self.link is not None:
+            d['_link'] = self.link.unique_identifier
+        return d
+
+    def from_dict(
+            self,
+            v: dict
+    ) -> None:
+        if v['_link'] is not None:
+            unique_identifier = v['_link']
+            for o in self.get_instances():
+                if unique_identifier == o.unique_identifier:
+                    v['_link'] = o
+            super(Parameter, self).from_dict(v)
+            if isinstance(v['_link'], str):
+                raise ValueError(
+                    "The linked parameter %s is not instantiated." % unique_identifier
+                )
 
     def __init__(
             self,
@@ -216,7 +234,10 @@ class Parameter(
             *args,
             **kwargs
     ):
-        super(Parameter, self).__init__(*args, **kwargs)
+        super(Parameter, self).__init__(
+            *args,
+            **kwargs
+        )
         self._bounds_on = bounds_on
         self._instances.add(weakref.ref(self))
         self._link = link
@@ -224,70 +245,59 @@ class Parameter(
         self._lb = lb
         self._ub = ub
 
-    def to_dict(self) -> dict:
-        v = super(Parameter, self).to_dict()
-        v['value'] = self.value
-        v['decimals'] = self.decimals
-        v['lb'], v['ub'] = self.bounds
-        v['bounds_on'] = self.bounds_on
-        return v
-
-    def from_dict(
-            self,
-            v: dict
-    ):
-        super(Parameter, self).from_dict(v)
-        self._value = v['value']
-        self._lb, self._ub = v['lb'], v['ub']
-        self._bounds_on = v['bounds_on']
-
 
 class ParameterGroup(mfm.base.Base):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
             *args,
             **kwargs
     ):
-        super(ParameterGroup, self).__init__(*args, **kwargs)
-        self.fit = fit
-        self._activeRuns = list()
-        self._chi2 = list()
+        super(ParameterGroup, self).__init__(
+            *args,
+            **kwargs
+        )
         self._parameter = list()
-        self.parameter_names = list()
+
+    def append(
+            self,
+            parameter: Parameter
+    ):
+        self._parameter.append(parameter)
 
     def clear(self):
-        self._chi2 = list()
         self._parameter = list()
 
-    def save_txt(
-            self,
-            filename: str,
-            sep: str = '\t'
-    ):
-        with open(filename, 'w') as fp:
-            s = ""
-            for ph in self.parameter_names:
-                s += ph + sep
-            s += "\n"
-            for l in self.values.T:
-                for p in l:
-                    s += "%.5f%s" % (p, sep)
-                s += "\n"
-            fp.write(s)
+    @property
+    def parameters(
+            self
+    ) -> List[Parameter]:
+        return self._parameter
+
+    @property
+    def parameter_names(
+            self
+    ) -> List[str]:
+        return [p.name for p in self.parameters]
 
     @property
     def values(self) -> np.array:
-        try:
-            re = np.vstack(self._parameter)
-            re = np.column_stack((re, self.chi2s))
-            return re.T
-        except ValueError:
-            return np.array([[0], [0]]).T
+        return [p.value for p in self.parameters]
 
-    @property
-    def chi2s(self) -> np.array:
-        return np.hstack(self._chi2)
-
+    # def save_txt(
+    #         self,
+    #         filename: str,
+    #         sep: str = '\t'
+    # ):
+    #     with open(filename, 'w') as fp:
+    #         s = ""
+    #         for ph in self.parameter_names:
+    #             s += ph + sep
+    #         s += "\n"
+    #         for l in self.values:
+    #             for p in l:
+    #                 s += "%.5f%s" % (p, sep)
+    #             s += "\n"
+    #         fp.write(s)
+    #
 
