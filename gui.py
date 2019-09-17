@@ -344,7 +344,6 @@ class Main(QtWidgets.QMainWindow):
         tcspc.add_setups(
             [
                 mfm.experiments.tcspc.TCSPCSetupWidget(
-                    name="CSV/PQ/IBH",
                     **mfm.settings.cs_settings['tcspc_csv']
                 ),
                 mfm.experiments.tcspc.TCSPCSetupSDTWidget(),

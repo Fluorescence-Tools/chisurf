@@ -221,6 +221,16 @@ class Tests(unittest.TestCase):
             fixed
         )
 
+    def test_fitting_parameter_group(self):
+        p1 = mfm.fitting.parameter.FittingParameter(value=22)
+        p2 = mfm.fitting.parameter.FittingParameter(value=33)
+        pg = mfm.fitting.parameter.FittingParameterGroup(name="jjk")
+        pg.append(p1)
+        pg.append(p2)
+        pg.find_parameters(
+            mfm.fitting.parameter.FittingParameter
+        )
+
 
 if __name__ == '__main__':
     unittest.main()

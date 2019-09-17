@@ -156,6 +156,7 @@ class Csv(object):
             skiprows: int = None,
             use_header: bool = None,
             verbose: bool = None,
+            delimiter: str = None,
             **kwargs
     ):
         """
@@ -183,13 +184,12 @@ class Csv(object):
                 print("Skip rows: {}".format(skiprows))
                 print("Use header: {}".format(use_header))
             if self.mode == 'csv':
-                delimiter = kwargs.pop('delimiter', None)
                 if delimiter is None:
                     with open(filename, 'r') as csvfile:
                         for _ in range(skiprows):
                             csvfile.readline()
                         dialect = csv.Sniffer().sniff(
-                            csvfile.read(1024), delimiters=';,|\t '
+                            csvfile.read(256), delimiters=';,|\t '
                         )
                         delimiter = dialect.delimiter
                 d = np.genfromtxt(
