@@ -76,8 +76,16 @@ class FittingControllerWidget(QtWidgets.QWidget):
         # the fitting widget
         def wrapper(f):
 
-            def update_new(*args, **kwargs):
-                f(*args, **kwargs)
+            def update_new(
+                    *args,
+                    **kwargs
+            ):
+                print(args)
+                print(kwargs)
+                f(
+                    *args,
+                    **kwargs
+                )
                 self.update(*args)
 
                 #for p in self.plots:

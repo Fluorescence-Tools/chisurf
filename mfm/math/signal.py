@@ -82,28 +82,36 @@ def autocorr(
         (default: False)
 
     """
+    # OLD
+    # x = np.atleast_1d(x)
+    # m = [slice(None), ] * len(x.shape)
+    #
+    # # For computational efficiency, crop the chain to the largest power of
+    # # two if requested.
+    # if fast:
+    #     n = int(2**np.floor(np.log2(x.shape[axis])))
+    #     m[axis] = slice(0, n)
+    #     x = x
+    # else:
+    #     n = x.shape[axis]
+    #
+    # # Compute the FFT and then (from that) the auto-correlation function.
+    # f = np.fft.fft(x-np.mean(x, axis=axis), n=2*n, axis=axis)
+    # m[axis] = slice(0, n)
+    # acf = np.fft.ifft(f * np.conjugate(f), axis=axis)[m].real
+    # m[axis] = 0
+    # if normalize:
+    #     return acf / acf[m]
+    # else:
+    #     return acf
 
-    x = np.atleast_1d(x)
-    m = [slice(None), ] * len(x.shape)
-
-    # For computational efficiency, crop the chain to the largest power of
-    # two if requested.
-    if fast:
-        n = int(2**np.floor(np.log2(x.shape[axis])))
-        m[axis] = slice(0, n)
-        x = x
-    else:
-        n = x.shape[axis]
-
-    # Compute the FFT and then (from that) the auto-correlation function.
-    f = np.fft.fft(x-np.mean(x, axis=axis), n=2*n, axis=axis)
-    m[axis] = slice(0, n)
-    acf = np.fft.ifft(f * np.conjugate(f), axis=axis)[m].real
-    m[axis] = 0
-    if normalize:
-        return acf / acf[m]
-    else:
-        return acf
+    return xcorr_fft(
+        x,
+        x,
+        axis=axis,
+        fast=fast,
+        normalize=normalize
+    )
 
 
 def xcorr_fft(
