@@ -15,10 +15,7 @@ class ExperimentReader(mfm.base.Base):
             *args,
             **kwargs
     ):
-        print(args)
-        print(kwargs)
         super(ExperimentReader, self).__init__(
-            self,
             *args,
             **kwargs
         )
@@ -28,7 +25,7 @@ class ExperimentReader(mfm.base.Base):
     def autofitrange(
             data: mfm.base.Data,
             **kwargs
-    ) -> Tuple[float, float]:
+    ) -> Tuple[int, int]:
         return 0, len(data.y) - 1
 
     @abstractmethod
@@ -50,9 +47,15 @@ class ExperimentReader(mfm.base.Base):
             **kwargs
     ) -> mfm.experiments.data.ExperimentDataGroup:
         data = self.read(**kwargs)
-        if isinstance(data, mfm.experiments.data.ExperimentalData):
+        if isinstance(
+                data,
+                mfm.experiments.data.ExperimentalData
+        ):
             data = mfm.experiments.data.ExperimentDataGroup([data])
-        if isinstance(data, mfm.experiments.data.ExperimentDataGroup):
+        if isinstance(
+                data,
+                mfm.experiments.data.ExperimentDataGroup
+        ):
             for d in data:
                 d.experiment = self.experiment
                 d.setup = self

@@ -252,9 +252,10 @@ class FittingParameterGroup(mfm.parameter.ParameterGroup):
     ) -> None:
         self._aggregated_parameters = None
         self._parameters = None
-
+        d = [v for v in self.__dict__.values() if v is not self]
         ag = mfm.base.find_objects(
-            self.__dict__.values(), FittingParameterGroup
+            d,
+            mfm.fitting.parameter.FittingParameterGroup
         )
         self._aggregated_parameters = ag
 
@@ -266,7 +267,7 @@ class FittingParameterGroup(mfm.parameter.ParameterGroup):
                 ap += o._parameters
 
         mp = mfm.base.find_objects(
-            self.__dict__.values(), parameter_type
+            d, parameter_type
         )
         self._parameters = list(set(mp + ap))
 

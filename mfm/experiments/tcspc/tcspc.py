@@ -120,7 +120,7 @@ class TCSPCReader(ExperimentReader):
             *args,
             **kwargs
     ):
-        super(TCSPCReader, self).__init__(self, *args, **kwargs)
+        super(TCSPCReader, self).__init__(*args, **kwargs)
         self.csvSetup = kwargs.pop('csvSetup', Csv(*args, **kwargs))
         self.skiprows = skiprows
         self.is_jordi = is_jordi
@@ -281,7 +281,7 @@ class TCSPCSetupWidget(
             **kwargs
     ):
         super(TCSPCSetupWidget, self).__init__(*args, **kwargs)
-        #QtWidgets.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
         #TCSPCReader.__init__(self, *args, **kwargs)
 
         csvSetup = CsvWidget(parent=self)
