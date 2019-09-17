@@ -89,7 +89,10 @@ class Model(
         wr = np.array((d[:ml] - m[:ml]) / e[:ml], dtype=np.float64)
         return wr
 
-    def update_model(self, **kwargs):
+    def update_model(
+            self,
+            **kwargs
+    ):
         pass
 
     def update(
@@ -114,7 +117,10 @@ class Model(
         return s
 
 
-class ModelCurve(Model, mfm.curve.Curve):
+class ModelCurve(
+    Model,
+    mfm.curve.Curve
+):
 
     @property
     def n_points(
@@ -149,7 +155,11 @@ class ModelCurve(Model, mfm.curve.Curve):
             fit: mfm.fitting.fit.FitGroup,
             *args, **kwargs
     ):
-        Model.__init__(self, fit, **kwargs)
+        super(ModelCurve, self).__init__(
+            fit,
+            *args,
+            **kwargs
+        )
         Curve.__init__(
             self,
             x=fit.data.x,
@@ -193,16 +203,21 @@ class ModelWidget(Model, QtWidgets.QWidget):
             **kwargs
     ) -> None:
         for p in self.fit.plots:
-            p.update_all(*args, **kwargs)
+            p.update_all(
+                *args,
+                **kwargs
+            )
             p.update()
 
     def update_widgets(
             self
     ) -> None:
-        for p in self.parameters:
-            p.update()
-            #if isinstance(p, mfm.fitting.fitting_widgets.FittingParameterWidget):
-            #    p.update()
+        for parameter in self.parameters:
+            if isinstance(
+                    parameter,
+                    mfm.fitting.fitting_widgets.FittingParameterWidget
+            ):
+                parameter.update()
 
     def update(
             self
