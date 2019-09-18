@@ -425,26 +425,28 @@ class FitGroup(list, Fit):
         :param kwargs:
         :return:
         """
+        fit = self
         if local_first is None:
-            local_first = mfm.settings.cs_settings['fitting']['global']['fit_local_first']
+            local_first = mfm.settings.fitting['global']['fit_local_first']
 
         if local_first:
-            for f in self:
+            for f in fit:
                 f.run(**kwargs)
-        for f in self:
+        for f in fit:
             f.model.find_parameters()
 
-        self.global_model.find_parameters()
+        fit.global_model.find_parameters()
         fitting_options = mfm.settings.fitting['leastsq']
-        bounds = [pi.bounds for pi in self.global_model.parameters]
+        bounds = [pi.bounds for pi in fit.global_model.parameters]
 
-        self.results = leastsqbound(
+        results = leastsqbound(
             get_wres,
-            self.global_model.parameter_values,
-            args=(self.global_model,),
+            fit.global_model.parameter_values,
+            args=(fit.global_model,),
             bounds=bounds,
             **fitting_options
         )
+        self.results = results
 
         self.update()
         self.global_model.finalize()

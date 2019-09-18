@@ -60,6 +60,30 @@ def window(
     return y[window_len-1:-window_len+1]
 
 
+def shift_array(
+        y: np.array,
+        shift: float
+) -> np.array:
+    """Calculates an array that is shifted by a float. For non-integer shifts
+    the shifted array is interpolated.
+
+    :return:
+    """
+    ts = -shift
+    ts_f = np.floor(ts)
+    if np.isnan(ts_f):
+        ts_f = 0
+    tsi = int(ts_f)
+
+    tsf = shift - tsi
+    ysh = np.roll(y, tsi) * (1 - tsf) + np.roll(y, tsi + 1) * tsf
+    if ts > 0:
+        ysh[:tsi] = 0.0
+    elif ts < 0:
+        ysh[tsi:] = 0.0
+    return ysh
+
+
 def autocorr(
         x: np.array,
         axis: int = 0,
