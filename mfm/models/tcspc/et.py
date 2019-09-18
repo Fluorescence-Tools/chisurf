@@ -453,7 +453,10 @@ class EtModelFree(
                     x = solve_richardson_lucy(self.t_matrix, self.et, 1000)
         return x
 
-    def weighted_residuals(self, **kwargs):
+    def weighted_residuals(
+            self,
+            **kwargs
+    ):
         """
         The current weighted residuals given a lifetime distribution
         :param data:
@@ -466,7 +469,12 @@ class EtModelFree(
             self.fda_model.update_model()
             return wres
 
-    def get_lifetime_spectrum(self, rDA, pRDA, d0_lifetime_spectrum):
+    def get_lifetime_spectrum(
+            self,
+            rDA: np.array,
+            pRDA: np.array,
+            d0_lifetime_spectrum: np.array
+    ):
         """
         Get the lifetime-spectrum of a distance-distribution given the the lifetime-spectrum a donor reference sample
 
@@ -481,7 +489,9 @@ class EtModelFree(
             A interleaved lifetime-spectrum given the distance distribution
         """
         lt_d = d0_lifetime_spectrum
-        xd, ld = lt_d.reshape((lt_d.shape[0]/2, 2)).T
+        xd, ld = lt_d.reshape(
+            (lt_d.shape[0] // 2, 2)
+        ).T
 
         ekFRET = np.exp(
             mfm.fluorescence.general.distance_to_fret_rate_constant(
@@ -552,12 +562,17 @@ class EtModelFreeWidget(EtModelFree, QtWidgets.QWidget):
     def __init__(
             self,
             fit: mfm.fitting.fit.FitGroup,
+            icon: QtGui.QIcon = None,
             **kwargs
     ):
         # TODO, refactor L-Curve (make L-Curve widget)
         # TODO, refactor Phasor (make Phasor widget)
+        super().__init__()
         QtWidgets.QWidget.__init__(self)
-        self.icon = QtGui.QIcon(":/icons/icons/TCSPC.ico")
+
+        if icon is None:
+            icon = QtGui.QIcon(":/icons/icons/TCSPC.ico")
+        self.icon = icon
 
         EtModelFree.__init__(self, fit)
         uic.loadUi(

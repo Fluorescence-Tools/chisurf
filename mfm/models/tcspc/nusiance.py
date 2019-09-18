@@ -388,7 +388,7 @@ class Convolve(FittingParameterGroup):
     def start(
             self
     ) -> int:
-        return int(self._start.value / self.dt)
+        return int(self._start.value // self.dt)
 
     @start.setter
     def start(
@@ -401,7 +401,7 @@ class Convolve(FittingParameterGroup):
     def stop(
             self
     ) -> int:
-        stop = int(self._stop.value / self.dt)
+        stop = int(self._stop.value // self.dt)
         return stop
 
     @stop.setter
@@ -535,7 +535,7 @@ class Convolve(FittingParameterGroup):
             data = self.data
 
         if autoscale:
-            weights = 1./data.ey
+            weights = 1.0 / data.ey
             self.n0 = float(mfm.fluorescence.tcspc.rescale_w_bg(decay, data.y, weights, bg, start, stop))
         else:
             decay *= self.n0

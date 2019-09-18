@@ -226,7 +226,7 @@ class DiffusionSimulation(object):
             print("-----------------------")
             print("Simulation time [us]: %.2f" % (t_max / 1000))
             print("Time-step [ps]: %.2f" % (t_step * 1000))
-            print("Number of steps: %.2f" % int((t_max / t_step)))
+            print("Number of steps: %.2f" % int((t_max // t_step)))
             print("-----------------------")
 
         start = time.clock()

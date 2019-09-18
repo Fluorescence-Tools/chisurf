@@ -23,8 +23,8 @@ def kappasqAllDelta(
     :return:
     """
     #beta angles
-    beta1 = np.arange(0.001, np.pi/2, step*np.pi/180.0)
-    phi = np.arange(0.001, 2*np.pi, step*np.pi/180.0)
+    beta1 = np.arange(0.001, np.pi / 2.0, step*np.pi / 180.0)
+    phi = np.arange(0.001, 2.0 * np.pi, step * np.pi / 180.0)
     n = beta1.shape[0]
     m = phi.shape[0]
     R = np.array([1, 0, 0])

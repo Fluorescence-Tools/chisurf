@@ -183,7 +183,7 @@ def calculate_fwhm(
     y_values = curve.y - background
     x_values = curve.x
 
-    half_maximum = max(y_values) / 2
+    half_maximum = max(y_values) / 2.0
     smaller = np.where(y_values > half_maximum)[0]
     lb_i = smaller[0]
     ub_i = smaller[-1]
