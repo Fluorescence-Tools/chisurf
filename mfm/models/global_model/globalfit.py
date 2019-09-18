@@ -35,16 +35,12 @@ class GlobalFitModel(model.Model, Curve):
 
     @property
     def weighted_residuals(
-            self,
-            flatten: bool = True
-    ) -> List[np.array]:
+            self
+    ) -> np.array:
         re = list()
         for f in self.fits:
             re.append(f.model.weighted_residuals.flatten())
-        if flatten:
-            return [np.concatenate(re)]
-        else:
-            return re
+        return np.concatenate(re)
 
     @property
     def fit_names(
