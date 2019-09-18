@@ -6,6 +6,7 @@ import math
 import numpy as np
 
 import mfm
+import mfm.math.datatools
 from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
 from mfm.models.model import ModelCurve
 from mfm.models.tcspc.nusiance import Generic, Corrections, Convolve
@@ -45,7 +46,7 @@ class Lifetime(FittingParameterGroup):
         a = self.amplitudes
         a /= a.sum()
         return species_averaged_lifetime(
-            mfm.fluorescence.general.two_column_to_interleaved(a, self.lifetimes)
+            mfm.math.datatools.two_column_to_interleaved(a, self.lifetimes)
         )
 
     @property
@@ -53,7 +54,7 @@ class Lifetime(FittingParameterGroup):
         a = self.amplitudes
         a /= a.sum()
         return fluorescence_averaged_lifetime(
-            mfm.fluorescence.general.two_column_to_interleaved(a, self.lifetimes)
+            mfm.math.datatools.two_column_to_interleaved(a, self.lifetimes)
         )
 
     @property
@@ -92,7 +93,7 @@ class Lifetime(FittingParameterGroup):
     def lifetime_spectrum(self) -> np.array:
         if self._link is None:
             if self._lifetime_spectrum is None:
-                return mfm.fluorescence.general.two_column_to_interleaved(
+                return mfm.math.datatools.two_column_to_interleaved(
                     self.amplitudes,
                     self.lifetimes
                 )
@@ -112,7 +113,7 @@ class Lifetime(FittingParameterGroup):
 
     @property
     def rate_spectrum(self) -> np.array:
-        return mfm.fluorescence.general.invert_interleaved(
+        return mfm.math.datatools.invert_interleaved(
             self.lifetime_spectrum
         )
 
@@ -303,7 +304,7 @@ class LifetimeModel(ModelCurve):
             self,
             time: np.array
     ) -> np.array:
-        amplitudes, lifetimes = mfm.fluorescence.general.interleaved_to_two_columns(
+        amplitudes, lifetimes = mfm.math.datatools.interleaved_to_two_columns(
             self.lifetime_spectrum
         )
         return np.array([np.dot(amplitudes, np.exp(- t / lifetimes)) for t in time])

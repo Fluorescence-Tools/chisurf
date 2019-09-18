@@ -5,6 +5,7 @@ import numpy as np
 import mfm
 import mfm.fluorescence.anisotropy.kappa2
 import mfm.math
+import mfm.math.datatools
 from mfm.models.tcspc.lifetime import Lifetime, LifetimeModel
 from mfm.fluorescence.general import distribution2rates, rates2lifetimes
 from mfm.fluorescence import rda_axis
@@ -164,7 +165,7 @@ class OrientationParameter(FittingParameterGroup):
         # slow isotropic
         k2s = np.linspace(0.01, 4, 50)
         p = mfm.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(k2s)
-        self._k2_slow_iso = mfm.fluorescence.general.two_column_to_interleaved(p, k2s)
+        self._k2_slow_iso = mfm.math.datatools.two_column_to_interleaved(p, k2s)
 
         FittingParameterGroup.__init__(self, *args, **kwargs)
 

@@ -6,6 +6,7 @@ from pyqtgraph.dockarea import DockArea, Dock
 
 import mfm
 import mfm.fluorescence
+import mfm.math.datatools
 from mfm.plots import plotbase
 
 plot_settings = mfm.settings.gui['plot']
@@ -87,13 +88,13 @@ class DistributionPlot(plotbase.Plot):
             x = d[0][1]
         elif self.pltControl.distribution_type == 'Lifetime':
             lifetime_spectrum = self.fit.model.lifetime_spectrum
-            y, x = mfm.fluorescence.general.interleaved_to_two_columns(
+            y, x = mfm.math.datatools.interleaved_to_two_columns(
                 lifetime_spectrum,
                 sort=True
             )
         elif self.pltControl.distribution_type == 'FRET-rate':
             lifetime_spectrum = self.fit.model.fret_rate_spectrum
-            y, x = mfm.fluorescence.general.interleaved_to_two_columns(
+            y, x = mfm.math.datatools.interleaved_to_two_columns(
                 lifetime_spectrum,
                 sort=True
             )
