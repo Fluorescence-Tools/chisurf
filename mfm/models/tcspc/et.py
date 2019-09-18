@@ -341,7 +341,7 @@ class EtModelFree(
         """
         return self._t_mode
 
-    @t_max.setter
+    @t_mode.setter
     def t_mode(self, v):
         self._t_mode = v
 
@@ -375,7 +375,7 @@ class EtModelFree(
             t_min = np.log10(max(self.t_min, 0.001))
             t_max = np.log10(self.t_max)
             ts = np.logspace(t_min, t_max, self.t_points)
-        elif self.t_mode == 'lin':
+        else: #elif self.t_mode == 'lin':
             ts = np.linspace(self.t_min, self.t_max, self.t_points)
         return ts
 
@@ -453,18 +453,22 @@ class EtModelFree(
                     x = solve_richardson_lucy(self.t_matrix, self.et, 1000)
         return x
 
+    @property
     def weighted_residuals(
-            self,
-            **kwargs
+            self
     ):
         """
         The current weighted residuals given a lifetime distribution
         :param data:
         :return:
         """
-        lifetime_spectrum = kwargs.get('lifetime_spectrum', self.lifetime_spectrum)
+        lifetime_spectrum = self.lifetime_spectrum
         if self.fda_model is not None:
-            self.fda_model.update_model(lifetime_spectrum=lifetime_spectrum, verbose=self.verbose, autoscale=True)
+            self.fda_model.update_model(
+                lifetime_spectrum=lifetime_spectrum,
+                verbose=self.verbose,
+                autoscale=True
+            )
             wres = self.fda_model.weighted_residuals()
             self.fda_model.update_model()
             return wres
@@ -593,48 +597,74 @@ class EtModelFreeWidget(EtModelFree, QtWidgets.QWidget):
         self.add_fit.connect(self.onUpdateDecays)
 
     @property
-    def l_curve_start(self):
+    def l_curve_start(
+            self
+    ) -> float:
         return float(self.doubleSpinBox_5.value())
 
     @l_curve_start.setter
-    def l_curve_start(self, v):
+    def l_curve_start(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_5.setValue(v)
 
     @property
-    def l_curve_stop(self):
+    def l_curve_stop(
+            self
+    ) -> float:
         return float(self.doubleSpinBox_9.value())
 
     @l_curve_stop.setter
-    def l_curve_stop(self, v):
+    def l_curve_stop(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_9.setValue(v)
 
     @property
-    def l_curve_steps(self):
+    def l_curve_steps(
+            self
+    ) -> int:
         return int(self.spinBox_6.value())
 
     @l_curve_steps.setter
-    def l_curve_steps(self, v):
+    def l_curve_steps(
+            self,
+            v: int
+    ):
         self.spinBox_6.setValue(int(v))
 
     @property
-    def entropy_weight(self):
+    def entropy_weight(
+            self
+    ) -> float:
         return float(self.doubleSpinBox_11.value())
 
-
     @property
-    def t_points(self):
+    def t_points(
+            self
+    ) -> int:
         return int(self.spinBox.value())
 
     @t_points.setter
-    def t_points(self, v):
+    def t_points(
+            self,
+            v: int
+    ):
         self.spinBox.setValue(int(v))
 
     @property
-    def t_min(self):
+    def t_min(
+            self
+    ) -> float:
         return float(self.doubleSpinBox_3.value())
 
     @t_min.setter
-    def t_min(self, v):
+    def t_min(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_3.setValue(v)
 
     @property
@@ -642,25 +672,35 @@ class EtModelFreeWidget(EtModelFree, QtWidgets.QWidget):
         return float(self.doubleSpinBox_4.value())
 
     @t_max.setter
-    def t_max(self, v):
+    def t_max(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_4.setValue(v)
 
     @property
-    def t_mode(self):
+    def t_mode(
+            self
+    ) -> str:
         if self.radioButton_3.isChecked():
             return 'lin'
         else:
             return 'log'
 
     @t_mode.setter
-    def t_mode(self, v):
+    def t_mode(
+            self,
+            v: str
+    ):
         if v == 'lin':
             self.radioButton_3.setChecked(True)
         else:
             self.radioButton_4.setChecked(True)
 
     @property
-    def inversion_method(self):
+    def inversion_method(
+            self
+    ) -> str:
         if self.radioButton_2.isChecked():
             return 'nnls'
         elif self.radioButton_4.isChecked():
@@ -669,35 +709,55 @@ class EtModelFreeWidget(EtModelFree, QtWidgets.QWidget):
             return 'lstsq'
 
     @property
-    def regularization_factor(self):
+    def regularization_factor(
+            self
+    ) -> float:
         return float(self.doubleSpinBox_10.value())
 
     @regularization_factor.setter
-    def regularization_factor(self, v):
+    def regularization_factor(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_10.setValue(float(v))
 
     @property
-    def r_DA_min(self):
+    def r_DA_min(
+            self
+    ) -> float:
         return float(self.doubleSpinBox.value())
 
     @r_DA_min.setter
-    def r_DA_min(self, v):
+    def r_DA_min(
+            self,
+            v: float
+    ):
         self.doubleSpinBox.setValue(v)
 
     @property
-    def r_DA_max(self):
+    def r_DA_max(
+            self
+    ) -> float:
         return float(self.doubleSpinBox_2.value())
 
     @r_DA_max.setter
-    def r_DA_max(self, v):
+    def r_DA_max(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_2.setValue(v)
 
     @property
-    def r_DA_npoints(self):
-        return float(self.spinBox_2.value())
+    def r_DA_npoints(
+            self
+    ) -> int:
+        return int(self.spinBox_2.value())
 
     @r_DA_npoints.setter
-    def r_DA_npoints(self, v):
+    def r_DA_npoints(
+            self,
+            v: int
+    ):
         self.spinBox_2.setValue(v)
 
     @property
@@ -705,31 +765,49 @@ class EtModelFreeWidget(EtModelFree, QtWidgets.QWidget):
         return float(self.doubleSpinBox_6.value())
 
     @kappa2.setter
-    def kappa2(self, v):
+    def kappa2(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_6.setValue(v)
 
     @property
-    def tau0(self):
+    def tau0(
+            self
+    ) -> float:
         return float(self.doubleSpinBox_8.value())
 
     @tau0.setter
-    def tau0(self, v):
+    def tau0(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_8.setValue(v)
 
     @property
-    def R0(self):
+    def R0(
+            self
+    ) -> float:
         return float(self.doubleSpinBox_7.value())
 
     @R0.setter
-    def R0(self, v):
+    def R0(
+            self,
+            v
+    ) -> float:
         self.doubleSpinBox_7.setValue(v)
 
     @property
-    def fda_index(self):
+    def fda_index(
+            self
+    ) -> int:
         return int(self.comboBox_2.currentIndex())
 
     @fda_index.setter
-    def fda_index(self, v):
+    def fda_index(
+            self,
+            v: int
+    ):
         pass
 
     @property
@@ -759,7 +837,7 @@ class EtModelFreeWidget(EtModelFree, QtWidgets.QWidget):
         self.lineEdit_2.setText(str(v))
 
     def update(self):
-        EtModelFree.update(self)
+        super().update()
         self.model_update.emit()
 
     def onUpdateDecays(self):
