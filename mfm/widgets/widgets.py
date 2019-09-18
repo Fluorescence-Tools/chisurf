@@ -389,7 +389,7 @@ def make_widget_from_yaml(
     >>> import pyqtgraph as pg
     >>> import collections
     >>> import yaml
-    >>> d = yaml.load(open("./test_session.yaml"))['datasets']
+    >>> d = yaml.safe_load(open("./test_session.yaml"))['datasets']
     >>> od = collections.OrderedDict(sorted(d.items()))
     >>> w = make_widget_from_yaml(od, 'test')
     >>> w.show()

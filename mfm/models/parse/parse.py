@@ -290,12 +290,21 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
         s += "$$</mathjax></p>"
         s += self.models[self.model_name]['description']
         s += "</body></html>"
-        tempFile = QFile(tempfile.mktemp('.html'))
+        file = tempfile.TemporaryFile(
+            suffix='.html'
+        )
+        tempFile = QFile(
+            file.name
+        )
         tempFile.open(QFile.WriteOnly)
         stream = QTextStream(tempFile)
         stream << s
         tempFile.close()
-        fileUrl = QUrl.fromLocalFile(QFileInfo(tempFile).canonicalFilePath())
+        fileUrl = QUrl.fromLocalFile(
+            QFileInfo(
+                tempFile
+            ).canonicalFilePath()
+        )
         self.webview.load(fileUrl)
 
     def onUpdateFunc(self):

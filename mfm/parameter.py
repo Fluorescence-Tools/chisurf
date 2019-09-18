@@ -272,7 +272,8 @@ class ParameterGroup(mfm.base.Base):
 
     def append(
             self,
-            parameter: Parameter
+            parameter: Parameter,
+            **kwargs
     ):
         self._parameter.append(parameter)
 

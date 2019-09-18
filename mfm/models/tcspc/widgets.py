@@ -862,21 +862,41 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
         mfm.run(t)
 
     def append(self, *args, **kwargs):
-        Gaussians.append(self, 50.0, 6., 1., **kwargs)
+        super().append(
+            50.0,
+            6.0,
+            1.0,
+        )
         gb = QtWidgets.QGroupBox()
         n_gauss = len(self)
-        gb.setTitle('G%i' % (n_gauss))
-        l = QtWidgets.QVBoxLayout()
+        gb.setTitle('G%i' % n_gauss)
+        layout = QtWidgets.QVBoxLayout()
 
-        m = self._gaussianMeans[-1].make_widget(layout=l)
-        s = self._gaussianSigma[-1].make_widget(layout=l)
-        shape = self._gaussianShape[-1].make_widget(layout=l)
-        x = self._gaussianAmplitudes[-1].make_widget(layout=l)
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._gaussianMeans[-1],
+            layout=layout
+        )
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._gaussianSigma[-1],
+            layout=layout
+        )
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._gaussianShape[-1],
+            layout=layout
+        )
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._gaussianAmplitudes[-1],
+            layout=layout
+        )
 
-        gb.setLayout(l)
-        row = (n_gauss - 1) / 2 + 1
+        gb.setLayout(layout)
+        row = (n_gauss - 1) // 2 + 1
         col = (n_gauss - 1) % 2
-        self.grid_layout.addWidget(gb, row, col)
+        self.grid_layout.addWidget(
+            gb,
+            row,
+            col
+        )
         self._gb.append(gb)
 
     def pop(self) -> None:
