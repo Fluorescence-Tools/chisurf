@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 
 from qtpy import QtWidgets
@@ -8,9 +11,21 @@ import mfm.widgets.pdb.pdb
 from mfm.experiments.reader import ExperimentReader
 
 
-class LoadStructure(ExperimentReader, QtWidgets.QWidget):
+class LoadStructure(
+    ExperimentReader,
+    QtWidgets.QWidget
+):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        """
+
+        :param args:
+        :param kwargs:
+        """
         super(LoadStructure, self).__init__(*args, **kwargs)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -36,7 +51,13 @@ class LoadStructure(ExperimentReader, QtWidgets.QWidget):
         return None, None
 
 
-class LoadStructureFolder(ExperimentReader, QtWidgets.QWidget):
+class LoadStructureFolder(
+    ExperimentReader,
+    QtWidgets.QWidget
+):
+    """
+
+    """
 
     name = 'Trajectory'
 

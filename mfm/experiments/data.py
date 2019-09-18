@@ -1,7 +1,10 @@
+"""
+
+"""
 from __future__ import annotations
 
 import os.path
-from typing import List, Type
+from typing import List
 import numpy as np
 
 import mfm
@@ -12,6 +15,9 @@ import mfm.experiments.experiment
 
 
 class ExperimentalData(mfm.base.Data):
+    """
+
+    """
 
     def __init__(
             self,
@@ -20,6 +26,13 @@ class ExperimentalData(mfm.base.Data):
             experiment=None,
             **kwargs
     ):
+        """
+
+        :param args:
+        :param setup:
+        :param experiment:
+        :param kwargs:
+        """
         super(ExperimentalData, self).__init__(*args, **kwargs)
         self.setup = setup
         self._experiment = experiment

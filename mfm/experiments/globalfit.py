@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 from typing import Tuple
 
@@ -10,7 +13,13 @@ import mfm.experiments.data
 from mfm.experiments.reader import ExperimentReader
 
 
-class GlobalFitSetup(ExperimentReader, QtWidgets.QWidget):
+class GlobalFitSetup(
+    ExperimentReader,
+    QtWidgets.QWidget
+):
+    """
+
+    """
 
     def __init__(
             self,

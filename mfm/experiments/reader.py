@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 from typing import Tuple
 
@@ -8,13 +11,23 @@ import mfm.curve
 import mfm.experiments.data
 
 
-class ExperimentReader(mfm.base.Base):
+class ExperimentReader(
+    mfm.base.Base
+):
+    """
+
+    """
 
     def __init__(
             self,
             *args,
             **kwargs
     ):
+        """
+
+        :param args:
+        :param kwargs:
+        """
         super(ExperimentReader, self).__init__(
             *args,
             **kwargs

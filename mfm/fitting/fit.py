@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 from typing import List, Tuple
 
@@ -18,6 +21,9 @@ from mfm.math.optimization.leastsqbound import leastsqbound
 
 
 class Fit(mfm.base.Base):
+    """
+
+    """
 
     def __init__(
             self,
@@ -26,6 +32,13 @@ class Fit(mfm.base.Base):
             xmax: int = 0,
             **kwargs
     ):
+        """
+
+        :param model_class:
+        :param xmin:
+        :param xmax:
+        :param kwargs:
+        """
         super(Fit, self).__init__(**kwargs)
         self._model = None
         self.results = None

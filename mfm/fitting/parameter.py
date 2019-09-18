@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 from typing import Tuple, List
 import deprecation
@@ -14,7 +17,9 @@ import mfm.decorators
 parameter_settings = mfm.settings.parameter
 
 
-class FittingParameter(mfm.parameter.Parameter):
+class FittingParameter(
+    mfm.parameter.Parameter
+):
 
     def __init__(
             self,
@@ -23,6 +28,13 @@ class FittingParameter(mfm.parameter.Parameter):
             *args,
             **kwargs
     ):
+        """
+
+        :param model:
+        :param fixed:
+        :param args:
+        :param kwargs:
+        """
         super(FittingParameter, self).__init__(
             *args,
             **kwargs
@@ -127,6 +139,9 @@ class FittingParameter(mfm.parameter.Parameter):
 class GlobalFittingParameter(
     FittingParameter
 ):
+    """
+
+    """
 
     @property
     def value(self) -> float:
@@ -160,6 +175,13 @@ class GlobalFittingParameter(
             formula,
             **kwargs
     ):
+        """
+
+        :param f:
+        :param g:
+        :param formula:
+        :param kwargs:
+        """
         args = [f, g, formula]
         super(GlobalFittingParameter, self).__init__(*args, **kwargs)
         self.f, self.g = f, g
@@ -264,6 +286,11 @@ class FittingParameterGroup(
             self,
             parameter_type=mfm.parameter.Parameter
     ) -> None:
+        """
+
+        :param parameter_type:
+        :return:
+        """
         self._aggregated_parameters = None
         self._parameters = None
         d = [v for v in self.__dict__.values() if v is not self]
