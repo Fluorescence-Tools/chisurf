@@ -12,6 +12,9 @@ T = TypeVar('T', bound='Parameter')
 class Parameter(
     mfm.base.Base
 ):
+    """
+
+    """
 
     _instances = set()
 

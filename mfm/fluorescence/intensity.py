@@ -52,13 +52,40 @@ def r_scatter(
     return (Fp-Fs)/(Fp*(1. - 3. * l2) + Fs*(2. - 3. * l1))
 
 @nusiance
-def r_exp(Sp, Ss, **kwargs):
+def r_exp(
+        Sp,
+        Ss,
+        **kwargs
+) -> float:
+    """Experimental anisotropy
+
+        .. math::
+
+        r_{exp} = (F_p-S_s) / (F_p * (1-3*l_2) + S_s * (2-3*l_1))
+        F_p = S_p * Gfactor
+
+    :param Sp: Signal in the parallel detection channel
+    :param Ss: Signal in the perpendicular detection channel
+    :param kwargs:
+    :return:
+    """
     Fp = Sp * Gfactor
     return (Fp-Ss)/(Fp*(1.-3.*l2) + Ss*(2.-3.*l1))
 
 
 @nusiance
-def sg_sr(Sg, Sr, **kwargs):
+def sg_sr(
+        Sg,
+        Sr,
+        **kwargs
+) -> float:
+    """Ratio of the green signal Sg and the red signal Sr
+
+    :param Sg: green signal intensity
+    :param Sr: red signal intensity
+    :param kwargs:
+    :return:
+    """
     if Sr != 0:
         return float(Sg) / float(Sr)
     else:
@@ -66,45 +93,107 @@ def sg_sr(Sg, Sr, **kwargs):
 
 
 @nusiance
-def fg_fr(Sg, Sr, **kwargs):
+def fg_fr(
+        Sg,
+        Sr,
+        **kwargs
+) -> float:
+    """Ratio of the green fluorescence intensity and the red fluorescence
+    intensity. The fluorescence intensities are corrected for the background
+    and the cross-talk from the green dye to the red detection channel.
+
+    :param Sg:
+    :param Sr:
+    :param kwargs:
+    :return:
+    """
     Fg = Sg - Bg
     Fr = Sr - Br - Fg * crosstalk
     return Fg / Fr
 
 
 @nusiance
-def proximity_ratio(Sg, Sr, **kwargs):
-    return Sr/(Sg + Sr)
+def proximity_ratio(
+        Sg,
+        Sr,
+        **kwargs
+) -> float:
+    """Proximity ratio of the green and red detection channels. The
+    proximity ratio is calculated by Sr / (Sg + Sr) where Sr is the
+    uncorrected red signal, and Sg is the uncorrected green signal.
+
+    :param Sg:
+    :param Sr:
+    :param kwargs:
+    :return:
+    """
+    return Sr / (Sg + Sr)
 
 
 @nusiance
-def apparent_efficiency(Sg, Sr, **kwargs):
+def apparent_fret_efficiency(
+        Sg,
+        Sr,
+        **kwargs
+) -> float:
+    """Apparent FRET efficiency (Fr / (Fg + Fr)) that is calculated using the
+    fluorescence intensities of the green Fg and red Fr dye. The
+    apparent FRET efficiency does not correct for instrumental
+    spectral sensitivity of the instrument for the dyes and the
+    fluorescence quantum yields of the dye.
+
+    :param Sg:
+    :param Sr:
+    :param kwargs:
+    :return:
+    """
     Fg = Sg - Bg
     Fr = Sr - Br - Fg * crosstalk
-    return Fr/(Fg + Fr)
+    return Fr / (Fg + Fr)
 
 
 @nusiance
-def fret_efficiency(Sg, Sr, **kwargs):
+def fret_efficiency(
+        Sg,
+        Sr,
+        **kwargs
+) -> float:
+    """
+
+    :param Sg:
+    :param Sr:
+    :param kwargs:
+    :return:
+    """
     Fg = Sg - Bg
     Fa = (Sr - Br - Fg*crosstalk) / phiA
 
-    return Fa/(Fg/Gfactor/phiD + Fa)
+    return Fa / (Fg / Gfactor / phiD + Fa)
 
 
 @nusiance
-def distance(Sg, Sr, **kwargs):
+def fluorescence_weighted_distance(
+        Sg,
+        Sr,
+        **kwargs
+) -> float:
+    """The fluorescence weighted distance RDA_E
+
+    :param Sg:
+    :param Sr:
+    :param kwargs:
+    :return:
+    """
     Fg = Sg - Bg
     Fa = (Sr - Br - Fg*crosstalk) / phiA
     return R0 * np.exp(1./6.*np.log(Fg/Gfactor/phiD/Fa))
 
 
-def SrSg_ratio(Sg, Sr, **kwargs):
-    return Sr/Sg
-
-
 @nusiance
-def transfer_efficency2fdfa(E, **kwargs):
+def fret_efficency_to_fdfa(
+        E,
+        **kwargs
+):
     """This function converts the transfer-efficency E to the donor-acceptor intensity ration FD/FA to
 
     :param E: float
@@ -115,7 +204,7 @@ def transfer_efficency2fdfa(E, **kwargs):
         acceptor quantum yield
     :return: float, the FRET transfer efficency
     """
-    fdfa = phiA/phiD*(1./E-1)
+    fdfa = phiA / phiD * (1.0 / E - 1.0)
     return fdfa
 
 
@@ -131,6 +220,6 @@ def fdfa2transfer_efficency(fdfa):
         acceptor quantum yield
     :return: float, the FRET transfer efficency
     """
-    r = 1 + fdfa * phiA/phiD
-    trans = 1./r
+    r = 1.0 + fdfa * phiA / phiD
+    trans = 1.0/r
     return trans

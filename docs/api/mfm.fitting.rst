@@ -6,7 +6,7 @@ Subpackages
 
 .. toctree::
 
-    mfm.fitting.models
+    mfm.models
     mfm.fitting.optimization
 
 Submodules

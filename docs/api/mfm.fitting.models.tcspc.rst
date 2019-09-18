@@ -1,93 +1,93 @@
-mfm.fitting.models.tcspc package
+mfm.models.tcspc package
 ================================
 
 Submodules
 ----------
 
-mfm.fitting.models.tcspc.anisotropy module
+mfm.models.tcspc.anisotropy module
 ------------------------------------------
 
-.. automodule:: mfm.fitting.models.tcspc.anisotropy
+.. automodule:: mfm.models.tcspc.anisotropy
     :members:
     :undoc-members:
     :show-inheritance:
 
-mfm.fitting.models.tcspc.dye_diffusion module
+mfm.models.tcspc.dye_diffusion module
 ---------------------------------------------
 
-.. automodule:: mfm.fitting.models.tcspc.dye_diffusion
+.. automodule:: mfm.models.tcspc.dye_diffusion
     :members:
     :undoc-members:
     :show-inheritance:
 
-mfm.fitting.models.tcspc.et module
+mfm.models.tcspc.et module
 ----------------------------------
 
-.. automodule:: mfm.fitting.models.tcspc.et
+.. automodule:: mfm.models.tcspc.et
     :members:
     :undoc-members:
     :show-inheritance:
 
-mfm.fitting.models.tcspc.fret module
+mfm.models.tcspc.fret module
 ------------------------------------
 
-.. automodule:: mfm.fitting.models.tcspc.fret
+.. automodule:: mfm.models.tcspc.fret
     :members:
     :undoc-members:
     :show-inheritance:
 
-mfm.fitting.models.tcspc.fret_structure module
+mfm.models.tcspc.fret_structure module
 ----------------------------------------------
 
-.. automodule:: mfm.fitting.models.tcspc.fret_structure
+.. automodule:: mfm.models.tcspc.fret_structure
     :members:
     :undoc-members:
     :show-inheritance:
 
-mfm.fitting.models.tcspc.membrane module
+mfm.models.tcspc.membrane module
 ----------------------------------------
 
-.. automodule:: mfm.fitting.models.tcspc.membrane
+.. automodule:: mfm.models.tcspc.membrane
     :members:
     :undoc-members:
     :show-inheritance:
 
-mfm.fitting.models.tcspc.mix_model module
+mfm.models.tcspc.mix_model module
 -----------------------------------------
 
-.. automodule:: mfm.fitting.models.tcspc.mix_model
+.. automodule:: mfm.models.tcspc.mix_model
     :members:
     :undoc-members:
     :show-inheritance:
 
-mfm.fitting.models.tcspc.nusiance module
+mfm.models.tcspc.nusiance module
 ----------------------------------------
 
-.. automodule:: mfm.fitting.models.tcspc.nusiance
+.. automodule:: mfm.models.tcspc.nusiance
     :members:
     :undoc-members:
     :show-inheritance:
 
-mfm.fitting.models.tcspc.parse module
+mfm.models.tcspc.parse module
 -------------------------------------
 
-.. automodule:: mfm.fitting.models.tcspc.parse
+.. automodule:: mfm.models.tcspc.parse
     :members:
     :undoc-members:
     :show-inheritance:
 
-mfm.fitting.models.tcspc.pddem module
+mfm.models.tcspc.pddem module
 -------------------------------------
 
-.. automodule:: mfm.fitting.models.tcspc.pddem
+.. automodule:: mfm.models.tcspc.pddem
     :members:
     :undoc-members:
     :show-inheritance:
 
-mfm.fitting.models.tcspc.tcspc module
+mfm.models.tcspc.tcspc module
 -------------------------------------
 
-.. automodule:: mfm.fitting.models.tcspc.tcspc
+.. automodule:: mfm.models.tcspc.tcspc
     :members:
     :undoc-members:
     :show-inheritance:
@@ -96,7 +96,7 @@ mfm.fitting.models.tcspc.tcspc module
 Module contents
 ---------------
 
-.. automodule:: mfm.fitting.models.tcspc
+.. automodule:: mfm.models.tcspc
     :members:
     :undoc-members:
     :show-inheritance:

@@ -13,6 +13,9 @@ import mfm
 
 
 class Base(object):
+    """
+
+    """
 
     @property
     def name(self) -> str:
