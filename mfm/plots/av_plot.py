@@ -78,7 +78,7 @@ class AvPlot(plotbase.Plot):
 
         alpha = 0.1
         data = av.rate_map
-        min_v, max_v = mfm.math.functions.datatools.minmax(data.flatten(), ignore_zero=True)
+        min_v, max_v = mfm.math.datatools.minmax(data.flatten(), ignore_zero=True)
         d1 = cm.jet((data - min_v) / (max_v - min_v)) * 255
         d1 = d1.astype(dtype=np.ubyte)
 

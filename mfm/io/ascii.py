@@ -12,7 +12,7 @@ def save_xy(
         filename: str,
         x: np.array,
         y: np.array,
-        verbose: bool = False,
+        verbose: bool = mfm.verbose,
         fmt: str = "%.3f\t%.3f",
         header_string: str = None
 ) -> None:
@@ -90,7 +90,7 @@ class Csv(object):
             error_x_on: bool = False,
             directory: str = '.',
             skiprows: int = 9,
-            verbose: bool = None,
+            verbose: bool = mfm.verbose,
             file_type: str = 'csv',
             **kwargs
     ):
@@ -133,8 +133,6 @@ class Csv(object):
         self._ex = kwargs.get('ex', None)
         self._ey = kwargs.get('ey', None)
 
-        if verbose is None:
-            verbose = mfm.verbose
         self.verbose = verbose
 
         if colspecs is None:
@@ -155,7 +153,7 @@ class Csv(object):
             filename: str,
             skiprows: int = None,
             use_header: bool = None,
-            verbose: bool = None,
+            verbose: bool = mfm.verbose,
             delimiter: str = None,
             **kwargs
     ):
