@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 import mfm
-from mfm.models.tcspc.lifetime import DecayModel
+from mfm.models.tcspc.lifetime import LifetimeModel
 from mfm.fluorescence.fps import DynamicAV
 from mfm.fitting.parameter import FittingParameter
 
 
-class AVDecayModel(DecayModel):
+class AVDecayModel(LifetimeModel):
 
-    def __init__(self, fit, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            structure: mfm.structure.structure.Structure = None,
+            **kwargs
+    ):
         """
         Example
         -------
@@ -88,11 +93,16 @@ class AVDecayModel(DecayModel):
         :param args: 
         :param kwargs: 
         """
-        DecayModel.__init__(self, fit, **kwargs)
-        self._structure = kwargs.pop('structure', None)
-        av = DynamicAV(self._structure,
-                       simulation_grid_resolution=1.5,
-                       **kwargs)
+        super(AVDecayModel, self).__init__(
+            fit,
+            **kwargs
+        )
+        self._structure = structure
+        av = DynamicAV(
+            structure,
+            simulation_grid_resolution=1.5,
+            **kwargs
+        )
         self._av = av
 
         self._fluorescence_lifetime = FittingParameter(value=4.2, name='tau0')
@@ -128,7 +138,14 @@ class AVDecayModel(DecayModel):
         t_step = (self.times[1] - self.times[0]) / i
         n_steps = (len(self.fit.data.y) - 1) * i
         if decay_changed:
-            times, density, counts = self._av.get_donor_only_decay(n_it=n_steps, t_step=t_step, n_out=i)
+            times, density, counts = self._av.get_donor_only_decay(
+                n_it=n_steps,
+                t_step=t_step,
+                n_out=i
+            )
             self._decay = counts
             self.decay_changed = False
-        DecayModel.update_model(self, **kwargs)
+        super().update_model(
+            mode='full',
+            **kwargs
+        )

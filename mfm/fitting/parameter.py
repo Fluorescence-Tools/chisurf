@@ -124,7 +124,9 @@ class FittingParameter(mfm.parameter.Parameter):
         return widget
 
 
-class GlobalFittingParameter(FittingParameter):
+class GlobalFittingParameter(
+    FittingParameter
+):
 
     @property
     def value(self) -> float:
@@ -164,7 +166,12 @@ class GlobalFittingParameter(FittingParameter):
         self.formula = formula
 
 
-class FittingParameterGroup(mfm.parameter.ParameterGroup):
+class FittingParameterGroup(
+    mfm.parameter.ParameterGroup
+):
+    """
+
+    """
 
     @property
     def parameters_all(
@@ -182,26 +189,31 @@ class FittingParameterGroup(mfm.parameter.ParameterGroup):
 
     @property
     def aggregated_parameters(self):
-        d = self.__dict__
         a = list()
-        for key, value in d.items():
+        for key, value in self.__dict__.items():
             if isinstance(value, FittingParameterGroup):
                 a.append(value)
         return list(set(a))
 
     @property
-    def parameter_dict(self) -> dict:
+    def parameter_dict(
+            self
+    ) -> dict:
         re = dict()
         for p in self.parameters:
             re[p.name] = p
         return re
 
     @property
-    def parameter_names(self) -> List[str]:
+    def parameter_names(
+            self
+    ) -> List[str]:
         return [p.name for p in self.parameters]
 
     @property
-    def parameter_values(self) -> List[float]:
+    def parameter_values(
+            self
+    ) -> List[float]:
         return [p.value for p in self.parameters]
 
     @parameter_values.setter
@@ -224,7 +236,9 @@ class FittingParameterGroup(mfm.parameter.ParameterGroup):
         a = dict()
         return a
 
-    def to_dict(self) -> dict:
+    def to_dict(
+            self
+    ) -> dict:
         s = dict()
         parameters = dict()
         s['parameter'] = parameters
