@@ -16,6 +16,9 @@ T = TypeVar('T', bound='Curve')
 
 
 class Curve(Base):
+    """
+
+    """
 
     @property
     def fwhm(self) -> float:

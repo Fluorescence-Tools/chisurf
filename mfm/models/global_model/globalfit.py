@@ -18,6 +18,9 @@ from mfm.fitting.parameter import GlobalFittingParameter
 
 
 class GlobalFitModel(model.Model, Curve):
+    """
+
+    """
 
     name = "Global fit"
 

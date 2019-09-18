@@ -1,4 +1,4 @@
-mfm.fitting.models package
+mfm.models package
 ==========================
 
 Subpackages
@@ -6,33 +6,33 @@ Subpackages
 
 .. toctree::
 
-    mfm.fitting.models.fcs
-    mfm.fitting.models.structure
-    mfm.fitting.models.tcspc
+    mfm.models.fcs
+    mfm.models.structure
+    mfm.models.tcspc
 
 Submodules
 ----------
 
-mfm.fitting.models.globalfit module
+mfm.models.globalfit module
 -----------------------------------
 
-.. automodule:: mfm.fitting.models.globalfit
+.. automodule:: mfm.models.globalfit
     :members:
     :undoc-members:
     :show-inheritance:
 
-mfm.fitting.models.parse module
+mfm.models.parse module
 -------------------------------
 
-.. automodule:: mfm.fitting.models.parse
+.. automodule:: mfm.models.parse
     :members:
     :undoc-members:
     :show-inheritance:
 
-mfm.fitting.models.stopped_flow module
+mfm.models.stopped_flow module
 --------------------------------------
 
-.. automodule:: mfm.fitting.models.stopped_flow
+.. automodule:: mfm.models.stopped_flow
     :members:
     :undoc-members:
     :show-inheritance:
@@ -41,7 +41,7 @@ mfm.fitting.models.stopped_flow module
 Module contents
 ---------------
 
-.. automodule:: mfm.fitting.models
+.. automodule:: mfm.models
     :members:
     :undoc-members:
     :show-inheritance:

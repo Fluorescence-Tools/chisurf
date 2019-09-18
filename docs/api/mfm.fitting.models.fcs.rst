@@ -1,13 +1,13 @@
-mfm.fitting.models.fcs package
+mfm.models.fcs package
 ==============================
 
 Submodules
 ----------
 
-mfm.fitting.models.fcs.fcs module
+mfm.models.fcs.fcs module
 ---------------------------------
 
-.. automodule:: mfm.fitting.models.fcs.fcs
+.. automodule:: mfm.models.fcs.fcs
     :members:
     :undoc-members:
     :show-inheritance:
@@ -16,7 +16,7 @@ mfm.fitting.models.fcs.fcs module
 Module contents
 ---------------
 
-.. automodule:: mfm.fitting.models.fcs
+.. automodule:: mfm.models.fcs
     :members:
     :undoc-members:
     :show-inheritance:
