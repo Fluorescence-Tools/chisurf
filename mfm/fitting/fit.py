@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 import os
 import numpy as np
@@ -322,7 +322,7 @@ class FitGroup(list, Fit):
     def selected_fit(
             self
     ) -> Fit:
-        return self[self._selected_fit_index]
+        return self[self.selected_fit_index]
 
     @property
     def selected_fit_index(
@@ -434,7 +434,8 @@ class FitGroup(list, Fit):
     ):
         """Optimizes the free parameters
 
-        :param local_first: if True the local parameters of a global-fit in a fit group are optimized first
+        :param local_first: if True the local parameters of a global-fit in a
+        fit group are optimized first
         :param kwargs:
         :return:
         """
@@ -444,7 +445,9 @@ class FitGroup(list, Fit):
 
         if local_first:
             for f in fit:
-                f.run(**kwargs)
+                f.run(
+                    **kwargs
+                )
         for f in fit:
             f.model.find_parameters()
 
@@ -455,7 +458,9 @@ class FitGroup(list, Fit):
         results = leastsqbound(
             get_wres,
             fit.global_model.parameter_values,
-            args=(fit.global_model,),
+            args=(
+                fit.global_model,
+            ),
             bounds=bounds,
             **fitting_options
         )
@@ -468,13 +473,21 @@ class FitGroup(list, Fit):
             self,
             data: mfm.experiments.data.DataGroup,
             model_class,
+            model_kw: Dict = None,
             **kwargs
     ):
+        """
+
+        :param data:
+        :param model_class:
+        :param kwargs:
+        """
         self._selected_fit_index = 0
         self._fits = list()
 
         for d in data:
-            model_kw = kwargs.get('model_kw', {})
+            if model_kw is None:
+                model_kw = dict()
             fit = Fit(
                 model_class=model_class,
                 data=d,
