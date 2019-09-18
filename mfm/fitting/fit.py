@@ -169,7 +169,7 @@ class Fit(mfm.base.Base):
         """Get the approximate gradient at the current parameter values
         :return:
         """
-        f0, grad = approx_grad(
+        _, grad = approx_grad(
             self.model.parameter_values,
             self,
             mfm.eps
@@ -223,6 +223,7 @@ class Fit(mfm.base.Base):
             self,
             filename: str,
             file_type: str = 'txt',
+            verbose: bool = False,
             **kwargs
     ) -> None:
         self.model.save(filename + '.json')
@@ -233,7 +234,10 @@ class Fit(mfm.base.Base):
             x, m = self.model[xmin:xmax]
             csv.save(np.vstack([x, wr]), filename+'_wr.txt')
             csv.save(self.model[:], filename+'_fit.txt')
-            if isinstance(self.data, mfm.curve.Curve):
+            if isinstance(
+                    self.data,
+                    mfm.curve.Curve
+            ):
                 self.data.save(filename +'_data.txt', file_type='txt')
                 self.data.save(filename +'_data.json', file_type='json')
                 with open(filename+'_info.txt', 'w') as fp:
@@ -241,17 +245,20 @@ class Fit(mfm.base.Base):
 
     def run(
             self,
+            *args,
             **kwargs
     ) -> None:
         fitting_options = mfm.settings.cs_settings['fitting']['leastsq']
         self.model.find_parameters(
             parameter_type=mfm.fitting.parameter.FittingParameter
         )
-        self.results = leastsqbound(get_wres,
-                                    self.model.parameter_values,
-                                    args=(self.model, ),
-                                    bounds=self.model.parameter_bounds,
-                                    **fitting_options)
+        self.results = leastsqbound(
+            get_wres,
+            self.model.parameter_values,
+            args=(self.model,),
+            bounds=self.model.parameter_bounds,
+            **fitting_options
+        )
         self.model.finalize()
         self.update()
 
