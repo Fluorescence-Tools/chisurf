@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from itertools import tee
 from typing import Tuple
 
 import copy
@@ -372,3 +374,197 @@ if __name__ == "__main__":
     p.plot(x2, y2, 'g')
     p.plot(rx2, ry2, 'b')
     p.show()
+
+
+def interleaved_to_two_columns(
+        ls: np.array,
+        sort: bool = False
+) -> Tuple[np.array, np.array]:
+    """
+    Converts an interleaved spectrum to two column-data
+    :param ls: numpy array
+        The interleaved spectrum (amplitude, lifetime)
+    :param sort: bool
+        if True sort by the size of the lifetimes
+    :return: two arrays (amplitudes), (lifetimes)
+    """
+    lt = ls.reshape((ls.shape[0] // 2, 2))
+    if sort:
+        s = lt[np.argsort(lt[:, 1])]
+        y = s[:, 0]
+        x = s[:, 1]
+        return y, x
+    else:
+        return lt[:, 0], lt[:, 1]
+
+
+def two_column_to_interleaved(
+        x: np.array,
+        t: np.array
+) -> np.array:
+    """
+    Converts two column lifetime spectra to interleaved lifetime spectra
+    :param ls: The
+    :return:
+    """
+    c = np.vstack((x, t)).ravel([-1])
+    return c
+
+
+@nb.jit(nopython=True, nogil=True)
+def elte2(
+        e1: np.array,
+        e2: np.array
+) -> np.array:
+    """
+    Takes two interleaved spectrum of lifetimes (a11, l11, a12, l12,...) and (a21, l21, a22, l22,...)
+    and return a new spectrum of lifetimes of the form (a11*a21, 1/(1/l11+1/l21), a12*a22, 1/(1/l22+1/l22), ...)
+
+    :param e1: array-like
+        Lifetime spectrum 1
+    :param e2: array-like
+        Lifetime spectrum 2
+    :return: array-like
+        Lifetime-spectrum
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> e1 = np.array([1,2,3,4])
+    >>> e2 = np.array([5,6,7,8])
+    >>> elte2(e1, e2)
+    array([  5.        ,   1.5       ,   7.        ,   1.6       ,
+        15.        ,   2.4       ,  21.        ,   2.66666667])
+    """
+    n1 = e1.shape[0] // 2
+    n2 = e2.shape[0] // 2
+    r = np.empty(n1*n2*2, dtype=np.float64)
+
+    k = 0
+    for i in range(n1):
+        for j in range(n2):
+            r[k * 2 + 0] = e1[i * 2 + 0] * e2[j * 2 + 0]
+            r[k * 2 + 1] = 1. / (1. / e1[i * 2 + 1] + 1. / e2[j * 2 + 1])
+            k += 1
+    return r
+
+
+@nb.jit(nopython=True, nogil=True)
+def ere2(
+        e1: np.array,
+        e2: np.array
+) -> np.array:
+    """
+    Takes two interleaved spectrum of rates (a11, r11, a12, r12,...) and (a21, r21, a22, r22,...)
+    and return a new spectrum of lifetimes of the form (a11*a21, r11+r21), a12*a22, r22+r22), ...)
+
+    :param e1: array-like
+        Lifetime spectrum 1
+    :param e2: array-like
+        Lifetime spectrum 2
+    :return: array-like
+        Lifetime-spectrum
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> e1 = np.array([1,2,3,4])
+    >>> e2 = np.array([5,6,7,8])
+    >>> elte2(e1, e2)
+    array([  5.        ,   1.5       ,   7.        ,   1.6       ,
+        15.        ,   2.4       ,  21.        ,   2.66666667])
+    """
+    n1 = e1.shape[0] // 2
+    n2 = e2.shape[0] // 2
+    r = np.zeros(n1*n2*2, dtype=np.float64)
+
+    k = 0
+    for i in range(n1):
+        for j in range(n2):
+            r[k * 2 + 0] = e1[i * 2 + 0] * e2[j * 2 + 0]
+            r[k * 2 + 1] = e1[i * 2 + 1] + e2[j * 2 + 1]
+            k += 1
+    return r
+
+
+@nb.jit(nopython=True, nogil=True)
+def invert_interleaved(
+        interleaved_spectrum: np.array
+) -> np.array:
+    """Converts interleaved lifetime to rate spectra and vice versa
+
+    :param interleaved_spectrum: array-like
+        Lifetime/rate spectrum
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> e1 = np.array([1,2,3,4])
+    >>> invert_interleaved(e1)
+    array([ 1.  ,  0.5 ,  3.  ,  0.25])
+    """
+    n1 = interleaved_spectrum.shape[0] / 2
+    r = np.empty(n1*2, dtype=np.float64)
+
+    for i in range(n1):
+        r[i * 2 + 0] = interleaved_spectrum[i * 2 + 0]
+        r[i * 2 + 1] = 1. / (interleaved_spectrum[i * 2 + 1])
+    return r
+
+
+@nb.jit(nopython=True, nogil=True)
+def e1tn(
+        e1: np.array,
+        n: float
+) -> np.array:
+    """
+    Multiply amplitudes of interleaved rate/lifetime spectrum by float
+
+    :param e1: array-like
+        Rate spectrum
+    :param n: float
+
+    Examples
+    --------
+
+    >>> e1 = np.array([1,2,3,4])
+    >>> e1tn(e1, 2.0)
+    array([2, 2, 6, 4])
+    """
+    n2 = e1.shape[0]
+    for i in range(0, n2, 2):
+        e1[i] *= n
+    return e1
+
+
+@nb.jit(nopython=True, nogil=True)
+def e1ti2(
+        e1: np.array,
+        e2: np.array
+) -> np.array:
+    n1 = e1.shape[0] // 2
+    n2 = e2.shape[0] // 2
+    r = np.zeros(n1 * n2 * 2, dtype=np.float64)
+
+    k = 0
+    for i in range(n1):
+        for j in range(n2):
+            r[k * 2 + 0] = e1[i] * e2[j]
+            r[k * 2 + 1] = e1[i + 1] * e2[j + 1]
+            k += 1
+    return r
+
+
+def pairwise(iterable):
+    """Iterate in pairs of 2 over iterable
+
+    :param iterable:
+    :return:
+    """
+    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+    a, b = tee(iterable)
+    next(b, None)
+    return zip(a, b)
