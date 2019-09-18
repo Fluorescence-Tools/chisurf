@@ -65,8 +65,11 @@ class Parameter(
                     return v
 
     @value.setter
-    def value(self, value):
-        self._value = float(value)
+    def value(
+            self,
+            value: float
+    ):
+        self._value = value
         if self.is_linked:
             self.link.value = value
 

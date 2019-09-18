@@ -8,7 +8,10 @@ from scipy.optimize import _minpack, leastsq
 from scipy.optimize.minpack import _check_func
 
 
-def _internal2external_grad(xi, bounds):
+def _internal2external_grad(
+        xi,
+        bounds
+):
     """
 Calculate the internal (unconstrained) to external (constained)
 parameter gradiants.
@@ -16,13 +19,13 @@ parameter gradiants.
     grad = empty_like(xi)
     for i, (v, bound) in enumerate(zip(xi, bounds)):
         lower, upper = bound
-        if lower is None and upper is None: # No constraints
+        if lower is None and upper is None:  # No constraints
             grad[i] = 1.0
-        elif upper is None: # only lower bound
+        elif upper is None:  # only lower bound
             grad[i] = v / sqrt(v * v + 1.)
-        elif lower is None: # only upper bound
+        elif lower is None:  # only upper bound
             grad[i] = -v / sqrt(v * v + 1.)
-        else: # lower and upper bounds
+        else:  # lower and upper bounds
             grad[i] = (upper - lower) * cos(v) / 2.
     return grad
 
@@ -48,12 +51,16 @@ Make a lambda function which converts a single internal (uncontrained)
 parameter to a external (constrained) parameter.
 """
     lower, upper = bound
+    if lower == float("-inf"):
+        lower = None
+    if upper == float("inf"):
+        upper = None
 
-    if lower is None and upper is None: # no constraints
+    if lower is None and upper is None:  # no constraints
         return lambda x: x
-    elif upper is None: # only lower bound
+    elif upper is None:  # only lower bound
         return lambda x: lower - 1. + sqrt(x * x + 1.)
-    elif lower is None: # only upper bound
+    elif lower is None:  # only upper bound
         return lambda x: upper + 1. - sqrt(x * x + 1.)
     else:
         return lambda x: lower + ((upper - lower) / 2.) * (sin(x) + 1.)
@@ -80,20 +87,36 @@ Make a lambda function which converts an single external (constrained)
 parameter to a internal (unconstrained) parameter.
 """
     lower, upper = bound
+    if lower == float("-inf"):
+        lower = None
+    if upper == float("inf"):
+        upper = None
 
-    if lower is None and upper is None: # no constraints
+    if lower is None and upper is None:  # no constraints
         return lambda x: x
-    elif upper is None: # only lower bound
+    elif upper is None:  # only lower bound
         return lambda x: sqrt((x - lower + 1.) ** 2 - 1)
-    elif lower is None: # only upper bound
+    elif lower is None:  # only upper bound
         return lambda x: sqrt((upper - x + 1.) ** 2 - 1)
     else:
         return lambda x: arcsin((2. * (x - lower) / (upper - lower)) - 1.)
 
 
-def leastsqbound(func, x0, args=(), bounds=None, Dfun=None, full_output=0,
-                 col_deriv=0, ftol=1.49012e-8, xtol=1.49012e-8,
-                 gtol=0.0, maxfev=0, epsfcn=0.0, factor=100, diag=None):
+def leastsqbound(
+        func, x0,
+        args=(),
+        bounds=None,
+        Dfun=None,
+        full_output=0,
+        col_deriv=0,
+        ftol=1.49012e-8,
+        xtol=1.49012e-8,
+        gtol=0.0,
+        maxfev=0,
+        epsfcn=0.0,
+        factor=100,
+        diag=None
+):
     """
 Bounded minimization of the sum of squares of a set of equations.
 
@@ -272,11 +295,23 @@ References
         if (maxfev == 0):
             maxfev = 100 * (n + 1)
 
-        def wDfun(x, *args): # wrapped Dfun
+        def wDfun(x, *args):  # wrapped Dfun
             return Dfun(i2e(x), *args)
 
-        retval = _minpack._lmder(func, wDfun, i0, args, full_output,
-                                 col_deriv, ftol, xtol, gtol, maxfev, factor, diag)
+        retval = _minpack._lmder(
+            func,
+            wDfun,
+            i0,
+            args,
+            full_output,
+            col_deriv,
+            ftol,
+            xtol,
+            gtol,
+            maxfev,
+            factor,
+            diag
+        )
 
     errors = {0: ["Improper input parameters.", TypeError],
               1: ["Both actual and predicted relative reductions "
@@ -301,7 +336,7 @@ References
                   "precision." % gtol, ValueError],
               'unknown': ["Unknown error.", TypeError]}
 
-    info = retval[-1] # The FORTRAN return value
+    info = retval[-1]  # The FORTRAN return value
 
     if (info not in [1, 2, 3, 4] and not full_output):
         if info in [5, 6, 7, 8]:
@@ -313,7 +348,7 @@ References
                 raise errors['unknown'][1](errors['unknown'][0])
 
     mesg = errors[info][0]
-    x = i2e(retval[0]) # internal params to external params
+    x = i2e(retval[0])  # internal params to external params
 
     if full_output:
         # convert fjac from internal params to external
