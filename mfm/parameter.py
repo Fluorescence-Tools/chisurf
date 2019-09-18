@@ -247,17 +247,28 @@ class Parameter(
 
 
 class ParameterGroup(mfm.base.Base):
+    """
+
+    """
 
     def __init__(
             self,
+            parameters: List[Parameter] = None,
             *args,
             **kwargs
     ):
+        """
+
+        :param args:
+        :param kwargs:
+        """
         super(ParameterGroup, self).__init__(
             *args,
             **kwargs
         )
-        self._parameter = list()
+        if parameters is None:
+            parameters = list()
+        self._parameter = parameters
 
     def append(
             self,

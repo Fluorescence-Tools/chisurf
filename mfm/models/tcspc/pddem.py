@@ -11,6 +11,9 @@ from mfm.models.tcspc.lifetime import Lifetime, LifetimeModel
 
 
 class PDDEM(FittingParameterGroup):
+    """
+
+    """
 
     name = "PDDEM"
 

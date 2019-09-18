@@ -629,7 +629,8 @@ def get_chi2(
 
     :param parameter: a list of the parameter values or None. If None the models is not updated
     :param model:
-    :param reduced:
+    :param reduced: If True the returned value is divided by (n_points - n_free - 1.0) where n_points
+    is the number of data points and n_free is the number of model parameters
     :return:
     """
     chi2 = (get_wres(parameter, model)**2.0).sum()

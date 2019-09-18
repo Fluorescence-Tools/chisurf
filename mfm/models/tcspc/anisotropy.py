@@ -8,7 +8,12 @@ import mfm.fitting
 import mfm.fitting.parameter
 
 
-class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
+class Anisotropy(
+    mfm.fitting.parameter.FittingParameterGroup
+):
+    """
+
+    """
 
     @property
     def r0(self) -> float:
@@ -149,7 +154,9 @@ class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
         self._rhos.append(rho)
         self._bs.append(b)
 
-    def remove_rotation(self) -> None:
+    def remove_rotation(
+            self
+    ) -> None:
         self._rhos.pop().close()
         self._bs.pop().close()
 

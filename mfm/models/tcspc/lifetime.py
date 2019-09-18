@@ -14,6 +14,9 @@ from mfm.fluorescence.general import species_averaged_lifetime, fluorescence_ave
 
 
 class Lifetime(FittingParameterGroup):
+    """
+
+    """
 
     @property
     def absolute_amplitudes(self) -> bool:
@@ -169,7 +172,10 @@ class Lifetime(FittingParameterGroup):
         self._amplitudes.append(amplitude)
         self._lifetimes.append(lifetime)
 
-    def pop(self) -> Tuple[float, float]:
+    def pop(self) -> Tuple[
+        mfm.fitting.parameter.FittingParameter,
+        mfm.fitting.parameter.FittingParameter
+    ]:
         amplitude = self._amplitudes.pop()
         lifetime = self._lifetimes.pop()
         return amplitude, lifetime
@@ -179,8 +185,8 @@ class Lifetime(FittingParameterGroup):
             short: str = 'L',
             absolute_amplitudes: bool = True,
             normalize_amplitudes: bool = True,
-            amplitudes: List[float] = None,
-            lifetimes: List[float] = None,
+            amplitudes: List[mfm.fitting.parameter.FittingParameter] = None,
+            lifetimes: List[mfm.fitting.parameter.FittingParameter] = None,
             name: str = 'lifetimes',
             link: FittingParameter = None,
             **kwargs
@@ -209,6 +215,9 @@ class Lifetime(FittingParameterGroup):
 
 
 class LifetimeModel(ModelCurve):
+    """
+
+    """
 
     name = "Lifetime fit"
 
@@ -258,24 +267,32 @@ class LifetimeModel(ModelCurve):
         self.convolve = convolve
 
     @property
-    def species_averaged_lifetime(self) -> float:
+    def species_averaged_lifetime(
+            self
+    ) -> float:
         return species_averaged_lifetime(self.lifetime_spectrum)
 
     @property
-    def var_lifetime(self) -> float:
+    def var_lifetime(
+            self
+    ) -> float:
         lx = self.species_averaged_lifetime
         lf = self.fluorescence_averaged_lifetime
         return lx*(lf-lx)
 
     @property
-    def fluorescence_averaged_lifetime(self) -> float:
+    def fluorescence_averaged_lifetime(
+            self
+    ) -> float:
         return fluorescence_averaged_lifetime(
             self.lifetime_spectrum,
             self.species_averaged_lifetime
         )
 
     @property
-    def lifetime_spectrum(self) -> np.array:
+    def lifetime_spectrum(
+            self
+    ) -> np.array:
         return self.lifetimes.lifetime_spectrum
 
     def finalize(self) -> None:
@@ -294,87 +311,15 @@ class LifetimeModel(ModelCurve):
     def update_model(
             self,
             shift_bg_with_irf: bool = None,
-            **kwargs
-    ):
-        verbose = kwargs.get('verbose', mfm.verbose)
-        lifetime_spectrum = kwargs.get('lifetime_spectrum', self.lifetime_spectrum)
-        scatter = kwargs.get('scatter', self.generic.scatter)
-        background = kwargs.get('background', self.generic.background)
-        if shift_bg_with_irf is None:
-            shift_bg_with_irf = mfm.settings.cs_settings['tcspc']['shift_bg_with_irf']
-
-        lifetime_spectrum = self.anisotropy.get_decay(
-            lifetime_spectrum
-        )
-        decay = self.convolve.convolve(
-            lifetime_spectrum,
-            verbose=verbose,
-            scatter=scatter
-        )
-
-        # Calculate background curve from reference measurement
-        background_curve = kwargs.get('background_curve', self.generic.background_curve)
-
-        if isinstance(background_curve, mfm.curve.Curve):
-            if shift_bg_with_irf:
-                background_curve = background_curve << self.convolve.timeshift
-
-            bg_y = background_curve.y.copy()
-            bg_y /= bg_y.sum()
-            bg_y *= self.generic.n_ph_bg
-
-            decay *= self.generic.n_ph_fl
-            decay += bg_y
-
-        self.convolve.scale(decay, bg=self.generic.background)
-        self.corrections.pileup(decay)
-        decay += background
-        decay = self.corrections.linearize(decay)
-        self.y = np.maximum(decay, 0)
-
-
-class DecayModel(ModelCurve):
-
-    name = "Fluorescence decay models"
-
-    def __init__(
-            self,
-            fit: mfm.fitting.fit.FitGroup,
-            **kwargs
-    ):
-        ModelCurve.__init__(self, fit, **kwargs)
-        self.generic = kwargs.get('generic', Generic(name='generic', fit=fit, **kwargs))
-        self.corrections = kwargs.get('corrections', Corrections(name='corrections', fit=fit, **kwargs))
-        self.convolve = kwargs.get('convolve', Convolve(name='convolve', fit=fit, **kwargs))
-        self._y = None
-
-    @property
-    def species_averaged_lifetime(self) -> float:
-        return species_averaged_lifetime([self.times, self.decay], is_lifetime_spectrum=False)
-
-    @property
-    def fluorescence_averaged_lifetime(self) -> float:
-        return fluorescence_averaged_lifetime([self.times, self.decay], is_lifetime_spectrum=False)
-
-    @property
-    def times(self) -> np.array:
-        return self.fit.data.x
-
-    @property
-    def decay(self):
-        return self._y
-
-    def update_model(
-            self,
-            verbose: bool = None,
+            lifetime_spectrum: np.array = None,
             scatter: float = None,
+            verbose: bool = mfm.verbose,
             background: float = None,
-            shift_bg_with_irf: bool = None,
-            background_curve: mfm.experiments.data.Curve = None,
+            background_curve: mfm.curve.Curve = None,
             **kwargs
     ):
-        if verbose is None:
-            verbose = mfm.verbose
+        if lifetime_spectrum is None:
+            lifetime_spectrum = self.lifetime_spectrum
         if scatter is None:
             scatter = self.generic.scatter
         if background is None:
@@ -384,31 +329,37 @@ class DecayModel(ModelCurve):
         if background_curve is None:
             background_curve = self.generic.background_curve
 
-        decay = self.decay
-        convolved_decay = self.convolve.convolve(
-            decay,
+        lifetime_spectrum = self.anisotropy.get_decay(
+            lifetime_spectrum
+        )
+        decay = self.convolve.convolve(
+            lifetime_spectrum,
             verbose=verbose,
             scatter=scatter,
-            mode='full'
+            **kwargs
         )
 
         # Calculate background curve from reference measurement
-        if isinstance(background_curve, mfm.curve.Curve):
+        if isinstance(
+                background_curve,
+                mfm.curve.Curve
+        ):
             if shift_bg_with_irf:
                 background_curve = background_curve << self.convolve.timeshift
 
-            bg_y = background_curve.y.copy()
+            bg_y = np.copy(background_curve.y)
             bg_y /= bg_y.sum()
             bg_y *= self.generic.n_ph_bg
 
-            convolved_decay *= self.generic.n_ph_fl
+            decay *= self.generic.n_ph_fl
             decay += bg_y
 
-        convolved_decay = self.convolve.scale(
-            convolved_decay,
+        self.convolve.scale(
+            decay,
             bg=self.generic.background
         )
-        self.corrections.pileup(convolved_decay)
-        convolved_decay += background
-        convolved_decay = self.corrections.linearize(convolved_decay)
-        self._y = np.maximum(convolved_decay, 0)
+        self.corrections.pileup(decay)
+        decay += background
+        decay = self.corrections.linearize(decay)
+        self.y = np.maximum(decay, 0)
+

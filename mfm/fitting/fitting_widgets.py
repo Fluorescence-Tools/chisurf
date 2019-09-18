@@ -488,7 +488,6 @@ def make_fitting_parameter_widget(
     if decimals is None:
         decimals = fitting_parameter.decimals
     update_widget = kwargs.get('update_widget', lambda x: x)
-
     kw = {
         'name': text,
         'decimals': decimals,
