@@ -3,3 +3,4 @@ import mfm.math.linalg
 import mfm.math.rand
 import mfm.math.reaction
 import mfm.math.signal
+import mfm.math.datatools

@@ -161,7 +161,7 @@ def align_x_spacing(
                     ry1 = ry[i]
                     rx1 = rx[i]
             else:
-                ny[j] = ry[i:].mean_xyz()
+                ny[j] = ry[i:].mean()
                                         
     if cm == "r1":
         rx1 = nx
@@ -174,45 +174,6 @@ def align_x_spacing(
         rx1 = tx
         ry1 = ty            
     return (rx1, ry1), (rx2, ry2)
-
-
-if __name__ == "__main__":
-    print("Test align_x_spacing")
-    import matplotlib.pylab as p
-    x1 = np.linspace(-1, 12, 10)
-    y1 = np.cos(x1)
-    a1 = (x1, y1)
-    
-    x2 = np.linspace(-1, 12, 11)
-    y2 = np.sin(x2)
-    a2 = (x2, y2)
-    
-    (rx1, ry1), (rx2, ry2) = align_x_spacing(a1, a2)
-    p.plot(x1, y1, 'r')
-    p.plot(rx1, ry1, 'k')
-    p.plot(x2, y2, 'g')
-    p.plot(rx2, ry2, 'b')
-    p.show()
-    
-    print("Test overlay")
-    import matplotlib.pylab as p
-    x1 = np.linspace(-5, 5, 10)
-    y1 = np.sin(x1)
-    a1 = (x1, y1)
-    
-    x2 = np.linspace(0, 10, 10)
-    y2 = np.sin(x2)
-    a2 = (x2, y2)
-    
-    (rx1, ry1), (rx2, ry2) = overlapping_region(a1, a2)
-    print(ry1)
-    print(ry2)
-
-    p.plot(x1, y1, 'r')
-    p.plot(rx1, ry1, 'k')
-    p.plot(x2, y2, 'g')
-    p.plot(rx2, ry2, 'b')
-    p.show()    
 
 
 def binCount(
@@ -371,3 +332,43 @@ def smooth(x, l, m):
             xz[i] /= (2 * m + 1)
     return xz
 
+
+if __name__ == "__main__":
+    print("Test align_x_spacing")
+    import matplotlib.pylab as p
+
+    x1 = np.linspace(-1, 12, 10)
+    y1 = np.cos(x1)
+    a1 = (x1, y1)
+
+    x2 = np.linspace(-1, 12, 11)
+    y2 = np.sin(x2)
+    a2 = (x2, y2)
+
+    (rx1, ry1), (rx2, ry2) = align_x_spacing(a1, a2)
+    p.plot(x1, y1, 'r')
+    p.plot(rx1, ry1, 'k')
+    p.plot(x2, y2, 'g')
+    p.plot(rx2, ry2, 'b')
+    p.show()
+
+    print("Test overlay")
+    import matplotlib.pylab as p
+
+    x1 = np.linspace(-5, 5, 10)
+    y1 = np.sin(x1)
+    a1 = (x1, y1)
+
+    x2 = np.linspace(0, 10, 10)
+    y2 = np.sin(x2)
+    a2 = (x2, y2)
+
+    (rx1, ry1), (rx2, ry2) = overlapping_region(a1, a2)
+    print(ry1)
+    print(ry2)
+
+    p.plot(x1, y1, 'r')
+    p.plot(rx1, ry1, 'k')
+    p.plot(x2, y2, 'g')
+    p.plot(rx2, ry2, 'b')
+    p.show()

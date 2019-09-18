@@ -60,9 +60,9 @@ def bin_lifetime_spectrum(
     :return: lifetime_spectrum
     """
     amplitudes, lifetimes = mfm.fluorescence.general.interleaved_to_two_columns(lifetime_spectrum, sort=False)
-    lt, am = mfm.math.functions.datatools.histogram1D(lifetimes, amplitudes, n_lifetimes)
+    lt, am = mfm.math.datatools.histogram1D(lifetimes, amplitudes, n_lifetimes)
     if discriminate and discriminator is not None:
-        lt, am = mfm.math.functions.datatools.discriminate(lt, am, discriminator)
+        lt, am = mfm.math.datatools.discriminate(lt, am, discriminator)
     binned_lifetime_spectrum = mfm.fluorescence.general.two_column_to_interleaved(am, lt)
     return binned_lifetime_spectrum
 

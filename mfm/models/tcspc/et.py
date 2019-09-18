@@ -262,13 +262,18 @@ class EtModelFree(
 
     name = "Et-Model free"
 
-    def __init__(self, fit, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            verbose: bool = mfm.verbose,
+            **kwargs
+    ):
         Model.__init__(self, fit=fit)
         Phasor.__init__(self)
         LCurve.__init__(self, **kwargs)
         DistanceDistribution.__init__(self)
 
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        self.verbose = verbose
 
         self.fd0_index = 0
         self.fda_index = 0
@@ -547,7 +552,10 @@ class EtModelFree(
             return chi2r
 
 
-class EtModelFreeWidget(EtModelFree, QtWidgets.QWidget):
+class EtModelFreeWidget(
+    EtModelFree,
+    QtWidgets.QWidget
+):
 
     model_update = QtCore.pyqtSignal()
 
