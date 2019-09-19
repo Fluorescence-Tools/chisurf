@@ -20,15 +20,19 @@ def get_fortune(
     ]
     attempt = 0
     while True:
-        fortune_file = os.path.join(fortunepath, random.choice(fortune_files))
-        data = pickle.load(open(fortune_file+".pdat", "rb"))
-        (start, length) = random.choice(data)
-        print(random.choice(data))
-        if length < min_length or (max_length is not None and length > max_length):
-            attempt += 1
-            if attempt > attempts:
-                return ""
-            continue
+        fortune_file = os.path.join(
+            fortunepath,
+            random.choice(fortune_files)
+        )
+        with open(fortune_file+".pdat", "rb") as fp:
+            data = pickle.load(fp)
+            (start, length) = random.choice(data)
+            print(random.choice(data))
+            if length < min_length or (max_length is not None and length > max_length):
+                attempt += 1
+                if attempt > attempts:
+                    return ""
+                continue
         with open(fortune_file, 'rU') as ffh:
             ffh.seek(start)
             fortunecookie = ffh.read(length)

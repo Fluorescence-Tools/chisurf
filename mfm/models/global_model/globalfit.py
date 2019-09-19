@@ -62,7 +62,7 @@ class GlobalFitModel(model.Model, Curve):
             self,
             v: List[mfm.fitting.parameter.FittingParameter]
     ):
-        self._links = v if type(v) is list else []
+        self._links = v if isinstance(v, list) else list()
 
     @property
     def n_points(self) -> int:
@@ -139,9 +139,9 @@ class GlobalFitModel(model.Model, Curve):
     ) -> List[mfm.fitting.parameter.FittingParameter]:
         try:
             re = list()
-            for i, f in enumerate(self.fits):
+            for f in self.fits:
                 if f.model is not None:
-                    re += [p for p in f.model._parameters]
+                    re += [p for p in f.model.parameters_all]
             re += self.global_parameters_all
             return re
         except AttributeError:
