@@ -229,6 +229,7 @@ class ExperimentalDataSelector(
                     data_set=mfm.imported_datasets,
                     **kwargs
                 )
+
             self.get_data_sets = get_data_sets
         else:
             self.get_data_sets = get_data_sets

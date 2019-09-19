@@ -7,7 +7,7 @@ import os
 import tempfile
 
 import numpy as np
-from qtpy import  QtWidgets, uic
+from qtpy import QtWidgets, uic
 
 import mfm.io.xyz
 from mfm.fluorescence.fps.dynamic import DiffusionSimulation, Dye, Sticking, \
@@ -246,14 +246,6 @@ class DyeDecay(Model, Curve):
     @t_step.setter
     def t_step(self, v):
         self._t_step = float(v)
-
-    @property
-    def sticky_mode(self):
-        return self.sticking_parameter.sticky_mode
-
-    @sticky_mode.setter
-    def sticky_mode(self, v):
-        self.sticking_parameter.sticky_mode = v
 
     def __init__(self, tau0=4.2, k_quench_protein=5.0, n_photons=10e6,
                  attachment_residue=None, attachment_atom=None, attachment_chain=None, dg=0.5, sticky_mode='quencher',

@@ -258,7 +258,13 @@ class DyeDecay(Curve):
             h5.close()
         elif mode == 'histogram':
             x, y, = self.get_histogram(hist_bins, hist_range)
-            mfm.io.ascii.save_xy(filename, x, y, verbose, header="time\tcount")
+            mfm.io.ascii.save_xy(
+                filename,
+                x,
+                y,
+                verbose,
+                header_string="time\tcount"
+            )
 
     def get_photons(self, **kwargs):
         n_photons = kwargs.get('n_photons', self.decay_parameter.n_photons)

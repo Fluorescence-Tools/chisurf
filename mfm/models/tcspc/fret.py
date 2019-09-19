@@ -673,7 +673,7 @@ class FRETrateModel(FRETModel):
     def finalize(
             self
     ):
-        super(FRETModel, self).finalize()
+        super(FRETrateModel, self).finalize()
         self.fret_rates.finalize()
 
     def __init__(

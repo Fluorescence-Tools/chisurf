@@ -10,11 +10,16 @@ from mfm.fluorescence.tcspc.phasor import Phasor
 class PhasorWidget(Phasor, QtWidgets.QWidget):
 
     @property
-    def phasor_omega(self):
+    def phasor_omega(
+            self
+    ) -> float:
         return float(self.doubleSpinBox_12.value()) / 1000.0 * np.pi * 2.0
 
     @phasor_omega.setter
-    def phasor_omega(self, v):
+    def phasor_omega(
+            self,
+            v: float
+    ):
         self.doubleSpinBox_12.setValue(v)
 
     @property
@@ -24,22 +29,6 @@ class PhasorWidget(Phasor, QtWidgets.QWidget):
     @phasor_n.setter
     def phasor_n(self, v):
         self.spinBox_5.setValue(v)
-
-    @property
-    def phasor_omega(self):
-        return self._phasor_omega / 1000.0 * np.pi * 2.0
-
-    @phasor_omega.setter
-    def phasor_omega(self, v):
-        self._phasor_omega = v
-
-    @property
-    def phasor_n(self):
-        return self._phasor_n
-
-    @phasor_n.setter
-    def phasor_n(self, v):
-        self._phasor_n = float(v)
 
     def __init__(
             self,
