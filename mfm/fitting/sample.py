@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 from typing import Tuple
 
@@ -39,7 +42,7 @@ def walk_mcmc(
         lnp_next = fit.lnprob(state_next, chi2max)
         if not np.isfinite(lnp_next):
             continue
-        if (-lnp_next + lnp_prev)/temp > np.log(np.random.rand()):
+        if (-lnp_next + lnp_prev) / temp > np.log(np.random.rand()):
             # save results
             parameter[n_accepted] = state_next
             lnp[n_accepted] = lnp_next

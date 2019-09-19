@@ -72,8 +72,22 @@
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Input-Output</a><ul>
 <li><a class="reference internal" href="#csv-files">CSV-Files</a></li>
-<li><a class="reference internal" href="#module-mfm.io.pdb">PDB-Files</a></li>
-<li><a class="reference internal" href="#module-mfm.io.photons">TTTR-Files</a></li>
+<li><a class="reference internal" href="#module-mfm.io.pdb">PDB-Files</a><ul>
+<li><a class="reference internal" href="#requirements">Requirements</a></li>
+<li><a class="reference internal" href="#revisions">Revisions</a></li>
+<li><a class="reference internal" href="#notes">Notes</a></li>
+<li><a class="reference internal" href="#references">References</a></li>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-mfm.io.photons">TTTR-Files</a><ul>
+<li><a class="reference internal" href="#id2">Requirements</a></li>
+<li><a class="reference internal" href="#id3">Revisions</a></li>
+<li><a class="reference internal" href="#id4">Notes</a></li>
+<li><a class="reference internal" href="#id5">References</a></li>
+<li><a class="reference internal" href="#id6">Examples</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -117,8 +131,22 @@
         <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
 <li><a class="reference internal" href="#">Input-Output</a><ul>
 <li><a class="reference internal" href="#csv-files">CSV-Files</a></li>
-<li><a class="reference internal" href="#module-mfm.io.pdb">PDB-Files</a></li>
-<li><a class="reference internal" href="#module-mfm.io.photons">TTTR-Files</a></li>
+<li><a class="reference internal" href="#module-mfm.io.pdb">PDB-Files</a><ul>
+<li><a class="reference internal" href="#requirements">Requirements</a></li>
+<li><a class="reference internal" href="#revisions">Revisions</a></li>
+<li><a class="reference internal" href="#notes">Notes</a></li>
+<li><a class="reference internal" href="#references">References</a></li>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-mfm.io.photons">TTTR-Files</a><ul>
+<li><a class="reference internal" href="#id2">Requirements</a></li>
+<li><a class="reference internal" href="#id3">Revisions</a></li>
+<li><a class="reference internal" href="#id4">Notes</a></li>
+<li><a class="reference internal" href="#id5">References</a></li>
+<li><a class="reference internal" href="#id6">Examples</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -147,15 +175,38 @@ In particular three kinds of file-types are handled:</p>
 <li><p>PDB-file <a class="reference internal" href="#module-mfm.io.pdb" title="mfm.io.pdb"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.pdb</span></code></a></p></li>
 <li><p>TTTR-files containing photon data <a class="reference internal" href="#module-mfm.io.photons" title="mfm.io.photons"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.photons</span></code></a></p></li>
 <li><p>XYZ-files containing coordinates <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.xyz</span></code></p></li>
+<li><p>PQR-files containing coordinates <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.pqr</span></code></p></li>
+<li><p>DX-files containing densities <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.dx</span></code></p></li>
+<li><p>SDT-files containing time-resolved fluorescence decays <a class="reference internal" href="../../api/mfm.io.html#module-mfm.io.sdtfile" title="mfm.io.sdtfile"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.sdtfile</span></code></a></p></li>
 </ol>
-<p>5. PQR-files containing coordinates <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.pqr</span></code>
-5. DX-files containing densities <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.dx</span></code>
-6. SDT-files containing time-resolved fluorescence decays <a class="reference internal" href="../../api/mfm.io.html#module-mfm.io.sdtfile" title="mfm.io.sdtfile"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.sdtfile</span></code></a></p>
 <div class="section" id="csv-files">
 <h2>CSV-Files<a class="headerlink" href="#csv-files" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-mfm.io.pdb">
 <span id="pdb-files"></span><h2>PDB-Files<a class="headerlink" href="#module-mfm.io.pdb" title="Permalink to this headline">¶</a></h2>
+<p>Read PDB files.</p>
+<p>PDB files contain atomic coordinates.</p>
+<p><a class="reference external" href="http://www.wwpdb.org/documentation/file-format">PDB</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Author</dt>
+<dd class="field-odd"><p><a class="reference external" href="http://tpeulen.github.io">Thomas-Otavio Peulen</a></p>
+</dd>
+</dl>
+<div class="section" id="requirements">
+<h3>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="revisions">
+<h3>Revisions<a class="headerlink" href="#revisions" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="notes">
+<h3>Notes<a class="headerlink" href="#notes" title="Permalink to this headline">¶</a></h3>
+<p>The API is not stable yet and might change between revisions.</p>
+</div>
+<div class="section" id="references">
+<h3>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="examples">
+<h3>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="mfm.io.pdb.assign_element_to_atom_name">
 <code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">assign_element_to_atom_name</code><span class="sig-paren">(</span><em class="sig-param">atom_name: 'str'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#assign_element_to_atom_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.assign_element_to_atom_name" title="Permalink to this definition">¶</a></dt>
@@ -264,8 +315,32 @@ If True the atoms are appended as a new models</p></li>
 </dd></dl>
 
 </div>
+</div>
 <div class="section" id="module-mfm.io.photons">
 <span id="tttr-files"></span><h2>TTTR-Files<a class="headerlink" href="#module-mfm.io.photons" title="Permalink to this headline">¶</a></h2>
+<p>Read TTTR files.</p>
+<p>TTTR files contain time-tagged-time-resolved records typically recorded
+in single-molecule experiments and on confocal laser scanning setups.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Author</dt>
+<dd class="field-odd"><p><a class="reference external" href="http://tpeulen.github.io">Thomas-Otavio Peulen</a></p>
+</dd>
+</dl>
+<div class="section" id="id2">
+<h3>Requirements<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id3">
+<h3>Revisions<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id4">
+<h3>Notes<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>The API is not stable yet and might change between revisions.</p>
+</div>
+<div class="section" id="id5">
+<h3>References<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id6">
+<h3>Examples<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="mfm.io.photons.Photons">
 <em class="property">class </em><code class="sig-prename descclassname">mfm.io.photons.</code><code class="sig-name descname">Photons</code><span class="sig-paren">(</span><em class="sig-param">p_object</em>, <em class="sig-param">file_type=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/photons.html#Photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.photons.Photons" title="Permalink to this definition">¶</a></dt>
@@ -514,6 +589,7 @@ This is the default behavior.</p></li>
 </div>
 </dd></dl>
 
+</div>
 </div>
 </div>
 

@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 from typing import List
 
@@ -83,9 +86,19 @@ class QIPythonWidget(RichJupyterWidget):
         t = inspect.getsource(function)
         self.execute(t)
 
-    def __init__(self, *args, **kwargs):
-        RichJupyterWidget.__init__(self, *args, **kwargs)
-        self.history_widget = kwargs.get('history_widget', None)
+    def __init__(
+            self,
+            history_widget: QtWidgets.QPlainTextEdit = None,
+            *args,
+            **kwargs
+    ):
+        """
+
+        :param args:
+        :param kwargs:
+        """
+        super(QIPythonWidget, self).__init__(*args, **kwargs)
+        self.history_widget = history_widget
 
         self.kernel_manager = kernel_manager = QtInProcessKernelManager()
         kernel_manager.start_kernel()
@@ -389,7 +402,7 @@ def make_widget_from_yaml(
     >>> import pyqtgraph as pg
     >>> import collections
     >>> import yaml
-    >>> d = yaml.load(open("./test_session.yaml"))['datasets']
+    >>> d = yaml.safe_load(open("./test_session.yaml"))['datasets']
     >>> od = collections.OrderedDict(sorted(d.items()))
     >>> w = make_widget_from_yaml(od, 'test')
     >>> w.show()

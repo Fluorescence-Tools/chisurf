@@ -15,7 +15,6 @@ In particular three kinds of file-types are handled:
 import mfm.io.ascii
 import mfm.io.pdb
 import mfm.io.photons
-import mfm.io.photons
 import mfm.io.sdtfile
 import mfm.io.tttr
 import mfm.io.zipped

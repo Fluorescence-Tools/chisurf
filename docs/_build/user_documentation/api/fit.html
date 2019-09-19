@@ -145,6 +145,51 @@
 </div>
 <div class="section" id="module-mfm.curve">
 <span id="curve"></span><h2>Curve<a class="headerlink" href="#module-mfm.curve" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.curve.Curve">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.curve.</code><code class="sig-name descname">Curve</code><span class="sig-paren">(</span><em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">copy_array=True</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/curve.html#Curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.curve.Curve" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="mfm.curve.Curve.cdf">
+<em class="property">property </em><code class="sig-name descname">cdf</code><a class="headerlink" href="#mfm.curve.Curve.cdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cumulative sum of function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#mfm.curve.Curve" title="mfm.curve.Curve"><code class="xref py py-class docutils literal notranslate"><span class="pre">Curve</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.curve.Curve.dx">
+<em class="property">property </em><code class="sig-name descname">dx</code><a class="headerlink" href="#mfm.curve.Curve.dx" title="Permalink to this definition">¶</a></dt>
+<dd><p>The derivative of the x-axis</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.curve.Curve.normalize">
+<code class="sig-name descname">normalize</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">mode: 'str' = 'max'</em>, <em class="sig-param">curve: 'mfm.curve.Curve' = None</em>, <em class="sig-param">inplace: 'bool' = True</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../../_modules/mfm/curve.html#Curve.normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.curve.Curve.normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates a scaling parameter for the Curve object and (optionally) scales the Curve object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mode</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – either ‘max’ to normalize the maximum to one, or ‘sum’ to normalize to sum to one</p></li>
+<li><p><strong>curve</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#mfm.curve.Curve" title="mfm.curve.Curve"><code class="xref py py-class docutils literal notranslate"><span class="pre">Curve</span></code></a>]) – </p></li>
+<li><p><strong>inplace</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – if True the Curve object is modified in place. Otherwise, only the scaling parameter</p></li>
+</ul>
+</dd>
+</dl>
+<p>is returned
+:rtype: <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>
+:return: the parameter that scales the Curve object</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="fit">
 <h2>Fit<a class="headerlink" href="#fit" title="Permalink to this headline">¶</a></h2>

@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 
 from math import exp, ceil
@@ -17,10 +20,14 @@ def fconv(
     :param decay: numpy-array
         the content of this array is overwritten by the y-values after convolution
     :param lifetime_spectrum: vector of amplitdes and lifetimes in form: amplitude, lifetime
-    :param irf:
-    :param stop:
-    :param dt:
+    :param irf: the instrument response function
+    :param stop: convolution stop channel (the index on the time-axis)
+    :param t: the time-axis of the decay
     :return:
+
+    Example
+    -------
+
     """
     nExp = lifetime_spectrum.shape[0] / 2
     #delta_tHalf = dt/2.

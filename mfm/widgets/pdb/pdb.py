@@ -8,13 +8,23 @@ from mfm.structure.structure import Structure
 from mfm.structure.trajectory import TrajectoryFile
 
 
-class PDBSelector(QtWidgets.QWidget):
+class PDBSelector(
+    QtWidgets.QWidget
+):
+    """
+
+    """
 
     def __init__(
             self,
             show_labels: bool = True,
             update=None
     ):
+        """
+
+        :param show_labels:
+        :param update:
+        """
         super(PDBSelector, self).__init__()
         uic.loadUi(
             os.path.join(
@@ -159,15 +169,25 @@ class LoadThread(QtCore.QThread):
         print('reading finished')
 
 
-class PDBFolderLoad(QtWidgets.QWidget):
+class PDBFolderLoad(
+    QtWidgets.QWidget
+):
+    """
+
+    """
 
     def __init__(
             self,
-            parent=None
+            *args,
+            **kwargs
     ):
-        QtWidgets.QWidget.__init__(
-            self,
-            parent=parent
+        """
+
+        :param parent:
+        """
+        super(PDBFolderLoad, self).__init__(
+            *args,
+            **kwargs
         )
         uic.loadUi(
             os.path.join(

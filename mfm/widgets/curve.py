@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 
 import os
@@ -9,17 +12,26 @@ import mfm.fitting
 import mfm.widgets
 
 
-class ExperimentalDataSelector(QtWidgets.QTreeWidget):
+class ExperimentalDataSelector(
+    QtWidgets.QTreeWidget
+):
+    """
+
+    """
 
     @property
-    def curve_name(self) -> str:
+    def curve_name(
+            self
+    ) -> str:
         try:
             return self.selected_dataset.name
         except AttributeError:
             return "Noname"
 
     @property
-    def datasets(self) -> List[mfm.experiments.data.ExperimentalData]:
+    def datasets(
+            self
+    ) -> List[mfm.experiments.data.ExperimentalData]:
         data_curves = self.get_data_sets(curve_type=self.curve_type)
         if self.setup is not None:
             return [
@@ -29,7 +41,9 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
             return data_curves
 
     @property
-    def selected_curve_index(self) -> int:
+    def selected_curve_index(
+            self
+    ) -> int:
         if self.currentIndex().parent().isValid():
             return self.currentIndex().parent().row()
         else:
@@ -196,6 +210,18 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
             parent: QtWidgets.QWidget = None,
             icon: QtGui.QIcon = None
     ):
+        """
+
+        :param fit:
+        :param setup:
+        :param drag_enabled:
+        :param click_close:
+        :param change_event:
+        :param curve_types:
+        :param get_data_sets:
+        :param parent:
+        :param icon:
+        """
         if get_data_sets is None:
 
             def get_data_sets(**kwargs):
@@ -203,6 +229,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
                     data_set=mfm.imported_datasets,
                     **kwargs
                 )
+
             self.get_data_sets = get_data_sets
         else:
             self.get_data_sets = get_data_sets

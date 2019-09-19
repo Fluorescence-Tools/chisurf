@@ -151,70 +151,12 @@
 </div>
 <div class="section" id="module-mfm.experiments.fcs">
 <span id="mfm-experiments-fcs-module"></span><h2>mfm.experiments.fcs module<a class="headerlink" href="#module-mfm.experiments.fcs" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mfm.experiments.fcs.FCS">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.fcs.</code><code class="sig-name descname">FCS</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.reader.ExperimentReader</span></code>, <a class="reference internal" href="../user_documentation/api/widgets.html#mfm.io.widgets.CsvWidget" title="mfm.io.widgets.CsvWidget"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.io.widgets.CsvWidget</span></code></a></p>
-<dl class="attribute">
-<dt id="mfm.experiments.fcs.FCS.name">
-<code class="sig-name descname">name</code><em class="property"> = 'fcs'</em><a class="headerlink" href="#mfm.experiments.fcs.FCS.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.fcs.FCS.read">
-<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename: 'str' = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCS.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCS.read" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – A name that will be associated to the data set that is read.</p></li>
-<li><p><strong>kwargs</strong> – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.experiments.fcs.FCSKristine">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.fcs.</code><code class="sig-name descname">FCSKristine</code><span class="sig-paren">(</span><em class="sig-param">experiment</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCSKristine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCSKristine" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="mfm.io.html#mfm.io.ascii.Csv" title="mfm.io.ascii.Csv"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.io.ascii.Csv</span></code></a>, <a class="reference internal" href="#mfm.experiments.fcs.FCS" title="mfm.experiments.fcs.FCS"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.fcs.FCS</span></code></a></p>
-<dl class="attribute">
-<dt id="mfm.experiments.fcs.FCSKristine.name">
-<code class="sig-name descname">name</code><em class="property"> = 'Kristine'</em><a class="headerlink" href="#mfm.experiments.fcs.FCSKristine.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.experiments.fcs.FCSKristine.read">
-<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename: 'str' = None</em>, <em class="sig-param">verbose: 'bool' = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCSKristine.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCSKristine.read" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uses either the error provided by the correlator (4. column)
-or calculates the error based on the correlation curve,
-the aquisition time and the count-rate.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – </p></li>
-<li><p><strong>verbose</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]) – </p></li>
-<li><p><strong>kwargs</strong> – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
 </div>
 <div class="section" id="module-mfm.experiments.globalfit">
 <span id="mfm-experiments-globalfit-module"></span><h2>mfm.experiments.globalfit module<a class="headerlink" href="#module-mfm.experiments.globalfit" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mfm.experiments.globalfit.GlobalFitSetup">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.globalfit.</code><code class="sig-name descname">GlobalFitSetup</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/globalfit.html#GlobalFitSetup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.globalfit.GlobalFitSetup" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.globalfit.</code><code class="sig-name descname">GlobalFitSetup</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/globalfit.html#GlobalFitSetup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.globalfit.GlobalFitSetup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.reader.ExperimentReader</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
 <dl class="method">
 <dt id="mfm.experiments.globalfit.GlobalFitSetup.autofitrange">
@@ -249,11 +191,11 @@ the aquisition time and the count-rate.</p>
 <span id="mfm-experiments-modelling-module"></span><h2>mfm.experiments.modelling module<a class="headerlink" href="#module-mfm.experiments.modelling" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mfm.experiments.modelling.LoadStructure">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.modelling.</code><code class="sig-name descname">LoadStructure</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructure" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.modelling.</code><code class="sig-name descname">LoadStructure</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructure" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.reader.ExperimentReader</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
 <dl class="method">
 <dt id="mfm.experiments.modelling.LoadStructure.autofitrange">
-<em class="property">static </em><code class="sig-name descname">autofitrange</code><span class="sig-paren">(</span><em class="sig-param">data: 'mfm.experiments.data.Data'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructure.autofitrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructure.autofitrange" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><code class="sig-name descname">autofitrange</code><span class="sig-paren">(</span><em class="sig-param">data: 'mfm.base.Data'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructure.autofitrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructure.autofitrange" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -276,11 +218,11 @@ the aquisition time and the count-rate.</p>
 
 <dl class="class">
 <dt id="mfm.experiments.modelling.LoadStructureFolder">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.modelling.</code><code class="sig-name descname">LoadStructureFolder</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructureFolder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructureFolder" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.modelling.</code><code class="sig-name descname">LoadStructureFolder</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructureFolder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructureFolder" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.reader.ExperimentReader</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
 <dl class="method">
 <dt id="mfm.experiments.modelling.LoadStructureFolder.autofitrange">
-<em class="property">static </em><code class="sig-name descname">autofitrange</code><span class="sig-paren">(</span><em class="sig-param">data: 'mfm.experiments.data.Data'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructureFolder.autofitrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructureFolder.autofitrange" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><code class="sig-name descname">autofitrange</code><span class="sig-paren">(</span><em class="sig-param">data: 'mfm.base.Data'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/modelling.html#LoadStructureFolder.autofitrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.modelling.LoadStructureFolder.autofitrange" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">

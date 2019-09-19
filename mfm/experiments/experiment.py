@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 from typing import List, Type
 
@@ -41,6 +44,12 @@ class Experiment(mfm.base.Base):
             *args,
             **kwargs
     ):
+        """
+
+        :param name:
+        :param args:
+        :param kwargs:
+        """
         super(Experiment, self).__init__(name, *args, **kwargs)
         self.name = name
         self.model_classes = list()

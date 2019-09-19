@@ -65,7 +65,7 @@ class Structure(mfm.base.Base):
     --------
 
     >>> import mfm.structure
-    >>> structure = mfm.structure.Structure('1dg3', verbose=True)
+    >>> structure = mfm.structure.structure.Structure('1dg3', verbose=True)
     ======================================
     Filename: ../sample_data/structure/HM_1FN5_Naming.pdb
     Path: ../sample_data/structure
@@ -655,7 +655,7 @@ def average(
         weights=None,
         write=True,
         filename=None
-):
+) -> mfm.structure.structure.Structure:
     """
     Calculates weighted average of a list of structures.
     saves to filename if write is True

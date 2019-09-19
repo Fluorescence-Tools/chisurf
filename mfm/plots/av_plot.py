@@ -35,8 +35,12 @@ class AvPlot(plotbase.Plot):
 
     name = "Accessible Volume"
 
-    def __init__(self, fit, **kwargs):
-        mfm.plots.Plot.__init__(self, fit)
+    def __init__(self, fit, *args, **kwargs):
+        super(AvPlot, self).__init__(
+            fit=fit,
+            *args,
+            **kwargs
+        )
         # plot control dialog
         self.pltControl = AvPlotControl(self, **kwargs)
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -78,7 +82,7 @@ class AvPlot(plotbase.Plot):
 
         alpha = 0.1
         data = av.rate_map
-        min_v, max_v = mfm.math.functions.datatools.minmax(data.flatten(), ignore_zero=True)
+        min_v, max_v = mfm.math.datatools.minmax(data.flatten(), ignore_zero=True)
         d1 = cm.jet((data - min_v) / (max_v - min_v)) * 255
         d1 = d1.astype(dtype=np.ubyte)
 

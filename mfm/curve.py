@@ -1,8 +1,5 @@
 from __future__ import annotations
-from typing import TypeVar, Tuple, Optional, Type
-
-import numbers
-from copy import copy
+from typing import TypeVar, Tuple, Type
 
 import numpy as np
 
@@ -16,6 +13,9 @@ T = TypeVar('T', bound='Curve')
 
 
 class Curve(Base):
+    """
+
+    """
 
     @property
     def fwhm(self) -> float:
@@ -85,6 +85,7 @@ class Curve(Base):
             self,
             x: np.array = None,
             y: np.array = None,
+            copy_array: bool = True,
             *args,
             **kwargs
     ):
@@ -94,10 +95,17 @@ class Curve(Base):
             y = np.array(list(), dtype=np.float64)
         if len(y) != len(x):
             raise ValueError(
-                "length of x (%s) and y (%s) differ" % (len(self._x), len(self._y))
+                "length of x (%s) and y (%s) differ" % (
+                    len(self._x),
+                    len(self._y)
+                )
             )
-        self._x = np.copy(x)
-        self._y = np.copy(y)
+        if copy_array:
+            self._x = np.copy(x)
+            self._y = np.copy(y)
+        else:
+            self._x = x
+            self._y = y
         super(Curve, self).__init__(
             *args,
             **kwargs
@@ -142,8 +150,8 @@ class Curve(Base):
                 raise ValueError("The x-axis differ")
             c = c.y
         return self.__class__(
-            x=copy(self.x),
-            y=copy(self.y).__add__(c)
+            x=self.x,
+            y=self.y.__add__(c)
         )
 
     def __sub__(
@@ -155,8 +163,8 @@ class Curve(Base):
                 raise ValueError("The x-axis differ")
             c = c.y
         return self.__class__(
-            x=copy(self.x),
-            y=copy(self.y).__sub__(c)
+            x=self.x,
+            y=self.y.__sub__(c)
         )
 
     def __mul__(
@@ -168,8 +176,8 @@ class Curve(Base):
                 raise ValueError("The x-axis differ")
             c = c.y
         return self.__class__(
-            x=copy(self.x),
-            y=copy(self.y).__mul__(c)
+            x=self.x,
+            y=self.y.__mul__(c)
         )
 
     def __truediv__(
@@ -181,25 +189,20 @@ class Curve(Base):
                 raise ValueError("The x-axis differ")
             c = c.y
         return self.__class__(
-            x=copy(self.x),
-            y=copy(self.y).__truediv__(c)
+            x=self.x,
+            y=self.y.__truediv__(c)
         )
 
     def __lshift__(
             self,
-            c: float
+            shift: float
     ) -> Type[Curve]:
-        ts = -c
-        tsi = int(np.floor(ts))
-        tsf = c - tsi
-        ysh = np.roll(self.y, tsi) * (1 - tsf) + np.roll(self.y, tsi + 1) * tsf
-        if ts > 0:
-            ysh[:tsi] = 0.0
-        elif ts < 0:
-            ysh[tsi:] = 0.0
         return self.__class__(
             x=self.x,
-            y=ysh
+            y=mfm.math.signal.shift_array(
+                self.y,
+                shift
+            )
         )
 
     def __len__(self) -> int:

@@ -21,7 +21,9 @@ import mfm.ui.resource
 class Main(QtWidgets.QMainWindow):
 
     @property
-    def current_dataset(self) -> mfm.base.Data:
+    def current_dataset(
+            self
+    ) -> mfm.base.Data:
         return self.dataset_selector.selected_dataset
 
     @current_dataset.setter
@@ -38,7 +40,9 @@ class Main(QtWidgets.QMainWindow):
         ]
 
     @property
-    def fit_idx(self) -> int:
+    def fit_idx(
+            self
+    ) -> int:
         subwindow = self.mdiarea.currentSubWindow()
         if subwindow is not None:
             for fit_idx, f in enumerate(mfm.fits):
@@ -76,7 +80,9 @@ class Main(QtWidgets.QMainWindow):
             self.current_experiment_idx = n
 
     @property
-    def current_setup_idx(self) -> int:
+    def current_setup_idx(
+            self
+    ) -> int:
         return self.comboBox_setupSelect.currentIndex()
 
     @current_setup_idx.setter
@@ -94,7 +100,7 @@ class Main(QtWidgets.QMainWindow):
     def current_setup(
             self,
             name: str
-    ):
+    ) -> None:
         i = self.current_setup_idx
         j = i
         for j, s in enumerate(self.current_experiment.setups):
@@ -104,7 +110,9 @@ class Main(QtWidgets.QMainWindow):
             self.current_setup_idx = j
 
     @property
-    def current_model_name(self) -> str:
+    def current_model_name(
+            self
+    ) -> str:
         return str(self.comboBox_Model.currentText())
 
     @property
@@ -120,7 +128,10 @@ class Main(QtWidgets.QMainWindow):
     ) -> None:
         self._current_fit = v
 
-    def closeEvent(self, event):
+    def closeEvent(
+            self,
+            event: QtGui.QCloseEvent
+    ):
         if mfm.settings.gui['confirm_close_program']:
             reply = mfm.widgets.widgets.MyMessageBox.question(self,
                                                               'Message',
@@ -197,7 +208,10 @@ class Main(QtWidgets.QMainWindow):
         self.comboBox_setupSelect.blockSignals(False)
         self.onSetupChanged()
 
-    def onLoadFitResults(self, **kwargs):
+    def onLoadFitResults(
+            self,
+            **kwargs
+    ):
         filename = mfm.widgets.get_filename(
             file_type="*.json",
             description="Load results into fit-models",
@@ -229,7 +243,7 @@ class Main(QtWidgets.QMainWindow):
             **kwargs
     ):
         if path is None:
-            path = kwargs.get('path', mfm.widgets.get_directory(**kwargs))
+            path = mfm.widgets.get_directory(**kwargs)
         mfm.cmd.save_fits(path)
 
     def onSaveFit(

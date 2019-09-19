@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>mfm.fitting.models package &#8212; ChiSurf  documentation</title>
+    <title>mfm.models package &#8212; ChiSurf  documentation</title>
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
@@ -70,13 +70,13 @@
   <ul class="dropdown-menu localtoc"
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">mfm.fitting.models package</a><ul>
+<li><a class="reference internal" href="#">mfm.models package</a><ul>
 <li><a class="reference internal" href="#subpackages">Subpackages</a></li>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#mfm-fitting-models-globalfit-module">mfm.fitting.models.globalfit module</a></li>
-<li><a class="reference internal" href="#mfm-fitting-models-parse-module">mfm.fitting.models.parse module</a></li>
-<li><a class="reference internal" href="#mfm-fitting-models-stopped-flow-module">mfm.fitting.models.stopped_flow module</a></li>
-<li><a class="reference internal" href="#module-contents">Module contents</a></li>
+<li><a class="reference internal" href="#mfm-models-globalfit-module">mfm.models.globalfit module</a></li>
+<li><a class="reference internal" href="#module-mfm.models.parse">mfm.models.parse module</a></li>
+<li><a class="reference internal" href="#module-mfm.models.stopped_flow">mfm.models.stopped_flow module</a></li>
+<li><a class="reference internal" href="#module-mfm.models">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -118,13 +118,13 @@
   <div class="row">
       <div class="col-md-3">
         <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
-<li><a class="reference internal" href="#">mfm.fitting.models package</a><ul>
+<li><a class="reference internal" href="#">mfm.models package</a><ul>
 <li><a class="reference internal" href="#subpackages">Subpackages</a></li>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#mfm-fitting-models-globalfit-module">mfm.fitting.models.globalfit module</a></li>
-<li><a class="reference internal" href="#mfm-fitting-models-parse-module">mfm.fitting.models.parse module</a></li>
-<li><a class="reference internal" href="#mfm-fitting-models-stopped-flow-module">mfm.fitting.models.stopped_flow module</a></li>
-<li><a class="reference internal" href="#module-contents">Module contents</a></li>
+<li><a class="reference internal" href="#mfm-models-globalfit-module">mfm.models.globalfit module</a></li>
+<li><a class="reference internal" href="#module-mfm.models.parse">mfm.models.parse module</a></li>
+<li><a class="reference internal" href="#module-mfm.models.stopped_flow">mfm.models.stopped_flow module</a></li>
+<li><a class="reference internal" href="#module-mfm.models">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -144,57 +144,37 @@
       </div>
     <div class="col-md-9 content">
       
-  <div class="section" id="mfm-fitting-models-package">
-<h1>mfm.fitting.models package<a class="headerlink" href="#mfm-fitting-models-package" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="mfm-models-package">
+<h1>mfm.models package<a class="headerlink" href="#mfm-models-package" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="subpackages">
 <h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="mfm.fitting.models.fcs.html">mfm.fitting.models.fcs package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.fcs.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.fcs.html#mfm-fitting-models-fcs-fcs-module">mfm.fitting.models.fcs.fcs module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.fcs.html#module-contents">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="mfm.fitting.models.structure.html">mfm.fitting.models.structure package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.structure.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.structure.html#mfm-fitting-models-structure-proteinmc-module">mfm.fitting.models.structure.proteinMC module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.structure.html#module-contents">Module contents</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="mfm.fitting.models.tcspc.html">mfm.fitting.models.tcspc package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#mfm-fitting-models-tcspc-anisotropy-module">mfm.fitting.models.tcspc.anisotropy module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#mfm-fitting-models-tcspc-dye-diffusion-module">mfm.fitting.models.tcspc.dye_diffusion module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#mfm-fitting-models-tcspc-et-module">mfm.fitting.models.tcspc.et module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#mfm-fitting-models-tcspc-fret-module">mfm.fitting.models.tcspc.fret module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#mfm-fitting-models-tcspc-fret-structure-module">mfm.fitting.models.tcspc.fret_structure module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#mfm-fitting-models-tcspc-membrane-module">mfm.fitting.models.tcspc.membrane module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#mfm-fitting-models-tcspc-mix-model-module">mfm.fitting.models.tcspc.mix_model module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#mfm-fitting-models-tcspc-nusiance-module">mfm.fitting.models.tcspc.nusiance module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#mfm-fitting-models-tcspc-parse-module">mfm.fitting.models.tcspc.parse module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#mfm-fitting-models-tcspc-pddem-module">mfm.fitting.models.tcspc.pddem module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#mfm-fitting-models-tcspc-tcspc-module">mfm.fitting.models.tcspc.tcspc module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.models.tcspc.html#module-contents">Module contents</a></li>
-</ul>
-</li>
-</ul>
 </div>
 </div>
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="mfm-fitting-models-globalfit-module">
-<h2>mfm.fitting.models.globalfit module<a class="headerlink" href="#mfm-fitting-models-globalfit-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="mfm-models-globalfit-module">
+<h2>mfm.models.globalfit module<a class="headerlink" href="#mfm-models-globalfit-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="mfm-fitting-models-parse-module">
-<h2>mfm.fitting.models.parse module<a class="headerlink" href="#mfm-fitting-models-parse-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-mfm.models.parse">
+<span id="mfm-models-parse-module"></span><h2>mfm.models.parse module<a class="headerlink" href="#module-mfm.models.parse" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="mfm-fitting-models-stopped-flow-module">
-<h2>mfm.fitting.models.stopped_flow module<a class="headerlink" href="#mfm-fitting-models-stopped-flow-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-mfm.models.stopped_flow">
+<span id="mfm-models-stopped-flow-module"></span><h2>mfm.models.stopped_flow module<a class="headerlink" href="#module-mfm.models.stopped_flow" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-contents">
-<h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-mfm.models">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.models" title="Permalink to this headline">¶</a></h2>
+<p>This module is responsible contains all fitting modules for experimental data</p>
+<p>The <a class="reference internal" href="../user_documentation/api/experiments.html#module-mfm.models" title="mfm.models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">models</span></code></a></p>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="../user_documentation/api/experiments.html#module-mfm.models.tcspc" title="mfm.models.tcspc"><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.tcspc</span></code></a></p></li>
+<li><p><a class="reference internal" href="../user_documentation/api/experiments.html#module-mfm.models.fcs" title="mfm.models.fcs"><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.fcs</span></code></a></p></li>
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.global_model</span></code></p></li>
+<li><p><a class="reference internal" href="#module-mfm.models.parse" title="mfm.models.parse"><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.parse</span></code></a></p></li>
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.proteinMC</span></code></p></li>
+<li><p><a class="reference internal" href="#module-mfm.models.stopped_flow" title="mfm.models.stopped_flow"><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.stopped_flow</span></code></a></p></li>
+</ol>
 </div>
 </div>
 

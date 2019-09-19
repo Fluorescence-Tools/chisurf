@@ -1,14 +1,14 @@
 """
 This module is responsible contains all fitting modules for experimental data
 
-The :py:mod:`.model`
+The :py:mod:`.models`
 
-1. :py:mod:`.model.tcspc`
-2. :py:mod:`.model.fcs`
-3. :py:mod:`.model.gloablfit`
-4. :py:mod:`.model.parse`
-5. :py:mod:`.model.proteinMC`
-6. :py:mod:`.model.stopped_flow`
+1. :py:mod:`.models.tcspc`
+2. :py:mod:`.models.fcs`
+3. :py:mod:`.models.global_model`
+4. :py:mod:`.models.parse`
+5. :py:mod:`.models.proteinMC`
+6. :py:mod:`.models.stopped_flow`
 
 
 """
@@ -17,3 +17,4 @@ from . import parse
 from . import fcs
 from . import tcspc
 from . import global_model
+from . import stopped_flow

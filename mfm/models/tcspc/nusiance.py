@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 
 import numpy as np
@@ -13,9 +16,14 @@ from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
 
 
 class Generic(FittingParameterGroup):
+    """
+
+    """
 
     @property
-    def n_ph_bg(self) -> float:
+    def n_ph_bg(
+            self
+    ) -> float:
         """Number of background photons
         """
         if isinstance(self.background_curve, Curve):
@@ -24,7 +32,9 @@ class Generic(FittingParameterGroup):
             return 0.0
 
     @property
-    def n_ph_exp(self) -> int:
+    def n_ph_exp(
+            self
+    ) -> int:
         """Number of experimental photons
         """
         if isinstance(self.fit.data, Curve):
@@ -33,13 +43,17 @@ class Generic(FittingParameterGroup):
             return 0
 
     @property
-    def n_ph_fl(self) -> float:
+    def n_ph_fl(
+            self
+    ) -> float:
         """Number of fluorescence photons
         """
         return self.n_ph_exp - self.n_ph_bg
 
     @property
-    def scatter(self) -> float:
+    def scatter(
+            self
+    ) -> float:
         # Scatter amplitude
         return self._sc.value
 
@@ -51,7 +65,9 @@ class Generic(FittingParameterGroup):
         self._sc.value = v
 
     @property
-    def background(self) -> float:
+    def background(
+            self
+    ) -> float:
         # Constant background in fluorescence decay curve
         return self._bg.value
 
@@ -63,7 +79,9 @@ class Generic(FittingParameterGroup):
         self._bg.value = v
 
     @property
-    def background_curve(self) -> mfm.curve.Curve:
+    def background_curve(
+            self
+    ) -> mfm.curve.Curve:
         # Background curve
         if isinstance(self._background_curve, Curve):
             return self._background_curve
@@ -79,7 +97,9 @@ class Generic(FittingParameterGroup):
             self._background_curve = v
 
     @property
-    def t_bg(self) -> float:
+    def t_bg(
+            self
+    ) -> float:
         """Measurement time of background-measurement
         """
         return self._tmeas_bg.value
@@ -92,7 +112,9 @@ class Generic(FittingParameterGroup):
         self._tmeas_bg.value = v
 
     @property
-    def t_exp(self) -> float:
+    def t_exp(
+            self
+    ) -> float:
         """Measurement time of experiment
         """
         return self._tmeas_exp.value
@@ -110,6 +132,12 @@ class Generic(FittingParameterGroup):
             name: str = 'Nuisance',
             **kwargs
     ):
+        """
+
+        :param background_curve:
+        :param name:
+        :param kwargs:
+        """
         super(Generic, self).__init__(
             name=name,
             **kwargs
@@ -122,61 +150,111 @@ class Generic(FittingParameterGroup):
 
 
 class Corrections(FittingParameterGroup):
+    """
+
+    """
 
     @property
-    def lintable(self):
+    def lintable(
+            self
+    ) -> np.array:
         if self._lintable is None:
             self._lintable = np.ones_like(self.fit.data.y)
         return self._lintable[::-1] if self.reverse else self._lintable
 
     @lintable.setter
-    def lintable(self, v):
+    def lintable(
+            self,
+            v: np.array
+    ):
         self._curve = v
         self._lintable = self.calc_lintable(v.y)
 
     @property
-    def window_length(self):
+    def window_length(
+            self
+    ) -> int:
         return int(self._window_length.value)
 
     @window_length.setter
-    def window_length(self, v):
+    def window_length(
+            self,
+            v: int
+    ):
         self._window_length.value = v
         self._lintable = self.calc_lintable(self._curve.y)
 
     @property
-    def window_function(self):
+    def window_function(
+            self
+    ) -> str:
         return self._window_function
 
     @window_function.setter
-    def window_function(self, v):
+    def window_function(
+            self,
+            v: str
+    ):
         self._window_function = v
         self._lintable = self.calc_lintable(self._curve.y)
 
     @property
-    def reverse(self):
+    def reverse(
+            self
+    ) -> bool:
         return self._reverse
 
     @reverse.setter
-    def reverse(self, v):
+    def reverse(
+            self,
+            v: bool
+    ):
         self._reverse = v
 
     def calc_lintable(
             self,
             y,
-            **kwargs
+            xmin: int = None,
+            xmax: int = None,
+            window_function: str = None,
+            window_length: int = None
     ):
-        window_function = kwargs.get('window_function', self.window_function)
-        window_length = kwargs.get('window_length', self.window_length)
-        xmin = kwargs.get('xmin', self.fit.xmin)
-        xmax = kwargs.get('xmax', self.fit.xmax)
-        return mfm.fluorescence.tcspc.corrections.compute_linearization_table(y, window_length, window_function, xmin, xmax)
+        """
+
+        :param y:
+        :param xmin:
+        :param xmax:
+        :param window_function:
+        :param window_length:
+        :return:
+        """
+        if xmin is None:
+            xmin = self.fit.xmin
+        if xmax is None:
+            xmax = self.fit.xmax
+        if window_function is None:
+            window_function = self.window_function
+        if window_length is None:
+            window_length = self.window_length
+        return mfm.fluorescence.tcspc.corrections.compute_linearization_table(
+            y,
+            window_length,
+            window_function,
+            xmin,
+            xmax
+        )
 
     @property
-    def measurement_time(self):
+    def measurement_time(
+            self
+    ) -> float:
         return self.fit.model.generic.t_exp
 
     @measurement_time.setter
-    def measurement_time(self, v):
+    def measurement_time(
+            self,
+            v: float
+    ):
         self.fit.model.generic.t_exp = v
 
     @property
@@ -191,7 +269,9 @@ class Corrections(FittingParameterGroup):
         self.fit.model.convolve.rep_rate = v
 
     @property
-    def dead_time(self) -> float:
+    def dead_time(
+            self
+    ) -> float:
         return self._dead_time.value
 
     @dead_time.setter
@@ -206,12 +286,25 @@ class Corrections(FittingParameterGroup):
             decay: np.array,
             **kwargs
     ):
+        """
+
+        :param decay:
+        :param kwargs:
+        :return:
+        """
         data = kwargs.get('data', self.fit.data.y)
         rep_rate = kwargs.get('rep_rate', self.rep_rate)
         dead_time = kwargs.get('dead_time', self.dead_time)
         meas_time = kwargs.get('meas_time', self.measurement_time)
         if self.correct_pile_up:
-            mfm.fluorescence.tcspc.corrections.correct_model_for_pile_up(data, decay, rep_rate, dead_time, meas_time, verbose=self.verbose)
+            mfm.fluorescence.tcspc.corrections.correct_model_for_pile_up(
+                data,
+                decay,
+                rep_rate,
+                dead_time,
+                meas_time,
+                verbose=self.verbose
+            )
 
     def linearize(
             self,
@@ -234,8 +327,7 @@ class Corrections(FittingParameterGroup):
             lin_auto_range: bool = True,
             **kwargs
     ):
-        FittingParameterGroup.__init__(
-            self,
+        super().__init__(
             fit=fit,
             name=name,
             **kwargs
@@ -252,9 +344,14 @@ class Corrections(FittingParameterGroup):
 
 
 class Convolve(FittingParameterGroup):
+    """
+
+    """
 
     @property
-    def dt(self) -> float:
+    def dt(
+            self
+    ) -> float:
         return self._dt.value
 
     @dt.setter
@@ -265,7 +362,9 @@ class Convolve(FittingParameterGroup):
         self._dt.value = v
 
     @property
-    def lamp_background(self) -> float:
+    def lamp_background(
+            self
+    ) -> float:
         return self._lb.value / self.n_photons_irf
 
     @lamp_background.setter
@@ -276,7 +375,9 @@ class Convolve(FittingParameterGroup):
         self._lb.value = v
 
     @property
-    def timeshift(self) -> float:
+    def timeshift(
+            self
+    ) -> float:
         return self._ts.value
 
     @timeshift.setter
@@ -287,8 +388,10 @@ class Convolve(FittingParameterGroup):
         self._ts.value = v
 
     @property
-    def start(self) -> int:
-        return int(self._start.value / self.dt)
+    def start(
+            self
+    ) -> int:
+        return int(self._start.value // self.dt)
 
     @start.setter
     def start(
@@ -298,8 +401,10 @@ class Convolve(FittingParameterGroup):
         self._start.value = v
 
     @property
-    def stop(self) -> int:
-        stop = int(self._stop.value / self.dt)
+    def stop(
+            self
+    ) -> int:
+        stop = int(self._stop.value // self.dt)
         return stop
 
     @stop.setter
@@ -310,7 +415,9 @@ class Convolve(FittingParameterGroup):
         self._stop.value = v
 
     @property
-    def rep_rate(self) -> float:
+    def rep_rate(
+            self
+    ) -> float:
         return self._rep.value
 
     @rep_rate.setter
@@ -321,7 +428,9 @@ class Convolve(FittingParameterGroup):
         self._rep.value = float(v)
 
     @property
-    def do_convolution(self) -> bool:
+    def do_convolution(
+            self
+    ) -> bool:
         return self._do_convolution
 
     @do_convolution.setter
@@ -332,7 +441,9 @@ class Convolve(FittingParameterGroup):
         self._do_convolution = bool(v)
 
     @property
-    def n0(self) -> float:
+    def n0(
+            self
+    ) -> float:
         return self._n0.value
 
     @n0.setter
@@ -343,7 +454,9 @@ class Convolve(FittingParameterGroup):
         self._n0.value = v
 
     @property
-    def irf(self) -> mfm.curve.Curve:
+    def irf(
+            self
+    ) -> mfm.curve.Curve:
         irf = self._irf
         if isinstance(irf, Curve):
             irf = self._irf
@@ -358,7 +471,9 @@ class Convolve(FittingParameterGroup):
             return curve
 
     @property
-    def _irf(self):
+    def _irf(
+            self
+    ) -> mfm.curve.Curve:
         return self.__irf
 
     @_irf.setter
@@ -423,7 +538,7 @@ class Convolve(FittingParameterGroup):
             data = self.data
 
         if autoscale:
-            weights = 1./data.ey
+            weights = 1.0 / data.ey
             self.n0 = float(mfm.fluorescence.tcspc.rescale_w_bg(decay, data.y, weights, bg, start, stop))
         else:
             decay *= self.n0
