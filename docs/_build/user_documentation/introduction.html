@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Introduction &#8212; ChiSurf  documentation</title>
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Tools" href="tools.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="use_cases.html">Use cases</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Introduction</a><ul>
+<li><a class="reference internal" href="#general">General</a><ul>
+<li><a class="reference internal" href="#experiment-types">Experiment types</a></li>
+<li><a class="reference internal" href="#datasets">Datasets</a></li>
+<li><a class="reference internal" href="#fits">Fits</a></li>
+<li><a class="reference internal" href="#variables">Variables</a></li>
+<li><a class="reference internal" href="#plots">Plots</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#error-estimation">Error-estimation</a><ul>
+<li><a class="reference internal" href="#support-plane-analysis">Support-Plane analysis</a></li>
+<li><a class="reference internal" href="#sampling">Sampling</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#experiments">Experiments</a><ul>
+<li><a class="reference internal" href="#fcs">FCS</a></li>
+<li><a class="reference internal" href="#tcspc">TCSPC</a></li>
+<li><a class="reference internal" href="#stopped-flow">Stopped-Flow</a></li>
+<li><a class="reference internal" href="#global-fit">Global-Fit</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#modelling">Modelling</a><ul>
+<li><a class="reference internal" href="#structure2transfer">Structure2Transfer</a></li>
+<li><a class="reference internal" href="#screening">Screening</a></li>
+<li><a class="reference internal" href="#peptide-plane-monte-carlo">Peptide-Plane-Monte-Carlo</a></li>
+<li><a class="reference internal" href="#dye-diffusion">Dye-Diffusion</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="installation.html" title="Previous Chapter: Installation"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Installation</span>
+    </a>
+  </li>
+  <li>
+    <a href="tools.html" title="Next Chapter: Tools"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Tools &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/user_documentation/introduction.rst.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
+<li><a class="reference internal" href="#">Introduction</a><ul>
+<li><a class="reference internal" href="#general">General</a><ul>
+<li><a class="reference internal" href="#experiment-types">Experiment types</a></li>
+<li><a class="reference internal" href="#datasets">Datasets</a></li>
+<li><a class="reference internal" href="#fits">Fits</a></li>
+<li><a class="reference internal" href="#variables">Variables</a></li>
+<li><a class="reference internal" href="#plots">Plots</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#error-estimation">Error-estimation</a><ul>
+<li><a class="reference internal" href="#support-plane-analysis">Support-Plane analysis</a></li>
+<li><a class="reference internal" href="#sampling">Sampling</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#experiments">Experiments</a><ul>
+<li><a class="reference internal" href="#fcs">FCS</a></li>
+<li><a class="reference internal" href="#tcspc">TCSPC</a></li>
+<li><a class="reference internal" href="#stopped-flow">Stopped-Flow</a></li>
+<li><a class="reference internal" href="#global-fit">Global-Fit</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#modelling">Modelling</a><ul>
+<li><a class="reference internal" href="#structure2transfer">Structure2Transfer</a></li>
+<li><a class="reference internal" href="#screening">Screening</a></li>
+<li><a class="reference internal" href="#peptide-plane-monte-carlo">Peptide-Plane-Monte-Carlo</a></li>
+<li><a class="reference internal" href="#dye-diffusion">Dye-Diffusion</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <li>
+    <a href="installation.html" title="Previous Chapter: Installation"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Installation</span>
+    </a>
+  </li>
+  <li>
+    <a href="tools.html" title="Next Chapter: Tools"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Tools &raquo;</span>
+    </a>
+  </li>
+<div id="sourcelink">
+  <a href="../_sources/user_documentation/introduction.rst.txt"
+     rel="nofollow">Source</a>
+</div>
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
+      
+  <div class="section" id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="general">
+<h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
+<div class="align-left figure align-right" id="id1" style="width: 45%">
+<img alt="../_images/fig1_user_interface_overview.png" src="../_images/fig1_user_interface_overview.png" />
+<p class="caption"><span class="caption-text">General overview: The different areas of the main program window</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<p>The main program window contains different areas:</p>
+<ol class="arabic simple">
+<li><p>Adding of data creation of new fits</p></li>
+<li><p>Fitting and adjustment of fitting parameter of the currently selected fit</p></li>
+<li><p>Change of plotting options of the current plot</p></li>
+<li><p>Adding of a new dataset</p></li>
+<li><p>List of loaded datasets</p></li>
+<li><p>Adding of a new fit to the dataset currentls selected in 5)</p></li>
+<li><p>Currently selected fit</p></li>
+<li><p>Delete currently selected fit</p></li>
+<li><p>Plotting area</p></li>
+</ol>
+<p>By default three different docks (<em>Load</em>, <em>Analysis</em> and <em>Plot</em>) are displayed on the left side of the window.
+By clicking on the names of the docks the user can change the content displayed in the left dock.
+In (1) the user can add new datasets and fits to the programm. In (2) the user can change the fitting
+parameters of the fit currently selected in (7). In (3) the user can change plotting options of
+the plot selected in (9) of the current fit (see Fig 1).</p>
+<div class="section" id="experiment-types">
+<h3>Experiment types<a class="headerlink" href="#experiment-types" title="Permalink to this headline">¶</a></h3>
+<div class="align-left figure align-right" id="id2" style="width: 45%">
+<img alt="../_images/fig2_introduction_experiment_types.png" src="../_images/fig2_introduction_experiment_types.png" />
+<p class="caption"><span class="caption-text">Selection of experiment types and setups</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+</div>
+<p>Before creation of a new fit the user has to choose the experiment type. Depending on the experiment type
+and the experimental-setup assicuated to the experiment type the content within the group-box “Load data”
+changes (compare Fig. 2).</p>
+</div>
+<div class="section" id="datasets">
+<h3>Datasets<a class="headerlink" href="#datasets" title="Permalink to this headline">¶</a></h3>
+<div class="align-left figure align-right" id="id3">
+<a class="reference internal image-reference" href="../_images/intro_fig3_datasets.png"><img alt="../_images/intro_fig3_datasets.png" src="../_images/intro_fig3_datasets.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Adding datasets</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
+</div>
+<p>Before performing a fit or any data analysis the user has to add a dataset to the program.
+First the user has to choose the experiment type and specify all relevant parameters
+(details see sections below). As intermediate step</p>
+<ol class="arabic simple">
+<li><p>Adjust data-file parameters</p></li>
+<li><p>Load-data</p></li>
+<li><p>Optionally data-processing (correlation, creation of histograms)</p></li>
+<li><p>Add-dataset</p></li>
+</ol>
+<p>After addition of dataset at first nothing happens except that the dataset is now listed in the
+dataset-table. By clicking on the row of a loaded dataset the currently selected dataset is changed.
+The selected dataset is highlighted in green. If the user double clicks an element in the datasets
+table the dataset and all related fits within the program are removed.</p>
+</div>
+<div class="section" id="fits">
+<h3>Fits<a class="headerlink" href="#fits" title="Permalink to this headline">¶</a></h3>
+<div class="align-left figure align-right" id="id4">
+<a class="reference internal image-reference" href="../_images/intro_fig4_fits.png"><img alt="../_images/intro_fig4_fits.png" src="../_images/intro_fig4_fits.png" style="width: 350px;" /></a>
+<p class="caption"><span class="caption-text">Selection of datasets and adding fits</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+</div>
+<p>New fits can be added by the user to the currently selected dataset by clicking on <em>add fit</em>.
+This creates a new fit containing the currently selected model and the currently selected dataset.
+After addition of the fit the dataset and the fit are listed in (7).
+The currently active fit is chosen by the user using the dropdown list (7). The content of the plotting area
+(9), the fitting parameters (2) and the plotting-options area (3) depends on the currently selected fit.</p>
+<div class="align-left figure align-right" id="id5">
+<a class="reference internal image-reference" href="../_images/intro_fig5_changing_active_fit.png"><img alt="../_images/intro_fig5_changing_active_fit.png" src="../_images/intro_fig5_changing_active_fit.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Changing active fits</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+</div>
+<p>By selecting another fit out of the dropdown list the plot and fitting parameter are automatically
+updated. In the Fitting pane all parameters of the currently selected fit are displayed. The fitting
+range is usually determined automatically. It can be specified by unchecking the <em>autorange</em> checkbox.</p>
+</div>
+<div class="section" id="variables">
+<h3>Variables<a class="headerlink" href="#variables" title="Permalink to this headline">¶</a></h3>
+<div class="align-left figure align-right" id="id6">
+<a class="reference internal image-reference" href="../_images/intro_fig6_variables.png"><img alt="../_images/intro_fig6_variables.png" src="../_images/intro_fig6_variables.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Possible parameters of a fitting variable</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
+</div>
+<p>All fitting variables have a name, are either fixed or not and can be linked to other fitting variables.
+Fixing of fitting varibales is achived by checking the first checkbox. So far variables can only be linked
+via a global-fit. If the fitting variable is linked the second checkbox is checked. The user can determine
+the target of the link using the tooltip of the value field. Optionally Fitting variables have a lower or
+upper limit. The lower and upper limit are either displayed or not. This is up to the developer of the
+fitting model.</p>
+</div>
+<div class="section" id="plots">
+<h3>Plots<a class="headerlink" href="#plots" title="Permalink to this headline">¶</a></h3>
+<div class="align-left figure align-center" id="id7">
+<a class="reference internal image-reference" href="../_images/intro_fig7_plots.png"><img alt="../_images/intro_fig7_plots.png" src="../_images/intro_fig7_plots.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Plot area and plot option area</span><a class="headerlink" href="#id7" title="Permalink to this image">¶</a></p>
+</div>
+<p>Each fitting model may contain different plot to represent the data and the fitting model. Depending on the selected
+plot the content of the plot option area changes. The user may change the plot displayed in the plotting area
+by changing the pane highlighted in red in Figure.</p>
+<div class="align-left figure align-center" id="id8">
+<a class="reference internal image-reference" href="../_images/intro_fig8_plots_save.png"><img alt="../_images/intro_fig8_plots_save.png" src="../_images/intro_fig8_plots_save.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Curves can be exported as CSV by right click on the curve and exporting the curve-data.</span><a class="headerlink" href="#id8" title="Permalink to this image">¶</a></p>
+</div>
+<p>By default one dimensional data is plotted as blue line and the fitted curve is displayed as green line.
+The colors and can be changed using the parameter window accessed using the right mouse button</p>
+<div class="align-left figure align-center" id="id9">
+<a class="reference internal image-reference" href="../_images/intro_fig9_plots_surface_1.png"><img alt="../_images/intro_fig9_plots_surface_1.png" src="../_images/intro_fig9_plots_surface_1.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Selection of plotted parameters</span><a class="headerlink" href="#id9" title="Permalink to this image">¶</a></p>
+</div>
+<div class="align-left figure align-center" id="id10">
+<a class="reference internal image-reference" href="../_images/intro_fig9_plots_surface_2.png"><img alt="../_images/intro_fig9_plots_surface_2.png" src="../_images/intro_fig9_plots_surface_2.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Inverting selections</span><a class="headerlink" href="#id10" title="Permalink to this image">¶</a></p>
+</div>
+<div class="align-left figure align-center" id="id11">
+<a class="reference internal image-reference" href="../_images/intro_fig9_plots_surface_3.png"><img alt="../_images/intro_fig9_plots_surface_3.png" src="../_images/intro_fig9_plots_surface_3.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Enabling and disabling selections</span><a class="headerlink" href="#id11" title="Permalink to this image">¶</a></p>
+</div>
+</div>
+</div>
+<div class="section" id="error-estimation">
+<h2>Error-estimation<a class="headerlink" href="#error-estimation" title="Permalink to this headline">¶</a></h2>
+<p>Error estimation either by emcee or plain mcmc.
+Short description</p>
+<div class="section" id="support-plane-analysis">
+<h3>Support-Plane analysis<a class="headerlink" href="#support-plane-analysis" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="sampling">
+<h3>Sampling<a class="headerlink" href="#sampling" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="experiments">
+<h2>Experiments<a class="headerlink" href="#experiments" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="fcs">
+<h3>FCS<a class="headerlink" href="#fcs" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="tcspc">
+<h3>TCSPC<a class="headerlink" href="#tcspc" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="stopped-flow">
+<h3>Stopped-Flow<a class="headerlink" href="#stopped-flow" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="global-fit">
+<h3>Global-Fit<a class="headerlink" href="#global-fit" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="modelling">
+<h2>Modelling<a class="headerlink" href="#modelling" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="structure2transfer">
+<h3>Structure2Transfer<a class="headerlink" href="#structure2transfer" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="screening">
+<h3>Screening<a class="headerlink" href="#screening" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="peptide-plane-monte-carlo">
+<h3>Peptide-Plane-Monte-Carlo<a class="headerlink" href="#peptide-plane-monte-carlo" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="dye-diffusion">
+<h3>Dye-Diffusion<a class="headerlink" href="#dye-diffusion" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

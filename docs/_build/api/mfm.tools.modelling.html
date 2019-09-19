@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>mfm.tools.modelling package &#8212; ChiSurf  documentation</title>
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">mfm.tools.modelling package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-mfm.tools.modelling.potential_enery">mfm.tools.modelling.potential_enery module</a></li>
+<li><a class="reference internal" href="#module-mfm.tools.modelling.screening">mfm.tools.modelling.screening module</a></li>
+<li><a class="reference internal" href="#module-mfm.tools.modelling.trajectory">mfm.tools.modelling.trajectory module</a></li>
+<li><a class="reference internal" href="#mfm-tools-modelling-transfer-desktop-c0n6tor-module">mfm.tools.modelling.transfer-DESKTOP-C0N6TOR module</a></li>
+<li><a class="reference internal" href="#mfm-tools-modelling-transfer-module">mfm.tools.modelling.transfer module</a></li>
+<li><a class="reference internal" href="#module-mfm.tools.modelling">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/api/mfm.tools.modelling.rst.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
+<li><a class="reference internal" href="#">mfm.tools.modelling package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-mfm.tools.modelling.potential_enery">mfm.tools.modelling.potential_enery module</a></li>
+<li><a class="reference internal" href="#module-mfm.tools.modelling.screening">mfm.tools.modelling.screening module</a></li>
+<li><a class="reference internal" href="#module-mfm.tools.modelling.trajectory">mfm.tools.modelling.trajectory module</a></li>
+<li><a class="reference internal" href="#mfm-tools-modelling-transfer-desktop-c0n6tor-module">mfm.tools.modelling.transfer-DESKTOP-C0N6TOR module</a></li>
+<li><a class="reference internal" href="#mfm-tools-modelling-transfer-module">mfm.tools.modelling.transfer module</a></li>
+<li><a class="reference internal" href="#module-mfm.tools.modelling">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="sourcelink">
+  <a href="../_sources/api/mfm.tools.modelling.rst.txt"
+     rel="nofollow">Source</a>
+</div>
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
+      
+  <div class="section" id="mfm-tools-modelling-package">
+<h1>mfm.tools.modelling package<a class="headerlink" href="#mfm-tools-modelling-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mfm.tools.modelling.potential_enery">
+<span id="mfm-tools-modelling-potential-enery-module"></span><h2>mfm.tools.modelling.potential_enery module<a class="headerlink" href="#module-mfm.tools.modelling.potential_enery" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.tools.modelling.potential_enery.PotentialEnergyWidget">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.modelling.potential_enery.</code><code class="sig-name descname">PotentialEnergyWidget</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/potential_enery.html#PotentialEnergyWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.potential_enery.PotentialEnergyWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
+<dl class="method">
+<dt id="mfm.tools.modelling.potential_enery.PotentialEnergyWidget.energy">
+<em class="property">property </em><code class="sig-name descname">energy</code><a class="headerlink" href="#mfm.tools.modelling.potential_enery.PotentialEnergyWidget.energy" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.tools.modelling.potential_enery.PotentialEnergyWidget.name">
+<code class="sig-name descname">name</code><em class="property"> = 'Potential-Energy calculator'</em><a class="headerlink" href="#mfm.tools.modelling.potential_enery.PotentialEnergyWidget.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.potential_enery.PotentialEnergyWidget.onAddPotential">
+<code class="sig-name descname">onAddPotential</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'None'<a class="reference internal" href="../_modules/mfm/tools/modelling/potential_enery.html#PotentialEnergyWidget.onAddPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.potential_enery.PotentialEnergyWidget.onAddPotential" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.potential_enery.PotentialEnergyWidget.onLoadTrajectory">
+<code class="sig-name descname">onLoadTrajectory</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'None'<a class="reference internal" href="../_modules/mfm/tools/modelling/potential_enery.html#PotentialEnergyWidget.onLoadTrajectory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.potential_enery.PotentialEnergyWidget.onLoadTrajectory" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.potential_enery.PotentialEnergyWidget.onProcessTrajectory">
+<code class="sig-name descname">onProcessTrajectory</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/potential_enery.html#PotentialEnergyWidget.onProcessTrajectory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.potential_enery.PotentialEnergyWidget.onProcessTrajectory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.potential_enery.PotentialEnergyWidget.onRemovePotential">
+<code class="sig-name descname">onRemovePotential</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'None'<a class="reference internal" href="../_modules/mfm/tools/modelling/potential_enery.html#PotentialEnergyWidget.onRemovePotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.potential_enery.PotentialEnergyWidget.onRemovePotential" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.potential_enery.PotentialEnergyWidget.onSelectedPotentialChanged">
+<code class="sig-name descname">onSelectedPotentialChanged</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'None'<a class="reference internal" href="../_modules/mfm/tools/modelling/potential_enery.html#PotentialEnergyWidget.onSelectedPotentialChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.potential_enery.PotentialEnergyWidget.onSelectedPotentialChanged" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.potential_enery.PotentialEnergyWidget.potential_name">
+<em class="property">property </em><code class="sig-name descname">potential_name</code><a class="headerlink" href="#mfm.tools.modelling.potential_enery.PotentialEnergyWidget.potential_name" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.potential_enery.PotentialEnergyWidget.potential_number">
+<em class="property">property </em><code class="sig-name descname">potential_number</code><a class="headerlink" href="#mfm.tools.modelling.potential_enery.PotentialEnergyWidget.potential_number" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.potential_enery.PotentialEnergyWidget.stride">
+<em class="property">property </em><code class="sig-name descname">stride</code><a class="headerlink" href="#mfm.tools.modelling.potential_enery.PotentialEnergyWidget.stride" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.tools.modelling.screening">
+<span id="mfm-tools-modelling-screening-module"></span><h2>mfm.tools.modelling.screening module<a class="headerlink" href="#module-mfm.tools.modelling.screening" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.modelling.screening.</code><code class="sig-name descname">FPSScreenTrajectory</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.align_atom">
+<em class="property">property </em><code class="sig-name descname">align_atom</code><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.align_atom" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.chi2Max">
+<em class="property">property </em><code class="sig-name descname">chi2Max</code><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.chi2Max" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.chi2_weights">
+<em class="property">property </em><code class="sig-name descname">chi2_weights</code><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.chi2_weights" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.cluster">
+<em class="property">property </em><code class="sig-name descname">cluster</code><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.cluster" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.dof">
+<em class="property">property </em><code class="sig-name descname">dof</code><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.dof" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.getCandidates">
+<code class="sig-name descname">getCandidates</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">withWeights=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.getCandidates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.getCandidates" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.initWidgets">
+<code class="sig-name descname">initWidgets</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.initWidgets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.initWidgets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.modelID">
+<code class="sig-name descname">modelID</code><em class="property"> = 0</em><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.modelID" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.name">
+<code class="sig-name descname">name</code><em class="property"> = 'Screening'</em><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.onAlignAverage">
+<code class="sig-name descname">onAlignAverage</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.onAlignAverage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.onAlignAverage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.onClearClusters">
+<code class="sig-name descname">onClearClusters</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.onClearClusters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.onClearClusters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.onClusterClicked">
+<code class="sig-name descname">onClusterClicked</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.onClusterClicked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.onClusterClicked" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.onClusterTableClicked">
+<code class="sig-name descname">onClusterTableClicked</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.onClusterTableClicked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.onClusterTableClicked" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.onGetSelectionRepresentative">
+<code class="sig-name descname">onGetSelectionRepresentative</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.onGetSelectionRepresentative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.onGetSelectionRepresentative" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.onLoadClusterResults">
+<code class="sig-name descname">onLoadClusterResults</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.onLoadClusterResults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.onLoadClusterResults" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.onLoadLabeling">
+<code class="sig-name descname">onLoadLabeling</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.onLoadLabeling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.onLoadLabeling" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.onLoadTableOnStructures">
+<code class="sig-name descname">onLoadTableOnStructures</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.onLoadTableOnStructures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.onLoadTableOnStructures" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.onSaveClusterResults">
+<code class="sig-name descname">onSaveClusterResults</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">directory=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.onSaveClusterResults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.onSaveClusterResults" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.onSaveClusterTable">
+<code class="sig-name descname">onSaveClusterTable</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.onSaveClusterTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.onSaveClusterTable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.onSaveStructureTable">
+<code class="sig-name descname">onSaveStructureTable</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.onSaveStructureTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.onSaveStructureTable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.onScreeningStart">
+<code class="sig-name descname">onScreeningStart</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.onScreeningStart"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.onScreeningStart" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.onSelectionChanged">
+<code class="sig-name descname">onSelectionChanged</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.onSelectionChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.onSelectionChanged" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.onStructureTableClicked">
+<code class="sig-name descname">onStructureTableClicked</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.onStructureTableClicked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.onStructureTableClicked" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.plot">
+<em class="property">property </em><code class="sig-name descname">plot</code><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.pymolPlot">
+<em class="property">property </em><code class="sig-name descname">pymolPlot</code><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.pymolPlot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.rmsd_ref_state">
+<em class="property">property </em><code class="sig-name descname">rmsd_ref_state</code><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.rmsd_ref_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.threshold">
+<em class="property">property </em><code class="sig-name descname">threshold</code><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.threshold" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.updateClusterTable">
+<code class="sig-name descname">updateClusterTable</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.updateClusterTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.updateClusterTable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.screening.FPSScreenTrajectory.update_widgets">
+<code class="sig-name descname">update_widgets</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/screening.html#FPSScreenTrajectory.update_widgets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.screening.FPSScreenTrajectory.update_widgets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.tools.modelling.trajectory">
+<span id="mfm-tools-modelling-trajectory-module"></span><h2>mfm.tools.modelling.trajectory module<a class="headerlink" href="#module-mfm.tools.modelling.trajectory" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.tools.modelling.trajectory.AlignTrajectoryWidget">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.modelling.trajectory.</code><code class="sig-name descname">AlignTrajectoryWidget</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#AlignTrajectoryWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.AlignTrajectoryWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.AlignTrajectoryWidget.atom_list">
+<em class="property">property </em><code class="sig-name descname">atom_list</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.AlignTrajectoryWidget.atom_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.AlignTrajectoryWidget.onOpenTrajectory">
+<code class="sig-name descname">onOpenTrajectory</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#AlignTrajectoryWidget.onOpenTrajectory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.AlignTrajectoryWidget.onOpenTrajectory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.AlignTrajectoryWidget.onSaveTrajectory">
+<code class="sig-name descname">onSaveTrajectory</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">target_filename=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#AlignTrajectoryWidget.onSaveTrajectory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.AlignTrajectoryWidget.onSaveTrajectory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.AlignTrajectoryWidget.stride">
+<em class="property">property </em><code class="sig-name descname">stride</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.AlignTrajectoryWidget.stride" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.AlignTrajectoryWidget.trajectory_filename">
+<em class="property">property </em><code class="sig-name descname">trajectory_filename</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.AlignTrajectoryWidget.trajectory_filename" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.tools.modelling.trajectory.JoinTrajectoriesWidget">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.modelling.trajectory.</code><code class="sig-name descname">JoinTrajectoriesWidget</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#JoinTrajectoriesWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.JoinTrajectoriesWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.chunk_size">
+<em class="property">property </em><code class="sig-name descname">chunk_size</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.chunk_size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.join_mode">
+<em class="property">property </em><code class="sig-name descname">join_mode</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.join_mode" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.onJoinTrajectories">
+<code class="sig-name descname">onJoinTrajectories</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#JoinTrajectoriesWidget.onJoinTrajectories"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.onJoinTrajectories" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.onOpenTrajectory_1">
+<code class="sig-name descname">onOpenTrajectory_1</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#JoinTrajectoriesWidget.onOpenTrajectory_1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.onOpenTrajectory_1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.onOpenTrajectory_2">
+<code class="sig-name descname">onOpenTrajectory_2</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#JoinTrajectoriesWidget.onOpenTrajectory_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.onOpenTrajectory_2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.reverse_traj_1">
+<em class="property">property </em><code class="sig-name descname">reverse_traj_1</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.reverse_traj_1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.reverse_traj_2">
+<em class="property">property </em><code class="sig-name descname">reverse_traj_2</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.reverse_traj_2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.stride">
+<em class="property">property </em><code class="sig-name descname">stride</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.stride" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.trajectory_filename_1">
+<em class="property">property </em><code class="sig-name descname">trajectory_filename_1</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.trajectory_filename_1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.trajectory_filename_2">
+<em class="property">property </em><code class="sig-name descname">trajectory_filename_2</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.JoinTrajectoriesWidget.trajectory_filename_2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.tools.modelling.trajectory.MDConverter">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.modelling.trajectory.</code><code class="sig-name descname">MDConverter</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#MDConverter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.MDConverter.ending">
+<em class="property">property </em><code class="sig-name descname">ending</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter.ending" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.MDConverter.filename">
+<em class="property">property </em><code class="sig-name descname">filename</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter.filename" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.MDConverter.first_frame">
+<em class="property">property </em><code class="sig-name descname">first_frame</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter.first_frame" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.MDConverter.last_frame">
+<em class="property">property </em><code class="sig-name descname">last_frame</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter.last_frame" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.tools.modelling.trajectory.MDConverter.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MC-Converter'</em><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.MDConverter.onConvert">
+<code class="sig-name descname">onConvert</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#MDConverter.onConvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter.onConvert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.MDConverter.onLoadHDFFile">
+<code class="sig-name descname">onLoadHDFFile</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#MDConverter.onLoadHDFFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter.onLoadHDFFile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.MDConverter.onOpenTopology">
+<code class="sig-name descname">onOpenTopology</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#MDConverter.onOpenTopology"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter.onOpenTopology" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.MDConverter.onSelecteTargetDir">
+<code class="sig-name descname">onSelecteTargetDir</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#MDConverter.onSelecteTargetDir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter.onSelecteTargetDir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.MDConverter.split">
+<em class="property">property </em><code class="sig-name descname">split</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter.split" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.MDConverter.stride">
+<em class="property">property </em><code class="sig-name descname">stride</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter.stride" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.MDConverter.target_directory">
+<em class="property">property </em><code class="sig-name descname">target_directory</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter.target_directory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.MDConverter.topology_file">
+<em class="property">property </em><code class="sig-name descname">topology_file</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter.topology_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.MDConverter.trajectory">
+<em class="property">property </em><code class="sig-name descname">trajectory</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter.trajectory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.MDConverter.use_folder">
+<em class="property">property </em><code class="sig-name descname">use_folder</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.MDConverter.use_folder" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.tools.modelling.trajectory.Object">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.modelling.trajectory.</code><code class="sig-name descname">Object</code><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#Object"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.Object" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.modelling.trajectory.</code><code class="sig-name descname">RotateTranslateTrajectoryWidget</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#RotateTranslateTrajectoryWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget.onOpenTrajectory">
+<code class="sig-name descname">onOpenTrajectory</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#RotateTranslateTrajectoryWidget.onOpenTrajectory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget.onOpenTrajectory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget.onSaveTrajectory">
+<code class="sig-name descname">onSaveTrajectory</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">target_filename=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#RotateTranslateTrajectoryWidget.onSaveTrajectory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget.onSaveTrajectory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget.rotation_matrix">
+<em class="property">property </em><code class="sig-name descname">rotation_matrix</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget.rotation_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget.stride">
+<em class="property">property </em><code class="sig-name descname">stride</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget.stride" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget.trajectory_filename">
+<em class="property">property </em><code class="sig-name descname">trajectory_filename</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget.trajectory_filename" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget.translation_vector">
+<em class="property">property </em><code class="sig-name descname">translation_vector</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget.translation_vector" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.tools.modelling.trajectory.SaveTopology">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.modelling.trajectory.</code><code class="sig-name descname">SaveTopology</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#SaveTopology"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.SaveTopology" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.SaveTopology.onOpenTrajectory">
+<code class="sig-name descname">onOpenTrajectory</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#SaveTopology.onOpenTrajectory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.SaveTopology.onOpenTrajectory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.SaveTopology.onSaveTopology">
+<code class="sig-name descname">onSaveTopology</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#SaveTopology.onSaveTopology"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.SaveTopology.onSaveTopology" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.tools.modelling.trajectory.SaveTopology.trajectory_filename">
+<em class="property">property </em><code class="sig-name descname">trajectory_filename</code><a class="headerlink" href="#mfm.tools.modelling.trajectory.SaveTopology.trajectory_filename" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.tools.modelling.trajectory.below_min_distance">
+<code class="sig-prename descclassname">mfm.tools.modelling.trajectory.</code><code class="sig-name descname">below_min_distance</code><span class="sig-paren">(</span><em class="sig-param">xyz</em>, <em class="sig-param">min_distance</em>, <em class="sig-param">atom_list=array([]</em>, <em class="sig-param">dtype=int32)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#below_min_distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.below_min_distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes the xyz-coordinates (frame, atom, xyz) of a trajectory as an argument an returns a vector of booleans
+of length of the number of frames. The bool is False if the frame contains a atomic distance smaller than the
+min distance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xyz</strong> – numpy array
+The coordinates (frame fit_index, atom fit_index, coord)</p></li>
+<li><p><strong>min_distance</strong> – float
+Minimum distance if a distance</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>numpy-array
+If a atom-atom distance within a frame is smaller than min_distance the value within the array is True otherwise
+it is False.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.tools.modelling.trajectory.rotate">
+<code class="sig-prename descclassname">mfm.tools.modelling.trajectory.</code><code class="sig-name descname">rotate</code><span class="sig-paren">(</span><em class="sig-param">xyz</em>, <em class="sig-param">rm</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#rotate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.rotate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotates a trajectory (frame, atom, coord)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xyz</strong> – numpy array
+The coordinates (frame fit_index, atom fit_index, coord)</p></li>
+<li><p><strong>rm</strong> – numpy array 3x3 dtpye np.float32 - the rotation matrix</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mfm.structure.trajectory</span> <span class="k">import</span> <span class="n">TrajectoryFile</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;stride_100.h5&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xyz</span> <span class="o">=</span> <span class="n">traj</span><span class="o">.</span><span class="n">xyz</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">0.856274009</span><span class="p">,</span> <span class="mf">0.513258278</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.057972118</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.513934493</span><span class="p">,</span> <span class="mf">0.835381866</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.194957629</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.051634759</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.196731016</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.979096889</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rotate</span><span class="p">(</span><span class="n">xyz</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.tools.modelling.trajectory.translate">
+<code class="sig-prename descclassname">mfm.tools.modelling.trajectory.</code><code class="sig-name descname">translate</code><span class="sig-paren">(</span><em class="sig-param">xyz</em>, <em class="sig-param">vector</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/modelling/trajectory.html#translate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.modelling.trajectory.translate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Translate a trajectory by an vector</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xyz</strong> – numpy array
+(frame fit_index, atom_number, coord)</p></li>
+<li><p><strong>vector</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="mfm-tools-modelling-transfer-desktop-c0n6tor-module">
+<h2>mfm.tools.modelling.transfer-DESKTOP-C0N6TOR module<a class="headerlink" href="#mfm-tools-modelling-transfer-desktop-c0n6tor-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="mfm-tools-modelling-transfer-module">
+<h2>mfm.tools.modelling.transfer module<a class="headerlink" href="#mfm-tools-modelling-transfer-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mfm.tools.modelling">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.tools.modelling" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

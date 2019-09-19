@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>mfm package &#8212; ChiSurf  documentation</title>
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">mfm package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-mfm.common">mfm.common module</a></li>
+<li><a class="reference internal" href="#module-mfm.curve">mfm.curve module</a></li>
+<li><a class="reference internal" href="#module-mfm.parameter">mfm.parameter module</a></li>
+<li><a class="reference internal" href="#module-mfm">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/api/mfm.rst.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
+<li><a class="reference internal" href="#">mfm package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-mfm.common">mfm.common module</a></li>
+<li><a class="reference internal" href="#module-mfm.curve">mfm.curve module</a></li>
+<li><a class="reference internal" href="#module-mfm.parameter">mfm.parameter module</a></li>
+<li><a class="reference internal" href="#module-mfm">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="sourcelink">
+  <a href="../_sources/api/mfm.rst.txt"
+     rel="nofollow">Source</a>
+</div>
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
+      
+  <div class="section" id="mfm-package">
+<h1>mfm package<a class="headerlink" href="#mfm-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="mfm.experiments.html">mfm.experiments package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mfm.experiments.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.experiments.html#module-mfm.experiments.fcs">mfm.experiments.fcs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.experiments.html#module-mfm.experiments.globalfit">mfm.experiments.globalfit module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.experiments.html#module-mfm.experiments.modelling">mfm.experiments.modelling module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.experiments.html#module-mfm.experiments.tcspc">mfm.experiments.tcspc module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.experiments.html#module-mfm.experiments">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mfm.fitting.html">mfm.fitting package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mfm.fitting.optimization.html">mfm.fitting.optimization package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.optimization.html#mfm-fitting-optimization-fnnls-module">mfm.fitting.optimization.fnnls module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.optimization.html#mfm-fitting-optimization-leastsqbound-module">mfm.fitting.optimization.leastsqbound module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.optimization.html#mfm-fitting-optimization-mem-module">mfm.fitting.optimization.mem module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fitting.optimization.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.html#mfm-fitting-error-estimate-module">mfm.fitting.error_estimate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.html#module-mfm.fitting.fit">mfm.fitting.fit module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fitting.html#module-mfm.fitting">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mfm.fluorescence.html">mfm.fluorescence package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fluorescence.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mfm.fluorescence.fcs.html">mfm.fluorescence.fcs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.fcs.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.fcs.html#mfm-fluorescence-fcs-fcs-module">mfm.fluorescence.fcs.fcs module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.fcs.html#module-mfm.fluorescence.fcs">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.fluorescence.fps.html">mfm.fluorescence.fps package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.fps.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.fps.html#module-mfm.fluorescence.fps.dynamic">mfm.fluorescence.fps.dynamic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.fps.html#module-mfm.fluorescence.fps.functions">mfm.fluorescence.fps.functions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.fps.html#module-mfm.fluorescence.fps.static">mfm.fluorescence.fps.static module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.fps.html#module-mfm.fluorescence.fps">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.fluorescence.pda.html">mfm.fluorescence.pda package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.pda.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.pda.html#mfm-fluorescence-pda-tat-test-module">mfm.fluorescence.pda.tat_test module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.pda.html#module-mfm.fluorescence.pda">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.fluorescence.simulation.html">mfm.fluorescence.simulation package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.simulation.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.simulation.html#module-mfm.fluorescence.simulation.dye_diffusion">mfm.fluorescence.simulation.dye_diffusion module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.simulation.html#module-mfm.fluorescence.simulation.photon">mfm.fluorescence.simulation.photon module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.simulation.html#module-mfm.fluorescence.simulation">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.fluorescence.tcspc.html">mfm.fluorescence.tcspc package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.tcspc.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.tcspc.html#module-mfm.fluorescence.tcspc.convolve">mfm.fluorescence.tcspc.convolve module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.tcspc.html#module-mfm.fluorescence.tcspc.tcspc">mfm.fluorescence.tcspc.tcspc module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.fluorescence.tcspc.html#module-mfm.fluorescence.tcspc">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fluorescence.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fluorescence.html#module-mfm.fluorescence.anisotropy">mfm.fluorescence.anisotropy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fluorescence.html#module-mfm.fluorescence.general">mfm.fluorescence.general module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fluorescence.html#module-mfm.fluorescence.intensity">mfm.fluorescence.intensity module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.fluorescence.html#module-mfm.fluorescence">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mfm.io.html">mfm.io package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mfm.io.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.io.html#module-mfm.io.ascii">mfm.io.ascii module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.io.html#module-mfm.io.pdb">mfm.io.pdb module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mfm.io.html#requirements">Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.io.html#revisions">Revisions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.io.html#notes">Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.io.html#references">References</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.io.html#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.io.html#module-mfm.io.photons">mfm.io.photons module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mfm.io.html#id2">Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.io.html#id3">Revisions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.io.html#id4">Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.io.html#id5">References</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.io.html#id6">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.io.html#module-mfm.io.sdtfile">mfm.io.sdtfile module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mfm.io.html#id7">Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.io.html#id8">Revisions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.io.html#id9">Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.io.html#id10">References</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.io.html#id11">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.io.html#module-mfm.io.tttr">mfm.io.tttr module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.io.html#module-mfm.io.widgets">mfm.io.widgets module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.io.html#module-mfm.io">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mfm.math.html">mfm.math package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mfm.math.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mfm.math.functions.html">mfm.math.functions package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.math.functions.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.math.functions.html#mfm-math-functions-datatools-module">mfm.math.functions.datatools module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.math.functions.html#module-mfm.math.functions.distributions">mfm.math.functions.distributions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.math.functions.html#module-mfm.math.functions.rdf">mfm.math.functions.rdf module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.math.functions.html#module-mfm.math.functions">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.math.linalg.html">mfm.math.linalg package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.math.linalg.html#module-mfm.math.linalg">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.math.rand.html">mfm.math.rand package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.math.rand.html#module-mfm.math.rand">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.math.reaction.html">mfm.math.reaction package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.math.reaction.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.math.reaction.html#module-mfm.math.reaction.continuous">mfm.math.reaction.continuous module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.math.reaction.html#module-mfm.math.reaction.stochastic">mfm.math.reaction.stochastic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.math.reaction.html#module-mfm.math.reaction">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.math.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.math.html#module-mfm.math.signal">mfm.math.signal module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.math.html#module-mfm.math">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mfm.plots.html">mfm.plots package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mfm.plots.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.plots.html#module-mfm.plots.MolView">mfm.plots.MolView module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.plots.html#mfm-plots-distance-module">mfm.plots.distance module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.plots.html#module-mfm.plots.fitinfo">mfm.plots.fitinfo module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.plots.html#module-mfm.plots.global_fit">mfm.plots.global_fit module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.plots.html#module-mfm.plots.global_tcspc">mfm.plots.global_tcspc module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.plots.html#module-mfm.plots.lineplot">mfm.plots.lineplot module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.plots.html#module-mfm.plots.parameter_scan">mfm.plots.parameter_scan module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.plots.html#module-mfm.plots.plot2d">mfm.plots.plot2d module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.plots.html#module-mfm.plots.plotbase">mfm.plots.plotbase module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.plots.html#module-mfm.plots.proteinMC">mfm.plots.proteinMC module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.plots.html#module-mfm.plots">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mfm.structure.html">mfm.structure package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mfm.structure.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mfm.structure.potential.html">mfm.structure.potential package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.structure.potential.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.structure.potential.html#module-mfm.structure.potential.cPotentials">mfm.structure.potential.cPotentials module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.structure.potential.html#module-mfm.structure.potential.potentials">mfm.structure.potential.potentials module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.structure.potential.html#module-mfm.structure.potential">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.structure.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.structure.html#mfm-structure-cstructure-module">mfm.structure.cStructure module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.structure.html#module-mfm.structure.cluster">mfm.structure.cluster module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.structure.html#module-mfm.structure.labeled_structure">mfm.structure.labeled_structure module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.structure.html#module-mfm.structure.protein">mfm.structure.protein module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.structure.html#module-mfm.structure.structure">mfm.structure.structure module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.structure.html#module-mfm.structure.trajectory">mfm.structure.trajectory module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.structure.html#module-mfm.structure">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mfm.tools.html">mfm.tools package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mfm.tools.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mfm.tools.modelling.html">mfm.tools.modelling package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.tools.modelling.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.tools.modelling.html#module-mfm.tools.modelling.potential_enery">mfm.tools.modelling.potential_enery module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.tools.modelling.html#module-mfm.tools.modelling.screening">mfm.tools.modelling.screening module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.tools.modelling.html#module-mfm.tools.modelling.trajectory">mfm.tools.modelling.trajectory module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.tools.modelling.html#mfm-tools-modelling-transfer-desktop-c0n6tor-module">mfm.tools.modelling.transfer-DESKTOP-C0N6TOR module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.tools.modelling.html#mfm-tools-modelling-transfer-module">mfm.tools.modelling.transfer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.tools.modelling.html#module-mfm.tools.modelling">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mfm.tools.tttr.html">mfm.tools.tttr package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mfm.tools.tttr.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.tools.tttr.html#module-mfm.tools.tttr.convert">mfm.tools.tttr.convert module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.tools.tttr.html#module-mfm.tools.tttr.correlate">mfm.tools.tttr.correlate module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.tools.tttr.html#module-mfm.tools.tttr.decay_histogram">mfm.tools.tttr.decay_histogram module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mfm.tools.tttr.html#module-mfm.tools.tttr">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.tools.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.tools.html#mfm-tools-dye-diffusion-module">mfm.tools.dye_diffusion module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.tools.html#mfm-tools-f-calculator-module">mfm.tools.f_calculator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.tools.html#mfm-tools-fret-lines-module">mfm.tools.fret_lines module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.tools.html#mfm-tools-kappa2dist-module">mfm.tools.kappa2dist module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.tools.html#mfm-tools-pdb2labeling-module">mfm.tools.pdb2labeling module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.tools.html#mfm-tools-tau2r-module">mfm.tools.tau2r module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.tools.html#module-mfm.tools">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mfm.ui.html">mfm.ui package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mfm.ui.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.ui.html#mfm-ui-rescource-rc-module">mfm.ui.rescource_rc module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.ui.html#module-mfm.ui">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mfm.widgets.html">mfm.widgets package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mfm.widgets.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.widgets.html#module-mfm.widgets.configuration_editor">mfm.widgets.configuration_editor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.widgets.html#mfm-widgets-downloader-module">mfm.widgets.downloader module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.widgets.html#module-mfm.widgets.widgets">mfm.widgets.widgets module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.widgets.html#module-mfm.widgets">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mfm.common">
+<span id="mfm-common-module"></span><h2>mfm.common module<a class="headerlink" href="#module-mfm.common" title="Permalink to this headline">¶</a></h2>
+<p>common.py</p>
+<p>Common data for all scripts in the SuRF-toolbox. In the common
+library all kinds of constants are defined. For instance colors
+in plots but also constants as the Avogadros number.</p>
+<dl class="data">
+<dt id="mfm.common.CHARGE_DICT">
+<code class="sig-prename descclassname">mfm.common.</code><code class="sig-name descname">CHARGE_DICT</code><em class="property"> = {'ARG': 1.0, 'ASP': -1.0, 'CTERM': -1.0, 'CYS': -1.0, 'GLU': -1.0, 'HIS': 1.0, 'LYS': 1.0, 'NTERM': 1.0, 'TYR': -1.0}</em><a class="headerlink" href="#mfm.common.CHARGE_DICT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default charges of amino acids</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="mfm.common.MAX_BONDS">
+<code class="sig-prename descclassname">mfm.common.</code><code class="sig-name descname">MAX_BONDS</code><em class="property"> = {'C': 4, 'H': 1, 'N': 4, 'O': 3, 'P': 5}</em><a class="headerlink" href="#mfm.common.MAX_BONDS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary of maximum number of bonds per atom type</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="mfm.common.MW_DICT">
+<code class="sig-prename descclassname">mfm.common.</code><code class="sig-name descname">MW_DICT</code><em class="property"> = {'ACE': 43.3, 'ALA': 89.09, 'ARG': 174.2, 'ASN': 132.12, 'ASP': 133.1, 'ASX': 132.61, 'CYS': 121.15, 'GLN': 146.15, 'GLU': 147.13, 'GLX': 146.64, 'GLY': 75.07, 'HIS': 155.16, 'ILE': 131.17, 'IVA': 85.12, 'LEU': 131.17, 'LYS': 146.19, 'MET': 149.21, 'PHE': 165.19, 'PRO': 115.13, 'SER': 105.09, 'STA': 157.15, 'THR': 119.12, 'TRP': 204.23, 'TYR': 181.19, 'VAL': 117.15}</em><a class="headerlink" href="#mfm.common.MW_DICT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary of amino acid molecular weights.  The the molecular weight of water
+should be subtracted for each peptide bond to calculate a protein molecular
+weight.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="mfm.common.MW_H2O">
+<code class="sig-prename descclassname">mfm.common.</code><code class="sig-name descname">MW_H2O</code><em class="property"> = 18.0</em><a class="headerlink" href="#mfm.common.MW_H2O" title="Permalink to this definition">¶</a></dt>
+<dd><p>Molecular weight of water</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="mfm.common.PKA_DICT">
+<code class="sig-prename descclassname">mfm.common.</code><code class="sig-name descname">PKA_DICT</code><em class="property"> = {'ARG': 12.0, 'ASP': 4.0, 'CTERM': 3.1, 'CYS': 8.5, 'GLU': 4.4, 'HIS': 6.5, 'LYS': 10.4, 'NTERM': 8.0, 'TYR': 10.0}</em><a class="headerlink" href="#mfm.common.PKA_DICT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary of pKa values and un-protonated charge state.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="mfm.common.TITR_ATOM">
+<code class="sig-prename descclassname">mfm.common.</code><code class="sig-name descname">TITR_ATOM</code><em class="property"> = {'ARG': 'CZ ', 'ASP': 'CG ', 'GLU': 'CD ', 'HIS': 'NE2', 'LYS': 'NZ ', 'TYR': 'OH '}</em><a class="headerlink" href="#mfm.common.TITR_ATOM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Atom on which to place charge in amino-acid</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="mfm.common.TITR_ATOM_COARSE">
+<code class="sig-prename descclassname">mfm.common.</code><code class="sig-name descname">TITR_ATOM_COARSE</code><em class="property"> = {'ARG': 'CB', 'ASP': 'CB', 'CYS': 'CB', 'GLU': 'CB', 'HIS': 'CB', 'LYS': 'CB', 'TYR': 'CB'}</em><a class="headerlink" href="#mfm.common.TITR_ATOM_COARSE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Atom on which to place charge in amino-acid (Coarse grained default position C-Beta)</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="mfm.common.VDW_DICT">
+<code class="sig-prename descclassname">mfm.common.</code><code class="sig-name descname">VDW_DICT</code><em class="property"> = {'Ac': 2.0, 'Ag': 1.72, 'Al': 2.0, 'Am': 2.0, 'Ar': 1.88, 'As': 1.85, 'At': 2.0, 'Au': 1.66, 'B': 2.0, 'Ba': 2.0, 'Be': 2.0, 'Bh': 2.0, 'Bi': 2.0, 'Bk': 2.0, 'Br': 1.85, 'C': 1.7, 'Ca': 2.0, 'Cd': 1.58, 'Ce': 2.0, 'Cf': 2.0, 'Cl': 1.75, 'Cm': 2.0, 'Co': 2.0, 'Cr': 2.0, 'Cs': 2.0, 'Cu': 1.4, 'Db': 2.0, 'Ds': 2.0, 'Dy': 2.0, 'Er': 2.0, 'Es': 2.0, 'Eu': 2.0, 'F': 1.47, 'Fe': 2.0, 'Fm': 2.0, 'Fr': 2.0, 'Ga': 1.87, 'Gd': 2.0, 'Ge': 2.0, 'H': 1.09, 'He': 1.4, 'Hf': 2.0, 'Hg': 1.55, 'Ho': 2.0, 'Hs': 2.0, 'I': 1.98, 'In': 1.93, 'Ir': 2.0, 'K': 2.75, 'Kr': 2.02, 'La': 2.0, 'Li': 1.82, 'Lr': 2.0, 'Lu': 2.0, 'Md': 2.0, 'Mg': 1.73, 'Mn': 2.0, 'Mo': 2.0, 'Mt': 2.0, 'N': 1.55, 'Na': 2.27, 'Nb': 2.0, 'Nd': 2.0, 'Ne': 1.54, 'Ni': 1.63, 'No': 2.0, 'Np': 2.0, 'O': 1.52, 'Os': 2.0, 'P': 1.8, 'Pa': 2.0, 'Pb': 2.02, 'Pd': 1.63, 'Pm': 2.0, 'Po': 2.0, 'Pr': 2.0, 'Pt': 1.72, 'Pu': 2.0, 'Ra': 2.0, 'Rb': 2.0, 'Re': 2.0, 'Rf': 2.0, 'Rh': 2.0, 'Rn': 2.0, 'Ru': 2.0, 'S': 1.8, 'Sb': 2.0, 'Sc': 2.0, 'Se': 1.9, 'Sg': 2.0, 'Si': 2.1, 'Sm': 2.0, 'Sn': 2.17, 'Sr': 2.0, 'Ta': 2.0, 'Tb': 2.0, 'Tc': 2.0, 'Te': 2.06, 'Th': 2.0, 'Ti': 2.0, 'Tl': 1.96, 'Tm': 2.0, 'U': 1.86, 'V': 2.0, 'W': 2.0, 'Xe': 2.16, 'Y': 2.0, 'Yb': 2.0, 'Zn': 1.39, 'Zr': 2.0}</em><a class="headerlink" href="#mfm.common.VDW_DICT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary of van der Waal radii
+CR - coarse grained Carbon/Calpha</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="mfm.common.atom_weights">
+<code class="sig-prename descclassname">mfm.common.</code><code class="sig-name descname">atom_weights</code><em class="property"> = {'Ac': 227.0, 'Ag': 107.868, 'Al': 26.982, 'Am': 243.0, 'Ar': 39.948, 'As': 74.922, 'At': 210.0, 'Au': 196.967, 'B': 10.811, 'Ba': 137.327, 'Be': 9.012, 'Bh': 264.0, 'Bi': 208.98, 'Bk': 247.0, 'Br': 79.904, 'C': 12.011, 'Ca': 40.078, 'Cd': 112.411, 'Ce': 140.116, 'Cf': 251.0, 'Cl': 35.453, 'Cm': 247.0, 'Co': 58.933, 'Cr': 51.996, 'Cs': 132.905, 'Cu': 63.546, 'Db': 262.0, 'Ds': 271.0, 'Dy': 162.5, 'Er': 167.26, 'Es': 252.0, 'Eu': 151.964, 'F': 18.998, 'Fe': 55.845, 'Fm': 257.0, 'Fr': 223.0, 'Ga': 69.723, 'Gd': 157.25, 'Ge': 72.61, 'H': 1.008, 'He': 4.003, 'Hf': 178.49, 'Hg': 200.59, 'Ho': 164.93, 'Hs': 269.0, 'I': 126.904, 'In': 114.818, 'Ir': 192.217, 'K': 39.098, 'Kr': 83.8, 'La': 138.906, 'Li': 6.941, 'Lr': 262.0, 'Lu': 174.967, 'Md': 258.0, 'Mg': 24.305, 'Mn': 54.938, 'Mo': 95.94, 'Mt': 268.0, 'N': 14.007, 'Na': 22.991, 'Nb': 92.906, 'Nd': 144.24, 'Ne': 20.18, 'Ni': 58.693, 'No': 259.0, 'Np': 237.0, 'O': 15.999, 'Os': 190.23, 'P': 30.974, 'Pa': 231.036, 'Pb': 207.2, 'Pd': 106.42, 'Pm': 145.0, 'Po': 210.0, 'Pr': 140.908, 'Pt': 195.078, 'Pu': 244.0, 'Ra': 226.0, 'Rb': 85.468, 'Re': 186.207, 'Rf': 261.0, 'Rh': 102.906, 'Rn': 222.0, 'Ru': 101.07, 'S': 32.066, 'Sb': 121.76, 'Sc': 44.956, 'Se': 78.96, 'Sg': 266.0, 'Si': 28.086, 'Sm': 150.36, 'Sn': 118.71, 'Sr': 87.62, 'Ta': 180.948, 'Tb': 158.925, 'Tc': 98.0, 'Te': 127.6, 'Th': 232.038, 'Ti': 47.867, 'Tl': 204.383, 'Tm': 168.934, 'U': 238.029, 'V': 50.942, 'W': 183.84, 'Xe': 131.29, 'Y': 88.906, 'Yb': 173.04, 'Zn': 65.39, 'Zr': 91.224}</em><a class="headerlink" href="#mfm.common.atom_weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Atomic weights (<a class="reference external" href="http://www.chem.qmul.ac.uk/iupac/AtWt/">http://www.chem.qmul.ac.uk/iupac/AtWt/</a> &amp; PyMol)</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="mfm.common.quencher_names">
+<code class="sig-prename descclassname">mfm.common.</code><code class="sig-name descname">quencher_names</code><em class="property"> = dict_keys(['TRP', 'MET', 'TYR', 'HIS', 'PRO'])</em><a class="headerlink" href="#mfm.common.quencher_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Definition of quenching amino-acids and quenching atoms of quencher</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.curve">
+<span id="mfm-curve-module"></span><h2>mfm.curve module<a class="headerlink" href="#module-mfm.curve" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.curve.Curve">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.curve.</code><code class="sig-name descname">Curve</code><span class="sig-paren">(</span><em class="sig-param">x=None</em>, <em class="sig-param">y=None</em>, <em class="sig-param">copy_array=True</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/curve.html#Curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.curve.Curve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.base.Base</span></code></p>
+<dl class="method">
+<dt id="mfm.curve.Curve.cdf">
+<em class="property">property </em><code class="sig-name descname">cdf</code><a class="headerlink" href="#mfm.curve.Curve.cdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cumulative sum of function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="../user_documentation/api/fit.html#mfm.curve.Curve" title="mfm.curve.Curve"><code class="xref py py-class docutils literal notranslate"><span class="pre">Curve</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.curve.Curve.dx">
+<em class="property">property </em><code class="sig-name descname">dx</code><a class="headerlink" href="#mfm.curve.Curve.dx" title="Permalink to this definition">¶</a></dt>
+<dd><p>The derivative of the x-axis</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.curve.Curve.from_dict">
+<code class="sig-name descname">from_dict</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">v: 'dict'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/curve.html#Curve.from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.curve.Curve.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.curve.Curve.fwhm">
+<em class="property">property </em><code class="sig-name descname">fwhm</code><a class="headerlink" href="#mfm.curve.Curve.fwhm" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.curve.Curve.normalize">
+<code class="sig-name descname">normalize</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">mode: 'str' = 'max'</em>, <em class="sig-param">curve: 'mfm.curve.Curve' = None</em>, <em class="sig-param">inplace: 'bool' = True</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/curve.html#Curve.normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.curve.Curve.normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates a scaling parameter for the Curve object and (optionally) scales the Curve object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mode</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – either ‘max’ to normalize the maximum to one, or ‘sum’ to normalize to sum to one</p></li>
+<li><p><strong>curve</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="../user_documentation/api/fit.html#mfm.curve.Curve" title="mfm.curve.Curve"><code class="xref py py-class docutils literal notranslate"><span class="pre">Curve</span></code></a>]) – </p></li>
+<li><p><strong>inplace</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – if True the Curve object is modified in place. Otherwise, only the scaling parameter</p></li>
+</ul>
+</dd>
+</dl>
+<p>is returned
+:rtype: <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>
+:return: the parameter that scales the Curve object</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.curve.Curve.to_dict">
+<code class="sig-name descname">to_dict</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'dict'<a class="reference internal" href="../_modules/mfm/curve.html#Curve.to_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.curve.Curve.to_dict" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.curve.Curve.to_json">
+<code class="sig-name descname">to_json</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">indent: 'int' = 4</em>, <em class="sig-param">sort_keys: 'bool' = True</em><span class="sig-paren">)</span> &#x2192; 'str'<a class="reference internal" href="../_modules/mfm/curve.html#Curve.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.curve.Curve.to_json" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.curve.Curve.to_yaml">
+<code class="sig-name descname">to_yaml</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'str'<a class="reference internal" href="../_modules/mfm/curve.html#Curve.to_yaml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.curve.Curve.to_yaml" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.curve.Curve.x">
+<em class="property">property </em><code class="sig-name descname">x</code><a class="headerlink" href="#mfm.curve.Curve.x" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.curve.Curve.y">
+<em class="property">property </em><code class="sig-name descname">y</code><a class="headerlink" href="#mfm.curve.Curve.y" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.parameter">
+<span id="mfm-parameter-module"></span><h2>mfm.parameter module<a class="headerlink" href="#module-mfm.parameter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.parameter.Parameter">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.parameter.</code><code class="sig-name descname">Parameter</code><span class="sig-paren">(</span><em class="sig-param">value=1.0</em>, <em class="sig-param">link=None</em>, <em class="sig-param">lb=-inf</em>, <em class="sig-param">ub=inf</em>, <em class="sig-param">bounds_on=False</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/parameter.html#Parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.parameter.Parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.base.Base</span></code></p>
+<dl class="method">
+<dt id="mfm.parameter.Parameter.bounds">
+<em class="property">property </em><code class="sig-name descname">bounds</code><a class="headerlink" href="#mfm.parameter.Parameter.bounds" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.parameter.Parameter.bounds_on">
+<em class="property">property </em><code class="sig-name descname">bounds_on</code><a class="headerlink" href="#mfm.parameter.Parameter.bounds_on" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.parameter.Parameter.from_dict">
+<code class="sig-name descname">from_dict</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">v: 'dict'</em><span class="sig-paren">)</span> &#x2192; 'None'<a class="reference internal" href="../_modules/mfm/parameter.html#Parameter.from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.parameter.Parameter.from_dict" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.parameter.Parameter.get_instances">
+<em class="property">classmethod </em><code class="sig-name descname">get_instances</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; 'List[Parameter]'<a class="reference internal" href="../_modules/mfm/parameter.html#Parameter.get_instances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.parameter.Parameter.get_instances" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="#mfm.parameter.Parameter" title="mfm.parameter.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.parameter.Parameter.is_linked">
+<em class="property">property </em><code class="sig-name descname">is_linked</code><a class="headerlink" href="#mfm.parameter.Parameter.is_linked" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.parameter.Parameter.link">
+<em class="property">property </em><code class="sig-name descname">link</code><a class="headerlink" href="#mfm.parameter.Parameter.link" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.parameter.Parameter.to_dict">
+<code class="sig-name descname">to_dict</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'dict'<a class="reference internal" href="../_modules/mfm/parameter.html#Parameter.to_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.parameter.Parameter.to_dict" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.parameter.Parameter.value">
+<em class="property">property </em><code class="sig-name descname">value</code><a class="headerlink" href="#mfm.parameter.Parameter.value" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.parameter.ParameterGroup">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.parameter.</code><code class="sig-name descname">ParameterGroup</code><span class="sig-paren">(</span><em class="sig-param">parameters=None</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/parameter.html#ParameterGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.parameter.ParameterGroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.base.Base</span></code></p>
+<dl class="method">
+<dt id="mfm.parameter.ParameterGroup.append">
+<code class="sig-name descname">append</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">parameter: 'Parameter'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/parameter.html#ParameterGroup.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.parameter.ParameterGroup.append" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.parameter.ParameterGroup.clear">
+<code class="sig-name descname">clear</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/parameter.html#ParameterGroup.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.parameter.ParameterGroup.clear" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.parameter.ParameterGroup.parameter_names">
+<em class="property">property </em><code class="sig-name descname">parameter_names</code><a class="headerlink" href="#mfm.parameter.ParameterGroup.parameter_names" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.parameter.ParameterGroup.parameters">
+<em class="property">property </em><code class="sig-name descname">parameters</code><a class="headerlink" href="#mfm.parameter.ParameterGroup.parameters" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="#mfm.parameter.Parameter" title="mfm.parameter.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.parameter.ParameterGroup.values">
+<em class="property">property </em><code class="sig-name descname">values</code><a class="headerlink" href="#mfm.parameter.ParameterGroup.values" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>mfm.fluorescence.tcspc.tcspc &#8212; ChiSurf  documentation</title>
+    <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary">
+<form action="../../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
+      
+  <h1>Source code for mfm.fluorescence.tcspc.tcspc</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">sqrt</span>
+
+<span class="kn">import</span> <span class="nn">numba</span> <span class="k">as</span> <span class="nn">nb</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">mfm</span>
+<span class="kn">import</span> <span class="nn">mfm.math</span>
+<span class="kn">import</span> <span class="nn">mfm.math.datatools</span>
+
+
+<div class="viewcode-block" id="get_scale_bg"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.tcspc.html#mfm.fluorescence.tcspc.tcspc.get_scale_bg">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_scale_bg</span><span class="p">(</span>
+        <span class="n">fit</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">data_weight</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">bg</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">stop</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;This function calculates a scaling factor for a given</span>
+<span class="sd">    experimental histogram and model function. The scaling-factor</span>
+<span class="sd">    scales the model function that the weighted photon counts</span>
+<span class="sd">    agree</span>
+
+<span class="sd">    :param fit:</span>
+<span class="sd">    :param data:</span>
+<span class="sd">    :param data_weight: </span>
+<span class="sd">    :param bg:</span>
+<span class="sd">    :param start:</span>
+<span class="sd">    :param stop:</span>
+<span class="sd">    :return: scaling factor (float)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">data_weight</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">fit</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span>
+
+    <span class="n">w2</span> <span class="o">=</span> <span class="n">w</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">d_bg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">d</span> <span class="o">-</span> <span class="n">bg</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">sumnom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">d_bg</span> <span class="o">*</span> <span class="n">f</span><span class="p">,</span> <span class="n">w2</span><span class="p">)</span>
+    <span class="n">sumdenom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">f</span> <span class="o">*</span> <span class="n">f</span><span class="p">,</span> <span class="n">w2</span><span class="p">)</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">sumnom</span> <span class="o">/</span> <span class="n">sumdenom</span>
+
+    <span class="k">return</span> <span class="n">scale</span></div>
+
+
+<div class="viewcode-block" id="bin_lifetime_spectrum"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.tcspc.html#mfm.fluorescence.tcspc.tcspc.bin_lifetime_spectrum">[docs]</a><span class="k">def</span> <span class="nf">bin_lifetime_spectrum</span><span class="p">(</span>
+        <span class="n">lifetime_spectrum</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">n_lifetimes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">discriminate</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">discriminator</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Takes a interleaved lifetime spectrum</span>
+
+<span class="sd">    :param lifetime_spectrum: interleaved lifetime spectrum</span>
+<span class="sd">    :param n_lifetimes:</span>
+<span class="sd">    :param discriminate:</span>
+<span class="sd">    :param discriminator:</span>
+<span class="sd">    :return: lifetime_spectrum</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">amplitudes</span><span class="p">,</span> <span class="n">lifetimes</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">datatools</span><span class="o">.</span><span class="n">interleaved_to_two_columns</span><span class="p">(</span><span class="n">lifetime_spectrum</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">lt</span><span class="p">,</span> <span class="n">am</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">datatools</span><span class="o">.</span><span class="n">histogram1D</span><span class="p">(</span><span class="n">lifetimes</span><span class="p">,</span> <span class="n">amplitudes</span><span class="p">,</span> <span class="n">n_lifetimes</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">discriminate</span> <span class="ow">and</span> <span class="n">discriminator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">lt</span><span class="p">,</span> <span class="n">am</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">datatools</span><span class="o">.</span><span class="n">discriminate</span><span class="p">(</span><span class="n">lt</span><span class="p">,</span> <span class="n">am</span><span class="p">,</span> <span class="n">discriminator</span><span class="p">)</span>
+    <span class="n">binned_lifetime_spectrum</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">datatools</span><span class="o">.</span><span class="n">two_column_to_interleaved</span><span class="p">(</span><span class="n">am</span><span class="p">,</span> <span class="n">lt</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">binned_lifetime_spectrum</span></div>
+
+
+<div class="viewcode-block" id="rescale_w_bg"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.tcspc.html#mfm.fluorescence.tcspc.tcspc.rescale_w_bg">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">rescale_w_bg</span><span class="p">(</span>
+        <span class="n">fit</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">decay</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">w_res</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">bg</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">stop</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">sumnom</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">sumdenom</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">):</span>
+        <span class="n">iwsq</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="p">(</span><span class="n">w_res</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">w_res</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="mf">1e-12</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">decay</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">sumnom</span> <span class="o">+=</span> <span class="n">fit</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">decay</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">bg</span><span class="p">)</span><span class="o">*</span><span class="n">iwsq</span>
+            <span class="n">sumdenom</span> <span class="o">+=</span> <span class="n">fit</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">fit</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">iwsq</span>
+    <span class="k">if</span> <span class="n">sumdenom</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">sumnom</span> <span class="o">/</span> <span class="n">sumdenom</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">):</span>
+        <span class="n">fit</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*=</span> <span class="n">scale</span>
+    <span class="k">return</span> <span class="n">scale</span></div>
+
+
+<div class="viewcode-block" id="pddem"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.tcspc.html#mfm.fluorescence.tcspc.tcspc.pddem">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">pddem</span><span class="p">(</span><span class="n">decayA</span><span class="p">,</span> <span class="n">decayB</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">px</span><span class="p">,</span> <span class="n">pm</span><span class="p">,</span> <span class="n">pAB</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Electronic Energy Transfer within Asymmetric</span>
+<span class="sd">    Pairs of Fluorophores: Partial Donor-Donor</span>
+<span class="sd">    Energy Migration (PDDEM)</span>
+<span class="sd">    Stanislav Kalinin</span>
+<span class="sd">    http://www.diva-portal.org/smash/get/diva2:143149/FULLTEXT01</span>
+
+
+<span class="sd">    Kalinin, S.V., Molotkovsky, J.G., and Johansson, L.B.</span>
+<span class="sd">    Partial Donor-Donor Energy Migration (PDDEM) as a Fluorescence</span>
+<span class="sd">    Spectroscopic Tool for Measuring Distances in Biomacromolecules.</span>
+<span class="sd">    Spectrochim. Acta A, 58 (2002) 1087-1097.</span>
+
+<span class="sd">    -&gt; same results as Stas pddem code (pddem_t.c)</span>
+
+<span class="sd">    :param decayA: decay A in form of [ampl lifetime, apml, lifetime...]</span>
+<span class="sd">    :param decayB: decay B in form of [ampl lifetime, apml, lifetime...]</span>
+<span class="sd">    :param k: rates of energy transfer [kAB, kBA]</span>
+<span class="sd">    :param px: probabilities of excitation (pxA, pxB)</span>
+<span class="sd">    :param pm: probabilities of emission (pmA, pmB)</span>
+<span class="sd">    :param pAB: pure AB [0., 0]</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#return _tcspc.pddem(decayA, decayB, k, px, pm, pAB)</span>
+
+    <span class="n">nA</span> <span class="o">=</span> <span class="n">decayA</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">nB</span> <span class="o">=</span> <span class="n">decayB</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="n">kAB</span><span class="p">,</span> <span class="n">kBA</span> <span class="o">=</span> <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">pxA</span><span class="p">,</span> <span class="n">pxB</span> <span class="o">=</span> <span class="n">px</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">px</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">pmA</span><span class="p">,</span> <span class="n">pmB</span> <span class="o">=</span> <span class="n">pm</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pm</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1">#tmp arrays for the return arguments</span>
+    <span class="n">lenR</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">nA</span> <span class="o">*</span> <span class="n">nB</span> <span class="o">+</span> <span class="n">nA</span> <span class="o">+</span> <span class="n">nB</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">lenR</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">tau</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">lenR</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+    <span class="c1">####  PDDEM-calculations ####</span>
+    <span class="c1"># initial probabilities</span>
+    <span class="n">piA</span> <span class="o">=</span> <span class="p">(</span><span class="n">pAB</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">pAB</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">pAB</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">pAB</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">piB</span> <span class="o">=</span> <span class="p">(</span><span class="n">pAB</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">pAB</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">pAB</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">pAB</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">piAB</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">piA</span> <span class="o">-</span> <span class="n">piB</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">iA</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nA</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">iB</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nB</span><span class="p">):</span>
+            <span class="n">cA</span> <span class="o">=</span> <span class="n">decayA</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">iA</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">cA</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">cB</span> <span class="o">=</span> <span class="n">decayB</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">iB</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">cB</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">tauA</span> <span class="o">=</span> <span class="n">decayA</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">iA</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">tauA</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">itauA</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">tauA</span>
+
+            <span class="n">tauB</span> <span class="o">=</span> <span class="n">decayB</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">iB</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">tauB</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">itauB</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">tauB</span>
+
+            <span class="n">root</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">((</span><span class="n">itauA</span> <span class="o">-</span> <span class="n">itauB</span> <span class="o">+</span> <span class="n">kAB</span> <span class="o">-</span> <span class="n">kBA</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">kAB</span> <span class="o">*</span> <span class="n">kBA</span><span class="p">)</span>
+            <span class="n">l1</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">itauA</span> <span class="o">-</span> <span class="n">itauB</span> <span class="o">-</span> <span class="n">kAB</span> <span class="o">-</span> <span class="n">kBA</span> <span class="o">+</span> <span class="n">root</span><span class="p">)</span>
+            <span class="n">l2</span> <span class="o">=</span> <span class="n">l1</span> <span class="o">-</span> <span class="n">root</span>
+
+            <span class="n">ci</span> <span class="o">=</span> <span class="p">(</span><span class="n">pmA</span> <span class="o">*</span> <span class="p">(</span><span class="n">pxA</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">l2</span> <span class="o">-</span> <span class="n">itauA</span> <span class="o">-</span> <span class="n">kAB</span><span class="p">)</span> <span class="o">+</span> <span class="n">pxB</span> <span class="o">*</span> <span class="n">kBA</span><span class="p">)</span> <span class="o">+</span> <span class="n">pmB</span> <span class="o">*</span> <span class="p">(</span><span class="n">pxA</span> <span class="o">*</span> <span class="n">kAB</span> <span class="o">+</span> <span class="n">pxB</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">l2</span> <span class="o">-</span> <span class="n">itauB</span> <span class="o">-</span> <span class="n">kBA</span><span class="p">)))</span>
+            <span class="n">ci</span> <span class="o">*=</span> <span class="n">piAB</span> <span class="o">*</span> <span class="n">cA</span> <span class="o">*</span> <span class="n">cB</span> <span class="o">/</span> <span class="p">(</span><span class="n">l1</span> <span class="o">-</span> <span class="n">l2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ci</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-10</span><span class="p">:</span>
+                <span class="n">c</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">ci</span>
+                <span class="n">tau</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="n">l1</span>
+                <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">ci</span> <span class="o">=</span> <span class="p">(</span><span class="n">pmA</span> <span class="o">*</span> <span class="p">(</span><span class="n">pxA</span> <span class="o">*</span> <span class="p">(</span><span class="n">l1</span> <span class="o">+</span> <span class="n">itauA</span> <span class="o">+</span> <span class="n">kAB</span><span class="p">)</span> <span class="o">-</span> <span class="n">pxB</span> <span class="o">*</span> <span class="n">kBA</span><span class="p">)</span> <span class="o">+</span> <span class="n">pmB</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">pxA</span> <span class="o">*</span> <span class="n">kAB</span> <span class="o">+</span> <span class="n">pxB</span> <span class="o">*</span> <span class="p">(</span><span class="n">l1</span> <span class="o">+</span> <span class="n">itauB</span> <span class="o">+</span> <span class="n">kBA</span><span class="p">)))</span>
+            <span class="n">ci</span> <span class="o">*=</span> <span class="n">piAB</span> <span class="o">*</span> <span class="n">cA</span> <span class="o">*</span> <span class="n">cB</span> <span class="o">/</span> <span class="p">(</span><span class="n">l1</span> <span class="o">-</span> <span class="n">l2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ci</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-10</span><span class="p">:</span>
+                <span class="n">c</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">ci</span>
+                <span class="n">tau</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="n">l2</span>
+                <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1">#  adding pureA, pureB</span>
+    <span class="k">for</span> <span class="n">iA</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nA</span><span class="p">):</span>
+        <span class="n">ci</span> <span class="o">=</span> <span class="n">pmA</span> <span class="o">*</span> <span class="n">pxA</span> <span class="o">*</span> <span class="n">piA</span> <span class="o">*</span> <span class="n">decayA</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">iA</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ci</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-10</span><span class="p">:</span>
+            <span class="n">c</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">ci</span>
+            <span class="n">tau</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">decayA</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">iA</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">iB</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nB</span><span class="p">):</span>
+        <span class="n">ci</span> <span class="o">=</span> <span class="n">pmB</span> <span class="o">*</span> <span class="n">pxB</span> <span class="o">*</span> <span class="n">piB</span> <span class="o">*</span> <span class="n">decayB</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">iB</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ci</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-10</span><span class="p">:</span>
+            <span class="n">c</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">ci</span>
+            <span class="n">tau</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">decayB</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">iB</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">d</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">d</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">tau</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">d</span></div>
+
+
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

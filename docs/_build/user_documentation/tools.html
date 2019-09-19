@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tools &#8212; ChiSurf  documentation</title>
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Tutorials" href="tutorials.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="use_cases.html">Use cases</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Tools</a><ul>
+<li><a class="reference internal" href="#time-resolved-fluorescence">Time-resolved fluorescence</a><ul>
+<li><a class="reference internal" href="#dye-diffusion">Dye-diffusion</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fret">FRET</a><ul>
+<li><a class="reference internal" href="#fret-lines">FRET-lines</a></li>
+<li><a class="reference internal" href="#transfer-calculator">Transfer-calculator</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#anisotropy">Anisotropy</a><ul>
+<li><a class="reference internal" href="#kappa2-distributions">Kappa2-Distributions</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#structural-models">Structural-Models</a><ul>
+<li><a class="reference internal" href="#filter-structures">Filter-Structures</a></li>
+<li><a class="reference internal" href="#structure2transfer">Structure2Transfer</a></li>
+<li><a class="reference internal" href="#trajectory-converter">Trajectory-converter</a></li>
+<li><a class="reference internal" href="#potential-calculation">Potential-calculation</a></li>
+<li><a class="reference internal" href="#labeling-file-generation">Labeling-file generation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="introduction.html" title="Previous Chapter: Introduction"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Introduction</span>
+    </a>
+  </li>
+  <li>
+    <a href="tutorials.html" title="Next Chapter: Tutorials"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Tutorials &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/user_documentation/tools.rst.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
+<li><a class="reference internal" href="#">Tools</a><ul>
+<li><a class="reference internal" href="#time-resolved-fluorescence">Time-resolved fluorescence</a><ul>
+<li><a class="reference internal" href="#dye-diffusion">Dye-diffusion</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fret">FRET</a><ul>
+<li><a class="reference internal" href="#fret-lines">FRET-lines</a></li>
+<li><a class="reference internal" href="#transfer-calculator">Transfer-calculator</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#anisotropy">Anisotropy</a><ul>
+<li><a class="reference internal" href="#kappa2-distributions">Kappa2-Distributions</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#structural-models">Structural-Models</a><ul>
+<li><a class="reference internal" href="#filter-structures">Filter-Structures</a></li>
+<li><a class="reference internal" href="#structure2transfer">Structure2Transfer</a></li>
+<li><a class="reference internal" href="#trajectory-converter">Trajectory-converter</a></li>
+<li><a class="reference internal" href="#potential-calculation">Potential-calculation</a></li>
+<li><a class="reference internal" href="#labeling-file-generation">Labeling-file generation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <li>
+    <a href="introduction.html" title="Previous Chapter: Introduction"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Introduction</span>
+    </a>
+  </li>
+  <li>
+    <a href="tutorials.html" title="Next Chapter: Tutorials"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Tutorials &raquo;</span>
+    </a>
+  </li>
+<div id="sourcelink">
+  <a href="../_sources/user_documentation/tools.rst.txt"
+     rel="nofollow">Source</a>
+</div>
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
+      
+  <div class="section" id="tools">
+<h1>Tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="time-resolved-fluorescence">
+<h2>Time-resolved fluorescence<a class="headerlink" href="#time-resolved-fluorescence" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="dye-diffusion">
+<h3>Dye-diffusion<a class="headerlink" href="#dye-diffusion" title="Permalink to this headline">¶</a></h3>
+<div class="align-center figure">
+<img alt="../_images/dye_diffusion.png" src="../_images/dye_diffusion.png" />
+</div>
+</div>
+</div>
+<div class="section" id="fret">
+<h2>FRET<a class="headerlink" href="#fret" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="fret-lines">
+<h3>FRET-lines<a class="headerlink" href="#fret-lines" title="Permalink to this headline">¶</a></h3>
+<div class="align-right figure" style="width: 50%">
+<img alt="../_images/fret_line_calculator.png" src="../_images/fret_line_calculator.png" />
+</div>
+</div>
+<div class="section" id="transfer-calculator">
+<h3>Transfer-calculator<a class="headerlink" href="#transfer-calculator" title="Permalink to this headline">¶</a></h3>
+<div class="align-right figure">
+<img alt="../_images/lifetime_calculator.png" src="../_images/lifetime_calculator.png" />
+</div>
+</div>
+</div>
+<div class="section" id="anisotropy">
+<h2>Anisotropy<a class="headerlink" href="#anisotropy" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="kappa2-distributions">
+<h3>Kappa2-Distributions<a class="headerlink" href="#kappa2-distributions" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="structural-models">
+<h2>Structural-Models<a class="headerlink" href="#structural-models" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="filter-structures">
+<h3>Filter-Structures<a class="headerlink" href="#filter-structures" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="structure2transfer">
+<h3>Structure2Transfer<a class="headerlink" href="#structure2transfer" title="Permalink to this headline">¶</a></h3>
+<div class="align-left figure" style="width: 10%">
+<img alt="../_images/structure2transfer.png" src="../_images/structure2transfer.png" />
+</div>
+<p>Structure2Transfer is a small tool that calculates for a given set of PDB-files the distance and
+the orientation factor kappa2. No fluorophore simulation is performed. Therefore the flurophores
+have to be part to the analyzed structures. You can access the tool Structure2Transfer as depicted below.</p>
+<div class="align-right figure">
+<img alt="../_images/structure2transfer_fig1.png" src="../_images/structure2transfer_fig1.png" />
+</div>
+<p>After opening the tool the following window becomes visible. Now first open a PDB-file representative
+for the whole set. The program does not do any checking if atom numbers within the whole set differ.
+Therefore make sure all PDB-files are identical except for their coordinates. After opening the “Reference-structure”
+you will be able to define you Donor and Acceptor fluorophore. The atoms chosen in the “Donor” and “Acceptor”
+box define the dipole of the donor and the acceptor-fluorophore. If the dipole checkbox is not checked only the
+first atom in the donor and acceptor definition box will be used to calculate the distances.</p>
+<p>If the “Histogram” checkbox is checked histograms of the orientation factor kappa2, the donor- and acceptor
+distance and the FRET-rate will be plotted after the processing of the PDB-files. After processing of the
+PDB-files the obtained distances, orientation factors and FRET-rate files can be saved using the “save” button.
+The distance between the flurophores and the orientation factor is calculated as depicted above.</p>
+<p>To calculate the donor-acceptor distance in every structure, on each fluorophore, we chose two
+Cbeta-atoms on the beta-barrel, so that the connecting vector of the two atoms is a good approximation of
+the transition dipole. The distance between the middle points of the connecting vectors of the donor and
+acceptor is taken as the distance between the chromophores, <span class="math notranslate nohighlight">\(R_{DA}\)</span>. Table 2 lists out the
+detailed calculation steps. For every simulated structure, given the D-A distance and the orientation
+factor the FRET-rate was calculated according to <span class="math notranslate nohighlight">\({k_{FRET}} = \left( {{3 \mathord{\left/ {\vphantom {3 2}} \right. \kern-\nulldelimiterspace} 2}} \right) \cdot {\kappa ^2} \cdot \left( {{1 \mathord{\left/{\vphantom {1 {{\tau _0}}}} \right.\kern-\nulldelimiterspace} {{\tau _0}}}} \right) \cdot {\left( {{{{R_0}} \mathord{\left/{\vphantom {{{R_0}} {{R_{DA}}}}} \right.\kern-\nulldelimiterspace} {{R_{DA}}}}} \right)^6}\)</span>,
+in which <span class="math notranslate nohighlight">\(\tau_0\)</span> is 2.6ns and the Forster radius, R0, of GFP and mCherry is 52 Ang including <span class="math notranslate nohighlight">\(\kappa^2=2/3\)</span>.
+The steady-state FRET efficiency Ess was determined using <span class="math notranslate nohighlight">\({E_{ss}} = {{{k_{FRET}}} \mathord{\left/ {\vphantom {{{k_{FRET}}} {\left( {{k_{FRET}} + {k_0}} \right)}}} \right. \kern-\nulldelimiterspace} {\left( {{k_{FRET}} + {k_0}} \right)}}\)</span>.</p>
+<div class="align-center figure" style="width: 40%">
+<img alt="../_images/structure2transfer_fig2.png" src="../_images/structure2transfer_fig2.png" />
+</div>
+</div>
+<div class="section" id="trajectory-converter">
+<h3>Trajectory-converter<a class="headerlink" href="#trajectory-converter" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="potential-calculation">
+<h3>Potential-calculation<a class="headerlink" href="#potential-calculation" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="labeling-file-generation">
+<h3>Labeling-file generation<a class="headerlink" href="#labeling-file-generation" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
