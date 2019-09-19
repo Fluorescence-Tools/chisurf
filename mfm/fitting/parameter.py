@@ -212,7 +212,7 @@ class FittingParameterGroup(
     @property
     def aggregated_parameters(self):
         a = list()
-        for key, value in self.__dict__.items():
+        for value in self.__dict__.values():
             if isinstance(value, FittingParameterGroup):
                 a.append(value)
         return list(set(a))
