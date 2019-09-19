@@ -1,7 +1,7 @@
 import mfm
 
 
-def tcspc_set_linearization(
+def set_linearization(
         idx: int = None,
         curve_name: str = None,
 ):

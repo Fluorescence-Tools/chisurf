@@ -655,7 +655,7 @@ def average(
         weights=None,
         write=True,
         filename=None
-):
+) -> mfm.structure.structure.Structure:
     """
     Calculates weighted average of a list of structures.
     saves to filename if write is True

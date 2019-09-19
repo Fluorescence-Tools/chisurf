@@ -234,7 +234,7 @@ class CorrectionsWidget(
         idx = self.lin_select.selected_curve_index
         lin_name = self.lin_select.curve_name
         mfm.run(
-            "mfm.cmd.tcspc_set_linearization(%s, '%s')" %
+            "mfm.cmd.tcspc.set_linearization(%s, '%s')" %
             (idx, lin_name)
         )
 
