@@ -45,6 +45,7 @@ class ExperimentReader(
     def read(
             self,
             name: str = None,
+            *args,
             **kwargs
     ) -> mfm.base.Data:
         """

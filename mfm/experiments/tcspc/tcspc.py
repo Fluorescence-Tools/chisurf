@@ -20,7 +20,6 @@ class CsvTCSPC(object):
 
     def __init__(
             self,
-            *args,
             dt: float = 1.0,
             rep_rate: float = 1.0,
             is_jordi: bool = False,
@@ -28,9 +27,13 @@ class CsvTCSPC(object):
             g_factor: float = 1.0,
             rebin: Tuple[int, int] = (1, 1),
             matrix_columns: Tuple[int, int] = (0, 1),
+            *args,
             **kwargs
     ):
-        super(CsvTCSPC, self).__init__(*args, **kwargs)
+        super(CsvTCSPC, self).__init__(
+            *args,
+            **kwargs
+        )
         self.dt = dt
         self.excitation_repetition_rate = rep_rate
         self.is_jordi = is_jordi
@@ -40,7 +43,10 @@ class CsvTCSPC(object):
         self.matrix_columns = matrix_columns
 
 
-class CsvTCSPCWidget(CsvTCSPC, QtWidgets.QWidget):
+class CsvTCSPCWidget(
+    CsvTCSPC,
+    QtWidgets.QWidget
+):
 
     def __init__(self, **kwargs):
         QtWidgets.QWidget.__init__(self)
@@ -120,7 +126,10 @@ class TCSPCReader(ExperimentReader):
             *args,
             **kwargs
     ):
-        super(TCSPCReader, self).__init__(*args, **kwargs)
+        super(TCSPCReader, self).__init__(
+            *args,
+            **kwargs
+        )
         self.csvSetup = kwargs.pop('csvSetup', Csv(*args, **kwargs))
         self.skiprows = skiprows
         self.is_jordi = is_jordi
@@ -142,16 +151,22 @@ class TCSPCReader(ExperimentReader):
     @staticmethod
     def autofitrange(
             data,
+            fit_area: float = None,
             **kwargs
     ) -> Tuple[float, float]:
-        area = kwargs.get('area', mfm.settings.cs_settings['tcspc']['fit_area'])
+        if fit_area is None:
+            fit_area = mfm.settings.cs_settings['tcspc']['fit_area']
         threshold = kwargs.get('threshold', mfm.settings.cs_settings['tcspc']['fit_count_threshold'])
-        return fitrange(data.y, threshold, area)
+        return fitrange(
+            data.y,
+            threshold,
+            fit_area
+        )
 
     def read(
             self,
-            *args,
             filename: str = None,
+            *args,
             **kwargs
     ) -> mfm.experiments.data.DataCurveGroup:
         filename = filename
@@ -259,8 +274,8 @@ class TCSPCSetupWidget(
 
     def read(
             self,
-            *args,
             filename: str = None,
+            *args,
             **kwargs
     ) -> mfm.experiments.data.DataCurveGroup:
         if filename is None:
@@ -271,7 +286,11 @@ class TCSPCSetupWidget(
             )
         if os.path.isfile(filename):
             kwargs['filename'] = filename
-            return TCSPCReader.read(self, *args, **kwargs)
+            return TCSPCReader.read(
+                self,
+                *args,
+                **kwargs
+            )
         else:
             return None
 
@@ -298,19 +317,27 @@ class TCSPCSetupWidget(
         self.csvTCSPC = csvTCSPC
 
 
-class TcspcSDTWidget(QtWidgets.QWidget):
+class TcspcSDTWidget(
+    QtWidgets.QWidget
+):
 
     @property
-    def name(self) -> str:
+    def name(
+            self
+    ) -> str:
         return self.filename + " _ " + str(self.curve_number)
 
     @property
-    def n_curves(self) -> int:
+    def n_curves(
+            self
+    ) -> int:
         n_data_curves = len(self._sdt.data)
         return n_data_curves
 
     @property
-    def curve_number(self) -> int:
+    def curve_number(
+            self
+    ) -> int:
         """
         The number of the currently selected curve
         """
@@ -324,7 +351,9 @@ class TcspcSDTWidget(QtWidgets.QWidget):
         self.comboBox.setCurrentIndex(int(v))
 
     @property
-    def filename(self) -> str:
+    def filename(
+            self
+    ) -> str:
         return str(self.lineEdit.text())
 
     @filename.setter
@@ -347,7 +376,9 @@ class TcspcSDTWidget(QtWidgets.QWidget):
         return self._sdt
 
     @property
-    def times(self) -> np.array:
+    def times(
+            self
+    ) -> np.array:
         """
         The time-array in nano-seconds
         """
@@ -356,11 +387,19 @@ class TcspcSDTWidget(QtWidgets.QWidget):
 
     @property
     def ph_counts(self) -> np.array:
+        """
+        The currently selected fluorescence decay histogram as a numpy array
+        """
         y = self._sdt.data[self.curve_number][0]
         return np.array(y, dtype=np.float64)
 
     @property
-    def rep_rate(self) -> float:
+    def rep_rate(
+            self
+    ) -> float:
+        """
+        The repetition rate used during the experiment in MHz.
+        """
         return 1. / (self._sdt.measure_info[self.curve_number]['rep_t'] * 1e-3)[0]
 
     @rep_rate.setter
@@ -368,27 +407,38 @@ class TcspcSDTWidget(QtWidgets.QWidget):
         pass
 
     @property
-    def curve(self) -> mfm.experiments.data.DataCurve:
+    def curve(
+            self
+    ) -> mfm.experiments.data.DataCurve:
         y = self.ph_counts
         w = weights(y)
-        d = mfm.experiments.data.DataCurve(setup=self, x=self.times, y=y, ey=1. / w, name=self.name)
+        d = mfm.experiments.data.DataCurve(
+            setup=self,
+            x=self.times,
+            y=y,
+            ey=1. / w,
+            name=self.name
+        )
         return d
 
-    def onOpenFile(self, **kwargs):
+    def onOpenFile(
+            self,
+            filename: str = None,
+            curve_nbr: int = 0,
+            *args,
+            **kwargs
+    ):
 
-        fn = kwargs.get('filename', None)
-        if fn is None:
-            filename = mfm.widgets.get_filename('Open BH-SDT file', 'SDT-files (*.sdt)')
-            self.filename = filename
-            print(self.filename)
-        else:
-            self.filename = fn
-
-        self.curve_number = kwargs.get('curve_nbr', 0)
+        if filename is None:
+            filename = mfm.widgets.get_filename(
+                'Open BH-SDT file', 'SDT-files (*.sdt)'
+            )
+        self.filename = filename
+        self.curve_number = curve_nbr
         self.textBrowser.setPlainText(str(self.sdt.info))
 
-    def __init__(self, **kwargs):
-        super(TcspcSDTWidget, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(TcspcSDTWidget, self).__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -400,18 +450,28 @@ class TcspcSDTWidget(QtWidgets.QWidget):
         self.actionOpen_SDT_file.triggered.connect(self.onOpenFile)
 
 
-class TCSPCSetupSDTWidget(TCSPCReader, QtWidgets.QWidget):
+class TCSPCSetupSDTWidget(
+    TCSPCReader,
+    QtWidgets.QWidget
+):
 
     @property
-    def rep_rate(self):
+    def rep_rate(
+            self
+    ) -> float:
         return self.tcspcSDT.rep_rate
 
     @rep_rate.setter
-    def rep_rate(self, v):
+    def rep_rate(
+            self,
+            v
+    ):
         pass
 
     @property
-    def dt(self):
+    def dt(
+            self
+    ):
         dt = self.tcspcSDT.times[1] - self.tcspcSDT.times[0]
         return dt
 
@@ -588,8 +648,8 @@ class TCSPCSetupDummyWidget(QtWidgets.QWidget, TCSPCSetupDummy):
     ):
         pass
 
-    def __init__(self, **kwargs):
-        super(TCSPCSetupDummyWidget, self).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super(TCSPCSetupDummyWidget, self).__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
