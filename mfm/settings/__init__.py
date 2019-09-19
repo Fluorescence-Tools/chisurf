@@ -13,30 +13,31 @@ settings_file = os.path.join(
     package_directory, 'chisurf.yaml'
 )
 
-cs_settings = yaml.safe_load(
-    open(settings_file)
-)
+with open(settings_file) as fp:
+    cs_settings = yaml.safe_load(fp)
+
 gui = cs_settings['gui']
-colors = yaml.safe_load(
-    open(
+
+with open(
         os.path.join(
             package_directory,
             './gui/colors.yaml'
         )
-    )
-)
+) as fp:
+    colors = yaml.safe_load(fp)
 
 style_sheet_file = os.path.join(
     package_directory,
     './gui/styles/',
     gui['style_sheet']
 )
-structure_data = json.load(
-    open(os.path.join(
+
+with open(os.path.join(
         package_directory,
         './constants/structure.json')
-    )
-)
+) as fp:
+    structure_data = json.load(fp)
+
 parameter = cs_settings['parameter']
 fitting = cs_settings['fitting']
 
@@ -45,7 +46,6 @@ for setting in pyqtgraph_settings:
     pg.setConfigOption(setting, gui['plot']['pyqtgraph'][setting])
 
 verbose = cs_settings['verbose']
-
 __version__ = cs_settings['version']
 __name__ = cs_settings['name']
 working_path = ''
