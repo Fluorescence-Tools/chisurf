@@ -19,9 +19,9 @@ class FCS(ExperimentReader, CsvWidget):
     def __init__(
             self,
             experiment,
-            *args,
             use_header: bool = False,
             skiprows: int = 0,
+            *args,
             **kwargs
     ):
         super(FCS, self).__init__(
@@ -62,18 +62,23 @@ class FCS(ExperimentReader, CsvWidget):
         return d
 
 
-class FCSKristine(mfm.io.ascii.Csv, FCS):
+class FCSKristine(
+    mfm.io.ascii.Csv,
+    FCS
+):
 
     name = 'Kristine'
 
     def __init__(
             self,
             experiment,
+            *args,
             **kwargs
     ):
         FCS.__init__(
             self,
             experiment,
+            *args,
             **kwargs
         )
         QtWidgets.QWidget.__init__(self)
