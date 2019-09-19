@@ -3,7 +3,7 @@ from typing import List
 
 import os
 import numpy as np
-from collections import Iterable
+from collections.abc import Iterable
 
 #######################################################
 #        SETTINGS  & CONSTANTS                        #
