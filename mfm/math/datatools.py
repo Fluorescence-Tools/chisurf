@@ -146,7 +146,7 @@ def align_x_spacing(
         ry1 = ry[0]
         rx1 = rx[0]
         for i, rxi in enumerate(rx):
-            if j < len(tx)-1:               
+            if j < len(tx)-1:
                 if rxi > tx[j]:
                     rx2 = rxi
                     ry2 = ry[i]
@@ -164,7 +164,6 @@ def align_x_spacing(
                     rx1 = rx[i]
             else:
                 ny[j] = ry[i:].mean()
-                                        
     if cm == "r1":
         rx1 = nx
         ry1 = ny
@@ -174,36 +173,36 @@ def align_x_spacing(
         rx2 = nx
         ry2 = ny
         rx1 = tx
-        ry1 = ty            
+        ry1 = ty
     return (rx1, ry1), (rx2, ry2)
 
 
-def binCount(
+def bin_count(
         data,
-        binWidth: int = 16,
-        binMin: int = 0,
-        binMax: int = 4095
+        bin_width: int = 16,
+        bin_min: int = 0,
+        bin_max: int = 4095
 ):
     """
     Count number of occurrences of each value in array of non-negative ints.
 
     :param data: array_like
         1-dimensional input array
-    :param binWidth:
-    :param binMin:
-    :param binMax:
+    :param bin_width: the width of the bins
+    :param bin_min: The value of the smallest bin
+    :param bin_max: The value of the largest bin
     :return: As return values a numpy array with the bins and a array containing the counts is obtained.
     """
-    nMin = np.rint(binMin / binWidth)
-    nMax = np.rint(binMax / binWidth)
-    nBins = nMax - nMin
-    count = np.zeros(nBins, dtype=np.float32)
-    bins = np.arange(nMin, nMax, dtype=np.float32)
-    bins *= binWidth
+    n_min = np.rint(bin_min / bin_width)
+    n_max = np.rint(bin_max / bin_width)
+    n_bins = n_max - n_min
+    count = np.zeros(n_bins, dtype=np.float32)
+    bins = np.arange(n_min, n_max, dtype=np.float32)
+    bins *= bin_width
     for i in range(data.shape[0]):
-        bin = np.rint((data[i] / binWidth)) - nMin
-        if bin < nBins:
-            count[bin] += 1
+        bin_index = np.rint((data[i] / bin_width)) - n_min
+        if bin_index < n_bins:
+            count[bin_index] += 1
     return bins, count
 
 
@@ -284,45 +283,45 @@ def discriminate(values, weights, discriminator):
             n_v += 1
     return v_r[:n_v], w_r[:n_v]
 
-
-def histogram1D(
-        pos,
-        data=None,
-        nbPt: int = 100
-):
-    """
-    Calculates histogram of pos weighted by weights.
-
-    :param pos: 2Theta array
-    :param weights: array with intensities
-    :param bins: number of output bins
-    :param pixelSize_in_Pos: size of a pixels in 2theta
-    :param nthread: maximum number of thread to use. By default: maximum available.
-        One can also limit this with OMP_NUM_THREADS environment variable
-
-    :return 2theta, I, weighted histogram, raw histogram
-
-    https://github.com/kif/pyFAI/blob/master/src/histogram.pyx
-    """
-    if data is None:
-        data = np.ones(pos.shape[0], dtype=np.float64)
-    else:
-        assert pos.size == data.size
-    ctth = pos.astype("float64").flatten()
-    cdata = data.astype("float64").flatten()
-    outData = np.zeros(nbPt, dtype=np.float64)
-    outCount = np.zeros(nbPt, dtype=np.int64)
-    size = pos.size
-    tth_min = pos.min()
-    tth_max = pos.max()
-    idtth = (float(nbPt - 1)) / (tth_max - tth_min)
-    bin = 0
-    i = 0
-    for i in range(size):
-        bin = int(floor((float(ctth[i]) - tth_min) * idtth))
-        outCount[bin] += 1
-        outData[bin] += cdata[i]
-    return outData, outCount
+#
+# def histogram1D(
+#         pos,
+#         data=None,
+#         nbPt: int = 100
+# ):
+#     """
+#     Calculates histogram of pos weighted by weights.
+#
+#     :param pos: 2Theta array
+#     :param weights: array with intensities
+#     :param bins: number of output bins
+#     :param pixelSize_in_Pos: size of a pixels in 2theta
+#     :param nthread: maximum number of thread to use. By default: maximum available.
+#         One can also limit this with OMP_NUM_THREADS environment variable
+#
+#     :return 2theta, I, weighted histogram, raw histogram
+#
+#     https://github.com/kif/pyFAI/blob/master/src/histogram.pyx
+#     """
+#     if data is None:
+#         data = np.ones(pos.shape[0], dtype=np.float64)
+#     else:
+#         assert pos.size == data.size
+#     ctth = pos.astype("float64").flatten()
+#     cdata = data.astype("float64").flatten()
+#     outData = np.zeros(nbPt, dtype=np.float64)
+#     outCount = np.zeros(nbPt, dtype=np.int64)
+#     size = pos.size
+#     tth_min = pos.min()
+#     tth_max = pos.max()
+#     idtth = (float(nbPt - 1)) / (tth_max - tth_min)
+#     bin = 0
+#     i = 0
+#     for i in range(size):
+#         bin = int(floor((float(ctth[i]) - tth_min) * idtth))
+#         outCount[bin] += 1
+#         outData[bin] += cdata[i]
+#     return outData, outCount
 
 
 def smooth(x, l, m):
@@ -333,47 +332,6 @@ def smooth(x, l, m):
             xz[i] += x[j]
             xz[i] /= (2 * m + 1)
     return xz
-
-
-if __name__ == "__main__":
-    print("Test align_x_spacing")
-    import matplotlib.pylab as p
-
-    x1 = np.linspace(-1, 12, 10)
-    y1 = np.cos(x1)
-    a1 = (x1, y1)
-
-    x2 = np.linspace(-1, 12, 11)
-    y2 = np.sin(x2)
-    a2 = (x2, y2)
-
-    (rx1, ry1), (rx2, ry2) = align_x_spacing(a1, a2)
-    p.plot(x1, y1, 'r')
-    p.plot(rx1, ry1, 'k')
-    p.plot(x2, y2, 'g')
-    p.plot(rx2, ry2, 'b')
-    p.show()
-
-    print("Test overlay")
-    import matplotlib.pylab as p
-
-    x1 = np.linspace(-5, 5, 10)
-    y1 = np.sin(x1)
-    a1 = (x1, y1)
-
-    x2 = np.linspace(0, 10, 10)
-    y2 = np.sin(x2)
-    a2 = (x2, y2)
-
-    (rx1, ry1), (rx2, ry2) = overlapping_region(a1, a2)
-    print(ry1)
-    print(ry2)
-
-    p.plot(x1, y1, 'r')
-    p.plot(rx1, ry1, 'k')
-    p.plot(x2, y2, 'g')
-    p.plot(rx2, ry2, 'b')
-    p.show()
 
 
 def interleaved_to_two_columns(
@@ -568,3 +526,44 @@ def pairwise(iterable):
     a, b = tee(iterable)
     next(b, None)
     return zip(a, b)
+
+
+if __name__ == "__main__":
+    print("Test align_x_spacing")
+    import matplotlib.pylab as p
+
+    x1 = np.linspace(-1, 12, 10)
+    y1 = np.cos(x1)
+    a1 = (x1, y1)
+
+    x2 = np.linspace(-1, 12, 11)
+    y2 = np.sin(x2)
+    a2 = (x2, y2)
+
+    (rx1, ry1), (rx2, ry2) = align_x_spacing(a1, a2)
+    p.plot(x1, y1, 'r')
+    p.plot(rx1, ry1, 'k')
+    p.plot(x2, y2, 'g')
+    p.plot(rx2, ry2, 'b')
+    p.show()
+
+    print("Test overlay")
+    import matplotlib.pylab as p
+
+    x1 = np.linspace(-5, 5, 10)
+    y1 = np.sin(x1)
+    a1 = (x1, y1)
+
+    x2 = np.linspace(0, 10, 10)
+    y2 = np.sin(x2)
+    a2 = (x2, y2)
+
+    (rx1, ry1), (rx2, ry2) = overlapping_region(a1, a2)
+    print(ry1)
+    print(ry2)
+
+    p.plot(x1, y1, 'r')
+    p.plot(rx1, ry1, 'k')
+    p.plot(x2, y2, 'g')
+    p.plot(rx2, ry2, 'b')
+    p.show()

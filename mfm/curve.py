@@ -1,8 +1,5 @@
 from __future__ import annotations
-from typing import TypeVar, Tuple, Optional, Type
-
-import numbers
-from copy import copy
+from typing import TypeVar, Tuple, Type
 
 import numpy as np
 
