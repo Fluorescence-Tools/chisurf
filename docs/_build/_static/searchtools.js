@@ -439,7 +439,7 @@ var Search = {
       }
     }
 
-    // now check if the files don'times contain excluded terms
+    // now check if the files don't contain excluded terms
     for (file in fileMap) {
       var valid = true;
 

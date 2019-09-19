@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 
 import sys
@@ -25,6 +28,17 @@ class SimplePythonEditor(QsciScintilla):
             caret_line_visible: bool = True,
             **kwargs
     ):
+        """
+
+        :param parent:
+        :param font_family:
+        :param font_point_size:
+        :param margins_background_color:
+        :param marker_background_color:
+        :param caret_line_background_color:
+        :param caret_line_visible:
+        :param kwargs:
+        """
         super(SimplePythonEditor, self).__init__(parent)
         if font_point_size is None:
             font_point_size = mfm.settings.gui['editor']['font_size']

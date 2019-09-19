@@ -12,6 +12,9 @@ T = TypeVar('T', bound='Parameter')
 class Parameter(
     mfm.base.Base
 ):
+    """
+
+    """
 
     _instances = set()
 
@@ -19,6 +22,9 @@ class Parameter(
     def bounds(
             self
     ) -> Tuple[float, float]:
+        """A tuple containing the values for the lower (first value) and
+        the upper (second value) of the bound.
+        """
         if self.bounds_on:
             return self._lb, self._ub
         else:
@@ -44,6 +50,15 @@ class Parameter(
 
     @property
     def value(self) -> float:
+        """The value of the parameter.
+
+        This value of the parameter considers links and
+        bounds, i.e., if a parameter is linked to another
+        parameter the value of the linked parameter is returned.
+        First, links are considered, then bounds are considered.
+
+        :return:
+        """
         v = self._value
         if callable(v):
             return v()
@@ -62,8 +77,11 @@ class Parameter(
                     return v
 
     @value.setter
-    def value(self, value):
-        self._value = float(value)
+    def value(
+            self,
+            value: float
+    ):
+        self._value = value
         if self.is_linked:
             self.link.value = value
 
@@ -86,11 +104,15 @@ class Parameter(
             self._link = None
 
     @property
-    def is_linked(self) -> bool:
+    def is_linked(
+            self
+    ) -> bool:
         return isinstance(self._link, Parameter)
 
     @classmethod
-    def get_instances(cls) -> List[Parameter]:
+    def get_instances(
+            cls
+    ) -> List[Parameter]:
         dead = set()
         for ref in cls._instances:
             obj = ref()
@@ -203,7 +225,9 @@ class Parameter(
         s = self.value.__repr__()
         return s
 
-    def to_dict(self) -> dict:
+    def to_dict(
+            self
+    ) -> dict:
         d = super(Parameter, self).to_dict()
         if self.link is not None:
             d['_link'] = self.link.unique_identifier
@@ -234,6 +258,16 @@ class Parameter(
             *args,
             **kwargs
     ):
+        """
+        :param value: the value of the parameter (default 1.0)
+        :param link: the (optional) parameter to which the new instance is linked to
+        :param lb: the lower bound of the parameter value
+        :param ub: the upper bound of the paramter value
+        :param bounds_on: if this is True the parameter value is bounded between
+        the upper and the lower bound as specified by ub and lb.
+        :param args:
+        :param kwargs:
+        """
         super(Parameter, self).__init__(
             *args,
             **kwargs
@@ -247,21 +281,33 @@ class Parameter(
 
 
 class ParameterGroup(mfm.base.Base):
+    """
+
+    """
 
     def __init__(
             self,
+            parameters: List[Parameter] = None,
             *args,
             **kwargs
     ):
+        """
+
+        :param args:
+        :param kwargs:
+        """
         super(ParameterGroup, self).__init__(
             *args,
             **kwargs
         )
-        self._parameter = list()
+        if parameters is None:
+            parameters = list()
+        self._parameter = parameters
 
     def append(
             self,
-            parameter: Parameter
+            parameter: Parameter,
+            **kwargs
     ):
         self._parameter.append(parameter)
 

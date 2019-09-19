@@ -295,11 +295,16 @@ class ACV(BasicAV):
     """
 
     @property
-    def contact_volume_trapped_fraction(self):
+    def contact_volume_trapped_fraction(
+            self
+    ) -> float:
         return self._contact_volume_trapped_fraction
 
     @contact_volume_trapped_fraction.setter
-    def contact_volume_trapped_fraction(self, v):
+    def contact_volume_trapped_fraction(
+            self,
+            v: float
+    ):
         self._contact_volume_trapped_fraction = v
         self.update()
 
@@ -325,21 +330,13 @@ class ACV(BasicAV):
     @slow_radius.setter
     def slow_radius(self, v):
         slow_centers = self.slow_centers
-        if isinstance(v, (int, long, float)):
+        if isinstance(v, (int, float)):
             slow_radii = np.ones(slow_centers.shape[0]) * v
         else:
             slow_radii = np.array(v)
             if slow_radii.shape[0] != slow_centers.shape[0]:
                 raise ValueError("The size of the slow_radius doesnt match the number of slow_centers")
         self._slow_radius = slow_radii
-
-    @property
-    def contact_volume_trapped_fraction(self):
-        return self._contact_volume_trapped_fraction
-
-    @contact_volume_trapped_fraction.setter
-    def contact_volume_trapped_fraction(self, v):
-        self._contact_volume_trapped_fraction = v
 
     @property
     def contact_density(self):

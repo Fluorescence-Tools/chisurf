@@ -148,7 +148,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="mfm.math.functions.html">mfm.math.functions package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="mfm.math.functions.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.math.functions.html#module-mfm.math.functions.datatools">mfm.math.functions.datatools module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.math.functions.html#mfm-math-functions-datatools-module">mfm.math.functions.datatools module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mfm.math.functions.html#module-mfm.math.functions.distributions">mfm.math.functions.distributions module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mfm.math.functions.html#module-mfm.math.functions.rdf">mfm.math.functions.rdf module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mfm.math.functions.html#module-mfm.math.functions">Module contents</a></li>
@@ -203,18 +203,37 @@ If <code class="docutils literal notranslate"><span class="pre">True</span></cod
 </dd></dl>
 
 <dl class="function">
-<dt id="mfm.math.signal.get_fwhm">
-<code class="sig-prename descclassname">mfm.math.signal.</code><code class="sig-name descname">get_fwhm</code><span class="sig-paren">(</span><em class="sig-param">curve: 'mfm.curve.Curve'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'Tuple[float, Tuple[int, int], Tuple[float, float]]'<a class="reference internal" href="../_modules/mfm/math/signal.html#get_fwhm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.signal.get_fwhm" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the FWHM using a linear-search from both sides of the curve</p>
+<dt id="mfm.math.signal.calculate_fwhm">
+<code class="sig-prename descclassname">mfm.math.signal.</code><code class="sig-name descname">calculate_fwhm</code><span class="sig-paren">(</span><em class="sig-param">curve: 'mfm.curve.Curve'</em>, <em class="sig-param">background: 'float' = 0.0</em>, <em class="sig-param">verbose: 'bool' = False</em><span class="sig-paren">)</span> &#x2192; 'Tuple[float, Tuple[int, int], Tuple[float, float]]'<a class="reference internal" href="../_modules/mfm/math/signal.html#calculate_fwhm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.signal.calculate_fwhm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the full-width-half-maximum (FWHM) using a linear-search from both sides of the curve</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>curve</strong> (<a class="reference internal" href="mfm.html#mfm.curve.Curve" title="mfm.curve.Curve"><code class="xref py py-class docutils literal notranslate"><span class="pre">Curve</span></code></a>) – </p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>curve</strong> (<a class="reference internal" href="../user_documentation/api/fit.html#mfm.curve.Curve" title="mfm.curve.Curve"><code class="xref py py-class docutils literal notranslate"><span class="pre">Curve</span></code></a>) – </p></li>
+<li><p><strong>background</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]</p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>a tupel containing the FWHM and the indices and the x-values of the used positions</p>
+<dd class="field-odd"><p>Tuple containing the FWHM, the indices and the x-values of the used positions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.math.signal.shift_array">
+<code class="sig-prename descclassname">mfm.math.signal.</code><code class="sig-name descname">shift_array</code><span class="sig-paren">(</span><em class="sig-param">y: 'np.array'</em>, <em class="sig-param">shift: 'float'</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../_modules/mfm/math/signal.html#shift_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.signal.shift_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates an array that is shifted by a float. For non-integer shifts
+the shifted array is interpolated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
 </dd>
 </dl>
 </dd></dl>

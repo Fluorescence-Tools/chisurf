@@ -1,7 +1,7 @@
 import mfm
 
 
-def tcspc_set_linearization(
+def set_linearization(
         idx: int = None,
         curve_name: str = None,
 ):
@@ -44,7 +44,7 @@ def change_irf(
 ) -> None:
     cs = mfm.cs
     irf = cs.current_fit.model.convolve.irf_select.datasets[dataset_idx]
-    for f in cs.current_fit[cs.current_fit._selected_fit:]:
+    for f in cs.current_fit[cs.current_fit.selected_fit_index:]:
         f.model.convolve._irf = mfm.experiments.data.DataCurve(
             x=irf.x,
             y=irf.y

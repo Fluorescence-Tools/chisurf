@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import numpy as np
 
+import mfm
+
 
 def write_xyz(
         filename: str,
         points: np.array,
-        verbose: bool = False
+        verbose: bool = mfm.verbose
 ):
     """
     Writes the points as xyz-format file. The xyz-format file can be opened and displayed for instance

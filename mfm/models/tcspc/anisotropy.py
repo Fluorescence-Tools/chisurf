@@ -6,9 +6,15 @@ import mfm
 import mfm.fluorescence
 import mfm.fitting
 import mfm.fitting.parameter
+import mfm.math.datatools
 
 
-class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
+class Anisotropy(
+    mfm.fitting.parameter.FittingParameterGroup
+):
+    """
+
+    """
 
     @property
     def r0(self) -> float:
@@ -97,21 +103,21 @@ class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
         a = self.rotation_spectrum
         f = lifetime_spectrum
         if pt == 'VH' or pt == 'VV':
-            d = mfm.fluorescence.general.elte2(a, f)
-            vv = np.hstack([f, mfm.fluorescence.general.e1tn(d, 2)])
-            vh = mfm.fluorescence.general.e1tn(
-                np.hstack([f, mfm.fluorescence.general.e1tn(d, -1)]),
+            d = mfm.math.datatools.elte2(a, f)
+            vv = np.hstack([f, mfm.math.datatools.e1tn(d, 2)])
+            vh = mfm.math.datatools.e1tn(
+                np.hstack([f, mfm.math.datatools.e1tn(d, -1)]),
                 self.g
             )
             if self.polarization_type.upper() == 'VH':
                 return np.hstack(
-                    [mfm.fluorescence.general.e1tn(vv, self.l2),
-                     mfm.fluorescence.general.e1tn(vh, 1 - self.l2)]
+                    [mfm.math.datatools.e1tn(vv, self.l2),
+                     mfm.math.datatools.e1tn(vh, 1 - self.l2)]
                 )
             elif self.polarization_type.upper() == 'VV':
                 r = np.hstack(
-                    [mfm.fluorescence.general.e1tn(vv, 1 - self.l1),
-                     mfm.fluorescence.general.e1tn(vh, self.l1)]
+                    [mfm.math.datatools.e1tn(vv, 1 - self.l1),
+                     mfm.math.datatools.e1tn(vh, self.l1)]
                 )
                 return r
         else:
@@ -149,7 +155,9 @@ class Anisotropy(mfm.fitting.parameter.FittingParameterGroup):
         self._rhos.append(rho)
         self._bs.append(b)
 
-    def remove_rotation(self) -> None:
+    def remove_rotation(
+            self
+    ) -> None:
         self._rhos.pop().close()
         self._bs.pop().close()
 

@@ -616,7 +616,7 @@
 <span class="sd">        &gt;&gt;&gt; av.update_equilibrium()#t_max=100.)</span>
 <span class="sd">        &gt;&gt;&gt; p.imshow(av.density[:,:,20])</span>
 <span class="sd">        &gt;&gt;&gt; p.show()</span>
-<span class="sd">        &gt;&gt;&gt; y, x = np.histogram(av.diffusion_map.flatten(), range=(0.01, 10), bins=20, weights=av.density.flatten())</span>
+<span class="sd">        &gt;&gt;&gt; y, x = np.histogram(av.diffusion_map.flatten(), tac_range=(0.01, 10), bins=20, weights=av.density.flatten())</span>
 <span class="sd">        &gt;&gt;&gt; p.plot(x[1:], y)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -682,7 +682,7 @@
 <span class="sd">        &gt;&gt;&gt; av_d.update_fret_map(av_a)</span>
 <span class="sd">        #</span>
 <span class="sd">        &gt;&gt;&gt; rda = (av_d._fret_rate_map.flatten() * av_d.fluorescence_lifetime) ** (-1./6.) * 52.</span>
-<span class="sd">        &gt;&gt;&gt; y, x = np.histogram(rda, range=(0.0, 100), bins=100, weights=av_d.density.flatten())</span>
+<span class="sd">        &gt;&gt;&gt; y, x = np.histogram(rda, tac_range=(0.0, 100), bins=100, weights=av_d.density.flatten())</span>
 <span class="sd">        &gt;&gt;&gt; p.plot(x[1:], y)</span>
 <span class="sd">        &gt;&gt;&gt; y, x = av_d.pRDA(av=av_a)</span>
 <span class="sd">        &gt;&gt;&gt; p.plot(x, y)</span>

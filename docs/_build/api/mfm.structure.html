@@ -176,7 +176,7 @@
 <span id="mfm-structure-cluster-module"></span><h2>mfm.structure.cluster module<a class="headerlink" href="#module-mfm.structure.cluster" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="mfm.structure.cluster.cluster">
-<code class="sig-prename descclassname">mfm.structure.cluster.</code><code class="sig-name descname">cluster</code><span class="sig-paren">(</span><em class="sig-param">structures</em>, <em class="sig-param">threshold=5000</em>, <em class="sig-param">criterion='maxclust'</em>, <em class="sig-param">Z=None</em>, <em class="sig-param">distances=None</em>, <em class="sig-param">directory=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/cluster.html#cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.cluster.cluster" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.structure.cluster.</code><code class="sig-name descname">cluster</code><span class="sig-paren">(</span><em class="sig-param">structures</em>, <em class="sig-param">threshold: 'int' = 5000</em>, <em class="sig-param">criterion: 'str' = 'maxclust'</em>, <em class="sig-param">Z=None</em>, <em class="sig-param">distances=None</em>, <em class="sig-param">directory: 'str' = None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/cluster.html#cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.cluster.cluster" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -211,7 +211,7 @@
 convenience Attributes which only apply to FRET-samples</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">LabeledStructure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">LabeledStructure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">donor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">acceptor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">577</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span><span class="o">.</span><span class="n">donor_label</span> <span class="o">=</span> <span class="n">donor_description</span>
@@ -282,17 +282,32 @@ convenience Attributes which only apply to FRET-samples</p>
 <dl class="method">
 <dt id="mfm.structure.labeled_structure.LabeledStructure.donor_lifetime_spectrum">
 <em class="property">property </em><code class="sig-name descname">donor_lifetime_spectrum</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.donor_lifetime_spectrum" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.labeled_structure.LabeledStructure.fret_rate_spectrum">
 <em class="property">property </em><code class="sig-name descname">fret_rate_spectrum</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.fret_rate_spectrum" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.labeled_structure.LabeledStructure.lifetime_spectrum">
 <em class="property">property </em><code class="sig-name descname">lifetime_spectrum</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.lifetime_spectrum" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.labeled_structure.LabeledStructure.pRDA">
@@ -303,7 +318,12 @@ convenience Attributes which only apply to FRET-samples</p>
 <dl class="method">
 <dt id="mfm.structure.labeled_structure.LabeledStructure.transfer_efficency">
 <em class="property">property </em><code class="sig-name descname">transfer_efficency</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.transfer_efficency" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.labeled_structure.LabeledStructure.update">
@@ -314,7 +334,7 @@ convenience Attributes which only apply to FRET-samples</p>
 
 <dl class="function">
 <dt id="mfm.structure.labeled_structure.av_distance_distribution">
-<code class="sig-prename descclassname">mfm.structure.labeled_structure.</code><code class="sig-name descname">av_distance_distribution</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">donor_av_parameter</em>, <em class="sig-param">acceptor_av_parameter</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/labeled_structure.html#av_distance_distribution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.labeled_structure.av_distance_distribution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.structure.labeled_structure.</code><code class="sig-name descname">av_distance_distribution</code><span class="sig-paren">(</span><em class="sig-param">structure: 'Structure'</em>, <em class="sig-param">donor_av_parameter</em>, <em class="sig-param">acceptor_av_parameter</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/labeled_structure.html#av_distance_distribution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.labeled_structure.av_distance_distribution" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>Get the distance distribution between two accessible volumes defined by the parameters passed as</dt><dd><p>an argument.</p>
 <dl class="field-list simple">
@@ -347,7 +367,7 @@ convenience Attributes which only apply to FRET-samples</p>
 
 <dl class="function">
 <dt id="mfm.structure.labeled_structure.av_filtered_fcs_weights">
-<code class="sig-prename descclassname">mfm.structure.labeled_structure.</code><code class="sig-name descname">av_filtered_fcs_weights</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">lifetime_filters</em>, <em class="sig-param">time_axis</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/labeled_structure.html#av_filtered_fcs_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.labeled_structure.av_filtered_fcs_weights" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.structure.labeled_structure.</code><code class="sig-name descname">av_filtered_fcs_weights</code><span class="sig-paren">(</span><em class="sig-param">structure: 'Structure'</em>, <em class="sig-param">lifetime_filters</em>, <em class="sig-param">time_axis: 'np.array'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/labeled_structure.html#av_filtered_fcs_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.labeled_structure.av_filtered_fcs_weights" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>Passes all <code class="docutils literal notranslate"><span class="pre">kwargs</span></code> parameters to the method in <code class="xref py py-meth docutils literal notranslate"><span class="pre">av_lifetime_spectrum()</span></code> and</dt><dd><p>calculates the filters weights for a set of lifetime filters <code class="docutils literal notranslate"><span class="pre">lifetime_filters</span></code>.</p>
 <dl class="field-list simple">
@@ -359,48 +379,15 @@ convenience Attributes which only apply to FRET-samples</p>
 </dl>
 </dd>
 </dl>
-<dl>
-<dt>import mfm.structure    &gt;&gt;&gt; structure_closed = mfm.structure.Structure(‘./sample_data/modelling/pdb_files/hGBP1_closed.pdb’)</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">structure_open</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_open.pdb&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">structure_middle</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_middle.pdb&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">ls_closed</span> <span class="o">=</span> <span class="n">av_lifetime_spectrum</span><span class="p">(</span><span class="n">structure_closed</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">ls_open</span> <span class="o">=</span> <span class="n">av_lifetime_spectrum</span><span class="p">(</span><span class="n">structure_open</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">ls_middle</span> <span class="o">=</span> <span class="n">av_lifetime_spectrum</span><span class="p">(</span><span class="n">structure_middle</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Define an fluorescence decay which serves as a reference which is used to calculate fluorescence lifetime
-filters. The calculated fluorescence lifetime filters are later used to determine weights of the structures.
-These weights could can later be auto-correlated and cross-correlated.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="p">,</span> <span class="n">d_closed</span> <span class="o">=</span> <span class="n">calculate_fluorescence_decay</span><span class="p">(</span><span class="n">ls_closed</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="p">,</span> <span class="n">d_open</span> <span class="o">=</span> <span class="n">calculate_fluorescence_decay</span><span class="p">(</span><span class="n">ls_open</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="p">,</span> <span class="n">d_middle</span> <span class="o">=</span> <span class="n">calculate_fluorescence_decay</span><span class="p">(</span><span class="n">ls_middle</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fraction_closed</span> <span class="o">=</span> <span class="mf">0.33</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fraction_middle</span> <span class="o">=</span> <span class="mf">0.33</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fraction_open</span> <span class="o">=</span> <span class="mf">0.33</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">experimental_decay</span> <span class="o">=</span> <span class="n">fraction_closed</span> <span class="o">*</span> <span class="n">d_closed</span> <span class="o">+</span> <span class="n">fraction_middle</span> <span class="o">*</span> <span class="n">d_middle</span> <span class="o">+</span> <span class="n">d_open</span> <span class="o">*</span> <span class="n">fraction_open</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">decays</span> <span class="o">=</span> <span class="p">[</span><span class="n">d_closed</span><span class="p">,</span> <span class="n">d_middle</span><span class="p">,</span> <span class="n">d_open</span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">lf</span> <span class="o">=</span> <span class="n">calc_lifetime_filter</span><span class="p">(</span><span class="n">decays</span><span class="o">=</span><span class="n">decays</span><span class="p">,</span> <span class="n">experimental_decay</span><span class="o">=</span><span class="n">experimental_decay</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>The fluorescence lifetime filter correctly identifies the open, semi-open and closed conformation.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">av_filtered_fcs_weights</span><span class="p">(</span><span class="n">structure_closed</span><span class="p">,</span> <span class="n">lifetime_filters</span><span class="o">=</span><span class="n">lf</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span>
-<span class="go">array([ 0.97265041,  0.03609784, -0.00888892])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">av_filtered_fcs_weights</span><span class="p">(</span><span class="n">structure_middle</span><span class="p">,</span> <span class="n">lifetime_filters</span><span class="o">=</span><span class="n">lf</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span>
-<span class="go">array([ 0.01791727,  0.97488255,  0.00726864])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">av_filtered_fcs_weights</span><span class="p">(</span><span class="n">structure_open</span><span class="p">,</span> <span class="n">lifetime_filters</span><span class="o">=</span><span class="n">lf</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span>
-<span class="go">array([ 0.00831755, -0.01459384,  1.00628016])</span>
-</pre></div>
-</div>
-<p>This method can be used together with trajectories. Use the limiting states to define filters. For the protein
-hGBP1 two limiting states are known, with the fraction 0.66 (state-1) and 0.33 (state-2). Using corase-grained
-models of these limiting states fluorescence decays are calculated and the filters are determined.</p>
-</dd>
-<dt>import mfm.structure    &gt;&gt;&gt; structure_1 = mfm.structure.Structure(‘./sample_data/modelling/trajectory/h5-file/steps/0_major.pdb’)</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">structure_2</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb&#39;</span><span class="p">)</span>
+<p>import mfm.structure    &gt;&gt;&gt; structure_1 = mfm.structure.Structure(‘./sample_data/modelling/trajectory/h5-file/steps/0_major.pdb’)</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">structure_1</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure_2</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ls_1</span> <span class="o">=</span> <span class="n">av_lifetime_spectrum</span><span class="p">(</span><span class="n">structure_1</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ls_2</span> <span class="o">=</span> <span class="n">av_lifetime_spectrum</span><span class="p">(</span><span class="n">structure_2</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="p">,</span> <span class="n">d_1</span> <span class="o">=</span> <span class="n">calculate_fluorescence_decay</span><span class="p">(</span><span class="n">ls_1</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="p">,</span> <span class="n">d_2</span> <span class="o">=</span> <span class="n">calculate_fluorescence_decay</span><span class="p">(</span><span class="n">ls_2</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">times</span><span class="p">,</span> <span class="n">d_1</span> <span class="o">=</span> <span class="n">calculate_fluorescence_decay</span><span class="p">(</span><span class="n">ls_1</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">times</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">times</span><span class="p">,</span> <span class="n">d_2</span> <span class="o">=</span> <span class="n">calculate_fluorescence_decay</span><span class="p">(</span><span class="n">ls_2</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">times</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fraction_1</span> <span class="o">=</span> <span class="mf">0.66</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">fraction_2</span> <span class="o">=</span> <span class="mf">0.33</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">experimental_decay</span> <span class="o">=</span> <span class="n">fraction_1</span> <span class="o">*</span> <span class="n">d_1</span> <span class="o">+</span> <span class="n">fraction_2</span> <span class="o">*</span> <span class="n">d_2</span>
@@ -410,21 +397,20 @@ models of these limiting states fluorescence decays are calculated and the filte
 </div>
 <p>Now the trajectory of the transition using the crystal-structure as intermediate state was simulated. Using this
 trajectory weights are associated to each frame which correspond to the first and the second state.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d_av</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>  <span class="c1"># the resiude numbers are slightly shifted</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a_av</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">567</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">av_filtered_fcs_weights</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">lifetime_filters</span><span class="o">=</span><span class="n">lf</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">traj</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">av_filtered_fcs_weights</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">lifetime_filters</span><span class="o">=</span><span class="n">lf</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">times</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">traj</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>Using the weights which were calculated for each frame species auto-correlations and species cross-correlations
 can be calculated.</p>
-</dd>
-</dl>
+</div></blockquote>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.structure.labeled_structure.av_fret_rate_spectrum">
-<code class="sig-prename descclassname">mfm.structure.labeled_structure.</code><code class="sig-name descname">av_fret_rate_spectrum</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">donor_av_parameter</em>, <em class="sig-param">acceptor_av_parameter</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/labeled_structure.html#av_fret_rate_spectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.labeled_structure.av_fret_rate_spectrum" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.structure.labeled_structure.</code><code class="sig-name descname">av_fret_rate_spectrum</code><span class="sig-paren">(</span><em class="sig-param">structure: 'Structure'</em>, <em class="sig-param">donor_av_parameter</em>, <em class="sig-param">acceptor_av_parameter</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/labeled_structure.html#av_fret_rate_spectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.labeled_structure.av_fret_rate_spectrum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get FRET-rate spectrum for a given donor and acceptor attachment point</p>
 <blockquote>
 <div><dl class="field-list simple">
@@ -454,7 +440,7 @@ can be calculated.</p>
 
 <dl class="function">
 <dt id="mfm.structure.labeled_structure.av_lifetime_spectrum">
-<code class="sig-prename descclassname">mfm.structure.labeled_structure.</code><code class="sig-name descname">av_lifetime_spectrum</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">donor_lifetime_spectrum</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/labeled_structure.html#av_lifetime_spectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.labeled_structure.av_lifetime_spectrum" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.structure.labeled_structure.</code><code class="sig-name descname">av_lifetime_spectrum</code><span class="sig-paren">(</span><em class="sig-param">structure: 'Structure'</em>, <em class="sig-param">donor_lifetime_spectrum: 'np.array'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/labeled_structure.html#av_lifetime_spectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.labeled_structure.av_lifetime_spectrum" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="simple">
 <dt>Get an interleaved lifetime spectrum for a given donor lifetime spectrum given two definitions of</dt><dd><p>a donor and an acceptor accessible volume. This function uses <code class="xref py py-meth docutils literal notranslate"><span class="pre">av_fret_rate_spectrum()</span></code>
 to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the lifetime spectrum.</p>
@@ -494,7 +480,7 @@ to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the
 <dt id="mfm.structure.protein.ProteinBead">
 <em class="property">class </em><code class="sig-prename descclassname">mfm.structure.protein.</code><code class="sig-name descname">ProteinBead</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/protein.html#ProteinBead"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.protein.ProteinBead" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.structure.structure.Structure</span></code></a></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s_aa</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">ProteinBead</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s_aa</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">protein</span><span class="o">.</span><span class="n">ProteinBead</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="method">
@@ -519,18 +505,18 @@ to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the
 
 <dl class="method">
 <dt id="mfm.structure.protein.ProteinBead.update">
-<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">start_point=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/protein.html#ProteinBead.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.protein.ProteinBead.update" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">start_point: 'int' = 0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/protein.html#ProteinBead.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.protein.ProteinBead.update" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="mfm.structure.protein.ProteinCentroid">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.protein.</code><code class="sig-name descname">ProteinCentroid</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/protein.html#ProteinCentroid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.protein.ProteinCentroid" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.protein.</code><code class="sig-name descname">ProteinCentroid</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">make_lookup=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/protein.html#ProteinCentroid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.protein.ProteinCentroid" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.structure.structure.Structure</span></code></a></p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">sp</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">ProteinCentroid</span><span class="p">(</span><span class="s1">&#39;../sample_data/structure/HM_1FN5_Naming.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sp</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">protein</span><span class="o">.</span><span class="n">ProteinCentroid</span><span class="p">(</span><span class="s1">&#39;../sample_data/structure/HM_1FN5_Naming.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="go">======================================</span>
 <span class="go">Filename: /sample_data/structure/HM_1FN5_Naming.pdb</span>
 <span class="go">Path: /sample_data/structure</span>
@@ -547,7 +533,7 @@ to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the
 <span class="go">ATOM   2273    C ALA   386      47.799  59.970  21.123  0.00  0.00             C</span>
 <span class="go">ATOM   2274    O ALA   386      47.600  59.096  20.280  0.00  0.00             O</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;test_out.pdb&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">s_aa</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">ProteinCentroid</span><span class="p">(</span><span class="s1">&#39;/sample_data/structure/HM_1FN5_Naming.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s_aa</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">protein</span><span class="o">.</span><span class="n">ProteinCentroid</span><span class="p">(</span><span class="s1">&#39;/sample_data/structure/HM_1FN5_Naming.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">s_aa</span><span class="p">)</span>
 <span class="go">ATOM   9312    H MET   583      40.848  10.075  17.847  0.00  0.00             H</span>
 <span class="go">ATOM   9313   HA MET   583      40.666   8.204  15.667  0.00  0.00             H</span>
@@ -622,7 +608,7 @@ to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the
 
 <dl class="method">
 <dt id="mfm.structure.protein.ProteinCentroid.update">
-<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">start_point=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/protein.html#ProteinCentroid.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.protein.ProteinCentroid.update" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">start_point: 'int' = 0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/protein.html#ProteinCentroid.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.protein.ProteinCentroid.update" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -639,7 +625,7 @@ to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the
 
 <dl class="function">
 <dt id="mfm.structure.protein.calc_internal_coordinates_bb">
-<code class="sig-prename descclassname">mfm.structure.protein.</code><code class="sig-name descname">calc_internal_coordinates_bb</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/protein.html#calc_internal_coordinates_bb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.protein.calc_internal_coordinates_bb" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.structure.protein.</code><code class="sig-name descname">calc_internal_coordinates_bb</code><span class="sig-paren">(</span><em class="sig-param">structure: 'Structure'</em>, <em class="sig-param">verbose: 'bool' = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/protein.html#calc_internal_coordinates_bb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.protein.calc_internal_coordinates_bb" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -668,12 +654,12 @@ to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the
 
 <dl class="function">
 <dt id="mfm.structure.protein.make_residue_lookup_table">
-<code class="sig-prename descclassname">mfm.structure.protein.</code><code class="sig-name descname">make_residue_lookup_table</code><span class="sig-paren">(</span><em class="sig-param">structure: 'mfm.structure.mfm.structure.Structure'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/protein.html#make_residue_lookup_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.protein.make_residue_lookup_table" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.structure.protein.</code><code class="sig-name descname">make_residue_lookup_table</code><span class="sig-paren">(</span><em class="sig-param">structure: 'Structure'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/protein.html#make_residue_lookup_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.protein.make_residue_lookup_table" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="mfm.structure.protein.move_center_of_mass">
-<code class="sig-prename descclassname">mfm.structure.protein.</code><code class="sig-name descname">move_center_of_mass</code><span class="sig-paren">(</span><em class="sig-param">structure: 'mfm.structure.mfm.structure.Structure'</em>, <em class="sig-param">all_atoms</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/protein.html#move_center_of_mass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.protein.move_center_of_mass" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.structure.protein.</code><code class="sig-name descname">move_center_of_mass</code><span class="sig-paren">(</span><em class="sig-param">structure: 'Structure'</em>, <em class="sig-param">all_atoms</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/protein.html#move_center_of_mass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.protein.move_center_of_mass" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -699,11 +685,11 @@ to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the
 <span id="mfm-structure-structure-module"></span><h2>mfm.structure.structure module<a class="headerlink" href="#module-mfm.structure.structure" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mfm.structure.structure.Structure">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.structure.</code><code class="sig-name descname">Structure</code><span class="sig-paren">(</span><em class="sig-param">p_object</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#Structure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.Structure" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.structure.</code><code class="sig-name descname">Structure</code><span class="sig-paren">(</span><em class="sig-param">p_object=None</em>, <em class="sig-param">*args</em>, <em class="sig-param">auto_update=False</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#Structure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.Structure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.base.Base</span></code></p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.structure</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;1dg3&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;1dg3&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="go">======================================</span>
 <span class="go">Filename: ../sample_data/structure/HM_1FN5_Naming.pdb</span>
 <span class="go">Path: ../sample_data/structure</span>
@@ -759,12 +745,12 @@ This only applies for coarse-grained coordinates</p>
 </dl>
 <dl class="method">
 <dt id="mfm.structure.structure.Structure.append_potential">
-<code class="sig-name descname">append_potential</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">function</em>, <em class="sig-param">kwargs={}</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#Structure.append_potential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.Structure.append_potential" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">append_potential</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">function</em>, <em class="sig-param">kwargs: 'Dict' = None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#Structure.append_potential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.Structure.append_potential" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>function</strong> – </p></li>
-<li><p><strong>kwargs</strong> – </p></li>
+<li><p><strong>kwargs</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[~KT, ~VT]]) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -792,7 +778,12 @@ This only applies for coarse-grained coordinates</p>
 <dl class="method">
 <dt id="mfm.structure.structure.Structure.atoms">
 <em class="property">property </em><code class="sig-name descname">atoms</code><a class="headerlink" href="#mfm.structure.structure.Structure.atoms" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.structure.Structure.b_factors">
@@ -803,7 +794,12 @@ This only applies for coarse-grained coordinates</p>
 <dl class="method">
 <dt id="mfm.structure.structure.Structure.energy">
 <em class="property">property </em><code class="sig-name descname">energy</code><a class="headerlink" href="#mfm.structure.structure.Structure.energy" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.structure.Structure.get_atom_index">
@@ -827,12 +823,22 @@ This only applies for coarse-grained coordinates</p>
 <dl class="method">
 <dt id="mfm.structure.structure.Structure.n_atoms">
 <em class="property">property </em><code class="sig-name descname">n_atoms</code><a class="headerlink" href="#mfm.structure.structure.Structure.n_atoms" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.structure.Structure.n_residues">
 <em class="property">property </em><code class="sig-name descname">n_residues</code><a class="headerlink" href="#mfm.structure.structure.Structure.n_residues" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.structure.Structure.radius_gyration">
@@ -847,21 +853,36 @@ This only applies for coarse-grained coordinates</p>
 <dl class="method">
 <dt id="mfm.structure.structure.Structure.residue_ids">
 <em class="property">property </em><code class="sig-name descname">residue_ids</code><a class="headerlink" href="#mfm.structure.structure.Structure.residue_ids" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.structure.Structure.residue_names">
 <em class="property">property </em><code class="sig-name descname">residue_names</code><a class="headerlink" href="#mfm.structure.structure.Structure.residue_names" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.structure.Structure.sequence">
 <em class="property">property </em><code class="sig-name descname">sequence</code><a class="headerlink" href="#mfm.structure.structure.Structure.sequence" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[~KT, ~VT]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.structure.Structure.update">
-<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#Structure.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.Structure.update" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#Structure.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.Structure.update" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -873,6 +894,11 @@ This only applies for coarse-grained coordinates</p>
 <dt id="mfm.structure.structure.Structure.vdw">
 <em class="property">property </em><code class="sig-name descname">vdw</code><a class="headerlink" href="#mfm.structure.structure.Structure.vdw" title="Permalink to this definition">¶</a></dt>
 <dd><p>Van der Waals radii of all atoms</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -894,6 +920,11 @@ If True the structure is appended to the filename as a new model otherwise the f
 <dt id="mfm.structure.structure.Structure.xyz">
 <em class="property">property </em><code class="sig-name descname">xyz</code><a class="headerlink" href="#mfm.structure.structure.Structure.xyz" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cartesian coordinates of all atoms</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -907,8 +938,8 @@ if filename not provided makes new “average.pdb” file in temp-folder
 of the system</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">avg</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">average</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">times</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">trajectory</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">avg</span> <span class="o">=</span> <span class="n">times</span><span class="o">.</span><span class="n">average</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">avg</span>
 <span class="go">&lt;mfm.structure.structure.Structure at 0x117ff770&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">avg</span><span class="o">.</span><span class="n">labeling_file</span>
@@ -940,8 +971,8 @@ reference is of length 1, target of arbitrary length</p>
 <p>returns a Structure object and the index within the trajectory</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">find_best</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">mdtraj</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">mdtraj</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">times</span> <span class="o">=</span> <span class="n">times</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">find_best</span><span class="p">(</span><span class="n">times</span><span class="o">.</span><span class="n">mdtraj</span><span class="p">,</span> <span class="n">times</span><span class="o">.</span><span class="n">mdtraj</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
 <span class="go">(2, &lt;mdtraj.Trajectory with 1 frames, 2495 atoms, 164 residues, without unitcells at 0x13570b30&gt;)</span>
 </pre></div>
 </div>
@@ -949,14 +980,14 @@ reference is of length 1, target of arbitrary length</p>
 
 <dl class="function">
 <dt id="mfm.structure.structure.get_atom_index_by_name">
-<code class="sig-prename descclassname">mfm.structure.structure.</code><code class="sig-name descname">get_atom_index_by_name</code><span class="sig-paren">(</span><em class="sig-param">pdb</em>, <em class="sig-param">atom_names</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#get_atom_index_by_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.get_atom_index_by_name" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.structure.structure.</code><code class="sig-name descname">get_atom_index_by_name</code><span class="sig-paren">(</span><em class="sig-param">pdb</em>, <em class="sig-param">atom_names</em>, <em class="sig-param">verbose: 'bool' = False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#get_atom_index_by_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.get_atom_index_by_name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns atom-indices given a an atomic name as list.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>pdb</strong> – </p></li>
 <li><p><strong>atom_names</strong> – list of strings</p></li>
-<li><p><strong>verbose</strong> – bool</p></li>
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -987,7 +1018,7 @@ reference is of length 1, target of arbitrary length</p>
 
 <dl class="function">
 <dt id="mfm.structure.structure.get_atom_index_of_residue_types">
-<code class="sig-prename descclassname">mfm.structure.structure.</code><code class="sig-name descname">get_atom_index_of_residue_types</code><span class="sig-paren">(</span><em class="sig-param">pdb</em>, <em class="sig-param">res_types</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#get_atom_index_of_residue_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.get_atom_index_of_residue_types" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.structure.structure.</code><code class="sig-name descname">get_atom_index_of_residue_types</code><span class="sig-paren">(</span><em class="sig-param">pdb</em>, <em class="sig-param">res_types</em>, <em class="sig-param">verbose: 'bool' = False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#get_atom_index_of_residue_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.get_atom_index_of_residue_types" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns atom-indices given a selection of residue types and atom names as OrderedDict.
 The selection is based on dictionaries. For each residue-type only the atoms within a
 list are selected (see example)</p>
@@ -996,7 +1027,7 @@ list are selected (see example)</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>pdb</strong> – </p></li>
 <li><p><strong>res_types</strong> – dict</p></li>
-<li><p><strong>verbose</strong> – bool</p></li>
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1114,11 +1145,11 @@ provided only the, respective atoms are used to calculate the RMSD.</p>
 </dl>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">s1</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">times</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s1</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">s1</span>
 <span class="go">&lt;mfm.structure.structure.Structure at 0x135f3ad0&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">s2</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s2</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">s2</span>
 <span class="go">&lt;mfm.structure.structure.Structure at 0x1348fbb0&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">rmsd</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">)</span>
@@ -1129,11 +1160,16 @@ provided only the, respective atoms are used to calculate the RMSD.</p>
 
 <dl class="function">
 <dt id="mfm.structure.structure.sequence">
-<code class="sig-prename descclassname">mfm.structure.structure.</code><code class="sig-name descname">sequence</code><span class="sig-paren">(</span><em class="sig-param">structure_obj</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#sequence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.sequence" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.structure.structure.</code><code class="sig-name descname">sequence</code><span class="sig-paren">(</span><em class="sig-param">structure_obj</em><span class="sig-paren">)</span> &#x2192; 'Dict'<a class="reference internal" href="../_modules/mfm/structure/structure.html#sequence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.sequence" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return dictionary of sequences keyed to chain and type of sequence used.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>structure_obj</strong> – Structure</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[~KT, ~VT]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1161,45 +1197,47 @@ provided only the, respective atoms are used to calculate the RMSD.</p>
 <span id="mfm-structure-trajectory-module"></span><h2>mfm.structure.trajectory module<a class="headerlink" href="#module-mfm.structure.trajectory" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mfm.structure.trajectory.TrajectoryFile">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.trajectory.</code><code class="sig-name descname">TrajectoryFile</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">make_coarse=False</em>, <em class="sig-param">rmsd_ref_state=0</em>, <em class="sig-param">stride=1</em>, <em class="sig-param">inverse_trajectory=False</em>, <em class="sig-param">center=False</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">atom_indices=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/trajectory.html#TrajectoryFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.trajectory.</code><code class="sig-name descname">TrajectoryFile</code><span class="sig-paren">(</span><em class="sig-param">p_object</em>, <em class="sig-param">*args</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">make_coarse=False</em>, <em class="sig-param">rmsd_ref_state=0</em>, <em class="sig-param">stride=1</em>, <em class="sig-param">inverse_trajectory=False</em>, <em class="sig-param">center=False</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">atom_indices=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/trajectory.html#TrajectoryFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.base.Base</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">mdtraj.core.trajectory.Trajectory</span></code></p>
-<blockquote>
-<div><p>Creates an Trajectory of mfm.structure.Structures given a HDF5-File using mdtraj.HDF5TrajectoryFile</p>
-</div></blockquote>
-<dl class="field-list">
+<p>Creates an Trajectory of mfm.structure.Structures given a HDF5-File using mdtraj.HDF5TrajectoryFile</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl>
-<dt><strong>structure</strong><span class="classifier">string / mfm.structure.Structure</span></dt><dd><blockquote>
-<div><p>determines the topology
+<dd class="field-odd"><dl class="simple">
+<dt><strong>structure</strong><span class="classifier">string / mfm.structure.Structure</span></dt><dd><p>determines the topology
 is either a string containing the filename of a PDB-File or an instance of mfm.structure.Structure()
 Obligatory in write file_type, not needed in reading file_type</p>
-</div></blockquote>
-<dl class="simple">
-<dt>filename_hdf<span class="classifier">string</span></dt><dd><p>the filename of the HDF5-file</p>
 </dd>
-</dl>
+<dt><strong>filename_hdf</strong><span class="classifier">string</span></dt><dd><p>the filename of the HDF5-file</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Other Parameters</dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>verbose</strong><span class="classifier">bool</span></dt><dd><dl class="simple">
-<dt>stride<span class="classifier">int, default=None</span></dt><dd><p>Only read every stride-th frame.</p>
+<dt><strong>verbose</strong><span class="classifier">bool</span></dt><dd></dd>
+<dt><strong>stride</strong><span class="classifier">int, default=None</span></dt><dd><p>Only read every stride-th frame.</p>
 </dd>
-<dt>frame<span class="classifier">integer or None</span></dt><dd><p>If frame is an integer only the frame number provided by the integer is loaded otherwise the whole trajectory
+<dt><strong>frame</strong><span class="classifier">integer or None</span></dt><dd><p>If frame is an integer only the frame number provided by the integer is loaded otherwise the whole trajectory
 is loaded.</p>
 </dd>
 </dl>
 </dd>
 </dl>
-</dd>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">mfm.mfm.structure.Structure</span></code></dt><dd></dd>
 </dl>
-<dl>
-<dt>import mfm.structure    &gt;&gt;&gt; import mfm</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/T4L_Topology.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</div>
+<p class="rubric">Examples</p>
+<p>Making new h5-Trajectory file</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.structure</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mfm.structure.trajectory</span> <span class="k">import</span> <span class="n">TrajectoryFile</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/T4L_Topology.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="go">&lt;mfm.structure.structure.mfm.structure.Structure at 0x11f34e10&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">traj</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 <span class="go">ATOM      1    N MET     1     -10.750  14.401  -5.002  0.00  0.00             N</span>
 <span class="go">ATOM      2   H1 MET     1     -11.310  14.080  -4.226  0.00  0.00             H</span>
 <span class="go">ATOM      3   H2 MET     1     -11.333  14.344  -5.825  0.00  0.00             H</span>
@@ -1210,26 +1248,26 @@ is loaded.</p>
 </div>
 <p>Opening h5-Trajectory file</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mfm.structure.trajectory</span> <span class="k">import</span> <span class="n">TrajectoryFile</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">traj</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">])</span>
 <span class="go">[&lt;mfm.structure.structure.mfm.structure.Structure at 0x1345d5d0&gt;,</span>
 <span class="go">&lt;mfm.structure.structure.mfm.structure.Structure at 0x1345d610&gt;,</span>
 <span class="go">&lt;mfm.structure.structure.mfm.structure.Structure at 0x132d2230&gt;]</span>
 </pre></div>
 </div>
 <p>Name of the trajectory</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">traj</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 <span class="go">&#39;/ sample_data/ structure/ sample_data/ structure/ T4L_Trajectory.h5&#39;</span>
 </pre></div>
 </div>
 <p>initialize with mdtraj.Trajectory</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t2</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">mdtraj</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;test.h5&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mfm.structure.trajectory</span> <span class="k">import</span> <span class="n">TrajectoryFile</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t2</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="n">traj</span><span class="o">.</span><span class="n">mdtraj</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;test.h5&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-</dd>
-</dl>
 <dl class="method">
 <dt id="mfm.structure.trajectory.TrajectoryFile.append">
 <code class="sig-name descname">append</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">xyz</em>, <em class="sig-param">update_rmsd: 'bool' = True</em>, <em class="sig-param">energy: 'float' = inf</em>, <em class="sig-param">energy_fret: 'float' = inf</em>, <em class="sig-param">verbose: 'bool' = True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/trajectory.html#TrajectoryFile.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile.append" title="Permalink to this definition">¶</a></dt>
@@ -1250,10 +1288,11 @@ By default True. If True energy, energy_fret, RMSD and dRMSD are printed to std-
 </dl>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mfm.structure.trajectory</span> <span class="k">import</span> <span class="n">TrajectoryFile</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span>
 <span class="go">&lt;mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x11762b70&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">traj</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 <span class="go">&lt;mdtraj.Trajectory with 93 frames, 2495 atoms, 164 residues, without unitcells at 0x11762b70&gt;</span>
 </pre></div>
 </div>
@@ -1384,16 +1423,17 @@ point to the same data.</p>
 <dd><p>A 2D-numpy array containing the RMSD, dRMSD, energy and the chi2 values of the trajectory</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mfm.structure.trajectory</span> <span class="k">import</span> <span class="n">TrajectoryFile</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span>
 <span class="go">&lt;mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x117f3b70&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">values</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span><span class="o">.</span><span class="n">values</span>
 <span class="go">array([], shape=(4, 0), dtype=float64)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 <span class="go">inf     inf     0.0000  0.6678</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 <span class="go">inf     inf     0.0000  0.0000</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">values</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span><span class="o">.</span><span class="n">values</span>
 <span class="go">array([ [  5.96507968e-09,   5.96508192e-09],</span>
 <span class="go">        [  6.67834069e-01,   5.96507944e-09],</span>
 <span class="go">        [             inf,              inf],</span>
@@ -1410,7 +1450,7 @@ point to the same data.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="mfm.structure.trajectory.Universe.addPotential">
-<code class="sig-name descname">addPotential</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">potential</em>, <em class="sig-param">scale=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/trajectory.html#Universe.addPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.Universe.addPotential" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">addPotential</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">potential</em>, <em class="sig-param">scale: 'float' = 1.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/trajectory.html#Universe.addPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.Universe.addPotential" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -1420,17 +1460,22 @@ point to the same data.</p>
 
 <dl class="method">
 <dt id="mfm.structure.trajectory.Universe.getEnergies">
-<code class="sig-name descname">getEnergies</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">structure=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/trajectory.html#Universe.getEnergies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.Universe.getEnergies" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">getEnergies</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">structure: 'mfm.structure.structure.Structure' = None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/trajectory.html#Universe.getEnergies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.Universe.getEnergies" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.trajectory.Universe.getEnergy">
-<code class="sig-name descname">getEnergy</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">structure=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/trajectory.html#Universe.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.Universe.getEnergy" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname">getEnergy</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">structure: 'mfm.structure.structure.Structure' = None</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/structure/trajectory.html#Universe.getEnergy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.Universe.getEnergy" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.trajectory.Universe.removePotential">
-<code class="sig-name descname">removePotential</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">potentialNbr=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/trajectory.html#Universe.removePotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.Universe.removePotential" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">removePotential</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">potentialNbr: 'int' = None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/trajectory.html#Universe.removePotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.Universe.removePotential" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>

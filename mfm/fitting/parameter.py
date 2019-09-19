@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 from typing import Tuple, List
 import deprecation
@@ -14,7 +17,9 @@ import mfm.decorators
 parameter_settings = mfm.settings.parameter
 
 
-class FittingParameter(mfm.parameter.Parameter):
+class FittingParameter(
+    mfm.parameter.Parameter
+):
 
     def __init__(
             self,
@@ -23,6 +28,13 @@ class FittingParameter(mfm.parameter.Parameter):
             *args,
             **kwargs
     ):
+        """
+
+        :param model:
+        :param fixed:
+        :param args:
+        :param kwargs:
+        """
         super(FittingParameter, self).__init__(
             *args,
             **kwargs
@@ -124,7 +136,12 @@ class FittingParameter(mfm.parameter.Parameter):
         return widget
 
 
-class GlobalFittingParameter(FittingParameter):
+class GlobalFittingParameter(
+    FittingParameter
+):
+    """
+
+    """
 
     @property
     def value(self) -> float:
@@ -158,13 +175,25 @@ class GlobalFittingParameter(FittingParameter):
             formula,
             **kwargs
     ):
+        """
+
+        :param f:
+        :param g:
+        :param formula:
+        :param kwargs:
+        """
         args = [f, g, formula]
         super(GlobalFittingParameter, self).__init__(*args, **kwargs)
         self.f, self.g = f, g
         self.formula = formula
 
 
-class FittingParameterGroup(mfm.parameter.ParameterGroup):
+class FittingParameterGroup(
+    mfm.parameter.ParameterGroup
+):
+    """
+
+    """
 
     @property
     def parameters_all(
@@ -182,26 +211,31 @@ class FittingParameterGroup(mfm.parameter.ParameterGroup):
 
     @property
     def aggregated_parameters(self):
-        d = self.__dict__
         a = list()
-        for key, value in d.items():
+        for value in self.__dict__.values():
             if isinstance(value, FittingParameterGroup):
                 a.append(value)
         return list(set(a))
 
     @property
-    def parameter_dict(self) -> dict:
+    def parameter_dict(
+            self
+    ) -> dict:
         re = dict()
         for p in self.parameters:
             re[p.name] = p
         return re
 
     @property
-    def parameter_names(self) -> List[str]:
+    def parameter_names(
+            self
+    ) -> List[str]:
         return [p.name for p in self.parameters]
 
     @property
-    def parameter_values(self) -> List[float]:
+    def parameter_values(
+            self
+    ) -> List[float]:
         return [p.value for p in self.parameters]
 
     @parameter_values.setter
@@ -224,7 +258,9 @@ class FittingParameterGroup(mfm.parameter.ParameterGroup):
         a = dict()
         return a
 
-    def to_dict(self) -> dict:
+    def to_dict(
+            self
+    ) -> dict:
         s = dict()
         parameters = dict()
         s['parameter'] = parameters
@@ -250,6 +286,11 @@ class FittingParameterGroup(mfm.parameter.ParameterGroup):
             self,
             parameter_type=mfm.parameter.Parameter
     ) -> None:
+        """
+
+        :param parameter_type:
+        :return:
+        """
         self._aggregated_parameters = None
         self._parameters = None
         d = [v for v in self.__dict__.values() if v is not self]

@@ -83,10 +83,10 @@ class Model(
             xmin = fit.xmin
         if xmax is None:
             xmax = fit.xmax
-        x, m = fit.model[xmin:xmax]
-        _, d, e = fit.data[xmin:xmax]
-        ml = min([len(m), len(d)])
-        wr = np.array((d[:ml] - m[:ml]) / e[:ml], dtype=np.float64)
+        model_x, model_y = fit.model[xmin:xmax]
+        data_x, data_y, data_y_error = fit.data[xmin:xmax]
+        ml = min([len(model_y), len(data_y)])
+        wr = np.array((data_y[:ml] - model_y[:ml]) / data_y_error[:ml], dtype=np.float64)
         return wr
 
     def update_model(

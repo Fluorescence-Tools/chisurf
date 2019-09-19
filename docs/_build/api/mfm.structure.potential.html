@@ -265,7 +265,7 @@ otherwise the value is set to epsilon*nnFraction (non-native interaction).</p>
 
 <dl class="class">
 <dt id="mfm.structure.potential.potentials.AvPotential">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">AvPotential</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#AvPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.AvPotential" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">AvPotential</code><span class="sig-paren">(</span><em class="sig-param">labeling_file=None</em>, <em class="sig-param">structure=None</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">rda_axis=None</em>, <em class="sig-param">av_samples=None</em>, <em class="sig-param">min_av=150</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#AvPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.AvPotential" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>The AvPotential class provides the possibility to calculate the reduced or unreduced chi2 given a set of
 labeling positions and experimental distances. Here the labeling positions and distances are provided as
@@ -366,7 +366,7 @@ Output to stdout</p></li>
 
 <dl class="class">
 <dt id="mfm.structure.potential.potentials.CEPotential">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">CEPotential</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#CEPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.CEPotential" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">CEPotential</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">potential=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#CEPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.CEPotential" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.structure</span>
@@ -413,7 +413,7 @@ Output to stdout</p></li>
 
 <dl class="class">
 <dt id="mfm.structure.potential.potentials.ClashPotential">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">ClashPotential</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#ClashPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.ClashPotential" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">ClashPotential</code><span class="sig-paren">(</span><em class="sig-param">structure=None</em>, <em class="sig-param">clash_tolerance=2.0</em>, <em class="sig-param">covalent_radius=1.5</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#ClashPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.ClashPotential" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="mfm.structure.potential.potentials.ClashPotential.getEnergy">
@@ -543,7 +543,7 @@ Output to stdout</p></li>
 
 <dl class="class">
 <dt id="mfm.structure.potential.potentials.MJPotential">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">MJPotential</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">filename='./mfm/structure/potential/database/mj.csv'</em>, <em class="sig-param">ca_cutcoff=6.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#MJPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.MJPotential" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.potential.potentials.</code><code class="sig-name descname">MJPotential</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">ca_cutcoff=6.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/potential/potentials.html#MJPotential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.potential.potentials.MJPotential" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="mfm.structure.potential.potentials.MJPotential.getEnergy">

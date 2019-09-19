@@ -5,6 +5,7 @@ import numpy as np
 import mfm
 import mfm.fluorescence.anisotropy.kappa2
 import mfm.math
+import mfm.math.datatools
 from mfm.models.tcspc.lifetime import Lifetime, LifetimeModel
 from mfm.fluorescence.general import distribution2rates, rates2lifetimes
 from mfm.fluorescence import rda_axis
@@ -14,11 +15,16 @@ fret_settings = mfm.settings.cs_settings['fret']
 
 
 class FRETParameters(FittingParameterGroup):
+    """
+
+    """
 
     name = "FRET-parameters"
 
     @property
-    def forster_radius(self) -> float:
+    def forster_radius(
+            self
+    ) -> float:
         return self._forster_radius.value
 
     @forster_radius.setter
@@ -29,7 +35,9 @@ class FRETParameters(FittingParameterGroup):
         self._forster_radius.value = v
 
     @property
-    def tauD0(self) -> float:
+    def tauD0(
+            self
+    ) -> float:
         return self._tauD0.value
 
     @tauD0.setter
@@ -40,11 +48,15 @@ class FRETParameters(FittingParameterGroup):
         self._tauD0.value = v
 
     @property
-    def kappa2(self) -> float:
+    def kappa2(
+            self
+    ) -> float:
         return self._kappa2.value
 
     @property
-    def xDOnly(self) -> float:
+    def xDOnly(
+            self
+    ) -> float:
         return np.sqrt(self._xDonly.value ** 2)
 
     @xDOnly.setter
@@ -54,32 +66,58 @@ class FRETParameters(FittingParameterGroup):
     ):
         self._xDonly.value = v
 
-    def __init__(self, **kwargs):
-        forster_radius = kwargs.pop('forster_radius', fret_settings['forster_radius'])
+    def __init__(
+            self,
+            forster_radius: float = fret_settings['forster_radius'],
+            tau0: float = mfm.settings.cs_settings['fret']['tau0'],
+            **kwargs
+    ):
         #kappa2 = kwargs.pop('kappa2', mfm.settings.cs_settings['fret']['kappa2'])
-        t0 = kwargs.pop('tau0', mfm.settings.cs_settings['fret']['tau0'])
+        t0 = tau0
         xDOnly = kwargs.pop('x(D0)', 0.0)
         model = kwargs.get('models', None)
 
-        self._tauD0 = FittingParameter(name='t0', label='&tau;<sub>0</sub>',
-                                       value=t0, fixed=True, model=model)
-        self._forster_radius = FittingParameter(name='R0', label='R<sub>0</sub>',
-                                                value=forster_radius, fixed=True, model=model)
+        self._tauD0 = FittingParameter(
+            name='t0',
+            label='&tau;<sub>0</sub>',
+            value=t0,
+            fixed=True,
+            model=model
+        )
+        self._forster_radius = FittingParameter(
+            name='R0',
+            label='R<sub>0</sub>',
+            value=forster_radius,
+            fixed=True,
+            model=model
+        )
         #self._kappa2 = FittingParameter(name='k2', label='&kappa;<sup>2</sup>',
         #                                value=kappa2, fixed=True,
         #                                lb=0.0, ub=4.0,
         #                                bounds_on=False,
         #                                models=models)
-        self._xDonly = FittingParameter(name='xDOnly', label='x<sup>(D,0)</sup>',
-                                        value=xDOnly, fixed=False,
-                                        lb=0.0, ub=1.0, bounds_on=False,
-                                        model=model)
+        self._xDonly = FittingParameter(
+            name='xDOnly',
+            label='x<sup>(D,0)</sup>',
+            value=xDOnly,
+            fixed=False,
+            lb=0.0,
+            ub=1.0,
+            bounds_on=False,
+            model=model
+        )
 
         func_calc_fret = kwargs.get('func_calc_fret', 'error')
-        self._fret_efficiency = FittingParameter(name='E_FRET', label='E<sub>FRET</sub>',
-                                                 value=func_calc_fret,
-                                                 fixed=False, lb=0.0, ub=1.0,
-                                                 bounds_on=True, model=model)
+        self._fret_efficiency = FittingParameter(
+            name='E_FRET',
+            label='E<sub>FRET</sub>',
+            value=func_calc_fret,
+            fixed=False,
+            lb=0.0,
+            ub=1.0,
+            bounds_on=True,
+            model=model
+        )
         parameters = [
             self._tauD0,
             self._forster_radius,
@@ -87,11 +125,16 @@ class FRETParameters(FittingParameterGroup):
             self._xDonly,
             self._fret_efficiency
         ]
-        FittingParameterGroup.__init__(self, parameters=parameters, **kwargs)
-        self.name = "FRET-parameters"
+        super().__init__(
+            parameters=parameters,
+            **kwargs
+        )
 
 
 class OrientationParameter(FittingParameterGroup):
+    """
+
+    """
 
     @property
     def orientation_spectrum(self):
@@ -109,7 +152,11 @@ class OrientationParameter(FittingParameterGroup):
     def mode(self, v):
         self._mode = v
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
         self._mode = kwargs.get('orientation_mode', 'fast_isotropic')
 
         # fast isotropic
@@ -118,17 +165,22 @@ class OrientationParameter(FittingParameterGroup):
         # slow isotropic
         k2s = np.linspace(0.01, 4, 50)
         p = mfm.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(k2s)
-        self._k2_slow_iso = mfm.fluorescence.general.two_column_to_interleaved(p, k2s)
+        self._k2_slow_iso = mfm.math.datatools.two_column_to_interleaved(p, k2s)
 
         FittingParameterGroup.__init__(self, *args, **kwargs)
 
 
 class Gaussians(FittingParameterGroup):
+    """
+
+    """
 
     name = "gaussians"
 
     @property
-    def distribution(self) -> np.array:
+    def distribution(
+            self
+    ) -> np.array:
         d = list()
         weights = self.amplitude
         if not self.is_distance_between_gaussians:
@@ -144,7 +196,9 @@ class Gaussians(FittingParameterGroup):
         return d
 
     @property
-    def mean(self):
+    def mean(
+            self
+    ):
         try:
             a = np.sqrt(np.array([g.value for g in self._gaussianMeans]) ** 2)
             return a
@@ -262,11 +316,16 @@ class Gaussians(FittingParameterGroup):
 
 
 class DiscreteDistance(FittingParameterGroup):
+    """
+
+    """
 
     name = "discrete_distance"
 
     @property
-    def distribution(self) -> np.array:
+    def distribution(
+            self
+    ) -> np.array:
         distance = self.distance
         amplitude = self.amplitude
         count, bins = np.histogram(distance, bins=rda_axis, weights=amplitude)
@@ -275,7 +334,9 @@ class DiscreteDistance(FittingParameterGroup):
         return np.array([s], dtype=np.float64)
 
     @property
-    def distance(self) -> np.array:
+    def distance(
+            self
+    ) -> np.array:
         try:
             a = np.sqrt(np.array([g.value for g in self._distances]) ** 2)
             return a
@@ -332,9 +393,14 @@ class DiscreteDistance(FittingParameterGroup):
 
 
 class FRETModel(LifetimeModel):
+    """
+
+    """
 
     @property
-    def distance_distribution(self):
+    def distance_distribution(
+            self
+    ) -> np.array:
         """
         The distribution of distances. The distribution should be 3D numpy array of the form
 
@@ -347,7 +413,9 @@ class FRETModel(LifetimeModel):
         return np.array([[[1.0], [52.0]]], dtype=np.float64)
 
     @property
-    def fret_rate_spectrum(self):
+    def fret_rate_spectrum(
+            self
+    ) -> np.array:
         """
         The FRET-rate spectrum. This takes the distance distribution of the models and calculated the resulting
         FRET-rate spectrum (excluding the donor-offset).
@@ -362,7 +430,9 @@ class FRETModel(LifetimeModel):
         return r
 
     @property
-    def lifetime_spectrum(self) -> np.array:
+    def lifetime_spectrum(
+            self
+    ) -> np.array:
         xDOnly = self.fret_parameters.xDOnly
         lt = rates2lifetimes(self.fret_rate_spectrum, self.donors.rate_spectrum, xDOnly)
         if mfm.settings.cs_settings['fret']['bin_lifetime']:
@@ -377,7 +447,9 @@ class FRETModel(LifetimeModel):
             return lt
 
     @property
-    def donor_lifetime_spectrum(self) -> np.array:
+    def donor_lifetime_spectrum(
+            self
+    ) -> np.array:
         """
         The donor lifetime spectrum in form amplitude, lifetime, amplitude, lifetime
         """
@@ -391,32 +463,42 @@ class FRETModel(LifetimeModel):
         self.model.donors.lifetime_spectrum = v
 
     @property
-    def donor_species_averaged_lifetime(self) -> float:
+    def donor_species_averaged_lifetime(
+            self
+    ) -> float:
         """
         The current species averaged lifetime of the donor sample xi*taui
         """
         return self.donors.species_averaged_lifetime
 
     @property
-    def donor_fluorescence_averaged_lifetime(self) -> float:
+    def donor_fluorescence_averaged_lifetime(
+            self
+    ) -> float:
         """
         The current species averaged lifetime of the donor sample xi*taui
         """
         return self.donors.fluorescence_averaged_lifetime
 
     @property
-    def fret_species_averaged_lifetime(self) -> float:
+    def fret_species_averaged_lifetime(
+            self
+    ) -> float:
         """
         The current species averages lifetime of the FRET sample xi * taui
         """
         return self.species_averaged_lifetime
 
     @property
-    def fret_fluorescence_averaged_lifetime(self) -> float:
+    def fret_fluorescence_averaged_lifetime(
+            self
+    ) -> float:
         return self.fluorescence_averaged_lifetime
 
     @property
-    def fret_efficiency(self) -> float:
+    def fret_efficiency(
+            self
+    ) -> float:
         return 1.0 - self.fret_species_averaged_lifetime / self.donor_species_averaged_lifetime
 
     @fret_efficiency.setter
@@ -430,13 +512,15 @@ class FRETModel(LifetimeModel):
         self.convolve.n0 = n0
 
     @property
-    def donors(self):
+    def donors(
+            self
+    ) -> Lifetime:
         return self._donors
 
     @donors.setter
     def donors(
             self,
-            v
+            v: Lifetime
     ):
         self._donors = v
 
@@ -513,7 +597,9 @@ class GaussianModel(FRETModel):
     name = "FRET: FD (Gaussian)"
 
     @property
-    def distance_distribution(self) -> np.array:
+    def distance_distribution(
+            self
+    ) -> np.array:
         dist = self.gaussians.distribution
         return dist
 
@@ -545,11 +631,16 @@ class GaussianModel(FRETModel):
 
 
 class FRETrateModel(FRETModel):
+    """
+
+    """
 
     name = "FRET: FD (Discrete)"
 
     @property
-    def fret_rate_spectrum(self) -> np.array:
+    def fret_rate_spectrum(
+            self
+    ) -> np.array:
         fret_rates = mfm.fluorescence.general.distance_to_fret_rate_constant(
             self.fret_rates.distance,
             self.fret_parameters.forster_radius,
@@ -561,7 +652,9 @@ class FRETrateModel(FRETModel):
         return r
 
     @property
-    def distance_distribution(self) -> np.array:
+    def distance_distribution(
+            self
+    ) -> np.array:
         dist = self.fret_rates.distribution
         return dist
 
@@ -572,19 +665,39 @@ class FRETrateModel(FRETModel):
     ):
         self.fret_rates.append(mean, species_fraction)
 
-    def pop(self):
+    def pop(
+            self
+    ):
         return self.fret_rates.pop()
 
-    def finalize(self):
-        super(FRETModel, self).finalize()
+    def finalize(
+            self
+    ):
+        super(FRETrateModel, self).finalize()
         self.fret_rates.finalize()
 
-    def __init__(self, fit, **kwargs):
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            fret_rates: DiscreteDistance = None,
+            **kwargs
+    ):
+        """
+
+        :param fit:
+        :param fret_rates:
+        :param kwargs:
+        """
         FRETModel.__init__(self, fit, **kwargs)
-        self.fret_rates = kwargs.get('fret_rates', DiscreteDistance(**kwargs))
+        if fret_rates is None:
+            fret_rates = DiscreteDistance(**kwargs)
+        self.fret_rates = fret_rates
 
 
 class WormLikeChainModel(FRETModel):
+    """
+
+    """
 
     name = "FD(A): Worm-like chain"
 
@@ -610,41 +723,74 @@ class WormLikeChainModel(FRETModel):
     def use_dye_linker(self, v):
         self._use_dye_linker = v
 
-    def __init__(self, fit, **kwargs):
-        FRETModel.__init__(self, fit, **kwargs)
-        self._chain_length = FittingParameter(name='length', value=100.0, model=self,
-                                              decimals=1, fixed=False, text='l')
-        self._use_dye_linker = kwargs.get('use_dye_linker', False)
-        self._sigma_linker = FittingParameter(name='link_width', value=6.0, model=self,
-                                              decimals=1, fixed=False, text='lw')
-        self._persistence_length = FittingParameter(name='persistence', value=30.0,
-                                                    model=self, decimals=4,
-                                                    fixed=False, text='lp')
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            use_dye_linker: bool = False,
+            **kwargs
+    ):
+        super().__init__(
+            fit,
+            **kwargs
+        )
+        self._chain_length = FittingParameter(
+            name='length',
+            value=100.0,
+            model=self,
+            fixed=False,
+            text='l'
+        )
+        self._use_dye_linker = use_dye_linker
+        self._sigma_linker = FittingParameter(
+            name='link_width',
+            value=6.0,
+            model=self,
+            fixed=False,
+            text='lw'
+        )
+        self._persistence_length = FittingParameter(
+            name='persistence',
+            value=30.0,
+            model=self,
+            fixed=False,
+            text='lp'
+        )
 
 
 class SingleDistanceModel(FRETModel):
+    """
+
+    """
 
     name = "Fixed distance distribution"
 
     @property
-    def xDOnly(self):
+    def xDOnly(
+            self
+    ) -> float:
         return self._xDOnly.value
 
     @property
-    def distance_distribution(self):
+    def distance_distribution(
+            self
+    ) -> np.array:
         n_points = self.n_points_dist
         r = np.vstack([self.prda, self.rda]).reshape([1, 2,  n_points])
         return r
 
     @property
-    def n_points_dist(self):
+    def n_points_dist(
+            self
+    ) -> int:
         """
         The number of points in the distribution
         """
         return self.prda.shape[0]
 
     @property
-    def rda(self):
+    def rda(
+            self
+    ) -> np.array:
         return self._rda
 
     @rda.setter
@@ -652,17 +798,29 @@ class SingleDistanceModel(FRETModel):
         self._rda = v
 
     @property
-    def prda(self):
+    def prda(
+            self
+    ) -> np.array:
         p = self._prda
         p /= sum(p)
         return p
 
     @prda.setter
-    def prda(self, v):
+    def prda(
+            self,
+            v: np.array
+    ):
         self._prda = v
 
-    def __init__(self, **kwargs):
-        FRETModel.__init__(self, **kwargs)
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.FitGroup,
+            **kwargs
+    ):
+        super().__init__(
+            fit=fit,
+            **kwargs
+        )
         self._rda = kwargs.get('rda', np.array([100.0]))
         self._prda = kwargs.get('prda', np.array([100.0]))
 

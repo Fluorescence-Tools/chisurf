@@ -303,13 +303,13 @@ it is not possible to prompt for more input.</p>
 
 <dl class="function">
 <dt id="mfm.widgets.widgets.clear_layout">
-<code class="sig-prename descclassname">mfm.widgets.widgets.</code><code class="sig-name descname">clear_layout</code><span class="sig-paren">(</span><em class="sig-param">layout</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/widgets/widgets.html#clear_layout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.widgets.widgets.clear_layout" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.widgets.widgets.</code><code class="sig-name descname">clear_layout</code><span class="sig-paren">(</span><em class="sig-param">layout: 'QtWidgets.QLayout'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/widgets/widgets.html#clear_layout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.widgets.widgets.clear_layout" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clears all widgets within a layout</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.widgets.widgets.get_directory">
-<code class="sig-prename descclassname">mfm.widgets.widgets.</code><code class="sig-name descname">get_directory</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/widgets/widgets.html#get_directory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.widgets.widgets.get_directory" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.widgets.widgets.</code><code class="sig-name descname">get_directory</code><span class="sig-paren">(</span><em class="sig-param">filename_ending: 'str' = None</em>, <em class="sig-param">get_files: 'bool' = False</em>, <em class="sig-param">directory: 'str' = None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/widgets/widgets.html#get_directory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.widgets.widgets.get_directory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Opens a new window where you can choose a directory. The current working path
 is updated to this directory.</p>
 <p>It either returns the directory or the files within the directory (if get_files is True).
@@ -346,19 +346,14 @@ file.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="mfm.widgets.widgets.get_fortune">
-<code class="sig-prename descclassname">mfm.widgets.widgets.</code><code class="sig-name descname">get_fortune</code><span class="sig-paren">(</span><em class="sig-param">fortunepath: 'str' = './mfm/ui/fortune/'</em>, <em class="sig-param">min_length: 'int' = 0</em>, <em class="sig-param">max_length: 'int' = 100</em>, <em class="sig-param">attempts: 'int' = 1000</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/widgets/widgets.html#get_fortune"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.widgets.widgets.get_fortune" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
 <dt id="mfm.widgets.widgets.get_widgets_in_layout">
-<code class="sig-prename descclassname">mfm.widgets.widgets.</code><code class="sig-name descname">get_widgets_in_layout</code><span class="sig-paren">(</span><em class="sig-param">layout</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/widgets/widgets.html#get_widgets_in_layout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.widgets.widgets.get_widgets_in_layout" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.widgets.widgets.</code><code class="sig-name descname">get_widgets_in_layout</code><span class="sig-paren">(</span><em class="sig-param">layout: 'QtWidgets.QLayout'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/widgets/widgets.html#get_widgets_in_layout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.widgets.widgets.get_widgets_in_layout" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of all widgets within a layout</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.widgets.widgets.hide_items_in_layout">
-<code class="sig-prename descclassname">mfm.widgets.widgets.</code><code class="sig-name descname">hide_items_in_layout</code><span class="sig-paren">(</span><em class="sig-param">layout</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/widgets/widgets.html#hide_items_in_layout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.widgets.widgets.hide_items_in_layout" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.widgets.widgets.</code><code class="sig-name descname">hide_items_in_layout</code><span class="sig-paren">(</span><em class="sig-param">layout: 'QtWidgets.QLayout'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/widgets/widgets.html#hide_items_in_layout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.widgets.widgets.hide_items_in_layout" title="Permalink to this definition">¶</a></dt>
 <dd><p>Hides all items within a Qt-layout</p>
 </dd></dl>
 
@@ -369,7 +364,7 @@ file.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pyqtgraph</span> <span class="k">as</span> <span class="nn">pg</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">collections</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">yaml</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;./test_session.yaml&quot;</span><span class="p">))[</span><span class="s1">&#39;datasets&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;./test_session.yaml&quot;</span><span class="p">))[</span><span class="s1">&#39;datasets&#39;</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">od</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">OrderedDict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">w</span> <span class="o">=</span> <span class="n">make_widget_from_yaml</span><span class="p">(</span><span class="n">od</span><span class="p">,</span> <span class="s1">&#39;test&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">w</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>

@@ -123,12 +123,12 @@
 <span class="kn">import</span> <span class="nn">numba</span> <span class="k">as</span> <span class="nn">nb</span>
 <span class="kn">import</span> <span class="nn">mfm</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span>  <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="p">,</span> <span class="n">uic</span>
+<span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span> <span class="n">QtWidgets</span><span class="p">,</span> <span class="n">uic</span>
 <span class="kn">import</span> <span class="nn">mdtraj</span> <span class="k">as</span> <span class="nn">md</span>
 <span class="kn">import</span> <span class="nn">tables</span>
 <span class="kn">import</span> <span class="nn">mdtraj.scripts.mdconvert</span> <span class="k">as</span> <span class="nn">mdconvert</span>
 
-<span class="kn">from</span> <span class="nn">mfm.widgets</span> <span class="k">import</span> <span class="n">MyMessageBox</span>
+<span class="kn">from</span> <span class="nn">mfm.widgets.widgets</span> <span class="k">import</span> <span class="n">MyMessageBox</span>
 
 
 <div class="viewcode-block" id="translate"><a class="viewcode-back" href="../../../../api/mfm.tools.modelling.html#mfm.tools.modelling.trajectory.translate">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span>
@@ -677,72 +677,6 @@
     <span class="k">def</span> <span class="nf">use_folder</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">radioButton</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span></div>
 
-
-<div class="viewcode-block" id="RemoveClashedFrames"><a class="viewcode-back" href="../../../../api/mfm.tools.modelling.html#mfm.tools.modelling.trajectory.RemoveClashedFrames">[docs]</a><span class="k">class</span> <span class="nc">RemoveClashedFrames</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">stride</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">atom_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">txt</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plainTextEdit</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">txt</span>
-        <span class="c1">#atom_list = np.fromstring(txt, dtype=np.int32, sep=&quot;,&quot;)</span>
-        <span class="c1">#return atom_list</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">trajectory_filename</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lineEdit</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
-
-    <span class="nd">@trajectory_filename</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">trajectory_filename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">min_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">doubleSpinBox</span><span class="o">.</span><span class="n">value</span><span class="p">())</span> <span class="o">/</span> <span class="mf">10.0</span>
-
-<div class="viewcode-block" id="RemoveClashedFrames.onRemoveClashes"><a class="viewcode-back" href="../../../../api/mfm.tools.modelling.html#mfm.tools.modelling.trajectory.RemoveClashedFrames.onRemoveClashes">[docs]</a>    <span class="k">def</span> <span class="nf">onRemoveClashes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;onRemoveClashes&quot;</span><span class="p">)</span>
-        <span class="n">target_filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">save_file</span><span class="p">(</span><span class="s1">&#39;H5-Trajectory file&#39;</span><span class="p">,</span> <span class="s1">&#39;H5-File (*.h5)&#39;</span><span class="p">)</span>
-        <span class="c1"># target_filename = &#39;clash_dimer.h5&#39;</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trajectory_filename</span>
-        <span class="n">stride</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span>
-        <span class="n">min_distance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_distance</span>
-
-        <span class="c1"># Make empty trajectory</span>
-        <span class="n">frame_0</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">load_frame</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="n">target_traj</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">Trajectory</span><span class="p">(</span><span class="n">xyz</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">frame_0</span><span class="o">.</span><span class="n">n_atoms</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span> <span class="n">topology</span><span class="o">=</span><span class="n">frame_0</span><span class="o">.</span><span class="n">topology</span><span class="p">)</span>
-        <span class="c1">#atom_indices = np.array(self.atom_list)</span>
-        <span class="n">atom_selection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atom_list</span>
-        <span class="n">atom_list</span> <span class="o">=</span> <span class="n">target_traj</span><span class="o">.</span><span class="n">top</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">atom_selection</span><span class="p">)</span>
-        <span class="n">target_traj</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">target_filename</span><span class="p">)</span>
-
-        <span class="n">chunk_size</span> <span class="o">=</span> <span class="mi">1000</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">md</span><span class="o">.</span><span class="n">iterload</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">chunk</span><span class="o">=</span><span class="n">chunk_size</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="n">stride</span><span class="p">)):</span>
-            <span class="n">xyz</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">xyz</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="n">frames_below</span> <span class="o">=</span> <span class="n">below_min_distance</span><span class="p">(</span><span class="n">xyz</span><span class="p">,</span> <span class="n">min_distance</span><span class="p">,</span> <span class="n">atom_list</span><span class="o">=</span><span class="n">atom_list</span><span class="p">)</span>
-            <span class="n">selection</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">frames_below</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">xyz_clash_free</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">xyz</span><span class="p">,</span> <span class="n">selection</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-            <span class="k">with</span> <span class="n">tables</span><span class="o">.</span><span class="n">open_file</span><span class="p">(</span><span class="n">target_filename</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">table</span><span class="p">:</span>
-                <span class="n">table</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">coordinates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xyz_clash_free</span><span class="p">)</span>
-                <span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                                  <span class="n">table</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">xyz_clash_free</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-                <span class="n">table</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">times</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="RemoveClashedFrames.onOpenTrajectory"><a class="viewcode-back" href="../../../../api/mfm.tools.modelling.html#mfm.tools.modelling.trajectory.RemoveClashedFrames.onOpenTrajectory">[docs]</a>    <span class="k">def</span> <span class="nf">onOpenTrajectory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;onOpenTrajectory 1&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1">#self.trajectory_filename = str(QtGui.QFileDialog.getOpenFileName(None, &#39;Open H5-Model file&#39;, &#39;&#39;, &#39;H5-files (*.h5)&#39;))</span>
-            <span class="n">filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">get_filename</span><span class="p">(</span><span class="s1">&#39;Open H5-Model file&#39;</span><span class="p">,</span> <span class="s1">&#39;H5-files (*.h5)&#39;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">trajectory_filename</span> <span class="o">=</span> <span class="n">filename</span></div>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span><span class="s1">&#39;./mfm/ui/tools/remove_clashes.ui&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">actionOpen_trajectory</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onOpenTrajectory</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">actionSave_clash_free_trajectory</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onRemoveClashes</span><span class="p">)</span></div>
 
 </pre></div>
 

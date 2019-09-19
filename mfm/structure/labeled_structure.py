@@ -66,7 +66,11 @@ import mfm.structure    >>> structure = mfm.structure.Structure('./sample_data/m
 
     p_rda, rda = av_distance_distribution(structure, donor_av_parameter=donor_av_parameter, acceptor_av_parameter=acceptor_av_parameter, **kwargs)
     d = np.array([[p_rda, rda]])
-    rs = mfm.fluorescence.general.distribution2rates(d, tau0=tau0, kappa2=kappa2, R0=forster_radius)
+    rs = mfm.fluorescence.general.distribution2rates(
+        d, tau0=tau0,
+        kappa2=kappa2,
+        forster_radius=forster_radius
+    )
     if interleave:
         return np.hstack(rs).ravel([-1])
     else:

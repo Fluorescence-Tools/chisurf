@@ -8,10 +8,9 @@ from mfm.io.pdb import keys, formats, assign_element_to_atom_name
 
 def parse_string_pqr(
         string: str,
-        **kwargs
+        verbose: bool = mfm.verbose
 ):
     rows = string.splitlines()
-    verbose = kwargs.get('verbose', mfm.verbose)
     atoms = np.zeros(len(rows), dtype={'names': keys, 'formats': formats})
     ni = 0
     for line in rows:

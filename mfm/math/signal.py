@@ -60,6 +60,30 @@ def window(
     return y[window_len-1:-window_len+1]
 
 
+def shift_array(
+        y: np.array,
+        shift: float
+) -> np.array:
+    """Calculates an array that is shifted by a float. For non-integer shifts
+    the shifted array is interpolated.
+
+    :return:
+    """
+    ts = -shift
+    ts_f = np.floor(ts)
+    if np.isnan(ts_f):
+        ts_f = 0
+    tsi = int(ts_f)
+
+    tsf = shift - tsi
+    ysh = np.roll(y, tsi) * (1 - tsf) + np.roll(y, tsi + 1) * tsf
+    if ts > 0:
+        ysh[:tsi] = 0.0
+    elif ts < 0:
+        ysh[tsi:] = 0.0
+    return ysh
+
+
 def autocorr(
         x: np.array,
         axis: int = 0,
@@ -82,28 +106,36 @@ def autocorr(
         (default: False)
 
     """
+    # OLD
+    # x = np.atleast_1d(x)
+    # m = [slice(None), ] * len(x.shape)
+    #
+    # # For computational efficiency, crop the chain to the largest power of
+    # # two if requested.
+    # if fast:
+    #     n = int(2**np.floor(np.log2(x.shape[axis])))
+    #     m[axis] = slice(0, n)
+    #     x = x
+    # else:
+    #     n = x.shape[axis]
+    #
+    # # Compute the FFT and then (from that) the auto-correlation function.
+    # f = np.fft.fft(x-np.mean(x, axis=axis), n=2*n, axis=axis)
+    # m[axis] = slice(0, n)
+    # acf = np.fft.ifft(f * np.conjugate(f), axis=axis)[m].real
+    # m[axis] = 0
+    # if normalize:
+    #     return acf / acf[m]
+    # else:
+    #     return acf
 
-    x = np.atleast_1d(x)
-    m = [slice(None), ] * len(x.shape)
-
-    # For computational efficiency, crop the chain to the largest power of
-    # two if requested.
-    if fast:
-        n = int(2**np.floor(np.log2(x.shape[axis])))
-        m[axis] = slice(0, n)
-        x = x
-    else:
-        n = x.shape[axis]
-
-    # Compute the FFT and then (from that) the auto-correlation function.
-    f = np.fft.fft(x-np.mean(x, axis=axis), n=2*n, axis=axis)
-    m[axis] = slice(0, n)
-    acf = np.fft.ifft(f * np.conjugate(f), axis=axis)[m].real
-    m[axis] = 0
-    if normalize:
-        return acf / acf[m]
-    else:
-        return acf
+    return xcorr_fft(
+        x,
+        x,
+        axis=axis,
+        fast=fast,
+        normalize=normalize
+    )
 
 
 def xcorr_fft(
@@ -151,7 +183,7 @@ def calculate_fwhm(
     y_values = curve.y - background
     x_values = curve.x
 
-    half_maximum = max(y_values) / 2
+    half_maximum = max(y_values) / 2.0
     smaller = np.where(y_values > half_maximum)[0]
     lb_i = smaller[0]
     ub_i = smaller[-1]

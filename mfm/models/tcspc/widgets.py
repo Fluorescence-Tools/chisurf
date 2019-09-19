@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 
 from qtpy import  QtWidgets, uic, QtCore, QtGui
@@ -25,6 +28,9 @@ from mfm.widgets.curve import ExperimentalDataSelector
 
 
 class ConvolveWidget(Convolve, QtWidgets.QWidget):
+    """
+
+    """
 
     def __init__(
             self,
@@ -54,21 +60,47 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             self.radioButton_3.setVisible(not hide_curve_convolution)
 
         layout = QtWidgets.QHBoxLayout()
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._dt, layout=layout, fixed=True, hide_bounds=True)
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._n0, layout=layout, fixed=True, hide_bounds=True)
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._dt,
+            layout=layout,
+            fixed=True,
+            hide_bounds=True
+        )
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._n0,
+            layout=layout,
+            fixed=True,
+            hide_bounds=True
+        )
         self.verticalLayout_2.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._start, layout=layout)
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._stop, layout=layout)
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._start,
+            layout=layout
+        )
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._stop,
+            layout=layout
+        )
         self.verticalLayout_2.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._lb, layout=layout)
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._ts, layout=layout)
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._lb,
+            layout=layout
+        )
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._ts,
+            layout=layout
+        )
         self.verticalLayout_2.addLayout(layout)
 
-        self._rep.make_widget(layout=self.horizontalLayout_3, text='r[MHz]')
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            fitting_parameter=self._rep,
+            layout=self.horizontalLayout_3,
+            text='r[MHz]'
+        )
 
         self.irf_select = ExperimentalDataSelector(
             parent=None,
@@ -85,12 +117,12 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
     def onConvolutionModeChanged(self):
         t = "for f in cs.current_fit:\n" \
-            "   f.models.convolve.file_type = '%s'\n" % self.gui_mode
+            "   f.model.convolve.file_type = '%s'\n" % self.gui_mode
         mfm.run(t)
         mfm.run("cs.current_fit.update()")
 
     def onDoConvolutionChanged(self):
-        mfm.run("cs.current_fit.models.convolve.do_convolution = %s" % self.groupBox.isChecked())
+        mfm.run("cs.current_fit.model.convolve.do_convolution = %s" % self.groupBox.isChecked())
 
     def change_irf(self):
         idx = self.irf_select.selected_curve_index
@@ -99,7 +131,9 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         self.fwhm = self._irf.fwhm
 
     @property
-    def fwhm(self) -> float:
+    def fwhm(
+            self
+    ) -> float:
         return self._irf.fwhm
 
     @fwhm.setter
@@ -119,7 +153,13 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             return "full"
 
 
-class CorrectionsWidget(Corrections, QtWidgets.QWidget):
+class CorrectionsWidget(
+    Corrections,
+    QtWidgets.QWidget
+):
+    """
+
+    """
 
     def __init__(
             self,
@@ -127,11 +167,18 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
             hide_corrections: bool = False,
             **kwargs
     ):
+        """
+
+        :param fit:
+        :param hide_corrections:
+        :param kwargs:
+        """
         super(CorrectionsWidget, self).__init__(
             fit=fit,
             threshold=0.9,
             reverse=False,
-            enabled=False
+            enabled=False,
+            **kwargs
         )
         QtWidgets.QWidget.__init__(self)
         uic.loadUi(
@@ -168,31 +215,37 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         self.actionSelect_lintable.triggered.connect(self.lin_select.show)
 
         self.checkBox_3.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.models.corrections.correct_pile_up = %s\n" % self.checkBox_3.isChecked())
+            "cs.current_fit.model.corrections.correct_pile_up = %s\n" % self.checkBox_3.isChecked())
         )
 
         self.checkBox_2.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.models.corrections.reverse = %s" % self.checkBox_2.isChecked())
+            "cs.current_fit.model.corrections.reverse = %s" % self.checkBox_2.isChecked())
         )
 
         self.checkBox.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.models.corrections.correct_dnl = %s" % self.checkBox.isChecked())
+            "cs.current_fit.model.corrections.correct_dnl = %s" % self.checkBox.isChecked())
         )
 
         self.comboBox.currentIndexChanged.connect(lambda: mfm.run(
-            "cs.current_fit.models.corrections.window_function = '%s'" % self.comboBox.currentText())
+            "cs.current_fit.model.corrections.window_function = '%s'" % self.comboBox.currentText())
         )
 
     def onChangeLin(self):
         idx = self.lin_select.selected_curve_index
         lin_name = self.lin_select.curve_name
         mfm.run(
-            "mfm.cmd.tcspc_set_linearization(%s, '%s')" %
+            "mfm.cmd.tcspc.set_linearization(%s, '%s')" %
             (idx, lin_name)
         )
 
 
-class GenericWidget(QtWidgets.QWidget, Generic):
+class GenericWidget(
+    QtWidgets.QWidget,
+    Generic
+):
+    """
+
+    """
 
     def change_bg_curve(
             self,
@@ -214,6 +267,11 @@ class GenericWidget(QtWidgets.QWidget, Generic):
             hide_generic: bool = False,
             **kwargs
     ):
+        """
+
+        :param hide_generic:
+        :param kwargs:
+        """
         super(GenericWidget, self).__init__(**kwargs)
 
         self.parent = kwargs.get('parent', None)
@@ -234,10 +292,22 @@ class GenericWidget(QtWidgets.QWidget, Generic):
         l = QtWidgets.QGridLayout()
         gbl.addLayout(l)
 
-        sc_w = self._sc.make_widget(update_function=self.update_widget, text='Sc')
-        bg_w = self._bg.make_widget(update_function=self.update_widget, text='Bg')
-        tmeas_bg_w = self._tmeas_bg.make_widget(update_function=self.update_widget, text='t<sub>Bg</sub>')
-        tmeas_exp_w = self._tmeas_exp.make_widget(update_function=self.update_widget, text='t<sub>Meas</sub>')
+        sc_w = mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._sc,
+            text='Sc'
+        )
+        bg_w = mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._bg,
+            text='Bg'
+        )
+        tmeas_bg_w = mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._tmeas_bg,
+            text='t<sub>Bg</sub>'
+        )
+        tmeas_exp_w = mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._tmeas_exp,
+            text='t<sub>Meas</sub>'
+        )
 
         l.addWidget(sc_w, 1, 0)
         l.addWidget(bg_w, 1, 1)
@@ -254,7 +324,11 @@ class GenericWidget(QtWidgets.QWidget, Generic):
         open_bg.setText('...')
         ly.addWidget(open_bg)
 
-        self.background_select = ExperimentalDataSelector(parent=None, change_event=self.change_bg_curve, fit=self.fit)
+        self.background_select = ExperimentalDataSelector(
+            parent=None,
+            change_event=self.change_bg_curve,
+            fit=self.fit
+        )
         open_bg.clicked.connect(self.background_select.show)
 
         a = QtWidgets.QHBoxLayout()
@@ -270,9 +344,18 @@ class GenericWidget(QtWidgets.QWidget, Generic):
         l.addLayout(a, 3, 1, 1, 1)
 
 
-class AnisotropyWidget(Anisotropy, QtWidgets.QWidget):
+class AnisotropyWidget(
+    Anisotropy,
+    QtWidgets.QWidget
+):
+    """
 
-    def __init__(self, **kwargs):
+    """
+
+    def __init__(
+            self,
+            **kwargs
+    ):
         super(AnisotropyWidget, self).__init__(
             **kwargs
         )
@@ -374,13 +457,13 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QWidget):
 
     def onAddRotation(self):
         t = "for f in cs.current_fit:\n" \
-            "   f.models.anisotropy.add_rotation()"
+            "   f.model.anisotropy.add_rotation()"
         mfm.run(t)
         mfm.run("cs.current_fit.update()")
 
     def onRemoveRotation(self):
         t = "for f in cs.current_fit:\n" \
-            "   f.models.anisotropy.remove_rotation()"
+            "   f.model.anisotropy.remove_rotation()"
         mfm.run(t)
         mfm.run("cs.current_fit.update()")
 
@@ -388,10 +471,20 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QWidget):
         Anisotropy.add_rotation(self, **kwargs)
         layout = QtWidgets.QHBoxLayout()
         self.lh.addLayout(layout)
-        rho = self._rhos[-1].make_widget(layout=layout, decimals=2)
-        x = self._bs[-1].make_widget(layout=layout, decimals=2)
-        self._rho_widgets.append(rho)
-        self._b_widgets.append(x)
+        self._rho_widgets.append(
+            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+                fitting_parameter=self._rhos[-1],
+                decimals=2,
+                layout=layout
+            )
+        )
+        self._b_widgets.append(
+            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+                fitting_parameter=self._bs[-1],
+                decimals=2,
+                layout=layout
+            )
+        )
 
     def remove_rotation(self):
         self._rhos.pop()
@@ -761,32 +854,52 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
 
     def onAddGaussian(self):
         t = "for f in cs.current_fit:\n" \
-            "   f.models.%s.append()\n" \
-            "   f.models.update()" % self.name
+            "   f.model.%s.append()\n" \
+            "   f.model.update()" % self.name
         mfm.run(t)
 
     def onRemoveGaussian(self):
         t = "for f in cs.current_fit:\n" \
-            "   f.models.%s.pop()\n" \
-            "   f.models.update()" % self.name
+            "   f.model.%s.pop()\n" \
+            "   f.model.update()" % self.name
         mfm.run(t)
 
     def append(self, *args, **kwargs):
-        Gaussians.append(self, 50.0, 6., 1., **kwargs)
+        super().append(
+            50.0,
+            6.0,
+            1.0,
+        )
         gb = QtWidgets.QGroupBox()
         n_gauss = len(self)
-        gb.setTitle('G%i' % (n_gauss))
-        l = QtWidgets.QVBoxLayout()
+        gb.setTitle('G%i' % n_gauss)
+        layout = QtWidgets.QVBoxLayout()
 
-        m = self._gaussianMeans[-1].make_widget(layout=l)
-        s = self._gaussianSigma[-1].make_widget(layout=l)
-        shape = self._gaussianShape[-1].make_widget(layout=l)
-        x = self._gaussianAmplitudes[-1].make_widget(layout=l)
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._gaussianMeans[-1],
+            layout=layout
+        )
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._gaussianSigma[-1],
+            layout=layout
+        )
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._gaussianShape[-1],
+            layout=layout
+        )
+        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            self._gaussianAmplitudes[-1],
+            layout=layout
+        )
 
-        gb.setLayout(l)
-        row = (n_gauss - 1) / 2 + 1
+        gb.setLayout(layout)
+        row = (n_gauss - 1) // 2 + 1
         col = (n_gauss - 1) % 2
-        self.grid_layout.addWidget(gb, row, col)
+        self.grid_layout.addWidget(
+            gb,
+            row,
+            col
+        )
         self._gb.append(gb)
 
     def pop(self) -> None:
@@ -842,14 +955,14 @@ class DiscreteDistanceWidget(DiscreteDistance, QtWidgets.QWidget):
     def onAddFRETrate(self):
         t = """
 for f in cs.current_fit:
-    f.models.%s.append()
+    f.model.%s.append()
             """ % self.name
         mfm.run(t)
 
     def onRemoveFRETrate(self):
         t = """
 for f in cs.current_fit:
-    f.models.%s.pop()
+    f.model.%s.pop()
             """ % self.name
         mfm.run(t)
 

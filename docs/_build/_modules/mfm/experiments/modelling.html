@@ -120,9 +120,9 @@
 <span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span> <span class="n">QtWidgets</span>
 
 <span class="kn">import</span> <span class="nn">mfm</span>
+<span class="kn">import</span> <span class="nn">mfm.base</span>
 <span class="kn">import</span> <span class="nn">mfm.widgets.pdb.pdb</span>
 <span class="kn">from</span> <span class="nn">mfm.experiments.reader</span> <span class="k">import</span> <span class="n">ExperimentReader</span>
-<span class="kn">from</span> <span class="nn">mfm.io.widgets</span> <span class="k">import</span> <span class="n">PDBLoad</span>
 
 
 <div class="viewcode-block" id="LoadStructure"><a class="viewcode-back" href="../../../api/mfm.experiments.html#mfm.experiments.modelling.LoadStructure">[docs]</a><span class="k">class</span> <span class="nc">LoadStructure</span><span class="p">(</span><span class="n">ExperimentReader</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
@@ -132,7 +132,7 @@
 
         <span class="n">layout</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">layout</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pdbWidget</span> <span class="o">=</span> <span class="n">PDBLoad</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pdbWidget</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">PDBLoad</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pdbWidget</span><span class="p">)</span>
 
 <div class="viewcode-block" id="LoadStructure.read"><a class="viewcode-back" href="../../../api/mfm.experiments.html#mfm.experiments.modelling.LoadStructure.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span>
@@ -147,7 +147,7 @@
 
 <div class="viewcode-block" id="LoadStructure.autofitrange"><a class="viewcode-back" href="../../../api/mfm.experiments.html#mfm.experiments.modelling.LoadStructure.autofitrange">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">autofitrange</span><span class="p">(</span>
-            <span class="n">data</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Data</span><span class="p">,</span>
+            <span class="n">data</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Data</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span></div></div>
@@ -184,7 +184,7 @@
 
 <div class="viewcode-block" id="LoadStructureFolder.autofitrange"><a class="viewcode-back" href="../../../api/mfm.experiments.html#mfm.experiments.modelling.LoadStructureFolder.autofitrange">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">autofitrange</span><span class="p">(</span>
-            <span class="n">data</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Data</span><span class="p">,</span>
+            <span class="n">data</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Data</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span></div></div>

@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 import os
 
@@ -76,8 +79,16 @@ class FittingControllerWidget(QtWidgets.QWidget):
         # the fitting widget
         def wrapper(f):
 
-            def update_new(*args, **kwargs):
-                f(*args, **kwargs)
+            def update_new(
+                    *args,
+                    **kwargs
+            ):
+                print(args)
+                print(kwargs)
+                f(
+                    *args,
+                    **kwargs
+                )
                 self.update(*args)
 
                 #for p in self.plots:
@@ -480,7 +491,6 @@ def make_fitting_parameter_widget(
     if decimals is None:
         decimals = fitting_parameter.decimals
     update_widget = kwargs.get('update_widget', lambda x: x)
-
     kw = {
         'name': text,
         'decimals': decimals,

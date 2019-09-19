@@ -161,19 +161,156 @@ different experimental setups. Furthermore, it contains a set of plotting librar
 <div class="section" id="module-mfm.models">
 <span id="models"></span><h2>Models<a class="headerlink" href="#module-mfm.models" title="Permalink to this headline">¶</a></h2>
 <p>This module is responsible contains all fitting modules for experimental data</p>
-<p>The <code class="xref py py-mod docutils literal notranslate"><span class="pre">model</span></code></p>
+<p>The <a class="reference internal" href="#module-mfm.models" title="mfm.models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">models</span></code></a></p>
 <ol class="arabic simple">
-<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">model.tcspc</span></code></p></li>
-<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">model.fcs</span></code></p></li>
-<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">model.gloablfit</span></code></p></li>
-<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">model.parse</span></code></p></li>
-<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">model.proteinMC</span></code></p></li>
-<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">model.stopped_flow</span></code></p></li>
+<li><p><a class="reference internal" href="#module-mfm.models.tcspc" title="mfm.models.tcspc"><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.tcspc</span></code></a></p></li>
+<li><p><a class="reference internal" href="#module-mfm.models.fcs" title="mfm.models.fcs"><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.fcs</span></code></a></p></li>
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.global_model</span></code></p></li>
+<li><p><a class="reference internal" href="../../api/mfm.fitting.models.html#module-mfm.models.parse" title="mfm.models.parse"><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.parse</span></code></a></p></li>
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.proteinMC</span></code></p></li>
+<li><p><a class="reference internal" href="../../api/mfm.fitting.models.html#module-mfm.models.stopped_flow" title="mfm.models.stopped_flow"><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.stopped_flow</span></code></a></p></li>
 </ol>
 <div class="section" id="module-mfm.models.tcspc">
 <span id="time-resolved-fluorescence"></span><h3>Time-resolved fluorescence<a class="headerlink" href="#module-mfm.models.tcspc" title="Permalink to this headline">¶</a></h3>
 <p>This module contains all time-resolved fluorescence models (TCSPC)</p>
 <span class="target" id="module-mfm.models.tcspc.pddem"></span><dl class="class">
+<dt id="mfm.models.tcspc.pddem.PDDEM">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.models.tcspc.pddem.</code><code class="sig-name descname">PDDEM</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/models/tcspc/pddem.html#PDDEM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.models.tcspc.pddem.PDDEM" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="mfm.models.tcspc.pddem.PDDEM.fAB">
+<em class="property">property </em><code class="sig-name descname">fAB</code><a class="headerlink" href="#mfm.models.tcspc.pddem.PDDEM.fAB" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>float
+probability of energy-transfer from A to B</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.models.tcspc.pddem.PDDEM.fABBA">
+<em class="property">property </em><code class="sig-name descname">fABBA</code><a class="headerlink" href="#mfm.models.tcspc.pddem.PDDEM.fABBA" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>array
+probability of energy-transfer from (A to B), (B to A)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.models.tcspc.pddem.PDDEM.fBA">
+<em class="property">property </em><code class="sig-name descname">fBA</code><a class="headerlink" href="#mfm.models.tcspc.pddem.PDDEM.fBA" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>float
+probability of energy-transfer from B to A</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.models.tcspc.pddem.PDDEM.pm">
+<em class="property">property </em><code class="sig-name descname">pm</code><a class="headerlink" href="#mfm.models.tcspc.pddem.PDDEM.pm" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>array
+Emission probability of flurophore (A, B)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.models.tcspc.pddem.PDDEM.pmA">
+<em class="property">property </em><code class="sig-name descname">pmA</code><a class="headerlink" href="#mfm.models.tcspc.pddem.PDDEM.pmA" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>float
+Emission probability of flurophore A</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.models.tcspc.pddem.PDDEM.pmB">
+<em class="property">property </em><code class="sig-name descname">pmB</code><a class="headerlink" href="#mfm.models.tcspc.pddem.PDDEM.pmB" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>float
+Emission probability of flurophore B</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.models.tcspc.pddem.PDDEM.pureA">
+<em class="property">property </em><code class="sig-name descname">pureA</code><a class="headerlink" href="#mfm.models.tcspc.pddem.PDDEM.pureA" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>float
+fraction of decay A in total decay</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.models.tcspc.pddem.PDDEM.pureAB">
+<em class="property">property </em><code class="sig-name descname">pureAB</code><a class="headerlink" href="#mfm.models.tcspc.pddem.PDDEM.pureAB" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>array
+fraction of decay (A, B) in total decay</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.models.tcspc.pddem.PDDEM.pureB">
+<em class="property">property </em><code class="sig-name descname">pureB</code><a class="headerlink" href="#mfm.models.tcspc.pddem.PDDEM.pureB" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>float
+fraction of decay B in total decay</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.models.tcspc.pddem.PDDEM.px">
+<em class="property">property </em><code class="sig-name descname">px</code><a class="headerlink" href="#mfm.models.tcspc.pddem.PDDEM.px" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>numpy-array
+Exciation probabilities of flurophore (A, B)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.models.tcspc.pddem.PDDEM.pxA">
+<em class="property">property </em><code class="sig-name descname">pxA</code><a class="headerlink" href="#mfm.models.tcspc.pddem.PDDEM.pxA" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>float
+Excitation probability of fluorphore A</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.models.tcspc.pddem.PDDEM.pxB">
+<em class="property">property </em><code class="sig-name descname">pxB</code><a class="headerlink" href="#mfm.models.tcspc.pddem.PDDEM.pxB" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>float
+Excitation probability of fluorphore B</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="mfm.models.tcspc.pddem.PDDEMModel">
 <em class="property">class </em><code class="sig-prename descclassname">mfm.models.tcspc.pddem.</code><code class="sig-name descname">PDDEMModel</code><span class="sig-paren">(</span><em class="sig-param">fit</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/models/tcspc/pddem.html#PDDEMModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.models.tcspc.pddem.PDDEMModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Kalinin, S., and Johansson, L.B.
@@ -186,12 +323,6 @@ J. Phys. Chem. B, 108 (2004) 3092-3097.</p>
 </div>
 <div class="section" id="module-mfm.models.fcs">
 <span id="fluorescence-correlation-spectroscopy"></span><h3>Fluorescence correlation spectroscopy<a class="headerlink" href="#module-mfm.models.fcs" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="mfm.models.fcs.ParseFCSWidget">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.models.fcs.</code><code class="sig-name descname">ParseFCSWidget</code><span class="sig-paren">(</span><em class="sig-param">fit</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/models/fcs.html#ParseFCSWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.models.fcs.ParseFCSWidget" title="Permalink to this definition">¶</a></dt>
-<dd><p>fcs</p>
-</dd></dl>
-
 </div>
 </div>
 </div>

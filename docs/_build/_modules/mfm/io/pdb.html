@@ -115,7 +115,35 @@
     <div class="col-md-9 content">
       
   <h1>Source code for mfm.io.pdb</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">&quot;&quot;&quot;Read PDB files.</span>
+
+<span class="sd">PDB files contain atomic coordinates.</span>
+
+<span class="sd">`PDB &lt;http://www.wwpdb.org/documentation/file-format&gt;`_</span>
+
+<span class="sd">:Author:</span>
+<span class="sd">  `Thomas-Otavio Peulen &lt;http://tpeulen.github.io&gt;`_</span>
+
+<span class="sd">Requirements</span>
+<span class="sd">------------</span>
+
+
+<span class="sd">Revisions</span>
+<span class="sd">---------</span>
+
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">The API is not stable yet and might change between revisions.</span>
+
+<span class="sd">References</span>
+<span class="sd">----------</span>
+
+<span class="sd">Examples</span>
+<span class="sd">--------</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">urllib.request</span>
@@ -125,18 +153,18 @@
 <span class="kn">import</span> <span class="nn">mfm.common</span> <span class="k">as</span> <span class="nn">common</span>
 
 <span class="n">keys_formats</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="p">(</span><span class="s1">&#39;i4&#39;</span><span class="p">,</span> <span class="s1">&#39;i&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s1">&#39;|U1&#39;</span><span class="p">,</span> <span class="s1">&#39;chain&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s1">&#39;i4&#39;</span><span class="p">,</span> <span class="s1">&#39;res_id&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s1">&#39;|U5&#39;</span><span class="p">,</span> <span class="s1">&#39;res_name&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s1">&#39;i4&#39;</span><span class="p">,</span> <span class="s1">&#39;atom_id&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s1">&#39;|U5&#39;</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s1">&#39;|U1&#39;</span><span class="p">,</span> <span class="s1">&#39;element&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s1">&#39;3f8&#39;</span><span class="p">,</span> <span class="s1">&#39;coord&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s1">&#39;f8&#39;</span><span class="p">,</span> <span class="s1">&#39;charge&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s1">&#39;f8&#39;</span><span class="p">,</span> <span class="s1">&#39;radius&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s1">&#39;f8&#39;</span><span class="p">,</span> <span class="s1">&#39;bfactor&#39;</span><span class="p">),</span>
-    <span class="p">(</span><span class="s1">&#39;f8&#39;</span><span class="p">,</span> <span class="s1">&#39;mass&#39;</span><span class="p">)</span>
+    <span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;chain&#39;</span><span class="p">,</span> <span class="s1">&#39;|U1&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;res_id&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;res_name&#39;</span><span class="p">,</span> <span class="s1">&#39;|U5&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;atom_id&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;atom_name&#39;</span><span class="p">,</span> <span class="s1">&#39;|U5&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;element&#39;</span><span class="p">,</span> <span class="s1">&#39;|U1&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;coord&#39;</span><span class="p">,</span> <span class="s1">&#39;3f8&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;charge&#39;</span><span class="p">,</span> <span class="s1">&#39;f8&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;radius&#39;</span><span class="p">,</span> <span class="s1">&#39;f8&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;bfactor&#39;</span><span class="p">,</span> <span class="s1">&#39;f8&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;mass&#39;</span><span class="p">,</span> <span class="s1">&#39;f8&#39;</span><span class="p">)</span>
 <span class="p">]</span>
 
 <span class="n">keys</span><span class="p">,</span> <span class="n">formats</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">keys_formats</span><span class="p">))</span>
@@ -261,7 +289,7 @@
         <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.pdb&#39;</span><span class="p">):</span>
             <span class="n">atoms</span> <span class="o">=</span> <span class="n">parse_string_pdb</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="n">assign_charge</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.pqr&#39;</span><span class="p">):</span>
-            <span class="n">atoms</span> <span class="o">=</span> <span class="n">parse_string_pqr</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">atoms</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pqr</span><span class="o">.</span><span class="n">parse_string_pqr</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">atoms</span></div>
 
 
@@ -327,7 +355,7 @@
             <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;bfactor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">density</span>
         <span class="n">write_pdb</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">atoms</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">write_xyz</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span></div>
+        <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">xyz</span><span class="o">.</span><span class="n">write_xyz</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="get_atom_index"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.pdb.get_atom_index">[docs]</a><span class="k">def</span> <span class="nf">get_atom_index</span><span class="p">(</span>
