@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>mfm.fluorescence.tcspc package &#8212; ChiSurf  documentation</title>
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">mfm.fluorescence.tcspc package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-mfm.fluorescence.tcspc.convolve">mfm.fluorescence.tcspc.convolve module</a></li>
+<li><a class="reference internal" href="#module-mfm.fluorescence.tcspc.tcspc">mfm.fluorescence.tcspc.tcspc module</a></li>
+<li><a class="reference internal" href="#module-mfm.fluorescence.tcspc">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/api/mfm.fluorescence.tcspc.rst.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
+<li><a class="reference internal" href="#">mfm.fluorescence.tcspc package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-mfm.fluorescence.tcspc.convolve">mfm.fluorescence.tcspc.convolve module</a></li>
+<li><a class="reference internal" href="#module-mfm.fluorescence.tcspc.tcspc">mfm.fluorescence.tcspc.tcspc module</a></li>
+<li><a class="reference internal" href="#module-mfm.fluorescence.tcspc">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="sourcelink">
+  <a href="../_sources/api/mfm.fluorescence.tcspc.rst.txt"
+     rel="nofollow">Source</a>
+</div>
+<form action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
+      
+  <div class="section" id="mfm-fluorescence-tcspc-package">
+<h1>mfm.fluorescence.tcspc package<a class="headerlink" href="#mfm-fluorescence-tcspc-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mfm.fluorescence.tcspc.convolve">
+<span id="mfm-fluorescence-tcspc-convolve-module"></span><h2>mfm.fluorescence.tcspc.convolve module<a class="headerlink" href="#module-mfm.fluorescence.tcspc.convolve" title="Permalink to this headline">¶</a></h2>
+<dl class="attribute">
+<dt id="mfm.fluorescence.tcspc.convolve.fconv">
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.convolve.</code><code class="sig-name descname">fconv</code><span class="sig-paren">(</span><em class="sig-param">decay: 'np.array'</em>, <em class="sig-param">lifetime_spectrum: 'np.array'</em>, <em class="sig-param">irf: 'np.array'</em>, <em class="sig-param">stop: 'int'</em>, <em class="sig-param">t: 'np.array'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/convolve.html#fconv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.convolve.fconv" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>decay</strong> (<em>&lt;built-in function array&gt;</em>) – numpy-array
+the content of this array is overwritten by the y-values after convolution</p></li>
+<li><p><strong>lifetime_spectrum</strong> (<em>&lt;built-in function array&gt;</em>) – vector of amplitdes and lifetimes in form: amplitude, lifetime</p></li>
+<li><p><strong>irf</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
+<li><p><strong>stop</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>dt</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.tcspc.convolve.fconv_per">
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.convolve.</code><code class="sig-name descname">fconv_per</code><span class="sig-paren">(</span><em class="sig-param">decay: 'np.array'</em>, <em class="sig-param">lifetime_spectrum: 'np.array'</em>, <em class="sig-param">irf: 'np.array'</em>, <em class="sig-param">start: 'int'</em>, <em class="sig-param">stop: 'int'</em>, <em class="sig-param">n_points: 'int'</em>, <em class="sig-param">period: 'float'</em>, <em class="sig-param">dt: 'float'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/convolve.html#fconv_per"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.convolve.fconv_per" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.tcspc.convolve.fconv_per_cs">
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.convolve.</code><code class="sig-name descname">fconv_per_cs</code><span class="sig-paren">(</span><em class="sig-param">decay: 'np.array'</em>, <em class="sig-param">lifetime_spectrum: 'np.array'</em>, <em class="sig-param">irf: 'np.array'</em>, <em class="sig-param">start: 'int'</em>, <em class="sig-param">stop: 'int'</em>, <em class="sig-param">n_points: 'int'</em>, <em class="sig-param">period: 'float'</em>, <em class="sig-param">dt: 'float'</em>, <em class="sig-param">conv_stop: 'int'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/convolve.html#fconv_per_cs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.convolve.fconv_per_cs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>decay</strong> (<em>&lt;built-in function array&gt;</em>) – array of doubles
+Here the convolved fit is stored</p></li>
+<li><p><strong>lifetime_spectrum</strong> (<em>&lt;built-in function array&gt;</em>) – array of doubles
+Lifetime-spectrum of the form (amplitude, lifetime, amplitude, lifetime, …)</p></li>
+<li><p><strong>irf</strong> (<em>&lt;built-in function array&gt;</em>) – array-doubles
+The instrument response function</p></li>
+<li><p><strong>start</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – int
+Start channel of convolution (position in array of IRF)</p></li>
+<li><p><strong>stop</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – int
+Stop channel of convolution (position in array of IRF)</p></li>
+<li><p><strong>n_points</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – int
+Number of points in fit and lamp</p></li>
+<li><p><strong>period</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – double
+Period of repetition in nano-seconds</p></li>
+<li><p><strong>dt</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – double
+Channel-width in nano-seconds</p></li>
+<li><p><strong>conv_stop</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – int
+Stopping channel of convolution</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.tcspc.convolve.fconv_per_dt">
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.convolve.</code><code class="sig-name descname">fconv_per_dt</code><span class="sig-paren">(</span><em class="sig-param">decay: 'np.array'</em>, <em class="sig-param">lifetime_spectrum: 'np.array'</em>, <em class="sig-param">irf: 'np.array'</em>, <em class="sig-param">start: 'int'</em>, <em class="sig-param">stop: 'int'</em>, <em class="sig-param">n_points: 'int'</em>, <em class="sig-param">period: 'float'</em>, <em class="sig-param">time: 'np.array'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/convolve.html#fconv_per_dt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.convolve.fconv_per_dt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.tcspc.convolve.sconv">
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.convolve.</code><code class="sig-name descname">sconv</code><span class="sig-paren">(</span><em class="sig-param">fit</em>, <em class="sig-param">p</em>, <em class="sig-param">irf</em>, <em class="sig-param">start</em>, <em class="sig-param">stop</em>, <em class="sig-param">dt</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/convolve.html#sconv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.convolve.sconv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-mfm.fluorescence.tcspc.tcspc">
+<span id="mfm-fluorescence-tcspc-tcspc-module"></span><h2>mfm.fluorescence.tcspc.tcspc module<a class="headerlink" href="#module-mfm.fluorescence.tcspc.tcspc" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="mfm.fluorescence.tcspc.tcspc.bin_lifetime_spectrum">
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.tcspc.</code><code class="sig-name descname">bin_lifetime_spectrum</code><span class="sig-paren">(</span><em class="sig-param">lifetime_spectrum: 'np.array'</em>, <em class="sig-param">n_lifetimes: 'int'</em>, <em class="sig-param">discriminate: 'bool'</em>, <em class="sig-param">discriminator=None</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/tcspc.html#bin_lifetime_spectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.tcspc.bin_lifetime_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a interleaved lifetime spectrum</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lifetime_spectrum</strong> (<em>&lt;built-in function array&gt;</em>) – interleaved lifetime spectrum</p></li>
+<li><p><strong>n_lifetimes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>discriminate</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
+<li><p><strong>discriminator</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>lifetime_spectrum</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.tcspc.tcspc.get_scale_bg">
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.tcspc.</code><code class="sig-name descname">get_scale_bg</code><span class="sig-paren">(</span><em class="sig-param">fit: 'np.array'</em>, <em class="sig-param">data: 'np.array'</em>, <em class="sig-param">data_weight: 'np.array'</em>, <em class="sig-param">bg: 'float'</em>, <em class="sig-param">start: 'int'</em>, <em class="sig-param">stop: 'int'</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/tcspc.html#get_scale_bg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.tcspc.get_scale_bg" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function calculates a scaling factor for a given
+experimental histogram and model function. The scaling-factor
+scales the model function that the weighted photon counts
+agree</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fit</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
+<li><p><strong>data</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
+<li><p><strong>data_weight</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
+<li><p><strong>bg</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
+<li><p><strong>start</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>stop</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>scaling factor (float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.tcspc.tcspc.pddem">
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.tcspc.</code><code class="sig-name descname">pddem</code><span class="sig-paren">(</span><em class="sig-param">decayA</em>, <em class="sig-param">decayB</em>, <em class="sig-param">k</em>, <em class="sig-param">px</em>, <em class="sig-param">pm</em>, <em class="sig-param">pAB</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/tcspc.html#pddem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.tcspc.pddem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Electronic Energy Transfer within Asymmetric
+Pairs of Fluorophores: Partial Donor-Donor
+Energy Migration (PDDEM)
+Stanislav Kalinin
+<a class="reference external" href="http://www.diva-portal.org/smash/get/diva2:143149/FULLTEXT01">http://www.diva-portal.org/smash/get/diva2:143149/FULLTEXT01</a></p>
+<p>Kalinin, S.V., Molotkovsky, J.G., and Johansson, L.B.
+Partial Donor-Donor Energy Migration (PDDEM) as a Fluorescence
+Spectroscopic Tool for Measuring Distances in Biomacromolecules.
+Spectrochim. Acta A, 58 (2002) 1087-1097.</p>
+<p>-&gt; same results as Stas pddem code (pddem_t.c)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>decayA</strong> – decay A in form of [ampl lifetime, apml, lifetime…]</p></li>
+<li><p><strong>decayB</strong> – decay B in form of [ampl lifetime, apml, lifetime…]</p></li>
+<li><p><strong>k</strong> – rates of energy transfer [kAB, kBA]</p></li>
+<li><p><strong>px</strong> – probabilities of excitation (pxA, pxB)</p></li>
+<li><p><strong>pm</strong> – probabilities of emission (pmA, pmB)</p></li>
+<li><p><strong>pAB</strong> – pure AB [0., 0]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.tcspc.tcspc.rescale_w_bg">
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.tcspc.</code><code class="sig-name descname">rescale_w_bg</code><span class="sig-paren">(</span><em class="sig-param">fit: 'np.array'</em>, <em class="sig-param">decay: 'np.array'</em>, <em class="sig-param">w_res: 'np.array'</em>, <em class="sig-param">bg: 'float'</em>, <em class="sig-param">start: 'int'</em>, <em class="sig-param">stop: 'int'</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/tcspc.html#rescale_w_bg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.tcspc.rescale_w_bg" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.fluorescence.tcspc">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.fluorescence.tcspc" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="mfm.fluorescence.tcspc.fitrange">
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.</code><code class="sig-name descname">fitrange</code><span class="sig-paren">(</span><em class="sig-param">y</em>, <em class="sig-param">threshold: 'float' = 10.0</em>, <em class="sig-param">area: 'float' = 0.999</em><span class="sig-paren">)</span> &#x2192; 'Tuple[float, float]'<a class="reference internal" href="../_modules/mfm/fluorescence/tcspc.html#fitrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.fitrange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determines the fitting range based on the total number of photons to be fitted (fitting area).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y</strong> – numpy-array
+a numpy array containing the photon counts</p></li>
+<li><p><strong>threshold</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
+a threshold value. Lowest index of the fitting range is the first encountered bin with a photon count
+higher than the threshold.</p></li>
+<li><p><strong>area</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
+The area which should be considered for fitting. Here 1.0 corresponds to all measured photons. 0.9 to 90%
+of the total measured photons.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.tcspc.weights">
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.</code><code class="sig-name descname">weights</code><span class="sig-paren">(</span><em class="sig-param">y: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../_modules/mfm/fluorescence/tcspc.html#weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculated the weights used in TCSPC. Poissonian noise (sqrt of counts)
+:type y: &lt;built-in function array&gt;
+:param y: numpy-array</p>
+<blockquote>
+<div><p>the photon counts</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>numpy-array
+an weighting array for fittin</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.tcspc.weights_ps">
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.</code><code class="sig-name descname">weights_ps</code><span class="sig-paren">(</span><em class="sig-param">p: 'np.array'</em>, <em class="sig-param">s: 'np.array'</em>, <em class="sig-param">fs: 'float'</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../_modules/mfm/fluorescence/tcspc.html#weights_ps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.weights_ps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculated the weights used in TCSPC. weight = 1/err(P+fs*S)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>&lt;built-in function array&gt;</em>) – parallel decay</p></li>
+<li><p><strong>s</strong> (<em>&lt;built-in function array&gt;</em>) – perpendicular decay</p></li>
+<li><p><strong>fs</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – weight of perpendicular decay</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>err(p + fs * fs)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

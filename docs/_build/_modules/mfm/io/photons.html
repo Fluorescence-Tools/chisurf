@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>mfm.io.photons &#8212; ChiSurf  documentation</title>
+    <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary">
+<form action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
+      
+  <h1>Source code for mfm.io.photons</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Read TTTR files.</span>
+
+<span class="sd">TTTR files contain time-tagged-time-resolved records typically recorded</span>
+<span class="sd">in single-molecule experiments and on confocal laser scanning setups.</span>
+
+<span class="sd">:Author:</span>
+<span class="sd">  `Thomas-Otavio Peulen &lt;http://tpeulen.github.io&gt;`_</span>
+
+<span class="sd">Requirements</span>
+<span class="sd">------------</span>
+
+<span class="sd">Revisions</span>
+<span class="sd">---------</span>
+
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">The API is not stable yet and might change between revisions.</span>
+
+<span class="sd">References</span>
+<span class="sd">----------</span>
+
+<span class="sd">Examples</span>
+<span class="sd">--------</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
+
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">tables</span>
+
+<span class="kn">from</span> <span class="nn">mfm.io</span> <span class="k">import</span> <span class="n">tttr</span>
+
+
+<div class="viewcode-block" id="read_burst_ids"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.photons.read_burst_ids">[docs]</a><span class="k">def</span> <span class="nf">read_burst_ids</span><span class="p">(</span>
+        <span class="n">filenames</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">stack_files</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reads Seidel-BID files and returns a list of numpy arrays. Each numpy array contains the indexes of the photons of</span>
+<span class="sd">    the burst. These indexes can be used to slice a photon-stream.</span>
+
+<span class="sd">    Seidel BID-files only contain the first and the last photon of the Burst and not all photons of</span>
+<span class="sd">    the burst. Thus, the Seidel BID-files have to be converted to array-type objects containing all</span>
+<span class="sd">    photons of the burst to be able to use standard Python slicing syntax to select photons.</span>
+
+<span class="sd">    :param filenames:</span>
+<span class="sd">        filename pointing to a Seidel BID-file</span>
+<span class="sd">    :param stack_files: bool</span>
+<span class="sd">        If stack is True the returned list is stacked and the numbering of the bursts is made continuous.</span>
+<span class="sd">        This is the default behavior.</span>
+<span class="sd">    :return:</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    &gt;&gt;&gt; import mfm, glob</span>
+<span class="sd">    &gt;&gt;&gt; directory = &quot;./sample_data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\BID&quot;</span>
+<span class="sd">    &gt;&gt;&gt; files = glob.glob(directory+&#39;/*.bst&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; bids = mfm.io.photons.read_burst_ids(files)</span>
+<span class="sd">    &gt;&gt;&gt; bids[1]</span>
+<span class="sd">    array([20384, 20385, 20386, 20387, 20388, 20389, 20390, 20391, 20392,</span>
+<span class="sd">       20393, 20394, 20395, 20396, 20397, 20398, 20399, 20400, 20401,</span>
+<span class="sd">       20402, 20403, 20404, 20405, 20406, 20407, 20408, 20409, 20410,</span>
+<span class="sd">       20411, 20412, 20413, 20414, 20415, 20416, 20417, 20418, 20419,</span>
+<span class="sd">       20420, 20421, 20422, 20423, 20424, 20425, 20426, 20427, 20428,</span>
+<span class="sd">       20429, 20430, 20431, 20432, 20433, 20434, 20435, 20436, 20437,</span>
+<span class="sd">       20438, 20439, 20440, 20441, 20442, 20443, 20444, 20445, 20446,</span>
+<span class="sd">       20447, 20448, 20449, 20450, 20451, 20452, 20453, 20454, 20455,</span>
+<span class="sd">       20456, 20457, 20458, 20459, 20460, 20461, 20462, 20463, 20464,</span>
+<span class="sd">       20465, 20466, 20467, 20468, 20469, 20470, 20471, 20472, 20473,</span>
+<span class="sd">       20474, 20475, 20476, 20477, 20478, 20479, 20480, 20481, 20482,</span>
+<span class="sd">       20483, 20484, 20485, 20486, 20487, 20488, 20489, 20490, 20491,</span>
+<span class="sd">       20492, 20493, 20494, 20495, 20496, 20497, 20498, 20499, 20500,</span>
+<span class="sd">       20501, 20502, 20503, 20504, 20505, 20506, 20507, 20508, 20509,</span>
+<span class="sd">       20510, 20511, 20512, 20513, 20514, 20515, 20516, 20517, 20518,</span>
+<span class="sd">       20519, 20520, 20521, 20522, 20523, 20524, 20525, 20526, 20527,</span>
+<span class="sd">       20528, 20529, 20530, 20531, 20532, 20533, 20534, 20535, 20536,</span>
+<span class="sd">       20537, 20538, 20539, 20540, 20541, 20542, 20543, 20544, 20545,</span>
+<span class="sd">       20546, 20547, 20548, 20549, 20550, 20551, 20552, 20553, 20554,</span>
+<span class="sd">       20555, 20556, 20557, 20558, 20559, 20560, 20561, 20562, 20563,</span>
+<span class="sd">       20564, 20565, 20566, 20567, 20568, 20569, 20570, 20571, 20572,</span>
+<span class="sd">       20573, 20574, 20575, 20576, 20577, 20578, 20579, 20580, 20581,</span>
+<span class="sd">       20582, 20583, 20584, 20585, 20586, 20587, 20588, 20589, 20590,</span>
+<span class="sd">       20591, 20592, 20593, 20594, 20595, 20596, 20597, 20598, 20599,</span>
+<span class="sd">       20600, 20601, 20602, 20603, 20604, 20605, 20606, 20607, 20608,</span>
+<span class="sd">       20609, 20610, 20611, 20612, 20613, 20614, 20615, 20616, 20617,</span>
+<span class="sd">       20618, 20619, 20620, 20621, 20622, 20623, 20624, 20625, 20626,</span>
+<span class="sd">       20627, 20628, 20629, 20630, 20631, 20632, 20633, 20634, 20635,</span>
+<span class="sd">       20636, 20637, 20638, 20639, 20640, 20641, 20642, 20643, 20644,</span>
+<span class="sd">       20645, 20646, 20647, 20648, 20649, 20650, 20651, 20652, 20653,</span>
+<span class="sd">       20654, 20655], dtype=uint64)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">filenames</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">filenames</span> <span class="o">=</span> <span class="p">[</span><span class="n">filenames</span><span class="p">]</span>
+    <span class="n">re</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">:</span>
+        <span class="n">bids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">re</span><span class="p">[</span><span class="n">file</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bid</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bid</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span> <span class="k">for</span> <span class="n">bid</span> <span class="ow">in</span> <span class="n">bids</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">stack_files</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">re</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">re</span><span class="p">[</span><span class="n">filenames</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">fn</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">filenames</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+                <span class="n">offset</span> <span class="o">=</span> <span class="n">re</span><span class="p">[</span><span class="n">filenames</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">re</span><span class="p">[</span><span class="n">fn</span><span class="p">])):</span>
+                    <span class="n">b</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">re</span><span class="p">[</span><span class="n">fn</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">offset</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">b</span></div>
+
+
+<div class="viewcode-block" id="Photons"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.photons.Photons">[docs]</a><span class="k">class</span> <span class="nc">Photons</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    :param p_object:</span>
+<span class="sd">        Is either a list of filenames or a single string containing the path to one file. If the first argument</span>
+<span class="sd">        is n</span>
+<span class="sd">    :param file_type:</span>
+<span class="sd">        The file type of the files passed using the first argument (p_object) is specified using the</span>
+<span class="sd">        &#39;file_type&#39; parameter. This string is either &#39;hdf&#39; or &#39;bh132&#39;, &#39;bh630_x48&#39;, &#39;ht3&#39;, &#39;iss&#39;. If</span>
+<span class="sd">        the file type is not an hdf file the files are temporarily converted to hdf-files to guarantee</span>
+<span class="sd">        a consistent interface.</span>
+<span class="sd">    :param kwargs:</span>
+<span class="sd">    :return:</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    &gt;&gt;&gt; import glob</span>
+<span class="sd">    &gt;&gt;&gt; import mfm</span>
+<span class="sd">    &gt;&gt;&gt; directory = &quot;../sample_data/tttr/spc132/smDNA&quot;</span>
+<span class="sd">    &gt;&gt;&gt; spc_files = glob.glob(directory+&#39;/*.spc&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; photons = mfm.io.photons.Photons(spc_files, file_type=&quot;bh132&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; print(photons)</span>
+<span class="sd">    File-type: bh132</span>
+<span class="sd">    Filename(s):</span>
+<span class="sd">            ./sample_data/tttr/spc132/hGBP1_18D\m000.spc</span>
+<span class="sd">            ./sample_data/tttr/spc132/hGBP1_18D\m001.spc</span>
+<span class="sd">            ./sample_data/tttr/spc132/hGBP1_18D\m002.spc</span>
+<span class="sd">            ./sample_data/tttr/spc132/hGBP1_18D\m003.spc</span>
+<span class="sd">    nTAC:   4095</span>
+<span class="sd">    nROUT:  255</span>
+<span class="sd">    MTCLK [ms]:     1.36000003815e-05</span>
+
+<span class="sd">    &gt;&gt;&gt; print(photons[:10])</span>
+<span class="sd">    File-type: None</span>
+<span class="sd">    Filename(s):    None</span>
+<span class="sd">    nTAC:   4095</span>
+<span class="sd">    nROUT:  255</span>
+<span class="sd">    MTCLK [ms]:     1.36000003815e-05</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">p_object</span><span class="p">,</span>
+            <span class="n">file_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tempfile</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">p_object</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p_object</span><span class="p">,</span> <span class="n">tables</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">File</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p_object</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">p_object</span> <span class="o">=</span> <span class="p">[</span><span class="n">p_object</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p_object</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">p_object</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_filenames</span> <span class="o">=</span> <span class="n">p_object</span>
+
+            <span class="k">if</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s1">&#39;hdf&#39;</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_h5</span> <span class="o">=</span> <span class="n">tables</span><span class="o">.</span><span class="n">open_file</span><span class="p">(</span><span class="n">p_object</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+                    <span class="n">tttr</span><span class="o">.</span><span class="n">make_hdf</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s1">&#39;bh132&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_tempfile</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="s2">&quot;.photons.h5&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_h5</span> <span class="o">=</span> <span class="n">tttr</span><span class="o">.</span><span class="n">spc2hdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filenames</span><span class="p">,</span> <span class="n">routine_name</span><span class="o">=</span><span class="n">file_type</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_tempfile</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s1">&#39;iss&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_tempfile</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="s2">&quot;.photons.h5&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_h5</span> <span class="o">=</span> <span class="n">tttr</span><span class="o">.</span><span class="n">spc2hdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filenames</span><span class="p">,</span> <span class="n">routine_name</span><span class="o">=</span><span class="n">file_type</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_tempfile</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_h5</span> <span class="o">=</span> <span class="n">p_object</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_filenames</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_photon_array</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="n">file_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sample_name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">selection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span>
+
+    <span class="nd">@selection</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">selection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_photon_array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_table</span><span class="o">.</span><span class="n">read_coordinates</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_selection</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">photon_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">photons</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">photon_array</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_photon_array</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_photon_array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_table</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_photon_array</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dt</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The micro-time calibration</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mt_clk</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_tac</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">filenames</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Original filename of the data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filenames</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">h5</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The h5-handle (PyTables)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_h5</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">measurement_time</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Total measurement time in seconds?</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mt</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">mt_clk</span> <span class="o">/</span> <span class="mf">1000.0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cr_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rout</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">selection</span><span class="p">]</span>
+
+    <span class="nd">@cr_filter</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">cr_filter</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rout</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nPh</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Total number of photons</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rout</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rout</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Array containing the routing channel of the photons</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_array</span><span class="p">[</span><span class="s1">&#39;ROUT&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tac</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Array containing the micro-time clock counts (TAC) of the photons</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_array</span><span class="p">[</span><span class="s1">&#39;TAC&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mt</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Array containing the macros-time clock counts of the photons</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_array</span><span class="p">[</span><span class="s1">&#39;MT&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_tac</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Number of TAC channels</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;nTAC&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span>
+
+    <span class="nd">@n_tac</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">n_tac</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_rout</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Number of routing channels</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;NROUT&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span>
+
+    <span class="nd">@n_rout</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">n_rout</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mt_clk</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Macro-time clock of the data (time between the macrotime events in milli-seconds)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;MTCLK&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e-6</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span>
+
+    <span class="nd">@mt_clk</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">mt_clk</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">h5</span><span class="p">,</span> <span class="n">tables</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">File</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sample_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_name</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sample_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">sample_name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@sample</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sample_name</span> <span class="o">=</span> <span class="nb">str</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">samples</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">root</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sample_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The sample names within the opened H5-File</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">sample</span><span class="o">.</span><span class="n">_v_name</span> <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">root</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Photons.read_where"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.photons.Photons.read_where">[docs]</a>    <span class="k">def</span> <span class="nf">read_where</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">selection</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This function uses the pytables selection syntax</span>
+
+<span class="sd">        :param selection:</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">selection</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">selection</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_selection</span><span class="p">,</span> <span class="n">selection</span><span class="p">,</span> <span class="n">assume_unique</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">re</span> <span class="o">=</span> <span class="n">Photons</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">_h5</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_h5</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">selection</span> <span class="o">=</span> <span class="n">selection</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sample_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span>
+
+        <span class="k">return</span> <span class="n">re</span></div>
+
+<div class="viewcode-block" id="Photons.take"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.photons.Photons.take">[docs]</a>    <span class="k">def</span> <span class="nf">take</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">):</span>
+        <span class="n">re</span> <span class="o">=</span> <span class="n">Photons</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selection</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">selection</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_selection</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">assume_unique</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">selection</span> <span class="o">=</span> <span class="n">keys</span>
+
+        <span class="n">re</span><span class="o">.</span><span class="n">_h5</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_h5</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">selection</span> <span class="o">=</span> <span class="n">selection</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sample_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sample_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cr_filter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_tac_channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_number_of_routing_channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MTCLK</span>
+
+        <span class="k">return</span> <span class="n">re</span></div>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;File-type: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetype</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;Filename(s):</span><span class="se">\t</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">:</span>
+                <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">fn</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;None</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;nTAC:</span><span class="se">\t</span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_tac</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;nROUT:</span><span class="se">\t</span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_rout</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;MTCLK [ms]:</span><span class="se">\t</span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">mt_clk</span>
+        <span class="k">return</span> <span class="n">s</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    def __del__(self):</span>
+<span class="sd">        if self.h5 is not None:</span>
+<span class="sd">            self.h5.close()</span>
+<span class="sd">            if self.filetype in [&#39;bh132&#39;, &#39;bh630_x48&#39;]:</span>
+<span class="sd">                os.unlink(self._tempfile)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nPh</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">start</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">key</span><span class="o">.</span><span class="n">start</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">key</span><span class="o">.</span><span class="n">stop</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">step</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">key</span><span class="o">.</span><span class="n">step</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="n">key</span><span class="p">)</span></div>
+
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

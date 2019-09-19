@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>mfm.structure.labeled_structure &#8212; ChiSurf  documentation</title>
+    <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary">
+<form action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
+      
+  <h1>Source code for mfm.structure.labeled_structure</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">mfm</span>
+<span class="kn">import</span> <span class="nn">mfm.fluorescence</span>
+<span class="kn">from</span> <span class="nn">mfm.structure.structure</span> <span class="k">import</span> <span class="n">Structure</span>
+
+
+<div class="viewcode-block" id="av_distance_distribution"><a class="viewcode-back" href="../../../api/mfm.structure.html#mfm.structure.labeled_structure.av_distance_distribution">[docs]</a><span class="k">def</span> <span class="nf">av_distance_distribution</span><span class="p">(</span>
+        <span class="n">structure</span><span class="p">:</span> <span class="n">Structure</span><span class="p">,</span>
+        <span class="n">donor_av_parameter</span><span class="p">,</span>
+        <span class="n">acceptor_av_parameter</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the distance distribution between two accessible volumes defined by the parameters passed as</span>
+<span class="sd">    an argument.</span>
+
+<span class="sd">    :param structure: a structure :py:class:`..Structure`</span>
+<span class="sd">    :param donor_av_parameter: a dictionary of parameters defining the donor (see AV-class)</span>
+<span class="sd">    :param acceptor_av_parameter: a dictionary of parameters defining the acceptor (see AV-class)</span>
+<span class="sd">    :param kwargs:</span>
+<span class="sd">    :return:</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; donor_description = {&#39;residue_seq_number&#39;: 18, &#39;atom_name&#39;: &#39;CB&#39;}</span>
+<span class="sd">    &gt;&gt;&gt; acceptor_description = {&#39;residue_seq_number&#39;: 577, &#39;atom_name&#39;: &#39;CB&#39;}</span>
+<span class="sd">    &gt;&gt;&gt; pRDA, rda = av_distance_distribution(structure, donor_av_parameter=donor_description, acceptor_av_parameter=acceptor_description)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">av_donor</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">ACV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="o">**</span><span class="n">donor_av_parameter</span><span class="p">)</span>
+    <span class="n">av_acceptor</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">ACV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="o">**</span><span class="n">acceptor_av_parameter</span><span class="p">)</span>
+    <span class="n">amplitude</span><span class="p">,</span> <span class="n">distance</span> <span class="o">=</span> <span class="n">av_donor</span><span class="o">.</span><span class="n">pRDA</span><span class="p">(</span><span class="n">av_acceptor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">amplitude</span><span class="p">,</span> <span class="n">distance</span></div>
+
+
+<div class="viewcode-block" id="av_fret_rate_spectrum"><a class="viewcode-back" href="../../../api/mfm.structure.html#mfm.structure.labeled_structure.av_fret_rate_spectrum">[docs]</a><span class="k">def</span> <span class="nf">av_fret_rate_spectrum</span><span class="p">(</span>
+        <span class="n">structure</span><span class="p">:</span> <span class="n">Structure</span><span class="p">,</span>
+        <span class="n">donor_av_parameter</span><span class="p">,</span>
+        <span class="n">acceptor_av_parameter</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get FRET-rate spectrum for a given donor and acceptor attachment point</span>
+
+<span class="sd">    :param donor_av_parameter: parameters describing the donor accessible volume (see AV-class)</span>
+<span class="sd">    :param structure: a structure</span>
+<span class="sd">    :param acceptor_av_parameter: parameters describing the acceptor accessible volume (see AV-class)</span>
+<span class="sd">    :return:</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; donor_description = {&#39;residue_seq_number&#39;: 18, &#39;atom_name&#39;: &#39;CB&#39;}</span>
+<span class="sd">    &gt;&gt;&gt; acceptor_description = {&#39;residue_seq_number&#39;: 577, &#39;atom_name&#39;: &#39;CB&#39;}</span>
+<span class="sd">    &gt;&gt;&gt; rs = av_fret_rate_spectrum(structure, donor_description, acceptor_description)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">forster_radius</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">])</span>
+    <span class="n">kappa2</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;kappa2&#39;</span><span class="p">])</span>
+    <span class="n">tau0</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tau0&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;tau0&#39;</span><span class="p">])</span>
+    <span class="n">interleave</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;interleave&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">p_rda</span><span class="p">,</span> <span class="n">rda</span> <span class="o">=</span> <span class="n">av_distance_distribution</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">donor_av_parameter</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">acceptor_av_parameter</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">p_rda</span><span class="p">,</span> <span class="n">rda</span><span class="p">]])</span>
+    <span class="n">rs</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">general</span><span class="o">.</span><span class="n">distribution2rates</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">tau0</span><span class="o">=</span><span class="n">tau0</span><span class="p">,</span> <span class="n">kappa2</span><span class="o">=</span><span class="n">kappa2</span><span class="p">,</span> <span class="n">R0</span><span class="o">=</span><span class="n">forster_radius</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">interleave</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">rs</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">rs</span></div>
+
+
+<div class="viewcode-block" id="av_lifetime_spectrum"><a class="viewcode-back" href="../../../api/mfm.structure.html#mfm.structure.labeled_structure.av_lifetime_spectrum">[docs]</a><span class="k">def</span> <span class="nf">av_lifetime_spectrum</span><span class="p">(</span>
+        <span class="n">structure</span><span class="p">:</span> <span class="n">Structure</span><span class="p">,</span>
+        <span class="n">donor_lifetime_spectrum</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get an interleaved lifetime spectrum for a given donor lifetime spectrum given two definitions of</span>
+<span class="sd">    a donor and an acceptor accessible volume. This function uses :py:meth:`~Structure.av_fret_rate_spectrum`</span>
+<span class="sd">    to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the lifetime spectrum.</span>
+
+<span class="sd">    :param donor_lifetime_spectrum: interleaved donor lifetime spectrum</span>
+<span class="sd">    :param donor_av_parameter: definition of the donor accessible volume</span>
+<span class="sd">    :param acceptor_av_parameter: definition of the acceptor accessible volume</span>
+<span class="sd">    :param kwargs:</span>
+<span class="sd">    :return:</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; d_av = {&#39;residue_seq_number&#39;: 18, &#39;atom_name&#39;: &#39;CB&#39;} # donor attachment and description of the linker</span>
+<span class="sd">    &gt;&gt;&gt; a_av = {&#39;residue_seq_number&#39;: 577, &#39;atom_name&#39;: &#39;CB&#39;} # acceptor description and linker</span>
+<span class="sd">    &gt;&gt;&gt; ds = np.array([0.8, 4., 0.2, 1.5]) # donor_lifetime_spectrum</span>
+<span class="sd">    &gt;&gt;&gt; lifetime_spectrum = av_lifetime_spectrum(structure, ds, donor_av_parameter=d_av, acceptor_av_parameter=a_av)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">donly</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;donly&#39;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">rs</span> <span class="o">=</span> <span class="n">av_fret_rate_spectrum</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">general</span><span class="o">.</span><span class="n">rates2lifetimes</span><span class="p">(</span><span class="n">rs</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="p">,</span> <span class="n">x_donly</span><span class="o">=</span><span class="n">donly</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="av_filtered_fcs_weights"><a class="viewcode-back" href="../../../api/mfm.structure.html#mfm.structure.labeled_structure.av_filtered_fcs_weights">[docs]</a><span class="k">def</span> <span class="nf">av_filtered_fcs_weights</span><span class="p">(</span>
+        <span class="n">structure</span><span class="p">:</span> <span class="n">Structure</span><span class="p">,</span>
+        <span class="n">lifetime_filters</span><span class="p">,</span>
+        <span class="n">time_axis</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Passes all ``kwargs`` parameters to the method in :py:meth:`~Structure.av_lifetime_spectrum` and</span>
+<span class="sd">    calculates the filters weights for a set of lifetime filters ``lifetime_filters``.</span>
+
+<span class="sd">    :param lifetime_filters: numpy array</span>
+<span class="sd">    :return:</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    Read two different structures (a open and a closed structure) calculate the fluorescence intensity decay</span>
+<span class="sd">    for these structures. Using these structures fluorescence filters are constructed and the weight of an</span>
+<span class="sd">    intermediate structure with respect to the two lifetime filters is calculated.</span>
+
+<span class="sd">    &gt;&gt;&gt; from mfm.fluorescence.fcs.filtered import calc_lifetime_filter</span>
+<span class="sd">    &gt;&gt;&gt; from mfm.fluorescence.general import calculate_fluorescence_decay</span>
+<span class="sd">    &gt;&gt;&gt; from mfm.structure.structure import Structure</span>
+<span class="sd">    &gt;&gt;&gt; from mfm.structure.trajectory import TrajectoryFile</span>
+
+<span class="sd">    Define where the donor and the acceptor are attached to</span>
+
+<span class="sd">    &gt;&gt;&gt; dl = np.array([1.0, 4.]) # donor lifetime spectrum</span>
+<span class="sd">    &gt;&gt;&gt; d_av = {&#39;residue_seq_number&#39;: 18, &#39;atom_name&#39;: &#39;CB&#39;}</span>
+<span class="sd">    &gt;&gt;&gt; a_av = {&#39;residue_seq_number&#39;: 577, &#39;atom_name&#39;: &#39;CB&#39;}</span>
+
+<span class="sd">    Load a set of structures</span>
+
+<span class="sd">    &gt;&gt;&gt; structure_closed = Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; structure_open = Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_open.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; structure_middle = Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_middle.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; ls_closed = av_lifetime_spectrum(structure_closed, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)</span>
+<span class="sd">    &gt;&gt;&gt; ls_open = av_lifetime_spectrum(structure_open, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)</span>
+<span class="sd">    &gt;&gt;&gt; ls_middle = av_lifetime_spectrum(structure_middle, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)</span>
+
+<span class="sd">    Define an fluorescence decay which serves as a reference which is used to calculate fluorescence lifetime</span>
+<span class="sd">    filters. The calculated fluorescence lifetime filters are later used to determine weights of the structures.</span>
+<span class="sd">    These weights could can later be auto-correlated and cross-correlated.</span>
+
+<span class="sd">    &gt;&gt;&gt; times = np.linspace(0, 20, num=50)</span>
+<span class="sd">    &gt;&gt;&gt; times, d_closed = calculate_fluorescence_decay(ls_closed, time_axis=times)</span>
+<span class="sd">    &gt;&gt;&gt; times, d_open = calculate_fluorescence_decay(ls_open, time_axis=times)</span>
+<span class="sd">    &gt;&gt;&gt; times, d_middle = calculate_fluorescence_decay(ls_middle, time_axis=times)</span>
+<span class="sd">    &gt;&gt;&gt; fraction_closed = 0.33</span>
+<span class="sd">    &gt;&gt;&gt; fraction_middle = 0.33</span>
+<span class="sd">    &gt;&gt;&gt; fraction_open = 0.33</span>
+<span class="sd">    &gt;&gt;&gt; experimental_decay = fraction_closed * d_closed + fraction_middle * d_middle + d_open * fraction_open</span>
+<span class="sd">    &gt;&gt;&gt; decays = [d_closed, d_middle, d_open]</span>
+<span class="sd">    &gt;&gt;&gt; lf = calc_lifetime_filter(decays=decays, experimental_decay=experimental_decay)</span>
+
+<span class="sd">    The fluorescence lifetime filter correctly identifies the open, semi-open and closed conformation.</span>
+
+<span class="sd">    &gt;&gt;&gt; av_filtered_fcs_weights(structure_closed, lifetime_filters=lf, time_axis=times, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)</span>
+<span class="sd">    array([ 0.97265041,  0.03609784, -0.00888892])</span>
+<span class="sd">    &gt;&gt;&gt; av_filtered_fcs_weights(structure_middle, lifetime_filters=lf, time_axis=times, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)</span>
+<span class="sd">    array([ 0.01791727,  0.97488255,  0.00726864])</span>
+<span class="sd">    &gt;&gt;&gt; av_filtered_fcs_weights(structure_open, lifetime_filters=lf, time_axis=times, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)</span>
+<span class="sd">    array([ 0.00831755, -0.01459384,  1.00628016])</span>
+
+
+<span class="sd">    This method can be used together with trajectories. Use the limiting states to define filters. For the protein</span>
+<span class="sd">    hGBP1 two limiting states are known, with the fraction 0.66 (state-1) and 0.33 (state-2). Using corase-grained</span>
+<span class="sd">    models of these limiting states fluorescence decays are calculated and the filters are determined.</span>
+
+<span class="sd">import mfm.structure    &gt;&gt;&gt; structure_1 = mfm.structure.Structure(&#39;./sample_data/modelling/trajectory/h5-file/steps/0_major.pdb&#39;)</span>
+
+<span class="sd">    &gt;&gt;&gt; structure_1 = Structure(&#39;./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; structure_2 = Structure(&#39;./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; ls_1 = av_lifetime_spectrum(structure_1, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)</span>
+<span class="sd">    &gt;&gt;&gt; ls_2 = av_lifetime_spectrum(structure_2, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)</span>
+<span class="sd">    &gt;&gt;&gt; times = np.linspace(0, 20, num=50)</span>
+<span class="sd">    &gt;&gt;&gt; times, d_1 = calculate_fluorescence_decay(ls_1, time_axis=times)</span>
+<span class="sd">    &gt;&gt;&gt; times, d_2 = calculate_fluorescence_decay(ls_2, time_axis=times)</span>
+<span class="sd">    &gt;&gt;&gt; fraction_1 = 0.66</span>
+<span class="sd">    &gt;&gt;&gt; fraction_2 = 0.33</span>
+<span class="sd">    &gt;&gt;&gt; experimental_decay = fraction_1 * d_1 + fraction_2 * d_2</span>
+<span class="sd">    &gt;&gt;&gt; decays = [d_1, d_2]</span>
+<span class="sd">    &gt;&gt;&gt; lf = calc_lifetime_filter(decays=decays, experimental_decay=experimental_decay)</span>
+
+<span class="sd">    Now the trajectory of the transition using the crystal-structure as intermediate state was simulated. Using this</span>
+<span class="sd">    trajectory weights are associated to each frame which correspond to the first and the second state.</span>
+
+<span class="sd">    &gt;&gt;&gt; traj = TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, file_type=&#39;r&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; d_av = {&#39;residue_seq_number&#39;: 12, &#39;atom_name&#39;: &#39;CB&#39;}  # the resiude numbers are slightly shifted</span>
+<span class="sd">    &gt;&gt;&gt; a_av = {&#39;residue_seq_number&#39;: 567, &#39;atom_name&#39;: &#39;CB&#39;}</span>
+<span class="sd">    &gt;&gt;&gt; weights = [av_filtered_fcs_weights(s, lifetime_filters=lf, time_axis=times, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av) for s in traj]</span>
+
+<span class="sd">    Using the weights which were calculated for each frame species auto-correlations and species cross-correlations</span>
+<span class="sd">    can be calculated.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">lifetime_spectrum</span> <span class="o">=</span> <span class="n">av_lifetime_spectrum</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">convolve</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;convolve&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">convolve</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">Convolve</span><span class="p">):</span>
+        <span class="n">decay</span> <span class="o">=</span> <span class="n">convolve</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">lifetime_spectrum</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">time_axis</span><span class="p">,</span> <span class="n">decay</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">calculate_fluorescence_decay</span><span class="p">(</span><span class="n">lifetime_spectrum</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">time_axis</span><span class="p">)</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">lifetime_filters</span><span class="p">,</span> <span class="n">decay</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">weights</span></div>
+
+
+<div class="viewcode-block" id="LabeledStructure"><a class="viewcode-back" href="../../../api/mfm.structure.html#mfm.structure.labeled_structure.LabeledStructure">[docs]</a><span class="k">class</span> <span class="nc">LabeledStructure</span><span class="p">(</span><span class="n">Structure</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This class is handles FRET-labeled molecule (so far only a single donor, and single acceptor) and provides</span>
+<span class="sd">    convenience Attributes which only apply to FRET-samples</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    donor_lifetime_spectrum : array</span>
+<span class="sd">        Interleaved array of amplitudes and lifetimes of the donor in absence of an acceptor</span>
+
+<span class="sd">    donor_label : dict</span>
+<span class="sd">        A dictionary which describes the labeling position of the donor (see :py:class:`mfm.fluorescence.fps.AV`)</span>
+
+<span class="sd">    acceptor_label : dict</span>
+<span class="sd">        A dictionary which describes the labeling position of the acceptor (see :py:class:`mfm.fluorescence.fps.AV`)</span>
+
+<span class="sd">    distance_distribution: list of arrays</span>
+<span class="sd">        A histogram of the donor-acceptor distance distribution for a given pair of lables</span>
+
+<span class="sd">    fret_rate_spectrum: array</span>
+<span class="sd">        Interleaved array of amplitudes and FRET-rate constants</span>
+
+<span class="sd">    lifetime_spectrum: array</span>
+<span class="sd">        Interleaved array of amplitudes and donor-lifetimes in presence of FRET</span>
+
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    &gt;&gt;&gt; import mfm</span>
+<span class="sd">    &gt;&gt;&gt; structure = mfm.structure.structure.LabeledStructure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;, verbose=True)</span>
+<span class="sd">    &gt;&gt;&gt; donor_description = {&#39;residue_seq_number&#39;: 18, &#39;atom_name&#39;: &#39;CB&#39;}</span>
+<span class="sd">    &gt;&gt;&gt; acceptor_description = {&#39;residue_seq_number&#39;: 577, &#39;atom_name&#39;: &#39;CB&#39;}</span>
+<span class="sd">    &gt;&gt;&gt; structure.donor_label = donor_description</span>
+<span class="sd">    &gt;&gt;&gt; structure.acceptor_label = acceptor_description</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">donor_lifetime_spectrum</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ds</span>
+
+    <span class="nd">@donor_lifetime_spectrum</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">donor_lifetime_spectrum</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ds</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">donor_label</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span>
+
+    <span class="nd">@donor_label</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">donor_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_donor_av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">ACV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">acceptor_label</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_description</span>
+
+    <span class="nd">@acceptor_label</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">acceptor_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_description</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">ACV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">distance_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">av_donor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">donor_av</span>
+        <span class="n">av_acceptor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acceptor_av</span>
+        <span class="n">amplitude</span><span class="p">,</span> <span class="n">distance</span> <span class="o">=</span> <span class="n">av_donor</span><span class="o">.</span><span class="n">pRDA</span><span class="p">(</span><span class="n">av_acceptor</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">amplitude</span><span class="p">,</span> <span class="n">distance</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fret_rate_spectrum</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+        <span class="n">forster_radius</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forster_radius</span>
+        <span class="n">kappa2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kappa2</span>
+        <span class="n">tau0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tau0</span>
+        <span class="n">p_rda</span><span class="p">,</span> <span class="n">rda</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance_distribution</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">p_rda</span><span class="p">,</span> <span class="n">rda</span><span class="p">]])</span>
+        <span class="n">rs</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">general</span><span class="o">.</span><span class="n">distribution2rates</span><span class="p">(</span>
+            <span class="n">d</span><span class="p">,</span>
+            <span class="n">tau0</span><span class="o">=</span><span class="n">tau0</span><span class="p">,</span>
+            <span class="n">kappa2</span><span class="o">=</span><span class="n">kappa2</span><span class="p">,</span>
+            <span class="n">forster_radius</span><span class="o">=</span><span class="n">forster_radius</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">rs</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">lifetime_spectrum</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+        <span class="n">rs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fret_rate_spectrum</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">donor_lifetime_spectrum</span>
+        <span class="k">return</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">general</span><span class="o">.</span><span class="n">rates2lifetimes</span><span class="p">(</span><span class="n">rs</span><span class="p">,</span> <span class="n">ds</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">transfer_efficency</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="n">tau_x_da</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">general</span><span class="o">.</span><span class="n">species_averaged_lifetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lifetime_spectrum</span><span class="p">)</span>
+        <span class="n">tau_x_d0</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">general</span><span class="o">.</span><span class="n">species_averaged_lifetime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">donor_lifetime_spectrum</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">tau_x_da</span> <span class="o">/</span> <span class="n">tau_x_d0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">donor_av</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_donor_av</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">acceptor_av</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_av</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pRDA</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;donor-acceptor distance distribution</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_donor_av</span><span class="o">.</span><span class="n">pRDA</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_av</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dRDAE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;fluorescence weighted averaged donor-acceptor distance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_donor_av</span><span class="o">.</span><span class="n">dRDAE</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_av</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dRDA</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;average donor-acceptor distance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_donor_av</span><span class="o">.</span><span class="n">dRDA</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_av</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dRmp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;distance between the mean positions</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_donor_av</span><span class="o">.</span><span class="n">dRmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_av</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LabeledStructure.update"><a class="viewcode-back" href="../../../api/mfm.structure.html#mfm.structure.labeled_structure.LabeledStructure.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">ACV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_description</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_donor_av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">ACV</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LabeledStructure</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_donor_description</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;donor_av_parameter&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_description</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;acceptor_av_parameter&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_donor_av</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_acceptor_av</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">forster_radius</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tau0</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tau0&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;tau0&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kappa2</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;kappa2&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;kappa2&#39;</span><span class="p">])</span></div>
+
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

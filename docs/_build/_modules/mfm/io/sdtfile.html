@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>mfm.io.sdtfile &#8212; ChiSurf  documentation</title>
+    <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary">
+<form action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
+      
+  <h1>Source code for mfm.io.sdtfile</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1"># sdtfile.py</span>
+
+<span class="c1"># Copyright (c) 2007-2014, Christoph Gohlke</span>
+<span class="c1"># Copyright (c) 2007-2014, The Regents of the University of California</span>
+<span class="c1"># Produced at the Laboratory for Fluorescence Dynamics</span>
+<span class="c1"># All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c1">#</span>
+<span class="c1"># * Redistributions of source code must retain the above copyright</span>
+<span class="c1">#   notice, this list of conditions and the following disclaimer.</span>
+<span class="c1"># * Redistributions in binary form must reproduce the above copyright</span>
+<span class="c1">#   notice, this list of conditions and the following disclaimer in the</span>
+<span class="c1">#   documentation and/or other materials provided with the distribution.</span>
+<span class="c1"># * Neither the name of the copyright holders nor the names of any</span>
+<span class="c1">#   contributors may be used to endorse or promote products derived</span>
+<span class="c1">#   from this software without specific prior written permission.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;</span>
+<span class="c1"># AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE</span>
+<span class="c1"># IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE</span>
+<span class="c1"># ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE</span>
+<span class="c1"># LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR</span>
+<span class="c1"># CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF</span>
+<span class="c1"># SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS</span>
+<span class="c1"># INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN</span>
+<span class="c1"># CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)</span>
+<span class="c1"># ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE</span>
+<span class="c1"># POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="sd">&quot;&quot;&quot;Read Becker &amp; Hickl SDT files.</span>
+
+<span class="sd">SDT files are produced by Becker &amp; Hickl SPCM software. They contain time</span>
+<span class="sd">correlated single photon counting instrumentation parameters and measurement</span>
+<span class="sd">data. Currently only the &quot;Setup &amp; Data&quot; and &quot;fcs Data&quot; formats are supported.</span>
+
+<span class="sd">`Becker &amp; Hickl GmbH &lt;http://www.becker-hickl.de/&gt;`_ is a manufacturer of</span>
+<span class="sd">equipment for photon counting.</span>
+
+<span class="sd">:Author:</span>
+<span class="sd">  `Christoph Gohlke &lt;http://www.lfd.uci.edu/~gohlke/&gt;`_</span>
+
+<span class="sd">:Organization:</span>
+<span class="sd">  Laboratory for Fluorescence Dynamics, University of California, Irvine</span>
+
+<span class="sd">:Version: 2014.09.05</span>
+
+<span class="sd">Requirements</span>
+<span class="sd">------------</span>
+<span class="sd">* `CPython 2.7 or 3.4 &lt;http://www.python.org&gt;`_</span>
+<span class="sd">* `Numpy 1.8.2 &lt;http://www.numpy.org&gt;`_</span>
+
+<span class="sd">Revisions</span>
+<span class="sd">---------</span>
+<span class="sd">2014.09.05</span>
+<span class="sd">    Fixed reading multiple MEASURE_INFO records.</span>
+
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">The API is not stable yet and might change between revisions.</span>
+
+<span class="sd">The `Priithon &lt;http://code.google.com/p/priithon/&gt;`_ package includes an</span>
+<span class="sd">alternative SDT file reader.</span>
+
+<span class="sd">References</span>
+<span class="sd">----------</span>
+<span class="sd">(1) W Becker. The bh TCSPC Handbook. Third Edition. Becker &amp; Hickl GmbH 2008.</span>
+<span class="sd">    pp 401.</span>
+<span class="sd">(2) SPC_data_file_structure.h header file. Part of the Becker &amp; Hickl</span>
+<span class="sd">    SPCM software.</span>
+
+<span class="sd">Examples</span>
+<span class="sd">--------</span>
+<span class="sd">&gt;&gt;&gt; sdt = SdtFile(&quot;image.sdt&quot;)</span>
+<span class="sd">&gt;&gt;&gt; sdt.header.revision</span>
+<span class="sd">588</span>
+<span class="sd">&gt;&gt;&gt; sdt.info.id[1:-1]</span>
+<span class="sd">b&#39;SPC Setup &amp; Data File&#39;</span>
+<span class="sd">&gt;&gt;&gt; int(sdt.measure_info.scan_x)</span>
+<span class="sd">128</span>
+<span class="sd">&gt;&gt;&gt; sdt.data[0].shape</span>
+<span class="sd">(128, 128, 256)</span>
+<span class="sd">&gt;&gt;&gt; sdt.times[0].shape</span>
+<span class="sd">(256,)</span>
+
+<span class="sd">&gt;&gt;&gt; sdt = SdtFile(&quot;fluorescein.sdt&quot;)</span>
+<span class="sd">&gt;&gt;&gt; len(sdt.data)</span>
+<span class="sd">4</span>
+<span class="sd">&gt;&gt;&gt; sdt.data[3].shape</span>
+<span class="sd">(1, 1024)</span>
+
+<span class="sd">&gt;&gt;&gt; sdt = SdtFile(&quot;fcs.sdt&quot;)</span>
+<span class="sd">&gt;&gt;&gt; sdt.info.id[1:-1]</span>
+<span class="sd">b&#39;SPC fcs Data File&#39;</span>
+<span class="sd">&gt;&gt;&gt; sdt.data[0].shape</span>
+<span class="sd">(512, 512, 256)</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+<span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;2014.09.05&#39;</span>
+<span class="n">__docformat__</span> <span class="o">=</span> <span class="s1">&#39;restructuredtext en&#39;</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="s2">&quot;SdtFile&quot;</span><span class="p">,</span>
+
+
+<div class="viewcode-block" id="SdtFile"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.sdtfile.SdtFile">[docs]</a><span class="k">class</span> <span class="nc">SdtFile</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Becker &amp; Hickl SDT file.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    header : numpy.rec.array of FILE_HEADER structure</span>
+<span class="sd">        General information about the location of the setup and measurement</span>
+<span class="sd">        data within the file.</span>
+<span class="sd">    info : FileInfo</span>
+<span class="sd">        General information in ASCII format.</span>
+<span class="sd">    setup : SetupBlock</span>
+<span class="sd">        Setup block containing all system parameters, display parameters, etc.</span>
+<span class="sd">    measure_info : numpy.rec.array of MEASURE_INFO structure</span>
+<span class="sd">        Measurement description blocks.</span>
+<span class="sd">    block_headers : list of numpy.rec.array of BLOCK_HEADER structure</span>
+<span class="sd">        Data block headers.</span>
+<span class="sd">    data : list of 2D numpy arrays</span>
+<span class="sd">        Photon counts at each curve point.</span>
+<span class="sd">    times : list of 1D numpy arrays</span>
+<span class="sd">        Time axes for each data set.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize instance from filename or open file.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">basestring</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fromfile</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="s1">&#39;seek&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fromfile</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_fromfile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fh</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize instance from open file.&quot;&quot;&quot;</span>
+        <span class="c1"># read file header</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">header</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">rec</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">fh</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">FILE_HEADER</span><span class="p">,</span>
+                                         <span class="n">shape</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="s1">&#39;&lt;&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">header_valid</span> <span class="o">!=</span> <span class="mh">0x5555</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;not a SDT file&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">no_of_data_blocks</span> <span class="o">==</span> <span class="mh">0x7fff</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">no_of_data_blocks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">reserved1</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">no_of_data_blocks</span> <span class="o">&gt;</span> <span class="mh">0x7fff</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="c1"># read file info</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">info_offset</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">FileInfo</span><span class="p">(</span><span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">info_length</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="sa">b</span><span class="s2">&quot;SPC Setup &amp; Data File&quot;</span><span class="p">,</span>
+                                    <span class="sa">b</span><span class="s2">&quot;SPC fcs Data File&quot;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                    <span class="s2">&quot;currently not supported:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid SDT file info</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
+
+        <span class="c1"># read setup block</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">setup_offs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup</span> <span class="o">=</span> <span class="n">SetupBlock</span><span class="p">(</span><span class="n">fh</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">setup_length</span><span class="p">))</span>
+
+        <span class="c1"># read measurement description blocks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">measure_info</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">MEASURE_INFO</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dtype</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">meas_desc_block_length</span><span class="p">:</span>
+            <span class="c1"># TODO: shorten MEASURE_INFO to meas_desc_block_length</span>
+            <span class="k">pass</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">meas_desc_block_offset</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">no_of_meas_desc_blocks</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">measure_info</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">numpy</span><span class="o">.</span><span class="n">rec</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">fh</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="s1">&#39;&lt;&#39;</span><span class="p">))</span>
+            <span class="n">fh</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">meas_desc_block_length</span> <span class="o">-</span> <span class="n">dtype</span><span class="o">.</span><span class="n">itemsize</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">times</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">block_headers</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">data_block_offset</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="o">.</span><span class="n">no_of_data_blocks</span><span class="p">):</span>
+            <span class="c1"># read data block header</span>
+            <span class="n">fh</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span>
+            <span class="n">bh</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">rec</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">fh</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">BLOCK_HEADER</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                    <span class="n">byteorder</span><span class="o">=</span><span class="s1">&#39;&lt;&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">block_headers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bh</span><span class="p">)</span>
+            <span class="c1"># read data block</span>
+            <span class="n">mi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure_info</span><span class="p">[</span><span class="n">bh</span><span class="o">.</span><span class="n">meas_desc_block_no</span><span class="p">]</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">BlockType</span><span class="p">(</span><span class="n">bh</span><span class="o">.</span><span class="n">block_type</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span>
+            <span class="n">dsize</span> <span class="o">=</span> <span class="n">bh</span><span class="o">.</span><span class="n">block_length</span> <span class="o">//</span> <span class="n">dtype</span><span class="o">.</span><span class="n">itemsize</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">fh</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">dsize</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">dsize</span> <span class="o">==</span> <span class="n">mi</span><span class="o">.</span><span class="n">scan_x</span> <span class="o">*</span> <span class="n">mi</span><span class="o">.</span><span class="n">scan_y</span> <span class="o">*</span> <span class="n">mi</span><span class="o">.</span><span class="n">adc_re</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">mi</span><span class="o">.</span><span class="n">scan_x</span><span class="p">,</span> <span class="n">mi</span><span class="o">.</span><span class="n">scan_y</span><span class="p">,</span> <span class="n">mi</span><span class="o">.</span><span class="n">adc_re</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">dsize</span> <span class="o">==</span> <span class="n">mi</span><span class="o">.</span><span class="n">image_x</span> <span class="o">*</span> <span class="n">mi</span><span class="o">.</span><span class="n">image_y</span> <span class="o">*</span> <span class="n">mi</span><span class="o">.</span><span class="n">adc_re</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">mi</span><span class="o">.</span><span class="n">image_x</span><span class="p">,</span> <span class="n">mi</span><span class="o">.</span><span class="n">image_y</span><span class="p">,</span> <span class="n">mi</span><span class="o">.</span><span class="n">adc_re</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">mi</span><span class="o">.</span><span class="n">adc_re</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="c1"># generate time axis</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">mi</span><span class="o">.</span><span class="n">adc_re</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+            <span class="n">t</span> <span class="o">*=</span> <span class="n">mi</span><span class="o">.</span><span class="n">tac_r</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">mi</span><span class="o">.</span><span class="n">tac_g</span> <span class="o">*</span> <span class="n">mi</span><span class="o">.</span><span class="n">adc_re</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="n">bh</span><span class="o">.</span><span class="n">next_block_offs</span>
+
+<div class="viewcode-block" id="SdtFile.block_measure_info"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.sdtfile.SdtFile.block_measure_info">[docs]</a>    <span class="k">def</span> <span class="nf">block_measure_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return measure_info record for data block.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure_info</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">data_headers</span><span class="p">[</span><span class="n">block</span><span class="p">]</span><span class="o">.</span><span class="n">meas_desc_block_no</span><span class="p">]</span></div>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return string containing all information about SDT file.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure_info</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_headers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)])</span></div>
+
+
+<span class="k">class</span> <span class="nc">FileInfo</span><span class="p">(</span><span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;File info string and attributes.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="nb">str</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;*IDENTIFICATION&#39;</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;*END&#39;</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bytes2str</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()),</span> <span class="n">val</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+
+<span class="k">class</span> <span class="nc">SetupBlock</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Setup block ascii and binary data.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;*SETUP&#39;</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;*END&#39;</span><span class="p">))</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;BIN_PARA_BEGIN&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">i</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ascii</span> <span class="o">=</span> <span class="n">value</span><span class="p">[:</span><span class="n">i</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">15</span><span class="p">:</span><span class="o">-</span><span class="mi">10</span><span class="p">])</span>
+            <span class="c1"># todo: parse binary data here</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ascii</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ascii</span>
+
+
+<span class="k">class</span> <span class="nc">BlockNo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The lblock_no field of BLOCK_HEADER.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span> <span class="o">&amp;</span> <span class="mh">0xFFFFFF00</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">24</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">value</span> <span class="o">&amp;</span> <span class="mh">0x000000FF</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Data number: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">Module number: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">BlockType</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The block_type field of BLOCK_HEADER.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">BLOCK_CREATION</span><span class="p">[</span><span class="n">value</span> <span class="o">&amp;</span> <span class="mh">0xF</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contents</span> <span class="o">=</span> <span class="n">BLOCK_CONTENT</span><span class="p">[</span><span class="n">value</span> <span class="o">&amp;</span> <span class="mh">0xF0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">BLOCK_DTYPE</span><span class="p">[</span><span class="n">value</span> <span class="o">&amp;</span> <span class="mh">0xF00</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Mode: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">Content: </span><span class="si">%s</span><span class="se">\n</span><span class="s2">Data Type: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">contents</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+
+
+<span class="n">FILE_HEADER</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s1">&#39;revision&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;info_offset&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;info_length&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;setup_offs&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;setup_length&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;data_block_offset&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;no_of_data_blocks&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;data_block_length&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;meas_desc_block_offset&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;no_of_meas_desc_blocks&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;meas_desc_block_length&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;header_valid&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;reserved1&#39;</span><span class="p">,</span> <span class="s1">&#39;u4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;reserved2&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;chksum&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">)]</span>
+
+<span class="n">SETUP_BIN_HDR</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s1">&#39;soft_rev&#39;</span><span class="p">,</span> <span class="s1">&#39;u4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;para_length&#39;</span><span class="p">,</span> <span class="s1">&#39;u4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;reserved1&#39;</span><span class="p">,</span> <span class="s1">&#39;u4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;reserved2&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">)]</span>
+
+<span class="n">MEASURE_STOP_INFO</span> <span class="o">=</span> <span class="p">[</span>  <span class="c1"># Info collected when measurement finished</span>
+    <span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;flags&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;stop_time&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;cur_step&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;cur_cycle&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;cur_page&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;min_sync_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;min_cfd_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;min_tac_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;min_adc_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;max_sync_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;max_cfd_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;max_tac_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;max_adc_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;reserved1&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;reserved2&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">)]</span>
+
+<span class="n">MEASURE_FCS_INFO</span> <span class="o">=</span> <span class="p">[</span>  <span class="c1"># Info collected when FIFO measurement finished</span>
+    <span class="p">(</span><span class="s1">&#39;chan&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;fcs_decay_calc&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;mt_resol&#39;</span><span class="p">,</span> <span class="s1">&#39;u4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;cortime&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;calc_photons&#39;</span><span class="p">,</span> <span class="s1">&#39;u4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;fcs_points&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;end_time&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;overruns&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;fcs_type&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;cross_chan&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;mod&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;cross_mod&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;cross_mt_resol&#39;</span><span class="p">,</span> <span class="s1">&#39;u4&#39;</span><span class="p">)]</span>
+
+<span class="n">HIST_INFO</span> <span class="o">=</span> <span class="p">[</span>  <span class="c1"># Extension of MeasFCSInfo for other histograms</span>
+    <span class="p">(</span><span class="s1">&#39;fida_time&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;filda_time&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;fida_points&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;filda_points&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;mcs_time&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;mcs_points&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">)]</span>
+
+<span class="n">MEASURE_INFO</span> <span class="o">=</span> <span class="p">[</span>  <span class="c1"># Measurement description blocks</span>
+    <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;a9&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;date&#39;</span><span class="p">,</span> <span class="s1">&#39;a11&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;mod_ser_no&#39;</span><span class="p">,</span> <span class="s1">&#39;a16&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;meas_mode&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;cfd_ll&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;cfd_lh&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;cfd_zc&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;cfd_hf&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;syn_zc&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;syn_fd&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;syn_hf&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;tac_r&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;tac_g&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;tac_of&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;tac_ll&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;tac_lh&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;adc_re&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;eal_de&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;ncx&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;ncy&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;page&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;col_t&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;rep_t&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;stopt&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;overfl&#39;</span><span class="p">,</span> <span class="s1">&#39;u1&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;use_motor&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;steps&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;offset&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;dither&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;incr&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;mem_bank&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;mod&#39;</span><span class="p">,</span> <span class="s1">&#39;a16&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;syn_th&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;dead_time_comp&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;polarity_l&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;polarity_f&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;polarity_p&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;linediv&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;accumulate&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;flbck_y&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;flbck_x&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;bord_u&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;bord_l&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;pix_time&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;pix_clk&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;trigger&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;scan_x&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;scan_y&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;scan_rx&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;scan_ry&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;fifo_typ&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;epx_div&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;mod_code&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;mod_fpga_ver&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;overflow_corr_factor&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;adc_zoom&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;cycles&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;StopInfo&#39;</span><span class="p">,</span> <span class="n">MEASURE_STOP_INFO</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;FCSInfo&#39;</span><span class="p">,</span> <span class="n">MEASURE_FCS_INFO</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;image_x&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;image_y&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;image_rx&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;image_ry&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;xy_gain&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;master_clock&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;adc_de&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;det&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;x_axis&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;MeasHISTInfo&#39;</span><span class="p">,</span> <span class="n">HIST_INFO</span><span class="p">)</span>
+    <span class="p">]</span>
+
+<span class="n">BLOCK_HEADER</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s1">&#39;block_no&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;data_offs&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;next_block_offs&#39;</span><span class="p">,</span> <span class="s1">&#39;i4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;block_type&#39;</span><span class="p">,</span> <span class="s1">&#39;u2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;meas_desc_block_no&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;lblock_no&#39;</span><span class="p">,</span> <span class="s1">&#39;u4&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">&#39;block_length&#39;</span><span class="p">,</span> <span class="s1">&#39;u4&#39;</span><span class="p">)]</span>
+
+<span class="n">BLOCK_CREATION</span> <span class="o">=</span> <span class="p">{</span>  <span class="c1"># file_type of creation</span>
+    <span class="mi">0</span><span class="p">:</span> <span class="s1">&#39;NOT_USED&#39;</span><span class="p">,</span>
+    <span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;MEAS_DATA&#39;</span><span class="p">,</span>
+    <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;FLOW_DATA&#39;</span><span class="p">,</span>
+    <span class="mi">3</span><span class="p">:</span> <span class="s1">&#39;MEAS_DATA_FROM_FILE&#39;</span><span class="p">,</span>
+    <span class="mi">4</span><span class="p">:</span> <span class="s1">&#39;CALC_DATA&#39;</span><span class="p">,</span>
+    <span class="mi">5</span><span class="p">:</span> <span class="s1">&#39;SIM_DATA&#39;</span><span class="p">,</span>
+    <span class="mi">8</span><span class="p">:</span> <span class="s1">&#39;FIFO_DATA&#39;</span><span class="p">,</span>
+    <span class="mi">9</span><span class="p">:</span> <span class="s1">&#39;FIFO_DATA_FROM_FILE&#39;</span><span class="p">}</span>
+
+<span class="n">BLOCK_CONTENT</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mh">0x0</span><span class="p">:</span> <span class="s1">&#39;DECAY_BLOCK&#39;</span><span class="p">,</span>
+    <span class="mh">0x10</span><span class="p">:</span> <span class="s1">&#39;PAGE_BLOCK&#39;</span><span class="p">,</span>
+    <span class="mh">0x20</span><span class="p">:</span> <span class="s1">&#39;FCS_BLOCK&#39;</span><span class="p">,</span>
+    <span class="mh">0x30</span><span class="p">:</span> <span class="s1">&#39;FIDA_BLOCK&#39;</span><span class="p">,</span>
+    <span class="mh">0x40</span><span class="p">:</span> <span class="s1">&#39;FILDA_BLOCK&#39;</span><span class="p">,</span>
+    <span class="mh">0x50</span><span class="p">:</span> <span class="s1">&#39;MCS_BLOCK&#39;</span><span class="p">,</span>
+    <span class="mh">0x60</span><span class="p">:</span> <span class="s1">&#39;IMG_BLOCK&#39;</span><span class="p">}</span>
+
+<span class="n">BLOCK_DTYPE</span> <span class="o">=</span> <span class="p">{</span>  <span class="c1"># data type</span>
+    <span class="mh">0x000</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s1">&#39;&lt;u2&#39;</span><span class="p">),</span>
+    <span class="mh">0x100</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s1">&#39;&lt;u4&#39;</span><span class="p">),</span>
+    <span class="mh">0x200</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s1">&#39;&lt;f4&#39;</span><span class="p">)}</span>
+
+<span class="n">HEADER_VALID</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mh">0x1111</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="mh">0x5555</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+
+<span class="n">INFO_IDS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="sa">b</span><span class="s2">&quot;SPC Setup Script File&quot;</span><span class="p">:</span> <span class="s2">&quot;Setup script file_type: setup only&quot;</span><span class="p">,</span>
+    <span class="sa">b</span><span class="s2">&quot;SPC Setup &amp; Data File&quot;</span><span class="p">:</span> <span class="s2">&quot;Normal file_type: setup + data&quot;</span><span class="p">,</span>
+    <span class="sa">b</span><span class="s2">&quot;SPC DLL Data File&quot;</span><span class="p">:</span> <span class="s2">&quot;DLL created: no setup, only data&quot;</span><span class="p">,</span>
+    <span class="sa">b</span><span class="s2">&quot;SPC Flow Data File&quot;</span><span class="p">:</span> <span class="s2">&quot;Continuous Flow file_type: no setup, only data&quot;</span><span class="p">,</span>
+    <span class="sa">b</span><span class="s2">&quot;SPC fcs Data File&quot;</span><span class="p">:</span>
+    <span class="s2">&quot;FIFO file_type: setup, data blocks = Decay, fcs, FIDA, FILDA &amp; MCS &quot;</span>
+    <span class="s2">&quot;curves for each used routing channel&quot;</span><span class="p">}</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+    <span class="n">basestring</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="n">bytes2str</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">bytes2str</span> <span class="o">=</span> <span class="nb">str</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

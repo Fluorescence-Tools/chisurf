@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>mfm.math.rand &#8212; ChiSurf  documentation</title>
+    <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../../index.html">
+          ChiSurf</a>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary">
+<form action="../../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+        </div>
+      </div>
+    <div class="col-md-9 content">
+      
+  <h1>Source code for mfm.math.rand</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Functions related to random numbers</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">sqrt</span>
+
+<span class="kn">import</span> <span class="nn">numba</span> <span class="k">as</span> <span class="nn">nb</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="k">import</span> <span class="n">norm</span>
+
+
+<div class="viewcode-block" id="weighted_choice"><a class="viewcode-back" href="../../../user_documentation/api/lib.html#mfm.math.rand.weighted_choice">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span>
+<span class="k">def</span> <span class="nf">weighted_choice</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A weighted random number generator. The random number generator generates</span>
+<span class="sd">    random numbers between zero and the length of the provided weight-array. The</span>
+<span class="sd">    elements of the weight-arrays are proportional to the probability that the corresponding</span>
+<span class="sd">    integer random number is generated.</span>
+
+<span class="sd">    :param weights: array-like</span>
+<span class="sd">    :param n: int</span>
+<span class="sd">        number of random values to be generated</span>
+<span class="sd">    :return: Returns an array containing the random values</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; weighted_choice(np.array([0.1, 0.5, 3]), 10)</span>
+<span class="sd">    array([1, 2, 2, 2, 2, 2, 2, 2, 2, 1], dtype=uint32)</span>
+
+<span class="sd">    http://eli.thegreenplace.net/2010/01/22/weighted-random-generation-in-python/</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">running_total</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="n">nWeights</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
+    <span class="n">totals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">nWeights</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nWeights</span><span class="p">):</span>
+        <span class="n">running_total</span> <span class="o">+=</span> <span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">totals</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">running_total</span>
+
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">rnd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">ranf</span><span class="p">()</span> <span class="o">*</span> <span class="n">running_total</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nWeights</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">rnd</span> <span class="o">&lt;=</span> <span class="n">totals</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="n">r</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="k">break</span>
+    <span class="k">return</span> <span class="n">r</span></div>
+
+
+<div class="viewcode-block" id="brownian"><a class="viewcode-back" href="../../../user_documentation/api/lib.html#mfm.math.rand.brownian">[docs]</a><span class="k">def</span> <span class="nf">brownian</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;\</span>
+<span class="sd">    Generate an instance of Brownian motion (i.e. the Wiener process):</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        X(t) = X(0) + N(0, \delta^2 \cdot t; 0, t)</span>
+
+<span class="sd">    where N(a,b; t0, t1) is a normally distributed random variable with mean a and</span>
+<span class="sd">    variance b.  The parameters t0 and t1 make explicit the statistical</span>
+<span class="sd">    independence of N on different time intervals; that is, if [t0, t1) and</span>
+<span class="sd">    [t2, t3) are disjoint intervals, then N(a, b; t0, t1) and N(a, b; t2, t3)</span>
+<span class="sd">    are independent.</span>
+
+<span class="sd">    Written as an iteration scheme,</span>
+
+<span class="sd">    .. math::</span>
+<span class="sd">        X(t + dt) = X(t) + N(0, \delta^2 \cdot dt; t, t+dt)</span>
+
+
+<span class="sd">    If :math:`x_0` is an array (or array-like), each value in :math:`x_0` is treated as</span>
+<span class="sd">    an initial condition, and the value returned is a numpy array with one</span>
+<span class="sd">    more dimension than :math:`x_0`.</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    x0 : float or numpy array (or something that can be converted to a numpy array</span>
+<span class="sd">         using numpy.asarray(x0)).</span>
+<span class="sd">        The initial condition(s) (i.e. position(s)) of the Brownian motion.</span>
+<span class="sd">    n : int</span>
+<span class="sd">        The number of steps to take.</span>
+<span class="sd">    dt : float</span>
+<span class="sd">        The time step.</span>
+<span class="sd">    delta : float</span>
+<span class="sd">        delta determines the &quot;speed&quot; of the Brownian motion.  The random variable</span>
+<span class="sd">        of the position at time t, X(t), has a normal distribution whose mean is</span>
+<span class="sd">        the position at time t=0 and whose variance is delta**2*t.</span>
+<span class="sd">    out : numpy array or None</span>
+<span class="sd">        If `out` is not None, it specifies the array in which to put the</span>
+<span class="sd">        result.  If `out` is None, a new numpy array is created and returned.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A numpy array of floats with shape `x0.shape + (n,)`.</span>
+
+<span class="sd">    Note that the initial value `x0` is not included in the returned array.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span>
+
+    <span class="c1"># For each element of x0, generate a sample of n numbers from a</span>
+    <span class="c1"># normal distribution.</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">norm</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">x0</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="p">(</span><span class="n">n</span><span class="p">,),</span> <span class="n">scale</span><span class="o">=</span><span class="n">delta</span><span class="o">*</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dt</span><span class="p">))</span>
+
+    <span class="c1"># If `out` was not given, create an output array.</span>
+    <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="c1"># This computes the Brownian motion by forming the cumulative sum of</span>
+    <span class="c1"># the random samples.</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">out</span><span class="p">)</span>
+
+    <span class="c1"># Add the initial condition.</span>
+    <span class="n">out</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="mc"><a class="viewcode-back" href="../../../user_documentation/api/lib.html#mfm.math.rand.mc">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">mc</span><span class="p">(</span><span class="n">e0</span><span class="p">,</span> <span class="n">e1</span><span class="p">,</span> <span class="n">kT</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Monte-Carlo acceptance criterion</span>
+
+<span class="sd">    :param e0: float</span>
+<span class="sd">        Previous energy</span>
+<span class="sd">    :param e1: float</span>
+<span class="sd">        Next energy</span>
+<span class="sd">    :param kT: float</span>
+<span class="sd">        Temperature</span>
+<span class="sd">    :return: bool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">e1</span> <span class="o">&lt;</span> <span class="n">e0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">ranf</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">((</span><span class="n">e0</span> <span class="o">-</span> <span class="n">e1</span><span class="p">)</span> <span class="o">/</span> <span class="n">kT</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="random_numbers"><a class="viewcode-back" href="../../../user_documentation/api/lib.html#mfm.math.rand.random_numbers">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">random_numbers</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">cdf</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">norm_cdf</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generates an array of n random numbers according to an cumulative distribution function (CDF)</span>
+
+<span class="sd">    :param x: x-axis of cdf</span>
+<span class="sd">    :param cdf: CDF according to which random numbers are generated</span>
+<span class="sd">    :param n: the number of random numbers to be generated</span>
+<span class="sd">    :param norm_cdf: if True the array passed as cdf is normalized so that its last point is one</span>
+<span class="sd">    :return:</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    &gt;&gt;&gt; x = np.linspace(0, 10, num=1000)</span>
+<span class="sd">    &gt;&gt;&gt; y = mfm.math.functions.distributions.normal_distribution(x, loc=4)</span>
+<span class="sd">    &gt;&gt;&gt; rn = random_numbers(axis=x, cdf=np.cumsum(y), n=10000000, norm_cdf=True)</span>
+<span class="sd">    &gt;&gt;&gt; hy, hx = np.histogram(rn, bins=4096, range=(0, 50))</span>
+<span class="sd">    &gt;&gt;&gt; p.plot(hx[1:], hy)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">norm_cdf</span><span class="p">:</span>
+        <span class="c1"># use the last point of the CDF for normalization</span>
+        <span class="c1"># at the latest time a sample is taken for sure...</span>
+        <span class="n">cdf</span> <span class="o">/=</span> <span class="n">cdf</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">tr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">xi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cdf</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">xi</span> <span class="o">&gt;=</span> <span class="n">r</span><span class="p">:</span>
+                <span class="n">tr</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">axis</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">break</span>
+    <span class="k">return</span> <span class="n">tr</span></div>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2019, Thomas Peulen.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
