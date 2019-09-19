@@ -17,8 +17,10 @@ before_install:
 install:
   - python setup.py install
 script:
+  - source activate chisurf
   - nosetests --with-coverage ./test/test_*.py  > /dev/null
 after_success:
+  - source activate chisurf
   - pip install codacy-coverage
   - coverage xml
   - python-codacy-coverage -r coverage.xml
