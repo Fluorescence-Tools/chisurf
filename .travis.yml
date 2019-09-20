@@ -18,10 +18,10 @@ before_install:
   - python setup.py build_ext --inplace --force
 install:
   - python setup.py install
-before_script:
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
-  - sleep 3
+#before_script:
+#  - "export DISPLAY=:99.0"
+#  - "sh -e /etc/init.d/xvfb start"
+#  - sleep 3
 script:
   - source activate chisurf
   - conda install nose coverage
