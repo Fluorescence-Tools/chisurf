@@ -10,7 +10,3 @@ class Tests(unittest.TestCase):
 
     def test_mfm_import(self):
         import mfm
-
-
-if __name__ == '__main__':
-    unittest.main()
