@@ -55,9 +55,16 @@ keys, formats = list(zip(*keys_formats))
 
 def fetch_pdb_string(
         pdb_id: str
-):
+) -> str:
+    """Downloads from the RCSB a PDB file with the specified PDB-ID
+
+    :param pdb_id: The PDB-ID that is downloaded
+    :param get_binary: If get_binary is True a binary string is returned.
+    :return:
+    """
     url = 'http://www.rcsb.org/pdb/files/%s.pdb' % pdb_id[:4]
-    return urllib.request.urlopen(url).read()
+    binary = urllib.request.urlopen(url).read()
+    return binary.decode("utf-8")
 
 
 def fetch_pdb(
@@ -97,13 +104,23 @@ def assign_element_to_atom_name(
 def parse_string_pdb(
         string: str,
         assign_charge: bool = False,
+        verbose: bool = True,  # mfm.verbose
         **kwargs
 ):
+    """
+
+    :param string:
+    :param assign_charge:
+    :param verbose:
+    :param kwargs:
+    :return:
+    """
     rows = string.splitlines()
-    verbose = kwargs.get('verbose', mfm.verbose)
     atoms = np.zeros(len(rows), dtype={'names': keys, 'formats': formats})
     ni = 0
     for line in rows:
+        if verbose:
+            print(line)
         if line.startswith('ATOM'):
             atom_name = line[12:16].strip().upper()
             atoms['i'][ni] = ni
