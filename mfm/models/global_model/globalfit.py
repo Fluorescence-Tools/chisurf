@@ -670,7 +670,8 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     def onLoadTable(self):
         filename = mfm.widgets.get_filename('Open link-table', 'link file (*.p)')
-        links = pickle.load(open(filename, "rb"))
+        with open(filename, "rb") as fp:
+            links = pickle.load(fp)
         self.onAddLink(links)
 
     def clear_listed_links(self):
