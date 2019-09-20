@@ -23,6 +23,7 @@ script:
   - conda install nose coverage
   - ln -sf $(which nosetests) $(pwd)/test/
   - cd $(pwd)/test/
+  - export DISPLAY=':99.0'
   - xvfb-run nosetests --with-coverage test_*.py  > /dev/null
 after_success:
   - source activate chisurf
