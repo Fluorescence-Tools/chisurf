@@ -23,7 +23,7 @@ script:
   - conda install nose coverage
   - ln -sf $(which nosetests) $(pwd)/test/
   - cd $(pwd)/test/
-  - xvfb-run nosetests --with-coverage test_*.py  > /dev/null
+  - xvfb-run --server-args="-screen 0 1280x1024x24" nosetests --with-coverage test_*.py  > /dev/null
 after_success:
   - source activate chisurf
   - pip install codacy-coverage
