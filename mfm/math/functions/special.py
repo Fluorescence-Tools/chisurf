@@ -5,7 +5,9 @@ from numba import jit
 
 
 @jit(nopython=True)
-def i0(x):
+def i0(
+        x: float
+):
     """
     Modified Bessel-function I0(x) for any real x
     (according to numerical recipes function - `bessi0`,
@@ -45,7 +47,9 @@ def i0(x):
 
 
 @jit(nopython=True)
-def i0_array(x):
+def i0_array(
+        x: np.array
+):
     """
     Modified Bessel-function I0(x) for any real x
     (according to numerical recipes function - `bessi0`,
@@ -65,22 +69,8 @@ def i0_array(x):
     ax = np.abs(x)
 
     ay = np.zeros_like(ax)
-
-    for i in range(len(ax)):
+    n_ax = len(ax)
+    for i in range(n_ax):
         axi = ax[i]
-        if axi < 3.75:
-            yi = axi / 3.75
-            yi *= yi
-            ay[i] = 1.0 + yi * (3.5156299 + yi * (
-                3.0899424 + yi * (1.2067492 + yi * (
-                    0.2659732 + yi * (0.360768e-1 + yi *
-                                     0.45813e-2)))))
-        else:
-            yi = 3.75 / axi
-            ay[i] = (exp(axi) / sqrt(axi)) * \
-                  (0.39894228 + yi * (0.1328592e-1 + yi * (
-                      0.225319e-2 + yi * ( -0.157565e-2 + yi * (
-                          0.916281e-2 + yi * (-0.2057706e-1 + yi * (
-                              0.2635537e-1 + yi * (-0.1647633e-1 + yi *
-                                                   0.392377e-2))))))))
+        ay[i] = i0(axi)
     return ay
