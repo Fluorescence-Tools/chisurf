@@ -36,13 +36,13 @@ def histogram_rebin(
 
     >>> new_bin_edges = np.linspace(-5, 20, 17)
     >>> new_bin_edges
-    array([ -5.    ,  -3.4375,  -1.875 ,  -0.3125,   1.25  ,   2.8125,
-             4.375 ,   5.9375,   7.5   ,   9.0625,  10.625 ,  12.1875,
-            13.75  ,  15.3125,  16.875 ,  18.4375,  20.    ])
+    array([-5.    , -3.4375, -1.875 , -0.3125,  1.25  ,  2.8125,  4.375 ,
+            5.9375,  7.5   ,  9.0625, 10.625 , 12.1875, 13.75  , 15.3125,
+           16.875 , 18.4375, 20.    ])
     >>> y = histogram_rebin(bin_edges, counts, new_bin_edges)
     [0.0, 0.0, 0.0, 0.0, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0.0, 0.0, 0.0, 0.0]
     """
-    re = []
+    re = list()
     for xi in new_bin_edges.flatten():
         if xi > max(bin_edges) or xi < min(bin_edges):
             re.append(0.0)
@@ -345,6 +345,14 @@ def interleaved_to_two_columns(
     :param sort: bool
         if True sort by the size of the lifetimes
     :return: two arrays (amplitudes), (lifetimes)
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> lifetime_spectrum = np.array([0.25, 1, 0.75, 4])
+    >>> amplitudes, lifetimes = interleaved_to_two_columns(lifetime_spectrum)
+
     """
     lt = ls.reshape((ls.shape[0] // 2, 2))
     if sort:
@@ -392,8 +400,8 @@ def elte2(
     >>> e1 = np.array([1,2,3,4])
     >>> e2 = np.array([5,6,7,8])
     >>> elte2(e1, e2)
-    array([  5.        ,   1.5       ,   7.        ,   1.6       ,
-        15.        ,   2.4       ,  21.        ,   2.66666667])
+    array([ 5.        ,  1.5       ,  7.        ,  1.6       , 15.        ,
+            2.4       , 21.        ,  2.66666667])
     """
     n1 = e1.shape[0] // 2
     n2 = e2.shape[0] // 2
@@ -428,11 +436,10 @@ def ere2(
     --------
 
     >>> import numpy as np
-    >>> e1 = np.array([1,2,3,4])
-    >>> e2 = np.array([5,6,7,8])
-    >>> elte2(e1, e2)
-    array([  5.        ,   1.5       ,   7.        ,   1.6       ,
-        15.        ,   2.4       ,  21.        ,   2.66666667])
+    >>> e1 = np.array([0.5,1,0.5,2])
+    >>> e2 = np.array([0.5,3,0.5,4])
+    >>> ere2(e1, e2)
+    array([0.25, 4.  , 0.25, 5.  , 0.25, 5.  , 0.25, 6.  ])
     """
     n1 = e1.shape[0] // 2
     n2 = e2.shape[0] // 2
@@ -460,11 +467,11 @@ def invert_interleaved(
     --------
 
     >>> import numpy as np
-    >>> e1 = np.array([1,2,3,4])
+    >>> e1 = np.array([1, 2, 3, 4])
     >>> invert_interleaved(e1)
     array([ 1.  ,  0.5 ,  3.  ,  0.25])
     """
-    n1 = interleaved_spectrum.shape[0] / 2
+    n1 = interleaved_spectrum.shape[0] // 2
     r = np.empty(n1*2, dtype=np.float64)
 
     for i in range(n1):
