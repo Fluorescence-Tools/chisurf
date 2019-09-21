@@ -6,7 +6,7 @@ from qtpy import QtWidgets, QtGui
 
 import mfm.curve
 import mfm.fitting.parameter
-import mfm.fitting.fitting_widgets
+import mfm.fitting.widgets
 import mfm.plots
 from mfm.curve import Curve
 
@@ -215,7 +215,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
         for parameter in self.parameters:
             if isinstance(
                     parameter,
-                    mfm.fitting.fitting_widgets.FittingParameterWidget
+                    mfm.fitting.widgets.FittingParameterWidget
             ):
                 parameter.update()
 

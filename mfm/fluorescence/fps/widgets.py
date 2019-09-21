@@ -3,7 +3,7 @@ from qtpy import QtWidgets
 
 import mfm
 from mfm.fluorescence.fps.dynamic import ProteinQuenching, Dye, Sticking
-from mfm.fitting.fitting_widgets import FittingParameterWidget
+from mfm.fitting.widgets import FittingParameterWidget
 
 
 class ProteinQuenchingWidget(ProteinQuenching, QtWidgets.QGroupBox):
@@ -106,28 +106,28 @@ class DyeWidget(Dye, QtWidgets.QGroupBox):
         gl.addWidget(self.dye_select, 0, 0, 1, 2)
 
         gl.addWidget(
-            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._critical_distance),
+            mfm.fitting.widgets.make_fitting_parameter_widget(self._critical_distance),
             1, 0
         )
         gl.addWidget(
-            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._diffusion_coefficient),
+            mfm.fitting.widgets.make_fitting_parameter_widget(self._diffusion_coefficient),
             2, 0
         )
         gl.addWidget(
-            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._tau0),
+            mfm.fitting.widgets.make_fitting_parameter_widget(self._tau0),
             3, 0
         )
 
         gl.addWidget(
-            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._av_length),
+            mfm.fitting.widgets.make_fitting_parameter_widget(self._av_length),
             1, 1
         )
         gl.addWidget(
-            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._av_width),
+            mfm.fitting.widgets.make_fitting_parameter_widget(self._av_width),
             2, 1
         )
         gl.addWidget(
-            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._av_radius),
+            mfm.fitting.widgets.make_fitting_parameter_widget(self._av_radius),
             3, 1
         )
         self.dye_select.currentIndexChanged[int].connect(self.update_parameter)
@@ -167,12 +167,12 @@ class StickingWidget(Sticking, QtWidgets.QGroupBox):
         self.radioButton_2 = QtWidgets.QRadioButton('Quencher')
 
         layout.addWidget(
-            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._slow_radius),
+            mfm.fitting.widgets.make_fitting_parameter_widget(self._slow_radius),
             0,
             1
         )
         layout.addWidget(
-            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(self._slow_fact),
+            mfm.fitting.widgets.make_fitting_parameter_widget(self._slow_fact),
             1,
             1
         )
