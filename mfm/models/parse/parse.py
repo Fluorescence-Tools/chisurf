@@ -52,7 +52,8 @@ class ParseFormula(FittingParameterGroup):
 
         if model_file is None:
             model_file = os.path.join(
-                mfm.package_directory, 'models.yaml'
+                os.path.dirname(os.path.abspath(__file__)),
+                'models.yaml'
             )
         self.model_file = model_file
 

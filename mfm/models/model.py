@@ -54,8 +54,8 @@ class Model(
         for a in self.aggregated_parameters:
             if a is not self:
                 a.finalize()
-        for pa in mfm.fitting.parameter.FittingParameter.get_instances():
-            pa.finalize()
+        #for pa in mfm.fitting.parameter.FittingParameter.get_instances():
+        #    pa.finalize()
 
     @property
     def weighted_residuals(
