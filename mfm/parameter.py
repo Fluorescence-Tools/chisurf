@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, TypeVar, Tuple
+from typing import List, TypeVar, Tuple, Type
 
 import weakref
 import numpy as np
@@ -125,76 +125,78 @@ class Parameter(
     def __add__(
             self,
             other: T
-    ) -> Parameter:
+    ) -> Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
-        return Parameter(
-            value=a.__add__(b)
+        return self.__class__(
+            value=(a + b)
         )
 
     def __mul__(
             self,
             other: T
-    ) -> Parameter:
+    ) -> Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
-        return Parameter(
-            value=a.__mul__(b)
+        return self.__class__(
+            value=(a * b)
         )
 
     def __truediv__(
             self,
             other: T
-    ) -> Parameter:
+    ) -> Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
-        return Parameter(
-            value=a.__truediv__(b)
+        return self.__class__(
+            value=(a / b)
         )
 
     def __floordiv__(
             self,
             other: T
-    ) -> Parameter:
+    ) -> Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
-        return Parameter(
-            value=a.__floordiv__(b)
+        return self.__class__(
+            value=(a // b)
         )
 
     def __sub__(
             self,
             other: T
-    ) -> Parameter:
+    ) -> Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
-        return Parameter(
-            value=a.__sub__(b)
+        return self.__class__(
+            value=(a - b)
         )
 
     def __mod__(
             self,
             other: T
-    ) -> Parameter:
+    ) -> Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
-        return Parameter(
-            value=a.__mod__(b)
+        return self.__class__(
+            value=(a % b)
         )
 
     def __pow__(
             self,
             other: T
-    ) -> Parameter:
+    ) -> Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
-        return Parameter(
-            value=a.__pow__(b)
+        return self.__class__(
+            value=(a ** b)
         )
 
-    def __invert__(self) -> Parameter:
+    def __invert__(
+            self
+    ) -> Type[Parameter]:
         a = self.value
-        return Parameter(
+        return self.__class__(
             value=(1./a)
         )
 
@@ -280,7 +282,9 @@ class Parameter(
         self._ub = ub
 
 
-class ParameterGroup(mfm.base.Base):
+class ParameterGroup(
+    mfm.base.Base
+):
     """
 
     """

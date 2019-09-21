@@ -231,6 +231,24 @@ class Tests(unittest.TestCase):
             mfm.fitting.parameter.FittingParameter
         )
 
+    def test_numpy(self):
+        import numpy as np
+        value = 22
+        p1 = mfm.fitting.parameter.FittingParameter(value=value)
+        x = np.linspace(0, 2, 100)
+        p2 = p1 + x
+        self.assertEqual(
+            type(p2),
+            mfm.fitting.parameter.FittingParameter
+        )
+        self.assertEqual(
+            np.allclose(
+                p2.value,
+                x + value
+            ),
+            True
+        )
+
 
 if __name__ == '__main__':
     unittest.main()
