@@ -1,7 +1,7 @@
 import os
 
 import numpy as np
-from qtpy import  QtWidgets, uic, QtCore
+from qtpy import QtWidgets, uic, QtCore
 
 import mfm.io
 from mfm.structure.structure import Structure

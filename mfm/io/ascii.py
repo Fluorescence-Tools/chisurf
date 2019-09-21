@@ -13,7 +13,7 @@ def save_xy(
         x: np.array,
         y: np.array,
         verbose: bool = mfm.verbose,
-        fmt: str = "%.3f\t%.3f",
+        fmt: str = "%.3f\t%.3f\n",
         header_string: str = None
 ) -> None:
     """
@@ -28,12 +28,35 @@ def save_xy(
     :param fmt:
     """
     if verbose:
-        print("Writing histogram to file: %s" % filename)
+        print("Writing (x,y) data to file: %s" % filename)
     with open(filename, 'w') as fp:
         if header_string is not None:
             fp.write(header_string)
         for p in zip(x, y):
             fp.write(fmt % (p[0], p[1]))
+
+
+def load_xy(
+        filename: str,
+        verbose: bool = mfm.verbose,
+        usecols: Tuple[int, int] = None,
+        skiprows: int = 0,
+        delimiter: str = "\t"
+) -> Tuple[
+    np.array,
+    np.array
+]:
+    if usecols is None:
+        usecols = [0, 1]
+    if verbose:
+        print("Loading file: ", filename)
+    data = np.loadtxt(
+        filename,
+        skiprows=skiprows,
+        usecols=usecols,
+        delimiter=delimiter
+    )
+    return data.T[0], data.T[1]
 
 
 class Csv(object):
