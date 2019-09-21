@@ -7,6 +7,8 @@ import mdtraj as md
 import numba as nb
 import numpy as np
 
+import mfm.fluorescence
+
 
 def convert_chain_id_to_numbers(chain_id):
     import string
@@ -23,95 +25,6 @@ def mdtraj_selection_string(chain_id, res_id, atom_name):
             int(res_id) - 1,
             atom_name
             )
-
-
-@nb.jit
-def distance2fretrate(r, R0, tau0, kappa2=2./3.):
-    """ Converts the DA-distance to a FRET-rate
-
-    :param r: donor-acceptor distance
-    :param R0: Forster-radius
-    :param tau0: lifetime
-    :param kappa2: orientation factor
-    :return:
-    """
-    return 3./2. * kappa2 * 1./tau0*(R0/r)**6.0
-
-
-@nb.jit
-def kappa_distance(d1, d2, a1, a2):
-    """Calculates the orientation factor kappa and the distance between two dipoles defined by the
-    two vectors (d1, d2) and (a1, a2). Returns the distance between the dipoles and the orientation
-    factor
-    """
-
-    # cartesian coordinates of the donor
-    d11 = d1[0]
-    d12 = d1[1]
-    d13 = d1[2]
-
-    d21 = d2[0]
-    d22 = d2[1]
-    d23 = d2[2]
-
-    # distance between the two end points of the donor
-    dD21 = sqrt((d11 - d21)*(d11 - d21) +
-                 (d12 - d22)*(d12 - d22) +
-                 (d13 - d23)*(d13 - d23)
-                )
-
-    # normal vector of the donor-dipole
-    muD1 = (d21 - d11) / dD21
-    muD2 = (d22 - d12) / dD21
-    muD3 = (d23 - d13) / dD21
-
-    # vector to the middle of the donor-dipole
-    dM1 = d11 + dD21 * muD1 / 2.0
-    dM2 = d12 + dD21 * muD2 / 2.0
-    dM3 = d13 + dD21 * muD3 / 2.0
-
-    ### Acceptor ###
-    # cartesian coordinates of the acceptor
-    a11 = a1[0]
-    a12 = a1[1]
-    a13 = a1[2]
-
-    a21 = a2[0]
-    a22 = a2[1]
-    a23 = a2[2]
-
-    # distance between the two end points of the acceptor
-    dA21 = sqrt( (a11 - a21)*(a11 - a21) +
-                 (a12 - a22)*(a12 - a22) +
-                 (a13 - a23)*(a13 - a23)
-    )
-
-    # normal vector of the acceptor-dipole
-    muA1 = (a21 - a11) / dA21
-    muA2 = (a22 - a12) / dA21
-    muA3 = (a23 - a13) / dA21
-
-    # vector to the middle of the acceptor-dipole
-    aM1 = a11 + dA21 * muA1 / 2.0
-    aM2 = a12 + dA21 * muA2 / 2.0
-    aM3 = a13 + dA21 * muA3 / 2.0
-
-    # vector connecting the middle of the dipoles
-    RDA1 = dM1 - aM1
-    RDA2 = dM2 - aM2
-    RDA3 = dM3 - aM3
-
-    # Length of the dipole-dipole vector (distance)
-    dRDA = sqrt(RDA1*RDA1 + RDA2*RDA2 + RDA3*RDA3)
-
-    # Normalized dipole-diple vector
-    nRDA1 = RDA1 / dRDA
-    nRDA2 = RDA2 / dRDA
-    nRDA3 = RDA3 / dRDA
-
-    # Orientation factor kappa2
-    kappa = muA1*muD1 + muA2*muD2 + muA3*muD3 - 3.0 * (muD1*nRDA1+muD2*nRDA2+muD3*nRDA3) * (muA1*nRDA1+muA2*nRDA2+muA3*nRDA3)
-    return dRDA, kappa
 
 
 def calculate_kappa_distance(xyz, aid1, aid2, aia1, aia2):
@@ -132,7 +45,10 @@ def calculate_kappa_distance(xyz, aid1, aid2, aia1, aia2):
 
     for i_frame in range(n_frames):
         try:
-            d, k = kappa_distance(xyz[i_frame, aid1], xyz[i_frame, aid2], xyz[i_frame, aia1], xyz[i_frame, aia2])
+            d, k = mfm.fluorescence.anisotropy.kappa2.kappa_distance(
+                xyz[i_frame, aid1], xyz[i_frame, aid2],
+                xyz[i_frame, aia1], xyz[i_frame, aia2]
+            )
             ks[i_frame] = k
             ds[i_frame] = d
         except:
@@ -377,17 +293,24 @@ class CalculateTransfer(object):
                     a1 = chunk.xyz[:, self.acceptor[0], :]
                     ds = np.sqrt(np.sum((a1 - d1)**2, axis=1))
                 i = np.arange(0, ds.shape[0]) + n
-                t = i * time_step
+                time = i * time_step
                 n += ds.shape[0]
 
                 with open(output_file, 'a') as f_handle:
-                    r = np.array([
-                        i * stride, # frame number
-                        t, # time
-                        ds * 10.0, # RDA-distance in Angstrom
-                        ks,  # kappa
-                        ks ** 2,  # kappa2
-                        distance2fretrate(ds * 10.0, self.forster_radius, self.tau0, ks ** 2)]  # FRET-rate constant
+                    r = np.array(
+                        [
+                            i * stride,  # frame number
+                            time,  # time
+                            ds * 10.0,  # RDA-distance in Angstrom
+                            ks,  # kappa
+                            ks ** 2,  # kappa2
+                            mfm.fluorescence.general.distance_to_fret_rate_constant(
+                                ds * 10.0,
+                                self.forster_radius,
+                                self.tau0,
+                                ks ** 2
+                            )
+                        ]  # FRET-rate constant
                     ).T
                     np.savetxt(f_handle,
                                r,
