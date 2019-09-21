@@ -8,7 +8,7 @@ from typing import List
 import mfm.fitting.parameter
 import mfm.fitting.fit
 import mfm.fitting.sample
-import mfm.fitting.widgets
+import mfm.fitting.fitting_widgets
 
 
 def find_fit_idx_of_model(

@@ -10,19 +10,15 @@ from scipy.stats import norm
 
 
 @nb.jit
-def weighted_choice(
-        weights: np.array,
-        number_of_weighted_choices: int = 1,
-
-):
+def weighted_choice(weights, n=1):
     """
-    a_matrix weighted random number generator. The random number generator generates
+    A weighted random number generator. The random number generator generates
     random numbers between zero and the length of the provided weight-array. The
     elements of the weight-arrays are proportional to the probability that the corresponding
     integer random number is generated.
 
     :param weights: array-like
-    :param number_of_weighted_choices: int
+    :param n: int
         number of random values to be generated
     :return: Returns an array containing the random values
 
@@ -30,44 +26,32 @@ def weighted_choice(
     --------
 
     >>> import numpy as np
-    >>> weighted_choice(np.array([0.2, 0.5, 0.5]), 10)
+    >>> weighted_choice(np.array([0.1, 0.5, 3]), 10)
     array([1, 2, 2, 2, 2, 2, 2, 2, 2, 1], dtype=uint32)
 
     http://eli.thegreenplace.net/2010/01/22/weighted-random-generation-in-python/
     """
     running_total = 0.0
 
-    number_of_weights = weights.shape[0]
+    nWeights = weights.shape[0]
 
-    r = np.empty(
-        number_of_weighted_choices,
-        dtype=np.uint32
-    )
-    totals = np.empty(
-        number_of_weights,
-        dtype=np.float64
-    )
+    r = np.empty(n, dtype=np.uint32)
+    totals = np.empty(nWeights, dtype=np.float64)
 
-    for i in range(number_of_weights):
+    for i in range(nWeights):
         running_total += weights[i]
         totals[i] = running_total
 
-    for j in range(number_of_weighted_choices):
+    for j in range(n):
         rnd = np.random.ranf() * running_total
-        for i in range(number_of_weights):
+        for i in range(nWeights):
             if rnd <= totals[i]:
                 r[j] = i
                 break
     return r
 
 
-def brownian(
-        x0,
-        n: int,
-        dt: float,
-        delta,
-        out=None
-):
+def brownian(x0, n, dt, delta, out=None):
     """\
     Generate an instance of Brownian motion (i.e. the Wiener process):
 
@@ -109,7 +93,7 @@ def brownian(
 
     Returns
     -------
-    a_matrix numpy array of floats with shape `x0.shape + (n,)`.
+    A numpy array of floats with shape `x0.shape + (n,)`.
 
     Note that the initial value `x0` is not included in the returned array.
     """
@@ -135,11 +119,7 @@ def brownian(
 
 
 @nb.jit()
-def mc(
-        e0: float,
-        e1: float,
-        kT: float
-):
+def mc(e0, e1, kT):
     """
     Monte-Carlo acceptance criterion
 
@@ -158,13 +138,7 @@ def mc(
 
 
 @nb.jit(nopython=True)
-def random_numbers(
-        axis,
-        cdf,
-        n: int,
-        norm_cdf:bool = True,
-        dtype=np.float64
-):
+def random_numbers(axis, cdf, n, norm_cdf=True, dtype=np.float64):
     """Generates an array of n random numbers according to an cumulative distribution function (CDF)
 
     :param x: x-axis of cdf

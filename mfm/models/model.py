@@ -6,7 +6,7 @@ from qtpy import QtWidgets, QtGui
 
 import mfm.curve
 import mfm.fitting.parameter
-import mfm.fitting.widgets
+import mfm.fitting.fitting_widgets
 import mfm.plots
 from mfm.curve import Curve
 
@@ -54,8 +54,8 @@ class Model(
         for a in self.aggregated_parameters:
             if a is not self:
                 a.finalize()
-        #for pa in mfm.fitting.parameter.FittingParameter.get_instances():
-        #    pa.finalize()
+        for pa in mfm.fitting.parameter.FittingParameter.get_instances():
+            pa.finalize()
 
     @property
     def weighted_residuals(
@@ -215,7 +215,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
         for parameter in self.parameters:
             if isinstance(
                     parameter,
-                    mfm.fitting.widgets.FittingParameterWidget
+                    mfm.fitting.fitting_widgets.FittingParameterWidget
             ):
                 parameter.update()
 
