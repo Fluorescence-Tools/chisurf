@@ -577,13 +577,13 @@ class Convolve(FittingParameterGroup):
 
         if mode == "per":
             period = 1000. / rep_rate
-            mfm.fluorescence.tcspc.convolve.fconv_per_cs(decay, data, irf_y, start, stop, n_points, period, dt, n_points)
+            mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_periodic(decay, data, irf_y, start, stop, n_points, period, dt, n_points)
             # TODO: in future non linear time-axis (better suited for exponentially decaying data)
             # time = fit.data._x
             # mfm.fluorescence.tcspc.fconv_per_dt(decay, lifetime_spectrum, irf_y, start, stop, n_points, period, time)
         elif mode == "exp":
             t = self.data.x
-            mfm.fluorescence.tcspc.convolve.fconv(
+            mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(
                 decay,
                 data,
                 irf_y,
