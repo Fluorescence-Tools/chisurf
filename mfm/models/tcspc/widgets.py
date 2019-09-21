@@ -1051,7 +1051,12 @@ class FRETrateModelWidget(FRETrateModel, LifetimeModelWidgetBase):
         self.lifetimes = donors
 
         self.layout_parameter.addWidget(donors)
-        self.layout_parameter.addWidget(self.fret_parameters.to_widget())
+        # self.layout_parameter.addWidget(self.fret_parameters.to_widget())
+        self.layout_parameter.addWidget(
+            mfm.fitting.fitting_widgets.make_fitting_parameter_group_widget(
+                self.fret_parameters
+            )
+        )
         self.layout_parameter.addWidget(fret_rates)
 
 
