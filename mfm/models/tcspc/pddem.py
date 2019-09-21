@@ -178,11 +178,11 @@ class PDDEMModel(LifetimeModel):
         if mfm.settings.cs_settings['fret']['bin_lifetime']:
             n_lifetimes = mfm.settings.cs_settings['fret']['lifetime_bins']
             discriminate_amplitude = mfm.settings.cs_settings['fret']['discriminate_amplitude']
-            return mfm.fluorescence.tcspc.bin_lifetime_spectrum(lt, n_lifetimes=n_lifetimes,
-                                                                discriminate=False,
-                                                                discriminator=discriminate_amplitude
-                                                                )
+            return mfm.fluorescence.tcspc.bin_lifetime_spectrum(
+                lt,
+                n_lifetimes=n_lifetimes,
+                discriminate=False,
+                discriminator=discriminate_amplitude
+            )
         else:
             return lt
-
-

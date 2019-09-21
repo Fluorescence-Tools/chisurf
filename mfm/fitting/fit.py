@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Type
 
 import os
 import numpy as np
@@ -27,7 +27,7 @@ class Fit(mfm.base.Base):
 
     def __init__(
             self,
-            model_class: mfm.models.model.Model = object,
+            model_class: Type[mfm.models.model.Model] = type,
             xmin: int = 0,
             xmax: int = 0,
             **kwargs
@@ -359,7 +359,7 @@ class FitGroup(list, Fit):
     @model.setter
     def model(
             self,
-            v: object
+            v: Type[mfm.models.model.Model]
     ):
         self.selected_fit.model = v
 
@@ -472,7 +472,7 @@ class FitGroup(list, Fit):
     def __init__(
             self,
             data: mfm.experiments.data.DataGroup,
-            model_class,
+            model_class: Type[mfm.models.model.Model] = type,
             model_kw: Dict = None,
             **kwargs
     ):

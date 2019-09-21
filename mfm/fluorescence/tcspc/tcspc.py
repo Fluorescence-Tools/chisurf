@@ -60,11 +60,25 @@ def bin_lifetime_spectrum(
     :param discriminator:
     :return: lifetime_spectrum
     """
-    amplitudes, lifetimes = mfm.math.datatools.interleaved_to_two_columns(lifetime_spectrum, sort=False)
-    lt, am = mfm.math.datatools.histogram1D(lifetimes, amplitudes, n_lifetimes)
+    amplitudes, lifetimes = mfm.math.datatools.interleaved_to_two_columns(
+        lifetime_spectrum,
+        sort=False
+    )
+    lt, am = mfm.math.datatools.histogram1D(
+        lifetimes,
+        amplitudes,
+        n_lifetimes
+    )
     if discriminate and discriminator is not None:
-        lt, am = mfm.math.datatools.discriminate(lt, am, discriminator)
-    binned_lifetime_spectrum = mfm.math.datatools.two_column_to_interleaved(am, lt)
+        lt, am = mfm.math.datatools.discriminate(
+            lt,
+            am,
+            discriminator
+        )
+    binned_lifetime_spectrum = mfm.math.datatools.two_column_to_interleaved(
+        am,
+        lt
+    )
     return binned_lifetime_spectrum
 
 
