@@ -119,7 +119,7 @@ class FittingParameter(
             layout: QtWidgets.QLayout = None,
             decimals: int = 4,
             **kwargs
-    ) -> mfm.fitting.fitting_widgets.FittingParameterWidget:
+    ) -> mfm.fitting.widgets.FittingParameterWidget:
         if text is None:
             text = self.name
         update_widget = kwargs.get('update_widget', lambda x: x)
@@ -128,7 +128,7 @@ class FittingParameter(
             'decimals': decimals,
             'layout': layout
         }
-        widget = mfm.fitting.fitting_widgets.FittingParameterWidget(
+        widget = mfm.fitting.widgets.FittingParameterWidget(
             self,
             **kw
         )
@@ -375,7 +375,7 @@ class FittingParameterGroup(
         current_version="19.08.23",
         details="use the mfm.fitting.widget.make_fitting_parameter_group_widget function instead"
     )
-    def to_widget(self, *args, **kwargs) -> mfm.fitting.fitting_widgets.FittingParameterGroupWidget:
-        return mfm.fitting.fitting_widgets.FittingParameterGroupWidget(self, *args, **kwargs)
+    def to_widget(self, *args, **kwargs) -> mfm.fitting.widgets.FittingParameterGroupWidget:
+        return mfm.fitting.widgets.FittingParameterGroupWidget(self, *args, **kwargs)
 
 

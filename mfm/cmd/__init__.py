@@ -50,14 +50,14 @@ def add_fit(
             )
             mfm.fits.append(fit_group)
 
-            fit_control_widget = mfm.fitting.fitting_widgets.FittingControllerWidget(
+            fit_control_widget = mfm.fitting.widgets.FittingControllerWidget(
                 fit_group
             )
             cs.modelLayout.addWidget(fit_control_widget)
             for fit in fit_group:
                 cs.modelLayout.addWidget(fit.model)
 
-            fit_window = mfm.fitting.fitting_widgets.FitSubWindow(
+            fit_window = mfm.fitting.widgets.FitSubWindow(
                 fit_group,
                 control_layout=cs.plotOptionsLayout,
                 fit_widget=fit_control_widget
