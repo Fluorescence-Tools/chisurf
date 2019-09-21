@@ -15,9 +15,9 @@ reg_scale = settings['reg_scale']
 
 
 def maxent(
-        A,
-        b,
-        nu,
+        a_matrix: np.array,
+        b: np.array,
+        nu: float,
         **kwargs
 ):
 
@@ -32,7 +32,7 @@ def maxent(
         return chi2,  grad_chi2 - grad_S
 
     # Initialization.
-    n, m = A.shape
+    n, m = a_matrix.shape
     weights = kwargs.get('w', np.ones(n))
     x0 = kwargs.get('x0', np.zeros(m))
 
@@ -43,19 +43,21 @@ def maxent(
     bounds = [(lower_bound, upper_bound) for i in range(m)]
     l2 = (nu * reg_scale) ** 2
 
-    result = minimize(func, x0,
-                      args=(weights, prior, A, b, l2),
-                      bounds=bounds,
-                      method='L-BFGS-B',
-                      jac=True,
-                      options={
-                          'maxiter': maxiter
-                      })
+    result = minimize(
+        func, x0,
+        args=(weights, prior, a_matrix, b, l2),
+        bounds=bounds,
+        method='L-BFGS-B',
+        jac=True,
+        options={
+            'maxiter': maxiter
+        }
+    )
     x = result.x
     # Summarize results #
-    res = dot(A, x) - b
+    res = dot(a_matrix, x) - b
 
-    grad_chi2 = 2.0 * dot(A.T, res)
+    grad_chi2 = 2.0 * dot(a_matrix.T, res)
     norm_chi2 = sqrt(dot(grad_chi2, grad_chi2))
 
     grad_S = l2 * (1 + log(prior * x))

@@ -271,6 +271,9 @@ class LinePlot(plotbase.Plot):
             plot_irf: bool = False,
             data_x: np.array = None,
             data_y: np.array = None,
+            hide_title: bool = mfm.settings.gui['plot']['hideTitle'],
+            enable_region_selector: bool = mfm.settings.gui['plot']['enable_region_selector'],
+            enable_grid: bool = mfm.settings.gui['plot']['enable_grid'],
             **kwargs
     ):
         super(LinePlot, self).__init__(fit)
@@ -292,7 +295,6 @@ class LinePlot(plotbase.Plot):
 
         area = DockArea()
         self.layout.addWidget(area)
-        hide_title = mfm.settings.gui['plot']['hideTitle']
         d1 = Dock("residuals", size=(300, 80), hideTitle=hide_title)
         d2 = Dock("a.corr.", size=(300, 80), hideTitle=hide_title)
         d3 = Dock("Fit", size=(300, 300), hideTitle=hide_title)
@@ -323,7 +325,7 @@ class LinePlot(plotbase.Plot):
         colors = mfm.settings.gui['plot']['colors']
 
         # Fitting-region selector
-        if mfm.settings.gui['plot']['enable_region_selector']:
+        if enable_region_selector:
             ca = list(mpl_colors.hex2color(colors["region_selector"]))
             co = [ca[0] * 255, ca[1] * 255, ca[2] * 255, colors["region_selector_alpha"]]
             region = pg.LinearRegionItem(brush=co)
@@ -346,7 +348,7 @@ class LinePlot(plotbase.Plot):
             region.sigRegionChangeFinished.connect(update_region)
 
         # Grid
-        if mfm.settings.gui['plot']['enable_grid']:
+        if enable_grid:
             if mfm.settings.gui['plot']['show_data_grid']:
                 data_plot.showGrid(True, True, 0.5)
             if mfm.settings.gui['plot']['show_residual_grid']:
@@ -367,9 +369,27 @@ class LinePlot(plotbase.Plot):
         # Plotted lines
         lw = mfm.settings.gui['plot']['line_width']
         if self.plot_irf:
-            self.irf_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['irf'], width=lw), name='IRF')
-        self.data_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['data'], width=lw), name='Data')
-        self.fit_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['model'], width=lw), name='Model')
+            self.irf_curve = data_plot.plot(
+                x=[0.0], y=[0.0],
+                pen=pg.mkPen(
+                    colors['irf'],
+                    width=lw
+                ), name='IRF'
+            )
+        self.data_curve = data_plot.plot(
+            x=[0.0],
+            y=[0.0],
+            pen=pg.mkPen(
+                colors['data'],
+                width=lw), name='Data'
+        )
+        self.fit_curve = data_plot.plot(
+            x=[0.0],
+            y=[0.0],
+            pen=pg.mkPen(
+                colors['model'], width=lw
+            ), name='Model'
+        )
         p1.setXLink(p3)
         p2.setXLink(p3)
 
