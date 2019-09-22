@@ -12,7 +12,7 @@ import numba as nb
 def vm_rt_to_vv_vh(
         times: np.array,
         vm: np.array,
-        anisotropy_spectrum: np.array,
+        anisotropy_spectrum: np.ndarray,
         g_factor: float = 1.0,
         l1: float = 0.0,
         l2: float = 0.0
@@ -48,7 +48,8 @@ def vm_rt_to_vv_vh(
 
     """
     rt = np.zeros_like(vm)
-    for i in range(0, len(anisotropy_spectrum), 2):
+    n_anisotropies = int(anisotropy_spectrum.shape[0] // 2)
+    for i in range(0, n_anisotropies, 2):
         b = anisotropy_spectrum[i]
         rho = anisotropy_spectrum[i + 1]
         rt += b * np.exp(-times / rho)
