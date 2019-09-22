@@ -560,7 +560,7 @@ rates2lifetimes = rates2lifetimes_new
 @nb.jit
 def calculate_fluorescence_decay(
         lifetime_spectrum: np.array,
-        time_axis: np.array = None,
+        time_axis: np.array,
         normalize: bool = True
 ) -> (np.array, np.array):
     """Converts a interleaved lifetime spectrum into a intensity decay
@@ -581,8 +581,6 @@ def calculate_fluorescence_decay(
     >>> lifetime_spectrum = structure.av_lifetime_spectrum(donor_lifetime_spectrum, donor_description, acceptor_description)
     >>> time_axis, decay = calculate_fluorescence_decay(lifetime_spectrum, time_axis)
     """
-    if time_axis is None:
-        time_axis = np.linspace(0, 50, num=100)
     decay = np.zeros(time_axis.shape)
     am = lifetime_spectrum[0::2]
     if normalize:
