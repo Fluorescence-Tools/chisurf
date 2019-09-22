@@ -41,7 +41,7 @@ class Tests(unittest.TestCase):
         )
         self.assertSetEqual(
             set(model.parameter_names),
-            set(['a', 'c'])
+            {'a', 'c'}
         )
         self.assertEqual(
             np.allclose(
