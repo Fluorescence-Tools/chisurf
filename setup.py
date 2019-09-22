@@ -5,6 +5,8 @@ from Cython.Distutils import build_ext
 from setuptools import setup, find_packages
 from setuptools.extension import Extension
 
+import mfm
+
 args = sys.argv[1:]
 # We want to always use build_ext --inplace
 if args.count("build_ext") > 0 and args.count("--inplace") == 0:
@@ -48,7 +50,7 @@ extensions = [make_extension(extension) for extension in eList]
 
 
 setup(
-    version="18.9.1",
+    version=mfm.__version__,
     description="Fluorescence-Fitting",
     author="Thomas-Otavio Peulen",
     author_email='thomas.otavio.peulen@gmail.com',
