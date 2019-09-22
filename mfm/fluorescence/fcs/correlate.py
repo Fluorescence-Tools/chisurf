@@ -13,10 +13,10 @@ import numpy as np
 def correlate(
         n: int,
         B: int,
-        t: np.array,
-        taus: np.array,
-        corr: np.array,
-        w: np.array
+        t: np.ndarray,
+        taus: np.ndarray,
+        corr: np.ndarray,
+        w: np.ndarray
 ) -> np.array:
     """
 
@@ -223,7 +223,8 @@ def log_corr(
         B: int,
         nc: int,
         fine: bool,
-        number_of_tac_channels: int
+        number_of_tac_channels: int,
+        verbose: bool = False
 ) -> Tuple[
     int, int,
     int, int,
@@ -264,8 +265,16 @@ def log_corr(
         taus[j] = taus[j - 1] + pow(2.0, floor(j / B))
     # correlation
     for n in range(nc):
-        print("cascade %s\tnph1: %s\tnph2: %s" % (n, t[0, 0], t[1, 0]))
-        corr = correlate(n, B, t, taus, corr, w)
+        if verbose:
+            print("cascade %s\tnph1: %s\tnph2: %s" % (n, t[0, 0], t[1, 0]))
+        corr = correlate(
+            n=n,
+            B=B,
+            t=t,
+            taus=taus,
+            corr=corr,
+            w=w
+        )
         coarsen(t, w)
     return np1, np2, dt1, dt2, taus, corr
 
