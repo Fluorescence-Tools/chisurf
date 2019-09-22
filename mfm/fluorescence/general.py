@@ -288,7 +288,7 @@ def calc_decay_matrix(
     """
     if space == 'lin':
         taus = np.linspace(tau_min, tau_max, n_steps)
-    elif space == 'log':
+    else:  #elif space == 'log':
         lmin = np.log10(tau_min)
         lmax = np.log10(tau_max)
         taus = np.logspace(lmin, lmax, n_steps)
@@ -334,7 +334,6 @@ def et2pRDA(
     """
     if t_matrix is None or r_DA is None:
         t_matrix, r_DA = calc_transfer_matrix(ts, 5, 200, 200, **kwargs)
-
     p_rDA = scipy.optimize.nnls(t_matrix.T, et)[0]
     return r_DA, p_rDA
 
@@ -568,6 +567,7 @@ def calculate_fluorescence_decay(
 
     :param lifetime_spectrum: interleaved lifetime spectrum
     :param time_axis: time-axis
+    :param normalize:
     :return:
 
     Examples

@@ -40,5 +40,4 @@ def focus_rectangular(xyz, w0, z0):
     return Iex
 
 
-
 focus_functions = [focus_3dgauss, focus_3dgauss2, focus_rectangular]
