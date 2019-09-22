@@ -313,7 +313,7 @@ class DataCurveGroup(DataGroup):
         return [str(d) + "\n------\n" for d in self]
 
     def __init__(self, *args, **kwargs):
-        DataGroup.__init__(self, *args, **kwargs)
+        super(DataCurveGroup, self).__init__(*args, **kwargs)
 
 
 class ExperimentDataGroup(DataGroup):

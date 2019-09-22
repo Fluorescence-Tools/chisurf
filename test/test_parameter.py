@@ -249,6 +249,15 @@ class Tests(unittest.TestCase):
             True
         )
 
+    def test_abs(self):
+        value = -11
+        p1 = mfm.fitting.parameter.FittingParameter(value=value)
+        p2 = abs(p1)
+        self.assertEqual(
+            abs(p1.value),
+            p2.value
+        )
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -148,33 +148,34 @@
 <div class="section" id="module-mfm.fluorescence.tcspc.convolve">
 <span id="mfm-fluorescence-tcspc-convolve-module"></span><h2>mfm.fluorescence.tcspc.convolve module<a class="headerlink" href="#module-mfm.fluorescence.tcspc.convolve" title="Permalink to this headline">¶</a></h2>
 <dl class="attribute">
-<dt id="mfm.fluorescence.tcspc.convolve.fconv">
-<code class="sig-prename descclassname">mfm.fluorescence.tcspc.convolve.</code><code class="sig-name descname">fconv</code><span class="sig-paren">(</span><em class="sig-param">decay: 'np.array'</em>, <em class="sig-param">lifetime_spectrum: 'np.array'</em>, <em class="sig-param">irf: 'np.array'</em>, <em class="sig-param">stop: 'int'</em>, <em class="sig-param">t: 'np.array'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/convolve.html#fconv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.convolve.fconv" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dt id="mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum">
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.convolve.</code><code class="sig-name descname">convolve_lifetime_spectrum</code><span class="sig-paren">(</span><em class="sig-param">decay: 'np.array'</em>, <em class="sig-param">lifetime_spectrum: 'np.array'</em>, <em class="sig-param">irf: 'np.array'</em>, <em class="sig-param">stop: 'int' = -1</em>, <em class="sig-param">time_axis: 'np.array' = None</em><span class="sig-paren">)</span> &#x2192; 'None'<a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/convolve.html#convolve_lifetime_spectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fills the pre-allocated array with a fluorescence intensity decay convolved (non-periodically)
+with an instrumental response function.</p>
+<p>This function calculates a fluorescence intensity decay that is convolved with an instrumnet response
+function (IRF). The fluorescence intensity decay is specified by its fluorescence lifetime spectrum, i.e.,
+an interleaved array containing fluorescence lifetimes with corresponding amplitudes.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>decay</strong> (<em>&lt;built-in function array&gt;</em>) – numpy-array
-the content of this array is overwritten by the y-values after convolution</p></li>
-<li><p><strong>lifetime_spectrum</strong> (<em>&lt;built-in function array&gt;</em>) – vector of amplitdes and lifetimes in form: amplitude, lifetime</p></li>
-<li><p><strong>irf</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
-<li><p><strong>stop</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
-<li><p><strong>dt</strong> – </p></li>
+<li><p><strong>decay</strong> (<em>&lt;built-in function array&gt;</em>) – numpy-array This array filled with the values of the computed fluorescence intensity decay</p></li>
+<li><p><strong>lifetime_spectrum</strong> (<em>&lt;built-in function array&gt;</em>) – interleaved vector of amplitudes and fluorescence lifetimes</p></li>
+<li><p><strong>irf</strong> (<em>&lt;built-in function array&gt;</em>) – the instrument response function</p></li>
+<li><p><strong>stop</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – convolution stop channel (the index on the time-axis)</p></li>
+<li><p><strong>time_axis</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[&lt;built-in function array&gt;]) – the time-axis of the decay</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="mfm.fluorescence.tcspc.convolve.fconv_per">
-<code class="sig-prename descclassname">mfm.fluorescence.tcspc.convolve.</code><code class="sig-name descname">fconv_per</code><span class="sig-paren">(</span><em class="sig-param">decay: 'np.array'</em>, <em class="sig-param">lifetime_spectrum: 'np.array'</em>, <em class="sig-param">irf: 'np.array'</em>, <em class="sig-param">start: 'int'</em>, <em class="sig-param">stop: 'int'</em>, <em class="sig-param">n_points: 'int'</em>, <em class="sig-param">period: 'float'</em>, <em class="sig-param">dt: 'float'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/convolve.html#fconv_per"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.convolve.fconv_per" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.fluorescence.tcspc.convolve.fconv_per_cs">
-<code class="sig-prename descclassname">mfm.fluorescence.tcspc.convolve.</code><code class="sig-name descname">fconv_per_cs</code><span class="sig-paren">(</span><em class="sig-param">decay: 'np.array'</em>, <em class="sig-param">lifetime_spectrum: 'np.array'</em>, <em class="sig-param">irf: 'np.array'</em>, <em class="sig-param">start: 'int'</em>, <em class="sig-param">stop: 'int'</em>, <em class="sig-param">n_points: 'int'</em>, <em class="sig-param">period: 'float'</em>, <em class="sig-param">dt: 'float'</em>, <em class="sig-param">conv_stop: 'int'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/convolve.html#fconv_per_cs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.convolve.fconv_per_cs" title="Permalink to this definition">¶</a></dt>
+<dt id="mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_periodic">
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.convolve.</code><code class="sig-name descname">convolve_lifetime_spectrum_periodic</code><span class="sig-paren">(</span><em class="sig-param">decay: 'np.array'</em>, <em class="sig-param">lifetime_spectrum: 'np.array'</em>, <em class="sig-param">irf: 'np.array'</em>, <em class="sig-param">start: 'int'</em>, <em class="sig-param">stop: 'int'</em>, <em class="sig-param">n_points: 'int'</em>, <em class="sig-param">period: 'float'</em>, <em class="sig-param">dt: 'float'</em>, <em class="sig-param">conv_stop: 'int'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/convolve.html#convolve_lifetime_spectrum_periodic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_periodic" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -202,14 +203,37 @@ Stopping channel of convolution</p></li>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="mfm.fluorescence.tcspc.convolve.fconv_per">
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.convolve.</code><code class="sig-name descname">fconv_per</code><span class="sig-paren">(</span><em class="sig-param">decay: 'np.array'</em>, <em class="sig-param">lifetime_spectrum: 'np.array'</em>, <em class="sig-param">irf: 'np.array'</em>, <em class="sig-param">start: 'int'</em>, <em class="sig-param">stop: 'int'</em>, <em class="sig-param">n_points: 'int'</em>, <em class="sig-param">period: 'float'</em>, <em class="sig-param">dt: 'float'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/convolve.html#fconv_per"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.convolve.fconv_per" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
 <dt id="mfm.fluorescence.tcspc.convolve.fconv_per_dt">
 <code class="sig-prename descclassname">mfm.fluorescence.tcspc.convolve.</code><code class="sig-name descname">fconv_per_dt</code><span class="sig-paren">(</span><em class="sig-param">decay: 'np.array'</em>, <em class="sig-param">lifetime_spectrum: 'np.array'</em>, <em class="sig-param">irf: 'np.array'</em>, <em class="sig-param">start: 'int'</em>, <em class="sig-param">stop: 'int'</em>, <em class="sig-param">n_points: 'int'</em>, <em class="sig-param">period: 'float'</em>, <em class="sig-param">time: 'np.array'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/convolve.html#fconv_per_dt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.convolve.fconv_per_dt" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.fluorescence.tcspc.convolve.sconv">
-<code class="sig-prename descclassname">mfm.fluorescence.tcspc.convolve.</code><code class="sig-name descname">sconv</code><span class="sig-paren">(</span><em class="sig-param">fit</em>, <em class="sig-param">p</em>, <em class="sig-param">irf</em>, <em class="sig-param">start</em>, <em class="sig-param">stop</em>, <em class="sig-param">dt</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/convolve.html#sconv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.convolve.sconv" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">mfm.fluorescence.tcspc.convolve.</code><code class="sig-name descname">sconv</code><span class="sig-paren">(</span><em class="sig-param">decay: 'np.array'</em>, <em class="sig-param">p</em>, <em class="sig-param">irf: 'np.array'</em>, <em class="sig-param">start: 'int'</em>, <em class="sig-param">stop: 'int'</em>, <em class="sig-param">dt: 'float'</em><span class="sig-paren">)</span> &#x2192; 'None'<a class="reference internal" href="../_modules/mfm/fluorescence/tcspc/convolve.html#sconv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.tcspc.convolve.sconv" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>decay</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
+<li><p><strong>p</strong> – </p></li>
+<li><p><strong>irf</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
+<li><p><strong>start</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>stop</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>dt</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
 
 </div>
 <div class="section" id="module-mfm.fluorescence.tcspc.tcspc">
