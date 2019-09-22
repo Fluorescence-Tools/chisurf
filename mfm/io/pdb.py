@@ -153,6 +153,7 @@ def parse_string_pdb(
 def read(
         filename: str,
         assign_charge: bool = False,
+        verbose: bool = mfm.verbose,
         **kwargs
 ):
     """ Open pdb_file and read each line into pdb (a list of lines)
@@ -178,7 +179,6 @@ def read(
     '), ('element', 'S1'), ('coord', '<f8', (3,)), ('charge', '<f8'), ('radius', '<f8'), ('bfactor', '<f8'), ('mass', '<f8')
     ])
     """
-    verbose = kwargs.get('verbose', mfm.verbose)
     with open(filename, 'r') as f:
         string = f.read()
         if verbose:
