@@ -10,8 +10,16 @@ from mfm.curve import Curve
 from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
 
 
-def simulate_decays(dyes, decay_parameter, simulation_parameter, quenching_parameter, save_decays=True,
-                    directory="./", file_id="", get_qy=False):
+def simulate_decays(
+        dyes,
+        decay_parameter,
+        simulation_parameter,
+        quenching_parameter,
+        save_decays: bool = True,
+        directory: str = "./",
+        file_id: str = "",
+        get_qy: bool = False
+):
     """
     Function for batch procession of decays (use-case see notebooks: quenching_and_fret.ipynb)
 
@@ -52,8 +60,19 @@ def simulate_decays(dyes, decay_parameter, simulation_parameter, quenching_param
         return dye_decays, dye_qy
 
 
-def simulate_fret_decays(donors, acceptors, decay_parameter, simulation_parameter, donor_quenching, acceptor_quenching,
-                         fret_parameter, save=True, directory="./", prefix="", get_number_of_av_points=False):
+def simulate_fret_decays(
+        donors,
+        acceptors,
+        decay_parameter,
+        simulation_parameter,
+        donor_quenching,
+        acceptor_quenching,
+        fret_parameter,
+        save: bool = True,
+        directory: str = "./",
+        prefix: str = "",
+        get_number_of_av_points: bool = False
+):
     """
     Function for batch procession of decays (use-case see notebooks: quenching_and_fret.ipynb)
 
@@ -66,6 +85,7 @@ def simulate_fret_decays(donors, acceptors, decay_parameter, simulation_paramete
     :param fret_parameter:
     :param save:
     :param directory:
+    :param prefix:
     :return:
     """
     donor_keys = donors.keys()
@@ -118,7 +138,9 @@ def simulate_fret_decays(donors, acceptors, decay_parameter, simulation_paramete
         return fret_decays, distances, n_donor, n_acceptor
 
 
-class DecaySimulationParameter(FittingParameterGroup):
+class DecaySimulationParameter(
+    FittingParameterGroup
+):
 
     @property
     def dt_tac(self):
@@ -181,8 +203,16 @@ class DecaySimulationParameter(FittingParameterGroup):
     def tac_range(self, v):
         self._tac_range = v
 
-    def __init__(self, dt_mt=100.0, dt_tac=0.032, n_tac=4096, n_curves=4096, n_photons=10e6,
-                 decay_mode='photon', **kwargs):
+    def __init__(
+            self,
+            dt_mt: float = 100.0,
+            dt_tac: float = 0.032,
+            n_tac: int = 4096,
+            n_curves: int = 4096,
+            n_photons: float = 10e6,
+            decay_mode: str = 'photon',
+            **kwargs
+    ):
         FittingParameterGroup.__init__(self, **kwargs)
         self._dt_mt = FittingParameter(value=dt_mt, name='dtMT[ns]')
         self._dt_tac = FittingParameter(value=dt_tac, name='dtTAC[ns]')
@@ -196,7 +226,12 @@ class DecaySimulationParameter(FittingParameterGroup):
 
 class DyeDecay(Curve):
 
-    def __init__(self, decay_parameter, diffusion_simulation, **kwargs):
+    def __init__(
+            self,
+            decay_parameter,
+            diffusion_simulation,
+            **kwargs
+    ):
         self.fit = kwargs.get('fit', None)
         super(DyeDecay, self).__init__(**kwargs)
 
@@ -238,8 +273,15 @@ class DyeDecay(Curve):
     def decays(self):
         return self._decays
 
-    def save_photons(self, filename, mode='photons', group_title='dye_diffusion',
-                     hist_bins=4096, hist_range=(0, 50), **kwargs):
+    def save_photons(
+            self,
+            filename,
+            mode: str = 'photons',
+            group_title: str = 'dye_diffusion',
+            hist_bins: int = 4096,
+            hist_range=(0, 50),
+            **kwargs
+    ):
         verbose = kwargs.get('verbose', self.verbose)
         if mode == 'photons':
             dtTAC = self.diffusion.simulation_parameter.t_step
@@ -266,7 +308,10 @@ class DyeDecay(Curve):
                 header_string="time\tcount"
             )
 
-    def get_photons(self, **kwargs):
+    def get_photons(
+            self,
+            **kwargs
+    ):
         n_photons = kwargs.get('n_photons', self.decay_parameter.n_photons)
         verbose = kwargs.get('verbose', mfm.verbose)
         tau0 = kwargs.get('tau0', self.diffusion.dye.tauD0)
@@ -279,11 +324,13 @@ class DyeDecay(Curve):
             print("----------------")
             print("Number of excitation photons: %s" % n_photons)
 
-        dts, phs = mfm.fluorescence.simulation.photon.simulate_photon_trace_rate(n_ph=n_photons,
-                                                                                 quench=kq_array,
-                                                                                 t_step=t_step,
-                                                                                 tau0=tau0,
-                                                                                 verbose=verbose)
+        dts, phs = mfm.fluorescence.simulation.photon.simulate_photon_trace_rate(
+            n_ph=n_photons,
+            quench=kq_array,
+            t_step=t_step,
+            tau0=tau0,
+            verbose=verbose
+        )
 
         n_photons = phs.shape[0]
         n_f = phs.sum()
@@ -293,7 +340,10 @@ class DyeDecay(Curve):
             print("Quantum yield: %.2f" % (float(n_f) / n_photons))
         return dts.take(np.where(phs > 0)[0])
 
-    def get_decay(self, **kwargs):
+    def get_decay(
+            self,
+            **kwargs
+    ):
         verbose = kwargs.get('verbose', self.verbose)
         n_curves = kwargs.get('n_curves', self.decay_parameter.n_curves)
         n_tac = kwargs.get('n_tac', self.decay_parameter.n_tac)
@@ -315,7 +365,10 @@ class DyeDecay(Curve):
                                                                  verbose=verbose)
         return decays
 
-    def get_histogram(self, **kwargs):
+    def get_histogram(
+            self,
+            **kwargs
+    ):
         normalize = kwargs.get('normalize', False)
         normalization_type = kwargs.get('normalization_type', 'area')
         verbose = kwargs.get('verbose', self.verbose)
@@ -363,11 +416,23 @@ class DyeDecay(Curve):
             self._decays = self.get_decay()
 
 
-class FRETDecay(DyeDecay):
+class FRETDecay(
+    DyeDecay
+):
 
-    def __init__(self, donor_diffusion, acceptor_diffusion,
-                 fret_parameter, decay_parameter, **kwargs):
-        DyeDecay.__init__(self, decay_parameter, donor_diffusion, **kwargs)
+    def __init__(
+            self,
+            donor_diffusion,
+            acceptor_diffusion,
+            fret_parameter,
+            decay_parameter,
+            **kwargs
+    ):
+        super(FRETDecay, self).__init__(
+            decay_parameter,
+            donor_diffusion,
+            **kwargs
+        )
         self.verbose = kwargs.get('verbose', mfm.verbose)
 
         self.donor_diffusion = donor_diffusion

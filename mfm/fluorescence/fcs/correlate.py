@@ -28,7 +28,7 @@ def correlate(
     :param w:
     :return:
     """
-    for b in range(B):  # this could be prange (in principle)
+    for b in range(B):
         j = (n * B + b)
         shift = taus[j] // (pow(2.0, float(j / B)))
         # STARTING CHANNEL
@@ -63,12 +63,12 @@ def normalize(
 ) -> float:
     """
 
-    :param np1:
-    :param np2:
-    :param dt1:
-    :param dt2:
-    :param tau:
-    :param corr:
+    :param np1: number of photons in channel 1
+    :param np2: number of photons in channel 2
+    :param dt1: the total measurement time of the data contained in channel 1
+    :param dt2: the total measurement time of the data contained in channel 2
+    :param tau: the array containing the correlation times
+    :param corr: the array containing the correlation values
     :param B:
     :return:
     """
@@ -88,18 +88,18 @@ def get_weights(
         rout: np.array,
         tac: np.array,
         wt: np.array,
-        nPh: int
+        number_of_photons: int
 ):
     """
 
     :param rout:
     :param tac:
     :param wt:
-    :param nPh:
+    :param number_of_photons:
     :return:
     """
-    w = np.zeros(nPh, dtype=np.float32)
-    for i in range(nPh):
+    w = np.zeros(number_of_photons, dtype=np.float32)
+    for i in range(number_of_photons):
         w[i] = wt[rout[i], tac[i]]
     return w
 

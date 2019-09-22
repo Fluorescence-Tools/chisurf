@@ -3,7 +3,12 @@ from __future__ import annotations
 import numpy as np
 
 
-def phasor_giw(f, n, omega, times):
+def phasor_giw(
+        f,
+        n,
+        omega,
+        times
+):
     """Phasor plot gi(w)
     The phasor approach to fluorescence lifetime page 236
 
@@ -18,7 +23,12 @@ def phasor_giw(f, n, omega, times):
     return np.trapz(y, x) / np.trapz(f, x)
 
 
-def phasor_siw(f, n, omega, times):
+def phasor_siw(
+        f,
+        n,
+        omega,
+        times
+):
     """Phasor plot gi(w)
     The phasor approach to fluorescence lifetime page 236
 
