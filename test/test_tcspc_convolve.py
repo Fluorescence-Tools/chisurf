@@ -8,13 +8,13 @@ utils.set_search_paths(TOPDIR)
 
 import mfm.fluorescence.tcspc.convolve
 import numpy as np
+import scipy.stats
 
 
 class Tests(unittest.TestCase):
 
     def test_convolve_lifetime_spectrum(self):
         # normal convolution (not periodic)
-        import scipy.stats
         time_axis = np.linspace(0, 50, 64)
         irf_position = 5.0
         irf_width = 1.0
@@ -86,6 +86,44 @@ class Tests(unittest.TestCase):
              0.03174486, 0.02963222, 0.02768248, 0.02587883, 0.0242069,
              0.02265429, 0.02121027, 0.01986547, 0.01861165, 0.01744149,
              0.01634852, 0.01532691, 0.01437142, 0.01324633]
+        )
+        self.assertEqual(
+            np.allclose(decay, reference),
+            True
+        )
+
+    def test_convolve_decay(self):
+        n_points = 64
+        time_axis = np.linspace(0, 16, n_points)
+        irf_position = 5.0
+        irf_width = 0.5
+        dt = time_axis[1] - time_axis[0]
+        irf = scipy.stats.norm.pdf(time_axis, loc=irf_position, scale=irf_width)
+        decay_u = np.exp(- time_axis / 4.1)
+        decay = mfm.fluorescence.tcspc.convolve.convolve_decay(
+            decay_u,
+            irf=irf,
+            start=0,
+            stop=n_points,
+            dt=dt
+        )
+        reference = np.array(
+            [0.00000000e+00, 2.77819439e-21, 3.06332831e-19, 2.59556233e-17,
+             1.70152833e-15, 8.63429983e-14, 3.39340281e-12, 1.03364648e-10,
+             2.44248333e-09, 4.48248284e-08, 6.39847217e-07, 7.11741328e-06,
+             6.18433221e-05, 4.21016564e-04, 2.25423039e-03, 9.53868022e-03,
+             3.20952829e-02, 8.65558481e-02, 1.89037122e-01, 3.38963884e-01,
+             5.08254614e-01, 6.52897353e-01, 7.40765250e-01, 7.68647246e-01,
+             7.54802676e-01, 7.20771357e-01, 6.80570553e-01, 6.40352746e-01,
+             6.02000410e-01, 5.65856083e-01, 5.31869941e-01, 4.99923824e-01,
+             4.69896413e-01, 4.41672562e-01, 4.15143947e-01, 3.90208747e-01,
+             3.66771254e-01, 3.44741510e-01, 3.24034961e-01, 3.04572129e-01,
+             2.86278313e-01, 2.69083297e-01, 2.52921081e-01, 2.37729633e-01,
+             2.23450643e-01, 2.10029307e-01, 1.97414110e-01, 1.85556631e-01,
+             1.74411360e-01, 1.63935519e-01, 1.54088898e-01, 1.44833704e-01,
+             1.36134415e-01, 1.27957639e-01, 1.20271993e-01, 1.13047978e-01,
+             1.06257866e-01, 9.98755948e-02, 9.38766684e-02, 8.82380615e-02,
+             8.29381318e-02, 7.79565370e-02, 7.32741566e-02, 6.88730186e-02]
         )
         self.assertEqual(
             np.allclose(decay, reference),
