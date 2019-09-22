@@ -106,7 +106,13 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
         ReactionSystem.__init__(self, **kwargs)
         parameter = kwargs.get('parameter', None)
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/models/reaction.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "reaction.ui"
+            ),
+            self
+        )
         self.actionPlot.triggered.connect(self.onPlot)
         self.actionIntegrate.triggered.connect(self.calc)
         self.actionLoad_reaction.triggered.connect(self.onLoadReaction)

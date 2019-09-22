@@ -1,4 +1,4 @@
-from .MolView import *
+from mfm.plots.molview import *
 from .av_plot import AvPlot
 from .distribution import DistributionPlot
 from .fitinfo import *
