@@ -694,13 +694,23 @@
 
         <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;per&quot;</span><span class="p">:</span>
             <span class="n">period</span> <span class="o">=</span> <span class="mf">1000.</span> <span class="o">/</span> <span class="n">rep_rate</span>
-            <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">fconv_per_cs</span><span class="p">(</span><span class="n">decay</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">irf_y</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">n_points</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">n_points</span><span class="p">)</span>
+            <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">convolve_lifetime_spectrum_periodic</span><span class="p">(</span>
+                <span class="n">decay</span><span class="p">,</span>
+                <span class="n">data</span><span class="p">,</span>
+                <span class="n">irf_y</span><span class="p">,</span>
+                <span class="n">start</span><span class="p">,</span>
+                <span class="n">stop</span><span class="p">,</span>
+                <span class="n">n_points</span><span class="p">,</span>
+                <span class="n">period</span><span class="p">,</span>
+                <span class="n">dt</span><span class="p">,</span>
+                <span class="n">n_points</span>
+            <span class="p">)</span>
             <span class="c1"># TODO: in future non linear time-axis (better suited for exponentially decaying data)</span>
             <span class="c1"># time = fit.data._x</span>
             <span class="c1"># mfm.fluorescence.tcspc.fconv_per_dt(decay, lifetime_spectrum, irf_y, start, stop, n_points, period, time)</span>
         <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;exp&quot;</span><span class="p">:</span>
             <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">x</span>
-            <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">fconv</span><span class="p">(</span>
+            <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">convolve</span><span class="o">.</span><span class="n">convolve_lifetime_spectrum</span><span class="p">(</span>
                 <span class="n">decay</span><span class="p">,</span>
                 <span class="n">data</span><span class="p">,</span>
                 <span class="n">irf_y</span><span class="p">,</span>

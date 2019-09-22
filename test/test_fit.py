@@ -11,7 +11,7 @@ import mfm
 
 class Tests(unittest.TestCase):
 
-    def test_fit_init(self):
+    def test_fit_parse(self):
         x = np.linspace(0, 32, 1024)
         c_value = 3.1
         a_value = 1.2
@@ -59,3 +59,23 @@ class Tests(unittest.TestCase):
             ),
             True
         )
+        fit.fit_range = 0, len(model.y)
+        self.assertAlmostEqual(
+            fit.chi2,
+            8857984.180815242
+        )
+
+        fit.run()
+        self.assertAlmostEqual(
+            fit.chi2,
+            0.0
+        )
+        self.assertAlmostEqual(
+            model.parameter_dict['a'].value,
+            a_value
+        )
+        self.assertAlmostEqual(
+            model.parameter_dict['c'].value,
+            c_value
+        )
+

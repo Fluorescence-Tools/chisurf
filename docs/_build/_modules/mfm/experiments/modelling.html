@@ -115,7 +115,10 @@
     <div class="col-md-9 content">
       
   <h1>Source code for mfm.experiments.modelling</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span> <span class="n">QtWidgets</span>
 
@@ -125,9 +128,21 @@
 <span class="kn">from</span> <span class="nn">mfm.experiments.reader</span> <span class="k">import</span> <span class="n">ExperimentReader</span>
 
 
-<div class="viewcode-block" id="LoadStructure"><a class="viewcode-back" href="../../../api/mfm.experiments.html#mfm.experiments.modelling.LoadStructure">[docs]</a><span class="k">class</span> <span class="nc">LoadStructure</span><span class="p">(</span><span class="n">ExperimentReader</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+<div class="viewcode-block" id="LoadStructure"><a class="viewcode-back" href="../../../api/mfm.experiments.html#mfm.experiments.modelling.LoadStructure">[docs]</a><span class="k">class</span> <span class="nc">LoadStructure</span><span class="p">(</span>
+    <span class="n">ExperimentReader</span><span class="p">,</span>
+    <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span>
+<span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param args:</span>
+<span class="sd">        :param kwargs:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">LoadStructure</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="n">layout</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -153,7 +168,13 @@
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span></div></div>
 
 
-<div class="viewcode-block" id="LoadStructureFolder"><a class="viewcode-back" href="../../../api/mfm.experiments.html#mfm.experiments.modelling.LoadStructureFolder">[docs]</a><span class="k">class</span> <span class="nc">LoadStructureFolder</span><span class="p">(</span><span class="n">ExperimentReader</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+<div class="viewcode-block" id="LoadStructureFolder"><a class="viewcode-back" href="../../../api/mfm.experiments.html#mfm.experiments.modelling.LoadStructureFolder">[docs]</a><span class="k">class</span> <span class="nc">LoadStructureFolder</span><span class="p">(</span>
+    <span class="n">ExperimentReader</span><span class="p">,</span>
+    <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Trajectory&#39;</span>
 

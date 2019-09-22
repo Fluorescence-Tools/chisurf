@@ -322,6 +322,16 @@ True.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="mfm.io.ascii.load_xy">
+<code class="sig-prename descclassname">mfm.io.ascii.</code><code class="sig-name descname">load_xy</code><span class="sig-paren">(</span><em class="sig-param">filename: 'str'</em>, <em class="sig-param">verbose: 'bool' = False</em>, <em class="sig-param">usecols: 'Tuple[int</em>, <em class="sig-param">int]' = None</em>, <em class="sig-param">skiprows: 'int' = 0</em>, <em class="sig-param">delimiter: 'str' = 't'</em><span class="sig-paren">)</span> &#x2192; 'Tuple[np.array, np.array]'<a class="reference internal" href="../_modules/mfm/io/ascii.html#load_xy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.ascii.load_xy" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[&lt;built-in function array&gt;, &lt;built-in function array&gt;]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="mfm.io.ascii.save_xy">
 <code class="sig-prename descclassname">mfm.io.ascii.</code><code class="sig-name descname">save_xy</code><span class="sig-paren">(</span><em class="sig-param">filename: 'str'</em>, <em class="sig-param">x: 'np.array'</em>, <em class="sig-param">y: 'np.array'</em>, <em class="sig-param">verbose: 'bool' = False</em>, <em class="sig-param">fmt: 'str' = '%.3ft%.3f'</em>, <em class="sig-param">header_string: 'str' = None</em><span class="sig-paren">)</span> &#x2192; 'None'<a class="reference internal" href="../_modules/mfm/io/ascii.html#save_xy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.ascii.save_xy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Saves data x, y to file in format (csv). x and y should have the same length.</p>
@@ -394,8 +404,23 @@ Target filename</p></li>
 
 <dl class="function">
 <dt id="mfm.io.pdb.fetch_pdb_string">
-<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">fetch_pdb_string</code><span class="sig-paren">(</span><em class="sig-param">pdb_id: 'str'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/pdb.html#fetch_pdb_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.fetch_pdb_string" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">fetch_pdb_string</code><span class="sig-paren">(</span><em class="sig-param">pdb_id: 'str'</em><span class="sig-paren">)</span> &#x2192; 'str'<a class="reference internal" href="../_modules/mfm/io/pdb.html#fetch_pdb_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.fetch_pdb_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Downloads from the RCSB a PDB file with the specified PDB-ID</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pdb_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The PDB-ID that is downloaded</p></li>
+<li><p><strong>get_binary</strong> – If get_binary is True a binary string is returned.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="function">
 <dt id="mfm.io.pdb.get_atom_index">
@@ -420,8 +445,21 @@ Target filename</p></li>
 
 <dl class="function">
 <dt id="mfm.io.pdb.parse_string_pdb">
-<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">parse_string_pdb</code><span class="sig-paren">(</span><em class="sig-param">string: 'str'</em>, <em class="sig-param">assign_charge: 'bool' = False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/pdb.html#parse_string_pdb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.parse_string_pdb" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">parse_string_pdb</code><span class="sig-paren">(</span><em class="sig-param">string: 'str'</em>, <em class="sig-param">assign_charge: 'bool' = False</em>, <em class="sig-param">verbose: 'bool' = True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/io/pdb.html#parse_string_pdb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.parse_string_pdb" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>string</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>assign_charge</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
+<li><p><strong>kwargs</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="function">
 <dt id="mfm.io.pdb.read">

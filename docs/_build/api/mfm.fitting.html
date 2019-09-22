@@ -169,7 +169,7 @@
 <span id="mfm-fitting-fit-module"></span><h2>mfm.fitting.fit module<a class="headerlink" href="#module-mfm.fitting.fit" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mfm.fitting.fit.Fit">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.fitting.fit.</code><code class="sig-name descname">Fit</code><span class="sig-paren">(</span><em class="sig-param">model_class=&lt;class 'object'&gt;</em>, <em class="sig-param">xmin=0</em>, <em class="sig-param">xmax=0</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.fitting.fit.</code><code class="sig-name descname">Fit</code><span class="sig-paren">(</span><em class="sig-param">model_class=&lt;class 'type'&gt;</em>, <em class="sig-param">xmin=0</em>, <em class="sig-param">xmax=0</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.base.Base</span></code></p>
 <dl class="method">
 <dt id="mfm.fitting.fit.Fit.chi2">
@@ -365,7 +365,7 @@ parameters.</p>
 
 <dl class="class">
 <dt id="mfm.fitting.fit.FitGroup">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.fitting.fit.</code><code class="sig-name descname">FitGroup</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">model_class</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FitGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FitGroup" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.fitting.fit.</code><code class="sig-name descname">FitGroup</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">model_class=&lt;class 'type'&gt;</em>, <em class="sig-param">model_kw=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#FitGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.FitGroup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>, <a class="reference internal" href="#mfm.fitting.fit.Fit" title="mfm.fitting.fit.Fit"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.fitting.fit.Fit</span></code></a></p>
 <dl class="method">
 <dt id="mfm.fitting.fit.FitGroup.chi2r">
@@ -419,15 +419,12 @@ parameters.</p>
 <dd><p>Optimizes the free parameters</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>local_first</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]) – if True the local parameters of a global-fit in a fit group are optimized first</p></li>
-<li><p><strong>kwargs</strong> – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dd class="field-odd"><p><strong>local_first</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]) – if True the local parameters of a global-fit in a</p>
 </dd>
 </dl>
+<p>fit group are optimized first
+:param kwargs:
+:return:</p>
 </dd></dl>
 
 <dl class="method">
