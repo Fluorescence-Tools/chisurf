@@ -100,7 +100,7 @@ class Csv(object):
     def __init__(
             self,
             *args,
-            filename: str = '',
+            filename: str = None,
             colspecs: List[int] = None,
             use_header: bool = False,
             x_on: bool = True,
@@ -151,11 +151,6 @@ class Csv(object):
         self.skiprows = skiprows
         self.mode = file_type
 
-        self._x = kwargs.get('x', None)
-        self._y = kwargs.get('y', None)
-        self._ex = kwargs.get('ex', None)
-        self._ey = kwargs.get('ey', None)
-
         self.verbose = verbose
 
         if colspecs is None:
@@ -163,9 +158,15 @@ class Csv(object):
         self.colspecs = colspecs
 
         self._data = kwargs.get('data', None)
+        if isinstance(filename, str):
+            self.load(
+                filename
+            )
 
     @property
-    def filename(self) -> str:
+    def filename(
+            self
+    ) -> str:
         """
         The currently open filename (after setting this parameter the file is opened)
         """
@@ -187,8 +188,6 @@ class Csv(object):
         :param verbose: The method is verbose if verbose is set to True of the verbose attribute of the instance is
         True.
         """
-        if verbose is None:
-            verbose = self.verbose
         if use_header is None:
             use_header = self.use_header
         if skiprows is None:

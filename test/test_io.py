@@ -25,12 +25,14 @@ class Tests(unittest.TestCase):
             filename=file.name,
             x=x,
             y=y,
-            fmt="%f\t%f\n"
+            fmt="%f\t%f\n",
+            header_string="x\ty\n"
         )
         x2, y2 = mfm.io.ascii.load_xy(
             filename=file.name,
             usecols=(0, 1),
-            delimiter="\t"
+            delimiter="\t",
+            skiprows=1
         )
         self.assertEqual(
             np.allclose(
@@ -43,6 +45,67 @@ class Tests(unittest.TestCase):
                 y, y2
             ),
             True
+        )
+
+    def test_csv(self):
+        x = np.linspace(
+            start=0,
+            stop=2 * np.pi,
+            num=32
+        )
+        y = np.sin(x)
+        file = tempfile.NamedTemporaryFile(suffix='.txt')
+        mfm.io.ascii.save_xy(
+            filename=file.name,
+            x=x,
+            y=y,
+            fmt="%f\t%f\n",
+            header_string="x\ty\n"
+        )
+
+        csv = mfm.io.ascii.Csv(
+            filename=file.name,
+            skiprows=1
+        )
+        self.assertEqual(
+            np.allclose(
+                y,
+                csv.data[1]
+            ),
+            True
+        )
+        self.assertEqual(
+            np.allclose(
+                x,
+                csv.data[0]
+            ),
+            True
+        )
+        self.assertEqual(
+            csv.filename,
+            file.name
+        )
+
+        x = np.linspace(
+            start=0,
+            stop=2 * np.pi,
+            num=32
+        )
+        y = np.cos(x)
+        file2 = tempfile.NamedTemporaryFile(suffix='.txt')
+        mfm.io.ascii.save_xy(
+            filename=file2.name,
+            x=x,
+            y=y,
+            fmt="%f\t%f\n",
+            header_string="x\ty\n"
+        )
+        csv.load(
+            filename=file2.name
+        )
+        self.assertEqual(
+            csv.filename,
+            file2.name
         )
 
     def test_fetch_pdb(self):
