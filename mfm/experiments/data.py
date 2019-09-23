@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Tuple
 
 import os.path
-from typing import List
+from typing import Sequence, List
 import numpy as np
 
 import mfm
@@ -22,9 +22,9 @@ class ExperimentalData(mfm.base.Data):
 
     def __init__(
             self,
-            *args,
             setup=None,
             experiment=None,
+            *args,
             **kwargs
     ):
         """
@@ -34,7 +34,10 @@ class ExperimentalData(mfm.base.Data):
         :param experiment:
         :param kwargs:
         """
-        super(ExperimentalData, self).__init__(*args, **kwargs)
+        super(ExperimentalData, self).__init__(
+            *args,
+            **kwargs
+        )
         self.setup = setup
         self._experiment = experiment
 
@@ -57,11 +60,21 @@ class ExperimentalData(mfm.base.Data):
 
     def to_dict(self):
         d = super(ExperimentalData, self).to_dict()
-        d['setup'] = self.setup.to_dict()
+        try:
+            d['setup'] = self.setup.to_dict()
+        except AttributeError:
+            d['setup'] = None
+        try:
+            d['experiment'] = self.experiment.to_dict()
+        except AttributeError:
+            d['experiment'] = None
         return d
 
 
-class DataCurve(Curve, ExperimentalData):
+class DataCurve(
+    Curve,
+    ExperimentalData
+):
 
     def __init__(
             self,
@@ -74,9 +87,9 @@ class DataCurve(Curve, ExperimentalData):
             **kwargs
     ):
         super(DataCurve, self).__init__(
-            *args,
             x=x,
             y=y,
+            *args,
             **kwargs
         )
         if os.path.isfile(filename):
@@ -134,8 +147,6 @@ class DataCurve(Curve, ExperimentalData):
         d.update(ExperimentalData.to_dict(self))
         d['ex'] = list(self.ex)
         d['ey'] = list(self.ey)
-        d['weights'] = list(self.weights)
-        d['experiment'] = self.experiment.to_dict()
         return d
 
     def from_dict(
@@ -268,7 +279,7 @@ class DataGroup(list, Base):
 
     def __init__(
             self,
-            seq: List,
+            seq: Sequence,
             *args,
             **kwargs
     ):

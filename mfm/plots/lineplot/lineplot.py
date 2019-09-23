@@ -432,16 +432,20 @@ class LinePlot(plotbase.Plot):
             y_max = np.log10(y_max)
         self.text.setPos(ub_max * .7, y_max * .9)
         #self.legend.setPos(ub_max * .7, y_max * .3)
-        self.text.setHtml('<div style="name-align: center">'
-                          '     <span style="color: #FF0; font-size: 10pt;">'
-                          '         Fit-range: %s, %s <br />'
-                          '         &Chi;<sup>2</sup>=%.4f <br />'
-                          '         DW=%.4f'
-                          '     </span>'
-                          '</div>' % (fit.xmin, fit.xmax,
-                                      fit.chi2r,
-                                      mfm.math.statistics.durbin_watson(fit.weighted_residuals[0]))
-                          )
+        self.text.setHtml(
+            '<div style="name-align: center">'
+            '     <span style="color: #FF0; font-size: 10pt;">'
+            '         Fit-range: %s, %s <br />'
+            '         &Chi;<sup>2</sup>=%.4f <br />'
+            '         DW=%.4f'
+            '     </span>'
+            '</div>' % (
+                fit.xmin, fit.xmax,
+                fit.chi2r,
+                mfm.math.statistics.durbin_watson(
+                    fit.weighted_residuals)
+            )
+        )
 
         # Reference-function
         if use_reference:
@@ -509,20 +513,19 @@ class LinePlot(plotbase.Plot):
         colors = mfm.settings.gui['plot']['colors']
         lw = mfm.settings.gui['plot']['line_width']
 
-        for i, w in enumerate(wres_y):
-            self.residuals_plot.plot(
-                x=model_x,
-                y=w,
-                pen=pg.mkPen(colors['residuals'], width=lw),
-                name='residues'
-            )
-            ac_y = mfm.math.signal.autocorr(w)
-            self.auto_corr_plot.plot(
-                x=model_x[1:],
-                y=ac_y[1:],
-                pen=pg.mkPen(colors['auto_corr'], width=lw),
-                name='residues'
-            )
+        self.residuals_plot.plot(
+            x=model_x,
+            y=wres_y,
+            pen=pg.mkPen(colors['residuals'], width=lw),
+            name='residues'
+        )
+        ac_y = mfm.math.signal.autocorr(wres_y)
+        self.auto_corr_plot.plot(
+            x=model_x[1:],
+            y=ac_y[1:],
+            pen=pg.mkPen(colors['auto_corr'], width=lw),
+            name='residues'
+        )
         self.data_x = data_x
         self.data_y = data_y
 
