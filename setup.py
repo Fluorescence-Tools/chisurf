@@ -1,11 +1,24 @@
 #!/usr/bin/python
 import sys
 import numpy
+import yaml
+import os
+
 from Cython.Distutils import build_ext
 from setuptools import setup, find_packages
 from setuptools.extension import Extension
 
-import mfm
+
+settings = {
+    'version': 'NA'
+}
+settings_file = os.path.join(
+    './mfm/settings/',
+    'chisurf.yaml'
+)
+with open(settings_file) as fp:
+    settings.update(yaml.safe_load(fp))
+
 
 args = sys.argv[1:]
 # We want to always use build_ext --inplace
@@ -50,7 +63,7 @@ extensions = [make_extension(extension) for extension in eList]
 
 
 setup(
-    version=mfm.__version__,
+    version=settings['version'],
     description="Fluorescence-Fitting",
     author="Thomas-Otavio Peulen",
     author_email='thomas.otavio.peulen@gmail.com',
