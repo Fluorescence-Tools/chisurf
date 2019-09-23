@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Tuple
 
 import sys
 import os
@@ -102,27 +103,50 @@ class FRETLineGenerator(object):
 
     """
 
-    def __init__(self, **kwargs):
-        self.verbose = kwargs.get('verbose', mfm.verbose)
-        self._polynomial_degree = kwargs.get('polynomial_degree', 4)
-        self.quantum_yield_donor = kwargs.get('quantum_yield_donor', 0.8)
-        self.quantum_yield_acceptor = kwargs.get('quantum_yield_acceptor', 0.32)
+    def __init__(
+            self,
+            polynomial_degree: int = 4,
+            verbose: bool = mfm.verbose,
+            quantum_yield_donor: float = 0.8,
+            quantum_yield_acceptor: float = 0.32,
+            n_points: int = 500,
+            parameter_name: str = None,
+            **kwargs
+    ):
+        self.verbose = verbose
+        self._polynomial_degree = polynomial_degree
+        self.quantum_yield_donor = quantum_yield_donor
+        self.quantum_yield_acceptor = quantum_yield_acceptor
 
         self._range = kwargs.get('range', [0.1, 100.0])
-        self._n_points = kwargs.get('n_points', 500)
-        self._parameter_name = kwargs.get('parameter_name', None)
+        self._n_points = n_points
+        self._parameter_name = parameter_name
         self._t_max = kwargs.get('t_max', 1000.0)
         self._dt = kwargs.get('dt', 0.1)
 
-        self.fit = mfm.Fit()
-        self._data_points = mfm.experiments.data.DataCurve(setup=None)
-        self._data_points.x = np.linspace(0.0, self._t_max, self._n_points)
-        self._data_points.y = np.zeros_like(self._data_points.x)
+        self.fit = mfm.fitting.fit.Fit()
+        self._data_points = mfm.experiments.data.DataCurve(
+            setup=None,
+            x=np.linspace(0.0, self._t_max, self._n_points),
+            y=np.zeros(self._n_points)
+        )
         self.fit.data = self._data_points
 
-        self._model = kwargs.get('model', mfm.models.tcspc.lifetime.LifetimeModel(fit=self.fit, dt=self._dt, do_convolution=False))
-        self.transfer_efficiencies = np.zeros(self.n_points)
-        self.fluorescence_averaged_lifetimes = np.zeros(self.n_points)
+        self._model = kwargs.get(
+            'model',
+            mfm.models.tcspc.lifetime.LifetimeModel(
+                fit=self.fit,
+                dt=self._dt,
+                do_convolution=False
+            )
+        )
+        self.fret_efficiencies = np.zeros(
+            self.n_points,
+            dtype=np.float
+        )
+        self.fluorescence_averaged_lifetimes = np.zeros_like(
+            self.fret_efficiencies
+        )
 
     @property
     def conversion_function(self):
@@ -132,60 +156,80 @@ class FRETLineGenerator(object):
         return self.fluorescence_averaged_lifetimes, self.fret_species_averaged_lifetimes
 
     @property
-    def parameter_name(self):
+    def parameter_name(
+            self
+    ) -> str:
         """
         The name of the parameter which is varies
         """
         return self._parameter_name
 
     @parameter_name.setter
-    def parameter_name(self, v):
+    def parameter_name(
+            self,
+            v: str
+    ):
         self._parameter_name = v
 
     @property
-    def fret_species_averaged_lifetime(self):
+    def fret_species_averaged_lifetime(
+            self
+    ) -> float:
         """
         The current species averages lifetime of the FRET sample xi * taui
         """
         return self._model.species_averaged_lifetime
 
     @property
-    def fret_fluorescence_averaged_lifetime(self):
+    def fret_fluorescence_averaged_lifetime(
+            self
+    ) -> float:
         """
         The current fluorescence averaged lifetime of the FRET-sample = xi*taui**2 / species_averaged_lifetime
         """
         return self._model.fret_fluorescence_averaged_lifetime
 
     @property
-    def donor_species_averaged_lifetime(self):
+    def donor_species_averaged_lifetime(
+            self
+    ) -> float:
         """
         The current species averaged lifetime of the donor sample xi*taui
         """
         return self._model.lifetimes.species_averaged_lifetime
 
     @property
-    def transfer_efficiency(self):
+    def transfer_efficiency(
+            self
+    ) -> float:
         """
         The current transfer efficency
         """
         return 1.0 - self.fret_species_averaged_lifetime / self.donor_species_averaged_lifetime
 
     @property
-    def polynomial_degree(self):
+    def polynomial_degree(
+            self
+    ) -> int:
         """
         The degree of the polynomial to approximate the conversion function
         """
         return self._polynomial_degree
 
     @polynomial_degree.setter
-    def polynomial_degree(self, v):
+    def polynomial_degree(
+            self,
+            v: int
+    ):
         """
         The degree of the polynomial used to approximate the transfer function
         """
         self._polynomial_degree = int(v)
 
     @property
-    def polynom_coefficients(self):
+    def polynom_coefficients(
+            self
+    ):
         """
         A numpy array with polynomial coefficients approximating the tauX(tauF) conversion function
         """
@@ -263,10 +307,20 @@ class FRETLineGenerator(object):
 
     @model.setter
     def model(self, v):
-        self._model = v(fit=self.fit, dt=self._dt)
+        self._model = v(
+            fit=self.fit,
+            dt=self._dt
+        )
 
-    def calc(self, parameter_name=None, parameter_range=None, **kwargs):
-        verbose = kwargs.get('verbose', self.verbose)
+    def calc(
+            self,
+            parameter_name: str = None,
+            parameter_range: Tuple[float, float] = None,
+            verbose: bool = None,
+            **kwargs
+    ):
+        if verbose is None:
+            verbose = self.verbose
 
         if isinstance(parameter_name, str):
             self.parameter_name = parameter_name
@@ -287,12 +341,14 @@ class FRETLineGenerator(object):
             fluorescence_averaged_lifetimes[i] = self.fret_fluorescence_averaged_lifetime
             transfer_efficiencies[i] = self.transfer_efficiency
             species_averaged_lifetimes[i] = self.fret_species_averaged_lifetime
-        self.transfer_efficiencies = transfer_efficiencies
+        self.fret_efficiencies = transfer_efficiencies
         self.fret_species_averaged_lifetimes = species_averaged_lifetimes
         self.fluorescence_averaged_lifetimes = fluorescence_averaged_lifetimes
 
 
-class StaticFRETLine(FRETLineGenerator):
+class StaticFRETLine(
+    FRETLineGenerator
+):
     """
     This class is used to calculate static-FRET lines of Gaussian distributed states.
 
@@ -633,15 +689,15 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
                                                           'hide_error': True,
                                                            'hide_donor': True
                                                               }),
-              (mfm.models.tcspc.mix_model.LifetimeMixModelWidget, {'hide_corrections': True,
-                                                          'hide_fit': True,
-                                                          'hide_generic': True,
-                                                          'hide_convolve': True,
-                                                          'hide_rotation': True,
-                                                          'hide_error': True,
-                                                          'hide_donor': True,
-                                                                           'enable_mix_model_donor': True
-                                                                   }),
+              # (mfm.models.tcspc.mix_model.LifetimeMixModelWidget, {'hide_corrections': True,
+              #                                             'hide_fit': True,
+              #                                             'hide_generic': True,
+              #                                             'hide_convolve': True,
+              #                                             'hide_rotation': True,
+              #                                             'hide_error': True,
+              #                                             'hide_donor': True,
+              #                                                              'enable_mix_model_donor': True
+              #                                                      }),
               (mfm.models.tcspc.widgets.FRETrateModelWidget, {'hide_corrections': True,
                                                           'hide_fit': True,
                                                           'hide_generic': True,
@@ -715,7 +771,7 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
 
     def onCalculate(self):
         self.calc()
-        fret_line = make.curve(self.fluorescence_averaged_lifetimes,  self.transfer_efficiencies,
+        fret_line = make.curve(self.fluorescence_averaged_lifetimes, self.fret_efficiencies,
                                color="r", linewidth=2)
         self.fret_line_plot.add_item(fret_line)
         self.fret_line_plot.do_autoscale()

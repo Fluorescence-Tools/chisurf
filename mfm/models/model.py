@@ -150,7 +150,7 @@ class ModelCurve(
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: mfm.fitting.fit.Fit,
             *args, **kwargs
     ):
         super(ModelCurve, self).__init__(

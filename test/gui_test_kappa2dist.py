@@ -14,7 +14,7 @@ import mfm.tools
 app = QApplication(sys.argv)
 
 
-class Kappa2Distribution(unittest.TestCase):
+class Tests(unittest.TestCase):
     """
     Test the kappa2 distribution GUI
     """

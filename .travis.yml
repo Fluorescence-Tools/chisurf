@@ -30,3 +30,6 @@ after_success:
   - pip install codacy-coverage
   - coverage xml
   - python-codacy-coverage -r coverage.xml
+#  - conda install conda-build anaconda-client git
+#  - git clone https://github.com/Fluorescence-Tools/conda-recipes.git
+#  -

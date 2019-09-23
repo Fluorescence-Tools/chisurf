@@ -20,8 +20,12 @@ class PDB2Label(QtWidgets.QWidget):
 
     name = "PDB2Label"
 
-    def __init__(self):
-        QtWidgets.QWidget.__init__(self)
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super(PDB2Label, self).__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -62,7 +66,10 @@ class PDB2Label(QtWidgets.QWidget):
     def onLoadJSON(self):
         #self.json_file = str(QtGui.QFileDialog.getOpenFileName(self, 'Open JSON Labeling-File',
         #                                                       '.', 'JSON-Files (*.fps.json)'))
-        filename = mfm.widgets.get_filename('Open JSON Labeling-File', 'JSON-Files (*.fps.json)')
+        filename = mfm.widgets.get_filename(
+            'Open JSON Labeling-File',
+            'JSON-Files (*.fps.json)'
+        )
         self.json_file = filename
         p = json.load(open(self.json_file, 'r'))
         self.distances = p["Distances"]
@@ -157,7 +164,10 @@ class PDB2Label(QtWidgets.QWidget):
 
     def onLoadReferencePDB(self):
         #self.pdb_filename = str(QtGui.QFileDialog.getOpenFileName(self, 'Open PDB-File', '.pdb', 'PDB-Files (*.pdb)'))
-        filename = mfm.widgets.get_filename('Open PDB-File', 'PDB-Files (*.pdb)')
+        filename = mfm.widgets.get_filename(
+            'Open PDB-File',
+            'PDB-Files (*.pdb)'
+        )
         self.pdb_filename = filename
         self.structure = mfm.structure.structure.Structure(self.pdb_filename)
         self.atom_select.atoms = self.structure.atoms
@@ -191,10 +201,12 @@ class PDB2Label(QtWidgets.QWidget):
         }
 
         if self.distance_type == "pRDA":
-            fn = mfm.widgets.get_filename("DA-Distance distribution (1st column RDA, 2nd pRDA)")
+            fn = mfm.widgets.get_filename(
+                "DA-Distance distribution (1st column RDA, 2nd pRDA)"
+            )
             csv = mfm.io.ascii.Csv(filename=fn, skiprows=1)
-            distance['rda'] = list(csv.data_x)
-            distance['prda'] = list(csv.data_y)
+            distance['rda'] = list(csv.data[0])
+            distance['prda'] = list(csv.data[1])
         else:
             distance['distance'] = self.distance
             distance['error_neg'] = self.error_neg
@@ -211,12 +223,19 @@ class PDB2Label(QtWidgets.QWidget):
     ):
         self.json_file = json_file if json_file is not None else self.json_file
         if self.json_file is None:
-            #self.json_file = str(QtGui.QFileDialog.getOpenFileName(self, 'Open FPS-JSON File',
-            #                                                          '.fps.json', 'JSON-Files (*.fps.json)'))
-            filename = mfm.widgets.get_filename('Open FPS-JSON File', 'JSON-Files (*.fps.json)')
+            filename = mfm.widgets.get_filename(
+                'Open FPS-JSON File',
+                'JSON-Files (*.fps.json)'
+            )
             self.json_file = filename
 
-        p = json.load(open(self.json_file), sort_keys=True, indent=4, separators=(',', ': '))
+        with open(self.json_file, 'r') as fp:
+            p = json.load(
+                fp,
+                sort_keys=True,
+                indent=4,
+                separators=(',', ': ')
+            )
         self.distances = p["Distances"]
         self.positions = p["Positions"]
         self.onUpdateJSON()

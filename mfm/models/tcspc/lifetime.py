@@ -235,7 +235,7 @@ class LifetimeModel(ModelCurve):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: mfm.fitting.fit.Fit,
             generic: Generic = None,
             corrections: Corrections = None,
             anisotropy: Anisotropy = None,
