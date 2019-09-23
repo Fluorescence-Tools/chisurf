@@ -113,16 +113,21 @@ class Fit(mfm.base.Base):
     @property
     def model(
             self
-    ) -> mfm.models.model.Model:
+    ) -> mfm.models.model.ModelCurve:
         return self._model
 
     @model.setter
     def model(
             self,
-            model_class
+            model_class: Type[
+                mfm.models.model.ModelCurve
+            ]
     ):
         if issubclass(model_class, mfm.models.model.Model):
-            self._model = model_class(self, **self._model_kw)
+            self._model = model_class(
+                self,
+                **self._model_kw
+            )
 
     @property
     def weighted_residuals(
@@ -366,8 +371,8 @@ class FitGroup(list, Fit):
     @property
     def weighted_residuals(
             self
-    ) -> List[np.array]:
-        return [self.selected_fit.weighted_residuals]
+    ) -> np.ndarray:
+        return self.selected_fit.weighted_residuals
 
     @property
     def chi2r(
@@ -657,7 +662,7 @@ def get_wres(
 
 def get_chi2(
         parameter: List[float],
-        model: mfm.models.model.Model,
+        model: mfm.models.model.ModelCurve,
         reduced: bool = True
 ) -> float:
     """Returns either the reduced chi2 or the sum of squares (chi2)

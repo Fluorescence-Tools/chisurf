@@ -11,14 +11,25 @@ import mfm
 
 class Tests(unittest.TestCase):
 
-    def test_fit_parse(self):
-        x = np.linspace(0, 32, 1024)
-        c_value = 3.1
-        a_value = 1.2
-        y_data = c_value + a_value * x**2.0
+    def get_data_values(
+            self,
+            c_value: float = 3.1,
+            a_value: float = 1.2,
+            n_points: int = 32
+    ):
+        x_data = np.linspace(0, 32, n_points)
+        y_data = c_value + a_value * x_data**2.0
+        return x_data, y_data
 
+    def test_fit_parse(self):
+        a_value = 1.2
+        c_value = 3.1
+        x_data, y_data = self.get_data_values(
+            a_value=a_value,
+            c_value=c_value
+        )
         data = mfm.experiments.data.DataCurve(
-            x=x,
+            x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
         )
@@ -51,7 +62,7 @@ class Tests(unittest.TestCase):
             True
         )
         model.update()
-        y_model = model.parameter_dict['c'] + model.parameter_dict['a'] * x**2.0
+        y_model = model.parameter_dict['c'] + model.parameter_dict['a'] * x_data**2.0
         self.assertEqual(
             np.allclose(
                 y_model.value,
@@ -59,15 +70,53 @@ class Tests(unittest.TestCase):
             ),
             True
         )
-        fit.fit_range = 0, len(model.y)
+        fit_range = 0, len(model.y) - 1
+        fit.fit_range = fit_range
+        self.assertTupleEqual(
+            fit.fit_range,
+            fit_range
+        )
+
+        # The fit range is bounded to the size of the data
+        fit.fit_range = -10, len(model.y) + 30
+        self.assertTupleEqual(
+            fit.fit_range,
+            fit_range
+        )
+
         self.assertAlmostEqual(
             fit.chi2,
-            8857984.180815242
+            248125.85601591066
+        )
+        self.assertEqual(
+            np.allclose(
+                fit.weighted_residuals,
+                np.array(
+                    [2.1, 2.31311134, 2.95244537, 4.01800208,
+                     5.50978148, 7.42778356, 9.77200832, 12.54245578,
+                     15.73912591, 19.36201873, 23.41113424, 27.88647242,
+                     32.7880333, 38.11581686, 43.8698231, 50.05005203,
+                     56.65650364, 63.68917794, 71.14807492, 79.03319459,
+                     87.34453694, 96.08210198, 105.2458897, 114.8359001,
+                     124.85213319, 135.29458897, 146.16326743,
+                     157.45816857,
+                     169.1792924, 181.32663892, 193.90020812]
+                )
+            ),
+            True
+        )
+
+        fit.run()
+        chi2 = fit.chi2
+        chi2r = chi2 / float(model.n_points - model.n_free - 1.0)
+        self.assertAlmostEqual(
+            fit.chi2r,
+            chi2r
         )
 
         fit.run()
         self.assertAlmostEqual(
-            fit.chi2,
+            fit.chi2r,
             0.0
         )
         self.assertAlmostEqual(
@@ -79,3 +128,54 @@ class Tests(unittest.TestCase):
             c_value
         )
 
+        # The number of "free" parameters corresponds to the number
+        # of fitting parameters
+        self.assertEqual(
+            fit.n_free,
+            len(fit.model.parameters)
+        )
+
+    def test_fit_data_setter(self):
+        c_value = 3.1
+        a_value = 1.2
+        x_data, y_data = self.get_data_values(
+            a_value=a_value,
+            c_value=c_value
+        )
+
+        data = mfm.experiments.data.DataCurve(
+            x=x_data,
+            y=y_data,
+            ey=np.ones_like(y_data)
+        )
+        fit = mfm.fitting.fit.FitGroup(
+            data=mfm.experiments.data.DataGroup(
+                [data]
+            ),
+            model_class=mfm.models.parse.ParseModel
+        )
+
+        self.assertIs(
+            fit.data,
+            data
+        )
+
+        data_2 = mfm.experiments.data.DataCurve(
+            x=x_data,
+            y=y_data,
+            ey=np.ones_like(y_data)
+        )
+
+        self.assertIsNot(
+            data,
+            data_2
+        )
+
+        fit.data = data_2
+        self.assertIs(
+            fit.data,
+            data_2
+        )
+
+    def test_fit_weighted_residuals(self):
+        pass
