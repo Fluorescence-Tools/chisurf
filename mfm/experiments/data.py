@@ -2,6 +2,7 @@
 
 """
 from __future__ import annotations
+from typing import Tuple
 
 import os.path
 from typing import List
@@ -208,7 +209,11 @@ class DataCurve(Curve, ExperimentalData):
     def __getitem__(
             self,
             key: str
-    ):
+    ) -> Tuple[
+        np.ndarray,
+        np.ndarray,
+        np.ndarray
+    ]:
         x, y = super(DataCurve, self).__getitem__(key)
         return x, y, self.ey[key]
 

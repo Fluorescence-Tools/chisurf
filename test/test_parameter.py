@@ -88,6 +88,19 @@ class Tests(unittest.TestCase):
         )
         self.assertEqual(p3.value, 2.0)
 
+    def test_fixing(self):
+        p1 = mfm.parameter.Parameter(value=2.0)
+        p1.fixed = True
+        self.assertEqual(
+            p1.fixed,
+            True
+        )
+        p1.fixed = False
+        self.assertEqual(
+            p1.fixed,
+            False
+        )
+
     def test_bounds(self):
         p1 = mfm.parameter.Parameter(
             value=2.0,

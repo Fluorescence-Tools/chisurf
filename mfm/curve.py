@@ -208,7 +208,13 @@ class Curve(Base):
     def __len__(self) -> int:
         return len(self.y)
 
-    def __getitem__(self, key) -> Tuple[float, float]:
+    def __getitem__(
+            self,
+            key
+    ) -> Tuple[
+        np.ndarray,
+        np.ndarray
+    ]:
         x = self.x.__getitem__(key)
         y = self.y.__getitem__(key)
         return x, y

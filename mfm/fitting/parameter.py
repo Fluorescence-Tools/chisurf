@@ -46,7 +46,12 @@ class FittingParameter(
         self._values = None
 
     @property
-    def parameter_scan(self) -> Tuple[np.array, np.array]:
+    def parameter_scan(
+            self
+    ) -> Tuple[
+        np.array,
+        np.array
+    ]:
         return self._values, self._chi2s
 
     @parameter_scan.setter
@@ -57,7 +62,9 @@ class FittingParameter(
         self._values, self._chi2s = v
 
     @property
-    def error_estimate(self) -> float:
+    def error_estimate(
+            self
+    ) -> float:
         if self.is_linked:
             return self._link.error_estimate
         else:
@@ -246,17 +253,6 @@ class FittingParameterGroup(
         ps = self.parameters
         for i, v in enumerate(vs):
             ps[i].value = v
-
-    @property
-    def outputs(self) -> dict:
-        """The outputs of a ParameterGroup are a dictionary
-
-        Returns
-        -------
-
-        """
-        a = dict()
-        return a
 
     def to_dict(
             self
