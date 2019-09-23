@@ -6,25 +6,26 @@ TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
 
 import numpy as np
+import copy
 import mfm
 
 
-class Tests(unittest.TestCase):
+def get_data_values(
+        c_value: float = 3.1,
+        a_value: float = 1.2,
+        n_points: int = 32
+):
+    x_data = np.linspace(0, 32, n_points)
+    y_data = c_value + a_value * x_data ** 2.0
+    return x_data, y_data
 
-    def get_data_values(
-            self,
-            c_value: float = 3.1,
-            a_value: float = 1.2,
-            n_points: int = 32
-    ):
-        x_data = np.linspace(0, 32, n_points)
-        y_data = c_value + a_value * x_data**2.0
-        return x_data, y_data
 
-    def test_fit_parse(self):
+class FitTests(unittest.TestCase):
+
+    def test_data_group(self):
         a_value = 1.2
         c_value = 3.1
-        x_data, y_data = self.get_data_values(
+        x_data, y_data = get_data_values(
             a_value=a_value,
             c_value=c_value
         )
@@ -33,6 +34,30 @@ class Tests(unittest.TestCase):
             y=y_data,
             ey=np.ones_like(y_data)
         )
+        data2 = copy.copy(data)
+        self.assertEqual(
+            np.allclose(
+                data2.y,
+                data.y
+            ),
+            True
+        )
+        self.assertEqual(
+            np.allclose(
+                data2.x,
+                data.x
+            ),
+            True
+        )
+        return data, data2
+
+    def test_fit_parse(self):
+        a_value = 1.2
+        c_value = 3.1
+
+        data_group = self.test_data_group()
+        data = data_group[0]
+        x_data = data.x
         fit = mfm.fitting.fit.FitGroup(
             data=mfm.experiments.data.DataGroup(
                 [data]
@@ -138,7 +163,7 @@ class Tests(unittest.TestCase):
     def test_fit_data_setter(self):
         c_value = 3.1
         a_value = 1.2
-        x_data, y_data = self.get_data_values(
+        x_data, y_data = get_data_values(
             a_value=a_value,
             c_value=c_value
         )

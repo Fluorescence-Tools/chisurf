@@ -218,4 +218,3 @@ class Curve(Base):
         x = self.x.__getitem__(key)
         y = self.y.__getitem__(key)
         return x, y
-
