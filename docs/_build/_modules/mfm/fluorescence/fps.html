@@ -412,11 +412,16 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">contact_volume_trapped_fraction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">contact_volume_trapped_fraction</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contact_volume_trapped_fraction</span>
 
     <span class="nd">@contact_volume_trapped_fraction</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">contact_volume_trapped_fraction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">contact_volume_trapped_fraction</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_contact_volume_trapped_fraction</span> <span class="o">=</span> <span class="n">v</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
 
@@ -442,21 +447,13 @@
     <span class="nd">@slow_radius</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">slow_radius</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="n">slow_centers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">slow_centers</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">long</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
             <span class="n">slow_radii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">slow_centers</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">v</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">slow_radii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">slow_radii</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">slow_centers</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The size of the slow_radius doesnt match the number of slow_centers&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_slow_radius</span> <span class="o">=</span> <span class="n">slow_radii</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">contact_volume_trapped_fraction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contact_volume_trapped_fraction</span>
-
-    <span class="nd">@contact_volume_trapped_fraction</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">contact_volume_trapped_fraction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_contact_volume_trapped_fraction</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">contact_density</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

@@ -12,7 +12,7 @@ import mfm.math
 import mfm.models
 from mfm import plots
 from mfm.fitting.parameter import FittingParameter
-from mfm.fitting.fitting_widgets import FittingControllerWidget
+from mfm.fitting.widgets import FittingControllerWidget
 from mfm.models import parse
 from mfm.models.model import ModelWidget
 from mfm.models.tcspc.anisotropy import Anisotropy
@@ -60,13 +60,13 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             self.radioButton_3.setVisible(not hide_curve_convolution)
 
         layout = QtWidgets.QHBoxLayout()
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._dt,
             layout=layout,
             fixed=True,
             hide_bounds=True
         )
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._n0,
             layout=layout,
             fixed=True,
@@ -75,28 +75,28 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         self.verticalLayout_2.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._start,
             layout=layout
         )
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._stop,
             layout=layout
         )
         self.verticalLayout_2.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._lb,
             layout=layout
         )
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._ts,
             layout=layout
         )
         self.verticalLayout_2.addLayout(layout)
 
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             fitting_parameter=self._rep,
             layout=self.horizontalLayout_3,
             text='r[MHz]'
@@ -194,12 +194,12 @@ class CorrectionsWidget(
         if hide_corrections:
             self.hide()
 
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._dead_time,
             layout=self.horizontalLayout_2,
             text='t<sub>dead</sub>[ns]'
         )
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._window_length,
             layout=self.horizontalLayout_2,
             text='t<sub>dead</sub>[ns]'
@@ -292,19 +292,19 @@ class GenericWidget(
         l = QtWidgets.QGridLayout()
         gbl.addLayout(l)
 
-        sc_w = mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        sc_w = mfm.fitting.widgets.make_fitting_parameter_widget(
             self._sc,
             text='Sc'
         )
-        bg_w = mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        bg_w = mfm.fitting.widgets.make_fitting_parameter_widget(
             self._bg,
             text='Bg'
         )
-        tmeas_bg_w = mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        tmeas_bg_w = mfm.fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_bg,
             text='t<sub>Bg</sub>'
         )
-        tmeas_exp_w = mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        tmeas_exp_w = mfm.fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_exp,
             text='t<sub>Meas</sub>'
         )
@@ -413,13 +413,13 @@ class AnisotropyWidget(
         self.gb.setLayout(self.lh)
 
         layout = QtWidgets.QHBoxLayout()
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._r0,
             text='r0',
             layout=layout,
             fixed=True
         )
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._g,
             text='g',
             layout=layout,
@@ -428,14 +428,14 @@ class AnisotropyWidget(
         self.lh.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._l1,
             text='l1',
             layout=layout,
             fixed=True,
             decimals=4
         )
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._l2,
             text='l2',
             layout=layout,
@@ -472,14 +472,14 @@ class AnisotropyWidget(
         layout = QtWidgets.QHBoxLayout()
         self.lh.addLayout(layout)
         self._rho_widgets.append(
-            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            mfm.fitting.widgets.make_fitting_parameter_widget(
                 fitting_parameter=self._rhos[-1],
                 decimals=2,
                 layout=layout
             )
         )
         self._b_widgets.append(
-            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            mfm.fitting.widgets.make_fitting_parameter_widget(
                 fitting_parameter=self._bs[-1],
                 decimals=2,
                 layout=layout
@@ -715,7 +715,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         #self._amp_widgets.append(amplitude)
 
         self._amp_widgets.append(
-            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            mfm.fitting.widgets.make_fitting_parameter_widget(
                 self._amplitudes[-1],
                 layout=layout
             )
@@ -725,7 +725,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         #self._lifetime_widgets.append(lifetime)
 
         self._lifetime_widgets.append(
-            mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+            mfm.fitting.widgets.make_fitting_parameter_widget(
                 self._lifetimes[-1],
                 layout=layout
             )
@@ -875,19 +875,19 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
         gb.setTitle('G%i' % n_gauss)
         layout = QtWidgets.QVBoxLayout()
 
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianMeans[-1],
             layout=layout
         )
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianSigma[-1],
             layout=layout
         )
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianShape[-1],
             layout=layout
         )
-        mfm.fitting.fitting_widgets.make_fitting_parameter_widget(
+        mfm.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianAmplitudes[-1],
             layout=layout
         )
@@ -980,8 +980,8 @@ for f in cs.current_fit:
         px = FittingParameter(name='x(%s,%i)' % (self.short, n_rates + 1), value=x,
                               model=self.model, decimals=3,
                               bounds_on=False, text='x', update_function=self.update)
-        m = mfm.fitting.fitting_widgets.make_fitting_parameter_widget(pm, layout=l)
-        x = mfm.fitting.fitting_widgets.make_fitting_parameter_widget(px, layout=l)
+        m = mfm.fitting.widgets.make_fitting_parameter_widget(pm, layout=l)
+        x = mfm.fitting.widgets.make_fitting_parameter_widget(px, layout=l)
 
         gb.setLayout(l)
         row = n_rates / 2
@@ -1012,7 +1012,7 @@ class GaussianModelWidget(GaussianModel, LifetimeModelWidgetBase):
         self.layout_parameter.addWidget(donors)
 
         self.layout_parameter.addWidget(
-            mfm.fitting.fitting_widgets.make_fitting_parameter_group_widget(self.fret_parameters)
+            mfm.fitting.widgets.make_fitting_parameter_group_widget(self.fret_parameters)
         )
 
         self.layout_parameter.addWidget(gaussians)
@@ -1053,7 +1053,7 @@ class FRETrateModelWidget(FRETrateModel, LifetimeModelWidgetBase):
         self.layout_parameter.addWidget(donors)
         # self.layout_parameter.addWidget(self.fret_parameters.to_widget())
         self.layout_parameter.addWidget(
-            mfm.fitting.fitting_widgets.make_fitting_parameter_group_widget(
+            mfm.fitting.widgets.make_fitting_parameter_group_widget(
                 self.fret_parameters
             )
         )
@@ -1239,7 +1239,7 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
             item = layout.itemAt(i)
             if isinstance(
                     item,
-                    mfm.fitting.fitting_widgets.FittingParameterWidget
+                    mfm.fitting.widgets.FittingParameterWidget
             ):
                 re.append(item)
         return re
@@ -1293,7 +1293,7 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
             model = fit.model
 
         fraction_name = "x(%s)" % (len(self) + 1)
-        fraction = mfm.fitting.fitting_widgets.FittingParameterWidget(
+        fraction = mfm.fitting.widgets.FittingParameterWidget(
             name=fraction_name,
             value=1.0,
             model=self,

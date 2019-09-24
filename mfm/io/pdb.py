@@ -104,7 +104,7 @@ def assign_element_to_atom_name(
 def parse_string_pdb(
         string: str,
         assign_charge: bool = False,
-        verbose: bool = True,  # mfm.verbose
+        verbose: bool = mfm.verbose,
         **kwargs
 ):
     """
@@ -153,6 +153,7 @@ def parse_string_pdb(
 def read(
         filename: str,
         assign_charge: bool = False,
+        verbose: bool = mfm.verbose,
         **kwargs
 ):
     """ Open pdb_file and read each line into pdb (a list of lines)
@@ -178,7 +179,6 @@ def read(
     '), ('element', 'S1'), ('coord', '<f8', (3,)), ('charge', '<f8'), ('radius', '<f8'), ('bfactor', '<f8'), ('mass', '<f8')
     ])
     """
-    verbose = kwargs.get('verbose', mfm.verbose)
     with open(filename, 'r') as f:
         string = f.read()
         if verbose:
@@ -234,10 +234,10 @@ def write_pdb(
 
 def write_points(
         filename: str,
-        points,
+        points: np.ndarray,
         verbose: bool = False,
-        mode='xyz',
-        density=None
+        mode: str = 'xyz',
+        density: np.ndarray = None
 ):
     """
 

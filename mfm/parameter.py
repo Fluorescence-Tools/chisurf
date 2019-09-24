@@ -227,6 +227,16 @@ class Parameter(
         s = self.value.__repr__()
         return s
 
+    def __abs__(self):
+        return self.__class__(
+            value=self.value.__abs__()
+        )
+
+    def __round__(self, n=None):
+        return self.__class__(
+            value=self.value.__round__()
+        )
+
     def to_dict(
             self
     ) -> dict:

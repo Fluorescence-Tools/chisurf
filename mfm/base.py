@@ -1,9 +1,11 @@
 from __future__ import annotations
+from typing import Type
 
 import uuid
 import json
 import os.path
 import zlib
+import copy
 from collections.abc import Iterable
 
 import yaml
@@ -235,6 +237,17 @@ class Base(object):
         d['unique_identifier'] = unique_identifier
         kwargs.update(d)
         self.__dict__.update(**kwargs)
+
+    def __copy__(
+            self
+    ) -> Type[Base]:
+        c = self.__class__()
+        c.from_dict(
+            copy.copy(self.to_dict())
+        )
+        # make sure that the copy gets a new uuid
+        c.unique_identifier = str(uuid.uuid4())
+        return c
 
 
 class Data(Base):

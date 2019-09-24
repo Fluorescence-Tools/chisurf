@@ -8,11 +8,11 @@ from qtpy import  QtWidgets, uic
 from mfm.models.parse import ParseModelWidget
 
 import mfm
-import mfm.fitting.fitting_widgets
+import mfm.fitting.widgets
 from mfm import plots
 from mfm.models.model import Model
 from mfm.math.reaction.continuous import ReactionSystem
-from mfm.fitting.fitting_widgets import FittingParameterWidget
+from mfm.fitting.widgets import FittingParameterWidget
 
 
 class ParseStoppedFlowWidget(ParseModelWidget):
@@ -106,7 +106,13 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
         ReactionSystem.__init__(self, **kwargs)
         parameter = kwargs.get('parameter', None)
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/models/reaction.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "reaction.ui"
+            ),
+            self
+        )
         self.actionPlot.triggered.connect(self.onPlot)
         self.actionIntegrate.triggered.connect(self.calc)
         self.actionLoad_reaction.triggered.connect(self.onLoadReaction)
@@ -114,7 +120,7 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
         self.actionSave_reaction.triggered.connect(self.onSaveLabelingFile)
         Model.__init__(self, **kwargs)
         self.setParameter(parameter)
-        self.fitting_widget = mfm.fitting.fitting_widgets.FittingControllerWidget(fit=self.fit)
+        self.fitting_widget = mfm.fitting.widgets.FittingControllerWidget(fit=self.fit)
         self.verticalLayout_4.addWidget(self.fitting_widget)
         self.verticalLayout_4.addWidget(self.scaleing)
         self.verticalLayout_4.addWidget(self.background)

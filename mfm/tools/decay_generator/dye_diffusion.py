@@ -15,7 +15,7 @@ import mfm
 import mfm.io.xyz
 import mfm.fluorescence.fps.widgets
 from mfm.fluorescence.simulation.dye_diffusion import DyeDecay
-from mfm.plots.MolView import MolQtWidget
+from mfm.plots.molview.MolView import MolQtWidget
 from mfm.structure.structure import Structure
 from mfm.widgets.pdb import PDBSelector
 

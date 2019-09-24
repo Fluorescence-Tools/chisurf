@@ -5,7 +5,14 @@ import mfm
 from mfm.fluorescence.simulation import _simulation
 
 
-def simulate_photon_trace_rate(n_ph, quench, t_step=0.01, tau0=4.10, n_traj=4, **kwargs):
+def simulate_photon_trace_rate(
+        n_ph,
+        quench,
+        t_step: float = 0.01,
+        tau0: float = 4.10,
+        n_traj: int = 4,
+        **kwargs
+):
     """
     This function generates a stream of photons considering quenching of the excited state
     using a mix of a purely Poissonian process and the know solution of a Poissonian process
@@ -73,7 +80,15 @@ def simulate_photon_trace_rate(n_ph, quench, t_step=0.01, tau0=4.10, n_traj=4, *
     return dts, phs
 
 
-def simulate_decay_quench(n_curves, decay, dt_tac, k_quench, t_step, tau0, **kwargs):
+def simulate_decay_quench(
+        n_curves: int,
+        decay,
+        dt_tac: float,
+        k_quench,
+        t_step,
+        tau0: float,
+        **kwargs
+):
     """
     :param n_curves: int
         Number of samples taken from the trajectory
@@ -90,15 +105,13 @@ def simulate_decay_quench(n_curves, decay, dt_tac, k_quench, t_step, tau0, **kwa
 
     """
     verbose = kwargs.get('verbose', mfm.verbose)
-    shift = np.random.randint(0, int(k_quench.shape[0] / 2), int(n_curves))
-    _simulation.simulate_decay(n_curves=n_curves,
-                           decay=decay,
-                           dt_tac=dt_tac,
-                           k_quench=k_quench,
-                           t_step=t_step,
-                           tau0=tau0,
-                           shift=shift
+    shift = np.random.randint(0, int(k_quench.shape[0] // 2), int(n_curves))
+    _simulation.simulate_decay(
+        n_curves=n_curves,
+        decay=decay,
+        dt_tac=dt_tac,
+        k_quench=k_quench,
+        t_step=t_step,
+        tau0=tau0,
+        shift=shift
     )
-
-
-

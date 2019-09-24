@@ -269,7 +269,6 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
             <span class="n">p_object</span><span class="p">,</span>
-            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
             <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">make_coarse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
             <span class="n">rmsd_ref_state</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
@@ -278,6 +277,8 @@
             <span class="n">center</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
             <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
             <span class="n">atom_indices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -289,7 +290,7 @@
 <span class="sd">            the models number of the pdb (optional argument). By default the first models in the PDB-File is used.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;file_type&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">atom_indices</span> <span class="o">=</span> <span class="n">atom_indices</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">make_coarse</span> <span class="o">=</span> <span class="n">make_coarse</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stride</span> <span class="o">=</span> <span class="n">stride</span>
@@ -304,35 +305,67 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">filename</span>
         <span class="n">pdb_tmp</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="s2">&quot;.pdb&quot;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p_object</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">p_object</span><span class="p">,</span>
+                <span class="nb">str</span>
+        <span class="p">):</span>
             <span class="k">if</span> <span class="n">p_object</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.pdb&#39;</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span> <span class="o">=</span> <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">p_object</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">p_object</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.h5&#39;</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">p_object</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span> <span class="o">=</span> <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">p_object</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">)</span>
-                    <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span><span class="o">.</span><span class="n">xyz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span><span class="o">.</span><span class="n">topology</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span> <span class="o">=</span> <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+                        <span class="n">p_object</span><span class="p">,</span>
+                        <span class="n">stride</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span>
+                    <span class="p">)</span>
+                    <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span><span class="o">.</span><span class="n">xyz</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span><span class="o">.</span><span class="n">topology</span>
+                    <span class="p">)</span>
                 <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;w&#39;</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span> <span class="o">=</span> <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pdb_tmp</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span><span class="o">.</span><span class="n">save_hdf5</span><span class="p">(</span><span class="n">p_object</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">p_object</span>
-                    <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span><span class="o">.</span><span class="n">xyz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span><span class="o">.</span><span class="n">topology</span><span class="p">)</span>
+                    <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span><span class="o">.</span><span class="n">xyz</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span><span class="o">.</span><span class="n">topology</span>
+                    <span class="p">)</span>
 
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p_object</span><span class="p">,</span> <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">p_object</span><span class="p">,</span>
+                <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span>
+        <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span> <span class="o">=</span> <span class="n">p_object</span>
             <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xyz</span><span class="o">=</span><span class="n">p_object</span><span class="o">.</span><span class="n">xyz</span><span class="p">,</span> <span class="n">topology</span><span class="o">=</span><span class="n">p_object</span><span class="o">.</span><span class="n">topology</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;filename&#39;</span><span class="p">,</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="s2">&quot;.h5&quot;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="s2">&quot;.h5&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">filename</span>
 
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p_object</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;filename&#39;</span><span class="p">,</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="s2">&quot;.h5&quot;</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">p_object</span><span class="p">,</span>
+                <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="s2">&quot;.h5&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">filename</span>
+
             <span class="n">p_object</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">pdb_tmp</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span> <span class="o">=</span> <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pdb_tmp</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span><span class="o">.</span><span class="n">save_hdf5</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">)</span>
-            <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xyz</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span><span class="o">.</span><span class="n">xyz</span><span class="p">,</span> <span class="n">topology</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span><span class="o">.</span><span class="n">topology</span><span class="p">)</span>
+            <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span>
+                <span class="n">xyz</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span><span class="o">.</span><span class="n">xyz</span><span class="p">,</span>
+                <span class="n">topology</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span><span class="o">.</span><span class="n">topology</span>
+            <span class="p">)</span>
             <span class="n">structure</span> <span class="o">=</span> <span class="n">p_object</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">save_pdb</span><span class="p">(</span><span class="n">pdb_tmp</span><span class="p">)</span>
-            <span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="n">pdb_tmp</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+            <span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span>
+                <span class="n">pdb_tmp</span><span class="p">,</span>
+                <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span>
+            <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;structure&#39;</span><span class="p">,</span> <span class="n">structure</span><span class="p">)</span>
 
@@ -341,7 +374,7 @@
 
         <span class="c1">#super(TrajectoryFile, self).__init__(*args, **kwargs)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">rmsd_ref_state</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ref_state&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rmsd_ref_state</span> <span class="o">=</span> <span class="n">rmsd_ref_state</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rmsd</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">drmsd</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">energy</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
@@ -373,7 +406,9 @@
 <span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">structure</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">structure</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span>
 
     <span class="nd">@structure</span><span class="o">.</span><span class="n">setter</span>
@@ -384,7 +419,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_structure</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">invert</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">invert</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;If True the oder of the trajectory is inverted (by default False)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invert</span>
@@ -397,7 +434,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_invert</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">filename</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">filename</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;The filename of the trajectory</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span>
@@ -412,11 +451,15 @@
             <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">mdtraj</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">mdtraj</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mdtraj</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;The name of the trajectory composed of the directory and the filename</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
@@ -426,7 +469,9 @@
             <span class="k">return</span> <span class="s2">&quot;None&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">rmsd_ref_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">rmsd_ref_state</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;The index (frame number) of the reference state used for the RMSD calculation</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rmsd_ref_state</span>
@@ -440,13 +485,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">rmsd</span> <span class="o">=</span> <span class="n">mdtraj</span><span class="o">.</span><span class="n">rmsd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">ref_frame</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">directory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">directory</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Directory in which the filename of the trajectory is located in</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">reference</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">reference</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;The reference structure used for RMSD-calculation. This cannot be set directly but has to be set via the number</span>
 <span class="sd">        of the reference state :py:attribute`.rmsd_ref_state`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -456,14 +505,18 @@
             <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rmsd_ref_state</span><span class="p">)]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">average</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">average</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The average structure (:py:class:`~mfm.structure.mfm.structure.Structure`) of the trajectory</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="bp">self</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)])</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;A 2D-numpy array containing the RMSD, dRMSD, energy and the chi2 values of the trajectory</span>
 
 <span class="sd">        Examples</span>

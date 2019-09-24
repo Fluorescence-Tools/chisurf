@@ -115,52 +115,75 @@
     <div class="col-md-9 content">
       
   <h1>Source code for mfm.fluorescence.tcspc.convolve</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">exp</span><span class="p">,</span> <span class="n">ceil</span>
 <span class="kn">import</span> <span class="nn">numba</span> <span class="k">as</span> <span class="nn">nb</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 
-<div class="viewcode-block" id="fconv"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.tcspc.html#mfm.fluorescence.tcspc.convolve.fconv">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">fconv</span><span class="p">(</span>
+<div class="viewcode-block" id="convolve_lifetime_spectrum"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.tcspc.html#mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">convolve_lifetime_spectrum</span><span class="p">(</span>
         <span class="n">decay</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
         <span class="n">lifetime_spectrum</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
         <span class="n">irf</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
-        <span class="n">stop</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span>
-<span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    :param decay: numpy-array</span>
-<span class="sd">        the content of this array is overwritten by the y-values after convolution</span>
-<span class="sd">    :param lifetime_spectrum: vector of amplitdes and lifetimes in form: amplitude, lifetime</span>
-<span class="sd">    :param irf:</span>
-<span class="sd">    :param stop:</span>
-<span class="sd">    :param dt:</span>
-<span class="sd">    :return:</span>
+        <span class="n">stop</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">time_axis</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Fills the pre-allocated array with a fluorescence intensity decay convolved (non-periodically)</span>
+<span class="sd">    with an instrumental response function.</span>
+
+
+<span class="sd">    This function calculates a fluorescence intensity decay that is convolved with an instrumnet response</span>
+<span class="sd">    function (IRF). The fluorescence intensity decay is specified by its fluorescence lifetime spectrum, i.e.,</span>
+<span class="sd">    an interleaved array containing fluorescence lifetimes with corresponding amplitudes.</span>
+
+<span class="sd">    :param decay: numpy-array This array filled with the values of the computed fluorescence intensity decay</span>
+<span class="sd">    :param lifetime_spectrum: interleaved vector of amplitudes and fluorescence lifetimes</span>
+<span class="sd">    :param irf: the instrument response function</span>
+<span class="sd">    :param stop: convolution stop channel (the index on the time-axis)</span>
+<span class="sd">    :param time_axis: the time-axis of the decay</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+
+<span class="sd">    &gt;&gt;&gt; import scipy.stats</span>
+<span class="sd">    &gt;&gt;&gt; time_axis = np.linspace(0, 50, 2048)</span>
+<span class="sd">    &gt;&gt;&gt; irf_position = 5.0</span>
+<span class="sd">    &gt;&gt;&gt; irf_width = 1.0</span>
+<span class="sd">    &gt;&gt;&gt; irf = scipy.stats.norm.pdf(time_axis, loc=irf_position, scale=irf_width)</span>
+<span class="sd">    &gt;&gt;&gt; lifetime_spectrum = np.array([0.8, 1.1, 0.2, 4.0])</span>
+<span class="sd">    &gt;&gt;&gt; decay = np.zeros_like(time_axis)</span>
+<span class="sd">    &gt;&gt;&gt; convolve_lifetime_spectrum(decay, lifetime_spectrum=lifetime_spectrum, irf=irf, time_axis=time_axis)</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">nExp</span> <span class="o">=</span> <span class="n">lifetime_spectrum</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
-    <span class="c1">#delta_tHalf = dt/2.</span>
+    <span class="n">number_of_exponentials</span> <span class="o">=</span> <span class="n">lifetime_spectrum</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="k">if</span> <span class="n">stop</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">decay</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">stop</span><span class="p">):</span>
         <span class="n">decay</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="k">for</span> <span class="n">ne</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nExp</span><span class="p">):</span>
-        <span class="n">x_curr</span> <span class="o">=</span> <span class="n">lifetime_spectrum</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">ne</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">x_curr</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">ne</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number_of_exponentials</span><span class="p">):</span>
+        <span class="n">current_amplitude</span> <span class="o">=</span> <span class="n">lifetime_spectrum</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">ne</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">current_amplitude</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">lt</span> <span class="o">=</span> <span class="p">(</span><span class="n">lifetime_spectrum</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">ne</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">lt</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="n">current_lifetime</span> <span class="o">=</span> <span class="p">(</span><span class="n">lifetime_spectrum</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">ne</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">current_lifetime</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">fitCurr</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">stop</span><span class="p">):</span>
-            <span class="n">dt</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-            <span class="n">delta_tHalf</span> <span class="o">=</span> <span class="n">dt</span> <span class="o">/</span> <span class="mf">2.</span>
-            <span class="n">currExp</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span> <span class="o">/</span> <span class="n">lt</span><span class="p">)</span>
-            <span class="n">fitCurr</span> <span class="o">=</span> <span class="p">(</span><span class="n">fitCurr</span> <span class="o">+</span> <span class="n">delta_tHalf</span><span class="o">*</span><span class="n">irf</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">*</span><span class="n">currExp</span> <span class="o">+</span> <span class="n">delta_tHalf</span><span class="o">*</span><span class="n">irf</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-            <span class="n">decay</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">fitCurr</span> <span class="o">*</span> <span class="n">x_curr</span></div>
+        <span class="n">current_model_value</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">stop</span><span class="p">):</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="p">(</span><span class="n">time_axis</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">time_axis</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">dt_2</span> <span class="o">=</span> <span class="n">dt</span> <span class="o">/</span> <span class="mf">2.0</span>
+            <span class="n">current_exponential</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span> <span class="o">/</span> <span class="n">current_lifetime</span><span class="p">)</span>
+            <span class="n">current_model_value</span> <span class="o">=</span> <span class="p">(</span><span class="n">current_model_value</span> <span class="o">+</span> <span class="n">dt_2</span> <span class="o">*</span> <span class="n">irf</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">current_exponential</span> <span class="o">+</span> <span class="n">dt_2</span> <span class="o">*</span> <span class="n">irf</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">decay</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">current_model_value</span> <span class="o">*</span> <span class="n">current_amplitude</span></div>
 
 
-<div class="viewcode-block" id="fconv_per_cs"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.tcspc.html#mfm.fluorescence.tcspc.convolve.fconv_per_cs">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">fconv_per_cs</span><span class="p">(</span>
+<div class="viewcode-block" id="convolve_lifetime_spectrum_periodic"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.tcspc.html#mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_periodic">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">convolve_lifetime_spectrum_periodic</span><span class="p">(</span>
         <span class="n">decay</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
         <span class="n">lifetime_spectrum</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
         <span class="n">irf</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
@@ -191,6 +214,21 @@
 <span class="sd">        Channel-width in nano-seconds</span>
 <span class="sd">    :param conv_stop: int</span>
 <span class="sd">        Stopping channel of convolution</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+
+<span class="sd">    &gt;&gt;&gt; import scipy.stats</span>
+<span class="sd">    &gt;&gt;&gt; n_points = 2048</span>
+<span class="sd">    &gt;&gt;&gt; time_axis = np.linspace(0, 16, n_points)</span>
+<span class="sd">    &gt;&gt;&gt; irf_position = 5.0</span>
+<span class="sd">    &gt;&gt;&gt; irf_width = 0.5</span>
+<span class="sd">    &gt;&gt;&gt; dt = time_axis[1] - time_axis[0]</span>
+<span class="sd">    &gt;&gt;&gt; irf = scipy.stats.norm.pdf(time_axis, loc=irf_position, scale=irf_width)</span>
+<span class="sd">    &gt;&gt;&gt; lifetime_spectrum = np.array([0.8, 1.1, 0.2, 4.0])</span>
+<span class="sd">    &gt;&gt;&gt; decay = np.zeros_like(time_axis)</span>
+<span class="sd">    &gt;&gt;&gt; convolve_lifetime_spectrum_periodic(decay, lifetime_spectrum=lifetime_spectrum, irf=irf, start=0, stop=n_points, n_points=n_points, period=16, conv_stop=n_points, dt=dt)</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">stop</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span> <span class="n">n_points</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
@@ -332,14 +370,31 @@
 
 
 <div class="viewcode-block" id="sconv"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.tcspc.html#mfm.fluorescence.tcspc.convolve.sconv">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">sconv</span><span class="p">(</span><span class="n">fit</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">irf</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">sconv</span><span class="p">(</span>
+        <span class="n">decay</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">p</span><span class="p">,</span>
+        <span class="n">irf</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">stop</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    :param decay:</span>
+<span class="sd">    :param p:</span>
+<span class="sd">    :param irf:</span>
+<span class="sd">    :param start:</span>
+<span class="sd">    :param stop:</span>
+<span class="sd">    :param dt:</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">):</span>
-        <span class="n">fit</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">irf</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">decay</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">irf</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
-            <span class="n">fit</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">irf</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="n">j</span><span class="p">]</span>
-        <span class="n">fit</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">irf</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">fit</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*=</span> <span class="n">dt</span>
-    <span class="n">fit</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span></div>
+            <span class="n">decay</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">irf</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="n">j</span><span class="p">]</span>
+        <span class="n">decay</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">irf</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">decay</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*=</span> <span class="n">dt</span>
+    <span class="n">decay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span></div>
 </pre></div>
 
     </div>

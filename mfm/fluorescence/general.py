@@ -288,7 +288,7 @@ def calc_decay_matrix(
     """
     if space == 'lin':
         taus = np.linspace(tau_min, tau_max, n_steps)
-    elif space == 'log':
+    else:  #elif space == 'log':
         lmin = np.log10(tau_min)
         lmax = np.log10(tau_max)
         taus = np.logspace(lmin, lmax, n_steps)
@@ -334,7 +334,6 @@ def et2pRDA(
     """
     if t_matrix is None or r_DA is None:
         t_matrix, r_DA = calc_transfer_matrix(ts, 5, 200, 200, **kwargs)
-
     p_rDA = scipy.optimize.nnls(t_matrix.T, et)[0]
     return r_DA, p_rDA
 
@@ -561,13 +560,14 @@ rates2lifetimes = rates2lifetimes_new
 @nb.jit
 def calculate_fluorescence_decay(
         lifetime_spectrum: np.array,
-        time_axis: np.array = None,
+        time_axis: np.array,
         normalize: bool = True
 ) -> (np.array, np.array):
     """Converts a interleaved lifetime spectrum into a intensity decay
 
     :param lifetime_spectrum: interleaved lifetime spectrum
     :param time_axis: time-axis
+    :param normalize:
     :return:
 
     Examples
@@ -581,8 +581,6 @@ def calculate_fluorescence_decay(
     >>> lifetime_spectrum = structure.av_lifetime_spectrum(donor_lifetime_spectrum, donor_description, acceptor_description)
     >>> time_axis, decay = calculate_fluorescence_decay(lifetime_spectrum, time_axis)
     """
-    if time_axis is None:
-        time_axis = np.linspace(0, 50, num=100)
     decay = np.zeros(time_axis.shape)
     am = lifetime_spectrum[0::2]
     if normalize:

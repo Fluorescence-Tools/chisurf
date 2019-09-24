@@ -148,11 +148,12 @@
         <span class="p">]</span>
     <span class="k">elif</span> <span class="n">curve_type</span> <span class="o">==</span> <span class="s1">&#39;experiment&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[</span>
-            <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data_set</span> <span class="k">if</span>
-            <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">ExperimentalData</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">ExperimentDataGroup</span><span class="p">))</span> <span class="ow">and</span>
-            <span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;Global-fit&quot;</span>
-        <span class="p">]</span></div>
+            <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data_set</span> <span class="k">if</span> <span class="p">(</span>
+                    <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">ExperimentalData</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">ExperimentDataGroup</span><span class="p">))</span> <span class="ow">and</span>
+                    <span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;Global-fit&quot;</span>
+                                   <span class="p">)</span>
 
+        <span class="p">]</span></div>
 
 </pre></div>
 

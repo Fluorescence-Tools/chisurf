@@ -445,7 +445,14 @@ class MDConverter(QtWidgets.QWidget):
 
     def __init__(self, parent=None, **kwargs):
         QtWidgets.QWidget.__init__(self, parent=parent)
-        uic.loadUi('./mfm/ui/convert_structures.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "convert_structures.ui"
+            ),
+            self
+        )
+
         self.toolButton.clicked.connect(self.onLoadHDFFile)
         self.toolButton_2.clicked.connect(self.onSelecteTargetDir)
         self.pushButton_3.clicked.connect(self.onConvert)

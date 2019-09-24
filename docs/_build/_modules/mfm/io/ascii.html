@@ -153,6 +153,29 @@
             <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">fmt</span> <span class="o">%</span> <span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span></div>
 
 
+<div class="viewcode-block" id="load_xy"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.ascii.load_xy">[docs]</a><span class="k">def</span> <span class="nf">load_xy</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">,</span>
+        <span class="n">usecols</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">skiprows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">delimiter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">array</span>
+<span class="p">]:</span>
+    <span class="k">if</span> <span class="n">usecols</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">usecols</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading file: &quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">,</span>
+        <span class="n">skiprows</span><span class="o">=</span><span class="n">skiprows</span><span class="p">,</span>
+        <span class="n">usecols</span><span class="o">=</span><span class="n">usecols</span><span class="p">,</span>
+        <span class="n">delimiter</span><span class="o">=</span><span class="n">delimiter</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></div>
+
+
 <div class="viewcode-block" id="Csv"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.ascii.Csv">[docs]</a><span class="k">class</span> <span class="nc">Csv</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
     <span class="sd">&quot;&quot;&quot;</span>

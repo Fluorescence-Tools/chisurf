@@ -1,6 +1,6 @@
 ---
 name: ChiSurf
-version: 19.08.23
+version: 19.9.22
 n_threads: 4
 verbose: false
 fitting_message: true

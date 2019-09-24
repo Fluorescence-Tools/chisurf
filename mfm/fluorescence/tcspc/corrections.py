@@ -43,11 +43,11 @@ def compute_linearization_table(
 
 @nb.jit(nopython=True, nogil=True)
 def correct_model_for_pile_up(
-        data,
-        model,
-        rep_rate,
-        dead_time,
-        measurement_time,
+        data: np.ndarray,
+        model: np.ndarray,
+        rep_rate: float,
+        dead_time: float,
+        measurement_time: float,
         verbose: bool = False
 ) -> None:
     """

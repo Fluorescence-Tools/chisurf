@@ -6,7 +6,7 @@ from qtpy import QtWidgets, QtGui
 
 import mfm.curve
 import mfm.fitting.parameter
-import mfm.fitting.fitting_widgets
+import mfm.fitting.widgets
 import mfm.plots
 from mfm.curve import Curve
 
@@ -17,7 +17,7 @@ class Model(
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: mfm.fitting.fit.Fit,
             model_number: int = 0,
             **kwargs
     ):
@@ -61,16 +61,11 @@ class Model(
     def weighted_residuals(
             self
     ) -> np.array:
-        return self.get_wres(self.fit)
-
-    @property
-    def outputs(self):
-        out = {
-            'wres': self.weighted_residuals,
-            'x': self.x,
-            'y': self.y
-        }
-        return out
+        return self.get_wres(
+            self.fit,
+            xmin=self.fit.xmin,
+            xmax=self.fit.xmax
+        )
 
     def get_wres(
             self,
@@ -86,7 +81,10 @@ class Model(
         model_x, model_y = fit.model[xmin:xmax]
         data_x, data_y, data_y_error = fit.data[xmin:xmax]
         ml = min([len(model_y), len(data_y)])
-        wr = np.array((data_y[:ml] - model_y[:ml]) / data_y_error[:ml], dtype=np.float64)
+        wr = np.array(
+            (data_y[:ml] - model_y[:ml]) / data_y_error[:ml],
+            dtype=np.float64
+        )
         return wr
 
     def update_model(
@@ -152,7 +150,7 @@ class ModelCurve(
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: mfm.fitting.fit.Fit,
             *args, **kwargs
     ):
         super(ModelCurve, self).__init__(
@@ -171,7 +169,10 @@ class ModelCurve(
     def __getitem__(
             self,
             key
-    ):
+    ) -> Tuple[
+        np.ndarray,
+        np.ndarray
+    ]:
         start = key.start
         stop = key.stop
         step = 1 if key.step is None else key.step
@@ -215,7 +216,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
         for parameter in self.parameters:
             if isinstance(
                     parameter,
-                    mfm.fitting.fitting_widgets.FittingParameterWidget
+                    mfm.fitting.widgets.FittingParameterWidget
             ):
                 parameter.update()
 
