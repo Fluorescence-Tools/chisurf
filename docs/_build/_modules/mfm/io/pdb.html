@@ -170,11 +170,18 @@
 <span class="n">keys</span><span class="p">,</span> <span class="n">formats</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">keys_formats</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="fetch_pdb_string"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.pdb.fetch_pdb_string">[docs]</a><span class="k">def</span> <span class="nf">fetch_pdb_string</span><span class="p">(</span>
+<div class="viewcode-block" id="fetch_pdb_string"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.pdb.fetch_pdb_string">[docs]</a><span class="k">def</span> <span class="nf">fetch_pdb_string</span><span class="p">(</span>
         <span class="n">pdb_id</span><span class="p">:</span> <span class="nb">str</span>
-<span class="p">):</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Downloads from the RCSB a PDB file with the specified PDB-ID</span>
+
+<span class="sd">    :param pdb_id: The PDB-ID that is downloaded</span>
+<span class="sd">    :param get_binary: If get_binary is True a binary string is returned.</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;http://www.rcsb.org/pdb/files/</span><span class="si">%s</span><span class="s1">.pdb&#39;</span> <span class="o">%</span> <span class="n">pdb_id</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span></div>
+    <span class="n">binary</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">binary</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="fetch_pdb"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.pdb.fetch_pdb">[docs]</a><span class="k">def</span> <span class="nf">fetch_pdb</span><span class="p">(</span>
@@ -211,16 +218,26 @@
     <span class="k">return</span> <span class="n">element</span></div>
 
 
-<div class="viewcode-block" id="parse_string_pdb"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.pdb.parse_string_pdb">[docs]</a><span class="k">def</span> <span class="nf">parse_string_pdb</span><span class="p">(</span>
+<div class="viewcode-block" id="parse_string_pdb"><a class="viewcode-back" href="../../../user_documentation/api/io.html#mfm.io.pdb.parse_string_pdb">[docs]</a><span class="k">def</span> <span class="nf">parse_string_pdb</span><span class="p">(</span>
         <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">assign_charge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># mfm.verbose</span>
         <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    :param string:</span>
+<span class="sd">    :param assign_charge:</span>
+<span class="sd">    :param verbose:</span>
+<span class="sd">    :param kwargs:</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">rows</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
-    <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
     <span class="n">atoms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;names&#39;</span><span class="p">:</span> <span class="n">keys</span><span class="p">,</span> <span class="s1">&#39;formats&#39;</span><span class="p">:</span> <span class="n">formats</span><span class="p">})</span>
     <span class="n">ni</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;ATOM&#39;</span><span class="p">):</span>
             <span class="n">atom_name</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">12</span><span class="p">:</span><span class="mi">16</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
             <span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">][</span><span class="n">ni</span><span class="p">]</span> <span class="o">=</span> <span class="n">ni</span>

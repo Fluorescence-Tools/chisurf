@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import argparse
-from math import sqrt
 
 import mdtraj as md
 import numba as nb
 import numpy as np
+
+import mfm.fluorescence
 
 
 def convert_chain_id_to_numbers(chain_id):
@@ -17,7 +18,11 @@ def convert_chain_id_to_numbers(chain_id):
         return di[chain_id]
 
 
-def mdtraj_selection_string(chain_id, res_id, atom_name):
+def mdtraj_selection_string(
+        chain_id: str,
+        res_id: int,
+        atom_name: str
+):
     return "(chainid == %s) and (resid == %s) and (name == %s)" % \
            (convert_chain_id_to_numbers(chain_id),
             int(res_id) - 1,
@@ -25,123 +30,13 @@ def mdtraj_selection_string(chain_id, res_id, atom_name):
             )
 
 
-@nb.jit
-def distance2fretrate(r, R0, tau0, kappa2=2./3.):
-    """ Converts the DA-distance to a FRET-rate
-
-    :param r: donor-acceptor distance
-    :param R0: Forster-radius
-    :param tau0: lifetime
-    :param kappa2: orientation factor
-    :return:
-    """
-    return 3./2. * kappa2 * 1./tau0*(R0/r)**6.0
-
-
-@nb.jit
-def kappa_distance(d1, d2, a1, a2):
-    """Calculates the orientation factor kappa and the distance between two dipoles defined by the
-    two vectors (d1, d2) and (a1, a2). Returns the distance between the dipoles and the orientation
-    factor
-    """
-
-    # cartesian coordinates of the donor
-    d11 = d1[0]
-    d12 = d1[1]
-    d13 = d1[2]
-
-    d21 = d2[0]
-    d22 = d2[1]
-    d23 = d2[2]
-
-    # distance between the two end points of the donor
-    dD21 = sqrt((d11 - d21)*(d11 - d21) +
-                 (d12 - d22)*(d12 - d22) +
-                 (d13 - d23)*(d13 - d23)
-                )
-
-    # normal vector of the donor-dipole
-    muD1 = (d21 - d11) / dD21
-    muD2 = (d22 - d12) / dD21
-    muD3 = (d23 - d13) / dD21
-
-    # vector to the middle of the donor-dipole
-    dM1 = d11 + dD21 * muD1 / 2.0
-    dM2 = d12 + dD21 * muD2 / 2.0
-    dM3 = d13 + dD21 * muD3 / 2.0
-
-    ### Acceptor ###
-    # cartesian coordinates of the acceptor
-    a11 = a1[0]
-    a12 = a1[1]
-    a13 = a1[2]
-
-    a21 = a2[0]
-    a22 = a2[1]
-    a23 = a2[2]
-
-    # distance between the two end points of the acceptor
-    dA21 = sqrt( (a11 - a21)*(a11 - a21) +
-                 (a12 - a22)*(a12 - a22) +
-                 (a13 - a23)*(a13 - a23)
-    )
-
-    # normal vector of the acceptor-dipole
-    muA1 = (a21 - a11) / dA21
-    muA2 = (a22 - a12) / dA21
-    muA3 = (a23 - a13) / dA21
-
-    # vector to the middle of the acceptor-dipole
-    aM1 = a11 + dA21 * muA1 / 2.0
-    aM2 = a12 + dA21 * muA2 / 2.0
-    aM3 = a13 + dA21 * muA3 / 2.0
-
-    # vector connecting the middle of the dipoles
-    RDA1 = dM1 - aM1
-    RDA2 = dM2 - aM2
-    RDA3 = dM3 - aM3
-
-    # Length of the dipole-dipole vector (distance)
-    dRDA = sqrt(RDA1*RDA1 + RDA2*RDA2 + RDA3*RDA3)
-
-    # Normalized dipole-diple vector
-    nRDA1 = RDA1 / dRDA
-    nRDA2 = RDA2 / dRDA
-    nRDA3 = RDA3 / dRDA
-
-    # Orientation factor kappa2
-    kappa = muA1*muD1 + muA2*muD2 + muA3*muD3 - 3.0 * (muD1*nRDA1+muD2*nRDA2+muD3*nRDA3) * (muA1*nRDA1+muA2*nRDA2+muA3*nRDA3)
-    return dRDA, kappa
-
-
-def calculate_kappa_distance(xyz, aid1, aid2, aia1, aia2):
-    """Calculates the orientation factor kappa2 and the distance of a trajectory given the atom-indices of the
-    donor and the acceptor.
-
-    :param xyz: numpy-array (frame, atom, xyz)
-    :param aid1: int, atom-index of d-dipole 1
-    :param aid2: int, atom-index of d-dipole 2
-    :param aia1: int, atom-index of a-dipole 1
-    :param aia2: int, atom-index of a-dipole 2
-
-    :return: distances, kappa2
-    """
-    n_frames = xyz.shape[0]
-    ks = np.empty(n_frames, dtype=np.float32)
-    ds = np.empty(n_frames, dtype=np.float32)
-
-    for i_frame in range(n_frames):
-        try:
-            d, k = kappa_distance(xyz[i_frame, aid1], xyz[i_frame, aid2], xyz[i_frame, aia1], xyz[i_frame, aia2])
-            ks[i_frame] = k
-            ds[i_frame] = d
-        except:
-            print("Frame skipped, calculation error")
-
-    return ds, ks
-
-
-def traj2anisotropy(traj, t_step, d1, d2, t_max):
+def traj2anisotropy(
+        traj,
+        t_step: float,
+        d1: int,
+        d2: int,
+        t_max: float
+):
     """
     Biophysical Journal Volume 89 December 2005 3757-3770
     Gunnar F. Schroder, Ulrike Alexiev,y and Helmut Grubmuller
@@ -169,7 +64,11 @@ def traj2anisotropy(traj, t_step, d1, d2, t_max):
 
 
 @nb.jit(nopython=True)
-def integrate_rate_traj(k, t_step, t_max):
+def integrate_rate_traj(
+        k,
+        t_step: float,
+        t_max: float
+):
     """Calculates an average array of rate constants, k, up to a maximum time t_max.
 
     :param k: array (list) of rate constants
@@ -187,7 +86,12 @@ def integrate_rate_traj(k, t_step, t_max):
     return sk * t_step
 
 
-def traj2decay(k, t_step, t_max, tau0=None):
+def traj2decay(
+        k,
+        t_step: float,
+        t_max: float,
+        tau0: float = None
+):
     """Converts a FRET-rate constant trajectory to a FRET-induced donor decay
     or a fluorescence intensity decay.
     If the parameter tau0 is None the FRET-induced donor decay is calculated. If tau0
@@ -202,13 +106,13 @@ def traj2decay(k, t_step, t_max, tau0=None):
     :return: time-axis and decay
     """
     ki = integrate_rate_traj(k, t_step, t_max)
-    t = np.arange(0, t_max, t_step, dtype=np.float64)
+    times = np.arange(0, t_max, t_step, dtype=np.float64)
     fret_decay = np.exp(-ki)
     if tau0 is None:
-        return t, fret_decay
+        return times, fret_decay
     else:
-        fd0 = np.exp(-t / tau0)
-        return t, fd0 * fret_decay
+        fd0 = np.exp(-times / tau0)
+        return times, fd0 * fret_decay
 
 
 class CalculateTransfer(object):
@@ -365,29 +269,37 @@ class CalculateTransfer(object):
         try:
             for chunk in md.iterload(trajectory_file, stride=self.stride, chunk=chunk):
                 if dipoles:
-                    ds, ks = calculate_kappa_distance(chunk.xyz,
-                                                      self.donor[0],
-                                                      self.donor[1],
-                                                      self.acceptor[0],
-                                                      self.acceptor[1]
-                                                      )
+                    ds, ks = mfm.fluorescence.anisotropy.kappa2.calculate_kappa_distance(
+                        chunk.xyz,
+                        self.donor[0],
+                        self.donor[1],
+                        self.acceptor[0],
+                        self.acceptor[1]
+                    )
                 else:
                     ks = np.zeros(chunk.n_frames, dtype=np.float32)
                     d1 = chunk.xyz[:, self.donor[0], :]
                     a1 = chunk.xyz[:, self.acceptor[0], :]
                     ds = np.sqrt(np.sum((a1 - d1)**2, axis=1))
                 i = np.arange(0, ds.shape[0]) + n
-                t = i * time_step
+                time = i * time_step
                 n += ds.shape[0]
 
                 with open(output_file, 'a') as f_handle:
-                    r = np.array([
-                        i * stride, # frame number
-                        t, # time
-                        ds * 10.0, # RDA-distance in Angstrom
-                        ks,  # kappa
-                        ks ** 2,  # kappa2
-                        distance2fretrate(ds * 10.0, self.forster_radius, self.tau0, ks ** 2)]  # FRET-rate constant
+                    r = np.array(
+                        [
+                            i * stride,  # frame number
+                            time,  # time
+                            ds * 10.0,  # RDA-distance in Angstrom
+                            ks,  # kappa
+                            ks ** 2,  # kappa2
+                            mfm.fluorescence.general.distance_to_fret_rate_constant(
+                                ds * 10.0,
+                                self.forster_radius,
+                                self.tau0,
+                                ks ** 2
+                            )
+                        ]  # FRET-rate constant
                     ).T
                     np.savetxt(f_handle,
                                r,
@@ -476,7 +388,6 @@ python traj2fret.py traj.h5 -a A 22 CA A 32 CA -d A 101 CA A 152 CA -o output.cs
                         required=False, help='Quenching rate constant of PET (at zero distance)')
 
 
-
     args = parser.parse_args()
     if args.verbose:
         print("\nMDFRET (FRET-MD analysis)")
@@ -498,24 +409,36 @@ python traj2fret.py traj.h5 -a A 22 CA A 32 CA -d A 101 CA A 152 CA -o output.cs
     if args.verbose:
         print("Applying user parameters.")
 
-    d1_atom = frame.top.select(mdtraj_selection_string(args.donor[0],
-                                                       args.donor[1],
-                                                       args.donor[2])
-                               )[0]
-    a1_atom = frame.top.select(mdtraj_selection_string(args.acceptor[0],
-                                                       args.acceptor[1],
-                                                       args.acceptor[2])
-                               )[0]
+    d1_atom = frame.top.select(
+        mdtraj_selection_string(
+            args.donor[0],
+            args.donor[1],
+            args.donor[2]
+        )
+    )[0]
+    a1_atom = frame.top.select(
+        mdtraj_selection_string(
+            args.acceptor[0],
+            args.acceptor[1],
+            args.acceptor[2]
+        )
+    )[0]
 
     if kwargs['dipoles']:
-        a2_atom = frame.top.select(mdtraj_selection_string(args.acceptor[3],
-                                                           args.acceptor[4],
-                                                           args.acceptor[5])
-                                   )[0]
-        d2_atom = frame.top.select(mdtraj_selection_string(args.donor[3],
-                                                           args.donor[4],
-                                                           args.donor[5])
-                                   )[0]
+        a2_atom = frame.top.select(
+            mdtraj_selection_string(
+                args.acceptor[3],
+                args.acceptor[4],
+                args.acceptor[5]
+            )
+        )[0]
+        d2_atom = frame.top.select(
+            mdtraj_selection_string(
+                args.donor[3],
+                args.donor[4],
+                args.donor[5]
+            )
+        )[0]
     else:
         d2_atom = None
         a2_atom = None

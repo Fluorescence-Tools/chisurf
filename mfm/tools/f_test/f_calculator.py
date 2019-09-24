@@ -40,7 +40,9 @@ class FTestWidget(QtWidgets.QWidget):
         for f in mfm.fits:
             for fs in f:
                 Action = menu.addAction(fs.name)
-                Action.triggered.connect(self.read_values((fs, self.spinBox_4, self.spinBox_3, self.doubleSpinBox_5)))
+                Action.triggered.connect(
+                    self.read_values((fs, self.spinBox_4, self.spinBox_3, self.doubleSpinBox_5))
+                )
         self.toolButton_3.setMenu(menu)
 
     def read_n1(self):
@@ -48,7 +50,9 @@ class FTestWidget(QtWidgets.QWidget):
         for f in mfm.fits:
             for fs in f:
                 Action = menu.addAction(fs.name)
-                Action.triggered.connect(self.read_v((fs, self.spinBox, self.doubleSpinBox)))
+                Action.triggered.connect(
+                    self.read_v((fs, self.spinBox, self.doubleSpinBox))
+                )
         self.toolButton.setMenu(menu)
 
     def read_n2(self):
@@ -56,11 +60,17 @@ class FTestWidget(QtWidgets.QWidget):
         for f in mfm.fits:
             for fs in f:
                 Action = menu.addAction(fs.name)
-                Action.triggered.connect(self.read_v((fs, self.spinBox_2, self.doubleSpinBox_3)))
+                Action.triggered.connect(
+                    self.read_v((fs, self.spinBox_2, self.doubleSpinBox_3))
+                )
         self.toolButton_2.setMenu(menu)
 
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super(FTestWidget, self).__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -68,7 +78,6 @@ class FTestWidget(QtWidgets.QWidget):
             ),
             self
         )
-        self.parent = kwargs.get('parent', None)
         self._selected_fit = None
 
         # Upper part of F-Calculator
@@ -89,7 +98,10 @@ class FTestWidget(QtWidgets.QWidget):
         self.toolButton_3.clicked.connect(self.read_n)
 
     def calculate_chi2_max(self):
-        if self._selected_fit is not None :
+        if isinstance(
+                self._selected_fit,
+                mfm.fitting.fit.Fit
+        ):
             self.chi2_min = self._selected_fit.chi2r
         dof = max(1, self.dof)
         number_of_parameters = max(1, self.npars)
@@ -102,7 +114,11 @@ class FTestWidget(QtWidgets.QWidget):
 
     def onChi2_2_Changed(self):
         # recalculate confidence level
-        conf_level = fdist.cdf(self.chi2_2 / self.chi2_1, self.n1, self.n2)
+        conf_level = fdist.cdf(
+            self.chi2_2 / self.chi2_1,
+            self.n1,
+            self.n2
+        )
         self.doubleSpinBox_2.blockSignals(True)
         self.doubleSpinBox_2.setValue(conf_level)
         self.doubleSpinBox_2.blockSignals(False)
@@ -136,7 +152,9 @@ class FTestWidget(QtWidgets.QWidget):
         self.doubleSpinBox_2.blockSignals(False)
 
     @property
-    def n1(self) -> int:
+    def n1(
+            self
+    ) -> int:
         return int(self.spinBox.value())
 
     @n1.setter
@@ -147,7 +165,9 @@ class FTestWidget(QtWidgets.QWidget):
         self.spinBox.setValue(v)
 
     @property
-    def n2(self) -> int:
+    def n2(
+            self
+    ) -> int:
         return int(self.spinBox_2.value())
 
     @n2.setter
@@ -158,7 +178,9 @@ class FTestWidget(QtWidgets.QWidget):
         self.spinBox_2.setValue(v)
 
     @property
-    def conf_level(self) -> float:
+    def conf_level(
+            self
+    ) -> float:
         return float(self.doubleSpinBox_2.value())
 
     @conf_level.setter
@@ -169,7 +191,9 @@ class FTestWidget(QtWidgets.QWidget):
         self.doubleSpinBox_2.setValue(c)
 
     @property
-    def chi2_1(self) -> float:
+    def chi2_1(
+            self
+    ) -> float:
         return float(self.doubleSpinBox.value())
 
     @chi2_1.setter
@@ -180,7 +204,9 @@ class FTestWidget(QtWidgets.QWidget):
         self.doubleSpinBox.setValue(v)
 
     @property
-    def chi2_2(self) -> float:
+    def chi2_2(
+            self
+    ) -> float:
         return float(self.doubleSpinBox_3.value())
 
     @chi2_2.setter
@@ -191,7 +217,9 @@ class FTestWidget(QtWidgets.QWidget):
         self.doubleSpinBox_3.setValue(v)
 
     @property
-    def npars(self) -> int:
+    def npars(
+            self
+    ) -> int:
         return int(self.spinBox_4.value())
 
     @npars.setter
@@ -202,7 +230,9 @@ class FTestWidget(QtWidgets.QWidget):
         self.spinBox_4.setValue(v)
 
     @property
-    def dof(self) -> int:
+    def dof(
+            self
+    ) -> int:
         return int(self.spinBox_3.value())
 
     @dof.setter
@@ -213,7 +243,9 @@ class FTestWidget(QtWidgets.QWidget):
         self.spinBox_3.setValue(v)
 
     @property
-    def conf_level_2(self) -> float:
+    def conf_level_2(
+            self
+    ) -> float:
         return float(self.doubleSpinBox_4.value())
 
     @conf_level_2.setter
@@ -224,7 +256,9 @@ class FTestWidget(QtWidgets.QWidget):
         self.doubleSpinBox_4.setValue(c)
 
     @property
-    def chi2_max(self) -> float:
+    def chi2_max(
+            self
+    ) -> float:
         return float(self.lineEdit.text())
 
     @chi2_max.setter
@@ -235,7 +269,9 @@ class FTestWidget(QtWidgets.QWidget):
         self.lineEdit.setText(str(c))
 
     @property
-    def chi2_min(self) -> float:
+    def chi2_min(
+            self
+    ) -> float:
         return float(self.doubleSpinBox_5.value())
 
     @chi2_min.setter

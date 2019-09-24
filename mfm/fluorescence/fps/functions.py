@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import Tuple, Type
+
 import mfm.fluorescence
 from mfm.fluorescence.fps import _fps
 import mfm
@@ -9,13 +12,20 @@ from pyopencl import array as cl_array
 fps_settings = mfm.settings.cs_settings['fps']
 
 
-
-def histogram_rda(av1, av2, **kwargs):
+def histogram_rda(
+        av1: Type[mfm.fluorescence.fps.BasicAV],
+        av2: Type[mfm.fluorescence.fps.BasicAV],
+        **kwargs
+) -> Tuple[
+    np.ndarray,
+    np.ndarray
+]:
     """Calculates the distance distribution with respect to a second accessible volume and returns the
     distance axis and the probability of the respective distance. By default the distance-axis "mfm.rda_axis"
     is taken to generate the histogram.
 
-    :param av: Accessible volume
+    :param av1: Accessible volume
+    :param av2: Accessible volume
     :param kwargs:
     :return:
 
@@ -41,7 +51,11 @@ def histogram_rda(av1, av2, **kwargs):
     return p, rda_axis
 
 
-def RDAMean(av1, av2, **kwargs):
+def RDAMean(
+        av1: mfm.fluorescence.fps.BasicAV,
+        av2: mfm.fluorescence.fps.BasicAV,
+        **kwargs
+) -> float:
     """Calculate the mean distance between two accessible volumes
 
     >>> import mfm
@@ -57,7 +71,11 @@ def RDAMean(av1, av2, **kwargs):
     return np.dot(d[:, 0], d[:, 1]) / d[:, 1].sum()
 
 
-def widthRDA(av1, av2, **kwargs):
+def widthRDA(
+        av1: mfm.fluorescence.fps.BasicAV,
+        av2: mfm.fluorescence.fps.BasicAV,
+        **kwargs
+):
     """Calculate the width of the distance distribution between two accessible volumes
 
     >>> import mfm
@@ -76,7 +94,12 @@ def widthRDA(av1, av2, **kwargs):
     return np.sqrt(v)
 
 
-def RDAMeanE(av1, av2, R0=52.0, **kwargs):
+def RDAMeanE(
+        av1: mfm.fluorescence.fps.BasicAV,
+        av2: mfm.fluorescence.fps.BasicAV,
+        R0: float = 52.0,
+        **kwargs
+) -> float:
     """Calculate the FRET-averaged (PDA/Intensity) distance between two accessible volumes
 
     >>> import mfm
@@ -96,7 +119,10 @@ def RDAMeanE(av1, av2, R0=52.0, **kwargs):
     return (1./mean_fret - 1.)**(1./6.) * R0
 
 
-def dRmp(av1, av2):
+def dRmp(
+        av1: mfm.fluorescence.fps.BasicAV,
+        av2: mfm.fluorescence.fps.BasicAV,
+) -> float:
     """Calculate the distance between the mean position of two accessible volumes
 
     >>> import mfm

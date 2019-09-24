@@ -931,7 +931,7 @@ If True the structure is appended to the filename as a new model otherwise the f
 
 <dl class="function">
 <dt id="mfm.structure.structure.average">
-<code class="sig-prename descclassname">mfm.structure.structure.</code><code class="sig-name descname">average</code><span class="sig-paren">(</span><em class="sig-param">structures: 'List[mfm.structure.structure.Structure]'</em>, <em class="sig-param">weights=None</em>, <em class="sig-param">write=True</em>, <em class="sig-param">filename=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#average"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.average" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.structure.structure.</code><code class="sig-name descname">average</code><span class="sig-paren">(</span><em class="sig-param">structures: 'List[mfm.structure.structure.Structure]'</em>, <em class="sig-param">weights=None</em>, <em class="sig-param">write=True</em>, <em class="sig-param">filename=None</em><span class="sig-paren">)</span> &#x2192; 'mfm.structure.structure.Structure'<a class="reference internal" href="../_modules/mfm/structure/structure.html#average"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.average" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates weighted average of a list of structures.
 saves to filename if write is True
 if filename not provided makes new “average.pdb” file in temp-folder
@@ -946,6 +946,11 @@ of the system</p>
 <span class="go">&#39;c:\users\peulen\appdata\local\temp\average.pdb&#39;</span>
 </pre></div>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
@@ -1197,7 +1202,7 @@ provided only the, respective atoms are used to calculate the RMSD.</p>
 <span id="mfm-structure-trajectory-module"></span><h2>mfm.structure.trajectory module<a class="headerlink" href="#module-mfm.structure.trajectory" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mfm.structure.trajectory.TrajectoryFile">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.trajectory.</code><code class="sig-name descname">TrajectoryFile</code><span class="sig-paren">(</span><em class="sig-param">p_object</em>, <em class="sig-param">*args</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">make_coarse=False</em>, <em class="sig-param">rmsd_ref_state=0</em>, <em class="sig-param">stride=1</em>, <em class="sig-param">inverse_trajectory=False</em>, <em class="sig-param">center=False</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">atom_indices=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/trajectory.html#TrajectoryFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.trajectory.</code><code class="sig-name descname">TrajectoryFile</code><span class="sig-paren">(</span><em class="sig-param">p_object</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">make_coarse=False</em>, <em class="sig-param">rmsd_ref_state=0</em>, <em class="sig-param">stride=1</em>, <em class="sig-param">inverse_trajectory=False</em>, <em class="sig-param">center=False</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">atom_indices=None</em>, <em class="sig-param">mode='r'</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/trajectory.html#TrajectoryFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.base.Base</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">mdtraj.core.trajectory.Trajectory</span></code></p>
 <p>Creates an Trajectory of mfm.structure.Structures given a HDF5-File using mdtraj.HDF5TrajectoryFile</p>
 <dl class="field-list simple">
@@ -1302,6 +1307,11 @@ By default True. If True energy, energy_fret, RMSD and dRMSD are printed to std-
 <dt id="mfm.structure.trajectory.TrajectoryFile.average">
 <em class="property">property </em><code class="sig-name descname">average</code><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile.average" title="Permalink to this definition">¶</a></dt>
 <dd><p>The average structure (<code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code>) of the trajectory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1373,6 +1383,11 @@ By default True. If True energy, energy_fret, RMSD and dRMSD are printed to std-
 <em class="property">property </em><code class="sig-name descname">reference</code><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile.reference" title="Permalink to this definition">¶</a></dt>
 <dd><p>The reference structure used for RMSD-calculation. This cannot be set directly but has to be set via the number
 of the reference state :py:attribute`.rmsd_ref_state`</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1440,6 +1455,11 @@ point to the same data.</p>
 <span class="go">        [             inf,              inf]])</span>
 </pre></div>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>

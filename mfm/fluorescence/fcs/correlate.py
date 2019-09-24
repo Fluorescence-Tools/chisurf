@@ -13,10 +13,10 @@ import numpy as np
 def correlate(
         n: int,
         B: int,
-        t: np.array,
-        taus: np.array,
-        corr: np.array,
-        w: np.array
+        t: np.ndarray,
+        taus: np.ndarray,
+        corr: np.ndarray,
+        w: np.ndarray
 ) -> np.array:
     """
 
@@ -28,7 +28,7 @@ def correlate(
     :param w:
     :return:
     """
-    for b in range(B):  # this could be prange (in principle)
+    for b in range(B):
         j = (n * B + b)
         shift = taus[j] // (pow(2.0, float(j / B)))
         # STARTING CHANNEL
@@ -63,12 +63,12 @@ def normalize(
 ) -> float:
     """
 
-    :param np1:
-    :param np2:
-    :param dt1:
-    :param dt2:
-    :param tau:
-    :param corr:
+    :param np1: number of photons in channel 1
+    :param np2: number of photons in channel 2
+    :param dt1: the total measurement time of the data contained in channel 1
+    :param dt2: the total measurement time of the data contained in channel 2
+    :param tau: the array containing the correlation times
+    :param corr: the array containing the correlation values
     :param B:
     :return:
     """
@@ -88,18 +88,18 @@ def get_weights(
         rout: np.array,
         tac: np.array,
         wt: np.array,
-        nPh: int
+        number_of_photons: int
 ):
     """
 
     :param rout:
     :param tac:
     :param wt:
-    :param nPh:
+    :param number_of_photons:
     :return:
     """
-    w = np.zeros(nPh, dtype=np.float32)
-    for i in range(nPh):
+    w = np.zeros(number_of_photons, dtype=np.float32)
+    for i in range(number_of_photons):
         w[i] = wt[rout[i], tac[i]]
     return w
 
@@ -223,7 +223,8 @@ def log_corr(
         B: int,
         nc: int,
         fine: bool,
-        number_of_tac_channels: int
+        number_of_tac_channels: int,
+        verbose: bool = False
 ) -> Tuple[
     int, int,
     int, int,
@@ -264,8 +265,16 @@ def log_corr(
         taus[j] = taus[j - 1] + pow(2.0, floor(j / B))
     # correlation
     for n in range(nc):
-        print("cascade %s\tnph1: %s\tnph2: %s" % (n, t[0, 0], t[1, 0]))
-        corr = correlate(n, B, t, taus, corr, w)
+        if verbose:
+            print("cascade %s\tnph1: %s\tnph2: %s" % (n, t[0, 0], t[1, 0]))
+        corr = correlate(
+            n=n,
+            B=B,
+            t=t,
+            taus=taus,
+            corr=corr,
+            w=w
+        )
         coarsen(t, w)
     return np1, np2, dt1, dt2, taus, corr
 

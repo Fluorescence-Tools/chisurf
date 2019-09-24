@@ -567,7 +567,9 @@ CR - coarse grained Carbon/Calpha</p>
 <dl class="method">
 <dt id="mfm.parameter.Parameter.bounds">
 <em class="property">property </em><code class="sig-name descname">bounds</code><a class="headerlink" href="#mfm.parameter.Parameter.bounds" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>A tuple containing the values for the lower (first value) and
+the upper (second value) of the bound.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</p>
 </dd>
@@ -632,9 +634,17 @@ CR - coarse grained Carbon/Calpha</p>
 <dl class="method">
 <dt id="mfm.parameter.Parameter.value">
 <em class="property">property </em><code class="sig-name descname">value</code><a class="headerlink" href="#mfm.parameter.Parameter.value" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>The value of the parameter.</p>
+<p>This value of the parameter considers links and
+bounds, i.e., if a parameter is linked to another
+parameter the value of the linked parameter is returned.
+First, links are considered, then bounds are considered.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
 </dd>
 </dl>
 </dd></dl>

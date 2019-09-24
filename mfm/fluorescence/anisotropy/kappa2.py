@@ -85,7 +85,7 @@ def kappasq_all(
 
 
 @nb.jit()
-def kappa2_distance(
+def kappa_distance(
         d1: np.array,
         d2: np.array,
         a1: np.array,
@@ -175,7 +175,7 @@ def kappa2_distance(
 def kappa(
         donor_dipole: np.array,
         acceptor_dipole: np.array
-):
+) -> Tuple[float, float]:
     """Calculates the orientation-factor kappa
 
     :param donor_dipole: 2x3 vector of the donor-dipole
@@ -189,25 +189,26 @@ def kappa(
     >>> donor_dipole = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]], dtype=np.float64)
     >>> acceptor_dipole = np.array([[0.0, 0.5, 0.0], [0.0, 0.5, 1.0]], dtype=np.float64)
     >>> kappa(donor_dipole, acceptor_dipole)
+    (0.8660254037844386, 1.0000000000000002)
     """
-    return kappa2_distance(
+    return kappa_distance(
         donor_dipole[0], donor_dipole[1],
         acceptor_dipole[0], acceptor_dipole[1]
     )
 
 
 def s2delta(
-        r_0,
-        s2donor,
-        s2acceptor,
-        r_inf_AD
-):
+        r_0: float,
+        s2donor: float,
+        s2acceptor: float,
+        r_inf_AD: float
+) -> float:
     """calculate delta given residual anisotropies
 
     :param r_0:
     :param s2donor: -np.sqrt(self.r_Dinf/self.r_0)
     :param s2acceptor: np.sqrt(self.r_Ainf/self.r_0)
-    :param r_inf_DA:
+    :param r_inf_AD:
 
     Accurate Distance Determination of Nucleic Acids via Foerster Resonance Energy Transfer:
     Implications of Dye Linker Length and Rigidity
@@ -241,7 +242,7 @@ def calculate_kappa_distance(
 
     for i_frame in range(n_frames):
         try:
-            d, k = kappa2_distance(
+            d, k = kappa_distance(
                 xyz[i_frame, aid1], xyz[i_frame, aid2],
                 xyz[i_frame, aia1], xyz[i_frame, aia2]
             )

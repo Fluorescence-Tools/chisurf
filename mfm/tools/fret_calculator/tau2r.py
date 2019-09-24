@@ -15,8 +15,16 @@ class FRETCalculator(QtWidgets.QWidget):
 
     name = "FRET-Calculator"
 
-    def __init__(self, kappa2=0.667):
-        QtWidgets.QWidget.__init__(self)
+    def __init__(
+            self,
+            kappa2=0.667,
+            *args,
+            **kwargs
+    ):
+        super(FRETCalculator, self).__init__(
+            *args,
+            **kwargs
+        )
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -38,44 +46,106 @@ class FRETCalculator(QtWidgets.QWidget):
 
     def onRChanged(self):
         self.blockSignals(True)
-        self.kFRET = distance_to_fret_rate_constant(self.R, self.R0, self.tau0, 2. / 3.)
-        self.E = distance_to_fret_efficiency(self.R, self.R0)
-        self.tau = fret_efficiency_to_lifetime(self.E, self.tau0)
+        self.kFRET = distance_to_fret_rate_constant(
+            self.R,
+            self.R0,
+            self.tau0,
+            2. / 3.
+        )
+        self.E = distance_to_fret_efficiency(
+            self.R,
+            self.R0
+        )
+        self.tau = fret_efficiency_to_lifetime(
+            self.E,
+            self.tau0
+        )
         self.blockSignals(False)
 
     def onkFRETChanged(self):
         self.blockSignals(True)
-        self.R = fretrate_to_distance(self.kFRET, self.R0, self.tau0)
-        self.E = distance_to_fret_efficiency(self.R, self.R0)
-        self.tau = fret_efficiency_to_lifetime(self.E, self.tau0)
+        self.R = fretrate_to_distance(
+            self.kFRET,
+            self.R0,
+            self.tau0
+        )
+        self.E = distance_to_fret_efficiency(
+            self.R,
+            self.R0
+        )
+        self.tau = fret_efficiency_to_lifetime(
+            self.E,
+            self.tau0
+        )
         self.blockSignals(False)
 
     def onTauChanged(self):
         self.blockSignals(True)
-        self.E = lifetime_to_fret_efficiency(self.tau, self.tau0)
-        self.R = fretrate_to_distance(self.kFRET, self.R0, self.tau0)
-        self.kFRET = distance_to_fret_rate_constant(self.R, self.R0, self.tau0)
+        self.E = lifetime_to_fret_efficiency(
+            self.tau,
+            self.tau0
+        )
+        self.R = fretrate_to_distance(
+            self.kFRET,
+            self.R0,
+            self.tau0
+        )
+        self.kFRET = distance_to_fret_rate_constant(
+            self.R,
+            self.R0,
+            self.tau0
+        )
         self.blockSignals(False)
 
     def onEChanged(self):
         self.blockSignals(True)
-        self.R = fret_efficiency_to_distance(self.E, self.R0)
-        self.kFRET = distance_to_fret_rate_constant(self.R, self.R0, self.tau0)
-        self.tau = fret_efficiency_to_lifetime(self.E, self.tau0)
+        self.R = fret_efficiency_to_distance(
+            self.E,
+            self.R0
+        )
+        self.kFRET = distance_to_fret_rate_constant(
+            self.R,
+            self.R0,
+            self.tau0
+        )
+        self.tau = fret_efficiency_to_lifetime(
+            self.E,
+            self.tau0
+        )
         self.blockSignals(False)
 
     def onTau0Changed(self):
         self.blockSignals(True)
-        self.E = distance_to_fret_efficiency(self.R, self.R0)
-        self.tau = fret_efficiency_to_lifetime(self.E, self.tau0)
-        self.kFRET = distance_to_fret_rate_constant(self.R, self.R0, self.tau0)
+        self.E = distance_to_fret_efficiency(
+            self.R,
+            self.R0
+        )
+        self.tau = fret_efficiency_to_lifetime(
+            self.E,
+            self.tau0
+        )
+        self.kFRET = distance_to_fret_rate_constant(
+            self.R,
+            self.R0,
+            self.tau0
+        )
         self.blockSignals(False)
 
     def onR0Changed(self):
         self.blockSignals(True)
-        self.E = distance_to_fret_efficiency(self.R, self.R0)
-        self.tau = fret_efficiency_to_lifetime(self.E, self.tau0)
-        self.kFRET = distance_to_fret_rate_constant(self.R, self.R0, self.tau0)
+        self.E = distance_to_fret_efficiency(
+            self.R,
+            self.R0
+        )
+        self.tau = fret_efficiency_to_lifetime(
+            self.E,
+            self.tau0
+        )
+        self.kFRET = distance_to_fret_rate_constant(
+            self.R,
+            self.R0,
+            self.tau0
+        )
         self.blockSignals(False)
 
     @property

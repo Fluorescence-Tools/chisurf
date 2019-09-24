@@ -46,7 +46,12 @@ class FittingParameter(
         self._values = None
 
     @property
-    def parameter_scan(self) -> Tuple[np.array, np.array]:
+    def parameter_scan(
+            self
+    ) -> Tuple[
+        np.array,
+        np.array
+    ]:
         return self._values, self._chi2s
 
     @parameter_scan.setter
@@ -57,7 +62,9 @@ class FittingParameter(
         self._values, self._chi2s = v
 
     @property
-    def error_estimate(self) -> float:
+    def error_estimate(
+            self
+    ) -> float:
         if self.is_linked:
             return self._link.error_estimate
         else:
@@ -119,7 +126,7 @@ class FittingParameter(
             layout: QtWidgets.QLayout = None,
             decimals: int = 4,
             **kwargs
-    ) -> mfm.fitting.fitting_widgets.FittingParameterWidget:
+    ) -> mfm.fitting.widgets.FittingParameterWidget:
         if text is None:
             text = self.name
         update_widget = kwargs.get('update_widget', lambda x: x)
@@ -128,7 +135,7 @@ class FittingParameter(
             'decimals': decimals,
             'layout': layout
         }
-        widget = mfm.fitting.fitting_widgets.FittingParameterWidget(
+        widget = mfm.fitting.widgets.FittingParameterWidget(
             self,
             **kw
         )
@@ -247,17 +254,6 @@ class FittingParameterGroup(
         for i, v in enumerate(vs):
             ps[i].value = v
 
-    @property
-    def outputs(self) -> dict:
-        """The outputs of a ParameterGroup are a dictionary
-
-        Returns
-        -------
-
-        """
-        a = dict()
-        return a
-
     def to_dict(
             self
     ) -> dict:
@@ -375,7 +371,7 @@ class FittingParameterGroup(
         current_version="19.08.23",
         details="use the mfm.fitting.widget.make_fitting_parameter_group_widget function instead"
     )
-    def to_widget(self, *args, **kwargs) -> mfm.fitting.fitting_widgets.FittingParameterGroupWidget:
-        return mfm.fitting.fitting_widgets.FittingParameterGroupWidget(self, *args, **kwargs)
+    def to_widget(self, *args, **kwargs) -> mfm.fitting.widgets.FittingParameterGroupWidget:
+        return mfm.fitting.widgets.FittingParameterGroupWidget(self, *args, **kwargs)
 
 

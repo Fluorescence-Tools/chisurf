@@ -4,7 +4,6 @@
 [![DOI](https://zenodo.org/badge/149296509.svg)](https://zenodo.org/badge/latestdoi/149296509)
 
 
-
 # ChiSurf
 
 ChiSurf is a software package for the analysis of complex fluorescence data acquired in time-resolved single-molecule 

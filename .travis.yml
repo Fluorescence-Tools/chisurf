@@ -18,10 +18,6 @@ before_install:
   - python setup.py build_ext --inplace --force
 install:
   - python setup.py install
-#before_script:
-#  - "export DISPLAY=:99.0"
-#  - "sh -e /etc/init.d/xvfb start"
-#  - sleep 3
 script:
   - source activate chisurf
   - conda install nose coverage
@@ -34,3 +30,6 @@ after_success:
   - pip install codacy-coverage
   - coverage xml
   - python-codacy-coverage -r coverage.xml
+#  - conda install conda-build anaconda-client git
+#  - git clone https://github.com/Fluorescence-Tools/conda-recipes.git
+#  -

@@ -20,6 +20,20 @@ class Tests(unittest.TestCase):
         b3 = mfm.base.Base(name='B', test_parameter='aa')
         self.assertEqual(b3.test_parameter, 'aa')
 
+    def test_copy(self):
+        import copy
+        b1 = mfm.base.Base(name='B')
+        b2 = copy.copy(b1)
+        self.assertNotEqual(
+            b1.unique_identifier,
+            b2.unique_identifier,
+        )
+        b1.unique_identifier = b2.unique_identifier
+        self.assertDictEqual(
+            b1.to_dict(),
+            b2.to_dict()
+        )
+
     def test_base_dict(self):
         d = {
             'name': 'B',

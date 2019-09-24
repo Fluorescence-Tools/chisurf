@@ -161,7 +161,14 @@ class ControlWidget(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/plots/molViewControlWidget.ui', self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "molViewControlWidget.ui"
+            ),
+            self
+        )
+
         self.parent = parent
 
         self.pushButton_4.clicked.connect(self.onReset)
