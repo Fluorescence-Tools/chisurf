@@ -104,7 +104,7 @@ def assign_element_to_atom_name(
 def parse_string_pdb(
         string: str,
         assign_charge: bool = False,
-        verbose: bool = True,  # mfm.verbose
+        verbose: bool = mfm.verbose,
         **kwargs
 ):
     """
@@ -234,10 +234,10 @@ def write_pdb(
 
 def write_points(
         filename: str,
-        points,
+        points: np.ndarray,
         verbose: bool = False,
-        mode='xyz',
-        density=None
+        mode: str = 'xyz',
+        density: np.ndarray = None
 ):
     """
 

@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import Tuple, Type
+
 import json
 import os
 import numpy as np
@@ -163,13 +166,18 @@ class BasicAV(object):
             d = p[:, [3]].flatten()
             d /= max(d) * 50.0
             xyz = p[:, [0, 1, 2]]
-            mfm.io.pdb.write_points(filename=filename + '.'+mode,
-                                    points=xyz,
-                                    mode=mode,
-                                    verbose=self.verbose,
-                                    density=d)
+            mfm.io.pdb.write_points(
+                filename=filename + '.' + mode,
+                points=xyz,
+                mode=mode,
+                verbose=self.verbose,
+                density=d
+            )
 
-    def dRmp(self, av):
+    def dRmp(
+            self,
+            av: Type[BasicAV],
+    ):
         """
         Calculate the distance between the mean positions with respect to the accessible volume `av`
 
@@ -187,7 +195,11 @@ class BasicAV(object):
         """
         return functions.dRmp(self, av)
 
-    def dRDA(self, av, **kwargs):
+    def dRDA(
+            self,
+            av: Type[BasicAV],
+            **kwargs
+    ):
         """Calculate the mean distance to the second accessible volume
 
         :param av:
@@ -204,7 +216,10 @@ class BasicAV(object):
         """
         return functions.RDAMean(self, av, **kwargs)
 
-    def widthRDA(self, av):
+    def widthRDA(
+            self,
+            av: Type[BasicAV],
+    ):
         """Calculates the width of a DA-distance distribution
 
         :param av:
@@ -222,7 +237,11 @@ class BasicAV(object):
         """
         return functions.widthRDA(self, av)
 
-    def dRDAE(self, av, forster_radius):
+    def dRDAE(
+            self,
+            av: Type[BasicAV],
+            forster_radius: float
+    ):
         """Calculate the FRET-averaged mean distance to the second accessible volume
 
         :param av: Accessible volume
@@ -239,7 +258,14 @@ class BasicAV(object):
         """
         return functions.RDAMeanE(self, av, forster_radius)
 
-    def pRDA(self, av, **kwargs):
+    def pRDA(
+            self,
+            av: Type[BasicAV],
+            **kwargs
+    ) -> Tuple[
+        np.ndarray,
+        np.ndarray
+    ]:
         """Calculates the distance distribution with respect to a second accessible volume and returns the
         distance axis and the probability of the respective distance. By default the distance-axis "mfm.rda_axis"
         is taken to generate the histogram.
@@ -258,10 +284,16 @@ class BasicAV(object):
         >>> y, x = av1.pRDA(av2)
 
         """
-        return functions.histogram_rda(self, av, **kwargs)
+        return functions.histogram_rda(
+            self,
+            av,
+            **kwargs
+        )
 
     @property
-    def Rmp(self):
+    def Rmp(
+            self
+    ) -> np.ndarray:
         """
         The mean position of the accessible volume (average x, y, z coordinate)
         """
@@ -324,7 +356,9 @@ class ACV(BasicAV):
         self._slow_centers = slow_centers
 
     @property
-    def slow_radius(self):
+    def slow_radius(
+            self
+    ) -> float:
         return self._slow_radius
 
     @slow_radius.setter
@@ -365,8 +399,15 @@ class ACV(BasicAV):
         self.update_density()
         BasicAV.update(self)
 
-    def __init__(self, *args, **kwargs):
-        BasicAV.__init__(self, *args, **kwargs)
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super().__init__(
+            *args,
+            **kwargs
+        )
         self._slow_centers = None
         self.slow_centers = kwargs.get('slow_centers', 'CB')
 
