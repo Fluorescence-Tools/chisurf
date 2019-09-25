@@ -7,7 +7,9 @@ from typing import List, Type
 import mfm.base
 
 
-class Experiment(mfm.base.Base):
+class Experiment(
+    mfm.base.Base
+):
     """
     All information contained within `ChiSurf` is associated to an experiment. Each experiment
     is associated with a list of models and a list of setups. The list of models and the list

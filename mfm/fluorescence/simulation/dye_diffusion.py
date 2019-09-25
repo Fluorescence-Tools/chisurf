@@ -106,32 +106,63 @@ def simulate_fret_decays(
         donor = donors[donor_key]
         acceptor = acceptors[acceptor_key]
 
-        donor_diffusion_simulation = DiffusionSimulation(donor,
-                                                         donor_quenching,
-                                                         simulation_parameter)
+        donor_diffusion_simulation = DiffusionSimulation(
+            donor,
+            donor_quenching,
+            simulation_parameter)
         donor_diffusion_simulation.run()
-        donor_diffusion_simulation.save(directory+prefix+'_%sD_diffusion.xyz' % donor_key, mode='xyz', skip=5)
-        donor_diffusion_simulation.av.save(directory+prefix+'_%sD' % donor_key)
+        donor_diffusion_simulation.save(
+            directory + prefix + '_%sD_diffusion.xyz' % donor_key,
+            mode='xyz',
+            skip=5
+        )
+        donor_diffusion_simulation.av.save(
+            directory + prefix + '_%sD' % donor_key)
         n_donor[donor_key] = len(donor_diffusion_simulation.av.points)
 
-        acceptor_diffusion_simulation = DiffusionSimulation(acceptor,
-                                                            acceptor_quenching,
-                                                            simulation_parameter)
+        acceptor_diffusion_simulation = DiffusionSimulation(
+            acceptor,
+            acceptor_quenching,
+            simulation_parameter
+        )
         acceptor_diffusion_simulation.run()
-        acceptor_diffusion_simulation.save(directory+prefix+'_%sA_diffusion.xyz' % acceptor_key, mode='xyz', skip=5)
-        acceptor_diffusion_simulation.av.save(directory+prefix+'_%sA' % acceptor_key)
+        acceptor_diffusion_simulation.save(
+            directory + prefix + '_%sA_diffusion.xyz' % acceptor_key,
+            mode='xyz',
+            skip=5
+        )
+        acceptor_diffusion_simulation.av.save(
+            directory + prefix + '_%sA' % acceptor_key
+        )
         n_acceptor[acceptor_key] = len(acceptor_diffusion_simulation.av.points)
 
-        fret_sim = FRETDecay(donor_diffusion_simulation, acceptor_diffusion_simulation,
-                             fret_parameter, decay_parameter)
+        fret_sim = FRETDecay(
+            donor_diffusion_simulation,
+            acceptor_diffusion_simulation,
+            fret_parameter, decay_parameter
+        )
         fret_sim.update()
         decay = fret_sim.get_histogram()
         decay = np.vstack(decay)
         if save:
-            np.savetxt(directory+prefix+"_FRET-%sD-%sA-dRDA.txt" % (donor_key, acceptor_key), fret_sim.dRDA.T, delimiter='\t')
-            np.savetxt(directory+prefix+"_FRET-%sD-%sA.txt" % (donor_key, acceptor_key), decay.T, delimiter='\t')
+            np.savetxt(
+                directory + prefix + "_FRET-%sD-%sA-dRDA.txt" % (
+                donor_key, acceptor_key),
+                fret_sim.dRDA.T,
+                delimiter='\t'
+            )
+            np.savetxt(
+                directory + prefix + "_FRET-%sD-%sA.txt" % (
+                donor_key, acceptor_key),
+                decay.T,
+                delimiter='\t'
+            )
         fret_decays[donor_key][acceptor_key] = decay
-        distances[donor_key][acceptor_key] = np.histogram(fret_sim.dRDA, bins=np.linspace(0, 150, 150), density=True)
+        distances[donor_key][acceptor_key] = np.histogram(
+            fret_sim.dRDA,
+            bins=np.linspace(0, 150, 150),
+            density=True
+        )
     if not get_number_of_av_points:
         return fret_decays, distances
     else:

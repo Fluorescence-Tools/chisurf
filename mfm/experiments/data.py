@@ -15,7 +15,9 @@ from mfm.curve import Curve
 import mfm.experiments.experiment
 
 
-class ExperimentalData(mfm.base.Data):
+class ExperimentalData(
+    mfm.base.Data
+):
     """
 
     """
@@ -38,11 +40,21 @@ class ExperimentalData(mfm.base.Data):
             *args,
             **kwargs
         )
-        self.setup = setup
+        if experiment is None:
+            experiment = mfm.experiments.experiment.Experiment(
+                name="NA"
+            )
+        if setup is None:
+            setup = mfm.experiments.reader.ExperimentReader(
+                name="NA"
+            )
+        self._setup = setup
         self._experiment = experiment
 
     @property
-    def experiment(self) -> mfm.experiments.experiment.Experiment:
+    def experiment(
+            self
+    ) -> mfm.experiments.experiment.Experiment:
         if self._experiment is None:
             if self.setup is None:
                 return None
@@ -328,7 +340,11 @@ class DataCurveGroup(DataGroup):
     def __str__(self):
         return [str(d) + "\n------\n" for d in self]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
         super(DataCurveGroup, self).__init__(*args, **kwargs)
 
 
