@@ -13,10 +13,10 @@ import numpy as np
 
 import mfm.io.pdb
 
-cartesian_keys = ['i', 'chain', 'res_id', 'res_name', 'atom_id', 'atom_name', 'element', 'coord',
-                  'charge', 'radius', 'bfactor']
-
-cartesian_formats = ['i4', '|S1', 'i4', '|S5', 'i4', '|S5', '|S1', '3f8', 'f4int', 'f4', 'f4']
+# cartesian_keys = ['i', 'chain', 'res_id', 'res_name', 'atom_id', 'atom_name', 'element', 'xyz',
+#                   'charge', 'radius', 'bfactor']
+#
+# cartesian_formats = ['i4', '|S1', 'i4', '|S5', 'i4', '|S5', '|S1', '3f8', 'f4int', 'f4', 'f4']
 
 clusterCriteria = ['maxclust', 'inconsistent', 'distance']
 
@@ -167,14 +167,14 @@ class Structure(mfm.base.Base):
     ) -> np.array:
         """Cartesian coordinates of all atoms
         """
-        return self.atoms['coord']
+        return self.atoms['xyz']
 
     @xyz.setter
     def xyz(
             self,
             v: np.array
     ):
-        self.atoms['coord'] = v
+        self.atoms['xyz'] = v
 
     @property
     def vdw(
@@ -314,7 +314,7 @@ class Structure(mfm.base.Base):
         if len(args) > 0:
             filename = args[0]
         aw = np.copy(self.atoms)
-        aw['coord'] = self.xyz
+        aw['xyz'] = self.xyz
         self.io.write_pdb(filename, aw, append_model=append_model, append_coordinates=append_coordinates)
 
     def update(
@@ -332,7 +332,7 @@ class Structure(mfm.base.Base):
                      ("ATOM ",
                       at['atom_id'], at['atom_name'], " ", at['res_name'], at['chain'],
                       at['res_id'], " ",
-                      at['coord'][0], at['coord'][1], at['coord'][2],
+                      at['xyz'][0], at['xyz'][1], at['xyz'][2],
                       0.0, 0.0, "  ", at['element'])
         return s + "END\n"
 
@@ -369,11 +369,11 @@ def onRMSF(
         super_impose(reference, s)
     print("Getting %s-atoms of reference" % atomName)
     ar = reference.getAtoms(atomName=atomName)
-    cr = ar['coord']
+    cr = ar['xyz']
     msf = np.zeros(len(ar), dtype=np.float32)
     for i, s in enumerate(candidateStructures):
         a = s.getAtoms(atomName=atomName)
-        ca = a['coord']
+        ca = a['xyz']
         msf += weights[i] * np.sum((cr - ca) ** 2, axis=1)
     return np.sqrt(msf)
 
@@ -524,7 +524,7 @@ def get_coordinates_of_residues(atoms, quencher, verbose=False):
     atom_idx = get_atom_index_of_residue_types(atoms, quencher)
     coordinates = OrderedDict()
     for res_key in quencher:
-        coordinates[res_key] = atoms['coord'][atom_idx[res_key]]
+        coordinates[res_key] = atoms['xyz'][atom_idx[res_key]]
     if verbose:
         print("Quencher atom-indeces: \n %s" % atom_idx)
         print("Quencher coordinates: \n %s" % coordinates)

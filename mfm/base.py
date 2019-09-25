@@ -254,14 +254,17 @@ class Data(Base):
 
     def __init__(
             self,
-            *args,
-            filename: str = None,
+            filename: str = "None",
             data: Data = None,
             embed_data: bool = None,
             read_file_size_limit: int = None,
+            *args,
             **kwargs
     ):
-        super(Data, self).__init__(*args, **kwargs)
+        super(Data, self).__init__(
+            *args,
+            **kwargs
+        )
         self._filename = filename
         self._data = data
 
@@ -272,6 +275,8 @@ class Data(Base):
 
         self._embed_data = embed_data
         self._max_file_size = read_file_size_limit
+
+        self.filename = self._filename
 
     @property
     def data(self) -> Data:
@@ -291,17 +296,10 @@ class Data(Base):
         except KeyError:
             return self.filename
 
-    @name.setter
-    def name(
-            self,
-            v: str
-    ):
-        self.__dict__['name'] = v
-
     @property
     def filename(self) -> str:
         try:
-            return os.path.normpath(self._filename)
+            return self._filename
         except (AttributeError, TypeError):
             return 'No file'
 
@@ -310,25 +308,28 @@ class Data(Base):
             self,
             v: str
     ) -> None:
-        self._filename = os.path.normpath(v)
-        file_size = os.path.getsize(self._filename)
-        if file_size < self._max_file_size and self._embed_data:
-            data = open(self._filename).read()
-            if len(data) > mfm.settings.cs_settings['database']['compression_data_limit']:
-                data = zlib.compress(data)
-            if len(data) < mfm.settings.cs_settings['database']['embed_data_limit']:
-                self._data = data
-            else:
-                self._data = None
-        else:
-            self._data = None
-        if mfm.verbose:
-            print("Filename: %s" % self._filename)
-            print("File size [byte]: %s" % file_size)
+        try:
+            self._filename = os.path.normpath(v)
+            file_size = os.path.getsize(self._filename)
+            self._data = b""
+            if file_size < self._max_file_size and self._embed_data:
+                with open(self._filename, "rb") as fp:
+                    data = fp.read()
+                    if len(data) > mfm.settings.cs_settings['database']['compression_data_limit']:
+                        data = zlib.compress(data)
+                    if len(data) < mfm.settings.cs_settings['database']['embed_data_limit']:
+                        self._data = data
+            if self.verbose:
+                print("Filename: %s" % self._filename)
+                print("File size [byte]: %s" % file_size)
+        except FileNotFoundError:
+            if self.verbose:
+                print("Filename: ", v, "not found.")
+
 
     def __str__(self):
         s = super(Data, self).__str__()
-        s += "filename: %s\n" % self.filename
+        s += "\nfilename: %s" % self.filename
         return s
 
 

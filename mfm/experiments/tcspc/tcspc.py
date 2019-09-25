@@ -262,7 +262,10 @@ class TCSPCReader(ExperimentReader):
             )
             data.filename = filename
             data_curves.append(data)
-        data_group = mfm.experiments.data.DataCurveGroup(data_curves, filename)
+        data_group = mfm.experiments.data.DataCurveGroup(
+            data_curves,
+            filename,
+        )
         return data_group
 
 

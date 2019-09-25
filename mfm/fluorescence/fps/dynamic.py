@@ -455,7 +455,7 @@ class Sticking(ParameterGroup):
     def slow_center(self):
         """The location of the slow part of the accessible volume.
         """
-        coordinates = self.structure.atoms['coord']
+        coordinates = self.structure.atoms['xyz']
         if self.sticky_mode == 'surface' or self.quenching_parameter is None:
             slow_atoms = np.where(self.structure.atoms['atom_name'] == 'CA')[0]
             coordinates = coordinates[slow_atoms]
@@ -559,7 +559,7 @@ class ProteinQuenching(ParameterGroup):
             for atom_name in v[residue_key]['atoms']:
                 idx = np.where((atoms['res_name'] == residue_key) & (self.structure.atoms['atom_name'] == atom_name))[0]
                 atoms_idx += list(idx)
-            v[residue_key]['coordinates'] = self.structure.atoms[atoms_idx]['coord']
+            v[residue_key]['coordinates'] = self.structure.atoms[atoms_idx]['xyz']
             v[residue_key]['atom_idx'] = np.array(atoms_idx, dtype=np.int32)
         self._quencher = v
 

@@ -93,8 +93,12 @@ class Main(QtWidgets.QMainWindow):
         self.comboBox_setupSelect.setCurrentIndex(v)
 
     @property
-    def current_setup(self):
-        return self.current_experiment.setups[self.current_setup_idx]
+    def current_setup(
+            self
+    ) -> mfm.experiments.reader.ExperimentReader:
+        return self.current_experiment.setups[
+            self.current_setup_idx
+        ]
 
     @current_setup.setter
     def current_setup(
@@ -133,11 +137,13 @@ class Main(QtWidgets.QMainWindow):
             event: QtGui.QCloseEvent
     ):
         if mfm.settings.gui['confirm_close_program']:
-            reply = mfm.widgets.widgets.MyMessageBox.question(self,
-                                                              'Message',
-                                                              "Are you sure to quit?",
-                                                              QtWidgets.QMessageBox.Yes,
-                                                              QtWidgets.QMessageBox.No)
+            reply = mfm.widgets.widgets.MyMessageBox.question(
+                self,
+                'Message',
+                "Are you sure to quit?",
+                QtWidgets.QMessageBox.Yes,
+                QtWidgets.QMessageBox.No
+            )
             if reply == QtWidgets.QMessageBox.Yes:
                 event.accept()
             else:
@@ -146,15 +152,15 @@ class Main(QtWidgets.QMainWindow):
             event.accept()
 
     def subWindowActivated(self):
-        subwindow = self.mdiarea.currentSubWindow()
-        if subwindow is not None:
+        sub_window = self.mdiarea.currentSubWindow()
+        if sub_window is not None:
             for f in mfm.fits:
-                if f == subwindow.fit:
+                if f == sub_window.fit:
                     if self.current_fit is not mfm.fits[self.fit_idx]:
                         mfm.run("cs.current_fit = mfm.fits[%s]" % self.fit_idx)
                         break
 
-            self.current_fit_widget = subwindow.fit_widget
+            self.current_fit_widget = sub_window.fit_widget
             window_title = mfm.__name__ + "(" + mfm.__version__ + "): " + str(self.current_fit.name)
 
             self.setWindowTitle(window_title)
@@ -164,7 +170,7 @@ class Main(QtWidgets.QMainWindow):
             self.current_fit.model.update()
             self.current_fit.model.show()
             self.current_fit_widget.show()
-            subwindow.current_plt_ctrl.show()
+            sub_window.current_plt_ctrl.show()
 
     def onRunMacro(self):
         filename = mfm.widgets.get_filename("Python macros", file_type="Python file (*.py)")
@@ -412,8 +418,15 @@ class Main(QtWidgets.QMainWindow):
         mfm.cmd.add_dataset(setup=global_setup)
         #self.onAddDataset(experiment=global_fit, setup=global_setup)  # Add Global-Dataset by default
 
-    def __init__(self, *args, **kwargs):
-        super(Main, self).__init__(*args, **kwargs)
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super(Main, self).__init__(
+            *args,
+            **kwargs
+        )
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -512,7 +525,7 @@ class Main(QtWidgets.QMainWindow):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     mfm.console = mfm.widgets.QIPythonWidget()
-    win = Main(parent=None)
+    win = Main()
     mfm.console.history_widget = win.plainTextEditHistory
     mfm.cs = win
     win.init_setups()

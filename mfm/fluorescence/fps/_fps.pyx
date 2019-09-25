@@ -339,7 +339,7 @@ def simulate_traj_points(np.ndarray[dtype=np.float32_t, ndim=3] av_d,
     >>> av = mfm.fps.AV(structure, residue_seq_number=residue_number, atom_name=atom_name)
 
     Calcualte a slow part of the accessible volume
-    >>> slow_point = structure.residue_dict[18]['CB']['coord'].reshape([1,3])
+    >>> slow_point = structure.residue_dict[18]['CB']['xyz'].reshape([1,3])
     >>> av.calc_slow_av(slow_centers=slow_point, slow_radius=5)
 
     Define the dye geometry. Here the dye geometry is determined by three points.

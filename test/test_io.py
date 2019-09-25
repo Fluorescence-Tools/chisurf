@@ -110,17 +110,41 @@ class Tests(unittest.TestCase):
 
     def test_fetch_pdb(self):
         pdb_id = "148L"
-        mfm.io.pdb.fetch_pdb_string(pdb_id)
+        s = mfm.io.pdb.fetch_pdb_string(pdb_id)
+        self.assertEqual(
+            'HEADER    HYDROLASE/HYDROLASE SUBSTRATE           27-OCT-93   148L              \nTITLE     A COVALEN',
+            s[:100]
+        )
 
     def test_parse_string_pdb(self):
         pdb_id = "148L"
         s = mfm.io.pdb.fetch_pdb_string(pdb_id)
-        mfm.io.pdb.parse_string_pdb(s)
+        atoms = mfm.io.pdb.parse_string_pdb(s)
+        atoms_reference = np.array(
+            [[7.71, 28.561, 39.546],
+             [8.253, 29.664, 38.758],
+             [7.445, 30.133, 37.548],
+             [7.189, 29.466, 36.54],
+             [9.738, 29.578, 38.445],
+             [10.256, 30.962, 38.143],
+             [10.845, 31.785, 39.624],
+             [11.874, 30.541, 40.499],
+             [7.052, 31.375, 37.689],
+             [6.241, 32.049, 36.726]]
+        )
+        self.assertEqual(
+            np.allclose(
+                atoms['xyz'][:10],
+                atoms_reference
+            ),
+            True
+        )
 
     def test_read_pdb(self):
         pdb_id = "148L"
-
-        file = tempfile.NamedTemporaryFile(suffix='.pdb')
+        file = tempfile.NamedTemporaryFile(
+            suffix='.pdb'
+        )
         with open(file=file.name, mode='w') as fp:
             fp.write(
                 mfm.io.pdb.fetch_pdb_string(pdb_id)
@@ -137,13 +161,13 @@ class Tests(unittest.TestCase):
              (4, 'E', 1, 'MET', 5, 'CB', 'C', [9.738, 29.578, 38.445], 0., 1.7, 58.3, 12.011)],
             dtype=[('i', '<i4'), ('chain', '<U1'), ('res_id', '<i4'), ('res_name', '<U5'),
                    ('atom_id', '<i4'), ('atom_name', '<U5'), ('element', '<U1'),
-                   ('coord', '<f8', (3,)), ('charge', '<f8'), ('radius', '<f8'),
+                   ('xyz', '<f8', (3,)), ('charge', '<f8'), ('radius', '<f8'),
                    ('bfactor', '<f8'), ('mass', '<f8')]
         )
         self.assertEqual(
             np.allclose(
-                atoms['coord'][:5],
-                atoms_reference['coord']
+                atoms['xyz'][:5],
+                atoms_reference['xyz']
             ),
             True
         )
