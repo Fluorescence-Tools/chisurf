@@ -149,7 +149,7 @@ class Csv(object):
         self.error_x_on = error_x_on
         self.directory = directory
         self.skiprows = skiprows
-        self.mode = file_type
+        self.file_type = file_type
         self.verbose = verbose
 
         self._header = None
@@ -180,6 +180,7 @@ class Csv(object):
             use_header: bool = None,
             verbose: bool = mfm.verbose,
             delimiter: str = None,
+            file_type: str = None,
             **kwargs
     ):
         """
@@ -191,6 +192,8 @@ class Csv(object):
         the verbose attribute of the instance is
         True.
         """
+        if file_type is None:
+            file_type = self.file_type
         if use_header is None:
             use_header = self.use_header
         if skiprows is None:
@@ -217,7 +220,7 @@ class Csv(object):
                 with open(filename, 'r') as csvfile:
                     print(csvfile.read()[:512])
 
-            if self.mode == 'csv':
+            if file_type == 'csv':
                 if delimiter is None:
                     with open(filename, 'r') as csvfile:
                         for _ in range(skiprows):
@@ -249,7 +252,7 @@ class Csv(object):
             data: np.ndarray,
             filename: str,
             delimiter: str = '\t',
-            mode: str = 'txt',
+            file_type: str = 'txt',
             header: str = ''
     ):
         self._data = data
@@ -260,7 +263,7 @@ class Csv(object):
             file_type: %s
             delimiter: %s
             Object-type: %s
-            """ % (filename, mode, delimiter, type(data))
+            """ % (filename, file_type, delimiter, type(data))
             print(s)
         # if isinstance(data, mfm.curve.Curve):
         #     d = np.array(data[:])
@@ -269,14 +272,14 @@ class Csv(object):
         # else:
         #     d = np.array(data)
         #
-        if mode == 'txt':
+        if file_type == 'txt':
             np.savetxt(
                 filename,
                 data.T,
                 delimiter=delimiter,
                 header=header
             )
-        if mode == 'npy':
+        if file_type == 'npy':
             np.save(
                 filename,
                 data.T

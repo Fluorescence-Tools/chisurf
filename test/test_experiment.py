@@ -127,3 +127,72 @@ class Tests(unittest.TestCase):
         d = mfm.experiments.data.DataCurve(
             *data
         )
+        file = tempfile.NamedTemporaryFile(
+            suffix='.txt'
+        )
+        d.save(
+            filename=file.name,
+            file_type='txt'
+        )
+        self.assertEqual(
+            d.filename,
+            file.name
+        )
+
+        reference_string = """
+length  : 50
+x	y	error-x	error-y
+0.000e+00   	0.000e+00   	0.000e+00   	1.000e+00   	
+1.282e-01   	1.279e-01   	0.000e+00   	1.000e+00   	
+....
+6.027e+00   	-2.537e-01  	0.000e+00   	1.000e+00  """
+        self.assertEqual(
+            reference_string in d.__str__(),
+            True
+        )
+
+        d2 = mfm.experiments.data.DataCurve()
+        d2.load(
+            filename=file.name,
+            skiprows=0
+        )
+        self.assertEqual(
+            np.allclose(
+                np.hstack(d[:]),
+                np.hstack(d2[:]),
+            ),
+            True
+        )
+
+        d3 = mfm.experiments.data.DataCurve()
+        d3.set_data(*d2.data)
+        self.assertEqual(
+            np.allclose(
+                np.hstack(d[:]),
+                np.hstack(d3[:]),
+            ),
+            True
+        )
+
+        d4 = mfm.experiments.data.DataCurve()
+        d4.data = d3.data
+        self.assertEqual(
+            np.allclose(
+                np.hstack(d[:]),
+                np.hstack(d4[:]),
+            ),
+            True
+        )
+
+        # d5 = mfm.experiments.data.DataCurve(
+        #     filename=file.name
+        # )
+        # self.assertEqual(
+        #     np.allclose(
+        #         np.hstack(d[:]),
+        #         np.hstack(d5[:]),
+        #     ),
+        #     True
+        # )
+        #
+

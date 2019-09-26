@@ -11,9 +11,9 @@ import numba as nb
 import scipy.stats
 
 import mfm.fluorescence
-from mfm.fluorescence.fps import BasicAV
-from mfm.structure.structure import Structure
-from mfm.structure.potential import cPotentials
+import mfm.fluorescence.fps
+import mfm.structure.structure
+import mfm.structure.potential.cPotentials
 import mfm.widgets
 import mfm
 
@@ -321,11 +321,11 @@ class Electrostatics(object):
         self.structure = structure
         self.name = 'ele'
         if type == 'gb':
-            self.p = cPotentials.gb
+            self.p = mfm.structure.potential.cPotentials.gb
 
     def getEnergy(self) -> float:
         structure = self.structure
-        #Eel = cPotentials.gb(structure.xyz)
+        #Eel = mfm.structure.potential.cPotentials.gb(structure.xyz)
         Eel = gb(structure.xyz)
         self.E = Eel
         return Eel
@@ -375,7 +375,7 @@ class HPotential(object):
         s1 = self.structure
         cca2 = self.cutoffCA ** 2
         ch2 = self.cutoffH ** 2
-        nHbond, Ehbond = cPotentials.hBondLookUpAll(s1.l_res, s1.dist_ca, s1.xyz, self._hPot, cca2, ch2)
+        nHbond, Ehbond = mfm.structure.potential.cPotentials.hBondLookUpAll(s1.l_res, s1.dist_ca, s1.xyz, self._hPot, cca2, ch2)
         self.E = Ehbond
         self.nHbond = nHbond
         return self.E
@@ -420,12 +420,12 @@ class GoPotential(object):
         c = self.structure
         nnEFactor = self.nnEFactor if self.non_native_contact_on else 0.0
         cutoff = self.cutoff if self.native_cutoff_on else 1e6
-        self.eMatrix, self.sMatrix = cPotentials.go_init(c.residue_lookup_r, c.dist_ca,
+        self.eMatrix, self.sMatrix = mfm.structure.potential.cPotentials.go_init(c.residue_lookup_r, c.dist_ca,
                                                          self.epsilon, nnEFactor, cutoff)
 
     def getEnergy(self):
         c = self.structure
-        Etot, nNa, Ena, nNN, Enn = cPotentials.go(c.residue_lookup_r, c.dist_ca, self.eMatrix, self.sMatrix)
+        Etot, nNa, Ena, nNN, Enn = mfm.structure.potential.cPotentials.go(c.residue_lookup_r, c.dist_ca, self.eMatrix, self.sMatrix)
         #Etot = go(c., c.dist_ca, self.eMatrix, self.sMatrix)
         self.E = Etot
         return Etot
@@ -475,7 +475,7 @@ class MJPotential(object):
 
     def getEnergy(self):
         c = self.structure
-        nCont, Emj = cPotentials.mj(c.l_res, c.residue_types, c.dist_ca, c.xyz, self.mjPot, cutoff=self.ca_cutoff)
+        nCont, Emj = mfm.structure.potential.cPotentials.mj(c.l_res, c.residue_types, c.dist_ca, c.xyz, self.mjPot, cutoff=self.ca_cutoff)
         self.E = Emj
         self.nCont = nCont
         return Emj
@@ -582,14 +582,23 @@ class ASA(object):
         self.structure = structure
         self.probe = probe
         self.n_sphere_point = n_sphere_point
-        self.sphere_points = cPotentials.spherePoints(n_sphere_point)
+        self.sphere_points = mfm.structure.potential.cPotentials.spherePoints(
+            n_sphere_point
+        )
         self.radius = radius
 
     def getEnergy(self) -> float:
         c = self.structure
         #def asa(double[:, :] xyz, int[:, :] resLookUp, double[:, :] caDist, double[:, :] sphere_points,
         #double probe=1.0, double radius = 2.5, char sum=1)
-        asa = cPotentials.asa(c.xyz, c.l_res, c.dist_ca, self.sphere_points, self.probe, self.radius)
+        asa = mfm.structure.potential.cPotentials.asa(
+            c.xyz,
+            c.l_res,
+            c.dist_ca,
+            self.sphere_points,
+            self.probe,
+            self.radius
+        )
         return asa
 
 
@@ -625,7 +634,7 @@ class ClashPotential(object):
 
     def getEnergy(self) -> float:
         c = self.structure
-        return cPotentials.clash_potential(
+        return mfm.structure.potential.cPotentials.clash_potential(
             c.xyz,
             c.vdw,
             self.clash_tolerance,
@@ -731,7 +740,10 @@ class AvPotential(object):
             )
             for position_key in self.positions
         ]
-        avs = map(lambda x: BasicAV(**x), arguments)
+        avs = map(
+            lambda x: mfm.fluorescence.fps.BasicAV(**x),
+            arguments
+        )
         for i, position_key in enumerate(self.positions):
             self.avs[position_key] = avs[i]
 
@@ -749,7 +761,10 @@ class AvPotential(object):
             If this is True output to stdout is generated
         """
         verbose = verbose or self.verbose
-        if isinstance(structure, Structure):
+        if isinstance(
+                structure,
+                mfm.structure.structure.Structure
+        ):
             self.structure = structure
         for distance_key in self.distances:
             distance = self.distances[distance_key]
@@ -773,8 +788,12 @@ class AvPotential(object):
                 print("Forster-Radius %.1f" % distance['Forster_radius'])
                 print("Distance type: %s" % distance_type)
                 print("Model distance: %.1f" % d12)
-                print("Experimental distance: %.1f (-%.1f, +%.1f)" % (distance['distance'],
-                                                                      distance['error_neg'], distance['error_pos']))
+                print(
+                    "Experimental distance: %.1f (-%.1f, +%.1f)" % (
+                        distance['distance'],
+                        distance['error_neg'], distance['error_pos']
+                    )
+                )
 
     def getChi2(
             self,
@@ -794,7 +813,10 @@ class AvPotential(object):
         :return: A float containig the chi2 (reduced or unreduced) of the current or provided structure.
         """
         verbose = self.verbose or verbose
-        if isinstance(structure, Structure):
+        if isinstance(
+                structure,
+                mfm.structure.structure.Structure
+        ):
             self.structure = structure
 
         chi2 = 0.0

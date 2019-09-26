@@ -557,7 +557,13 @@ def sample_fit(
         scan = np.vstack([chi2[mask], para[mask].T])
         header = "chi2\t"
         header += "\t".join(fit.model.parameter_names)
-        mfm.io.ascii.Csv().save(scan, fn, delimiter='\t', mode='txt', header=header)
+        mfm.io.ascii.Csv().save(
+            scan,
+            fn,
+            delimiter='\t',
+            file_type='txt',
+            header=header
+        )
     # restore initial parameter values
     fit.model.parameter_values = pv
     fit.model.update()
