@@ -50,7 +50,6 @@ class CsvTCSPCWidget(
 
     def __init__(self, **kwargs):
         QtWidgets.QWidget.__init__(self)
-        self.parent = kwargs.get('parent', None)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -262,7 +261,10 @@ class TCSPCReader(ExperimentReader):
             )
             data.filename = filename
             data_curves.append(data)
-        data_group = mfm.experiments.data.DataCurveGroup(data_curves, filename)
+        data_group = mfm.experiments.data.DataCurveGroup(
+            data_curves,
+            filename,
+        )
         return data_group
 
 
@@ -299,7 +301,10 @@ class TCSPCSetupWidget(
             *args,
             **kwargs
     ):
-        super(TCSPCSetupWidget, self).__init__(*args, **kwargs)
+        super(TCSPCSetupWidget, self).__init__(
+            *args,
+            **kwargs
+        )
         QtWidgets.QWidget.__init__(self)
         #TCSPCReader.__init__(self, *args, **kwargs)
 

@@ -43,7 +43,7 @@ keys_formats = [
     ('atom_id', 'i4'),
     ('atom_name', '|U5'),
     ('element', '|U1'),
-    ('coord', '3f8'),
+    ('xyz', '3f8'),
     ('charge', 'f8'),
     ('radius', 'f8'),
     ('bfactor', 'f8'),
@@ -88,7 +88,7 @@ def assign_element_to_atom_name(
     >>> assign_element_to_atom_name('CA')
     C
     """
-    element = ""
+    element = atom_name
     if atom_name.upper() not in common.atom_weights:
         # Inorganic elements have their name shifted left by one position
         #  (is a convention in PDB, but not part of the standard).
@@ -104,19 +104,23 @@ def assign_element_to_atom_name(
 def parse_string_pdb(
         string: str,
         assign_charge: bool = False,
-        verbose: bool = mfm.verbose,
-        **kwargs
+        verbose: bool = mfm.verbose
 ):
     """
 
     :param string:
     :param assign_charge:
     :param verbose:
-    :param kwargs:
     :return:
     """
     rows = string.splitlines()
-    atoms = np.zeros(len(rows), dtype={'names': keys, 'formats': formats})
+    atoms = np.zeros(
+        len(rows),
+        dtype={
+            'names': keys,
+            'formats': formats
+        }
+    )
     ni = 0
     for line in rows:
         if verbose:
@@ -129,9 +133,9 @@ def parse_string_pdb(
             atoms['atom_name'][ni] = atom_name
             atoms['res_id'][ni] = line[22:26]
             atoms['atom_id'][ni] = line[6:11]
-            atoms['coord'][ni][0] = line[30:38]
-            atoms['coord'][ni][1] = line[38:46]
-            atoms['coord'][ni][2] = line[46:54]
+            atoms['xyz'][ni][0] = line[30:38]
+            atoms['xyz'][ni][1] = line[38:46]
+            atoms['xyz'][ni][2] = line[46:54]
             atoms['bfactor'][ni] = line[60:65]
             atoms['element'][ni] = assign_element_to_atom_name(atom_name)
             try:
@@ -176,7 +180,7 @@ def read(
            (3, ' ', 7, 'MET', 4, 'O', 'O', [73.642, -18.708, 11.489], 0.0, 1.4, 0.0, 15.9994),
            (4, ' ', 7, 'MET', 5, 'CB', 'C', [73.384, -15.89, 10.649], 0.0, 1.76, 0.0, 12.0107)],
           dtype=[('i', '<i4'), ('chain', 'S1'), ('res_id', '<i4'), ('res_name', 'S5'), ('atom_id', '<i4'), ('atom_name', 'S5
-    '), ('element', 'S1'), ('coord', '<f8', (3,)), ('charge', '<f8'), ('radius', '<f8'), ('bfactor', '<f8'), ('mass', '<f8')
+    '), ('element', 'S1'), ('xyz', '<f8', (3,)), ('charge', '<f8'), ('radius', '<f8'), ('bfactor', '<f8'), ('mass', '<f8')
     ])
     """
     with open(filename, 'r') as f:
@@ -222,7 +226,7 @@ def write_pdb(
         al = [
             "%-6s%5d %4s%1s%3s %1s%4d%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n" %
             ("ATOM ", at['atom_id'], at['atom_name'], " ", at['res_name'], at['chain'], at['res_id'], " ",
-             at['coord'][0], at['coord'][1], at['coord'][2], 0.0, at['bfactor'], at['element'], "  ")
+             at['xyz'][0], at['xyz'][1], at['xyz'][2], 0.0, at['bfactor'], at['element'], "  ")
             for at in atoms
         ]
         if append_model:
@@ -250,7 +254,7 @@ def write_points(
     """
     if mode == 'pdb':
         atoms = np.empty(len(points), dtype={'names': keys, 'formats': formats})
-        atoms['coord'] = points
+        atoms['xyz'] = points
         if density is not None:
             atoms['bfactor'] = density
         write_pdb(filename, atoms, verbose=verbose)
@@ -310,3 +314,30 @@ def get_atom_index(
     return attachment_atom_index
 
 
+def parse_string_pqr(
+        string: str,
+        verbose: bool = mfm.verbose
+):
+    rows = string.splitlines()
+    atoms = np.zeros(len(rows), dtype={'names': keys, 'formats': formats})
+    ni = 0
+    for line in rows:
+        if line.startswith('ATOM'):
+            atom_name = line[12:16].strip().upper()
+            atoms['i'][ni] = ni
+            atoms['chain'][ni] = line[21]
+            atoms['atom_name'][ni] = atom_name.upper()
+            atoms['res_name'][ni] = line[17:20].strip().upper()
+            atoms['res_id'][ni] = line[21:27]
+            atoms['atom_id'][ni] = line[6:11]
+            atoms['xyz'][ni][0] = float(line[30:38].strip())
+            atoms['xyz'][ni][1] = float(line[38:46].strip())
+            atoms['xyz'][ni][2] = float(line[46:54].strip())
+            atoms['radius'][ni] = float(line[63:70].strip())
+            atoms['element'][ni] = assign_element_to_atom_name(atom_name)
+            atoms['charge'][ni] = float(line[55:62].strip())
+            ni += 1
+    atoms = atoms[:ni]
+    if verbose:
+        print("Number of atoms: %s" % (ni + 1))
+    return atoms

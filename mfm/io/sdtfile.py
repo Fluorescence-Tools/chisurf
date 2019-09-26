@@ -187,8 +187,12 @@ class SdtFile(object):
         for _ in range(self.header.no_of_data_blocks):
             # read data block header
             fh.seek(offset)
-            bh = numpy.rec.fromfile(fh, dtype=BLOCK_HEADER, shape=1,
-                                    byteorder='<')[0]
+            bh = numpy.rec.fromfile(
+                fh,
+                dtype=BLOCK_HEADER,
+                shape=1,
+                byteorder='<'
+            )[0]
             self.block_headers.append(bh)
             # read data block
             mi = self.measure_info[bh.meas_desc_block_no]
@@ -200,7 +204,7 @@ class SdtFile(object):
             elif dsize == mi.image_x * mi.image_y * mi.adc_re:
                 data = data.reshape(mi.image_x, mi.image_y, mi.adc_re)
             else:
-                data = data.reshape(-1, mi.adc_re)
+                data = data.reshape(-1, mi.adc_re[0])
             self.data.append(data)
             # generate time axis
             t = numpy.arange(mi.adc_re, dtype=numpy.float64)
@@ -210,7 +214,9 @@ class SdtFile(object):
 
     def block_measure_info(self, block):
         """Return measure_info record for data block."""
-        return self.measure_info[self.data_headers[block].meas_desc_block_no]
+        return self.measure_info[
+            self.data_headers[block].meas_desc_block_no
+        ]
 
     def __str__(self):
         """Return string containing all information about SDT file."""

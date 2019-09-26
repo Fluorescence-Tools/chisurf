@@ -145,7 +145,7 @@ def gb(np.ndarray rAtoms, double epsilon=4.0, double epsilon0 = 80.1, double cut
 
     cdef int nAtoms = rAtoms.shape[0]
     cdef double cutoff2 = cutoff ** 2
-    cdef double[:, :] rs = rAtoms['coord']
+    cdef double[:, :] rs = rAtoms['xyz']
     cdef double[:] aRadii = rAtoms['radius']
     cdef double[:] aCharges = rAtoms['charge']
     cdef double pre = 1. / (8 * 3.14159265359) * (1. / epsilon0 - 1. / epsilon)

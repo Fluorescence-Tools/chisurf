@@ -32,7 +32,9 @@ class ExperimentalDataSelector(
     def datasets(
             self
     ) -> List[mfm.experiments.data.ExperimentalData]:
-        data_curves = self.get_data_sets(curve_type=self.curve_type)
+        data_curves = self.get_data_sets(
+            curve_type=self.curve_type
+        )
         if self.setup is not None:
             return [
                 d for d in data_curves if isinstance(d.setup, self.setup)
@@ -245,7 +247,9 @@ class ExperimentalDataSelector(
         self.fit = fit
         self.setup = setup
 
-        super(ExperimentalDataSelector, self).__init__(parent=parent)
+        super(ExperimentalDataSelector, self).__init__(
+            parent=parent
+        )
         self.setWindowIcon(icon)
         self.setWordWrap(True)
         self.setHeaderHidden(True)

@@ -130,9 +130,9 @@ class DyeDecay(Model, Curve):
             coordinates = get_coordinates_of_residues(self.structure.atoms, self.quencher)
             s = [np.vstack(coordinates[res_key]) for res_key in coordinates if len(coordinates[res_key]) > 0]
             coordinates = np.vstack(s)
-        elif self.sticking_parameter.sticky_mode == 'surface':
+        else: #elif self.sticking_parameter.sticky_mode == 'surface':
             slow_atoms = np.where(self.structure.atoms['atom_name'] == 'CB')[0]
-            coordinates = self.structure.atoms['coord'][slow_atoms]
+            coordinates = self.structure.atoms['xyz'][slow_atoms]
         return coordinates
 
     @property

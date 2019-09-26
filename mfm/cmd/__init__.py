@@ -217,11 +217,19 @@ def add_dataset(
         **kwargs
 ) -> None:
     cs = mfm.cs
+    print(kwargs)
     if dataset is None:
-        dataset = setup.get_data(**kwargs)
+        dataset = setup.get_data(
+            **kwargs
+        )
 
-    dataset_group = dataset if isinstance(dataset, mfm.experiments.data.ExperimentDataGroup) \
-        else mfm.experiments.data.ExperimentDataCurveGroup(dataset)
+    dataset_group = dataset if isinstance(
+        dataset,
+        mfm.experiments.data.ExperimentDataGroup
+    ) else mfm.experiments.data.ExperimentDataCurveGroup(
+        dataset
+    )
+
     if len(dataset_group) == 1:
         mfm.imported_datasets.append(dataset_group[0])
     else:
