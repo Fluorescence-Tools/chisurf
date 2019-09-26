@@ -26,7 +26,7 @@ class LoadStructure(
         :param args:
         :param kwargs:
         """
-        super(LoadStructure, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )
@@ -65,7 +65,7 @@ class LoadStructureFolder(
     name = 'Trajectory'
 
     def __init__(self, *args, **kwargs):
-        super(LoadStructureFolder, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.parent = kwargs.get('parent', None)
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout

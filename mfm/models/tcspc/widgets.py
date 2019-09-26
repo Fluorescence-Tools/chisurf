@@ -44,7 +44,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         :param hide_curve_convolution:
         :param kwargs:
         """
-        super(ConvolveWidget, self).__init__(
+        super().__init__(
             fit,
             **kwargs
         )
@@ -173,7 +173,7 @@ class CorrectionsWidget(
         :param hide_corrections:
         :param kwargs:
         """
-        super(CorrectionsWidget, self).__init__(
+        super().__init__(
             fit=fit,
             threshold=0.9,
             reverse=False,
@@ -272,7 +272,7 @@ class GenericWidget(
         :param hide_generic:
         :param kwargs:
         """
-        super(GenericWidget, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.parent = kwargs.get('parent', None)
 
@@ -356,7 +356,7 @@ class AnisotropyWidget(
             self,
             **kwargs
     ):
-        super(AnisotropyWidget, self).__init__(
+        super().__init__(
             **kwargs
         )
 
@@ -545,7 +545,7 @@ class PDDEMModelWidget(ModelWidget, PDDEMModel):
     ]
 
     def __init__(self, fit, **kwargs):
-        super(PDDEMModelWidget, self).__init__(
+        super().__init__(
             fit,
             icon=QtGui.QIcon(":/icons/icons/TCSPC.ico"),
             **kwargs
@@ -635,7 +635,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
             title: str = '',
             **kwargs
     ):
-        super(LifetimeWidget, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.layout = QtWidgets.QVBoxLayout(self)
         self.gb = QtWidgets.QGroupBox()
@@ -751,7 +751,7 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
     ):
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
-        super(LifetimeModelWidgetBase, self).__init__(
+        super().__init__(
             fit=fit,
             icon=icon
         )
@@ -793,7 +793,7 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
             fit: mfm.fitting.fit.FitGroup,
             **kwargs
     ):
-        super(LifetimeModelWidget, self).__init__(
+        super().__init__(
             fit=fit,
             **kwargs
         )
@@ -815,7 +815,7 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
             model=None,
             **kwargs
     ):
-        super(GaussianWidget, self).__init__(
+        super().__init__(
             donors=donors,
             model=model,
             **kwargs

@@ -16,7 +16,7 @@ class UpdateDialog(QtWidgets.QWidget):
             parent: QtWidgets.QLayout = None,
             installed_version: str = None
     ):
-        super(UpdateDialog, self).__init__(parent=parent)
+        super().__init__(parent=parent)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -71,7 +71,7 @@ class FileDownloadThread(QtCore.QThread):
     signal = QtCore.pyqtSignal()
 
     def __init__(self, progbar, url, target):
-        super(FileDownloadThread, self).__init__()
+        super().__init__()
         self._url = url
         self._target = target
         self.progbar = progbar

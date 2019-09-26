@@ -23,7 +23,7 @@ class FCS(ExperimentReader, CsvWidget):
             *args,
             **kwargs
     ):
-        super(FCS, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )

@@ -192,7 +192,7 @@ class Lifetime(FittingParameterGroup):
             link: FittingParameter = None,
             **kwargs
     ):
-        super(Lifetime, self).__init__(
+        super().__init__(
             name=name,
             **kwargs
         )
@@ -223,7 +223,7 @@ class LifetimeModel(ModelCurve):
     name = "Lifetime fit"
 
     def __str__(self):
-        s = super(LifetimeModel, self).__str__()
+        s = super().__str__()
         s += "\nLifetimes"
         s += "\n------------------\n"
         s += "\nAverage Lifetimes:\n"
@@ -243,7 +243,7 @@ class LifetimeModel(ModelCurve):
             convolve: Convolve = None,
             **kwargs
     ):
-        super(LifetimeModel, self).__init__(
+        super().__init__(
             fit,
             **kwargs
         )
@@ -297,7 +297,7 @@ class LifetimeModel(ModelCurve):
         return self.lifetimes.lifetime_spectrum
 
     def finalize(self) -> None:
-        super(LifetimeModel, self).finalize()
+        super().finalize()
         self.lifetimes.update()
 
     def decay(

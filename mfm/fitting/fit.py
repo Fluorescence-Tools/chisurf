@@ -39,7 +39,7 @@ class Fit(mfm.base.Base):
         :param xmax:
         :param kwargs:
         """
-        super(Fit, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._model = None
         self.results = None
 

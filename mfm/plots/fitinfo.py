@@ -17,7 +17,7 @@ class FitInfo(plotbase.Plot):
             parent: QtWidgets.QWidget = None,
             **kwargs
     ):
-        super(FitInfo, self).__init__(
+        super().__init__(
             fit,
             parent=parent,
             **kwargs

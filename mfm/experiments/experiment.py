@@ -102,7 +102,7 @@ class Experiment(
         :param args:
         :param kwargs:
         """
-        super(Experiment, self).__init__(
+        super().__init__(
             name=name,
             *args,
             **kwargs

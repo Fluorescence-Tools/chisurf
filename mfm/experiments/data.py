@@ -67,7 +67,7 @@ class ExperimentalData(
         :param experiment:
         :param kwargs:
         """
-        super(ExperimentalData, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )
@@ -81,7 +81,7 @@ class ExperimentalData(
         self._data_reader = data_reader
 
     def to_dict(self):
-        d = super(ExperimentalData, self).to_dict()
+        d = super().to_dict()
         try:
             d['reader'] = self.setup.to_dict()
         except AttributeError:
@@ -108,7 +108,7 @@ class DataCurve(
             *args,
             **kwargs
     ):
-        super(DataCurve, self).__init__(
+        super().__init__(
             x=x,
             y=y,
             *args,
@@ -165,7 +165,7 @@ class DataCurve(
     def to_dict(
             self
     ) -> dict:
-        d = super(DataCurve, self).to_dict()
+        d = super().to_dict()
         d.update(ExperimentalData.to_dict(self))
         d['ex'] = list(self.ex)
         d['ey'] = list(self.ey)
@@ -175,7 +175,7 @@ class DataCurve(
             self,
             v: dict
     ) -> None:
-        super(DataCurve, self).from_dict(v)
+        super().from_dict(v)
         self.ex = np.array(v['ex'], dtype=np.float64)
         self.__dict__['ey'] = np.array(v['ey'], dtype=np.float64)
 
@@ -250,7 +250,7 @@ class DataCurve(
         np.ndarray,
         np.ndarray
     ]:
-        x, y = super(DataCurve, self).__getitem__(key)
+        x, y = super().__getitem__(key)
         return x, y, self.ey[key]
 
 
@@ -311,7 +311,7 @@ class DataGroup(
             *args,
             **kwargs
     ):
-        super(DataGroup, self).__init__(seq)
+        super().__init__(seq)
         self._current_dataset = 0
 
 
@@ -361,7 +361,7 @@ class DataCurveGroup(DataGroup):
             *args,
             **kwargs
     ):
-        super(DataCurveGroup, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class ExperimentDataGroup(DataGroup):
@@ -383,7 +383,7 @@ class ExperimentDataGroup(DataGroup):
         pass
 
     def __init__(self, *args, **kwargs):
-        super(ExperimentDataGroup, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class ExperimentDataCurveGroup(ExperimentDataGroup, DataCurveGroup):
@@ -397,6 +397,6 @@ class ExperimentDataCurveGroup(ExperimentDataGroup, DataCurveGroup):
         pass
 
     def __init__(self, *args, **kwargs):
-        super(ExperimentDataCurveGroup, self).__init__(
+        super().__init__(
             *args, **kwargs
         )

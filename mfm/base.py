@@ -165,7 +165,7 @@ class Base(object):
                 raise AttributeError("can't set attribute")
             propobj.fset(self, v)
         else:
-            super(Base, self).__setattr__(k, v)
+            super().__setattr__(k, v)
 
     def __getattr__(
             self,
@@ -216,7 +216,7 @@ class Base(object):
         >>> bc.zu
         auf
         """
-        super(Base, self).__init__()
+        super().__init__()
 
         if len(args) > 0 and isinstance(args[0], dict):
             kwargs = args[0]
@@ -261,7 +261,7 @@ class Data(Base):
             *args,
             **kwargs
     ):
-        super(Data, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )
@@ -344,7 +344,7 @@ class Data(Base):
                 print("Filename: ", v, "not found.")
 
     def __str__(self):
-        s = super(Data, self).__str__()
+        s = super().__str__()
         s += "\nfilename: %s" % self.filename
         return s
 

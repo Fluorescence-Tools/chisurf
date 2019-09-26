@@ -432,7 +432,7 @@ class Main(QtWidgets.QMainWindow):
             *args,
             **kwargs
     ):
-        super(Main, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )

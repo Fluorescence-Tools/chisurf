@@ -106,8 +106,10 @@ class Tests(unittest.TestCase):
         y = np.sin(x)
         ex = np.zeros_like(x)
         ey = np.ones_like(y)
-        data = np.vstack([x, y, ex, ey]).T
-        csv_io = mfm.io.ascii.Csv()
+        data = np.vstack([x, y, ex, ey])
+        csv_io = mfm.io.ascii.Csv(
+            use_header=False
+        )
         file = tempfile.NamedTemporaryFile(
             suffix='.txt'
         )
@@ -115,5 +117,6 @@ class Tests(unittest.TestCase):
             data=data,
             filename=file.name
         )
-        d = mfm.experiments.data.DataCurve()
-
+        d = mfm.experiments.data.DataCurve(
+            *data
+        )

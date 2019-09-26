@@ -53,7 +53,10 @@ class FittingControllerWidget(QtWidgets.QWidget):
             *args,
             **kwargs
     ):
-        super(FittingControllerWidget, self).__init__(*args, **kwargs)
+        super().__init__(
+            *args,
+            **kwargs
+        )
 
         self.fit = fit
         self.curve_select = mfm.widgets.curve.ExperimentalDataSelector(

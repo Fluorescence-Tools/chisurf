@@ -97,7 +97,7 @@ class QIPythonWidget(RichJupyterWidget):
         :param args:
         :param kwargs:
         """
-        super(QIPythonWidget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.history_widget = history_widget
 
         self.kernel_manager = kernel_manager = QtInProcessKernelManager()
@@ -185,7 +185,7 @@ class MyMessageBox(QtWidgets.QMessageBox):
             label: str = None,
             info: str = None
     ):
-        super(MyMessageBox, self).__init__()
+        super().__init__()
         self.Icon = 1
         self.setSizeGripEnabled(True)
         self.setIcon(QtWidgets.QMessageBox.Information)
@@ -235,10 +235,10 @@ class FileList(QtWidgets.QListWidget):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
         else:
-            super(FileList, self).dragEnterEvent(event)
+            super().dragEnterEvent(event)
 
     def dragMoveEvent(self, event):
-        super(FileList, self).dragMoveEvent(event)
+        super().dragMoveEvent(event)
 
     def dropEvent(self, event):
         if event.mimeData().hasUrls():
@@ -252,7 +252,7 @@ class FileList(QtWidgets.QListWidget):
                     self.addItem(s)
             event.acceptProposedAction()
         else:
-            super(FileList, self).dropEvent(event)
+            super().dropEvent(event)
 
     def __init__(
             self,
@@ -264,7 +264,7 @@ class FileList(QtWidgets.QListWidget):
         :param accept_drops: if True accepts files that are dropped into the list
         :param kwargs:
         """
-        super(FileList, self).__init__()
+        super().__init__()
         self.filename_ending = filename_ending
         self.drag_item = None
         self.drag_row = None
