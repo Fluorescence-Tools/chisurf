@@ -8,7 +8,10 @@ utils.set_search_paths(TOPDIR)
 import numpy as np
 import tempfile
 import copy
+
 import mfm
+import mfm.base
+import mfm.experiments
 
 
 def get_data_values(

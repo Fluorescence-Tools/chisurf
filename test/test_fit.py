@@ -7,7 +7,11 @@ utils.set_search_paths(TOPDIR)
 
 import numpy as np
 import copy
+
 import mfm
+import mfm.experiments
+import mfm.fitting
+import mfm.models
 
 
 def get_data_values(
