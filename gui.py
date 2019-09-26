@@ -12,7 +12,6 @@ import mfm
 import mfm.base
 import mfm.cmd
 import mfm.experiments
-import mfm.tools.modelling.remove_clashed_frames
 import mfm.widgets
 import mfm.tools
 import mfm.ui.resource
@@ -96,7 +95,7 @@ class Main(QtWidgets.QMainWindow):
     def current_setup(
             self
     ) -> mfm.experiments.reader.ExperimentReader:
-        return self.current_experiment.setups[
+        return self.current_experiment.readers[
             self.current_setup_idx
         ]
 
@@ -107,7 +106,7 @@ class Main(QtWidgets.QMainWindow):
     ) -> None:
         i = self.current_setup_idx
         j = i
-        for j, s in enumerate(self.current_experiment.setups):
+        for j, s in enumerate(self.current_experiment.readers):
             if s.name == name:
                 break
         if j != i:
@@ -210,7 +209,7 @@ class Main(QtWidgets.QMainWindow):
         # Add setups for selected experiment
         self.comboBox_setupSelect.blockSignals(True)
         self.comboBox_setupSelect.clear()
-        self.comboBox_setupSelect.addItems(self.current_experiment.setup_names)
+        self.comboBox_setupSelect.addItems(self.current_experiment.reader_names)
         self.comboBox_setupSelect.blockSignals(False)
         self.onSetupChanged()
 
@@ -348,12 +347,12 @@ class Main(QtWidgets.QMainWindow):
         # This needs to move to the QtApplication or it needs to be
         # independent as new Widgets can only be created once a QApplication has been created
         structure = mfm.experiments.experiment.Experiment('Modelling')
-        structure.add_setups(
+        structure.add_readers(
             [
                 mfm.experiments.modelling.LoadStructure()
             ]
         )
-        structure.add_models(
+        structure.add_model_classes(
             [
                 mfm.models.tcspc.widgets.LifetimeModelWidget
             ]
@@ -361,7 +360,7 @@ class Main(QtWidgets.QMainWindow):
         mfm.experiment.append(structure)
 
         tcspc = mfm.experiments.experiment.Experiment('TCSPC')
-        tcspc.add_setups(
+        tcspc.add_readers(
             [
                 mfm.experiments.tcspc.TCSPCSetupWidget(
                     **mfm.settings.cs_settings['tcspc_csv']
@@ -370,7 +369,7 @@ class Main(QtWidgets.QMainWindow):
                 mfm.experiments.tcspc.TCSPCSetupDummyWidget()
             ]
         )
-        tcspc.add_models(
+        tcspc.add_model_classes(
             models=[
                 mfm.models.tcspc.widgets.LifetimeModelWidget,
                 mfm.models.tcspc.widgets.FRETrateModelWidget,
@@ -382,7 +381,7 @@ class Main(QtWidgets.QMainWindow):
         mfm.experiment.append(tcspc)
 
         fcs = mfm.experiments.experiment.Experiment('FCS')
-        fcs.add_setups(
+        fcs.add_readers(
             [
                 mfm.experiments.fcs.fcs.FCSKristine(
                     experiment=mfm.experiments.fcs.fcs
@@ -392,7 +391,7 @@ class Main(QtWidgets.QMainWindow):
                 )
             ]
         )
-        fcs.add_models(
+        fcs.add_model_classes(
             models=[
                 mfm.models.fcs.fcs.ParseFCSWidget
             ]
@@ -404,12 +403,12 @@ class Main(QtWidgets.QMainWindow):
             name='Global-Fit',
             experiment=global_fit
         )
-        global_fit.add_models(
+        global_fit.add_model_classes(
             models=[
                 mfm.models.global_model.GlobalFitModelWidget
             ]
         )
-        global_fit.add_setup(global_setup)
+        global_fit.add_reader(global_setup)
         mfm.experiment.append(global_fit)
 
         self.experiment_names = [b.name for b in mfm.experiment if b.name is not 'Global']

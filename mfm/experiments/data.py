@@ -73,9 +73,9 @@ class ExperimentalData(
     def to_dict(self):
         d = super(ExperimentalData, self).to_dict()
         try:
-            d['setup'] = self.setup.to_dict()
+            d['reader'] = self.setup.to_dict()
         except AttributeError:
-            d['setup'] = None
+            d['reader'] = None
         try:
             d['experiment'] = self.experiment.to_dict()
         except AttributeError:
@@ -90,12 +90,12 @@ class DataCurve(
 
     def __init__(
             self,
-            *args,
             x: np.array = None,
             y: np.array = None,
             ex: np.array = None,
             ey: np.array = None,
             filename: str = '',
+            *args,
             **kwargs
     ):
         super(DataCurve, self).__init__(

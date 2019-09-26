@@ -17,28 +17,80 @@ class Experiment(
     """
 
     @property
-    def setups(
+    def readers(
             self
     ) -> List[mfm.experiments.reader.ExperimentReader]:
-        return self.get_setups()
+        return self.get_readers()
 
     @property
-    def setup_names(
+    def reader_names(
             self
     ) -> List[str]:
         return self.get_setup_names()
 
     @property
-    def models(
+    def model_classes(
             self
-    ) -> List:
-        return self.model_classes
+    ) -> List[Type[mfm.models.model.Model]]:
+        return list(self._model_classes)
 
     @property
     def model_names(
             self
     ) -> List[str]:
         return self.get_model_names()
+
+    def add_model_class(
+            self,
+            model: Type[mfm.models.model.Model]
+    ):
+        if model not in self._model_classes:
+            self._model_classes.append(model)
+
+    def add_model_classes(
+            self,
+            models: List[Type[mfm.models.model.Model]]
+    ):
+        for model in models:
+            if model not in self._model_classes:
+                self._model_classes.append(model)
+
+    def add_reader(
+            self,
+            reader: mfm.experiments.reader.ExperimentReader
+    ):
+        if reader not in self._readers:
+            self._readers.append(reader)
+
+    def add_readers(
+            self,
+            setups: List[mfm.experiments.reader.ExperimentReader]
+    ):
+        for s in setups:
+            if s not in self._readers:
+                self._readers.append(s)
+                s.experiment = self
+            else:
+                continue
+
+    def get_readers(
+            self
+    ) -> List[mfm.experiments.reader.ExperimentReader]:
+        return list(self._readers)
+
+    def get_setup_names(self) -> List[str]:
+        names = list()
+        for s in self.readers:
+            names.append(s.name)
+        return names
+
+    def get_model_names(
+            self
+    ) -> List[str]:
+        names = list()
+        for s in self.model_classes:
+            names.append(str(s.name))
+        return names
 
     def __init__(
             self,
@@ -52,49 +104,10 @@ class Experiment(
         :param args:
         :param kwargs:
         """
-        super(Experiment, self).__init__(name, *args, **kwargs)
-        self.name = name
-        self.model_classes = list()
-        self._setups = list()
-
-    def add_model(
-            self,
-            model: mfm.models.model.Model
-    ):
-        self.model_classes.append(model)
-
-    def add_models(
-            self,
-            models: List[Type[mfm.models.model.Model]]
-    ):
-        for model in models:
-            self.model_classes.append(model)
-
-    def add_setup(
-            self,
-            setup: mfm.experiments.reader.ExperimentReader
-    ):
-        self.setups.append(setup)
-
-    def add_setups(
-            self,
-            setups: List
-    ):
-        self._setups += setups
-        for s in setups:
-            s.experiment = self
-
-    def get_setups(self) -> List:
-        return self._setups
-
-    def get_setup_names(self) -> List[str]:
-        names = list()
-        for s in self.setups:
-            names.append(s.name)
-        return names
-
-    def get_model_names(self) -> List[str]:
-        names = list()
-        for s in self.model_classes:
-            names.append(str(s.name))
-        return names
+        super(Experiment, self).__init__(
+            name=name,
+            *args,
+            **kwargs
+        )
+        self._model_classes = list()
+        self._readers = list()
