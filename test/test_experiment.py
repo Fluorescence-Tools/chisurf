@@ -57,7 +57,7 @@ class Tests(unittest.TestCase):
         )
 
         self.assertListEqual(
-            experiment.get_setup_names(),
+            experiment.get_reader_names(),
             ["ExperimentReaderName_A"]
         )
 
@@ -67,6 +67,9 @@ class Tests(unittest.TestCase):
         )
         data_reader = mfm.experiments.reader.ExperimentReader(
             experiment=experiment
+        )
+        experiment.add_reader(
+            data_reader
         )
         a = np.arange(100)
         experimental_data = mfm.experiments.data.ExperimentalData(
@@ -86,6 +89,10 @@ class Tests(unittest.TestCase):
         self.assertEqual(
             experimental_data.data_reader,
             data_reader
+        )
+        self.assertListEqual(
+            experiment.reader_names,
+            [data_reader.name]
         )
         file = tempfile.NamedTemporaryFile(
             suffix='.npy'

@@ -26,7 +26,7 @@ class Experiment(
     def reader_names(
             self
     ) -> List[str]:
-        return self.get_setup_names()
+        return self.get_reader_names()
 
     @property
     def model_classes(
@@ -52,31 +52,29 @@ class Experiment(
             models: List[Type[mfm.models.model.Model]]
     ):
         for model in models:
-            if model not in self._model_classes:
-                self._model_classes.append(model)
+            self.add_model_class(model)
 
     def add_reader(
             self,
             reader: mfm.experiments.reader.ExperimentReader
     ):
         if reader not in self._readers:
+            reader.experiment = self
             self._readers.append(reader)
 
     def add_readers(
             self,
             setups: List[mfm.experiments.reader.ExperimentReader]
     ):
-        for s in setups:
-            if s not in self._readers:
-                self._readers.append(s)
-                s.experiment = self
+        for reader in setups:
+            self.add_reader(reader)
 
     def get_readers(
             self
     ) -> List[mfm.experiments.reader.ExperimentReader]:
         return list(self._readers)
 
-    def get_setup_names(self) -> List[str]:
+    def get_reader_names(self) -> List[str]:
         names = list()
         for s in self.readers:
             names.append(s.name)
