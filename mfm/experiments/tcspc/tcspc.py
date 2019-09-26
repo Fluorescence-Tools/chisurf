@@ -50,7 +50,6 @@ class CsvTCSPCWidget(
 
     def __init__(self, **kwargs):
         QtWidgets.QWidget.__init__(self)
-        self.parent = kwargs.get('parent', None)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),

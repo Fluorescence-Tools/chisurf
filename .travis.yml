@@ -2,7 +2,7 @@ language: python
 sudo: required
 os:
   - linux
-  - osx
+#  - osx
 services:
   - xvfb
 python:
@@ -18,9 +18,9 @@ before_install:
   - conda info -a
   - conda env create -f environment.yaml
   - source activate chisurf
-  - python setup.py build_ext --inplace --force
+  - python reader.py build_ext --inplace --force
 install:
-  - python setup.py install
+  - python reader.py install
 script:
   - source activate chisurf
   - conda install nose coverage

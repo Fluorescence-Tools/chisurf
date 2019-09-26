@@ -34,8 +34,12 @@ class TTTRConvert(QtWidgets.QWidget):
     def filenames(self):
         return self.filelist.filenames
 
-    def __init__(self):
-        QtWidgets.QWidget.__init__(self)
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super(TTTRConvert, self).__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
