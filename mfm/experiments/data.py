@@ -22,33 +22,6 @@ class ExperimentalData(
 
     """
 
-    def __init__(
-            self,
-            data_reader=None,
-            experiment=None,
-            *args,
-            **kwargs
-    ):
-        """
-
-        :param args:
-        :param data_reader:
-        :param experiment:
-        :param kwargs:
-        """
-        super(ExperimentalData, self).__init__(
-            *args,
-            experiment=experiment,
-            **kwargs
-        )
-        if data_reader is None:
-            data_reader = mfm.experiments.reader.ExperimentReader(
-                *args,
-                experiment=experiment,
-                **kwargs
-            )
-        self._data_reader = data_reader
-
     @property
     def experiment(
             self
@@ -68,6 +41,44 @@ class ExperimentalData(
             v: mfm.experiments.experiment.Experiment
     ) -> None:
         self._experiment = v
+
+    @property
+    def data_reader(self):
+        return self._data_reader
+
+    @data_reader.setter
+    def data_reader(
+        self,
+        v: mfm.experiments.reader.ExperimentReader
+    ):
+        self._data_reader = v
+
+    def __init__(
+            self,
+            data_reader=None,
+            experiment=None,
+            *args,
+            **kwargs
+    ):
+        """
+
+        :param args:
+        :param data_reader:
+        :param experiment:
+        :param kwargs:
+        """
+        super(ExperimentalData, self).__init__(
+            *args,
+            **kwargs
+        )
+        if data_reader is None:
+            data_reader = mfm.experiments.reader.ExperimentReader(
+                *args,
+                experiment=experiment,
+                **kwargs
+            )
+        self._experiment = experiment
+        self._data_reader = data_reader
 
     def to_dict(self):
         d = super(ExperimentalData, self).to_dict()
@@ -197,7 +208,10 @@ class DataCurve(
     ) -> None:
         if file_type == 'txt':
             csv = mfm.io.ascii.Csv()
-            csv.load(filename, skiprows=skiprows)
+            csv.load(
+                filename,
+                skiprows=skiprows
+            )
             self.x = csv.data[0]
             self.y = csv.data[1]
             self.ex = csv.data[2]
@@ -240,7 +254,10 @@ class DataCurve(
         return x, y, self.ey[key]
 
 
-class DataGroup(list, Base):
+class DataGroup(
+    list,
+    Base
+):
 
     @property
     def names(

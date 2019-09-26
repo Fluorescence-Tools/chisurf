@@ -150,8 +150,9 @@ class Csv(object):
         self.directory = directory
         self.skiprows = skiprows
         self.mode = file_type
-
         self.verbose = verbose
+
+        self._header = None
 
         if colspecs is None:
             colspecs = (15, 17, 17)
@@ -184,8 +185,10 @@ class Csv(object):
         """
         This method loads a filename to the `Csv` object
         :param filename: string specifying the file
-        :param skiprows: number of rows to skip in the file. By default the value of the instance is used
-        :param verbose: The method is verbose if verbose is set to True of the verbose attribute of the instance is
+        :param skiprows: number of rows to skip in the file. By default the
+        value of the instance is used
+        :param verbose: The method is verbose if verbose is set to True of
+        the verbose attribute of the instance is
         True.
         """
         if use_header is None:
@@ -193,7 +196,15 @@ class Csv(object):
         if skiprows is None:
             skiprows = self.skiprows
 
+        # process header
         header = 'infer' if use_header else None
+        if use_header:
+            with open(file=filename, mode='r') as fp:
+                for _ in range(skiprows):
+                    fp.readline()
+                header_line = fp.readline()
+            self._header = header_line.split(delimiter)
+            skiprows += 1
 
         if os.path.isfile(filename):
             self.directory = os.path.dirname(filename)
@@ -203,13 +214,16 @@ class Csv(object):
                 print("Reading: {}".format(filename))
                 print("Skip rows: {}".format(skiprows))
                 print("Use header: {}".format(use_header))
+                with open(filename, 'r') as csvfile:
+                    print(csvfile.read()[:512])
+
             if self.mode == 'csv':
                 if delimiter is None:
                     with open(filename, 'r') as csvfile:
                         for _ in range(skiprows):
                             csvfile.readline()
                         dialect = csv.Sniffer().sniff(
-                            csvfile.read(256), delimiters=';,|\t '
+                            csvfile.read(), delimiters=';,|\t '
                         )
                         delimiter = dialect.delimiter
                 d = np.genfromtxt(
@@ -232,7 +246,7 @@ class Csv(object):
 
     def save(
             self,
-            data,
+            data: np.ndarray,
             filename: str,
             delimiter: str = '\t',
             mode: str = 'txt',
@@ -247,18 +261,25 @@ class Csv(object):
             Object-type: %s
             """ % (filename, mode, delimiter, type(data))
             print(s)
-
-        if isinstance(data, mfm.curve.Curve):
-            d = np.array(data[:])
-        elif isinstance(data, np.ndarray):
-            d = data
-        else:
-            d = np.array(data)
-
+        # if isinstance(data, mfm.curve.Curve):
+        #     d = np.array(data[:])
+        # elif isinstance(data, np.ndarray):
+        #     d = data
+        # else:
+        #     d = np.array(data)
+        #
         if mode == 'txt':
-            np.savetxt(filename, d.T, delimiter=delimiter, header=header)
+            np.savetxt(
+                filename,
+                data.T,
+                delimiter=delimiter,
+                header=header
+            )
         if mode == 'npy':
-            np.save(filename, d.T)
+            np.save(
+                filename,
+                data.T
+            )
 
     @property
     def n_cols(self) -> int:
@@ -285,20 +306,23 @@ class Csv(object):
             return np.array(self._data, dtype=np.float64).T
 
     @property
-    def header(self) -> List[str]:
+    def header(
+            self
+    ) -> List[str]:
         """
         A list of the column headers
         """
         if self.use_header is not None:
-            header = list(self._data.columns)
+            header = self._header
         else:
-            header = range(self._data.shape[1])
+            header = range(self.data.shape[1])
         return [str(i) for i in header]
 
     @property
     def n_points(self) -> int:
         """
-        The number of data points corresponds to the number of rows :py:attribute`.CSV.n_rows`
+        The number of data points corresponds to the number of rows
+        :py:attribute`.CSV.n_rows`
         """
         return self.n_rows
 
