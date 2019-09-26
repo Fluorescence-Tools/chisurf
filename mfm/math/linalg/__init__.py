@@ -59,7 +59,8 @@ def cartesian(
 def angle(
         a: np.array,
         b: np.array,
-        c: np.array):
+        c: np.array
+) -> float:
     """
     The angle between three vectors
 
@@ -91,7 +92,7 @@ def angle(
 def sq_dist3(
         u: np.array,
         v: np.array
-):
+) -> np.ndarray:
     r = (u[0]-v[0])**2
     r += (u[1] - v[1]) ** 2
     r += (u[2] - v[2]) ** 2
@@ -102,7 +103,7 @@ def sq_dist3(
 def cross3(
         a: np.array,
         b: np.array
-):
+) -> np.ndarray:
     o = np.empty(3, dtype=np.float64)
     o[0] = a[1]*b[2]-a[2]*b[1]
     o[1] = a[2]*b[0]-a[0]*b[2]
@@ -113,7 +114,7 @@ def cross3(
 @nb.jit
 def norm3(
         a: np.array
-):
+) -> np.ndarray:
     """The length of a 3D-vector
 
     :param a:
@@ -126,7 +127,7 @@ def norm3(
 def dot3(
         a: np.array,
         b: np.array
-):
+) -> float:
     """Dot product of 2 3D-vectors
 
     :param a:
@@ -144,7 +145,7 @@ def dot3(
 def add3(
         a: np.array,
         b: np.array
-):
+) -> np.ndarray:
     """Adds two 3D vectors
 
     :param a:
@@ -162,7 +163,7 @@ def add3(
 def sub3(
         a: np.array,
         b: np.array
-):
+) -> np.ndarray:
     o = np.empty(3, dtype=np.float64)
     o[0] = a[0]-b[0]
     o[1] = a[1]-b[1]
@@ -174,7 +175,7 @@ def sub3(
 def dist3(
         a: np.array,
         b: np.array
-):
+) -> np.ndarray:
     d2 = (a[0] - b[0])**2
     d2 += (a[1] - b[1]) ** 2
     d2 += (a[2] - b[2]) ** 2
@@ -187,7 +188,7 @@ def dihedral(
         v2: np.array,
         v3: np.array,
         v4: np.array
-):
+) -> float:
     """Dihedral angle between four-vectors
 
     Given the coordinates of the four points, obtain the vectors b1, b2, and b3 by vector subtraction.
@@ -246,7 +247,11 @@ def dihedral(
 
 
 @nb.jit(nopython=True, nogil=True)
-def grad3d(d, b=None, dg=1.0):
+def grad3d(
+        d: np.ndarray,
+        b: np.ndarray = None,
+        dg: float = 1.0
+) -> np.ndarray:
     """Calculates the gradient of a 3D scalar field within a certain shape defined the bounds.
 
     :param d: 3D scalar field
@@ -273,7 +278,11 @@ def grad3d(d, b=None, dg=1.0):
 
 
 @nb.jit(nopython=True, nogil=True)
-def laplace3d_1(c, b=None, dg=1.0):
+def laplace3d_1(
+        c: np.ndarray,
+        b: np.ndarray = None,
+        dg: float = 1.0
+) -> np.ndarray:
     """Calculates the Laplacian of a 3D scalar field within a certain shape defined the bounds.
 
     :param c:
@@ -304,7 +313,7 @@ def solve_richardson_lucy(
         u: np.array,
         d: np.array,
         max_iter: int
-) -> np.array:
+) -> np.ndarray:
     """
 
     :param p:
@@ -335,7 +344,12 @@ def solve_richardson_lucy(
     return u
 
 
-def euler_matrix(psi, theta, phi, approx=False):
+def euler_matrix(
+        psi,
+        theta,
+        phi,
+        approx:bool = False
+) -> np.ndarray:
     """Return homogeneous rotation matrix from Euler angles psi, theta and phi
 
     Here the Euler-angles are defined according to DIN 9300. For small angles the Trigonometric functions can be
@@ -374,7 +388,9 @@ def euler_matrix(psi, theta, phi, approx=False):
     return m
 
 
-def vector4_norm(v):
+def vector4_norm(
+        v: np.ndarray
+) -> np.ndarray:
     """Normalize a vector of length 4
     """
     # untested
@@ -387,7 +403,10 @@ def vector4_norm(v):
     return v
 
 
-def quaternion_about_axis(angle, axis):
+def quaternion_about_axis(
+        angle: float,
+        axis: np.ndarray
+) -> np.ndarray:
     """Return quaternion for rotation about axis.
     """
     # untested
@@ -400,7 +419,10 @@ def quaternion_about_axis(angle, axis):
     return q
 
 
-def quaternion_multiply(quaternion0, quaternion1):
+def quaternion_multiply(
+        quaternion0: np.ndarray,
+        quaternion1: np.ndarray
+) -> np.ndarray:
     """Multiply quaternion1 to quaternion0
     (inplace, quaternion0 is modified)
     """
@@ -415,7 +437,10 @@ def quaternion_multiply(quaternion0, quaternion1):
     return quaternion0
 
 
-def rotate_point(p3, quaternion):
+def rotate_point(
+        p3: np.ndarray,
+        quaternion: np.ndarray
+) -> np.ndarray:
     # untested
     v = quaternion[1:3]
     w = quaternion[0]
