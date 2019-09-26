@@ -12,11 +12,7 @@ import mdtraj as md
 import numpy as np
 
 import mfm.io.pdb
-
-# cartesian_keys = ['i', 'chain', 'res_id', 'res_name', 'atom_id', 'atom_name', 'element', 'xyz',
-#                   'charge', 'radius', 'bfactor']
-#
-# cartesian_formats = ['i4', '|S1', 'i4', '|S5', 'i4', '|S5', '|S1', '3f8', 'f4int', 'f4', 'f4']
+import mfm.base
 
 clusterCriteria = ['maxclust', 'inconsistent', 'distance']
 
