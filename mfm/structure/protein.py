@@ -63,10 +63,10 @@ def r2i(coord_i, a1, a2, a3, a4, ai):
     :param ai: The index of the internal coordinate which is defined by the four atoms
     :return: the index of the next atom (ai+1)
     """
-    vn = a4['coord']
-    v1 = a1['coord']
-    v2 = a2['coord']
-    v3 = a3['coord']
+    vn = a4['xyz']
+    v1 = a1['xyz']
+    v2 = a2['xyz']
+    v3 = a3['xyz']
     b = la.norm3(v3 - vn)
     a = la.angle(v2, v3, vn)
     d = la.dihedral(v1, v2, v3, vn)
@@ -108,14 +108,14 @@ def move_center_of_mass(
         cb_nbr = structure.l_cb[i]
         if cb_nbr > 0:
             cb = structure.atoms[cb_nbr]
-            cb['coord'] *= cb['mass']
+            cb['xyz'] *= cb['mass']
             for at in at_nbr:
                 atom = all_atoms[at]
                 residue_name = atom['res_name']
                 if atom['atom_name'] not in residue_atoms_internal[residue_name]:
-                    cb['coord'] += atom['coord'] * atom['mass']
+                    cb['xyz'] += atom['xyz'] * atom['mass']
                     cb['mass'] += atom['mass']
-            cb['coord'] /= cb['mass']
+            cb['xyz'] /= cb['mass']
             structure.atoms[cb_nbr] = cb
 
 
@@ -232,11 +232,11 @@ def calc_internal_coordinates_bb(
             structure.coord_i[ai] = rn['N']['i'], 0, 0, 0, 0.0, 0.0, 0.0
             ai += 1
             structure.coord_i[ai] = rn['CA']['i'], rn['N']['i'], 0, 0, \
-                                    la.norm3(rn['N']['coord'] - rn['CA']['coord']), 0.0, 0.0
+                                    la.norm3(rn['N']['xyz'] - rn['CA']['xyz']), 0.0, 0.0
             ai += 1
             structure.coord_i[ai] = rn['C']['i'], rn['CA']['i'], rn['N']['i'], 0, \
-                                    la.norm3(rn['CA']['coord'] - rn['C']['coord']), \
-                                    la.angle(rn['C']['coord'], rn['CA']['coord'], rn['N']['coord']), \
+                                    la.norm3(rn['CA']['xyz'] - rn['C']['xyz']), \
+                                    la.angle(rn['C']['xyz'], rn['CA']['xyz'], rn['N']['xyz']), \
                                     0.0
             ai += 1
         else:
@@ -564,10 +564,10 @@ class ProteinBead(Structure):
 
             coord_i[0] = rd[0]['CA']['i'], 0, 0, 0, 0.0, 0.0, 0.0
             coord_i[1] = rd[0]['CA']['i'], rd[1]['CA']['i'], 0, 0, la.norm3(
-                rd[0]['CA']['coord'] - rd[1]['CA']['coord']), 0.0, 0.0
+                rd[0]['CA']['xyz'] - rd[1]['CA']['xyz']), 0.0, 0.0
             coord_i[2] = rd[0]['CA']['i'], rd[1]['CA']['i'], rd[2]['CA']['i'], 0, la.norm3(
-                rd[2]['CA']['coord'] - rd[1]['CA']['coord']), \
-                         la.angle(rd[0]['CA']['coord'], rd[1]['CA']['coord'], rd[2]['CA']['coord']), \
+                rd[2]['CA']['xyz'] - rd[1]['CA']['xyz']), \
+                         la.angle(rd[0]['CA']['xyz'], rd[1]['CA']['xyz'], rd[2]['CA']['xyz']), \
                          0.0
             for i in range(3, len(rd)):
                 ai = r2i(coord_i, rd[i - 3]['CA'], rd[i - 2]['CA'], rd[i - 1]['CA'], rd[i]['CA'], i)

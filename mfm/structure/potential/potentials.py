@@ -191,7 +191,7 @@ def lennard_jones_calpha(
         structure.atoms, ['CA']
     )
     ca_atoms = structure.atoms.take(sel)
-    return lj_calpha(ca_atoms['coord'][0], rm)
+    return lj_calpha(ca_atoms['xyz'][0], rm)
 
 
 @nb.njit
@@ -213,7 +213,7 @@ def gb(
 
     nAtoms = xyz.shape[0]
     cutoff2 = cutoff ** 2
-    rs = xyz['coord']
+    rs = xyz['xyz']
     a_radii = xyz['radius']
     a_charge = xyz['charge']
     pre = 1. / (8 * 3.14159265359) * (1. / epsilon0 - 1. / epsilon)
@@ -342,7 +342,7 @@ class LJ_Bead(object):
 
     def getEnergy(self) -> float:
         structure = self.structure
-        self.E = lennard_jones_calpha(structure.atoms['coord'])
+        self.E = lennard_jones_calpha(structure.atoms['xyz'])
         return self.E
 
 

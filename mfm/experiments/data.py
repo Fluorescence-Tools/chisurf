@@ -15,14 +15,16 @@ from mfm.curve import Curve
 import mfm.experiments.experiment
 
 
-class ExperimentalData(mfm.base.Data):
+class ExperimentalData(
+    mfm.base.Data
+):
     """
 
     """
 
     def __init__(
             self,
-            setup=None,
+            data_reader=None,
             experiment=None,
             *args,
             **kwargs
@@ -30,23 +32,32 @@ class ExperimentalData(mfm.base.Data):
         """
 
         :param args:
-        :param setup:
+        :param data_reader:
         :param experiment:
         :param kwargs:
         """
         super(ExperimentalData, self).__init__(
             *args,
+            experiment=experiment,
             **kwargs
         )
-        self.setup = setup
-        self._experiment = experiment
+        if data_reader is None:
+            data_reader = mfm.experiments.reader.ExperimentReader(
+                *args,
+                experiment=experiment,
+                **kwargs
+            )
+        self._data_reader = data_reader
 
     @property
-    def experiment(self) -> mfm.experiments.experiment.Experiment:
+    def experiment(
+            self
+    ) -> mfm.experiments.experiment.Experiment:
         if self._experiment is None:
-            if self.setup is None:
-                return None
-            else:
+            if isinstance(
+                self.setup,
+                mfm.experiments.reader.ExperimentReader
+            ):
                 return self.setup.experiment
         else:
             return self._experiment
@@ -61,9 +72,9 @@ class ExperimentalData(mfm.base.Data):
     def to_dict(self):
         d = super(ExperimentalData, self).to_dict()
         try:
-            d['setup'] = self.setup.to_dict()
+            d['reader'] = self.setup.to_dict()
         except AttributeError:
-            d['setup'] = None
+            d['reader'] = None
         try:
             d['experiment'] = self.experiment.to_dict()
         except AttributeError:
@@ -78,12 +89,12 @@ class DataCurve(
 
     def __init__(
             self,
-            *args,
             x: np.array = None,
             y: np.array = None,
             ex: np.array = None,
             ey: np.array = None,
             filename: str = '',
+            *args,
             **kwargs
     ):
         super(DataCurve, self).__init__(
@@ -328,7 +339,11 @@ class DataCurveGroup(DataGroup):
     def __str__(self):
         return [str(d) + "\n------\n" for d in self]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
         super(DataCurveGroup, self).__init__(*args, **kwargs)
 
 

@@ -17,7 +17,10 @@ class Tests(unittest.TestCase):
         b2 = mfm.base.Base(name='B')
         self.assertEqual(b2.name, 'B')
 
-        b3 = mfm.base.Base(name='B', test_parameter='aa')
+        b3 = mfm.base.Base(
+            name='B',
+            test_parameter='aa'
+        )
         self.assertEqual(b3.test_parameter, 'aa')
 
     def test_copy(self):
@@ -77,7 +80,7 @@ class Tests(unittest.TestCase):
     def test_json(self):
         json_string = '{\n    "name": "B",\n    "test_parameter": "aa",\n    "unique_identifier": "e7f0eb02-cbab-4aa3-abf2-799aebe96a09",\n    "verbose": false\n}'
         b1 = mfm.base.Base()
-        b1.from_json(json_string, verbose=True)
+        b1.from_json(json_string, verbose=False)
 
         b2 = mfm.base.Base()
         b2.from_json(json_string)

@@ -42,8 +42,11 @@ class BasicAV(object):
     def __init__(self, structure, *args, **kwargs):
         super(BasicAV, self).__init__(*args, **kwargs)
 
-        self.dg = kwargs.get('simulation_grid_resolution', mfm.settings['fps']['simulation_grid_resolution'])
-        self.allowed_sphere_radius = kwargs.get('allowed_sphere_radius', mfm.settings['fps']['allowed_sphere_radius'])
+        self.dg = kwargs.get('simulation_grid_resolution',
+                             mfm.settings['fps']['simulation_grid_resolution'])
+        self.allowed_sphere_radius = kwargs.get('allowed_sphere_radius',
+                                                mfm.settings['fps'][
+                                                    'allowed_sphere_radius'])
         self.position_name = kwargs.get('position_name', None)
         self.residue_name = kwargs.get('residue_name', None)
         self.attachment_residue = kwargs.get('residue_seq_number', None)
@@ -63,15 +66,20 @@ class BasicAV(object):
         elif isinstance(structure, str):
             self.structure = Structure(structure, **kwargs)
 
-        attachment_atom_index = kwargs.get('attachment_atom_index',
-                                           mfm.io.pdb.get_atom_index(self.atoms,
-                                                                     chain_identifier,
-                                                                     self.attachment_residue,
-                                                                     self.attachment_atom,
-                                                                     self.residue_name)
-                                           )
+        attachment_atom_index = kwargs.get(
+            'attachment_atom_index',
+            mfm.io.pdb.get_atom_index(
+                self.atoms,
+                chain_identifier,
+                self.attachment_residue,
+                self.attachment_atom,
+                self.residue_name
+            )
+        )
 
-        x, y, z = self.atoms['coord'][:, 0], self.atoms['coord'][:, 1], self.atoms['coord'][:, 2]
+        x, y, z = self.atoms['xyz'][:, 0], self.atoms['xyz'][:, 1], self.atoms[
+                                                                        'xyz'][
+                                                                    :, 2]
         vdw = self.atoms['radius']
 
         if self.simulation_type == 'AV3':
@@ -349,10 +357,10 @@ class ACV(BasicAV):
         atoms = self.atoms
         if isinstance(v, str):
             if v == 'all':
-                slow_centers = atoms['coord']
+                slow_centers = atoms['xyz']
             else:
                 a = np.where(atoms['atom_name'] == v)[0]
-                slow_centers = atoms['coord'][a]
+                slow_centers = atoms['xyz'][a]
         self._slow_centers = slow_centers
 
     @property
@@ -369,7 +377,8 @@ class ACV(BasicAV):
         else:
             slow_radii = np.array(v)
             if slow_radii.shape[0] != slow_centers.shape[0]:
-                raise ValueError("The size of the slow_radius doesnt match the number of slow_centers")
+                raise ValueError(
+                    "The size of the slow_radius doesnt match the number of slow_centers")
         self._slow_radius = slow_radii
 
     @property
@@ -383,7 +392,8 @@ class ACV(BasicAV):
         slow_radius = av.slow_radius
         slow_centers = av.slow_centers
         density = av.density
-        nc, nn, cd, nd = functions.split_av_acv(density, dg, slow_radius, slow_centers, x0)
+        nc, nn, cd, nd = functions.split_av_acv(density, dg, slow_radius,
+                                                slow_centers, x0)
 
         cd *= contact_volume_trapped_fraction / nc
         self._contact_density = cd
@@ -415,7 +425,8 @@ class ACV(BasicAV):
         self.slow_radius = kwargs.get('slow_radius', 10.0)
 
         self._contact_volume_trapped_fraction = None
-        self.contact_volume_trapped_fraction = kwargs.get('contact_volume_trapped_fraction', 0.8)
+        self.contact_volume_trapped_fraction = kwargs.get(
+            'contact_volume_trapped_fraction', 0.8)
 
         self._contact_density = None
         self.update_density()
@@ -457,7 +468,8 @@ class DynamicAV(BasicAV):
     @contact_distance.setter
     def contact_distance(self, v):
         av = self
-        self._contact_distance = float(v) + max(av.radius1, av.radius2, av.radius3)
+        self._contact_distance = float(v) + max(av.radius1, av.radius2,
+                                                av.radius3)
 
     @property
     def slow_factor(self):
@@ -493,32 +505,38 @@ class DynamicAV(BasicAV):
         >>> p.show()
         >>> p.hist(av.diffusion_map.flatten(), bins=np.arange(0.01, free_diffusion, 0.5))
         """
-        diffusion_coefficient = kwargs.get('diffusion_coefficient', self._diffusion_coefficient)
+        diffusion_coefficient = kwargs.get('diffusion_coefficient',
+                                           self._diffusion_coefficient)
         slow_factor = kwargs.get('slow_factor', self.slow_factor)
         stick_distance = kwargs.get('stick_distance', self.contact_distance)
 
         av = self
-        coordinates = av.atoms['coord']
-        ds_sq = stick_distance**2.0
+        coordinates = av.atoms['xyz']
+        ds_sq = stick_distance ** 2.0
         density = av._density
         r0 = av.x0
         dg = av.dg
 
-        #diffusion_mode = kwargs.get('diffusion_mode', self.diffusion_mode)
+        # diffusion_mode = kwargs.get('diffusion_mode', self.diffusion_mode)
 
         def f(x):
             a1, a2, a3 = 10.5, 500., 37.2
             m1, m2, m3 = 20.2, 11.7, 1.40
             s1, s2, s3 = 0.47, 11.8, 1.54
             b = -11.0
-            y = a1 * np.exp(-.5 * ((x - m1) / s1) ** 2) / (s1 * (2 * np.pi) ** .5) + \
-                a2 * np.exp(-.5 * ((x - m2) / s2) ** 2) / (s2 * (2 * np.pi) ** .5) + \
-                a3 * np.exp(-.5 * ((x - m3) / s3) ** 2) / (s3 * (2 * np.pi) ** .5) + \
+            y = a1 * np.exp(-.5 * ((x - m1) / s1) ** 2) / (
+                        s1 * (2 * np.pi) ** .5) + \
+                a2 * np.exp(-.5 * ((x - m2) / s2) ** 2) / (
+                            s2 * (2 * np.pi) ** .5) + \
+                a3 * np.exp(-.5 * ((x - m3) / s3) ** 2) / (
+                            s3 * (2 * np.pi) ** .5) + \
                 b
             return np.maximum(y, 0)
+
         d_map = assign_diffusion_to_grid_3(density, r0, dg, f)
-        d_map = assign_diffusion_to_grid_1(d_map, density, r0, dg, coordinates, ds_sq, slow_factor)
-        #d_map = assign_diffusion_to_grid_2(density, r0, dg, diffusion_coefficient, coordinates, stick_distance, slow_factor)
+        d_map = assign_diffusion_to_grid_1(d_map, density, r0, dg, coordinates,
+                                           ds_sq, slow_factor)
+        # d_map = assign_diffusion_to_grid_2(density, r0, dg, diffusion_coefficient, coordinates, stick_distance, slow_factor)
         self._diffusion_coefficient_map = d_map
 
     def update_equilibrium(self, **kwargs):
@@ -581,9 +599,13 @@ class DynamicAV(BasicAV):
         kQ, rC = get_kQ_rC(atoms, quencher=quencher)
         tau0 = self.fluorescence_lifetime
         dye_radius = min(self.radius1, self.radius2, self.radius3)
-        #self._quenching_rate_map = create_quenching_map(density, r0, dg, atoms['coord'], tau0, kQ, rC, dye_radius)
+        # self._quenching_rate_map = create_quenching_map(density, r0, dg, atoms['xyz'], tau0, kQ, rC, dye_radius)
         v = np.ones_like(rC) * self.rC_electron_transfer
-        self._quenching_rate_map = create_quenching_map(density, r0, dg, atoms['coord'], tau0, kQ, v, dye_radius)
+        self._quenching_rate_map = create_quenching_map(
+            density, r0, dg,
+            atoms['xyz'], tau0, kQ,
+            v, dye_radius
+        )
 
     def update_fret_map(self, acceptor, **kwargs):
         """ Calculates an average FRET-rate constant for every AV grid point.
@@ -670,12 +692,14 @@ class DynamicAV(BasicAV):
         n_out = kwargs.get('n_out', 10)
         n_it = kwargs.get('n_it', min(int(t_max / t_step), max_it))
 
-        self._di.to_device(k=self.quenching_rate_map,
-                           p=self.density,
-                           d=self.diffusion_map,
-                           b=self.bounds,
-                           it=0,
-                           t_step=t_step)
+        self._di.to_device(
+            k=self.quenching_rate_map,
+            p=self.density,
+            d=self.diffusion_map,
+            b=self.bounds,
+            it=0,
+            t_step=t_step
+        )
         t, n, c = self._di.execute(n_it=n_it, n_out=n_out)
         self._d0_time = t
         self._d0_fluorescence = n
@@ -705,20 +729,24 @@ class DynamicAV(BasicAV):
         # the contact distance is deliberately big, so that the dye does not stick in very
         # tinny pockets.
         self.slow_factor = kwargs.get('slow_factor', 0.99)
-        self.contact_distance = kwargs.get('contact_distance', 3.5) # th
+        self.contact_distance = kwargs.get('contact_distance', 3.5)  # th
 
         self.quencher = kwargs.get('quencher', mfm.common.quencher)
-        #self.diffusion_mode = kwargs.get('diffusion_mode', 'two_state')
-        self.t_step_fl = kwargs.get('t_step_fl', 0.001)  # integration time step of fluorescence decay
-        self.t_step_eq = kwargs.get('t_step_eq', 0.02)  # integration time step of equilibration
+        # self.diffusion_mode = kwargs.get('diffusion_mode', 'two_state')
+        self.t_step_fl = kwargs.get('t_step_fl',
+                                    0.001)  # integration time step of fluorescence decay
+        self.t_step_eq = kwargs.get('t_step_eq',
+                                    0.02)  # integration time step of equilibration
 
         self.update_diffusion_map()
         self.update_quenching_map()
 
         # Iterator for equilibration and calculation of fluorescence decay
-        self._di = functions.DiffusionIterator(self.diffusion_map, self.bounds, self.density,
-                                               dg=self.dg, t_step=self.t_step_eq)
+        self._di = functions.DiffusionIterator(
+            self.diffusion_map, self.bounds,
+            self.density,
+            dg=self.dg,
+            t_step=self.t_step_eq
+        )
         self._di.build_program()
         self.update_equilibrium()
-
-

@@ -15,8 +15,13 @@ quencher_names = quencher.keys()
 MAX_BONDS = structure_data['MAX_BONDS']
 """Dictionary of maximum number of bonds per atom type"""
 
-atom_weights = dict((key, structure_data["Periodic Table"][key]["Atomic weight"])
-                    for key in structure_data["Periodic Table"].keys())
+atom_weights = dict(
+    (
+        key,
+        structure_data["Periodic Table"][key]["Atomic weight"]
+    )
+    for key in structure_data["Periodic Table"].keys()
+)
 """Atomic weights (http://www.chem.qmul.ac.uk/iupac/AtWt/ & PyMol) """
 
 PKA_DICT = structure_data['PKA_DICT']

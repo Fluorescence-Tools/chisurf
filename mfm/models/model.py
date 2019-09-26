@@ -14,6 +14,7 @@ from mfm.curve import Curve
 class Model(
     mfm.fitting.parameter.FittingParameterGroup
 ):
+    name = "Model name not available"
 
     def __init__(
             self,
