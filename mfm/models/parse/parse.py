@@ -36,7 +36,7 @@ class ParseFormula(FittingParameterGroup):
             model_name: str = None,
             **kwargs
     ):
-        super(ParseFormula, self).__init__(
+        super().__init__(
             fit=fit,
             model=model,
             short=short,
@@ -169,7 +169,7 @@ class ParseModel(ModelCurve):
             parse: object = None,
             **kwargs
     ):
-        super(ParseModel, self).__init__(
+        super().__init__(
             fit,
             *args,
             **kwargs
@@ -205,7 +205,7 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
                 "parseWidget.ui"
             )
         )
-        super(ParseFormulaWidget, self).__init__(
+        super().__init__(
             fit=fit,
             model=model,
             short=short,

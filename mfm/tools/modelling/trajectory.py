@@ -228,7 +228,7 @@ class JoinTrajectoriesWidget(QtWidgets.QWidget):
             return 'atoms'
 
     def __init__(self, **kwargs):
-        super(JoinTrajectoriesWidget, self).__init__()
+        super().__init__()
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -385,7 +385,7 @@ class RotateTranslateTrajectoryWidget(QtWidgets.QWidget):
     def __init__(self, **kwargs):
         self.trajectory = None
         self.verbose = kwargs.get('verbose', mfm.verbose)
-        super(RotateTranslateTrajectoryWidget, self).__init__()
+        super().__init__()
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),

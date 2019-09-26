@@ -55,7 +55,7 @@ class Curve(Base):
 
     def to_dict(self) -> dict:
         d = dict()
-        d.update(super(Curve, self).to_dict())
+        d.update(super().to_dict())
         d['_x'] = d.pop('_x').tolist()
         d['_y'] = d.pop('_y').tolist()
         return d
@@ -65,13 +65,13 @@ class Curve(Base):
             indent: int = 4,
             sort_keys: bool = True
     ) -> str:
-        return super(Curve, self).to_json(
+        return super().to_json(
             indent,
             sort_keys
         )
 
     def to_yaml(self) -> str:
-        return super(Curve, self).to_yaml()
+        return super().to_yaml()
 
     def from_dict(
             self,
@@ -79,7 +79,7 @@ class Curve(Base):
     ):
         v['_y'] = np.array(v['_y'], dtype=np.float64)
         v['_x'] = np.array(v['_x'], dtype=np.float64)
-        super(Curve, self).from_dict(v)
+        super().from_dict(v)
 
     def __init__(
             self,
@@ -106,7 +106,7 @@ class Curve(Base):
         else:
             self._x = x
             self._y = y
-        super(Curve, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )

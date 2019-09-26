@@ -34,7 +34,7 @@ class ResidualPlot(plotbase.Plot):
             *args,
             **kwargs
     ):
-        super(ResidualPlot, self).__init__(
+        super().__init__(
             fit=fit,
             **kwargs
         )

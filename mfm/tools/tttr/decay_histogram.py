@@ -132,7 +132,7 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
     histDone = QtCore.pyqtSignal()
 
     def __init__(self, parent):
-        super(TcspcTTTRWidget, self).__init__(parent)
+        super().__init__(parent)
         self.tcspcTTTRWidget = QtWidgets.QWidget(self)
         uic.loadUi(
             os.path.join(

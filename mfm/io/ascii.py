@@ -252,6 +252,7 @@ class Csv(object):
             mode: str = 'txt',
             header: str = ''
     ):
+        self._data = data
         if self.verbose:
             s = """Saving
             ------

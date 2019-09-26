@@ -22,7 +22,7 @@ class Model(
             model_number: int = 0,
             **kwargs
     ):
-        super(Model, self).__init__(
+        super().__init__(
             model=self,
             **kwargs
         )
@@ -154,7 +154,7 @@ class ModelCurve(
             fit: mfm.fitting.fit.Fit,
             *args, **kwargs
     ):
-        super(ModelCurve, self).__init__(
+        super().__init__(
             fit,
             *args,
             **kwargs
@@ -224,7 +224,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
     def update(
             self
     ) -> None:
-        super(ModelWidget, self).update()
+        super().update()
         self.update_widgets()
         self.update_plots()
 
@@ -238,7 +238,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
             *args,
             **kwargs
     ):
-        super(ModelWidget, self).__init__(
+        super().__init__(
             fit,
             *args,
             **kwargs

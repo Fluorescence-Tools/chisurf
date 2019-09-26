@@ -138,7 +138,7 @@ class Generic(FittingParameterGroup):
         :param name:
         :param kwargs:
         """
-        super(Generic, self).__init__(
+        super().__init__(
             name=name,
             **kwargs
         )
@@ -627,7 +627,7 @@ class Convolve(FittingParameterGroup):
             irf: mfm.curve.Curve = None,
             **kwargs
     ):
-        super(Convolve, self).__init__(
+        super().__init__(
             fit=fit,
             name=name,
             **kwargs

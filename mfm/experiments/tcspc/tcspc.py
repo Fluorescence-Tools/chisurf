@@ -30,7 +30,7 @@ class CsvTCSPC(object):
             *args,
             **kwargs
     ):
-        super(CsvTCSPC, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )
@@ -125,7 +125,7 @@ class TCSPCReader(ExperimentReader):
             *args,
             **kwargs
     ):
-        super(TCSPCReader, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )
@@ -301,7 +301,7 @@ class TCSPCSetupWidget(
             *args,
             **kwargs
     ):
-        super(TCSPCSetupWidget, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )
@@ -443,7 +443,7 @@ class TcspcSDTWidget(
         self.textBrowser.setPlainText(str(self.sdt.info))
 
     def __init__(self, *args, **kwargs):
-        super(TcspcSDTWidget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -501,7 +501,7 @@ class TCSPCSetupSDTWidget(
             name: str = 'Becker SDT',
             **kwargs
     ):
-        super(TCSPCSetupSDTWidget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
@@ -541,7 +541,7 @@ class TCSPCSetupDummy(TCSPCReader):
             verbose: bool = None,
             **kwargs
     ):
-        super(TCSPCSetupDummy, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         TCSPCReader.__init__(self, **kwargs)
         self.parent = parent
 
@@ -654,7 +654,7 @@ class TCSPCSetupDummyWidget(QtWidgets.QWidget, TCSPCSetupDummy):
         pass
 
     def __init__(self, *args, **kwargs):
-        super(TCSPCSetupDummyWidget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),

@@ -354,7 +354,7 @@ class CrFilterWidget(QtWidgets.QWidget):
             *args,
             **kwargs
     ):
-        super(CrFilterWidget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -421,7 +421,7 @@ class FCStttr(QtWidgets.QWidget):
     name = 'fcs-tttr'
 
     def __init__(self, parent=None):
-        super(FCStttr, self).__init__(parent)
+        super().__init__(parent)
         layout = QtWidgets.QVBoxLayout(self)
         self.parent = parent
         self.layout = layout

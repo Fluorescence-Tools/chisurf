@@ -300,7 +300,7 @@ class Gaussians(FittingParameterGroup):
         :param no_donly: bool
             If this is True the donor-only fraction is not displayed/present.
         """
-        super(Gaussians, self).__init__(
+        super().__init__(
             name=name,
             **kwargs
         )
@@ -384,7 +384,7 @@ class DiscreteDistance(FittingParameterGroup):
             short: str = 'G',
             **kwargs
     ):
-        super(DiscreteDistance, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.name = name
         self.short = short
         self.donors = Lifetime(**kwargs)
@@ -552,7 +552,7 @@ class FRETModel(LifetimeModel):
             lifetimes: Lifetime = None,
             **kwargs
     ):
-        super(FRETModel, self).__init__(
+        super().__init__(
             fit,
             **kwargs
         )
@@ -615,7 +615,7 @@ class GaussianModel(FRETModel):
         return self.gaussians.pop()
 
     def finalize(self):
-        super(FRETModel, self).finalize()
+        super().finalize()
         self.gaussians.finalize()
 
     def __init__(
@@ -623,7 +623,7 @@ class GaussianModel(FRETModel):
             fit: mfm.fitting.fit.FitGroup,
             **kwargs
     ):
-        super(GaussianModel).__init__(
+        super().__init__(
             fit,
             **kwargs
         )
@@ -673,7 +673,7 @@ class FRETrateModel(FRETModel):
     def finalize(
             self
     ):
-        super(FRETrateModel, self).finalize()
+        super().finalize()
         self.fret_rates.finalize()
 
     def __init__(
