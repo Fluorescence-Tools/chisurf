@@ -98,6 +98,28 @@ class DataCurve(
     ExperimentalData
 ):
 
+    @property
+    def data(
+            self
+    ) -> np.ndarray:
+        return np.vstack(
+            [
+                self.x,
+                self.y,
+                self.ex,
+                self.ey
+            ]
+        )
+
+    @data.setter
+    def data(
+            self,
+            v: np.ndarray
+    ):
+        self.set_data(
+            *v
+        )
+
     def __init__(
             self,
             x: np.array = None,
@@ -190,10 +212,12 @@ class DataCurve(
                 self.name,
                 '_data.txt'
             )
+        self.filename = filename
         if file_type == 'txt':
             mfm.io.ascii.Csv().save(
-                self,
-                filename
+                np.array(self[:]),
+                filename=filename,
+                **kwargs
             )
         else:
             with open(filename, 'w') as fp:
@@ -202,30 +226,38 @@ class DataCurve(
     def load(
             self,
             filename: str,
-            skiprows: int = 9,
-            file_type: str = 'txt',
+            skiprows: int = 0,
+            file_type: str = 'csv',
             **kwargs
     ) -> None:
-        if file_type == 'txt':
+        if file_type == 'csv':
             csv = mfm.io.ascii.Csv()
             csv.load(
-                filename,
-                skiprows=skiprows
+                filename=filename,
+                skiprows=skiprows,
+                file_type=file_type,
+                **kwargs
             )
-            self.x = csv.data[0]
-            self.y = csv.data[1]
-            self.ex = csv.data[2]
-            self.ex = csv.data[3]
+            # First assume four columns
+            # if this fails use three columns
+            try:
+                self.x = csv.data[0]
+                self.y = csv.data[1]
+                self.ex = csv.data[2]
+                self.ey = csv.data[3]
+            except IndexError:
+                self.x = csv.data[0]
+                self.y = csv.data[1]
+                self.ey = csv.data[2]
+                self.ex = np.ones_like(self.ey)
 
     def set_data(
             self,
-            filename: str,
             x: np.array,
             y: np.array,
             ex: np.array = None,
             ey: np.array = None,
     ) -> None:
-        self.filename = filename
         self.x = x
         self.y = y
 
@@ -248,10 +280,11 @@ class DataCurve(
     ) -> Tuple[
         np.ndarray,
         np.ndarray,
+        np.ndarray,
         np.ndarray
     ]:
         x, y = super().__getitem__(key)
-        return x, y, self.ey[key]
+        return x, y, self.ex[key], self.ey[key]
 
 
 class DataGroup(
@@ -386,7 +419,10 @@ class ExperimentDataGroup(DataGroup):
         super().__init__(*args, **kwargs)
 
 
-class ExperimentDataCurveGroup(ExperimentDataGroup, DataCurveGroup):
+class ExperimentDataCurveGroup(
+    ExperimentDataGroup,
+    DataCurveGroup
+):
 
     @property
     def setup(self):

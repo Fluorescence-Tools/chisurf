@@ -9,6 +9,7 @@ import qdarkstyle
 import numpy as np
 
 import mfm
+import mfm.models
 import mfm.base
 import mfm.cmd
 import mfm.experiments

@@ -79,14 +79,12 @@ class Model(
             xmin = fit.xmin
         if xmax is None:
             xmax = fit.xmax
-        model_x, model_y = fit.model[xmin:xmax]
-        data_x, data_y, data_y_error = fit.data[xmin:xmax]
-        ml = min([len(model_y), len(data_y)])
-        wr = np.array(
-            (data_y[:ml] - model_y[:ml]) / data_y_error[:ml],
-            dtype=np.float64
+        return mfm.fitting.calculate_weighted_residuals(
+            fit.data,
+            fit.model,
+            xmin=xmin,
+            xmax=xmax
         )
-        return wr
 
     def update_model(
             self,
