@@ -24,7 +24,7 @@ class ExperimentalData(
 
     def __init__(
             self,
-            setup=None,
+            data_reader=None,
             experiment=None,
             *args,
             **kwargs
@@ -32,33 +32,32 @@ class ExperimentalData(
         """
 
         :param args:
-        :param setup:
+        :param data_reader:
         :param experiment:
         :param kwargs:
         """
         super(ExperimentalData, self).__init__(
             *args,
+            experiment=experiment,
             **kwargs
         )
-        if experiment is None:
-            experiment = mfm.experiments.experiment.Experiment(
-                name="NA"
+        if data_reader is None:
+            data_reader = mfm.experiments.reader.ExperimentReader(
+                *args,
+                experiment=experiment,
+                **kwargs
             )
-        if setup is None:
-            setup = mfm.experiments.reader.ExperimentReader(
-                name="NA"
-            )
-        self._setup = setup
-        self._experiment = experiment
+        self._data_reader = data_reader
 
     @property
     def experiment(
             self
     ) -> mfm.experiments.experiment.Experiment:
         if self._experiment is None:
-            if self.setup is None:
-                return None
-            else:
+            if isinstance(
+                self.setup,
+                mfm.experiments.reader.ExperimentReader
+            ):
                 return self.setup.experiment
         else:
             return self._experiment

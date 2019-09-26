@@ -26,7 +26,10 @@ class LoadStructure(
         :param args:
         :param kwargs:
         """
-        super(LoadStructure, self).__init__(*args, **kwargs)
+        super(LoadStructure, self).__init__(
+            *args,
+            **kwargs
+        )
 
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout

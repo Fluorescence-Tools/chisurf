@@ -70,8 +70,6 @@ class Experiment(
             if s not in self._readers:
                 self._readers.append(s)
                 s.experiment = self
-            else:
-                continue
 
     def get_readers(
             self

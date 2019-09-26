@@ -349,7 +349,9 @@ class Main(QtWidgets.QMainWindow):
         structure = mfm.experiments.experiment.Experiment('Modelling')
         structure.add_readers(
             [
-                mfm.experiments.modelling.LoadStructure()
+                mfm.experiments.modelling.LoadStructure(
+                    experiment=structure
+                )
             ]
         )
         structure.add_model_classes(
@@ -363,10 +365,15 @@ class Main(QtWidgets.QMainWindow):
         tcspc.add_readers(
             [
                 mfm.experiments.tcspc.TCSPCSetupWidget(
-                    **mfm.settings.cs_settings['tcspc_csv']
+                    experiment=tcspc,
+                    **mfm.settings.cs_settings['tcspc_csv'],
                 ),
-                mfm.experiments.tcspc.TCSPCSetupSDTWidget(),
-                mfm.experiments.tcspc.TCSPCSetupDummyWidget()
+                mfm.experiments.tcspc.TCSPCSetupSDTWidget(
+                    experiment=tcspc
+                ),
+                mfm.experiments.tcspc.TCSPCSetupDummyWidget(
+                    experiment=tcspc
+                )
             ]
         )
         tcspc.add_model_classes(
@@ -383,11 +390,11 @@ class Main(QtWidgets.QMainWindow):
         fcs = mfm.experiments.experiment.Experiment('FCS')
         fcs.add_readers(
             [
-                mfm.experiments.fcs.fcs.FCSKristine(
-                    experiment=mfm.experiments.fcs.fcs
+                mfm.experiments.fcs.FCSKristine(
+                    experiment=mfm.experiments.fcs.FCS
                 ),
-                mfm.experiments.fcs.fcs.FCS(
-                    experiment=mfm.experiments.fcs.fcs
+                mfm.experiments.fcs.FCS(
+                    experiment=mfm.experiments.fcs.FCS
                 )
             ]
         )
@@ -414,8 +421,11 @@ class Main(QtWidgets.QMainWindow):
         self.experiment_names = [b.name for b in mfm.experiment if b.name is not 'Global']
         self.comboBox_experimentSelect.addItems(self.experiment_names)
 
-        mfm.cmd.add_dataset(setup=global_setup)
-        #self.onAddDataset(experiment=global_fit, setup=global_setup)  # Add Global-Dataset by default
+        mfm.cmd.add_dataset(
+            setup=global_setup,
+            experiment=global_fit
+        )
+        #self.onAddDataset(experiment=global_fit, data_reader=global_setup)  # Add Global-Dataset by default
 
     def __init__(
             self,

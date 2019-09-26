@@ -301,7 +301,10 @@ class TCSPCSetupWidget(
             *args,
             **kwargs
     ):
-        super(TCSPCSetupWidget, self).__init__(*args, **kwargs)
+        super(TCSPCSetupWidget, self).__init__(
+            *args,
+            **kwargs
+        )
         QtWidgets.QWidget.__init__(self)
         #TCSPCReader.__init__(self, *args, **kwargs)
 

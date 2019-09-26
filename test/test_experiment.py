@@ -26,6 +26,9 @@ class Tests(unittest.TestCase):
             mfm.models.model.Model in experiment.model_classes,
             True
         )
+        experiment.add_model_classes(
+            [mfm.models.model.Model]
+        )
 
         # Models are unique
         experiment.add_model_class(
@@ -41,9 +44,31 @@ class Tests(unittest.TestCase):
         )
 
         experiment_reader = mfm.experiments.reader.ExperimentReader(
-            name="ExperimentReaderName_A"
+            name="ExperimentReaderName_A",
+            experiment=experiment
         )
         experiment.add_reader(
             experiment_reader
         )
 
+        experiment.add_readers(
+            [experiment_reader]
+        )
+
+        self.assertListEqual(
+            experiment.get_setup_names(),
+            ["ExperimentReaderName_A"]
+        )
+
+    def test_experimental_data(self):
+        experiment = mfm.experiments.experiment.Experiment(
+            name="Experiment Type"
+        )
+        data_reader = mfm.experiments.reader.ExperimentReader(
+            experiment=experiment
+        )
+        experimental_data = mfm.experiments.data.ExperimentalData(
+            experiment=experiment,
+            data_reader=data_reader
+        )
+        #experimental_data.filename
