@@ -255,7 +255,7 @@ class Data(Base):
     def __init__(
             self,
             filename: str = "None",
-            data: Data = None,
+            data: bytes = None,
             embed_data: bool = None,
             read_file_size_limit: int = None,
             *args,
@@ -279,7 +279,24 @@ class Data(Base):
         self.filename = self._filename
 
     @property
-    def data(self) -> Data:
+    def embed_data(
+            self
+    ) -> bool:
+        return self._embed_data
+
+    @embed_data.setter
+    def embed_data(
+            self,
+            v: bool
+    ) -> None:
+        self._embed_data = v
+        if v is False:
+            self._data = None
+
+    @property
+    def data(
+            self
+    ) -> bytes:
         return self._data
 
     @data.setter
@@ -325,7 +342,6 @@ class Data(Base):
         except FileNotFoundError:
             if self.verbose:
                 print("Filename: ", v, "not found.")
-
 
     def __str__(self):
         s = super(Data, self).__str__()

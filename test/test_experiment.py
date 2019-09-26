@@ -6,6 +6,7 @@ TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
 
 import numpy as np
+import tempfile
 import mfm
 
 
@@ -67,8 +68,52 @@ class Tests(unittest.TestCase):
         data_reader = mfm.experiments.reader.ExperimentReader(
             experiment=experiment
         )
+        a = np.arange(100)
         experimental_data = mfm.experiments.data.ExperimentalData(
             experiment=experiment,
-            data_reader=data_reader
+            data_reader=data_reader,
+            embed_data=True,
+            data=bytes(a)
         )
-        #experimental_data.filename
+        self.assertEqual(
+            experimental_data.filename,
+            'None'
+        )
+        self.assertEqual(
+            experimental_data.experiment,
+            experiment
+        )
+        self.assertEqual(
+            experimental_data.data_reader,
+            data_reader
+        )
+        file = tempfile.NamedTemporaryFile(
+            suffix='.npy'
+        )
+        np.save(
+            file=file.name,
+            arr=a
+        )
+        experimental_data.filename = file.name
+        self.assertEqual(
+            experimental_data.filename,
+            file.name
+        )
+        # TODO: test to_dict and to_json
+
+    def test_DataCurve(self):
+        x = np.linspace(0, np.pi * 2.0)
+        y = np.sin(x)
+        ex = np.zeros_like(x)
+        ey = np.ones_like(y)
+        data = np.vstack([x, y, ex, ey]).T
+        csv_io = mfm.io.ascii.Csv()
+        file = tempfile.NamedTemporaryFile(
+            suffix='.txt'
+        )
+        csv_io.save(
+            data=data,
+            filename=file.name
+        )
+        d = mfm.experiments.data.DataCurve()
+

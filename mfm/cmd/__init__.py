@@ -217,7 +217,6 @@ def add_dataset(
         **kwargs
 ) -> None:
     cs = mfm.cs
-    print(kwargs)
     if dataset is None:
         dataset = setup.get_data(
             **kwargs
