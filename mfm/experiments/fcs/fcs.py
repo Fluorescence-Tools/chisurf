@@ -18,7 +18,6 @@ class FCS(ExperimentReader, CsvWidget):
 
     def __init__(
             self,
-            experiment,
             use_header: bool = False,
             skiprows: int = 0,
             *args,
@@ -29,7 +28,6 @@ class FCS(ExperimentReader, CsvWidget):
             **kwargs
         )
 
-        self.experiment = experiment
         self.hide()
         self.skiprows = skiprows
         self.use_header = use_header
@@ -71,13 +69,11 @@ class FCSKristine(
 
     def __init__(
             self,
-            experiment,
             *args,
             **kwargs
     ):
         FCS.__init__(
             self,
-            experiment,
             *args,
             **kwargs
         )

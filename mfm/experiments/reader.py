@@ -20,6 +20,7 @@ class ExperimentReader(
 
     def __init__(
             self,
+            experiment: mfm.experiments.experiment.Experiment,
             *args,
             **kwargs
     ):
@@ -32,6 +33,7 @@ class ExperimentReader(
             *args,
             **kwargs
         )
+        self.experiment = experiment
 
     @staticmethod
     @abstractmethod
