@@ -164,7 +164,7 @@ class CorrectionsWidget(
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: mfm.fitting.fit.Fit,
             hide_corrections: bool = False,
             **kwargs
     ):
@@ -745,7 +745,7 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: mfm.fitting.fit.Fit,
             icon: QtGui.QIcon = None,
             hide_nuisances: bool = False,
             **kwargs
@@ -757,12 +757,31 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
             icon=icon
         )
 
-        corrections = CorrectionsWidget(fit=fit, **kwargs)
-        generic = GenericWidget(fit=fit, parent=self, **kwargs)
-        anisotropy = AnisotropyWidget(name='anisotropy', short='rL', **kwargs)
-        convolve = ConvolveWidget(name='convolve', fit=fit, show_convolution_mode=False, **kwargs)
+        corrections = CorrectionsWidget(
+            fit=fit,
+            **kwargs
+        )
+        generic = GenericWidget(
+            fit=fit,
+            parent=self,
+            **kwargs
+        )
+        anisotropy = AnisotropyWidget(
+            name='anisotropy',
+            short='rL',
+            **kwargs
+        )
+        convolve = ConvolveWidget(
+            name='convolve',
+            fit=fit,
+            hide_curve_convolution=False,
+            **kwargs
+        )
 
-        LifetimeModel.__init__(self, fit)
+        LifetimeModel.__init__(
+            self,
+            fit
+        )
         layout = QtWidgets.QVBoxLayout(self)
         layout.setAlignment(QtCore.Qt.AlignTop)
 
@@ -911,7 +930,10 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
         self._gb.pop().close()
 
 
-class DiscreteDistanceWidget(DiscreteDistance, QtWidgets.QWidget):
+class DiscreteDistanceWidget(
+    DiscreteDistance,
+    QtWidgets.QWidget
+):
 
     def __init__(
             self,
@@ -919,7 +941,12 @@ class DiscreteDistanceWidget(DiscreteDistance, QtWidgets.QWidget):
             model: mfm.models.model.Model = None,
             **kwargs
     ):
-        DiscreteDistance.__init__(self, donors=donors, model=model, **kwargs)
+        DiscreteDistance.__init__(
+            self,
+            donors=donors,
+            model=model,
+            **kwargs
+        )
         QtWidgets.QWidget.__init__(self)
 
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -967,13 +994,18 @@ for f in cs.current_fit:
             """ % self.name
         mfm.run(t)
 
-    def append(self, x=None, distance=None, update=True):
+    def append(
+            self,
+            x=None,
+            distance=None,
+            update=True
+    ):
         x = 1.0 if x is None else x
         m = 50.0 if distance is None else distance
         gb = QtWidgets.QGroupBox()
         n_rates = len(self)
         gb.setTitle('G%i' % (n_rates + 1))
-        l = QtWidgets.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         pm = FittingParameter(
             name='R(%s,%i)' % (self.short, n_rates + 1),
             value=m,
@@ -994,10 +1026,16 @@ for f in cs.current_fit:
             text='x',
             update_function=self.update
         )
-        m = mfm.fitting.widgets.make_fitting_parameter_widget(pm, layout=l)
-        x = mfm.fitting.widgets.make_fitting_parameter_widget(px, layout=l)
+        m = mfm.fitting.widgets.make_fitting_parameter_widget(
+            pm,
+            layout=layout
+        )
+        x = mfm.fitting.widgets.make_fitting_parameter_widget(
+            px,
+            layout=layout
+        )
 
-        gb.setLayout(l)
+        gb.setLayout(layout)
         row = n_rates / 2
         col = n_rates % 2
         self.grid_layout.addWidget(gb, row, col)
@@ -1013,30 +1051,61 @@ for f in cs.current_fit:
         mfm.run("cs.current_fit.update()")
 
 
-class GaussianModelWidget(GaussianModel, LifetimeModelWidgetBase):
+class GaussianModelWidget(
+    GaussianModel,
+    LifetimeModelWidgetBase
+):
 
-    def __init__(self, fit, **kwargs):
-        donors = LifetimeWidget(parent=self, model=self, title='Donor(0)')
-        gaussians = GaussianWidget(donors=donors, parent=self, model=self, short='G', **kwargs)
-        GaussianModel.__init__(self, fit=fit, lifetimes=donors, gaussians=gaussians)
+    def __init__(
+            self,
+            fit: mfm.fitting.fit.Fit,
+            **kwargs
+    ):
+        donors = LifetimeWidget(
+            parent=self,
+            model=self,
+            title='Donor(0)'
+        )
+        gaussians = GaussianWidget(
+            donors=donors,
+            parent=self,
+            model=self,
+            short='G',
+            **kwargs
+        )
+        GaussianModel.__init__(
+            self,
+            fit=fit,
+            lifetimes=donors,
+            gaussians=gaussians
+        )
 
-        LifetimeModelWidgetBase.__init__(self, fit=fit, **kwargs)
+        LifetimeModelWidgetBase.__init__(
+            self,
+            fit=fit,
+            **kwargs
+        )
         self.lifetimes = donors
 
         self.layout_parameter.addWidget(donors)
 
         self.layout_parameter.addWidget(
-            mfm.fitting.widgets.make_fitting_parameter_group_widget(self.fret_parameters)
+            mfm.fitting.widgets.make_fitting_parameter_group_widget(
+                self.fret_parameters
+            )
         )
 
         self.layout_parameter.addWidget(gaussians)
 
 
-class FRETrateModelWidget(FRETrateModel, LifetimeModelWidgetBase):
+class FRETrateModelWidget(
+    FRETrateModel,
+    LifetimeModelWidgetBase
+):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: mfm.fitting.fit.Fit,
             **kwargs
     ):
         donors = LifetimeWidget(
@@ -1074,7 +1143,10 @@ class FRETrateModelWidget(FRETrateModel, LifetimeModelWidgetBase):
         self.layout_parameter.addWidget(fret_rates)
 
 
-class WormLikeChainModelWidget(WormLikeChainModel, LifetimeModelWidgetBase):
+class WormLikeChainModelWidget(
+    WormLikeChainModel,
+    LifetimeModelWidgetBase
+):
 
     @property
     def use_dye_linker(
@@ -1091,13 +1163,27 @@ class WormLikeChainModelWidget(WormLikeChainModel, LifetimeModelWidgetBase):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: mfm.fitting.fit.Fit,
             **kwargs
     ):
-        donors = LifetimeWidget(parent=self, model=self, title='Donor(0)', name='donors')
-        WormLikeChainModel.__init__(self, fit=fit, lifetimes=donors, **kwargs)
+        donors = LifetimeWidget(
+            parent=self,
+            model=self,
+            title='Donor(0)',
+            name='donors'
+        )
+        WormLikeChainModel.__init__(
+            self,
+            fit=fit,
+            lifetimes=donors,
+            **kwargs
+        )
 
-        LifetimeModelWidgetBase.__init__(self, fit, **kwargs)
+        LifetimeModelWidgetBase.__init__(
+            self,
+            fit,
+            **kwargs
+        )
         self.lifetimes = donors
 
         l = QtWidgets.QHBoxLayout()
