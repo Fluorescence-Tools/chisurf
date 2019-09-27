@@ -12,10 +12,10 @@ from typing import List
 from . import experiment
 from . import data
 from . import reader
-# from . import fcs
-# from . import tcspc
-# from . import globalfit
-# from . import modelling
+from . import fcs
+from . import tcspc
+from . import globalfit
+from . import modelling
 
 
 def get_data(

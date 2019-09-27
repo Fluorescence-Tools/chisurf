@@ -8,8 +8,8 @@ import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 
 import mfm
+import mfm.experiments.widgets
 import mfm.widgets
-import mfm.widgets.curve
 
 parameter_settings = mfm.settings.parameter
 
@@ -59,7 +59,7 @@ class FittingControllerWidget(QtWidgets.QWidget):
         )
 
         self.fit = fit
-        self.curve_select = mfm.widgets.curve.ExperimentalDataSelector(
+        self.curve_select = mfm.experiments.widgets.ExperimentalDataSelector(
             parent=None,
             fit=fit,
             change_event=self.change_dataset,

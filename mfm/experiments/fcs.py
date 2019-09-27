@@ -4,11 +4,11 @@ import numpy as np
 from qtpy import QtWidgets
 
 import mfm
+import mfm.io.ascii
+import mfm.io.widgets
 import mfm.widgets
 import mfm.fluorescence
-import mfm.experiments
 import mfm.experiments.data
-import mfm.io.ascii
 from . import reader
 
 

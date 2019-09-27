@@ -11,12 +11,12 @@ from PyQt5 import QtCore, QtWidgets, uic
 import qdarkstyle
 
 import mfm
+import mfm.experiments.widgets
 import mfm.tools
 import mfm.fluorescence
 import mfm.experiments.data
 import mfm.settings
 import mfm.widgets
-import mfm.widgets.curve
 from mfm.io.widgets import SpcFileWidget
 
 settings = mfm.settings.cs_settings['correlator']
@@ -96,7 +96,7 @@ class CorrelateTTTR(QtWidgets.QWidget):
         self.verticalLayout.addWidget(w)
         w.show()
 
-        self.cs = mfm.widgets.curve.ExperimentalDataSelector(
+        self.cs = mfm.experiments.widgets.ExperimentalDataSelector(
             get_data_sets=self.get_data_curves,
             click_close=False
         )

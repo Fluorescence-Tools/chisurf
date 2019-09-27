@@ -13,6 +13,7 @@ import mfm
 import mfm.base
 import mfm.parameter
 import mfm.decorators
+import mfm.models.model
 
 parameter_settings = mfm.settings.parameter
 

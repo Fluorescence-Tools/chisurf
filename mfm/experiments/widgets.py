@@ -1,6 +1,3 @@
-"""
-
-"""
 from __future__ import annotations
 
 import os
@@ -8,7 +5,8 @@ from typing import List, Callable
 
 from qtpy import QtWidgets, QtCore, QtGui
 
-import mfm.experiments
+import mfm.experiments.data
+import mfm.widgets
 
 
 class ExperimentalDataSelector(

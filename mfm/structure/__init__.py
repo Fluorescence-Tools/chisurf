@@ -13,6 +13,6 @@ provides a set of functions and classes to work with structures and trajectories
 from . import structure
 from . import trajectory
 from . import protein
-from . import potential
-from . import labeled_structure
+#from . import potential
+#from . import labeled_structure
 

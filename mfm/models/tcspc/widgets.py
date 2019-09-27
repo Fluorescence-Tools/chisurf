@@ -24,7 +24,7 @@ from mfm.models.tcspc.nusiance import Convolve, Corrections, Generic
 from mfm.models.parse.tcspc.tcspc_parse import ParseDecayModel
 from mfm.models.tcspc.pddem import PDDEM, PDDEMModel
 from mfm.widgets import clear_layout
-from mfm.widgets.curve import ExperimentalDataSelector
+from mfm.experiments.widgets import ExperimentalDataSelector
 
 
 class ConvolveWidget(Convolve, QtWidgets.QWidget):
