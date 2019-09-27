@@ -3,16 +3,24 @@ from __future__ import annotations
 import json
 import os
 import numpy as np
-from qtpy import  QtWidgets, uic
+from qtpy import QtWidgets, uic
 
-import mfm.widgets
-from mfm.structure.potential.potentials import HPotential, GoPotential, MJPotential, CEPotential, ClashPotential, \
+#import mfm.widgets
+import mfm.structure
+from mfm.structure.potential.potentials import HPotential, GoPotential, \
+    MJPotential, CEPotential, ClashPotential, \
     AvPotential, ASA
 
 
 class HPotentialWidget(HPotential, QtWidgets.QWidget):
 
-    def __init__(self, structure, parent, cutoff_ca=8.0, cutoff_hbond=3.0):
+    def __init__(
+            self,
+            structure,
+            parent,
+            cutoff_ca=8.0,
+            cutoff_hbond=3.0
+    ):
         QtWidgets.QWidget.__init__(self, parent=parent)
         uic.loadUi(
             os.path.join(
@@ -21,21 +29,24 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
             ),
             self
         )
-        self.checkBox.stateChanged [int].connect(self.updateParameter)
-        self.checkBox_2.stateChanged [int].connect(self.updateParameter)
-        self.checkBox_3.stateChanged [int].connect(self.updateParameter)
-        self.checkBox_4.stateChanged [int].connect(self.updateParameter)
+        self.checkBox.stateChanged[int].connect(self.updateParameter)
+        self.checkBox_2.stateChanged[int].connect(self.updateParameter)
+        self.checkBox_3.stateChanged[int].connect(self.updateParameter)
+        self.checkBox_4.stateChanged[int].connect(self.updateParameter)
         self.actionLoad_potential.triggered.connect(self.onOpenFile)
         self.cutoffCA = cutoff_ca
         self.cutoffH = cutoff_hbond
-        super(HPotentialWidget, self).__init__(
+        super().__init__(
             structure,
             cutoff_ca,
             cutoff_hbond
         )
 
     def onOpenFile(self):
-        filename = mfm.widgets.get_filename('Open File', 'CSV data files (*.csv)')
+        filename = mfm.widgets.get_filename(
+            'Open File',
+            'CSV data files (*.csv)'
+        )
         self.potential = filename
 
     @property
@@ -44,7 +55,11 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
 
     @potential.setter
     def potential(self, v):
-        self._hPot = np.loadtxt(v, skiprows=1, dtype=np.float64).T[1:, :]
+        self._hPot = np.loadtxt(
+            v,
+            skiprows=1,
+            dtype=np.float64
+        ).T[1:, :]
         self.hPot = self._hPot
         self.lineEdit_3.setText(str(v))
 
@@ -138,7 +153,7 @@ class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
     def __init__(
             self,
             structure: mfm.structure.structure.Structure,
-            filename: str ='./mfm/structure/potential/database/mj.csv',
+            filename: str = './mfm/structure/potential/database/mj.csv',
             ca_cutoff: float =6.5
     ):
         super(MJPotentialWidget, self).__init__(structure, filename, ca_cutoff)
@@ -154,7 +169,10 @@ class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
         self.ca_cutoff = ca_cutoff
 
     def onOpenFile(self):
-        filename = mfm.widgets.get_filename('Open MJ-Potential', 'CSV data files (*.csv)')
+        filename = mfm.widgets.get_filename(
+            'Open MJ-Potential',
+            'CSV data files (*.csv)'
+        )
         self.potential = filename
 
     @property

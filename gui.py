@@ -9,12 +9,16 @@ import qdarkstyle
 import numpy as np
 
 import mfm
-import mfm.models
-import mfm.base
-import mfm.cmd
-import mfm.experiments
 import mfm.widgets
 import mfm.tools
+import mfm.base
+import mfm.models
+import mfm.experiments
+import mfm.experiments.tcspc
+import mfm.experiments.fcs
+import mfm.experiments.modelling
+import mfm.experiments.globalfit
+import mfm.cmd
 import mfm.ui.resource
 
 

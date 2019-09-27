@@ -3,6 +3,7 @@ from typing import Tuple
 
 import numpy as np
 import mfm
+import mfm.curve
 
 window_function_types = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
 

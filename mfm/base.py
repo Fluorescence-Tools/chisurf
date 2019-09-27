@@ -126,7 +126,7 @@ class Base(object):
         Example
         -------
 
-        >>> import mfm
+        >>> import mfm.experiments
         >>> dc = mfm.experiments.data.DataCurve()
         >>> dc.from_json(filename='./sample_data/internal_types/datacurve.json')
 
@@ -202,7 +202,7 @@ class Base(object):
         Example
         -------
 
-        >>> import mfm
+        >>> import mfm.base
         >>> bc = mfm.base.Base(parameter="ala", lol=1)
         >>> bc.lol
         1
