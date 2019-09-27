@@ -8,19 +8,27 @@
 
 # ChiSurf
 
-ChiSurf is a software package for the analysis of complex fluorescence data acquired in time-resolved single-molecule 
-and ensemble fluorescence experiments. The main feature of ChiSurf is the joint (global) analysis of multiple datasets.
+ChiSurf is a software package for the analysis of complex fluorescence data 
+acquired in time-resolved single-molecule 
+and ensemble fluorescence experiments. The main feature of ChiSurf is the 
+joint (global) analysis of multiple datasets.
 ![ChiSurf GUI][1]
 
 ## History
 
-The original of ChiSurfs was to estimate errors of model parameters of fluorescence intensity decays in 
-Förster-resonance energy transfer (FRET) experiments for FRET-driven structural models of protein and other 
-biological macromolecules. It started as a collection of python scripts. With time more features were added, e.g., 
-the analysis of correlation curves, correlation of time-tagged-time resolved (TTTR) data. A graphical user interface 
+The original of ChiSurfs was to estimate errors of model parameters of 
+fluorescence intensity decays in 
+Förster-resonance energy transfer (FRET) experiments for FRET-driven structural 
+models of protein and other 
+biological macromolecules. It started as a collection of python scripts. With 
+time more features were added, e.g., 
+the analysis of correlation curves, correlation of time-tagged-time resolved 
+(TTTR) data. A graphical user interface 
 makes these scripts and tools available for users without programming experience.
-Overall, ChiSurf is highly experimental and its core is still heavily refactored. Consequently, features, which worked 
-in old versions, may be not supported in newer versions, unless users explicitly demand these functions.
+Overall, ChiSurf is highly experimental and its core is still heavily 
+refactored. Consequently, features, which worked 
+in old versions, may be not supported in newer versions, unless users 
+explicitly demand these functions.
 
 ## Features
 
