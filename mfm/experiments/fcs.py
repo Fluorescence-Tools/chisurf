@@ -8,12 +8,12 @@ import mfm.widgets
 import mfm.fluorescence
 import mfm.experiments
 import mfm.experiments.data
-import mfm.experiments.reader
-import mfm.io
+import mfm.io.ascii
+from . import reader
 
 
 class FCS(
-    mfm.experiments.reader.ExperimentReader,
+    reader.ExperimentReader,
     mfm.io.widgets.CsvWidget
 ):
 

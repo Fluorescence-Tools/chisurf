@@ -7,6 +7,7 @@ from docx.shared import Inches
 
 import mfm
 import mfm.base
+import mfm.fitting
 import mfm.widgets
 import mfm.experiments.data
 from . import tcspc
@@ -38,8 +39,13 @@ def add_fit(
         if data_set.experiment is data_sets[0].experiment:
 
             # Make sure the data set is a DataGroup
-            if not isinstance(data_set, mfm.experiments.data.DataGroup):
-                data_group = mfm.experiments.data.ExperimentDataCurveGroup([data_set])
+            if not isinstance(
+                    data_set,
+                    mfm.experiments.data.DataGroup
+            ):
+                data_group = mfm.experiments.data.ExperimentDataCurveGroup(
+                    [data_set]
+                )
             else:
                 data_group = data_set
 
@@ -131,7 +137,9 @@ def save_fit():
         row_cells[0].text = str(k)
         for i, f in enumerate(fs):
             paragraph = row_cells[i + 1].paragraphs[0]
-            run = paragraph.add_run('{:.3f}'.format(f.model.parameters_all_dict[k].value))
+            run = paragraph.add_run(
+                '{:.3f}'.format(f.model.parameters_all_dict[k].value)
+            )
             if f.model.parameters_all_dict[k].fixed:
                 continue
             else:
@@ -147,9 +155,13 @@ def save_fit():
         run = paragraph.add_run('{:.4f}'.format(f.chi2r))
     try:
         tr = mfm.base.clean_string(fs.name)
-        document.save(os.path.join(target_path, tr + '.docx'))
+        document.save(
+            os.path.join(target_path, tr + '.docx')
+        )
     except IOError:
-        document.save(os.path.join(target_path, 'fit.docx'))
+        document.save(
+            os.path.join(target_path, 'fit.docx')
+        )
         cs.current_fit.save(target_dir, 'fit')
 
 
@@ -172,11 +184,20 @@ def group_datasets(
     selected_data = [
         mfm.imported_datasets[i] for i in dataset_indices
     ]
-    if isinstance(selected_data[0], mfm.experiments.data.DataCurve):
+    if isinstance(
+            selected_data[0],
+            mfm.experiments.data.DataCurve
+    ):
         # TODO: check for double names!!!
-        dg = mfm.experiments.data.ExperimentDataCurveGroup(selected_data, name="Data-Group")
+        dg = mfm.experiments.data.ExperimentDataCurveGroup(
+            selected_data,
+            name="Data-Group"
+        )
     else:
-        dg = mfm.experiments.data.ExperimentDataGroup(selected_data, name="Data-Group")
+        dg = mfm.experiments.data.ExperimentDataGroup(
+            selected_data,
+            name="Data-Group"
+        )
     dn = list()
     for d in mfm.imported_datasets:
         if d not in dg:
@@ -188,7 +209,10 @@ def group_datasets(
 def remove_datasets(
         dataset_indices: List[int]
 ) -> None:
-    if not isinstance(dataset_indices, list):
+    if not isinstance(
+            dataset_indices,
+            list
+    ):
         dataset_indices = [dataset_indices]
 
     imported_datasets = list()

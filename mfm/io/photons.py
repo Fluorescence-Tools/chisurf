@@ -32,7 +32,7 @@ import tempfile
 import numpy as np
 import tables
 
-from mfm.io import tttr
+from . import tttr
 
 
 def read_burst_ids(

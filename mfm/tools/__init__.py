@@ -1,7 +1,6 @@
 """
 This module contains a collection of tools
 """
-
 from . import tttr
 from . import fret_calculator
 from . import traj2fret

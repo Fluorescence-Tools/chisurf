@@ -7,8 +7,8 @@ import mfm
 import mfm.structure.structure
 import mfm.widgets
 
-from .photons import Photons
-from .tttr import filetypes
+from . import photons
+from . import tttr
 
 
 class SpcFileWidget(
@@ -31,7 +31,7 @@ class SpcFileWidget(
 
         self._photons = None
         self.filenames = list()
-        self.filetypes = filetypes
+        self.filetypes = tttr.filetypes
 
         self.actionSample_changed.triggered.connect(self.onSampleChanged)
         self.actionLoad_sample.triggered.connect(self.onLoadSample)
@@ -192,7 +192,7 @@ class SpcFileWidget(
             filenames = [directory + '/' + s for s in os.listdir(directory)]
 
         self.filenames = filenames
-        self._photons = Photons(filenames, self.fileType)
+        self._photons = photons.Photons(filenames, self.fileType)
         self.samples = self._photons.samples
         #self.comboBox.addItems(self._photons.sample_names)
         self.onSampleChanged()
@@ -200,7 +200,7 @@ class SpcFileWidget(
     @property
     def photons(
             self
-    ) -> Photons:
+    ) -> photons.Photons:
         return self._photons
 
 
@@ -221,7 +221,10 @@ class PDBLoad(QtWidgets.QWidget):
 
     def load(self, filename=None):
         if filename is None:
-            filename = mfm.widgets.get_filename('Open PDB-Structure', 'PDB-file (*.pdb)')
+            filename = mfm.widgets.get_filename(
+                'Open PDB-Structure',
+                'PDB-file (*.pdb)'
+            )
         self.filename = filename
         self.structure = self.filename
         self.lineEdit.setText(str(self.structure.n_atoms))
