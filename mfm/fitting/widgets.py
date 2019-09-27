@@ -14,10 +14,14 @@ import mfm.widgets
 parameter_settings = mfm.settings.parameter
 
 
-class FittingControllerWidget(QtWidgets.QWidget):
+class FittingControllerWidget(
+    QtWidgets.QWidget
+):
 
     @property
-    def selected_fit(self) -> int:
+    def selected_fit(
+            self
+    ) -> int:
         return int(self.comboBox.currentIndex())
 
     @selected_fit.setter
@@ -28,10 +32,14 @@ class FittingControllerWidget(QtWidgets.QWidget):
         self.comboBox.setCurrentIndex(int(v))
 
     @property
-    def current_fit_type(self) -> str:
+    def current_fit_type(
+            self
+    ) -> str:
         return str(self.comboBox.currentText())
 
-    def change_dataset(self):
+    def change_dataset(
+            self
+    ) -> None:
         dataset = self.curve_select.selected_dataset
         self.fit.data = dataset
         self.fit.update()
@@ -136,7 +144,9 @@ class FittingControllerWidget(QtWidgets.QWidget):
 
     def onAutoFitRange(self):
         try:
-            self.fit.fit_range = self.fit.data.setup.autofitrange(self.fit.data)
+            self.fit.fit_range = self.fit.data.setup.autofitrange(
+                self.fit.data
+            )
         except AttributeError:
             self.fit.fit_range = 0, len(self.fit.data.x)
         self.fit.update()
@@ -155,9 +165,13 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             control_layout: QtWidgets.QLayout,
             close_confirm: bool = None,
             fit_widget: mfm.fitting.widgets.FittingControllerWidget = None,
+            *args,
             **kwargs
     ):
-        super(FitSubWindow, self).__init__(**kwargs)
+        super().__init__(
+            *args,
+            **kwargs
+        )
         self.fit = fit
         self.fit_widget = fit_widget
         if close_confirm is None:
@@ -271,7 +285,9 @@ class FittingParameterWidget(QtWidgets.QWidget):
                 for p in fs.model.parameters_all:
                     if p is not self:
                         Action = action_submenu.addAction(p.name)
-                        Action.triggered.connect(self.make_linkcall(fit_idx, p.name))
+                        Action.triggered.connect(
+                            self.make_linkcall(fit_idx, p.name)
+                        )
                 submenu.addMenu(action_submenu)
 
                 menu.addMenu(submenu)
@@ -292,6 +308,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
             name: str = None,
             label_text: str = None,
             hide_link: bool = None,
+            *args,
             **kwargs
     ):
         if hide_link is None:
@@ -312,7 +329,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
         if decimals is None:
             decimals = parameter_settings['decimals']
 
-        super(FittingParameterWidget, self).__init__(**kwargs)
+        super().__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -439,7 +456,9 @@ class FittingParameterWidget(QtWidgets.QWidget):
         if self.fitting_parameter.fixed or not isinstance(self.fitting_parameter.error_estimate, float):
             self.lineEdit.setText("NA")
         else:
-            rel_error = abs(self.fitting_parameter.error_estimate / (value + 1e-12) * 100.0)
+            rel_error = abs(
+                self.fitting_parameter.error_estimate / (value + 1e-12) * 100.0
+            )
             self.lineEdit.setText("%.0f%%" % rel_error)
 
         #link
@@ -461,7 +480,7 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
             *args,
             **kwargs
     ):
-        super(FittingParameterGroupWidget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if n_col is None:
             n_col = mfm.settings.gui['fit_models']['n_columns']

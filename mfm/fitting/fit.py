@@ -23,7 +23,9 @@ import mfm.models
 from mfm.math.optimization.leastsqbound import leastsqbound
 
 
-class Fit(mfm.base.Base):
+class Fit(
+    mfm.base.Base
+):
     """
 
     """
@@ -31,6 +33,7 @@ class Fit(mfm.base.Base):
     def __init__(
             self,
             model_class: Type[mfm.models.model.Model] = type,
+            data: mfm.experiments.data.DataCurve = None,
             xmin: int = 0,
             xmax: int = 0,
             **kwargs
@@ -45,14 +48,13 @@ class Fit(mfm.base.Base):
         super().__init__(**kwargs)
         self._model = None
         self.results = None
-
-        self._data = kwargs.get(
-            'data',
-            mfm.experiments.data.DataCurve(
+        if data is None:
+            data = mfm.experiments.data.DataCurve(
                 x=np.arange(10),
                 y=np.arange(10)
             )
-        )
+
+        self._data = data
         self.plots = list()
         self._xmin, self._xmax = xmin, xmax
         self._model_kw = kwargs.get('model_kw', {})
@@ -332,8 +334,10 @@ class Fit(mfm.base.Base):
         """
         parameter = self.model.parameters_all_dict[parameter_name]
         if rel_range is None:
-            rel_range = max(parameter.error_estimate * 3.0 / parameter.value, 0.25)
-            rel_range = (rel_range, rel_range)
+            rel_range = max(
+                parameter.error_estimate * 3.0 / parameter.value,
+                0.25
+            )
         kwargs['rel_range'] = (rel_range, rel_range)
         parameter.parameter_scan = mfm.fitting.support_plane.scan_parameter(
             self,
@@ -523,9 +527,15 @@ class FitGroup(list, Fit):
             self._fits.append(fit)
 
         list.__init__(self, self._fits)
-        Fit.__init__(self, data=data, **kwargs)
+        Fit.__init__(
+            self,
+            data=data,
+            **kwargs
+        )
 
-        self.global_model = mfm.models.global_model.globalfit.GlobalFitModel(self)
+        self.global_model = mfm.models.global_model.GlobalFitModel(
+            self
+        )
         self.global_model.fits = self._fits
 
     def __str__(self):
@@ -668,7 +678,10 @@ def covariance_matrix(
     try:
         cov_m = scipy.linalg.pinvh(0.5 * m)
     except ValueError:
-        cov_m = np.zeros_like((n_important_parameters, n_important_parameters), dtype=float)
+        cov_m = np.zeros_like(
+            (n_important_parameters, n_important_parameters),
+            dtype=float
+        )
     return cov_m, important_parameters
 
 
