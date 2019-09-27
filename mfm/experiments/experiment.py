@@ -45,7 +45,7 @@ class Experiment(
             self,
             model: Type[mfm.models.model.Model]
     ):
-        if model not in self._model_classes:
+        if model not in self.model_classes:
             self._model_classes.append(model)
 
     def add_model_classes(
@@ -59,7 +59,7 @@ class Experiment(
             self,
             reader: mfm.experiments.reader.ExperimentReader
     ):
-        if reader not in self._readers:
+        if reader not in self.readers:
             reader.experiment = self
             self._readers.append(reader)
 

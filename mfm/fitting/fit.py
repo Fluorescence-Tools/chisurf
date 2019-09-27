@@ -11,6 +11,8 @@ import scipy.stats
 
 import mfm
 import mfm.base
+import mfm.io
+import mfm.curve
 import mfm.experiments
 import mfm.experiments.data
 import mfm.fitting.parameter
@@ -223,7 +225,11 @@ class Fit(mfm.base.Base):
     ) -> float:
         if model is None:
             model = self.model
-        return get_chi2(parameter, model, reduced)
+        return get_chi2(
+            parameter,
+            model,
+            reduced
+        )
 
     def get_wres(
             self,
@@ -236,7 +242,10 @@ class Fit(mfm.base.Base):
         if parameter is not None:
             model.parameter_values = parameter
             model.update_model()
-        return model.get_wres(self, **kwargs)
+        return model.get_wres(
+            self,
+            **kwargs
+        )
 
     def save(
             self,
@@ -251,14 +260,26 @@ class Fit(mfm.base.Base):
             wr = self.weighted_residuals
             xmin, xmax = self.xmin, self.xmax
             x, m = self.model[xmin:xmax]
-            csv.save(np.vstack([x, wr]), filename+'_wr.txt')
-            csv.save(self.model[:], filename+'_fit.txt')
+            csv.save(
+                data=np.vstack([x, wr]),
+                filename=filename+'_wr.txt'
+            )
+            csv.save(
+                data=self.model[:],
+                filename=filename+'_fit.txt'
+            )
             if isinstance(
                     self.data,
                     mfm.curve.Curve
             ):
-                self.data.save(filename +'_data.txt', file_type='txt')
-                self.data.save(filename +'_data.json', file_type='json')
+                self.data.save(
+                    filename=filename + '_data.txt',
+                    file_type='txt'
+                )
+                self.data.save(
+                    filename=filename + '_data.json',
+                    file_type='json'
+                )
                 with open(filename+'_info.txt', 'w') as fp:
                     fp.write(str(self))
 

@@ -27,14 +27,28 @@ def get_data(
     """
     if curve_type == 'all':
         return [
-            d for d in data_set if isinstance(d, data.ExperimentalData) or isinstance(d, data.ExperimentDataGroup)
+            d for d in data_set if
+            isinstance(
+                d,
+                data.ExperimentalData
+            ) or isinstance(
+                d, data.ExperimentDataGroup
+            )
         ]
     elif curve_type == 'experiment':
         return [
             d for d in data_set if (
-                    (isinstance(d, data.ExperimentalData) or isinstance(d, data.ExperimentDataGroup)) and
+                    (
+                            isinstance(
+                                d,
+                                data.ExperimentalData
+                            ) or
+                            isinstance(
+                                d,
+                                data.ExperimentDataGroup
+                            )
+                    ) and
                     d.name != "Global-fit"
-                                   )
-
+            )
         ]
 

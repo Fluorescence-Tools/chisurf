@@ -1,7 +1,30 @@
-#
-# import warnings
+# #
+# # import warnings
 # import functools
+# import os
+# from qtpy import uic
 #
+#
+#
+# def load_ui(ui_file):
+#     """This is a decorator which can be used to mark functions
+#     as deprecated. It will result in a warning being emitted
+#     when the function is used."""
+#
+#     def new_func(func, *args, **kwargs):
+#         super(func.__class__, ).__init__(*args, **kwargs)
+#         uic.loadUi(
+#             os.path.join(
+#                 os.path.dirname(os.path.abspath(func.__module__.__file__)),
+#                 ui_file
+#             ),
+#             args[0]
+#         )
+#         return func(*args, **kwargs)
+#
+#     return new_func
+#
+
 #
 # def deprecated(func):
 #     """This is a decorator which can be used to mark functions
