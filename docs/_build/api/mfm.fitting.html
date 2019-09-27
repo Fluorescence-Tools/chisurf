@@ -1,147 +1,154 @@
+
+
 <!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mfm.fitting package &mdash; ChiSurf  documentation</title>
+  
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta charset="utf-8" />
-    <title>mfm.fitting package &#8212; ChiSurf  documentation</title>
-    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
 
-  </head><body>
+<body class="wy-body-for-nav">
 
-  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
-    <div class="container">
-      <div class="navbar-header">
-        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="../index.html">
-          ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b></b></span>
-      </div>
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
 
-        <div class="collapse navbar-collapse nav-collapse">
-          <ul class="nav navbar-nav">
+          
+            <a href="../index.html" class="icon icon-home"> ChiSurf
+          
+
+          
+          </a>
+
+          
             
             
-              <li class="dropdown globaltoc-container">
-  <a role="button"
-     id="dLabelGlobalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="../index.html">Site <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"
-      role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul>
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
-</ul>
-</li>
-              
-                <li class="dropdown">
-  <a role="button"
-     id="dLabelLocalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="#">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"
-      role="menu"
-      aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">mfm.fitting package</a><ul>
-<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#mfm-fitting-error-estimate-module">mfm.fitting.error_estimate module</a></li>
-<li><a class="reference internal" href="#module-mfm.fitting.fit">mfm.fitting.fit module</a></li>
-<li><a class="reference internal" href="#module-mfm.fitting">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</ul>
-</li>
-              
-            
-            
-              
-                
-              
-            
-            
-            
-            
-              <li class="hidden-sm">
-<div id="sourcelink">
-  <a href="../_sources/api/mfm.fitting.rst.txt"
-     rel="nofollow">Source</a>
-</div></li>
-            
-          </ul>
 
+            
           
-            
-<form class="navbar-form navbar-right" action="../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
-          
-        </div>
-    </div>
-  </div>
-
-<div class="container">
-  <div class="row">
-      <div class="col-md-3">
-        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
-<li><a class="reference internal" href="#">mfm.fitting package</a><ul>
-<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#mfm-fitting-error-estimate-module">mfm.fitting.error_estimate module</a></li>
-<li><a class="reference internal" href="#module-mfm.fitting.fit">mfm.fitting.fit module</a></li>
-<li><a class="reference internal" href="#module-mfm.fitting">Module contents</a></li>
-</ul>
-</li>
-</ul>
-
-<div id="sourcelink">
-  <a href="../_sources/api/mfm.fitting.rst.txt"
-     rel="nofollow">Source</a>
-</div>
-<form action="../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
         </div>
       </div>
-    <div class="col-md-9 content">
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
       
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">ChiSurf</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>mfm.fitting package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/api/mfm.fitting.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
   <div class="section" id="mfm-fitting-package">
 <h1>mfm.fitting package<a class="headerlink" href="#mfm-fitting-package" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="subpackages">
@@ -169,7 +176,7 @@
 <span id="mfm-fitting-fit-module"></span><h2>mfm.fitting.fit module<a class="headerlink" href="#module-mfm.fitting.fit" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mfm.fitting.fit.Fit">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.fitting.fit.</code><code class="sig-name descname">Fit</code><span class="sig-paren">(</span><em class="sig-param">model_class=&lt;class 'type'&gt;</em>, <em class="sig-param">xmin=0</em>, <em class="sig-param">xmax=0</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.fitting.fit.</code><code class="sig-name descname">Fit</code><span class="sig-paren">(</span><em class="sig-param">model_class=&lt;class 'type'&gt;</em>, <em class="sig-param">data=None</em>, <em class="sig-param">xmin=0</em>, <em class="sig-param">xmax=0</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.base.Base</span></code></p>
 <dl class="method">
 <dt id="mfm.fitting.fit.Fit.chi2">
@@ -230,12 +237,7 @@ parameters.</p>
 <dl class="method">
 <dt id="mfm.fitting.fit.Fit.data">
 <em class="property">property </em><code class="sig-name descname">data</code><a class="headerlink" href="#mfm.fitting.fit.Fit.data" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataCurve</span></code></p>
-</dd>
-</dl>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mfm.fitting.fit.Fit.fit_range">
@@ -250,12 +252,7 @@ parameters.</p>
 <dl class="method">
 <dt id="mfm.fitting.fit.Fit.get_chi2">
 <code class="sig-name descname">get_chi2</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">parameter=None</em>, <em class="sig-param">model: 'mfm.models.model.Model' = None</em>, <em class="sig-param">reduced: 'bool' = True</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit.get_chi2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit.get_chi2" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
-</dd>
-</dl>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mfm.fitting.fit.Fit.get_wres">
@@ -273,12 +270,7 @@ parameters.</p>
 <dl class="method">
 <dt id="mfm.fitting.fit.Fit.model">
 <em class="property">property </em><code class="sig-name descname">model</code><a class="headerlink" href="#mfm.fitting.fit.Fit.model" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
-</dd>
-</dl>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mfm.fitting.fit.Fit.n_free">
@@ -381,12 +373,7 @@ parameters.</p>
 <dl class="method">
 <dt id="mfm.fitting.fit.FitGroup.data">
 <em class="property">property </em><code class="sig-name descname">data</code><a class="headerlink" href="#mfm.fitting.fit.FitGroup.data" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataCurve</span></code></p>
-</dd>
-</dl>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mfm.fitting.fit.FitGroup.fit_range">
@@ -401,12 +388,7 @@ parameters.</p>
 <dl class="method">
 <dt id="mfm.fitting.fit.FitGroup.model">
 <em class="property">property </em><code class="sig-name descname">model</code><a class="headerlink" href="#mfm.fitting.fit.FitGroup.model" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
-</dd>
-</dl>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mfm.fitting.fit.FitGroup.next">
@@ -462,7 +444,7 @@ parameters.</p>
 <em class="property">property </em><code class="sig-name descname">weighted_residuals</code><a class="headerlink" href="#mfm.fitting.fit.FitGroup.weighted_residuals" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[&lt;built-in function array&gt;]</p>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -496,10 +478,10 @@ parameters.</p>
 xk. The return value of the function is an array.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>xk</strong> (<em>&lt;built-in function array&gt;</em>) – values around which gradient is estimated. These values should be an array of length of the</p>
+<dd class="field-odd"><p><strong>xk</strong> (<em>&lt;built-in function array&gt;</em>) – values around which gradient is estimated. These values should</p>
 </dd>
 </dl>
-<p>free fitting parameters
+<p>be an array of length of the free fitting parameters
 :type fit: <a class="reference internal" href="#mfm.fitting.fit.Fit" title="mfm.fitting.fit.Fit"><code class="xref py py-class docutils literal notranslate"><span class="pre">Fit</span></code></a>
 :param fit: object of type ‘Fit’
 :type epsilon: <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>
@@ -525,27 +507,26 @@ xk. The return value of the function is an array.</p>
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[&lt;built-in function array&gt;, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>the covariance matrix and a list of of parameter indices which are “important”, i.e.,</p>
+<dd class="field-odd"><p>the covariance matrix and a list of of parameter indices which</p>
 </dd>
 </dl>
-<p>have a partial derivative deviating from zero.</p>
+<p>are “important”, i.e., have a partial derivative deviating from zero.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.fitting.fit.get_chi2">
-<code class="sig-prename descclassname">mfm.fitting.fit.</code><code class="sig-name descname">get_chi2</code><span class="sig-paren">(</span><em class="sig-param">parameter: 'List[float]'</em>, <em class="sig-param">model: 'mfm.models.model.Model'</em>, <em class="sig-param">reduced: 'bool' = True</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/fitting/fit.html#get_chi2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.get_chi2" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fitting.fit.</code><code class="sig-name descname">get_chi2</code><span class="sig-paren">(</span><em class="sig-param">parameter: 'List[float]'</em>, <em class="sig-param">model: 'mfm.models.model.ModelCurve'</em>, <em class="sig-param">reduced: 'bool' = True</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/fitting/fit.html#get_chi2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.get_chi2" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns either the reduced chi2 or the sum of squares (chi2)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>parameter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – a list of the parameter values or None. If None the models is not updated</p></li>
-<li><p><strong>model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code>) – </p></li>
-<li><p><strong>reduced</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True the returned value is divided by (n_points - n_free - 1.0) where n_points</p></li>
-</ul>
+<dd class="field-odd"><p><strong>parameter</strong> – a list of the parameter values or None. If None the models</p>
 </dd>
 </dl>
-<p>is the number of data points and n_free is the number of model parameters
-:rtype: <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>
+<p>is not updated
+:param model:
+:param reduced: If True the returned value is divided by
+(n_points - n_free - 1.0) where n_points is the number of data points
+and n_free is the number of model parameters
 :return:</p>
 </dd></dl>
 
@@ -555,16 +536,16 @@ xk. The return value of the function is an array.</p>
 <dd><p>Returns the weighted residuals for a list of parameters of a models</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>parameter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – a list of the parameter values / or None. If None the models is not updated</p></li>
-<li><p><strong>model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code>) – </p></li>
-</ul>
+<dd class="field-odd"><p><strong>parameter</strong> – a list of the parameter values / or None. If None</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>&lt;built-in function array&gt;</p>
+</dl>
+<p>the models is not updated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model</strong> – </p>
 </dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -572,9 +553,9 @@ xk. The return value of the function is an array.</p>
 <dl class="function">
 <dt id="mfm.fitting.fit.lnprior">
 <code class="sig-prename descclassname">mfm.fitting.fit.</code><code class="sig-name descname">lnprior</code><span class="sig-paren">(</span><em class="sig-param">parameter_values: 'List[float]'</em>, <em class="sig-param">fit: 'mfm.fitting.fit.Fit'</em>, <em class="sig-param">bounds: 'List[Tuple[float</em>, <em class="sig-param">float]]' = None</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/fitting/fit.html#lnprior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.lnprior" title="Permalink to this definition">¶</a></dt>
-<dd><p>The probability determined by the prior which is given by the bounds of the models parameters.
-If the models parameters leave the bounds, the ln of the probability is minus infinity otherwise it
-is zero.</p>
+<dd><p>The probability determined by the prior which is given by the bounds
+of the models parameters. If the models parameters leave the bounds, the
+ln of the probability is minus infinity otherwise it is zero.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
@@ -611,21 +592,40 @@ is zero.</p>
 <div class="section" id="module-mfm.fitting">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.fitting" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
+<dt id="mfm.fitting.calculate_weighted_residuals">
+<code class="sig-prename descclassname">mfm.fitting.</code><code class="sig-name descname">calculate_weighted_residuals</code><span class="sig-paren">(</span><em class="sig-param">data: 'mfm.experiments.data.DataCurve'</em>, <em class="sig-param">model: 'mfm.curve.Curve'</em>, <em class="sig-param">xmin: 'int'</em>, <em class="sig-param">xmax: 'int'</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../_modules/mfm/fitting.html#calculate_weighted_residuals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.calculate_weighted_residuals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the weighted residuals for a DataCurve and a
+model curve given the range as provided by xmin and xmax. The
+weighted residuals are given by (data - model) / weights. Here,
+the weights are the errors of the data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> – the experimental data</p></li>
+<li><p><strong>model</strong> – the model</p></li>
+<li><p><strong>xmin</strong> – minimum index</p></li>
+<li><p><strong>xmax</strong> – maximum index</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a numpy array containing the weighted residuals</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="mfm.fitting.find_fit_idx_of_model">
 <code class="sig-prename descclassname">mfm.fitting.</code><code class="sig-name descname">find_fit_idx_of_model</code><span class="sig-paren">(</span><em class="sig-param">model: 'mfm.models.model.Model'</em>, <em class="sig-param">fits: 'List[mfm.fitting.fit.Fit]'</em><span class="sig-paren">)</span> &#x2192; 'int'<a class="reference internal" href="../_modules/mfm/fitting.html#find_fit_idx_of_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.find_fit_idx_of_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns index of the fit of a model in mfm.fits array</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code>) – </p></li>
-<li><p><strong>fits</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="#mfm.fitting.fit.Fit" title="mfm.fitting.fit.Fit"><code class="xref py py-class docutils literal notranslate"><span class="pre">Fit</span></code></a>]) – </p></li>
+<li><p><strong>model</strong> – </p></li>
+<li><p><strong>fits</strong> – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p></p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -634,21 +634,43 @@ is zero.</p>
 </div>
 
 
-    </div>
-      
-  </div>
-</div>
-<footer class="footer">
-  <div class="container">
-    <p class="pull-right">
-      <a href="#">Back to top</a>
-      
-    </p>
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+        &copy; Copyright 2019, Thomas Peulen
+
     </p>
   </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
 </footer>
-  </body>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
 </html>

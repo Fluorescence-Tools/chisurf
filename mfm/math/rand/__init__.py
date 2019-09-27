@@ -51,7 +51,13 @@ def weighted_choice(weights, n=1):
     return r
 
 
-def brownian(x0, n, dt, delta, out=None):
+def brownian(
+        x0: np.ndarray,
+        n: int,
+        dt: float,
+        delta: float,
+        out=None
+):
     """\
     Generate an instance of Brownian motion (i.e. the Wiener process):
 
@@ -119,17 +125,32 @@ def brownian(x0, n, dt, delta, out=None):
 
 
 @nb.jit()
-def mc(e0, e1, kT):
-    """
-    Monte-Carlo acceptance criterion
+def mc(
+        e0: float,
+        e1: float,
+        kT: float
+) -> bool:
+    """Accept or reject a candidate in Metropolis-Algorithm by its energy
+    and the energy of its predecessors using the Bennett acceptance ratio.
+
+    (1) calculates the acceptance probability p_A, a candidate is accepted if it
+    (2) generate a uniform random number u on [0,1],
+    (3) and accepts a candidate if u <= alpha, rejects a candidate if u > alpha.
+
+    .. math::
+        p_A = min(1, exp( (E_1 - E_0) / kT))
+
+    (see: https://de.wikipedia.org/wiki/Metropolis-Algorithmus)
 
     :param e0: float
         Previous energy
     :param e1: float
-        Next energy
+        Candidate energy
     :param kT: float
         Temperature
-    :return: bool
+    :return: True if a candidate is accepted, False is a candidate is
+    rejected.
+
     """
     if e1 < e0:
         return True
@@ -138,32 +159,43 @@ def mc(e0, e1, kT):
 
 
 @nb.jit(nopython=True)
-def random_numbers(axis, cdf, n, norm_cdf=True, dtype=np.float64):
-    """Generates an array of n random numbers according to an cumulative distribution function (CDF)
+def random_numbers(
+        cdf_axis,
+        cdf_values: np.ndarray,
+        n: int,
+        norm_cdf=True, dtype=np.float64
+) -> np.ndarray:
+    """Generates an array of n random numbers according to an cumulative
+    distribution function (CDF)
 
-    :param x: x-axis of cdf
-    :param cdf: CDF according to which random numbers are generated
+    :param cdf_axis: x-axis of cdf
+    :param cdf_values: CDF according to which random numbers are generated
     :param n: the number of random numbers to be generated
-    :param norm_cdf: if True the array passed as cdf is normalized so that its last point is one
+    :param norm_cdf: if True the array passed as cdf is normalized so that
+    its last point is one
     :return:
 
     Examples
     --------
 
-    >>> x = np.linspace(0, 10, num=1000)
+    >>> import mfm.math
+    >>> import pylab as p
+    >>> x = np.linspace(0, 8, num=1000)
     >>> y = mfm.math.functions.distributions.normal_distribution(x, loc=4)
-    >>> rn = random_numbers(axis=x, cdf=np.cumsum(y), n=10000000, norm_cdf=True)
-    >>> hy, hx = np.histogram(rn, bins=4096, range=(0, 50))
+    >>> rn = mfm.math.rand.random_numbers(axis=x, cdf=np.cumsum(y), n=10000000, norm_cdf=True)
+    >>> hy, hx = np.histogram(rn, bins=4096, range=(0, 10))
     >>> p.plot(hx[1:], hy)
     """
     if norm_cdf:
         # use the last point of the CDF for normalization
         # at the latest time a sample is taken for sure...
-        cdf /= cdf[-1]
+        cdf_values /= cdf_values[-1]
     tr = np.zeros(n, dtype=dtype)
-    for j, r in enumerate(np.random.rand(n)):
-        for i, xi in enumerate(cdf):
+    for j, r in enumerate(
+            np.random.random_sample(n)
+    ):
+        for i, xi in enumerate(cdf_values):
             if xi >= r:
-                tr[j] = axis[i]
+                tr[j] = cdf_axis[i]
                 break
     return tr

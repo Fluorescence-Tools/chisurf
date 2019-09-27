@@ -1,11 +1,22 @@
+from __future__ import annotations
+from typing import List
+
 import numpy as np
 import pylab as p
 from scipy.integrate import odeint
 
 import mfm
+import mfm.parameter
+import mfm.fitting
 
 
-def stoichometry_matrix(n_species, educts, products, educts_stoichometry, products_stoichometry):
+def stoichometry_matrix(
+        n_species: int,
+        educts,
+        products,
+        educts_stoichometry,
+        products_stoichometry
+):
     """
     http://en.wikipedia.org/wiki/Rate_equation
 
@@ -84,21 +95,32 @@ def stoichometry_matrix(n_species, educts, products, educts_stoichometry, produc
 class ChemicalSpecies(object):
 
     @property
-    def name(self):
+    def name(
+            self
+    ) -> str:
         return self._name
 
     @property
-    def description(self):
+    def description(
+            self
+    ) -> str:
         return self._description
 
-    def __init__(self, name, description=""):
+    def __init__(
+            self,
+            name: str,
+            description: str = ""
+    ):
         self._name = name
         self._description = description
 
 
 class ReactionSystem(object):
 
-    def __init__(self, **kwargs):
+    def __init__(
+            self,
+            **kwargs
+    ):
         """
 
         :param kwargs:
@@ -202,7 +224,7 @@ class ReactionSystem(object):
 
         Example
         =======
-        >>> from mfm.fitting.model.stopped_flow import ReactionSystem
+        >>> from mfm.models.stopped_flow import ReactionSystem
         >>> rs = ReactionSystem()
         >>> rs.add_reaction(educts=[0], products=[1], educt_stoichiometry=[1], product_stoichometry=[1], rate=2)
         >>> rs.add_reaction(educts=[1], products=[0], educt_stoichiometry=[1], product_stoichometry=[1], rate=1)
@@ -231,7 +253,7 @@ class ReactionSystem(object):
 
         Example
         =======
-        >>> from mfm.fitting.model.stopped_flow import ReactionSystem
+        >>> from mfm.models.stopped_flow import ReactionSystem
         >>> rs = ReactionSystem()
         >>> rs.add_reaction(educts=[0], products=[1], educt_stoichiometry=[1], product_stoichometry=[1], rate=2)
         >>> rs.add_reaction(educts=[1], products=[0], educt_stoichiometry=[1], product_stoichometry=[1], rate=1)
@@ -258,7 +280,16 @@ class ReactionSystem(object):
             s += "\trate: %.5f" % rate
         return s
 
-    def add_reaction(self, educts, products, educt_stoichiometry, product_stoichometry, rate, fixed=True, verbose=False):
+    def add_reaction(
+            self,
+            educts,
+            products,
+            educt_stoichiometry,
+            product_stoichometry,
+            rate,
+            fixed=True,
+            verbose=False
+    ):
         verbose = self.verbose or verbose
         educt_stoichiometry = np.array(educt_stoichiometry, dtype=np.float64)
         product_stoichometry = np.array(product_stoichometry, dtype=np.float64)
@@ -267,7 +298,7 @@ class ReactionSystem(object):
         self.products.append(products)
         self.educts_stoichometry.append(educt_stoichiometry)
         self.products_stoichometry.append(np.array(product_stoichometry, dtype=np.float64))
-        r = mfm.parameter.FittingParameter(value=rate)
+        r = mfm.fitting.parameter.FittingParameter(value=rate)
         self.rates.append(r)
         if verbose:
             print("Adding new reaction")
@@ -283,7 +314,12 @@ class ReactionSystem(object):
         rates = [r.value for r in self.rates]
         return zip(educts, products, educts_stoichometry, products_stoichometry, rates)
 
-    def rate_equation(self, y, t, reactions):
+    def rate_equation(
+            self,
+            y,
+            t,
+            reactions
+    ):
         """
 
         :param y: array
@@ -296,7 +332,7 @@ class ReactionSystem(object):
 
         Example
         =======
-        >>> from mfm.fitting.model.stopped_flow import ReactionSystem
+        >>> from mfm.models.stopped_flow import ReactionSystem
         >>> rs = ReactionSystem()
         >>> rs.add_reaction(educts=[0], products=[1], educt_stoichiometry=[1], product_stoichometry=[1], rate=2)
         >>> rs.add_reaction(educts=[1], products=[0], educt_stoichiometry=[1], product_stoichometry=[1], rate=1)
@@ -317,11 +353,17 @@ class ReactionSystem(object):
 
     @property
     def initial_concentrations(self):
-        return np.array([c.value for c in self._initial_concentrations], dtype=np.float64)
+        return np.array(
+            [
+                c.value for c in self._initial_concentrations
+            ], dtype=np.float64
+        )
 
     @initial_concentrations.setter
     def initial_concentrations(self, v):
-        self._initial_concentrations = [mfm.parameter.FittingParameter(value=vi) for vi in v]
+        self._initial_concentrations = [
+            mfm.fitting.parameter.FittingParameter(value=vi) for vi in v
+        ]
 
     @property
     def concentrations(self):
@@ -332,7 +374,10 @@ class ReactionSystem(object):
         return self._times
 
     @times.setter
-    def times(self, v):
+    def times(
+            self,
+            v
+    ):
         self._times = v
 
     def calc(self):
@@ -351,7 +396,12 @@ class ReactionSystem(object):
         )
         self._concentrations = res[0]
 
-    def plot(self, t_divisor=1.0, normalize=False, show=True):
+    def plot(
+            self,
+            t_divisor: float = 1.0,
+            normalize: bool = False,
+            show: bool = True
+    ) -> None:
         """
         Generates a plot of the currently calculated time dependent concentrations
         :param t_divisor: float
@@ -384,18 +434,25 @@ class ReactionSystem(object):
             p.show()
 
     @property
-    def species_brightness(self):
+    def species_brightness(
+            self
+    ) -> List[float]:
         if isinstance(self._species_brightness, np.ndarray):
             return self._species_brightness
         else:
             return [v.value for v in self._species_brightness]
 
     @species_brightness.setter
-    def species_brightness(self, v):
+    def species_brightness(
+            self,
+            v
+    ):
         self._species_brightness = v
 
     @property
-    def signal_intensity(self):
+    def signal_intensity(
+            self
+    ) -> np.ndarray:
         sf = self.concentrations
         q = self.species_brightness
         return np.dot(sf, q)

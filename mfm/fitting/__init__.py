@@ -27,7 +27,7 @@ def find_fit_idx_of_model(
     :return:
     """
     for idx, f in enumerate(fits):
-        if f.model == model:
+        if f.model is model:
             return idx
 
 
@@ -37,6 +37,17 @@ def calculate_weighted_residuals(
         xmin: int,
         xmax: int,
 ) -> np.array:
+    """Calculates the weighted residuals for a DataCurve and a
+    model curve given the range as provided by xmin and xmax. The
+    weighted residuals are given by (data - model) / weights. Here,
+    the weights are the errors of the data.
+
+    :param data: the experimental data
+    :param model: the model
+    :param xmin: minimum index
+    :param xmax: maximum index
+    :return: a numpy array containing the weighted residuals
+    """
     model_x, model_y = model[xmin:xmax]
     data_x, data_y, _, data_y_error = data[xmin:xmax]
     ml = min([len(model_y), len(data_y)])

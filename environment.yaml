@@ -36,7 +36,7 @@ dependencies:
     - qtpy
     - qdarkstyle
     - sphinx
-    - sphinx_bootstrap_theme
-    - sphinx-autodoc-typehints
-    - numpydoc
+#    - sphinx_bootstrap_theme
+#    - sphinx-autodoc-typehints
+#    - numpydoc
     - mrcfile

@@ -1,8 +1,7 @@
 #from numpy import arange, array, empty,zeros
 import time
 
-cimport
-numpy as np
+cimport numpy as np
 import numpy as np
 from numpy.random import multinomial
 
