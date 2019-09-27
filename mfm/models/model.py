@@ -4,8 +4,8 @@ from typing import List, Tuple
 import numpy as np
 from qtpy import QtWidgets, QtGui
 
+import mfm.parameter
 import mfm.curve
-import mfm.fitting
 import mfm.fitting.parameter
 import mfm.fitting.widgets
 import mfm.plots

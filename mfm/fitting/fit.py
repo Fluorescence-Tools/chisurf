@@ -16,6 +16,7 @@ import mfm.experiments.data
 import mfm.fitting.parameter
 import mfm.fitting.sample
 import mfm.fitting.support_plane
+import mfm.models
 
 from mfm.math.optimization.leastsqbound import leastsqbound
 

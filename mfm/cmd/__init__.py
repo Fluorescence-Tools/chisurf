@@ -7,9 +7,10 @@ from docx.shared import Inches
 
 import mfm
 import mfm.base
+import mfm.experiments
+import mfm.models
 import mfm.fitting
 import mfm.widgets
-import mfm.experiments.data
 from . import tcspc
 
 

@@ -7,6 +7,7 @@ from typing import List
 
 import numpy as np
 
+import mfm.curve
 import mfm.fitting.parameter
 import mfm.experiments
 import mfm.fitting.fit
