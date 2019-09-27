@@ -48,8 +48,16 @@ class CsvTCSPCWidget(
     QtWidgets.QWidget
 ):
 
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        QtWidgets.QWidget.__init__(
+            self,
+            *args,
+            **kwargs
+        )
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -109,7 +117,9 @@ class CsvTCSPCWidget(
         mfm.run("cs.current_setup.dt = %s" % dt)
 
 
-class TCSPCReader(ExperimentReader):
+class TCSPCReader(
+    ExperimentReader
+):
 
     def __init__(
             self,
@@ -129,7 +139,10 @@ class TCSPCReader(ExperimentReader):
             *args,
             **kwargs
         )
-        self.csvSetup = kwargs.pop('csvSetup', Csv(*args, **kwargs))
+        self.csvSetup = kwargs.pop(
+            'csvSetup',
+            Csv(*args, **kwargs)
+        )
         self.skiprows = skiprows
         self.is_jordi = is_jordi
         self.rebin = rebin
@@ -155,7 +168,10 @@ class TCSPCReader(ExperimentReader):
     ) -> Tuple[float, float]:
         if fit_area is None:
             fit_area = mfm.settings.cs_settings['tcspc']['fit_area']
-        threshold = kwargs.get('threshold', mfm.settings.cs_settings['tcspc']['fit_count_threshold'])
+        threshold = kwargs.get(
+            'threshold',
+            mfm.settings.cs_settings['tcspc']['fit_count_threshold']
+        )
         return fitrange(
             data.y,
             threshold,
@@ -165,11 +181,13 @@ class TCSPCReader(ExperimentReader):
     def read(
             self,
             filename: str = None,
+            skiprows: int = None,
             *args,
             **kwargs
     ) -> mfm.experiments.data.DataCurveGroup:
         filename = filename
-        skiprows = kwargs.get('skiprows', self.skiprows)
+        if skiprows is None:
+            skiprows = self.skiprows
 
         # Load data
         rebin_x, rebin_y = self.rebin
@@ -436,17 +454,27 @@ class TcspcSDTWidget(
 
         if filename is None:
             filename = mfm.widgets.get_filename(
-                'Open BH-SDT file', 'SDT-files (*.sdt)'
+                'Open BH-SDT file',
+                'SDT-files (*.sdt)'
             )
         self.filename = filename
         self.curve_number = curve_nbr
         self.textBrowser.setPlainText(str(self.sdt.info))
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super().__init__(
+            *args,
+            **kwargs
+        )
         uic.loadUi(
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
+                os.path.dirname(
+                    os.path.abspath(__file__)
+                ),
                 "sdtfile.ui"
             ),
             self
@@ -501,7 +529,10 @@ class TCSPCSetupSDTWidget(
             name: str = 'Becker SDT',
             **kwargs
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args,
+            **kwargs
+        )
 
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
@@ -523,7 +554,9 @@ class TCSPCSetupSDTWidget(
         return curves
 
 
-class TCSPCSetupDummy(TCSPCReader):
+class TCSPCSetupDummy(
+    TCSPCReader
+):
 
     name = "Dummy-TCSPC"
 
@@ -585,7 +618,10 @@ class TCSPCSetupDummy(TCSPCReader):
         return s
 
 
-class TCSPCSetupDummyWidget(QtWidgets.QWidget, TCSPCSetupDummy):
+class TCSPCSetupDummyWidget(
+    QtWidgets.QWidget,
+    TCSPCSetupDummy
+):
 
     @property
     def sample_name(
@@ -653,11 +689,20 @@ class TCSPCSetupDummyWidget(QtWidgets.QWidget, TCSPCSetupDummy):
     ):
         pass
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super().__init__(
+            *args,
+            **kwargs
+        )
         uic.loadUi(
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
+                os.path.dirname(
+                    os.path.abspath(__file__)
+                ),
                 "tcspcDummy.ui"
             ),
             self

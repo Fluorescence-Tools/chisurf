@@ -14,9 +14,6 @@ API Reference
    user_documentation/api/widgets.rst
 
 
-API All
-=====
-
 .. toctree::
    :maxdepth: 2
    :glob:
