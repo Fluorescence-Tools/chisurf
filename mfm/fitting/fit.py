@@ -612,8 +612,8 @@ def approx_grad(
     """Approximate the derivative of a fit with respect to the parameters
     xk. The return value of the function is an array.
 
-    :param xk: values around which gradient is estimated. These values should be an array of length of the
-    free fitting parameters
+    :param xk: values around which gradient is estimated. These values should
+    be an array of length of the free fitting parameters
     :param fit: object of type 'Fit'
     :param epsilon: differential change
     :param args: additional arguments passed to 'Fit.get_wres'
@@ -648,8 +648,8 @@ def covariance_matrix(
 
     :param fit:
     :param kwargs:
-    :return: the covariance matrix and a list of of parameter indices which are "important", i.e.,
-    have a partial derivative deviating from zero.
+    :return: the covariance matrix and a list of of parameter indices which
+    are "important", i.e., have a partial derivative deviating from zero.
     """
     model = fit.model
     xk = np.array(model.parameter_values)
@@ -691,7 +691,9 @@ def get_wres(
 ) -> np.array:
     """Returns the weighted residuals for a list of parameters of a models
 
-    :param parameter: a list of the parameter values / or None. If None the models is not updated
+    :param parameter: a list of the parameter values / or None. If None
+    the models is not updated.
+
     :param model:
     :return:
     """
@@ -708,10 +710,12 @@ def get_chi2(
 ) -> float:
     """Returns either the reduced chi2 or the sum of squares (chi2)
 
-    :param parameter: a list of the parameter values or None. If None the models is not updated
+    :param parameter: a list of the parameter values or None. If None the models
+    is not updated
     :param model:
-    :param reduced: If True the returned value is divided by (n_points - n_free - 1.0) where n_points
-    is the number of data points and n_free is the number of model parameters
+    :param reduced: If True the returned value is divided by
+    (n_points - n_free - 1.0) where n_points is the number of data points
+    and n_free is the number of model parameters
     :return:
     """
     chi2 = (get_wres(parameter, model)**2.0).sum()
@@ -728,9 +732,9 @@ def lnprior(
         fit: mfm.fitting.fit.Fit,
         bounds: List[Tuple[float, float]] = None
 ) -> float:
-    """The probability determined by the prior which is given by the bounds of the models parameters.
-    If the models parameters leave the bounds, the ln of the probability is minus infinity otherwise it
-    is zero.
+    """The probability determined by the prior which is given by the bounds
+    of the models parameters. If the models parameters leave the bounds, the
+    ln of the probability is minus infinity otherwise it is zero.
     """
     if bounds is None:
         bounds = fit.model.parameter_bounds

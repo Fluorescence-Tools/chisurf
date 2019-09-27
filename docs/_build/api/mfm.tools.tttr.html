@@ -1,528 +1,211 @@
+
+
 <!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mfm.tools.tttr package &mdash; ChiSurf  documentation</title>
+  
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta charset="utf-8" />
-    <title>mfm.tools.tttr package &#8212; ChiSurf  documentation</title>
-    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
 
-  </head><body>
+<body class="wy-body-for-nav">
 
-  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
-    <div class="container">
-      <div class="navbar-header">
-        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="../index.html">
-          ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b></b></span>
-      </div>
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
 
-        <div class="collapse navbar-collapse nav-collapse">
-          <ul class="nav navbar-nav">
+          
+            <a href="../index.html" class="icon icon-home"> ChiSurf
+          
+
+          
+          </a>
+
+          
             
             
-              <li class="dropdown globaltoc-container">
-  <a role="button"
-     id="dLabelGlobalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="../index.html">Site <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"
-      role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul>
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
-</ul>
-</li>
-              
-                <li class="dropdown">
-  <a role="button"
-     id="dLabelLocalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="#">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"
-      role="menu"
-      aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">mfm.tools.tttr package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-mfm.tools.tttr.convert">mfm.tools.tttr.convert module</a></li>
-<li><a class="reference internal" href="#module-mfm.tools.tttr.correlate">mfm.tools.tttr.correlate module</a></li>
-<li><a class="reference internal" href="#module-mfm.tools.tttr.decay_histogram">mfm.tools.tttr.decay_histogram module</a></li>
-<li><a class="reference internal" href="#module-mfm.tools.tttr">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</ul>
-</li>
-              
-            
-            
-              
-                
-              
-            
-            
-            
-            
-              <li class="hidden-sm">
-<div id="sourcelink">
-  <a href="../_sources/api/mfm.tools.tttr.rst.txt"
-     rel="nofollow">Source</a>
-</div></li>
-            
-          </ul>
 
+            
           
-            
-<form class="navbar-form navbar-right" action="../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
-          
-        </div>
-    </div>
-  </div>
-
-<div class="container">
-  <div class="row">
-      <div class="col-md-3">
-        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
-<li><a class="reference internal" href="#">mfm.tools.tttr package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-mfm.tools.tttr.convert">mfm.tools.tttr.convert module</a></li>
-<li><a class="reference internal" href="#module-mfm.tools.tttr.correlate">mfm.tools.tttr.correlate module</a></li>
-<li><a class="reference internal" href="#module-mfm.tools.tttr.decay_histogram">mfm.tools.tttr.decay_histogram module</a></li>
-<li><a class="reference internal" href="#module-mfm.tools.tttr">Module contents</a></li>
-</ul>
-</li>
-</ul>
-
-<div id="sourcelink">
-  <a href="../_sources/api/mfm.tools.tttr.rst.txt"
-     rel="nofollow">Source</a>
-</div>
-<form action="../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
         </div>
       </div>
-    <div class="col-md-9 content">
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
       
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">ChiSurf</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>mfm.tools.tttr package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/api/mfm.tools.tttr.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
   <div class="section" id="mfm-tools-tttr-package">
 <h1>mfm.tools.tttr package<a class="headerlink" href="#mfm-tools-tttr-package" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-mfm.tools.tttr.convert">
-<span id="mfm-tools-tttr-convert-module"></span><h2>mfm.tools.tttr.convert module<a class="headerlink" href="#module-mfm.tools.tttr.convert" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mfm.tools.tttr.convert.TTTRConvert">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.tttr.convert.</code><code class="sig-name descname">TTTRConvert</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/convert.html#TTTRConvert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.convert.TTTRConvert" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
-<dl class="method">
-<dt id="mfm.tools.tttr.convert.TTTRConvert.ending">
-<em class="property">property </em><code class="sig-name descname">ending</code><a class="headerlink" href="#mfm.tools.tttr.convert.TTTRConvert.ending" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.convert.TTTRConvert.ending_changed">
-<code class="sig-name descname">ending_changed</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/convert.html#TTTRConvert.ending_changed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.convert.TTTRConvert.ending_changed" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.convert.TTTRConvert.filenames">
-<em class="property">property </em><code class="sig-name descname">filenames</code><a class="headerlink" href="#mfm.tools.tttr.convert.TTTRConvert.filenames" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.convert.TTTRConvert.filetype">
-<em class="property">property </em><code class="sig-name descname">filetype</code><a class="headerlink" href="#mfm.tools.tttr.convert.TTTRConvert.filetype" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.tttr.convert.TTTRConvert.name">
-<code class="sig-name descname">name</code><em class="property"> = 'tttr-convert'</em><a class="headerlink" href="#mfm.tools.tttr.convert.TTTRConvert.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.convert.TTTRConvert.open_target">
-<code class="sig-name descname">open_target</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/convert.html#TTTRConvert.open_target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.convert.TTTRConvert.open_target" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.convert.TTTRConvert.reading_routine">
-<em class="property">property </em><code class="sig-name descname">reading_routine</code><a class="headerlink" href="#mfm.tools.tttr.convert.TTTRConvert.reading_routine" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="mfm-tools-tttr-convert-module">
+<h2>mfm.tools.tttr.convert module<a class="headerlink" href="#mfm-tools-tttr-convert-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-mfm.tools.tttr.correlate">
-<span id="mfm-tools-tttr-correlate-module"></span><h2>mfm.tools.tttr.correlate module<a class="headerlink" href="#module-mfm.tools.tttr.correlate" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mfm.tools.tttr.correlate.CorrelateTTTR">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.tttr.correlate.</code><code class="sig-name descname">CorrelateTTTR</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/correlate.html#CorrelateTTTR"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelateTTTR" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelateTTTR.add_curve">
-<code class="sig-name descname">add_curve</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/correlate.html#CorrelateTTTR.add_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelateTTTR.add_curve" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelateTTTR.clear_curves">
-<code class="sig-name descname">clear_curves</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/correlate.html#CorrelateTTTR.clear_curves"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelateTTTR.clear_curves" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelateTTTR.curve_name">
-<em class="property">property </em><code class="sig-name descname">curve_name</code><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelateTTTR.curve_name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelateTTTR.get_data_curves">
-<code class="sig-name descname">get_data_curves</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/correlate.html#CorrelateTTTR.get_data_curves"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelateTTTR.get_data_curves" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.tttr.correlate.CorrelateTTTR.name">
-<code class="sig-name descname">name</code><em class="property"> = 'tttr-correlate'</em><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelateTTTR.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelateTTTR.onRemoveDataset">
-<code class="sig-name descname">onRemoveDataset</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/correlate.html#CorrelateTTTR.onRemoveDataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelateTTTR.onRemoveDataset" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelateTTTR.plot_curves">
-<code class="sig-name descname">plot_curves</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/correlate.html#CorrelateTTTR.plot_curves"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelateTTTR.plot_curves" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.tools.tttr.correlate.Correlator">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.tttr.correlate.</code><code class="sig-name descname">Correlator</code><span class="sig-paren">(</span><em class="sig-param">parent: QObject = None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/correlate.html#Correlator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.correlate.Correlator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtCore.QThread</span></code></p>
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.Correlator.data">
-<em class="property">property </em><code class="sig-name descname">data</code><a class="headerlink" href="#mfm.tools.tttr.correlate.Correlator.data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.Correlator.getWeightStream">
-<code class="sig-name descname">getWeightStream</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">tacWeighting</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/correlate.html#Correlator.getWeightStream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.correlate.Correlator.getWeightStream" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>tacWeighting</strong> – is either a list of integers or a numpy-array. If it’s a list of integers        the integers correspond to channel-numbers. In this case all photons have an equal weight of one.        If tacWeighting is a numpy-array it should be of shape [max-routing, number of TAC channels]. The        array contains np.floats with weights for photons arriving at different TAC-times.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>numpy-array with same length as photon-stream, each photon is associated to one weight.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.tttr.correlate.Correlator.partDone">
-<code class="sig-name descname">partDone</code><a class="headerlink" href="#mfm.tools.tttr.correlate.Correlator.partDone" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.tttr.correlate.Correlator.procDone">
-<code class="sig-name descname">procDone</code><a class="headerlink" href="#mfm.tools.tttr.correlate.Correlator.procDone" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.Correlator.run">
-<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/correlate.html#Correlator.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.correlate.Correlator.run" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.Correlator.weight">
-<code class="sig-name descname">weight</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">tau</em>, <em class="sig-param">cor</em>, <em class="sig-param">dur</em>, <em class="sig-param">cr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/correlate.html#Correlator.weight"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.correlate.Correlator.weight" title="Permalink to this definition">¶</a></dt>
-<dd><p>tau-axis in milliseconds
-correlation amplitude
-dur = duration in seconds
-cr = count-rate in kHz</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.tools.tttr.correlate.CorrelatorWidget">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.tttr.correlate.</code><code class="sig-name descname">CorrelatorWidget</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/correlate.html#CorrelatorWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelatorWidget" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelatorWidget.B">
-<em class="property">property </em><code class="sig-name descname">B</code><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelatorWidget.B" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelatorWidget.ch1">
-<em class="property">property </em><code class="sig-name descname">ch1</code><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelatorWidget.ch1" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelatorWidget.ch2">
-<em class="property">property </em><code class="sig-name descname">ch2</code><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelatorWidget.ch2" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelatorWidget.data">
-<em class="property">property </em><code class="sig-name descname">data</code><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelatorWidget.data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelatorWidget.dt">
-<em class="property">property </em><code class="sig-name descname">dt</code><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelatorWidget.dt" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelatorWidget.fine">
-<em class="property">property </em><code class="sig-name descname">fine</code><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelatorWidget.fine" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelatorWidget.method">
-<em class="property">property </em><code class="sig-name descname">method</code><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelatorWidget.method" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelatorWidget.nCasc">
-<em class="property">property </em><code class="sig-name descname">nCasc</code><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelatorWidget.nCasc" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelatorWidget.split">
-<em class="property">property </em><code class="sig-name descname">split</code><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelatorWidget.split" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelatorWidget.updatePBar">
-<code class="sig-name descname">updatePBar</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">val</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/correlate.html#CorrelatorWidget.updatePBar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelatorWidget.updatePBar" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CorrelatorWidget.weighting">
-<em class="property">property </em><code class="sig-name descname">weighting</code><a class="headerlink" href="#mfm.tools.tttr.correlate.CorrelatorWidget.weighting" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.tools.tttr.correlate.CrFilterWidget">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.tttr.correlate.</code><code class="sig-name descname">CrFilterWidget</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/correlate.html#CrFilterWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.correlate.CrFilterWidget" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CrFilterWidget.cr_filter_on">
-<em class="property">property </em><code class="sig-name descname">cr_filter_on</code><a class="headerlink" href="#mfm.tools.tttr.correlate.CrFilterWidget.cr_filter_on" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CrFilterWidget.max_count_rate">
-<em class="property">property </em><code class="sig-name descname">max_count_rate</code><a class="headerlink" href="#mfm.tools.tttr.correlate.CrFilterWidget.max_count_rate" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CrFilterWidget.photons">
-<em class="property">property </em><code class="sig-name descname">photons</code><a class="headerlink" href="#mfm.tools.tttr.correlate.CrFilterWidget.photons" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.CrFilterWidget.time_window">
-<em class="property">property </em><code class="sig-name descname">time_window</code><a class="headerlink" href="#mfm.tools.tttr.correlate.CrFilterWidget.time_window" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.tools.tttr.correlate.FCStttr">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.tttr.correlate.</code><code class="sig-name descname">FCStttr</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/correlate.html#FCStttr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.correlate.FCStttr" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
-<dl class="method">
-<dt id="mfm.tools.tttr.correlate.FCStttr.load_data">
-<code class="sig-name descname">load_data</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/correlate.html#FCStttr.load_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.correlate.FCStttr.load_data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.tttr.correlate.FCStttr.name">
-<code class="sig-name descname">name</code><em class="property"> = 'fcs-tttr'</em><a class="headerlink" href="#mfm.tools.tttr.correlate.FCStttr.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="mfm-tools-tttr-correlate-module">
+<h2>mfm.tools.tttr.correlate module<a class="headerlink" href="#mfm-tools-tttr-correlate-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-mfm.tools.tttr.decay_histogram">
-<span id="mfm-tools-tttr-decay-histogram-module"></span><h2>mfm.tools.tttr.decay_histogram module<a class="headerlink" href="#module-mfm.tools.tttr.decay_histogram" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mfm.tools.tttr.decay_histogram.HistogramTTTR">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.tttr.decay_histogram.</code><code class="sig-name descname">HistogramTTTR</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/decay_histogram.html#HistogramTTTR"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.HistogramTTTR" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.HistogramTTTR.add_curve">
-<code class="sig-name descname">add_curve</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/decay_histogram.html#HistogramTTTR.add_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.HistogramTTTR.add_curve" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.HistogramTTTR.clear_curves">
-<code class="sig-name descname">clear_curves</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/decay_histogram.html#HistogramTTTR.clear_curves"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.HistogramTTTR.clear_curves" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.HistogramTTTR.curve_name">
-<em class="property">property </em><code class="sig-name descname">curve_name</code><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.HistogramTTTR.curve_name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.HistogramTTTR.get_data_curves">
-<code class="sig-name descname">get_data_curves</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/decay_histogram.html#HistogramTTTR.get_data_curves"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.HistogramTTTR.get_data_curves" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.HistogramTTTR.onRemoveDataset">
-<code class="sig-name descname">onRemoveDataset</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/decay_histogram.html#HistogramTTTR.onRemoveDataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.HistogramTTTR.onRemoveDataset" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.HistogramTTTR.plot_curves">
-<code class="sig-name descname">plot_curves</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/decay_histogram.html#HistogramTTTR.plot_curves"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.HistogramTTTR.plot_curves" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.tools.tttr.decay_histogram.TCSPCSetupTTTRWidget">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.tttr.decay_histogram.</code><code class="sig-name descname">TCSPCSetupTTTRWidget</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/decay_histogram.html#TCSPCSetupTTTRWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.TCSPCSetupTTTRWidget" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.TCSPCSetupTTTRWidget.load_data">
-<code class="sig-name descname">load_data</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/decay_histogram.html#TCSPCSetupTTTRWidget.load_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.TCSPCSetupTTTRWidget.load_data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.tools.tttr.decay_histogram.TcspcTTTRWidget">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.tools.tttr.decay_histogram.</code><code class="sig-name descname">TcspcTTTRWidget</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/decay_histogram.html#TcspcTTTRWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.TcspcTTTRWidget" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.div">
-<em class="property">property </em><code class="sig-name descname">div</code><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.div" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.dt_min">
-<em class="property">property </em><code class="sig-name descname">dt_min</code><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.dt_min" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.histDone">
-<code class="sig-name descname">histDone</code><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.histDone" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.histSelection">
-<em class="property">property </em><code class="sig-name descname">histSelection</code><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.histSelection" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.inverted_selection">
-<em class="property">property </em><code class="sig-name descname">inverted_selection</code><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.inverted_selection" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.makeHist">
-<code class="sig-name descname">makeHist</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/decay_histogram.html#TcspcTTTRWidget.makeHist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.makeHist" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.nPh">
-<em class="property">property </em><code class="sig-name descname">nPh</code><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.nPh" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.nTAC">
-<em class="property">property </em><code class="sig-name descname">nTAC</code><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.nTAC" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.onLoadFile">
-<code class="sig-name descname">onLoadFile</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/decay_histogram.html#TcspcTTTRWidget.onLoadFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.onLoadFile" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.onTacDivChanged">
-<code class="sig-name descname">onTacDivChanged</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/tools/tttr/decay_histogram.html#TcspcTTTRWidget.onTacDivChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.onTacDivChanged" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.rep_rate">
-<em class="property">property </em><code class="sig-name descname">rep_rate</code><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.rep_rate" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.use_dtmin">
-<em class="property">property </em><code class="sig-name descname">use_dtmin</code><a class="headerlink" href="#mfm.tools.tttr.decay_histogram.TcspcTTTRWidget.use_dtmin" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="mfm-tools-tttr-decay-histogram-module">
+<h2>mfm.tools.tttr.decay_histogram module<a class="headerlink" href="#mfm-tools-tttr-decay-histogram-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-mfm.tools.tttr">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.tools.tttr" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-contents">
+<h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
 
-    </div>
-      
-  </div>
-</div>
-<footer class="footer">
-  <div class="container">
-    <p class="pull-right">
-      <a href="#">Back to top</a>
-      
-    </p>
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+        &copy; Copyright 2019, Thomas Peulen
+
     </p>
   </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
 </footer>
-  </body>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
 </html>

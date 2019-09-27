@@ -1,119 +1,154 @@
+
+
 <!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mfm.fitting.fit &mdash; ChiSurf  documentation</title>
+  
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta charset="utf-8" />
-    <title>mfm.fitting.fit &#8212; ChiSurf  documentation</title>
-    <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
 
-  </head><body>
+<body class="wy-body-for-nav">
 
-  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
-    <div class="container">
-      <div class="navbar-header">
-        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="../../../index.html">
-          ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b></b></span>
-      </div>
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
 
-        <div class="collapse navbar-collapse nav-collapse">
-          <ul class="nav navbar-nav">
+          
+            <a href="../../../index.html" class="icon icon-home"> ChiSurf
+          
+
+          
+          </a>
+
+          
             
             
-              <li class="dropdown globaltoc-container">
-  <a role="button"
-     id="dLabelGlobalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="../../../index.html">Site <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"
-      role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul>
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
-</ul>
-</li>
-              
-                <li class="dropdown">
-  <a role="button"
-     id="dLabelLocalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="#">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"
-      role="menu"
-      aria-labelledby="dLabelLocalToc"></ul>
-</li>
-              
-            
-            
-              
-                
-              
-            
-            
-            
-            
-              <li class="hidden-sm"></li>
-            
-          </ul>
 
-          
             
-<form class="navbar-form navbar-right" action="../../../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
           
-        </div>
-    </div>
-  </div>
-
-<div class="container">
-  <div class="row">
-      <div class="col-md-3">
-        <div id="sidebar" class="bs-sidenav" role="complementary">
-<form action="../../../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
         </div>
       </div>
-    <div class="col-md-9 content">
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
       
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ChiSurf</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+          <li><a href="../fitting.html">mfm.fitting</a> &raquo;</li>
+        
+      <li>mfm.fitting.fit</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
   <h1>Source code for mfm.fitting.fit</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 
@@ -128,16 +163,21 @@
 
 <span class="kn">import</span> <span class="nn">mfm</span>
 <span class="kn">import</span> <span class="nn">mfm.base</span>
+<span class="kn">import</span> <span class="nn">mfm.io</span>
+<span class="kn">import</span> <span class="nn">mfm.curve</span>
 <span class="kn">import</span> <span class="nn">mfm.experiments</span>
 <span class="kn">import</span> <span class="nn">mfm.experiments.data</span>
 <span class="kn">import</span> <span class="nn">mfm.fitting.parameter</span>
 <span class="kn">import</span> <span class="nn">mfm.fitting.sample</span>
 <span class="kn">import</span> <span class="nn">mfm.fitting.support_plane</span>
+<span class="kn">import</span> <span class="nn">mfm.models</span>
 
 <span class="kn">from</span> <span class="nn">mfm.math.optimization.leastsqbound</span> <span class="k">import</span> <span class="n">leastsqbound</span>
 
 
-<div class="viewcode-block" id="Fit"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit">[docs]</a><span class="k">class</span> <span class="nc">Fit</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Base</span><span class="p">):</span>
+<div class="viewcode-block" id="Fit"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit">[docs]</a><span class="k">class</span> <span class="nc">Fit</span><span class="p">(</span>
+    <span class="n">mfm</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Base</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -145,6 +185,7 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
             <span class="n">model_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Model</span><span class="p">]</span> <span class="o">=</span> <span class="nb">type</span><span class="p">,</span>
+            <span class="n">data</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataCurve</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">xmin</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
             <span class="n">xmax</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
@@ -156,17 +197,16 @@
 <span class="sd">        :param xmax:</span>
 <span class="sd">        :param kwargs:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Fit</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="o">=</span> <span class="kc">None</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="s1">&#39;data&#39;</span><span class="p">,</span>
-            <span class="n">mfm</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataCurve</span><span class="p">(</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataCurve</span><span class="p">(</span>
                 <span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span>
                 <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
             <span class="p">)</span>
-        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">data</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">plots</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_xmin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xmax</span> <span class="o">=</span> <span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_kw</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_kw&#39;</span><span class="p">,</span> <span class="p">{})</span>
@@ -230,16 +270,21 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">model</span><span class="p">(</span>
             <span class="bp">self</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Model</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">ModelCurve</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span>
 
     <span class="nd">@model</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">model</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
-            <span class="n">model_class</span>
+            <span class="n">model_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span>
+                <span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">ModelCurve</span>
+            <span class="p">]</span>
     <span class="p">):</span>
         <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">model_class</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kw</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model_class</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span>
+                <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kw</span>
+            <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">weighted_residuals</span><span class="p">(</span>
@@ -334,7 +379,11 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
-        <span class="k">return</span> <span class="n">get_chi2</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">reduced</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">get_chi2</span><span class="p">(</span>
+            <span class="n">parameter</span><span class="p">,</span>
+            <span class="n">model</span><span class="p">,</span>
+            <span class="n">reduced</span>
+        <span class="p">)</span></div>
 
 <div class="viewcode-block" id="Fit.get_wres"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit.get_wres">[docs]</a>    <span class="k">def</span> <span class="nf">get_wres</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
@@ -347,7 +396,10 @@
         <span class="k">if</span> <span class="n">parameter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span> <span class="o">=</span> <span class="n">parameter</span>
             <span class="n">model</span><span class="o">.</span><span class="n">update_model</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">get_wres</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">get_wres</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span></div>
 
 <div class="viewcode-block" id="Fit.save"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
@@ -362,14 +414,26 @@
             <span class="n">wr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_residuals</span>
             <span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xmin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xmax</span>
             <span class="n">x</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">[</span><span class="n">xmin</span><span class="p">:</span><span class="n">xmax</span><span class="p">]</span>
-            <span class="n">csv</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">wr</span><span class="p">]),</span> <span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_wr.txt&#39;</span><span class="p">)</span>
-            <span class="n">csv</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">[:],</span> <span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_fit.txt&#39;</span><span class="p">)</span>
+            <span class="n">csv</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">wr</span><span class="p">]),</span>
+                <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_wr.txt&#39;</span>
+            <span class="p">)</span>
+            <span class="n">csv</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+                <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">[:],</span>
+                <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_fit.txt&#39;</span>
+            <span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
                     <span class="n">mfm</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">Curve</span>
             <span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span> <span class="o">+</span><span class="s1">&#39;_data.txt&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;txt&#39;</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span> <span class="o">+</span><span class="s1">&#39;_data.json&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;json&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+                    <span class="n">filename</span><span class="o">=</span><span class="n">filename</span> <span class="o">+</span> <span class="s1">&#39;_data.txt&#39;</span><span class="p">,</span>
+                    <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;txt&#39;</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+                    <span class="n">filename</span><span class="o">=</span><span class="n">filename</span> <span class="o">+</span> <span class="s1">&#39;_data.json&#39;</span><span class="p">,</span>
+                    <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;json&#39;</span>
+                <span class="p">)</span>
                 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_info.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
                     <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
 
@@ -422,8 +486,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">parameter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters_all_dict</span><span class="p">[</span><span class="n">parameter_name</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">rel_range</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">rel_range</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">parameter</span><span class="o">.</span><span class="n">error_estimate</span> <span class="o">*</span> <span class="mf">3.0</span> <span class="o">/</span> <span class="n">parameter</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">)</span>
-            <span class="n">rel_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">rel_range</span><span class="p">,</span> <span class="n">rel_range</span><span class="p">)</span>
+            <span class="n">rel_range</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="n">parameter</span><span class="o">.</span><span class="n">error_estimate</span> <span class="o">*</span> <span class="mf">3.0</span> <span class="o">/</span> <span class="n">parameter</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="mf">0.25</span>
+            <span class="p">)</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;rel_range&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">rel_range</span><span class="p">,</span> <span class="n">rel_range</span><span class="p">)</span>
         <span class="n">parameter</span><span class="o">.</span><span class="n">parameter_scan</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">support_plane</span><span class="o">.</span><span class="n">scan_parameter</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
@@ -483,8 +549,8 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">weighted_residuals</span><span class="p">(</span>
             <span class="bp">self</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_fit</span><span class="o">.</span><span class="n">weighted_residuals</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_fit</span><span class="o">.</span><span class="n">weighted_residuals</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">chi2r</span><span class="p">(</span>
@@ -613,9 +679,15 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_fits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fit</span><span class="p">)</span>
 
         <span class="nb">list</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fits</span><span class="p">)</span>
-        <span class="n">Fit</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">Fit</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">global_model</span><span class="o">.</span><span class="n">globalfit</span><span class="o">.</span><span class="n">GlobalFitModel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">global_model</span><span class="o">.</span><span class="n">GlobalFitModel</span><span class="p">(</span>
+            <span class="bp">self</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="o">.</span><span class="n">fits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fits</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -669,7 +741,13 @@
         <span class="n">scan</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">chi2</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">para</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">])</span>
         <span class="n">header</span> <span class="o">=</span> <span class="s2">&quot;chi2</span><span class="se">\t</span><span class="s2">&quot;</span>
         <span class="n">header</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">)</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ascii</span><span class="o">.</span><span class="n">Csv</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">scan</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;txt&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">header</span><span class="p">)</span>
+        <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ascii</span><span class="o">.</span><span class="n">Csv</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+            <span class="n">scan</span><span class="p">,</span>
+            <span class="n">fn</span><span class="p">,</span>
+            <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;txt&#39;</span><span class="p">,</span>
+            <span class="n">header</span><span class="o">=</span><span class="n">header</span>
+        <span class="p">)</span>
     <span class="c1"># restore initial parameter values</span>
     <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span> <span class="o">=</span> <span class="n">pv</span>
     <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
@@ -686,8 +764,8 @@
     <span class="sd">&quot;&quot;&quot;Approximate the derivative of a fit with respect to the parameters</span>
 <span class="sd">    xk. The return value of the function is an array.</span>
 
-<span class="sd">    :param xk: values around which gradient is estimated. These values should be an array of length of the</span>
-<span class="sd">    free fitting parameters</span>
+<span class="sd">    :param xk: values around which gradient is estimated. These values should</span>
+<span class="sd">    be an array of length of the free fitting parameters</span>
 <span class="sd">    :param fit: object of type &#39;Fit&#39;</span>
 <span class="sd">    :param epsilon: differential change</span>
 <span class="sd">    :param args: additional arguments passed to &#39;Fit.get_wres&#39;</span>
@@ -722,8 +800,8 @@
 
 <span class="sd">    :param fit:</span>
 <span class="sd">    :param kwargs:</span>
-<span class="sd">    :return: the covariance matrix and a list of of parameter indices which are &quot;important&quot;, i.e.,</span>
-<span class="sd">    have a partial derivative deviating from zero.</span>
+<span class="sd">    :return: the covariance matrix and a list of of parameter indices which</span>
+<span class="sd">    are &quot;important&quot;, i.e., have a partial derivative deviating from zero.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span>
     <span class="n">xk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_values</span><span class="p">)</span>
@@ -752,7 +830,10 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">cov_m</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinvh</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">m</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-        <span class="n">cov_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">((</span><span class="n">n_important_parameters</span><span class="p">,</span> <span class="n">n_important_parameters</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">cov_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">n_important_parameters</span><span class="p">,</span> <span class="n">n_important_parameters</span><span class="p">),</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span>
+        <span class="p">)</span>
     <span class="k">return</span> <span class="n">cov_m</span><span class="p">,</span> <span class="n">important_parameters</span></div>
 
 
@@ -762,7 +843,9 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Returns the weighted residuals for a list of parameters of a models</span>
 
-<span class="sd">    :param parameter: a list of the parameter values / or None. If None the models is not updated</span>
+<span class="sd">    :param parameter: a list of the parameter values / or None. If None</span>
+<span class="sd">    the models is not updated.</span>
+
 <span class="sd">    :param model:</span>
 <span class="sd">    :return:</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -774,15 +857,17 @@
 
 <div class="viewcode-block" id="get_chi2"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.get_chi2">[docs]</a><span class="k">def</span> <span class="nf">get_chi2</span><span class="p">(</span>
         <span class="n">parameter</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
-        <span class="n">model</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">ModelCurve</span><span class="p">,</span>
         <span class="n">reduced</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Returns either the reduced chi2 or the sum of squares (chi2)</span>
 
-<span class="sd">    :param parameter: a list of the parameter values or None. If None the models is not updated</span>
+<span class="sd">    :param parameter: a list of the parameter values or None. If None the models</span>
+<span class="sd">    is not updated</span>
 <span class="sd">    :param model:</span>
-<span class="sd">    :param reduced: If True the returned value is divided by (n_points - n_free - 1.0) where n_points</span>
-<span class="sd">    is the number of data points and n_free is the number of model parameters</span>
+<span class="sd">    :param reduced: If True the returned value is divided by</span>
+<span class="sd">    (n_points - n_free - 1.0) where n_points is the number of data points</span>
+<span class="sd">    and n_free is the number of model parameters</span>
 <span class="sd">    :return:</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">chi2</span> <span class="o">=</span> <span class="p">(</span><span class="n">get_wres</span><span class="p">(</span><span class="n">parameter</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span><span class="o">**</span><span class="mf">2.0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
@@ -799,9 +884,9 @@
         <span class="n">fit</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">Fit</span><span class="p">,</span>
         <span class="n">bounds</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;The probability determined by the prior which is given by the bounds of the models parameters.</span>
-<span class="sd">    If the models parameters leave the bounds, the ln of the probability is minus infinity otherwise it</span>
-<span class="sd">    is zero.</span>
+    <span class="sd">&quot;&quot;&quot;The probability determined by the prior which is given by the bounds</span>
+<span class="sd">    of the models parameters. If the models parameters leave the bounds, the</span>
+<span class="sd">    ln of the probability is minus infinity otherwise it is zero.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">bounds</span> <span class="o">=</span> <span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameter_bounds</span>
@@ -840,21 +925,43 @@
 
 </pre></div>
 
-    </div>
-      
-  </div>
-</div>
-<footer class="footer">
-  <div class="container">
-    <p class="pull-right">
-      <a href="#">Back to top</a>
-      
-    </p>
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+        &copy; Copyright 2019, Thomas Peulen
+
     </p>
   </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
 </footer>
-  </body>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
 </html>
