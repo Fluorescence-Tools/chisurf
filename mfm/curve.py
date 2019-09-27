@@ -4,7 +4,6 @@ from typing import TypeVar, Tuple, Type
 import numpy as np
 
 import mfm
-import mfm.io
 import mfm.decorators
 from mfm.base import Base
 from mfm.math.signal import calculate_fwhm

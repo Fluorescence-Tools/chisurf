@@ -539,7 +539,6 @@ if __name__ == "__main__":
     mfm.console.history_widget = win.plainTextEditHistory
     mfm.cs = win
     win.init_setups()
-
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
     #with open(mfm.settings.style_sheet_file, 'r') as fp:
