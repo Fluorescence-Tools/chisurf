@@ -13,7 +13,6 @@ import qdarkstyle
 import mfm
 import mfm.tools
 import mfm.fluorescence
-import mfm.experiments
 import mfm.experiments.data
 import mfm.settings
 import mfm.widgets
@@ -153,7 +152,12 @@ class Correlator(QtCore.QThread):
         elif type(tacWeighting) is np.ndarray:
             print("TAC-weighted")
             wt = tacWeighting
-        w = mfm.fluorescence.fcs.get_weights(photons.rout, photons.tac, wt, photons.nPh)
+        w = mfm.fluorescence.fcs.get_weights(
+            photons.rout,
+            photons.tac,
+            wt,
+            photons.nPh
+        )
         return w
 
     def run(self):

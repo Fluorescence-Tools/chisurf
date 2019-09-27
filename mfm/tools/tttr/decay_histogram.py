@@ -11,7 +11,6 @@ from PyQt5 import QtCore, QtWidgets, uic
 import qdarkstyle
 
 import mfm
-import mfm.experiments
 import mfm.experiments.data
 from mfm.fluorescence.tcspc import weights
 from mfm.io.widgets import SpcFileWidget
@@ -226,7 +225,12 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
         curve = mfm.experiments.data.DataCurve(setup=self)
         curve.x = self.x
         curve.y = self.y
-        self.histDone.emit(self.nROUT, self.nTAC, self.chs, curve)
+        self.histDone.emit(
+            self.nROUT,
+            self.nTAC,
+            self.chs,
+            curve
+        )
 
     def onTacDivChanged(self):
         self.dtBase = self.spcFileWidget.dt

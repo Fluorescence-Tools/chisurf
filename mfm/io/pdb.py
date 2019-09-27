@@ -33,6 +33,7 @@ import urllib.request
 import numpy as np
 
 import mfm
+import mfm.io.xyz
 import mfm.common as common
 
 keys_formats = [
@@ -171,7 +172,7 @@ def read(
     --------
 
     >>> import mfm.io
-    >>> pdb_file = models'
+    >>> pdb_file = models
     >>> pdb = mfm.io.pdb.read(pdb_file, verbose=True)
     >>> pdb[:5]
     array([ (0, ' ', 7, 'MET', 1, 'N', 'N', [72.739, -17.501, 8.879], 0.0, 1.65, 0.0, 14.0067),
@@ -193,7 +194,7 @@ def read(
         if filename.endswith('.pdb'):
             atoms = parse_string_pdb(string, assign_charge, **kwargs)
         else: #elif filename.endswith('.pqr'):
-            atoms = mfm.io.pdb.parse_string_pqr(string, **kwargs)
+            atoms = parse_string_pqr(string, **kwargs)
         return atoms
 
 

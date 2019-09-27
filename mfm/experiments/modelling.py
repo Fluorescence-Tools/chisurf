@@ -8,7 +8,7 @@ from qtpy import QtWidgets
 import mfm
 import mfm.base
 import mfm.widgets.pdb.pdb
-from mfm.experiments.reader import ExperimentReader
+from . reader import ExperimentReader
 
 
 class LoadStructure(

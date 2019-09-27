@@ -8,6 +8,7 @@ from qtpy import QtWidgets, uic
 import qdarkstyle
 
 import mfm
+import mfm.io.tttr
 import mfm.widgets
 
 filetypes = copy.copy(mfm.io.tttr.filetypes)
@@ -48,7 +49,9 @@ class TTTRConvert(QtWidgets.QWidget):
             self
         )
 
-        self.comboBox.addItems(filetypes.keys())
+        self.comboBox.addItems(
+            filetypes.keys()
+        )
         self.hide()
 
         self.filelist = mfm.widgets.FileList(filename_ending=self.ending)

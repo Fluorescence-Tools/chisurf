@@ -9,7 +9,7 @@ import mfm
 import mfm.experiments
 import mfm.experiments.data
 import mfm.widgets
-from mfm.experiments.reader import ExperimentReader
+from .. reader import ExperimentReader
 from mfm.fluorescence.tcspc import weights, fitrange, weights_ps
 from mfm.io import sdtfile
 from mfm.io.ascii import Csv

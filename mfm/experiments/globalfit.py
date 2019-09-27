@@ -10,7 +10,7 @@ from qtpy import QtWidgets
 import mfm
 import mfm.experiments
 import mfm.experiments.data
-from mfm.experiments.reader import ExperimentReader
+from . reader import ExperimentReader
 
 
 class GlobalFitSetup(
