@@ -8,7 +8,7 @@ from typing import List
 import numpy as np
 
 import mfm.fitting.parameter
-import mfm.models
+#import mfm.models
 import mfm.fitting.fit
 import mfm.fitting.sample
 import mfm.fitting.widgets

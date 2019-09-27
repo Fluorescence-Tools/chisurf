@@ -13,8 +13,19 @@ class Tests(unittest.TestCase):
 
     def test_kappa(self):
         distance_reference, kappa_reference = 0.8660254037844386, 1.0000000000000002
-        donor_dipole = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]], dtype=np.float64)
-        acceptor_dipole = np.array([[0.0, 0.5, 0.0], [0.0, 0.5, 1.0]], dtype=np.float64)
+        donor_dipole = np.array(
+            [
+                [0.0, 0.0, 0.0],
+                [1.0, 0.0, 0.0]
+            ],
+            dtype=np.float64
+        )
+        acceptor_dipole = np.array(
+            [
+                [0.0, 0.5, 0.0],
+                [0.0, 0.5, 1.0]
+            ], dtype=np.float64
+        )
         distance, kappa = mfm.fluorescence.anisotropy.kappa2.kappa(
             donor_dipole,
             acceptor_dipole

@@ -14,7 +14,7 @@ import mfm.fluorescence
 import mfm.fluorescence.fps
 import mfm.structure.structure
 import mfm.structure.potential.cPotentials
-import mfm.widgets
+#import mfm.widgets
 import mfm
 
 
@@ -303,7 +303,11 @@ class Ramachandran(object):
 
     def getEnergy(self) -> float:
         c = self.structure
-        Erama = cPotentials.ramaEnergy(c.residue_lookup_i, c.iAtoms, self.ramaPot)
+        Erama = mfm.structure.potential.cPotentials.ramaEnergy(
+            c.residue_lookup_i,
+            c.iAtoms,
+            self.ramaPot
+        )
         self.E = Erama
         return Erama
 

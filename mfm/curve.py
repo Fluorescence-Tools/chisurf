@@ -4,21 +4,21 @@ from typing import TypeVar, Tuple, Type
 import numpy as np
 
 import mfm
+import mfm.base
 import mfm.decorators
-from mfm.base import Base
-from mfm.math.signal import calculate_fwhm
+import mfm.math
 
 T = TypeVar('T', bound='Curve')
 
 
-class Curve(Base):
+class Curve(mfm.base.Base):
     """
 
     """
 
     @property
     def fwhm(self) -> float:
-        return calculate_fwhm(self)[0]
+        return mfm.math.signal.calculate_fwhm(self)[0]
 
     @property
     def cdf(self) -> Type[Curve]:

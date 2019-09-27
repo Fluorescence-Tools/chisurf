@@ -164,6 +164,20 @@ def sub3(
         a: np.array,
         b: np.array
 ) -> np.ndarray:
+    """ Subtracts b from a and returns a vector of the difference
+
+    :param a: 3D vector
+    :param b: 3D vector
+    :return: distance between the vectors
+
+    Example
+    -------
+    >>> import numpy as np
+    >>> a = np.array([1,0,0], dtype=np.float64)
+    >>> b = np.array([0,0,0], dtype=np.float64)
+    >>> c = sub3(a, b)
+
+    """
     o = np.empty(3, dtype=np.float64)
     o[0] = a[0]-b[0]
     o[1] = a[1]-b[1]
@@ -176,6 +190,22 @@ def dist3(
         a: np.array,
         b: np.array
 ) -> np.ndarray:
+    """ Calculates the distance between two 3D vectors
+
+    :param a: 3D vector
+    :param b: 3D vector
+    :return: distance between the vectors
+
+    Example
+    -------
+    >>> import numpy as np
+    >>> a = np.array([1,0,0], dtype=np.float64)
+    >>> b = np.array([0,0,0], dtype=np.float64)
+    >>> dist = dist3(a, b)
+    >>> dist
+    1.0
+
+    """
     d2 = (a[0] - b[0])**2
     d2 += (a[1] - b[1]) ** 2
     d2 += (a[2] - b[2]) ** 2
@@ -252,7 +282,8 @@ def grad3d(
         b: np.ndarray = None,
         dg: float = 1.0
 ) -> np.ndarray:
-    """Calculates the gradient of a 3D scalar field within a certain shape defined the bounds.
+    """Calculates the gradient of a 3D scalar field within a certain shape
+    defined the bounds.
 
     :param d: 3D scalar field
     :param bd: 3D bounds (1 within structure, 0 outside)
@@ -283,7 +314,8 @@ def laplace3d_1(
         b: np.ndarray = None,
         dg: float = 1.0
 ) -> np.ndarray:
-    """Calculates the Laplacian of a 3D scalar field within a certain shape defined the bounds.
+    """Calculates the Laplacian of a 3D scalar field within a certain shape
+    defined the bounds.
 
     :param c:
     :param b:

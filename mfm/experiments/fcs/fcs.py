@@ -8,11 +8,14 @@ import mfm.widgets
 import mfm.fluorescence
 import mfm.experiments
 import mfm.experiments.data
-from mfm.io.widgets import CsvWidget
-from mfm.experiments.reader import ExperimentReader
+import mfm.experiments.reader
+import mfm.io
 
 
-class FCS(ExperimentReader, CsvWidget):
+class FCS(
+    mfm.experiments.reader.ExperimentReader,
+    mfm.io.widgets.CsvWidget
+):
 
     name = "FCS"
 
@@ -45,7 +48,7 @@ class FCS(ExperimentReader, CsvWidget):
         )
         d.setup = self
 
-        CsvWidget.load(
+        mfm.io.widgets.CsvWidget.load(
             self,
             filename=filename,
             skiprows=0,

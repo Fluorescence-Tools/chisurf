@@ -8,8 +8,7 @@ from typing import List, Callable
 
 from qtpy import QtWidgets, QtCore, QtGui
 
-import mfm.fitting
-import mfm.widgets
+import mfm.experiments
 
 
 class ExperimentalDataSelector(

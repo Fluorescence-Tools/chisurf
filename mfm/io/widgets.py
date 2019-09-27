@@ -4,14 +4,16 @@ import os
 from qtpy import QtWidgets, uic
 
 import mfm
-import mfm.structure
+import mfm.structure.structure
 import mfm.widgets
 
 from .photons import Photons
 from .tttr import filetypes
 
 
-class SpcFileWidget(QtWidgets.QWidget):
+class SpcFileWidget(
+    QtWidgets.QWidget
+):
 
     def __init__(
             self,
@@ -173,11 +175,17 @@ class SpcFileWidget(QtWidgets.QWidget):
             self
     ) -> None:
         if self.fileType in ("hdf"):
-            filename = mfm.widgets.get_filename('Open Photon-HDF', 'Photon-HDF (*.photon.h5)')
+            filename = mfm.widgets.get_filename(
+                'Open Photon-HDF',
+                'Photon-HDF (*.photon.h5)'
+            )
             filenames = [filename]
             self.lineEdit_2.setText(filename)
         elif self.fileType in ("ht3"):
-            filename = mfm.widgets.open_file('Open Photon-HDF', 'Photon-HDF (*.ht3)')
+            filename = mfm.widgets.open_file(
+                'Open Photon-HDF',
+                'Photon-HDF (*.ht3)'
+            )
             filenames = [filename]
         else:
             directory = mfm.widgets.get_directory()
@@ -237,11 +245,15 @@ class PDBLoad(QtWidgets.QWidget):
 
     @structure.setter
     def structure(self, v):
-        self._data = mfm.structure.structure.Structure(v, make_coarse=self.calcLookUp)
+        self._data = mfm.structure.structure.Structure(
+            v,
+            make_coarse=self.calcLookUp
+        )
 
 
-#class CsvWidget(Csv, QtGui.QWidget):
-class CsvWidget(QtWidgets.QWidget):
+class CsvWidget(
+    QtWidgets.QWidget
+):
 
     def __init__(self, **kwargs):
         QtWidgets.QWidget.__init__(self)
@@ -252,7 +264,6 @@ class CsvWidget(QtWidgets.QWidget):
             ),
             self
         )
-
         #Csv.__init__(self, **kwargs)
         #self.connect(self.spinBox, QtCore.SIGNAL("valueChanged(int)"), self.reload_csv)
         self.actionUseHeader.triggered.connect(self.changeUseHeader)
