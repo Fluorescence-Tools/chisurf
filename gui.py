@@ -10,15 +10,12 @@ import numpy as np
 
 import mfm
 import mfm.widgets
-import mfm.tools
 import mfm.base
 import mfm.models
+import mfm.fitting
 import mfm.experiments
-import mfm.experiments.tcspc
-import mfm.experiments.fcs
-import mfm.experiments.modelling
-import mfm.experiments.globalfit
 import mfm.cmd
+import mfm.tools
 import mfm.ui.resource
 
 
@@ -527,7 +524,7 @@ class Main(QtWidgets.QMainWindow):
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
-        self.dataset_selector = mfm.widgets.curve.ExperimentalDataSelector(
+        self.dataset_selector = mfm.experiments.widgets.ExperimentalDataSelector(
             click_close=False,
             curve_types='all',
             change_event=self.onCurrentDatasetChanged,

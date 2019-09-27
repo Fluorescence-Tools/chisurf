@@ -12,6 +12,7 @@ import qdarkstyle
 
 import mfm
 import mfm.experiments.data
+import mfm.experiments.widgets
 from mfm.fluorescence.tcspc import weights
 from mfm.io.widgets import SpcFileWidget
 
@@ -87,7 +88,7 @@ class HistogramTTTR(QtWidgets.QWidget):
         self.verticalLayout.addWidget(w)
         w.show()
 
-        self.cs = mfm.widgets.curve.ExperimentalDataSelector(
+        self.cs = mfm.experiments.widgets.ExperimentalDataSelector(
             get_data_sets=self.get_data_curves,
             click_close=False
         )

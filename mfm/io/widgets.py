@@ -4,7 +4,7 @@ import os
 from qtpy import QtWidgets, uic
 
 import mfm
-import mfm.structure.structure
+from mfm.structure.structure import Structure
 import mfm.widgets
 
 from . import photons
