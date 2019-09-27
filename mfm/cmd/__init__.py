@@ -212,7 +212,7 @@ def remove_datasets(
 
 
 def add_dataset(
-        setup,
+        setup: mfm.experiments.reader.ExperimentReader,
         dataset: mfm.base.Data = None,
         **kwargs
 ) -> None:

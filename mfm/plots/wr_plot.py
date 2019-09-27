@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import numpy as np
 import pyqtgraph as pg
-from qtpy import  QtWidgets
+from qtpy import QtWidgets
 
 import mfm
+import mfm.fitting
 from mfm.plots import plotbase
 
 pyqtgraph_settings = mfm.settings.gui['plot']["pyqtgraph"]
@@ -11,7 +14,8 @@ color_scheme = mfm.settings.colors
 
 class ResidualPlot(plotbase.Plot):
     """
-    Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
+    Started off as a plotting class to display TCSPC-data displaying the IRF,
+    the experimental data, the residuals
     and the autocorrelation of the residuals. Now it is also used also for fcs-data.
 
     In case the models is a :py:class:`~experiment.models.tcspc.LifetimeModel` it takes the irf and displays it:

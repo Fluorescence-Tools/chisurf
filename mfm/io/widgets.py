@@ -1,18 +1,24 @@
 from __future__ import annotations
 
 import os
-from qtpy import  QtWidgets, uic
+from qtpy import QtWidgets, uic
 
 import mfm
-from mfm.io.ascii import Csv
+import mfm.structure
+import mfm.widgets
+
 from .photons import Photons
 from .tttr import filetypes
 
 
 class SpcFileWidget(QtWidgets.QWidget):
 
-    def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self)
+    def __init__(
+            self,
+            *args,
+            **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -22,7 +28,6 @@ class SpcFileWidget(QtWidgets.QWidget):
         )
 
         self._photons = None
-        self.parent = parent
         self.filenames = list()
         self.filetypes = filetypes
 
@@ -309,11 +314,11 @@ class CsvWidget(QtWidgets.QWidget):
 
     @property
     def data(self):
-        return Csv.data.fget(self)
+        return mfm.io.ascii.Csv.data.fget(self)
 
     @data.setter
     def data(self, v):
-        Csv.data.fset(self, v)
+        mfm.io.ascii.Csv.data.fset(self, v)
         self.lineEdit_9.setText("%d" % v.shape[1])
         bx = [self.comboBox, self.comboBox_2, self.comboBox_3, self.comboBox_4]
         if self.n_rows > 0:
@@ -343,7 +348,7 @@ class CsvWidget(QtWidgets.QWidget):
             self,
             v: str
     ):
-        Csv.filename.fset(self, v)
+        mfm.io.ascii.Csv.filename.fset(self, v)
         self.lineEdit_8.setText(v)
 
     def changeCsvType(self):
@@ -353,7 +358,7 @@ class CsvWidget(QtWidgets.QWidget):
     def load(self, filename=None, **kwargs):
         if filename is None:
             filename = mfm.widgets.get_filename('Open CSV-File', 'CSV-file (*.*)')
-        Csv.load(self, filename, **kwargs)
+        mfm.io.ascii.Csv.load(self, filename, **kwargs)
         self.filename = filename
 
 

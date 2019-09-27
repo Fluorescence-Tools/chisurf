@@ -5,10 +5,10 @@ import numpy as np
 from qtpy import QtWidgets, QtGui
 
 import mfm.curve
+import mfm.fitting
 import mfm.fitting.parameter
 import mfm.fitting.widgets
 import mfm.plots
-from mfm.curve import Curve
 
 
 class Model(
@@ -157,7 +157,7 @@ class ModelCurve(
             *args,
             **kwargs
         )
-        Curve.__init__(
+        mfm.curve.Curve.__init__(
             self,
             x=fit.data.x,
             y=np.zeros_like(fit.data.y),

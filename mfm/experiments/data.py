@@ -10,8 +10,7 @@ import numpy as np
 
 import mfm
 import mfm.base
-from mfm.base import Base
-from mfm.curve import Curve
+import mfm.curve
 import mfm.experiments.experiment
 
 
@@ -94,7 +93,7 @@ class ExperimentalData(
 
 
 class DataCurve(
-    Curve,
+    mfm.curve.Curve,
     ExperimentalData
 ):
 
@@ -289,7 +288,7 @@ class DataCurve(
 
 class DataGroup(
     list,
-    Base
+    mfm.base.Base
 ):
 
     @property
