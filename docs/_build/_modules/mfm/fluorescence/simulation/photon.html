@@ -80,9 +80,9 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
@@ -155,7 +155,14 @@
 <span class="kn">from</span> <span class="nn">mfm.fluorescence.simulation</span> <span class="k">import</span> <span class="n">_simulation</span>
 
 
-<div class="viewcode-block" id="simulate_photon_trace_rate"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.photon.simulate_photon_trace_rate">[docs]</a><span class="k">def</span> <span class="nf">simulate_photon_trace_rate</span><span class="p">(</span><span class="n">n_ph</span><span class="p">,</span> <span class="n">quench</span><span class="p">,</span> <span class="n">t_step</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">tau0</span><span class="o">=</span><span class="mf">4.10</span><span class="p">,</span> <span class="n">n_traj</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="simulate_photon_trace_rate"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.photon.simulate_photon_trace_rate">[docs]</a><span class="k">def</span> <span class="nf">simulate_photon_trace_rate</span><span class="p">(</span>
+        <span class="n">n_ph</span><span class="p">,</span>
+        <span class="n">quench</span><span class="p">,</span>
+        <span class="n">t_step</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+        <span class="n">tau0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.10</span><span class="p">,</span>
+        <span class="n">n_traj</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This function generates a stream of photons considering quenching of the excited state</span>
 <span class="sd">    using a mix of a purely Poissonian process and the know solution of a Poissonian process</span>
@@ -223,7 +230,15 @@
     <span class="k">return</span> <span class="n">dts</span><span class="p">,</span> <span class="n">phs</span></div>
 
 
-<div class="viewcode-block" id="simulate_decay_quench"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.photon.simulate_decay_quench">[docs]</a><span class="k">def</span> <span class="nf">simulate_decay_quench</span><span class="p">(</span><span class="n">n_curves</span><span class="p">,</span> <span class="n">decay</span><span class="p">,</span> <span class="n">dt_tac</span><span class="p">,</span> <span class="n">k_quench</span><span class="p">,</span> <span class="n">t_step</span><span class="p">,</span> <span class="n">tau0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="simulate_decay_quench"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.photon.simulate_decay_quench">[docs]</a><span class="k">def</span> <span class="nf">simulate_decay_quench</span><span class="p">(</span>
+        <span class="n">n_curves</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">decay</span><span class="p">,</span>
+        <span class="n">dt_tac</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">k_quench</span><span class="p">,</span>
+        <span class="n">t_step</span><span class="p">,</span>
+        <span class="n">tau0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :param n_curves: int</span>
 <span class="sd">        Number of samples taken from the trajectory</span>
@@ -240,18 +255,16 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
-    <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">k_quench</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_curves</span><span class="p">))</span>
-    <span class="n">_simulation</span><span class="o">.</span><span class="n">simulate_decay</span><span class="p">(</span><span class="n">n_curves</span><span class="o">=</span><span class="n">n_curves</span><span class="p">,</span>
-                           <span class="n">decay</span><span class="o">=</span><span class="n">decay</span><span class="p">,</span>
-                           <span class="n">dt_tac</span><span class="o">=</span><span class="n">dt_tac</span><span class="p">,</span>
-                           <span class="n">k_quench</span><span class="o">=</span><span class="n">k_quench</span><span class="p">,</span>
-                           <span class="n">t_step</span><span class="o">=</span><span class="n">t_step</span><span class="p">,</span>
-                           <span class="n">tau0</span><span class="o">=</span><span class="n">tau0</span><span class="p">,</span>
-                           <span class="n">shift</span><span class="o">=</span><span class="n">shift</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">k_quench</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="mi">2</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_curves</span><span class="p">))</span>
+    <span class="n">_simulation</span><span class="o">.</span><span class="n">simulate_decay</span><span class="p">(</span>
+        <span class="n">n_curves</span><span class="o">=</span><span class="n">n_curves</span><span class="p">,</span>
+        <span class="n">decay</span><span class="o">=</span><span class="n">decay</span><span class="p">,</span>
+        <span class="n">dt_tac</span><span class="o">=</span><span class="n">dt_tac</span><span class="p">,</span>
+        <span class="n">k_quench</span><span class="o">=</span><span class="n">k_quench</span><span class="p">,</span>
+        <span class="n">t_step</span><span class="o">=</span><span class="n">t_step</span><span class="p">,</span>
+        <span class="n">tau0</span><span class="o">=</span><span class="n">tau0</span><span class="p">,</span>
+        <span class="n">shift</span><span class="o">=</span><span class="n">shift</span>
     <span class="p">)</span></div>
-
-
-
 </pre></div>
 
            </div>

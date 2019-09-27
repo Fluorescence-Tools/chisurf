@@ -80,9 +80,9 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
@@ -214,7 +214,8 @@ If <code class="docutils literal notranslate"><span class="pre">True</span></cod
 <dl class="function">
 <dt id="mfm.math.signal.calculate_fwhm">
 <code class="sig-prename descclassname">mfm.math.signal.</code><code class="sig-name descname">calculate_fwhm</code><span class="sig-paren">(</span><em class="sig-param">curve: 'mfm.curve.Curve'</em>, <em class="sig-param">background: 'float' = 0.0</em>, <em class="sig-param">verbose: 'bool' = False</em><span class="sig-paren">)</span> &#x2192; 'Tuple[float, Tuple[int, int], Tuple[float, float]]'<a class="reference internal" href="../_modules/mfm/math/signal.html#calculate_fwhm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.signal.calculate_fwhm" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the full-width-half-maximum (FWHM) using a linear-search from both sides of the curve</p>
+<dd><p>Calculates the full-width-half-maximum (FWHM) using a linear-search from
+both sides of the curve</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -227,9 +228,10 @@ If <code class="docutils literal notranslate"><span class="pre">True</span></cod
 <dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]</p>
 </dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Tuple containing the FWHM, the indices and the x-values of the used positions</p>
+<dd class="field-odd"><p>Tuple containing the FWHM, the indices and the x-values of the</p>
 </dd>
 </dl>
+<p>used positions</p>
 </dd></dl>
 
 <dl class="function">
@@ -262,17 +264,17 @@ scipy.signal.lfilter</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>data</strong> (<em>&lt;built-in function array&gt;</em>) – 1D numpy-array (data)</p></li>
-<li><p><strong>window_len</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – the dimension of the smoothing window; should be an odd integer</p></li>
-<li><p><strong>window_function_type</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the type of window from ‘flat’, ‘hanning’, ‘hamming’, ‘bartlett’, ‘blackman’                   flat window will produce a moving average smoothing.</p></li>
+<li><p><strong>window_len</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – the dimension of the smoothing window; should be an odd</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>&lt;built-in function array&gt;</p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>1D numpy-array (smoothed data)</p>
-</dd>
 </dl>
+<p>integer
+:type window_function_type: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>
+:param window_function_type: the type of window from ‘flat’, ‘hanning’,
+‘hamming’, ‘bartlett’, ‘blackman’ flat window will produce a moving average
+smoothing.
+:rtype: &lt;built-in function array&gt;
+:return: 1D numpy-array (smoothed data)</p>
 </dd></dl>
 
 <dl class="function">

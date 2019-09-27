@@ -80,9 +80,9 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
@@ -197,11 +197,12 @@
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>parameter_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the parameter name</p></li>
-<li><p><strong>rel_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – defines the scanning range as a fraction of the current value, e.g., for a</p></li>
+<li><p><strong>rel_range</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – defines the scanning range as a fraction of the</p></li>
 </ul>
 </dd>
 </dl>
-<p>value of 2.0 a rel_range of 0.5 scans from (2.0 - 2.0*0.5) to (2.0 + 2.0*0.5)
+<p>current value, e.g., for a value of 2.0 a rel_range of 0.5 scans
+from (2.0 - 2.0*0.5) to (2.0 + 2.0*0.5)
 :param kwargs:
 :rtype: <code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[&lt;built-in function array&gt;, &lt;built-in function array&gt;]
 :return: an list containing arrays of the chi2 and the parameter-values</p>
@@ -237,7 +238,12 @@ parameters.</p>
 <dl class="method">
 <dt id="mfm.fitting.fit.Fit.data">
 <em class="property">property </em><code class="sig-name descname">data</code><a class="headerlink" href="#mfm.fitting.fit.Fit.data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataCurve</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.fitting.fit.Fit.fit_range">
@@ -252,12 +258,32 @@ parameters.</p>
 <dl class="method">
 <dt id="mfm.fitting.fit.Fit.get_chi2">
 <code class="sig-name descname">get_chi2</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">parameter=None</em>, <em class="sig-param">model: 'mfm.models.model.Model' = None</em>, <em class="sig-param">reduced: 'bool' = True</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit.get_chi2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit.get_chi2" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fitting.fit.Fit.get_curves">
+<code class="sig-name descname">get_curves</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'Dict[str, mfm.curve.Curve]'<a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit.get_curves"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit.get_curves" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <a class="reference internal" href="../user_documentation/api/fit.html#mfm.curve.Curve" title="mfm.curve.Curve"><code class="xref py py-class docutils literal notranslate"><span class="pre">Curve</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.fitting.fit.Fit.get_wres">
-<code class="sig-name descname">get_wres</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">parameter=None</em>, <em class="sig-param">model=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit.get_wres"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit.get_wres" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname">get_wres</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">parameter=None</em>, <em class="sig-param">model=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'np.ndarray'<a class="reference internal" href="../_modules/mfm/fitting/fit.html#Fit.get_wres"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fitting.fit.Fit.get_wres" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.fitting.fit.Fit.grad">
@@ -270,7 +296,12 @@ parameters.</p>
 <dl class="method">
 <dt id="mfm.fitting.fit.Fit.model">
 <em class="property">property </em><code class="sig-name descname">model</code><a class="headerlink" href="#mfm.fitting.fit.Fit.model" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelCurve</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.fitting.fit.Fit.n_free">
@@ -373,7 +404,12 @@ parameters.</p>
 <dl class="method">
 <dt id="mfm.fitting.fit.FitGroup.data">
 <em class="property">property </em><code class="sig-name descname">data</code><a class="headerlink" href="#mfm.fitting.fit.FitGroup.data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataCurve</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.fitting.fit.FitGroup.fit_range">
@@ -388,7 +424,12 @@ parameters.</p>
 <dl class="method">
 <dt id="mfm.fitting.fit.FitGroup.model">
 <em class="property">property </em><code class="sig-name descname">model</code><a class="headerlink" href="#mfm.fitting.fit.FitGroup.model" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.fitting.fit.FitGroup.next">
@@ -519,14 +560,17 @@ xk. The return value of the function is an array.</p>
 <dd><p>Returns either the reduced chi2 or the sum of squares (chi2)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>parameter</strong> – a list of the parameter values or None. If None the models</p>
+<dd class="field-odd"><p><strong>parameter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – a list of the parameter values or None. If None the models</p>
 </dd>
 </dl>
 <p>is not updated
+:type model: <code class="xref py py-class docutils literal notranslate"><span class="pre">ModelCurve</span></code>
 :param model:
+:type reduced: <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>
 :param reduced: If True the returned value is divided by
 (n_points - n_free - 1.0) where n_points is the number of data points
 and n_free is the number of model parameters
+:rtype: <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>
 :return:</p>
 </dd></dl>
 
@@ -536,16 +580,19 @@ and n_free is the number of model parameters
 <dd><p>Returns the weighted residuals for a list of parameters of a models</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>parameter</strong> – a list of the parameter values / or None. If None</p>
+<dd class="field-odd"><p><strong>parameter</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – a list of the parameter values / or None. If None</p>
 </dd>
 </dl>
 <p>the models is not updated.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>model</strong> – </p>
+<dd class="field-odd"><p><strong>model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code>) – </p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -601,14 +648,17 @@ the weights are the errors of the data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> – the experimental data</p></li>
-<li><p><strong>model</strong> – the model</p></li>
-<li><p><strong>xmin</strong> – minimum index</p></li>
-<li><p><strong>xmax</strong> – maximum index</p></li>
+<li><p><strong>data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">DataCurve</span></code>) – the experimental data</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="../user_documentation/api/fit.html#mfm.curve.Curve" title="mfm.curve.Curve"><code class="xref py py-class docutils literal notranslate"><span class="pre">Curve</span></code></a>) – the model</p></li>
+<li><p><strong>xmin</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – minimum index</p></li>
+<li><p><strong>xmax</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – maximum index</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>a numpy array containing the weighted residuals</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>&lt;built-in function array&gt;</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>a numpy array containing the weighted residuals</p>
 </dd>
 </dl>
 </dd></dl>
@@ -620,12 +670,15 @@ the weights are the errors of the data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> – </p></li>
-<li><p><strong>fits</strong> – </p></li>
+<li><p><strong>model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code>) – </p></li>
+<li><p><strong>fits</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="#mfm.fitting.fit.Fit" title="mfm.fitting.fit.Fit"><code class="xref py py-class docutils literal notranslate"><span class="pre">Fit</span></code></a>]) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>

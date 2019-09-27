@@ -164,6 +164,9 @@ class FitTests(unittest.TestCase):
             len(fit.model.parameters)
         )
 
+        curves = fit.get_curves()
+        print(curves)
+
     def test_fit_data_setter(self):
         c_value = 3.1
         a_value = 1.2

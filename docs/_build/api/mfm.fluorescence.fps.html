@@ -80,9 +80,9 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
@@ -154,17 +154,1272 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="mfm-fluorescence-fps-dynamic-module">
-<h2>mfm.fluorescence.fps.dynamic module<a class="headerlink" href="#mfm-fluorescence-fps-dynamic-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-mfm.fluorescence.fps.dynamic">
+<span id="mfm-fluorescence-fps-dynamic-module"></span><h2>mfm.fluorescence.fps.dynamic module<a class="headerlink" href="#module-mfm.fluorescence.fps.dynamic" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.fluorescence.fps.dynamic.DiffusionSimulation">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.fluorescence.fps.dynamic.</code><code class="sig-name descname">DiffusionSimulation</code><span class="sig-paren">(</span><em class="sig-param">dye</em>, <em class="sig-param">quenching_parameter</em>, <em class="sig-param">diffusion_simulation_parameter</em>, <em class="sig-param">verbose=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/dynamic.html#DiffusionSimulation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.DiffusionSimulation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.DiffusionSimulation.av">
+<em class="property">property </em><code class="sig-name descname">av</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.DiffusionSimulation.av" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.DiffusionSimulation.collided">
+<em class="property">property </em><code class="sig-name descname">collided</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.DiffusionSimulation.collided" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.DiffusionSimulation.collisions">
+<em class="property">property </em><code class="sig-name descname">collisions</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.DiffusionSimulation.collisions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.DiffusionSimulation.distance_to_mean">
+<em class="property">property </em><code class="sig-name descname">distance_to_mean</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.DiffusionSimulation.distance_to_mean" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.DiffusionSimulation.mean_xyz">
+<em class="property">property </em><code class="sig-name descname">mean_xyz</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.DiffusionSimulation.mean_xyz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.DiffusionSimulation.quenching_trajectory">
+<em class="property">property </em><code class="sig-name descname">quenching_trajectory</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.DiffusionSimulation.quenching_trajectory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.DiffusionSimulation.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">verbose: 'str' = None</em>, <em class="sig-param">slow_fact: 'float' = None</em>, <em class="sig-param">diffusion_coefficient: 'float' = None</em>, <em class="sig-param">t_max: 'float' = None</em>, <em class="sig-param">t_step: 'float' = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/dynamic.html#DiffusionSimulation.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.DiffusionSimulation.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.DiffusionSimulation.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename: 'str'</em>, <em class="sig-param">mode: 'str' = 'h5'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/dynamic.html#DiffusionSimulation.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.DiffusionSimulation.save" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>mode</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>kwargs</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.DiffusionSimulation.time_axis">
+<em class="property">property </em><code class="sig-name descname">time_axis</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.DiffusionSimulation.time_axis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.DiffusionSimulation.xyz">
+<em class="property">property </em><code class="sig-name descname">xyz</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.DiffusionSimulation.xyz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fluorescence.fps.dynamic.DiffusionSimulationParameter">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.fluorescence.fps.dynamic.</code><code class="sig-name descname">DiffusionSimulationParameter</code><span class="sig-paren">(</span><em class="sig-param">t_max=2000</em>, <em class="sig-param">t_step=0.05</em>, <em class="sig-param">n_simulations=4</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/dynamic.html#DiffusionSimulationParameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.DiffusionSimulationParameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mfm.html#mfm.parameter.ParameterGroup" title="mfm.parameter.ParameterGroup"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.parameter.ParameterGroup</span></code></a></p>
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.DiffusionSimulationParameter.t_max">
+<em class="property">property </em><code class="sig-name descname">t_max</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.DiffusionSimulationParameter.t_max" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.DiffusionSimulationParameter.t_step">
+<em class="property">property </em><code class="sig-name descname">t_step</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.DiffusionSimulationParameter.t_step" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fluorescence.fps.dynamic.Dye">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.fluorescence.fps.dynamic.</code><code class="sig-name descname">Dye</code><span class="sig-paren">(</span><em class="sig-param">sticking</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/dynamic.html#Dye"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Dye" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mfm.html#mfm.parameter.ParameterGroup" title="mfm.parameter.ParameterGroup"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.parameter.ParameterGroup</span></code></a></p>
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Dye.av_length">
+<em class="property">property </em><code class="sig-name descname">av_length</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Dye.av_length" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Dye.av_parameter">
+<em class="property">property </em><code class="sig-name descname">av_parameter</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Dye.av_parameter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Dye.av_radius">
+<em class="property">property </em><code class="sig-name descname">av_radius</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Dye.av_radius" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Dye.av_width">
+<em class="property">property </em><code class="sig-name descname">av_width</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Dye.av_width" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Dye.critical_distance">
+<em class="property">property </em><code class="sig-name descname">critical_distance</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Dye.critical_distance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Dye.diffusion_coefficient">
+<em class="property">property </em><code class="sig-name descname">diffusion_coefficient</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Dye.diffusion_coefficient" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Dye.dye_definition">
+<em class="property">property </em><code class="sig-name descname">dye_definition</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Dye.dye_definition" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Dye.dye_name">
+<em class="property">property </em><code class="sig-name descname">dye_name</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Dye.dye_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Dye.get_av">
+<code class="sig-name descname">get_av</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/dynamic.html#Dye.get_av"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Dye.get_av" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Dye.n_atoms">
+<em class="property">property </em><code class="sig-name descname">n_atoms</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Dye.n_atoms" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Dye.simulation_grid_resolution">
+<em class="property">property </em><code class="sig-name descname">simulation_grid_resolution</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Dye.simulation_grid_resolution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Dye.tau0">
+<em class="property">property </em><code class="sig-name descname">tau0</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Dye.tau0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Dye.update_parameter">
+<code class="sig-name descname">update_parameter</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/dynamic.html#Dye.update_parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Dye.update_parameter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fluorescence.fps.dynamic.ProteinQuenching">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.fluorescence.fps.dynamic.</code><code class="sig-name descname">ProteinQuenching</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/dynamic.html#ProteinQuenching"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.ProteinQuenching" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mfm.html#mfm.parameter.ParameterGroup" title="mfm.parameter.ParameterGroup"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.parameter.ParameterGroup</span></code></a></p>
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.ProteinQuenching.all_atoms_quench">
+<em class="property">property </em><code class="sig-name descname">all_atoms_quench</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.ProteinQuenching.all_atoms_quench" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.ProteinQuenching.excluded_atoms">
+<em class="property">property </em><code class="sig-name descname">excluded_atoms</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.ProteinQuenching.excluded_atoms" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.ProteinQuenching.kQ_scale">
+<em class="property">property </em><code class="sig-name descname">kQ_scale</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.ProteinQuenching.kQ_scale" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.ProteinQuenching.k_quench">
+<em class="property">property </em><code class="sig-name descname">k_quench</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.ProteinQuenching.k_quench" title="Permalink to this definition">¶</a></dt>
+<dd><p>An array associating to each atom a quenching rate</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.ProteinQuenching.quencher">
+<em class="property">property </em><code class="sig-name descname">quencher</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.ProteinQuenching.quencher" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.ProteinQuenching.xyz">
+<em class="property">property </em><code class="sig-name descname">xyz</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.ProteinQuenching.xyz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Coordinates of the quenching atoms</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fluorescence.fps.dynamic.Sticking">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.fluorescence.fps.dynamic.</code><code class="sig-name descname">Sticking</code><span class="sig-paren">(</span><em class="sig-param">fit</em>, <em class="sig-param">structure</em>, <em class="sig-param">quenching_parameter=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/dynamic.html#Sticking"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Sticking" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mfm.html#mfm.parameter.ParameterGroup" title="mfm.parameter.ParameterGroup"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.parameter.ParameterGroup</span></code></a></p>
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Sticking.slow_center">
+<em class="property">property </em><code class="sig-name descname">slow_center</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Sticking.slow_center" title="Permalink to this definition">¶</a></dt>
+<dd><p>The location of the slow part of the accessible volume.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Sticking.slow_fact">
+<em class="property">property </em><code class="sig-name descname">slow_fact</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Sticking.slow_fact" title="Permalink to this definition">¶</a></dt>
+<dd><p>Slowing factor of the dye close to a slow-center. The diffusion
+coefficient is multiplied by this value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Sticking.slow_radius">
+<em class="property">property </em><code class="sig-name descname">slow_radius</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Sticking.slow_radius" title="Permalink to this definition">¶</a></dt>
+<dd><p>The radius around the C-alpha atoms which is considered as slow part
+of the accessible volume</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.dynamic.Sticking.sticky_mode">
+<em class="property">property </em><code class="sig-name descname">sticky_mode</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Sticking.sticky_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>If this value is set to <cite>quencher</cite> only the quencher slow down the
+dye if it is <cite>surface</cite> the C-beta
+atoms of all amino-acids slow down the dye. If the <cite>quencher</cite> file_type
+is used the <cite>quenching_parameter</cite>
+parameter has to be passed upon initialization of the class.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.fps.dynamic.simulate_trajectory">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.dynamic.</code><code class="sig-name descname">simulate_trajectory</code><span class="sig-paren">(</span><em class="sig-param">d: 'np.array'</em>, <em class="sig-param">ds: 'np.array'</em>, <em class="sig-param">dg: 'float'</em>, <em class="sig-param">t_max: 'float'</em>, <em class="sig-param">t_step: 'float'</em>, <em class="sig-param">diffusion_coefficient: 'float'</em>, <em class="sig-param">slow_fact: 'float'</em><span class="sig-paren">)</span> &#x2192; 'Tuple[np.array, np.array, int, int]'<a class="reference internal" href="../_modules/mfm/fluorescence/fps/dynamic.html#simulate_trajectory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.simulate_trajectory" title="Permalink to this definition">¶</a></dt>
+<dd><p><cite>d</cite> density of whole av in shape ng, ng, ng (as generated by fps library)
+<cite>ds</cite> density_slow of slow av (has to be same shape as fast av only different occupancy)
+dimensions = 2;         % two dimensional simulation
+tau = .1;               % time interval in seconds
+time = tau * 1:N;       % create a time vector for plotting</p>
+<p>k = sqrt(D * dimensions * tau);</p>
+<p><a class="reference external" href="http://labs.physics.berkeley.edu/mediawiki/index.php/Simulating_Brownian_Motion">http://labs.physics.berkeley.edu/mediawiki/index.php/Simulating_Brownian_Motion</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[&lt;built-in function array&gt;, &lt;built-in function array&gt;, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
-<div class="section" id="mfm-fluorescence-fps-functions-module">
-<h2>mfm.fluorescence.fps.functions module<a class="headerlink" href="#mfm-fluorescence-fps-functions-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-mfm.fluorescence.fps.functions">
+<span id="mfm-fluorescence-fps-functions-module"></span><h2>mfm.fluorescence.fps.functions module<a class="headerlink" href="#module-mfm.fluorescence.fps.functions" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.fluorescence.fps.functions.DiffusionIterator">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">DiffusionIterator</code><span class="sig-paren">(</span><em class="sig-param">d</em>, <em class="sig-param">b</em>, <em class="sig-param">p</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#DiffusionIterator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.DiffusionIterator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="mfm.fluorescence.fps.functions.DiffusionIterator.build_program">
+<code class="sig-name descname">build_program</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename='./opencl/iterated.c'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#DiffusionIterator.build_program"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.DiffusionIterator.build_program" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.functions.DiffusionIterator.execute">
+<code class="sig-name descname">execute</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">n_it=1</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#DiffusionIterator.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.DiffusionIterator.execute" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.functions.DiffusionIterator.to_device">
+<code class="sig-name descname">to_device</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#DiffusionIterator.to_device"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.DiffusionIterator.to_device" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.fps.functions.RDAMean">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">RDAMean</code><span class="sig-paren">(</span><em class="sig-param">av1: 'mfm.fluorescence.fps.BasicAV'</em>, <em class="sig-param">av2: 'mfm.fluorescence.fps.BasicAV'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#RDAMean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.RDAMean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the mean distance between two accessible volumes</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_filename</span> <span class="o">=</span> <span class="s1">&#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="n">pdb_filename</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av1</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">72</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av2</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">134</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">RDAMean</span><span class="p">(</span><span class="n">av1</span><span class="p">,</span> <span class="n">av2</span><span class="p">)</span>
+<span class="go">52.93390285282142</span>
+</pre></div>
 </div>
-<div class="section" id="mfm-fluorescence-fps-static-module">
-<h2>mfm.fluorescence.fps.static module<a class="headerlink" href="#mfm-fluorescence-fps-static-module" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.fps.functions.RDAMeanE">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">RDAMeanE</code><span class="sig-paren">(</span><em class="sig-param">av1: 'mfm.fluorescence.fps.BasicAV'</em>, <em class="sig-param">av2: 'mfm.fluorescence.fps.BasicAV'</em>, <em class="sig-param">R0: 'float' = 52.0</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#RDAMeanE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.RDAMeanE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the FRET-averaged (PDA/Intensity) distance between two accessible volumes</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_filename</span> <span class="o">=</span> <span class="s1">&#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="n">pdb_filename</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av1</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">72</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av2</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">134</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mfm</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">RDAMeanE</span><span class="p">(</span><span class="n">av1</span><span class="p">,</span> <span class="n">av2</span><span class="p">)</span>
+<span class="go">52.602731299544686</span>
+</pre></div>
 </div>
-<div class="section" id="module-contents">
-<h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.fps.functions.assign_diffusion_to_grid">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">assign_diffusion_to_grid</code><span class="sig-paren">(</span><em class="sig-param">d_map</em>, <em class="sig-param">density</em>, <em class="sig-param">r0</em>, <em class="sig-param">dg</em>, <em class="sig-param">atoms_coord</em>, <em class="sig-param">min_distance_sq</em>, <em class="sig-param">atomic_slow_factor</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.fluorescence.fps.functions.assign_diffusion_to_grid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a grid of diffusion coefficients based on distance to the atoms in a structure. The more atoms
+are in proximity to the grid-point the slower the diffusion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>density</strong> – 3D-numpy array of the denisty defined by AV-simulations</p></li>
+<li><p><strong>r0</strong> – attachment position of the AV (center of the 3D-grid)</p></li>
+<li><p><strong>ng</strong> – number of grid-points in each dimenstion</p></li>
+<li><p><strong>dg</strong> – distance between grid-points</p></li>
+<li><p><strong>free_diffusion</strong> – diffusion coefficient of the free dye</p></li>
+<li><p><strong>atomic_slow_factor</strong> – factor by which diffusion coefficient is lowered per atom in contact</p></li>
+<li><p><strong>min_distance_sq</strong> – squared distance between dye and atom which defines a contact ~(dye-radius + 2 * vdW-radius)</p></li>
+<li><p><strong>atoms_coord</strong> – coordinates of the atoms</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+<ol class="upperalpha simple" start="10">
+<li><p>Chem. Phys. 126, 044707 2007 eq. (3)</p></li>
+</ol>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.fps.functions.assign_diffusion_to_grid_1">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">assign_diffusion_to_grid_1</code><span class="sig-paren">(</span><em class="sig-param">d_map</em>, <em class="sig-param">density</em>, <em class="sig-param">r0</em>, <em class="sig-param">dg</em>, <em class="sig-param">atoms_coord</em>, <em class="sig-param">min_distance_sq</em>, <em class="sig-param">atomic_slow_factor</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#assign_diffusion_to_grid_1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.assign_diffusion_to_grid_1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a grid of diffusion coefficients based on distance to the atoms in a structure. The more atoms
+are in proximity to the grid-point the slower the diffusion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>density</strong> – 3D-numpy array of the denisty defined by AV-simulations</p></li>
+<li><p><strong>r0</strong> – attachment position of the AV (center of the 3D-grid)</p></li>
+<li><p><strong>ng</strong> – number of grid-points in each dimenstion</p></li>
+<li><p><strong>dg</strong> – distance between grid-points</p></li>
+<li><p><strong>free_diffusion</strong> – diffusion coefficient of the free dye</p></li>
+<li><p><strong>atomic_slow_factor</strong> – factor by which diffusion coefficient is lowered per atom in contact</p></li>
+<li><p><strong>min_distance_sq</strong> – squared distance between dye and atom which defines a contact ~(dye-radius + 2 * vdW-radius)</p></li>
+<li><p><strong>atoms_coord</strong> – coordinates of the atoms</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+<ol class="upperalpha simple" start="10">
+<li><p>Chem. Phys. 126, 044707 2007 eq. (3)</p></li>
+</ol>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.fps.functions.assign_diffusion_to_grid_2">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">assign_diffusion_to_grid_2</code><span class="sig-paren">(</span><em class="sig-param">density</em>, <em class="sig-param">r0</em>, <em class="sig-param">dg</em>, <em class="sig-param">free_diffusion</em>, <em class="sig-param">atoms_coord</em>, <em class="sig-param">radius</em>, <em class="sig-param">atomic_slow_factor</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#assign_diffusion_to_grid_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.assign_diffusion_to_grid_2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a grid of diffusion coefficients based on distance to the atoms in a structure. The more atoms
+are in proximity to the grid-point the slower the diffusion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>density</strong> – 3D-numpy array of the denisty defined by AV-simulations</p></li>
+<li><p><strong>r0</strong> – attachment position of the AV (center of the 3D-grid)</p></li>
+<li><p><strong>ng</strong> – number of grid-points in each dimenstion</p></li>
+<li><p><strong>dg</strong> – distance between grid-points</p></li>
+<li><p><strong>free_diffusion</strong> – diffusion coefficient of the free dye</p></li>
+<li><p><strong>atomic_slow_factor</strong> – factor by which diffusion coefficient is lowered per atom in contact</p></li>
+<li><p><strong>atoms_coord</strong> – coordinates of the atoms</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+<ol class="upperalpha simple" start="10">
+<li><p>Chem. Phys. 126, 044707 2007 eq. (3)</p></li>
+</ol>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.fps.functions.assign_diffusion_to_grid_3">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">assign_diffusion_to_grid_3</code><span class="sig-paren">(</span><em class="sig-param">density</em>, <em class="sig-param">r0</em>, <em class="sig-param">dg</em>, <em class="sig-param">f</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#assign_diffusion_to_grid_3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.assign_diffusion_to_grid_3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assigns diffusion coefficients according to the function f, which should depend on the 
+distance from the attachment point</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>density</strong> – 3D-numpy array of the denisty defined by AV-simulations</p></li>
+<li><p><strong>r0</strong> – attachment position of the AV (center of the 3D-grid)</p></li>
+<li><p><strong>dg</strong> – distance between grid-points</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.fps.functions.create_fret_rate_map">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">create_fret_rate_map</code><span class="sig-paren">(</span><em class="sig-param">density_donor</em>, <em class="sig-param">density_acceptor</em>, <em class="sig-param">r0_donor</em>, <em class="sig-param">r0_acceptor</em>, <em class="sig-param">dg_donor</em>, <em class="sig-param">dg_acceptor</em>, <em class="sig-param">foerster_radius</em>, <em class="sig-param">kf</em>, <em class="sig-param">acceptor_step=2</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#create_fret_rate_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.create_fret_rate_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>On every grid point (possible position of the donor) a distribution of FRET-rate constants
+is possible. Hence, the FRET-induced donor decay (fid) for a single donor position (i) is given by
+fid = sum_i (xi exp(-kret(i)*t)) where (i) are the (i) are the possible acceptor positions.
+Hence, a single FRET-rate constant is not sufficient to describe the fid of a fixed donor position.
+Here, the fid is approximated by the average time &lt;tret&gt; for FRET to occur.
+fid = sum_i (xi exp(-kret(i)*t)) approx exp(-&lt;kret&gt;*t)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>density_donor</strong> – </p></li>
+<li><p><strong>density_acceptor</strong> – </p></li>
+<li><p><strong>r0_donor</strong> – </p></li>
+<li><p><strong>r0_acceptor</strong> – </p></li>
+<li><p><strong>dg_donor</strong> – </p></li>
+<li><p><strong>dg_acceptor</strong> – </p></li>
+<li><p><strong>foerster_radius</strong> – </p></li>
+<li><p><strong>acceptor_step</strong> – sets the steps for iterating over the acceptor</p></li>
+<li><p><strong>kf</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.fps.functions.create_quenching_map">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">create_quenching_map</code><span class="sig-paren">(</span><em class="sig-param">density</em>, <em class="sig-param">r0</em>, <em class="sig-param">dg</em>, <em class="sig-param">atoms_coord</em>, <em class="sig-param">tau0</em>, <em class="sig-param">kQ</em>, <em class="sig-param">rC</em>, <em class="sig-param">dye_radius</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#create_quenching_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.create_quenching_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a grid of diffusion coefficients based on distance to the atoms in a structure. The more atoms
+are in proximity to the grid-point the slower the diffusion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>density</strong> – 3D-numpy array of the denisty defined by AV-simulations</p></li>
+<li><p><strong>r0</strong> – attachment position of the AV (center of the 3D-grid)</p></li>
+<li><p><strong>ng</strong> – number of grid-points in each dimenstion</p></li>
+<li><p><strong>dg</strong> – distance between grid-points</p></li>
+<li><p><strong>atoms_coord</strong> – coordinates of the atoms</p></li>
+<li><p><strong>kQ</strong> – atomic quenching constants</p></li>
+<li><p><strong>rC</strong> – characteristic distances for quenching</p></li>
+<li><p><strong>tau0</strong> – lifetime of the dye without quenching</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.fps.functions.dRmp">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">dRmp</code><span class="sig-paren">(</span><em class="sig-param">av1: 'mfm.fluorescence.fps.BasicAV'</em>, <em class="sig-param">av2: 'mfm.fluorescence.fps.BasicAV'</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#dRmp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.dRmp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the distance between the mean position of two accessible volumes</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_filename</span> <span class="o">=</span> <span class="s1">&#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="n">pdb_filename</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av1</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">72</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av2</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">134</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mfm</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">dRmp</span><span class="p">(</span><span class="n">av1</span><span class="p">,</span> <span class="n">av2</span><span class="p">)</span>
+<span class="go">49.724995634807691</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.fps.functions.density2points">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">density2points</code><span class="sig-paren">(</span><em class="sig-param">ng</em>, <em class="sig-param">dg</em>, <em class="sig-param">density</em>, <em class="sig-param">r0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#density2points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.density2points" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.fps.functions.get_kQ_rC">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">get_kQ_rC</code><span class="sig-paren">(</span><em class="sig-param">atoms</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#get_kQ_rC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.get_kQ_rC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an array of quenching rate constant (kQ) and critical distances (rC) for all atoms</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>atoms</strong> – an array of atoms</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>array of quenching rate constants and array of critical distances</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.fps.functions.histogram_rda">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">histogram_rda</code><span class="sig-paren">(</span><em class="sig-param">av1: 'Type[mfm.fluorescence.fps.BasicAV]'</em>, <em class="sig-param">av2: 'Type[mfm.fluorescence.fps.BasicAV]'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'Tuple[np.ndarray, np.ndarray]'<a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#histogram_rda"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.histogram_rda" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the distance distribution with respect to a second accessible volume and returns the
+distance axis and the probability of the respective distance. By default the distance-axis “mfm.rda_axis”
+is taken to generate the histogram.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>av1</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicAV</span></code></a>]) – Accessible volume</p></li>
+<li><p><strong>av2</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicAV</span></code></a>]) – Accessible volume</p></li>
+<li><p><strong>kwargs</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av1</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av2</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">577</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">av1</span><span class="o">.</span><span class="n">pRDA</span><span class="p">(</span><span class="n">av2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.fps.functions.modify_av">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">modify_av</code><span class="sig-paren">(</span><em class="sig-param">density</em>, <em class="sig-param">dg</em>, <em class="sig-param">radius</em>, <em class="sig-param">rs</em>, <em class="sig-param">r0</em>, <em class="sig-param">factor</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#modify_av"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.modify_av" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multiplies density by factor if within radius</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>density</strong> – numpy-array
+density of the accessible volume dimension ng, ng, ng uint8 numpy array as obtained of fps</p></li>
+<li><p><strong>dg</strong> – float
+grid resolution of the density grid</p></li>
+<li><p><strong>radius</strong> – numpy-array/list
+radius around the list of points. all points within a radius of r0 around the points in rs are part
+of the subav. each slow point is associated to one slow-radius</p></li>
+<li><p><strong>rs</strong> – numpy-array/list
+list of points (x,y,z) defining the subav</p></li>
+<li><p><strong>r0</strong> – numpy-array
+is the position of the accessible volume</p></li>
+<li><p><strong>factor</strong> – float
+factor by which density is multiplied</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.fps.functions.random_distances">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">random_distances</code><span class="sig-paren">(</span><em class="sig-param">p1</em>, <em class="sig-param">p2</em>, <em class="sig-param">n_samples</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#random_distances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.random_distances" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xyzw</strong> – a 4-dim vector xyz and the weight of the coordinate</p></li>
+<li><p><strong>nSamples</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.fps.functions.reset_density_av">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">reset_density_av</code><span class="sig-paren">(</span><em class="sig-param">density</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#reset_density_av"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.reset_density_av" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets all densities in av to 1.0 if the density is bigger than 0.0</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>density</strong> – numpy-array</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.fps.functions.split_av_acv">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">split_av_acv</code><span class="sig-paren">(</span><em class="sig-param">density</em>, <em class="sig-param">dg</em>, <em class="sig-param">radius</em>, <em class="sig-param">rs</em>, <em class="sig-param">r0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#split_av_acv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.split_av_acv" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>density</strong> – numpy-array
+density of the accessible volume dimension ng, ng, ng uint8 numpy array as obtained of fps</p></li>
+<li><p><strong>ng</strong> – int
+number of grid points</p></li>
+<li><p><strong>dg</strong> – float
+grid resolution of the density grid</p></li>
+<li><p><strong>radius</strong> – float
+radius around the list of points. all points within a radius of r0 around the points in rs are part
+of the subav. each slow point is assiciated to one slow-radius</p></li>
+<li><p><strong>rs</strong> – list
+list of points (x,y,z) defining the subav</p></li>
+<li><p><strong>r0</strong> – is the position of the accessible volume</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.fps.functions.widthRDA">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">widthRDA</code><span class="sig-paren">(</span><em class="sig-param">av1: 'mfm.fluorescence.fps.BasicAV'</em>, <em class="sig-param">av2: 'mfm.fluorescence.fps.BasicAV'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#widthRDA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.widthRDA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the width of the distance distribution between two accessible volumes</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_filename</span> <span class="o">=</span> <span class="s1">&#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="n">pdb_filename</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av1</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">72</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av2</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">134</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">widthRDA</span><span class="p">(</span><span class="n">av1</span><span class="p">,</span> <span class="n">av2</span><span class="p">)</span>
+<span class="go">52.93390285282142</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="module-mfm.fluorescence.fps.static">
+<span id="mfm-fluorescence-fps-static-module"></span><h2>mfm.fluorescence.fps.static module<a class="headerlink" href="#module-mfm.fluorescence.fps.static" title="Permalink to this headline">¶</a></h2>
+<dl class="attribute">
+<dt id="mfm.fluorescence.fps.static.atoms_in_reach">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.static.</code><code class="sig-name descname">atoms_in_reach</code><span class="sig-paren">(</span><em class="sig-param">xyz</em>, <em class="sig-param">vdw</em>, <em class="sig-param">dmaxsq</em>, <em class="sig-param">atom_i</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/static.html#atoms_in_reach"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.static.atoms_in_reach" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the xyz coordinates of atoms within reach (defined by dmaxsq) of a list of atoms</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xyz</strong> – </p></li>
+<li><p><strong>vdw</strong> – </p></li>
+<li><p><strong>dmaxsq</strong> – </p></li>
+<li><p><strong>atom_i</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.fps.static.calc_av1_py">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.static.</code><code class="sig-name descname">calc_av1_py</code><span class="sig-paren">(</span><em class="sig-param">l</em>, <em class="sig-param">w</em>, <em class="sig-param">r</em>, <em class="sig-param">atom_i</em>, <em class="sig-param">ng</em>, <em class="sig-param">xyz</em>, <em class="sig-param">vdw</em>, <em class="sig-param">vdw_max=3.5</em>, <em class="sig-param">linker_sphere=2.0</em>, <em class="sig-param">linknodes=3</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/static.html#calc_av1_py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.static.calc_av1_py" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l</strong> – linker-length</p></li>
+<li><p><strong>w</strong> – linker-width</p></li>
+<li><p><strong>r</strong> – dye-radius</p></li>
+<li><p><strong>atom_i</strong> – attachment atom</p></li>
+<li><p><strong>ng</strong> – number of grid points</p></li>
+<li><p><strong>xyz</strong> – coordinates of atoms</p></li>
+<li><p><strong>vdw</strong> – van der waals radii of atoms</p></li>
+<li><p><strong>vdw_max</strong> – maximum van der waals radius</p></li>
+<li><p><strong>linker_sphere</strong> – </p></li>
+<li><p><strong>linknodes</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.fps.static.calc_distance_from_traj">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.static.</code><code class="sig-name descname">calc_distance_from_traj</code><span class="sig-paren">(</span><em class="sig-param">traj</em>, <em class="sig-param">res_id</em>, <em class="sig-param">atom_name</em>, <em class="sig-param">chain_id</em>, <em class="sig-param">ng</em>, <em class="sig-param">dg</em>, <em class="sig-param">r0_res</em>, <em class="sig-param">r0_atom_name</em>, <em class="sig-param">r0_chain</em>, <em class="sig-param">dt</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/static.html#calc_distance_from_traj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.static.calc_distance_from_traj" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>density</strong> – </p></li>
+<li><p><strong>traj</strong> – </p></li>
+<li><p><strong>atom_i</strong> – </p></li>
+<li><p><strong>r0</strong> – xyz coordinates of attachment</p></li>
+<li><p><strong>dg</strong> – grid spacing</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.fps.static.calc_linker_distance">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.static.</code><code class="sig-name descname">calc_linker_distance</code><span class="sig-paren">(</span><em class="sig-param">density</em>, <em class="sig-param">linker_sphere</em>, <em class="sig-param">linknodes</em>, <em class="sig-param">dg</em>, <em class="sig-param">w</em>, <em class="sig-param">l</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/static.html#calc_linker_distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.static.calc_linker_distance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.fps.static.calc_weights_from_traj">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.static.</code><code class="sig-name descname">calc_weights_from_traj</code><span class="sig-paren">(</span><em class="sig-param">traj</em>, <em class="sig-param">res_id</em>, <em class="sig-param">atom_name</em>, <em class="sig-param">chain_id</em>, <em class="sig-param">ng</em>, <em class="sig-param">dg</em>, <em class="sig-param">r0_res</em>, <em class="sig-param">r0_atom_name</em>, <em class="sig-param">r0_chain</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/static.html#calc_weights_from_traj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.static.calc_weights_from_traj" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>density</strong> – </p></li>
+<li><p><strong>traj</strong> – </p></li>
+<li><p><strong>atom_i</strong> – </p></li>
+<li><p><strong>r0</strong> – xyz coordinates of attachment</p></li>
+<li><p><strong>dg</strong> – grid spacing</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.fps.static.calculate_1_radius">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.static.</code><code class="sig-name descname">calculate_1_radius</code><span class="sig-paren">(</span><em class="sig-param">l</em>, <em class="sig-param">w</em>, <em class="sig-param">r</em>, <em class="sig-param">atom_i</em>, <em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">z</em>, <em class="sig-param">vdw</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/static.html#calculate_1_radius"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.static.calculate_1_radius" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l</strong> – float
+linker length</p></li>
+<li><p><strong>w</strong> – float
+linker width</p></li>
+<li><p><strong>r</strong> – float
+dye-radius</p></li>
+<li><p><strong>atom_i</strong> – int
+attachment-atom index</p></li>
+<li><p><strong>x</strong> – array
+Cartesian coordinates of atoms (x)</p></li>
+<li><p><strong>y</strong> – array
+Cartesian coordinates of atoms (y)</p></li>
+<li><p><strong>z</strong> – array
+Cartesian coordinates of atoms (z)</p></li>
+<li><p><strong>vdw</strong> – Van der Waals radii (same length as number of atoms)</p></li>
+<li><p><strong>linkersphere</strong> – float
+Initial linker-sphere to start search of allowed dye positions</p></li>
+<li><p><strong>linknodes</strong> – int
+By default 3</p></li>
+<li><p><strong>vdwRMax</strong> – float
+Maximal Van der Waals radius</p></li>
+<li><p><strong>dg</strong> – float
+Resolution of accessible volume in Angstrom</p></li>
+<li><p><strong>verbose</strong> – bool
+If true informative output is printed on std-out</p></li>
+<li><p><strong>n_mul</strong> – bool
+number by which the number of grid points in each dimension has to be dividable if this
+is not the case the av is zero padded</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Calculating accessible volume using provided pdb-file</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_filename</span> <span class="o">=</span> <span class="s1">&#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">residue_number</span> <span class="o">=</span> <span class="mi">18</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">atom_name</span> <span class="o">=</span> <span class="s1">&#39;CB&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">attachment_atom</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="n">pdb_filename</span><span class="p">,</span> <span class="n">attachment_atom</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Calculating accessible volume using provided Structure object</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_filename</span> <span class="o">=</span> <span class="s1">&#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="n">pdb_filename</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">attachment_atom</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">Calculating accessible volume</span>
+<span class="go">-----------------------------</span>
+<span class="go">Loading PDB</span>
+<span class="go">Calculating initial-AV</span>
+<span class="go">Linker-length  : 20.00</span>
+<span class="go">Linker-width   : 0.50</span>
+<span class="go">Linker-radius  : 5.00</span>
+<span class="go">Attachment-atom: 1</span>
+<span class="go">AV-resolution  : 0.50</span>
+<span class="go">AV: calculate1R</span>
+<span class="go">Number of atoms: 2647</span>
+<span class="go">Attachment atom: [ 33.28   58.678  40.397]</span>
+<span class="go">Points in AV: 111911</span>
+<span class="go">Points in total-AV: 111911</span>
+</pre></div>
+</div>
+<p>Using residue_seq_number and atom_name to calculate accessible volume, this also works without
+chain_identifier. However, only if a single-chain is present.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_filename</span> <span class="o">=</span> <span class="s1">&#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="n">pdb_filename</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If save_av is True the calculated accessible volume is save to disk. The filename of the calculated
+accessible volume is determined by output_file</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.fluorescence</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.structure</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_filename</span> <span class="o">=</span> <span class="s1">&#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="n">pdb_filename</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">AV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">save_av</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
+<span class="go">Calculating accessible volume</span>
+<span class="go">-----------------------------</span>
+<span class="go">Loading PDB</span>
+<span class="go">Calculating initial-AV</span>
+<span class="go">Linker-length  : 20.00</span>
+<span class="go">Linker-width   : 0.50</span>
+<span class="go">Linker-radius  : 5.00</span>
+<span class="go">Attachment-atom: 174</span>
+<span class="go">AV-resolution  : 0.50</span>
+<span class="go">AV: calculate1R</span>
+<span class="go">Number of atoms: 2647</span>
+<span class="go">Attachment atom: [ 41.606  44.953  36.625]</span>
+<span class="go">Points in AV: 22212</span>
+<span class="go">Points in total-AV: 22212</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.fluorescence.fps.static.calculate_3_radius">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.static.</code><code class="sig-name descname">calculate_3_radius</code><span class="sig-paren">(</span><em class="sig-param">l</em>, <em class="sig-param">w</em>, <em class="sig-param">r1</em>, <em class="sig-param">r2</em>, <em class="sig-param">r3</em>, <em class="sig-param">atom_i</em>, <em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">z</em>, <em class="sig-param">vdw</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/static.html#calculate_3_radius"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.static.calculate_3_radius" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l</strong> – float
+linker length</p></li>
+<li><p><strong>w</strong> – float
+linker width</p></li>
+<li><p><strong>r1</strong> – float
+Dye-radius 1</p></li>
+<li><p><strong>r2</strong> – float
+Dye-radius 2</p></li>
+<li><p><strong>r3</strong> – float
+Dye-radius 3</p></li>
+<li><p><strong>atom_i</strong> – int
+attachment-atom index</p></li>
+<li><p><strong>x</strong> – array
+Cartesian coordinates of atoms (x)</p></li>
+<li><p><strong>y</strong> – array
+Cartesian coordinates of atoms (y)</p></li>
+<li><p><strong>z</strong> – array
+Cartesian coordinates of atoms (z)</p></li>
+<li><p><strong>vdw</strong> – Van der Waals radii (same length as number of atoms)</p></li>
+<li><p><strong>linkersphere</strong> – float
+Initial linker-sphere to start search of allowed dye positions</p></li>
+<li><p><strong>linknodes</strong> – int
+By default 3</p></li>
+<li><p><strong>vdw_max</strong> – float
+Maximal Van der Waals radius</p></li>
+<li><p><strong>dg</strong> – float
+Resolution of accessible volume in Angstrom</p></li>
+<li><p><strong>verbose</strong> – bool
+If true informative output is printed on std-out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.fps.static.define_starting_positions">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.static.</code><code class="sig-name descname">define_starting_positions</code><span class="sig-paren">(</span><em class="sig-param">linker_sphere</em>, <em class="sig-param">w</em>, <em class="sig-param">dg</em>, <em class="sig-param">l</em>, <em class="sig-param">ng</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/static.html#define_starting_positions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.static.define_starting_positions" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>density</strong> – </p></li>
+<li><p><strong>linker_sphere</strong> – a float (unit-less) the initial positions are a sphere around the attachment point
+of the radius linker_sphere * w, where w is the linker-width</p></li>
+<li><p><strong>w</strong> – the linker width</p></li>
+<li><p><strong>dg</strong> – the grid spacing</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.fps.static.distance_lookup">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.static.</code><code class="sig-name descname">distance_lookup</code><span class="sig-paren">(</span><em class="sig-param">linknodes</em>, <em class="sig-param">dg</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/static.html#distance_lookup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.static.distance_lookup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.fps.static.find_atom_clashes">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.static.</code><code class="sig-name descname">find_atom_clashes</code><span class="sig-paren">(</span><em class="sig-param">xyz</em>, <em class="sig-param">vdw</em>, <em class="sig-param">density</em>, <em class="sig-param">dg</em>, <em class="sig-param">min_clash</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/static.html#find_atom_clashes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.static.find_atom_clashes" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xyz</strong> – atomic coordinates</p></li>
+<li><p><strong>vdw</strong> – van der waals radii of atoms</p></li>
+<li><p><strong>density</strong> – initial assumed density as a 3D-grid</p></li>
+<li><p><strong>dg</strong> – grid spacing</p></li>
+<li><p><strong>min_clash</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.fps.static.make_grid_axis">
+<code class="sig-prename descclassname">mfm.fluorescence.fps.static.</code><code class="sig-name descname">make_grid_axis</code><span class="sig-paren">(</span><em class="sig-param">dg</em>, <em class="sig-param">n</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/static.html#make_grid_axis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.static.make_grid_axis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-mfm.fluorescence.fps">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.fluorescence.fps" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.fluorescence.fps.ACV">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.fluorescence.fps.</code><code class="sig-name descname">ACV</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#ACV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.ACV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.fluorescence.fps.BasicAV</span></code></a></p>
+<dl class="method">
+<dt id="mfm.fluorescence.fps.ACV.contact_density">
+<em class="property">property </em><code class="sig-name descname">contact_density</code><a class="headerlink" href="#mfm.fluorescence.fps.ACV.contact_density" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.ACV.contact_volume_trapped_fraction">
+<em class="property">property </em><code class="sig-name descname">contact_volume_trapped_fraction</code><a class="headerlink" href="#mfm.fluorescence.fps.ACV.contact_volume_trapped_fraction" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.ACV.slow_centers">
+<em class="property">property </em><code class="sig-name descname">slow_centers</code><a class="headerlink" href="#mfm.fluorescence.fps.ACV.slow_centers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.ACV.slow_radius">
+<em class="property">property </em><code class="sig-name descname">slow_radius</code><a class="headerlink" href="#mfm.fluorescence.fps.ACV.slow_radius" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.ACV.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#ACV.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.ACV.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.ACV.update_density">
+<code class="sig-name descname">update_density</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#ACV.update_density"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.ACV.update_density" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fluorescence.fps.BasicAV">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.fluorescence.fps.</code><code class="sig-name descname">BasicAV</code><span class="sig-paren">(</span><em class="sig-param">structure</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Simulates the accessible volume of a dye</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="mfm.fluorescence.fps.BasicAV.Rmp">
+<em class="property">property </em><code class="sig-name descname">Rmp</code><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.Rmp" title="Permalink to this definition">¶</a></dt>
+<dd><p>The mean position of the accessible volume (average x, y, z coordinate)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.BasicAV.atoms">
+<em class="property">property </em><code class="sig-name descname">atoms</code><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.atoms" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.BasicAV.bounds">
+<em class="property">property </em><code class="sig-name descname">bounds</code><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.bounds" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.BasicAV.dRDA">
+<code class="sig-name descname">dRDA</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">av: 'Type[BasicAV]'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.dRDA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.dRDA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the mean distance to the second accessible volume</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>av</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicAV</span></code></a>]) – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av1</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av2</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">577</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av1</span><span class="o">.</span><span class="n">dRDA</span><span class="p">(</span><span class="n">av2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.BasicAV.dRDAE">
+<code class="sig-name descname">dRDAE</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">av: 'Type[BasicAV]'</em>, <em class="sig-param">forster_radius: 'float'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.dRDAE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.dRDAE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the FRET-averaged mean distance to the second accessible volume</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>av</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicAV</span></code></a>]) – Accessible volume</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av1</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av2</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">577</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av1</span><span class="o">.</span><span class="n">dRDAE</span><span class="p">(</span><span class="n">av2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.BasicAV.dRmp">
+<code class="sig-name descname">dRmp</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">av: 'Type[BasicAV]'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.dRmp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.dRmp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the distance between the mean positions with respect to the accessible volume <cite>av</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>av</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicAV</span></code></a>]) – accessible volume object</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av1</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av2</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">577</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av1</span><span class="o">.</span><span class="n">dRmp</span><span class="p">(</span><span class="n">av2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.BasicAV.density">
+<em class="property">property </em><code class="sig-name descname">density</code><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.density" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.BasicAV.ng">
+<em class="property">property </em><code class="sig-name descname">ng</code><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.ng" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.BasicAV.pRDA">
+<code class="sig-name descname">pRDA</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">av: 'Type[BasicAV]'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'Tuple[np.ndarray, np.ndarray]'<a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.pRDA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.pRDA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the distance distribution with respect to a second accessible volume and returns the
+distance axis and the probability of the respective distance. By default the distance-axis “mfm.rda_axis”
+is taken to generate the histogram.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>av</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicAV</span></code></a>]) – Accessible volume</p></li>
+<li><p><strong>kwargs</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av1</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av2</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">577</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">av1</span><span class="o">.</span><span class="n">pRDA</span><span class="p">(</span><span class="n">av2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.BasicAV.points">
+<em class="property">property </em><code class="sig-name descname">points</code><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.points" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.BasicAV.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename: 'str'</em>, <em class="sig-param">mode: 'str' = 'xyz'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the accessible volume as xyz-file or open-dx density file</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;c:/temp/test&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;xyz&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;c:/temp/test&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;dx&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.BasicAV.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.BasicAV.update_points">
+<code class="sig-name descname">update_points</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.update_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.update_points" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.BasicAV.widthRDA">
+<code class="sig-name descname">widthRDA</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">av: 'Type[BasicAV]'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.widthRDA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.widthRDA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the width of a DA-distance distribution</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>av</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicAV</span></code></a>]) – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av1</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av2</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">residue_seq_number</span><span class="o">=</span><span class="mi">577</span><span class="p">,</span> <span class="n">atom_name</span><span class="o">=</span><span class="s1">&#39;CB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">av1</span><span class="o">.</span><span class="n">widthRDA</span><span class="p">(</span><span class="n">av2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mfm.fluorescence.fps.DynamicAV">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.fluorescence.fps.</code><code class="sig-name descname">DynamicAV</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#DynamicAV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.DynamicAV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.fluorescence.fps.BasicAV</span></code></a></p>
+<dl class="method">
+<dt id="mfm.fluorescence.fps.DynamicAV.contact_distance">
+<em class="property">property </em><code class="sig-name descname">contact_distance</code><a class="headerlink" href="#mfm.fluorescence.fps.DynamicAV.contact_distance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.DynamicAV.diffusion_map">
+<em class="property">property </em><code class="sig-name descname">diffusion_map</code><a class="headerlink" href="#mfm.fluorescence.fps.DynamicAV.diffusion_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.DynamicAV.donor_only_fluorescence">
+<em class="property">property </em><code class="sig-name descname">donor_only_fluorescence</code><a class="headerlink" href="#mfm.fluorescence.fps.DynamicAV.donor_only_fluorescence" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.DynamicAV.excited_state_map">
+<em class="property">property </em><code class="sig-name descname">excited_state_map</code><a class="headerlink" href="#mfm.fluorescence.fps.DynamicAV.excited_state_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.DynamicAV.fluorescence_lifetime">
+<em class="property">property </em><code class="sig-name descname">fluorescence_lifetime</code><a class="headerlink" href="#mfm.fluorescence.fps.DynamicAV.fluorescence_lifetime" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.DynamicAV.fret_rate_map">
+<em class="property">property </em><code class="sig-name descname">fret_rate_map</code><a class="headerlink" href="#mfm.fluorescence.fps.DynamicAV.fret_rate_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.DynamicAV.get_donor_only_decay">
+<code class="sig-name descname">get_donor_only_decay</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#DynamicAV.get_donor_only_decay"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.DynamicAV.get_donor_only_decay" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.DynamicAV.quenching_rate_map">
+<em class="property">property </em><code class="sig-name descname">quenching_rate_map</code><a class="headerlink" href="#mfm.fluorescence.fps.DynamicAV.quenching_rate_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.DynamicAV.rate_map">
+<em class="property">property </em><code class="sig-name descname">rate_map</code><a class="headerlink" href="#mfm.fluorescence.fps.DynamicAV.rate_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.DynamicAV.slow_factor">
+<em class="property">property </em><code class="sig-name descname">slow_factor</code><a class="headerlink" href="#mfm.fluorescence.fps.DynamicAV.slow_factor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.DynamicAV.update_diffusion_map">
+<code class="sig-name descname">update_diffusion_map</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#DynamicAV.update_diffusion_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.DynamicAV.update_diffusion_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the diffusion coefficient map.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.DynamicAV.update_equilibrium">
+<code class="sig-name descname">update_equilibrium</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#DynamicAV.update_equilibrium"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.DynamicAV.update_equilibrium" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the equilibrium probabilities of the dye
+Example
+——-
+&gt;&gt;&gt; import mfm
+&gt;&gt;&gt; structure = mfm.structure.Structure(‘./sample_data/modelling/pdb_files/hGBP1_closed.pdb’)
+&gt;&gt;&gt; free_diffusion = 8.0
+&gt;&gt;&gt; av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name=’CB’, slow_factor=0.985, contact_distance=3.5, diffusion_coefficients=free_diffusion, simulation_grid_resolution=2.0)
+&gt;&gt;&gt; p.imshow(av.diffusion_map[:,:,20])
+&gt;&gt;&gt; p.show()
+&gt;&gt;&gt; p.imshow(av.density[:,:,20])
+&gt;&gt;&gt; p.show()
+&gt;&gt;&gt; av.update_diffusion_map()
+&gt;&gt;&gt; av.update_equilibrium()#t_max=100.)
+&gt;&gt;&gt; p.imshow(av.density[:,:,20])
+&gt;&gt;&gt; p.show()
+&gt;&gt;&gt; y, x = np.histogram(av.diffusion_map.flatten(), tac_range=(0.01, 10), bins=20, weights=av.density.flatten())
+&gt;&gt;&gt; p.plot(x[1:], y)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.DynamicAV.update_fret_map">
+<code class="sig-name descname">update_fret_map</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">acceptor</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#DynamicAV.update_fret_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.DynamicAV.update_fret_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates an average FRET-rate constant for every AV grid point.</p>
+<p>In the FRET-map the average time of FRET to occur is used as FRET rate constant for each grid point
+of the donor. In an excat solution it should be considered, that the FRET-rate constants of the donor
+at each grid points follow a distribution the function create_fret_rate_map approximates this
+distribution by the average time of FRET.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.fluorescence.fps.DynamicAV.update_quenching_map">
+<code class="sig-name descname">update_quenching_map</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#DynamicAV.update_quenching_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.DynamicAV.update_quenching_map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assigns a quenching rate constant to each grid point of the AV</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 </div>
 

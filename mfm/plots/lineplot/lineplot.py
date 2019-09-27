@@ -3,11 +3,12 @@ from __future__ import annotations
 import os
 import numpy as np
 import pyqtgraph as pg
-from qtpy import  QtWidgets, uic
+from qtpy import QtWidgets, uic
 import matplotlib.colors as mpl_colors
 
 import mfm
 import mfm.math
+import mfm.fitting
 import mfm.math.statistics
 from mfm.plots import plotbase
 from pyqtgraph.dockarea import *
@@ -16,7 +17,9 @@ pyqtgraph_settings = mfm.settings.pyqtgraph_settings
 color_scheme = mfm.settings.colors
 
 
-class LinePlotControl(QtWidgets.QWidget):
+class LinePlotControl(
+    QtWidgets.QWidget
+):
 
     def __init__(
             self,
@@ -26,9 +29,12 @@ class LinePlotControl(QtWidgets.QWidget):
             r_scaley: str = 'lin',
             reference_curve: bool = False,
             xmin: float = 0.0,
-            ymin: float = 1.0
+            ymin: float = 1.0,
+            *args,
+            **kwargs
+
     ):
-        QtWidgets.QWidget.__init__(self)
+        super().__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -56,7 +62,9 @@ class LinePlotControl(QtWidgets.QWidget):
     def plot_ftt(
             self
     ) -> bool:
-        return bool(self.checkBox_plot_ftt.isChecked())
+        return bool(
+            self.checkBox_plot_ftt.isChecked()
+        )
 
     @plot_ftt.setter
     def plot_ftt(
@@ -242,10 +250,12 @@ class LinePlotControl(QtWidgets.QWidget):
 
 class LinePlot(plotbase.Plot):
     """
-    Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
-    and the autocorrelation of the residuals. Now it is also used also for fcs-data.
+    Started off as a plotting class to display TCSPC-data displaying the IRF,
+    the experimental data, the residuals and the autocorrelation of the
+    residuals. Now it is also used also for fcs-data.
 
-    In case the models is a :py:class:`~experiment.models.tcspc.LifetimeModel` it takes the irf and displays it:
+    In case the models is a :py:class:`~experiment.models.tcspc.LifetimeModel`
+    it takes the irf and displays it:
 
         irf = fit.models.convolve.irf
         irf_y = irf.y
@@ -367,9 +377,30 @@ class LinePlot(plotbase.Plot):
         # Plotted lines
         lw = mfm.settings.gui['plot']['line_width']
         if self.plot_irf:
-            self.irf_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['irf'], width=lw), name='IRF')
-        self.data_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['data'], width=lw), name='Data')
-        self.fit_curve = data_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['model'], width=lw), name='Model')
+            self.irf_curve = data_plot.plot(
+                x=[0.0],
+                y=[0.0],
+                pen=pg.mkPen(
+                    colors['irf'],
+                    width=lw
+                ), name='IRF'
+            )
+        self.data_curve = data_plot.plot(
+            x=[0.0],
+            y=[0.0],
+            pen=pg.mkPen(
+                colors['data'],
+                width=lw
+            ), name='Data'
+        )
+        self.fit_curve = data_plot.plot(
+            x=[0.0],
+            y=[0.0],
+            pen=pg.mkPen(
+                colors['model'], width=lw
+            ),
+            name='Model'
+        )
         p1.setXLink(p3)
         p2.setXLink(p3)
 
@@ -380,6 +411,7 @@ class LinePlot(plotbase.Plot):
             **kwargs
     ):
         fit = self.fit
+        curves = fit.get_curves()
         # Get parameters from plot-control
         plt_ctrl = self.pltControl
 
@@ -391,12 +423,18 @@ class LinePlot(plotbase.Plot):
         x_shift = plt_ctrl.x_shift
 
         # Model function
-        model_x, model_y = fit.model[fit.xmin:fit.xmax]
+        #model_x, model_y = fit.model[fit.xmin:fit.xmax]
+        model_x, model_y = curves['model'].x, curves['model'].y
         model_x = np.copy(model_x) + x_shift
         model_y = np.copy(model_y) + y_shift
+
         # Update fitting-region
-        data_x = np.copy(self.fit.data.x) + x_shift
-        data_y = np.copy(self.fit.data.y) + y_shift
+        #data_y = self.fit.data.y
+        #data_x = self.fit.data.x
+
+        data_x, data_y = curves['data'].x, curves['data'].y
+        data_x = np.copy(data_x) + x_shift
+        data_y = np.copy(data_y) + y_shift
         # Weighted residuals + Autocorrelation
         wres_y = fit.weighted_residuals
         if self.pltControl.is_density:
@@ -417,7 +455,13 @@ class LinePlot(plotbase.Plot):
             if mfm.verbose:
                 print("No instrument response to plot.")
 
-        xmin = max(np.searchsorted(data_x, 1e-12, side='right'), self.fit.xmin) if data_log_x else self.fit.xmin
+        xmin = max(
+            np.searchsorted(
+                data_x,
+                1e-12,
+                side='right'
+            ), self.fit.xmin
+        ) if data_log_x else self.fit.xmin
         lb_min, ub_max = data_x[0], data_x[-1]
         lb, ub = data_x[xmin], data_x[self.fit.xmax]
         if data_log_x:
@@ -430,7 +474,10 @@ class LinePlot(plotbase.Plot):
         y_max = data_y.max()
         if data_log_y:
             y_max = np.log10(y_max)
-        self.text.setPos(ub_max * .7, y_max * .9)
+        self.text.setPos(
+            ub_max * .7,
+            y_max * .9
+        )
         #self.legend.setPos(ub_max * .7, y_max * .3)
         self.text.setHtml(
             '<div style="name-align: center">'
@@ -459,7 +506,10 @@ class LinePlot(plotbase.Plot):
             irf_y *= mm / max(irf_y)
 
         if not only_fit_range:
-            idx = np.where(data_y > plt_ctrl.ymin)[0] if data_log_y else list(range(len(data_x)))
+            idx = np.where(
+                data_y > plt_ctrl.ymin
+            )[0] if data_log_y else list(range(len(data_x)))
+
             if plt_ctrl.plot_ftt:
                 self.data_curve.setData(
                     x=data_x[idx],
@@ -471,7 +521,9 @@ class LinePlot(plotbase.Plot):
                     y=data_y[idx]
                 )
             if self.plot_irf:
-                idx = np.where(irf_y > plt_ctrl.ymin)[0] if data_log_y else list(range(len(irf_x)))
+                idx = np.where(
+                    irf_y > plt_ctrl.ymin
+                )[0] if data_log_y else list(range(len(irf_x)))
                 self.irf_curve.setData(
                     x=irf_x[idx],
                     y=irf_y[idx]
@@ -495,7 +547,9 @@ class LinePlot(plotbase.Plot):
             self.region.setRegion((lb, ub))
 
         # Update the Model-lines (Model, wres, acorr)
-        idx = np.where(model_y > 0.0)[0] if data_log_y else list(range(len(model_x)))
+        idx = np.where(
+            model_y > 0.0
+        )[0] if data_log_y else list(range(len(model_x)))
         if plt_ctrl.plot_ftt:
             self.fit_curve.setData(
                 x=model_x[idx],

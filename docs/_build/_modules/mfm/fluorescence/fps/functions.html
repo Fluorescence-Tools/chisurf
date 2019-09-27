@@ -80,9 +80,9 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
@@ -150,7 +150,10 @@
            <div itemprop="articleBody">
             
   <h1>Source code for mfm.fluorescence.fps.functions</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">mfm.fluorescence</span>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span>
+
+<span class="kn">import</span> <span class="nn">mfm.fluorescence</span>
 <span class="kn">from</span> <span class="nn">mfm.fluorescence.fps</span> <span class="k">import</span> <span class="n">_fps</span>
 <span class="kn">import</span> <span class="nn">mfm</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -161,13 +164,20 @@
 <span class="n">fps_settings</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fps&#39;</span><span class="p">]</span>
 
 
-
-<div class="viewcode-block" id="histogram_rda"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.functions.histogram_rda">[docs]</a><span class="k">def</span> <span class="nf">histogram_rda</span><span class="p">(</span><span class="n">av1</span><span class="p">,</span> <span class="n">av2</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="histogram_rda"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.functions.histogram_rda">[docs]</a><span class="k">def</span> <span class="nf">histogram_rda</span><span class="p">(</span>
+        <span class="n">av1</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">],</span>
+        <span class="n">av2</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">],</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;Calculates the distance distribution with respect to a second accessible volume and returns the</span>
 <span class="sd">    distance axis and the probability of the respective distance. By default the distance-axis &quot;mfm.rda_axis&quot;</span>
 <span class="sd">    is taken to generate the histogram.</span>
 
-<span class="sd">    :param av: Accessible volume</span>
+<span class="sd">    :param av1: Accessible volume</span>
+<span class="sd">    :param av2: Accessible volume</span>
 <span class="sd">    :param kwargs:</span>
 <span class="sd">    :return:</span>
 
@@ -193,7 +203,11 @@
     <span class="k">return</span> <span class="n">p</span><span class="p">,</span> <span class="n">rda_axis</span></div>
 
 
-<div class="viewcode-block" id="RDAMean"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.functions.RDAMean">[docs]</a><span class="k">def</span> <span class="nf">RDAMean</span><span class="p">(</span><span class="n">av1</span><span class="p">,</span> <span class="n">av2</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="RDAMean"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.functions.RDAMean">[docs]</a><span class="k">def</span> <span class="nf">RDAMean</span><span class="p">(</span>
+        <span class="n">av1</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">,</span>
+        <span class="n">av2</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Calculate the mean distance between two accessible volumes</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
@@ -209,7 +223,11 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">d</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">d</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="n">d</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="widthRDA"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.functions.widthRDA">[docs]</a><span class="k">def</span> <span class="nf">widthRDA</span><span class="p">(</span><span class="n">av1</span><span class="p">,</span> <span class="n">av2</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="widthRDA"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.functions.widthRDA">[docs]</a><span class="k">def</span> <span class="nf">widthRDA</span><span class="p">(</span>
+        <span class="n">av1</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">,</span>
+        <span class="n">av2</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Calculate the width of the distance distribution between two accessible volumes</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
@@ -228,7 +246,12 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="RDAMeanE"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.functions.RDAMeanE">[docs]</a><span class="k">def</span> <span class="nf">RDAMeanE</span><span class="p">(</span><span class="n">av1</span><span class="p">,</span> <span class="n">av2</span><span class="p">,</span> <span class="n">R0</span><span class="o">=</span><span class="mf">52.0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="RDAMeanE"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.functions.RDAMeanE">[docs]</a><span class="k">def</span> <span class="nf">RDAMeanE</span><span class="p">(</span>
+        <span class="n">av1</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">,</span>
+        <span class="n">av2</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">,</span>
+        <span class="n">R0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">52.0</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Calculate the FRET-averaged (PDA/Intensity) distance between two accessible volumes</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
@@ -248,7 +271,10 @@
     <span class="k">return</span> <span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">mean_fret</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">6.</span><span class="p">)</span> <span class="o">*</span> <span class="n">R0</span></div>
 
 
-<div class="viewcode-block" id="dRmp"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.functions.dRmp">[docs]</a><span class="k">def</span> <span class="nf">dRmp</span><span class="p">(</span><span class="n">av1</span><span class="p">,</span> <span class="n">av2</span><span class="p">):</span>
+<div class="viewcode-block" id="dRmp"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.fps.html#mfm.fluorescence.fps.functions.dRmp">[docs]</a><span class="k">def</span> <span class="nf">dRmp</span><span class="p">(</span>
+        <span class="n">av1</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">,</span>
+        <span class="n">av2</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Calculate the distance between the mean position of two accessible volumes</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>

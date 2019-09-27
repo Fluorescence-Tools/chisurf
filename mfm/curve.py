@@ -18,10 +18,14 @@ class Curve(mfm.base.Base):
 
     @property
     def fwhm(self) -> float:
-        return mfm.math.signal.calculate_fwhm(self)[0]
+        return mfm.math.signal.calculate_fwhm(
+            self
+        )[0]
 
     @property
-    def cdf(self) -> Type[Curve]:
+    def cdf(
+            self
+    ) -> Type[Curve]:
         """Cumulative sum of function
         """
         return self.__class__(
@@ -204,7 +208,9 @@ class Curve(mfm.base.Base):
             )
         )
 
-    def __len__(self) -> int:
+    def __len__(
+            self
+    ) -> int:
         return len(self.y)
 
     def __getitem__(

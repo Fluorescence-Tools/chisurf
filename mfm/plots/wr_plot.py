@@ -39,6 +39,7 @@ class ResidualPlot(plotbase.Plot):
             **kwargs
     ):
         super().__init__(
+            *args,
             fit=fit,
             **kwargs
         )
@@ -49,7 +50,9 @@ class ResidualPlot(plotbase.Plot):
         lw = mfm.settings.gui['plot']['line_width']
         self.curves = curves
 
-        p = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])
+        p = pg.PlotWidget(
+            useOpenGL=pyqtgraph_settings['useOpenGL']
+        )
         self.layout.addWidget(p)
 
         for i, f in enumerate(fit):
@@ -64,6 +67,10 @@ class ResidualPlot(plotbase.Plot):
         fits = self.fit
         for ci, fi in zip(self.curves, fits):
             y_res = fi.weighted_residuals
-            x_res = np.arange(0, len(y_res))
-            ci.setData(x=x_res, y=y_res)
-
+            ci.setData(
+                x=np.arange(
+                    0,
+                    len(y_res)
+                ),
+                y=y_res
+            )

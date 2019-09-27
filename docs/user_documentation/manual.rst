@@ -1,3 +1,39 @@
+*****
+Manual
+*****
+
+
+Installation
+------------
+
+Major releases
+++++++++++++++
+
+Major releases are distributed using pre-packed installation files for Windows
+and MacOS. These installation files can be downloaded from the GitHub repository.
+
+`The Python language <https://github.com/Fluorescence-Tools/ChiSurf/releases>`_
+
+Conda releases
+++++++++++++++
+
+Alternatively the software can be installed using the Conda
+
+`Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_
+
+distribution system from the conda channel `fluorescence-tools`.
+
+
+Current release
++++++++++++++++
+
+The current release / the development version of the software can be installed
+directly from the GitHub repository.
+
+`Releases <https://github.com/Fluorescence-Tools/chisurf/releases>`_
+
+It is recommended not to use development releases for productive purposes.
+
 ############
 Introduction
 ############
@@ -26,11 +62,12 @@ The main program window contains different areas:
 8. Delete currently selected fit
 9. Plotting area
 
-By default three different docks (*Load*, *Analysis* and *Plot*) are displayed on the left side of the window.
-By clicking on the names of the docks the user can change the content displayed in the left dock.
-In (1) the user can add new datasets and fits to the programm. In (2) the user can change the fitting
-parameters of the fit currently selected in (7). In (3) the user can change plotting options of
-the plot selected in (9) of the current fit (see Fig 1).
+By default three different docks (*Load*, *Analysis* and *Plot*) are displayed
+on the left side of the window. By clicking on the names of the docks the user
+can change the content displayed in the left dock. In (1) the user can add new
+datasets and fits to the programm. In (2) the user can change the fitting
+parameters of the fit currently selected in (7). In (3) the user can change
+plotting options of the plot selected in (9) of the current fit (see Fig 1).
 
 
 

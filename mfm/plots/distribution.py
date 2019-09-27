@@ -5,6 +5,7 @@ from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
 import mfm
+import mfm.fitting
 import mfm.fluorescence
 import mfm.math.datatools
 from mfm.plots import plotbase
@@ -36,7 +37,13 @@ class DistributionPlotControl(QtWidgets.QWidget):
         self.setLayout(self.layout)
         self.selector = QtWidgets.QComboBox()
         self.layout.addWidget(self.selector)
-        self.selector.addItems(['Distance', 'Lifetime', 'FRET-rate'])
+        self.selector.addItems(
+            [
+                'Distance',
+                'Lifetime',
+                'FRET-rate'
+            ]
+        )
 
         self.selector.currentIndexChanged[int].connect(parent.update_all)
 
@@ -79,21 +86,29 @@ class DistributionPlot(plotbase.Plot):
         distribution_plot = p2.getPlotItem()
 
         self.distribution_plot = distribution_plot
-        self.distribution_curve = distribution_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['data'], width=lw), name='Data')
+        self.distribution_curve = distribution_plot.plot(
+            x=[0.0],
+            y=[0.0],
+            pen=pg.mkPen(
+                colors['data'],
+                width=lw
+            ),
+            name='Data'
+        )
 
     def update_all(self, *args, **kwargs):
         if self.pltControl.distribution_type == 'Distance':
             d = self.fit.model.distance_distribution
             y = d[0][0]
             x = d[0][1]
-        elif self.pltControl.distribution_type == 'Lifetime':
-            lifetime_spectrum = self.fit.model.lifetime_spectrum
+        elif self.pltControl.distribution_type == 'FRET-rate':
+            lifetime_spectrum = self.fit.model.fret_rate_spectrum
             y, x = mfm.math.datatools.interleaved_to_two_columns(
                 lifetime_spectrum,
                 sort=True
             )
-        elif self.pltControl.distribution_type == 'FRET-rate':
-            lifetime_spectrum = self.fit.model.fret_rate_spectrum
+        else: #elif self.pltControl.distribution_type == 'Lifetime':
+            lifetime_spectrum = self.fit.model.lifetime_spectrum
             y, x = mfm.math.datatools.interleaved_to_two_columns(
                 lifetime_spectrum,
                 sort=True

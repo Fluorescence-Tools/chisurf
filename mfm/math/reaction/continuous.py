@@ -7,7 +7,6 @@ from scipy.integrate import odeint
 
 import mfm
 import mfm.parameter
-import mfm.fitting
 
 
 def stoichometry_matrix(
@@ -119,6 +118,7 @@ class ReactionSystem(object):
 
     def __init__(
             self,
+            verbose: bool = mfm.verbose,
             **kwargs
     ):
         """
@@ -176,10 +176,14 @@ class ReactionSystem(object):
         >>> rs.calc()
         >>> rs.plot()
         """
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        self.verbose = verbose
         self._concentrations = kwargs.get('concentrations', np.array([[1.0], [1.]], dtype=np.float64))
-        self._species_brightness = kwargs.get('species_brightness', np.array([[1.0], [1.]], dtype=np.float64))
-        self._times = kwargs.get('times', np.array([0.0, 1.0], dtype=np.float64))
+        self._species_brightness = kwargs.get(
+            'species_brightness', np.array([[1.0], [1.]], dtype=np.float64)
+        )
+        self._times = kwargs.get(
+            'times', np.array([0.0, 1.0], dtype=np.float64)
+        )
 
         self.educts = list()
         self.products = list()
@@ -291,14 +295,27 @@ class ReactionSystem(object):
             verbose=False
     ):
         verbose = self.verbose or verbose
-        educt_stoichiometry = np.array(educt_stoichiometry, dtype=np.float64)
-        product_stoichometry = np.array(product_stoichometry, dtype=np.float64)
+        educt_stoichiometry = np.array(
+            educt_stoichiometry,
+            dtype=np.float64
+        )
+        product_stoichometry = np.array(
+            product_stoichometry,
+            dtype=np.float64
+        )
 
         self.educts.append(educts)
         self.products.append(products)
         self.educts_stoichometry.append(educt_stoichiometry)
-        self.products_stoichometry.append(np.array(product_stoichometry, dtype=np.float64))
-        r = mfm.fitting.parameter.FittingParameter(value=rate)
+        self.products_stoichometry.append(
+            np.array(
+                product_stoichometry,
+                dtype=np.float64
+            )
+        )
+        r = mfm.parameter.Parameter(
+            value=rate
+        )
         self.rates.append(r)
         if verbose:
             print("Adding new reaction")
@@ -403,7 +420,8 @@ class ReactionSystem(object):
             show: bool = True
     ) -> None:
         """
-        Generates a plot of the currently calculated time dependent concentrations
+        Generates a plot of the currently calculated time dependent
+        concentrations
         :param t_divisor: float
             The time-axis is divided byt this number
         :param normalize: bool

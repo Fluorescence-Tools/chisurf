@@ -1,5 +1,4 @@
 #from numpy import arange, array, empty,zeros
-import time
 
 cimport numpy as np
 import numpy as np
@@ -13,13 +12,22 @@ ctypedef np.double_t DTYPE_t
 ctypedef np.int_t INT_t
 
 cdef class Model:
+
     cdef object vn,rates,inits,pv
     cdef np.ndarray tm,res,time,series
     cdef int pvl,nvars,steps
     cdef object ts
-    def __init__(self,vnames,rates,inits, tmat,propensity):
+
+    def __init__(
+            self,
+            vnames,
+            rates,
+            inits,
+            tmat,
+            propensity
+    ):
         '''
-         * vnames: list of strings
+         * variable_names: list of strings
          * rates: list of fixed rate parameters
          * inits: list of initial values of variables
          * propensity: list of lambda functions of the form:
@@ -36,13 +44,18 @@ cdef class Model:
         self.series = np.zeros(1)
         self.steps = 0
 
-    def run(self, method='SSA', int tmax=10, int reps=1):
+    def run(
+            self,
+            method='SSA',
+            int tmax=10,
+            int reps=1
+    ):
         cdef np.ndarray[DTYPE_t,ndim=3] res = np.zeros((tmax,self.nvars,reps),dtype=float)
         tvec = np.arange(tmax)
         self.res = res
         cdef int i, steps
         if method =='SSA':
-            for i from 0 <= i<reps:
+            for i in range(0, reps):
                 steps = self.GSSA(tmax,i)
             print(steps,' steps')
         elif method == 'SSAct':
@@ -54,7 +67,11 @@ cdef class Model:
     def getStats(self):
         return self.time,self.series,self.steps
 
-    cpdef int GSSA(self, int tmax=50,int round=0):
+    cpdef int GSSA(
+            self,
+            int tmax = 50,
+            int round = 0
+    ):
         '''
         Gillespie Direct algorithm
         '''
@@ -73,12 +90,12 @@ cdef class Model:
         steps = 0
         self.res[0,:,round]= ini
         a0=1.
-        for tim from 1<= tim <tmax:
+        for tim in range(1, tmax):
             while tc < tim:
-                for i from 0 <= i <l:
+                for i in range(l):
                     pv[i] = pvi[i](r,ini)
                 #pv = abs(array([eq() for eq in pvi]))# #propensity vector
-                a0 = a_sum(pv,l) #sum of all transition probabilities
+                a0 = np.sum(pv) #a_sum(pv,l) #sum of all transition probabilities
                 #print ini#,tim, pv, a0
                 tau = (-1/a0)*np.log(np.random.random())
                 event = multinomial(1,(pv/a0)) # event which will happen on this iteration
@@ -99,29 +116,26 @@ cdef class Model:
         """
         pass
 
+# cdef double a_sum(
+#         np.ndarray a,
+#         int len
+# ):
+#     cdef double s
+#     cdef int i
+#     s=0
+#     for i in range(len):
+#         s+=a[i]
+#     return s
 
-def main():
-    vars = ['s','i','r']
-    cdef np.ndarray ini= np.array([500,1,0],dtype = int)
-    cdef np.ndarray rates = np.array([.001,.1],dtype=float)
-    cdef np.ndarray tm = np.array([[-1,0],[1,-1],[0,1]])
-
-    prop = [l1,l2]
-    M = Model(vnames = vars,rates = rates,inits=ini, tmat=tm,propensity=prop)
-    t0=time.time()
-    M.run(tmax=80,reps=1000)
-    print('total time: ' % time.time()-t0)
-
-
-cdef double a_sum(np.ndarray a, int len):
-    cdef double s
-    cdef int i
-    s=0
-    for i from 0 <=i <len:
-        s+=a[i]
-    return s
-
-def l1(np.ndarray r,np.ndarray ini):
+def l1(
+        np.ndarray r,
+        np.ndarray ini
+):
     return r[0]*ini[0]*ini[1]
-def l2(np.ndarray r,np.ndarray ini):
+
+def l2(
+        np.ndarray
+        r,np.ndarray ini
+):
     return r[1]*ini[1]
+

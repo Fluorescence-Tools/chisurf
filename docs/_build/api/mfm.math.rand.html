@@ -80,9 +80,9 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
@@ -183,47 +183,63 @@ more dimension than <span class="math notranslate nohighlight">\(x_0\)</span>.</
 
 <dl class="attribute">
 <dt id="mfm.math.rand.mc">
-<code class="sig-prename descclassname">mfm.math.rand.</code><code class="sig-name descname">mc</code><span class="sig-paren">(</span><em class="sig-param">e0</em>, <em class="sig-param">e1</em>, <em class="sig-param">kT</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/math/rand.html#mc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.rand.mc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Monte-Carlo acceptance criterion</p>
+<code class="sig-prename descclassname">mfm.math.rand.</code><code class="sig-name descname">mc</code><span class="sig-paren">(</span><em class="sig-param">e0: float</em>, <em class="sig-param">e1: float</em>, <em class="sig-param">kT: float</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="../_modules/mfm/math/rand.html#mc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.rand.mc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accept or reject a candidate in Metropolis-Algorithm by its energy
+and the energy of its predecessors using the Bennett acceptance ratio.</p>
+<ol class="arabic simple">
+<li><p>calculates the acceptance probability p_A, a candidate is accepted if it</p></li>
+<li><p>generate a uniform random number u on [0,1],</p></li>
+<li><p>and accepts a candidate if u &lt;= alpha, rejects a candidate if u &gt; alpha.</p></li>
+</ol>
+<div class="math notranslate nohighlight">
+\[p_A = min(1, exp( (E_1 - E_0) / kT))\]</div>
+<p>(see: <a class="reference external" href="https://de.wikipedia.org/wiki/Metropolis-Algorithmus">https://de.wikipedia.org/wiki/Metropolis-Algorithmus</a>)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>e0</strong> – float
+<li><p><strong>e0</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
 Previous energy</p></li>
-<li><p><strong>e1</strong> – float
-Next energy</p></li>
-<li><p><strong>kT</strong> – float
+<li><p><strong>e1</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
+Candidate energy</p></li>
+<li><p><strong>kT</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
 Temperature</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>bool</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>True if a candidate is accepted, False is a candidate is</p>
 </dd>
 </dl>
+<p>rejected.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.math.rand.random_numbers">
-<code class="sig-prename descclassname">mfm.math.rand.</code><code class="sig-name descname">random_numbers</code><span class="sig-paren">(</span><em class="sig-param">axis</em>, <em class="sig-param">cdf</em>, <em class="sig-param">n</em>, <em class="sig-param">norm_cdf=True</em>, <em class="sig-param">dtype=&lt;class 'numpy.float64'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/math/rand.html#random_numbers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.rand.random_numbers" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates an array of n random numbers according to an cumulative distribution function (CDF)</p>
+<code class="sig-prename descclassname">mfm.math.rand.</code><code class="sig-name descname">random_numbers</code><span class="sig-paren">(</span><em class="sig-param">cdf_axis</em>, <em class="sig-param">cdf_values: numpy.ndarray</em>, <em class="sig-param">n: int</em>, <em class="sig-param">norm_cdf=True</em>, <em class="sig-param">dtype=&lt;class 'numpy.float64'&gt;</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="../_modules/mfm/math/rand.html#random_numbers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.rand.random_numbers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates an array of n random numbers according to an cumulative
+distribution function (CDF)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> – x-axis of cdf</p></li>
-<li><p><strong>cdf</strong> – CDF according to which random numbers are generated</p></li>
-<li><p><strong>n</strong> – the number of random numbers to be generated</p></li>
-<li><p><strong>norm_cdf</strong> – if True the array passed as cdf is normalized so that its last point is one</p></li>
+<li><p><strong>cdf_axis</strong> – x-axis of cdf</p></li>
+<li><p><strong>cdf_values</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – CDF according to which random numbers are generated</p></li>
+<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – the number of random numbers to be generated</p></li>
+<li><p><strong>norm_cdf</strong> – if True the array passed as cdf is normalized so that</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
 </dl>
+<p>its last point is one
+:rtype: <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>
+:return:</p>
 <p class="rubric">Examples</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.math</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pylab</span> <span class="k">as</span> <span class="nn">p</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">normal_distribution</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">rn</span> <span class="o">=</span> <span class="n">random_numbers</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">cdf</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">n</span><span class="o">=</span><span class="mi">10000000</span><span class="p">,</span> <span class="n">norm_cdf</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">hy</span><span class="p">,</span> <span class="n">hx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">rn</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">50</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rn</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">rand</span><span class="o">.</span><span class="n">random_numbers</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">cdf</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">n</span><span class="o">=</span><span class="mi">10000000</span><span class="p">,</span> <span class="n">norm_cdf</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">hy</span><span class="p">,</span> <span class="n">hx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">rn</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">hx</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">hy</span><span class="p">)</span>
 </pre></div>
 </div>

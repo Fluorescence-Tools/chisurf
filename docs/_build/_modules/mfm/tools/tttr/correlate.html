@@ -80,9 +80,9 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
@@ -161,13 +161,12 @@
 <span class="kn">import</span> <span class="nn">qdarkstyle</span>
 
 <span class="kn">import</span> <span class="nn">mfm</span>
+<span class="kn">import</span> <span class="nn">mfm.experiments.widgets</span>
 <span class="kn">import</span> <span class="nn">mfm.tools</span>
 <span class="kn">import</span> <span class="nn">mfm.fluorescence</span>
-<span class="kn">import</span> <span class="nn">mfm.experiments</span>
 <span class="kn">import</span> <span class="nn">mfm.experiments.data</span>
 <span class="kn">import</span> <span class="nn">mfm.settings</span>
 <span class="kn">import</span> <span class="nn">mfm.widgets</span>
-<span class="kn">import</span> <span class="nn">mfm.widgets.curve</span>
 <span class="kn">from</span> <span class="nn">mfm.io.widgets</span> <span class="k">import</span> <span class="n">SpcFileWidget</span>
 
 <span class="n">settings</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;correlator&#39;</span><span class="p">]</span>
@@ -247,7 +246,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
         <span class="n">w</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">cs</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">ExperimentalDataSelector</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cs</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">ExperimentalDataSelector</span><span class="p">(</span>
             <span class="n">get_data_sets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_data_curves</span><span class="p">,</span>
             <span class="n">click_close</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">)</span>
@@ -303,7 +302,12 @@
         <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">tacWeighting</span><span class="p">)</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;TAC-weighted&quot;</span><span class="p">)</span>
             <span class="n">wt</span> <span class="o">=</span> <span class="n">tacWeighting</span>
-        <span class="n">w</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fcs</span><span class="o">.</span><span class="n">get_weights</span><span class="p">(</span><span class="n">photons</span><span class="o">.</span><span class="n">rout</span><span class="p">,</span> <span class="n">photons</span><span class="o">.</span><span class="n">tac</span><span class="p">,</span> <span class="n">wt</span><span class="p">,</span> <span class="n">photons</span><span class="o">.</span><span class="n">nPh</span><span class="p">)</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fcs</span><span class="o">.</span><span class="n">get_weights</span><span class="p">(</span>
+            <span class="n">photons</span><span class="o">.</span><span class="n">rout</span><span class="p">,</span>
+            <span class="n">photons</span><span class="o">.</span><span class="n">tac</span><span class="p">,</span>
+            <span class="n">wt</span><span class="p">,</span>
+            <span class="n">photons</span><span class="o">.</span><span class="n">nPh</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">w</span></div>
 
 <div class="viewcode-block" id="Correlator.run"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.correlate.Correlator.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -504,7 +508,7 @@
             <span class="o">*</span><span class="n">args</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">CrFilterWidget</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span>
             <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                 <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span>
@@ -571,7 +575,7 @@
     <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;fcs-tttr&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">FCStttr</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
         <span class="n">layout</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">layout</span>
