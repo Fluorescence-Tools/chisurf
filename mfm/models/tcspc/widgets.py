@@ -16,7 +16,8 @@ from mfm.fitting.widgets import FittingControllerWidget
 from mfm.models import parse
 from mfm.models.model import ModelWidget
 from mfm.models.tcspc.anisotropy import Anisotropy
-from mfm.models.tcspc.fret import Gaussians, DiscreteDistance, fret_settings, GaussianModel, FRETrateModel, \
+from mfm.models.tcspc.fret import Gaussians, DiscreteDistance, \
+    GaussianModel, FRETrateModel, \
     WormLikeChainModel, SingleDistanceModel
 from mfm.models.tcspc.lifetime import Lifetime, LifetimeModel
 from mfm.models.tcspc.mix_model import LifetimeMixModel
@@ -973,13 +974,26 @@ for f in cs.current_fit:
         n_rates = len(self)
         gb.setTitle('G%i' % (n_rates + 1))
         l = QtWidgets.QVBoxLayout()
-        pm = FittingParameter(name='R(%s,%i)' % (self.short, n_rates + 1),
-                              value=m, model=self.model, decimals=1,
-                              bounds_on=False, lb=fret_settings['rda_min'], ub=fret_settings['rda_max'],
-                              text='R', update_function=self.update)
-        px = FittingParameter(name='x(%s,%i)' % (self.short, n_rates + 1), value=x,
-                              model=self.model, decimals=3,
-                              bounds_on=False, text='x', update_function=self.update)
+        pm = FittingParameter(
+            name='R(%s,%i)' % (self.short, n_rates + 1),
+            value=m,
+            model=self.model,
+            decimals=1,
+            bounds_on=False,
+            lb=mfm.settings.fret['rda_min'],
+            ub=mfm.settings.fret['rda_max'],
+            text='R',
+            update_function=self.update
+        )
+        px = FittingParameter(
+            name='x(%s,%i)' % (self.short, n_rates + 1),
+            value=x,
+            model=self.model,
+            decimals=3,
+            bounds_on=False,
+            text='x',
+            update_function=self.update
+        )
         m = mfm.fitting.widgets.make_fitting_parameter_widget(pm, layout=l)
         x = mfm.fitting.widgets.make_fitting_parameter_widget(px, layout=l)
 

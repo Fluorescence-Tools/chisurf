@@ -6,6 +6,7 @@ TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
 
 import numpy as np
+import mfm
 import mfm.fluorescence
 
 

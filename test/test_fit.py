@@ -10,8 +10,8 @@ import copy
 
 import mfm
 import mfm.experiments
-import mfm.fitting
 import mfm.models
+import mfm.fitting
 
 
 def get_data_values(

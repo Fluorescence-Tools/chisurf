@@ -11,6 +11,7 @@ import numexpr as ne
 import mfm
 import mfm.io
 import mfm.io.xyz
+import mfm.models
 import mfm.fitting.parameter
 from mfm.structure.structure import count_atoms
 from mfm.fluorescence.fps import _fps

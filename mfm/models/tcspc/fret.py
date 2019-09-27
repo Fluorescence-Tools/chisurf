@@ -8,10 +8,13 @@ import mfm.math
 import mfm.math.datatools
 from mfm.models.tcspc.lifetime import Lifetime, LifetimeModel
 from mfm.fluorescence.general import distribution2rates, rates2lifetimes
-from mfm.fluorescence import rda_axis
 from mfm.fitting.parameter import FittingParameter, FittingParameterGroup
 
-fret_settings = mfm.settings.cs_settings['fret']
+rda_axis = np.linspace(
+    mfm.settings.fret['rda_min'],
+    mfm.settings.fret['rda_max'],
+    mfm.settings.fret['rda_resolution'], dtype=np.float64
+)
 
 
 class FRETParameters(FittingParameterGroup):
@@ -68,8 +71,8 @@ class FRETParameters(FittingParameterGroup):
 
     def __init__(
             self,
-            forster_radius: float = fret_settings['forster_radius'],
-            tau0: float = mfm.settings.cs_settings['fret']['tau0'],
+            forster_radius: float = mfm.settings.fret['forster_radius'],
+            tau0: float = mfm.settings.fret['tau0'],
             **kwargs
     ):
         #kappa2 = kwargs.pop('kappa2', mfm.settings.cs_settings['fret']['kappa2'])

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import List, Type
 
 import mfm.base
+import mfm.models
 
 
 class Experiment(

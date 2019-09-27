@@ -40,6 +40,7 @@ with open(os.path.join(
 
 parameter = cs_settings['parameter']
 fitting = cs_settings['fitting']
+fret = cs_settings['fret']
 
 pyqtgraph_settings = gui['plot']["pyqtgraph"]
 for setting in pyqtgraph_settings:
