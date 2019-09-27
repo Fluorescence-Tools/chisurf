@@ -132,7 +132,9 @@ class CodeEditor(QWidget):
         self.filename = filename
         try:
             print('loading filename: ', filename)
-            text = open(filename).read()
+            text = ""
+            with open(filename) as fp:
+                text = fp.read()
             self.editor.setText(text)
             self.line_edit.setText(filename)
         except IOError:

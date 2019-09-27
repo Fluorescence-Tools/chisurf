@@ -4,15 +4,18 @@ import numpy as np
 from qtpy import QtWidgets
 
 import mfm
+import mfm.io.ascii
+import mfm.io.widgets
 import mfm.widgets
 import mfm.fluorescence
-import mfm.experiments
 import mfm.experiments.data
-from mfm.io.widgets import CsvWidget
-from mfm.experiments.reader import ExperimentReader
+from . import reader
 
 
-class FCS(ExperimentReader, CsvWidget):
+class FCS(
+    reader.ExperimentReader,
+    mfm.io.widgets.CsvWidget
+):
 
     name = "FCS"
 
@@ -23,7 +26,7 @@ class FCS(ExperimentReader, CsvWidget):
             *args,
             **kwargs
     ):
-        super(FCS, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )
@@ -45,7 +48,7 @@ class FCS(ExperimentReader, CsvWidget):
         )
         d.setup = self
 
-        CsvWidget.load(
+        mfm.io.widgets.CsvWidget.load(
             self,
             filename=filename,
             skiprows=0,

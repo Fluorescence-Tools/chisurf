@@ -16,6 +16,7 @@ import mfm.experiments.data
 import mfm.fitting.parameter
 import mfm.fitting.sample
 import mfm.fitting.support_plane
+import mfm.models
 
 from mfm.math.optimization.leastsqbound import leastsqbound
 
@@ -39,7 +40,7 @@ class Fit(mfm.base.Base):
         :param xmax:
         :param kwargs:
         """
-        super(Fit, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._model = None
         self.results = None
 
@@ -557,7 +558,13 @@ def sample_fit(
         scan = np.vstack([chi2[mask], para[mask].T])
         header = "chi2\t"
         header += "\t".join(fit.model.parameter_names)
-        mfm.io.ascii.Csv().save(scan, fn, delimiter='\t', mode='txt', header=header)
+        mfm.io.ascii.Csv().save(
+            scan,
+            fn,
+            delimiter='\t',
+            file_type='txt',
+            header=header
+        )
     # restore initial parameter values
     fit.model.parameter_values = pv
     fit.model.update()

@@ -33,6 +33,7 @@ import urllib.request
 import numpy as np
 
 import mfm
+import mfm.io.xyz
 import mfm.common as common
 
 keys_formats = [
@@ -159,7 +160,7 @@ def read(
         assign_charge: bool = False,
         verbose: bool = mfm.verbose,
         **kwargs
-):
+) -> np.ndarray:
     """ Open pdb_file and read each line into pdb (a list of lines)
 
     :param filename:
@@ -170,9 +171,9 @@ def read(
     Examples
     --------
 
-    >>> import mfm
-    >>> pdb_file = models'
-    >>> pdb = mfm.io.pdb_file.read(pdb_file, verbose=True)
+    >>> import mfm.io
+    >>> pdb_file = models
+    >>> pdb = mfm.io.pdb.read(pdb_file, verbose=True)
     >>> pdb[:5]
     array([ (0, ' ', 7, 'MET', 1, 'N', 'N', [72.739, -17.501, 8.879], 0.0, 1.65, 0.0, 14.0067),
            (1, ' ', 7, 'MET', 2, 'CA', 'C', [73.841, -17.042, 9.747], 0.0, 1.76, 0.0, 12.0107),
@@ -192,9 +193,9 @@ def read(
             print("Path: %s" % path)
         if filename.endswith('.pdb'):
             atoms = parse_string_pdb(string, assign_charge, **kwargs)
-        elif filename.endswith('.pqr'):
-            atoms = mfm.io.pqr.parse_string_pqr(string, **kwargs)
-    return atoms
+        else: #elif filename.endswith('.pqr'):
+            atoms = parse_string_pqr(string, **kwargs)
+        return atoms
 
 
 def write_pdb(

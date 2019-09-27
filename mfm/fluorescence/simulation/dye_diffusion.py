@@ -264,7 +264,7 @@ class DyeDecay(Curve):
             **kwargs
     ):
         self.fit = kwargs.get('fit', None)
-        super(DyeDecay, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.decay_parameter = decay_parameter
         self.diffusion = diffusion_simulation
@@ -459,7 +459,7 @@ class FRETDecay(
             decay_parameter,
             **kwargs
     ):
-        super(FRETDecay, self).__init__(
+        super().__init__(
             decay_parameter,
             donor_diffusion,
             **kwargs

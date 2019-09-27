@@ -43,7 +43,7 @@ class ParseFCSWidget(ParseModelWidget):
             'models.yaml'
         )
 
-        super(ParseFCSWidget, self).__init__(
+        super().__init__(
             fit=fit,
             model_file=fn,
             **kwargs

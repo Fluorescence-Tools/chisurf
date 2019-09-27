@@ -16,17 +16,6 @@ __name__ = mfm.settings.cs_settings['name']
 working_path = ''
 eps = np.sqrt(np.finfo(float).eps)
 
-import mfm.base
-import mfm.io
-import mfm.parameter
-import mfm.curve
-import mfm.experiments
-
-import mfm.models
-import mfm.fitting
-import mfm.structure
-import mfm.widgets
-
 #######################################################
 #        LIST OF FITS, DATA, EXPERIMENTS              #
 #######################################################

@@ -20,7 +20,7 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
     modelID = 0
 
     def __init__(self, fit, parent):
-        super(FPSScreenTrajectory, self).__init__(parent)
+        super().__init__(parent)
         self.structure_table_data = []
         uic.loadUi(
             os.path.join(

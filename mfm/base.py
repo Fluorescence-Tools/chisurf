@@ -126,7 +126,7 @@ class Base(object):
         Example
         -------
 
-        >>> import mfm
+        >>> import mfm.experiments
         >>> dc = mfm.experiments.data.DataCurve()
         >>> dc.from_json(filename='./sample_data/internal_types/datacurve.json')
 
@@ -165,7 +165,7 @@ class Base(object):
                 raise AttributeError("can't set attribute")
             propobj.fset(self, v)
         else:
-            super(Base, self).__setattr__(k, v)
+            super().__setattr__(k, v)
 
     def __getattr__(
             self,
@@ -202,7 +202,7 @@ class Base(object):
         Example
         -------
 
-        >>> import mfm
+        >>> import mfm.base
         >>> bc = mfm.base.Base(parameter="ala", lol=1)
         >>> bc.lol
         1
@@ -216,7 +216,7 @@ class Base(object):
         >>> bc.zu
         auf
         """
-        super(Base, self).__init__()
+        super().__init__()
 
         if len(args) > 0 and isinstance(args[0], dict):
             kwargs = args[0]
@@ -255,13 +255,13 @@ class Data(Base):
     def __init__(
             self,
             filename: str = "None",
-            data: Data = None,
+            data: bytes = None,
             embed_data: bool = None,
             read_file_size_limit: int = None,
             *args,
             **kwargs
     ):
-        super(Data, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )
@@ -279,7 +279,24 @@ class Data(Base):
         self.filename = self._filename
 
     @property
-    def data(self) -> Data:
+    def embed_data(
+            self
+    ) -> bool:
+        return self._embed_data
+
+    @embed_data.setter
+    def embed_data(
+            self,
+            v: bool
+    ) -> None:
+        self._embed_data = v
+        if v is False:
+            self._data = None
+
+    @property
+    def data(
+            self
+    ) -> bytes:
         return self._data
 
     @data.setter
@@ -326,9 +343,8 @@ class Data(Base):
             if self.verbose:
                 print("Filename: ", v, "not found.")
 
-
     def __str__(self):
-        s = super(Data, self).__str__()
+        s = super().__str__()
         s += "\nfilename: %s" % self.filename
         return s
 

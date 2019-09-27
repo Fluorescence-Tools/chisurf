@@ -1,6 +1,3 @@
-"""
-
-"""
 from __future__ import annotations
 
 import os
@@ -8,7 +5,7 @@ from typing import List, Callable
 
 from qtpy import QtWidgets, QtCore, QtGui
 
-import mfm.fitting
+import mfm.experiments.data
 import mfm.widgets
 
 

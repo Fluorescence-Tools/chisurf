@@ -10,8 +10,7 @@ import numpy as np
 
 import mfm
 import mfm.base
-from mfm.base import Base
-from mfm.curve import Curve
+import mfm.curve
 import mfm.experiments.experiment
 
 
@@ -21,33 +20,6 @@ class ExperimentalData(
     """
 
     """
-
-    def __init__(
-            self,
-            data_reader=None,
-            experiment=None,
-            *args,
-            **kwargs
-    ):
-        """
-
-        :param args:
-        :param data_reader:
-        :param experiment:
-        :param kwargs:
-        """
-        super(ExperimentalData, self).__init__(
-            *args,
-            experiment=experiment,
-            **kwargs
-        )
-        if data_reader is None:
-            data_reader = mfm.experiments.reader.ExperimentReader(
-                *args,
-                experiment=experiment,
-                **kwargs
-            )
-        self._data_reader = data_reader
 
     @property
     def experiment(
@@ -69,8 +41,46 @@ class ExperimentalData(
     ) -> None:
         self._experiment = v
 
+    @property
+    def data_reader(self):
+        return self._data_reader
+
+    @data_reader.setter
+    def data_reader(
+        self,
+        v: mfm.experiments.reader.ExperimentReader
+    ):
+        self._data_reader = v
+
+    def __init__(
+            self,
+            data_reader=None,
+            experiment=None,
+            *args,
+            **kwargs
+    ):
+        """
+
+        :param args:
+        :param data_reader:
+        :param experiment:
+        :param kwargs:
+        """
+        super().__init__(
+            *args,
+            **kwargs
+        )
+        if data_reader is None:
+            data_reader = mfm.experiments.reader.ExperimentReader(
+                *args,
+                experiment=experiment,
+                **kwargs
+            )
+        self._experiment = experiment
+        self._data_reader = data_reader
+
     def to_dict(self):
-        d = super(ExperimentalData, self).to_dict()
+        d = super().to_dict()
         try:
             d['reader'] = self.setup.to_dict()
         except AttributeError:
@@ -83,9 +93,31 @@ class ExperimentalData(
 
 
 class DataCurve(
-    Curve,
+    mfm.curve.Curve,
     ExperimentalData
 ):
+
+    @property
+    def data(
+            self
+    ) -> np.ndarray:
+        return np.vstack(
+            [
+                self.x,
+                self.y,
+                self.ex,
+                self.ey
+            ]
+        )
+
+    @data.setter
+    def data(
+            self,
+            v: np.ndarray
+    ):
+        self.set_data(
+            *v
+        )
 
     def __init__(
             self,
@@ -97,7 +129,7 @@ class DataCurve(
             *args,
             **kwargs
     ):
-        super(DataCurve, self).__init__(
+        super().__init__(
             x=x,
             y=y,
             *args,
@@ -154,7 +186,7 @@ class DataCurve(
     def to_dict(
             self
     ) -> dict:
-        d = super(DataCurve, self).to_dict()
+        d = super().to_dict()
         d.update(ExperimentalData.to_dict(self))
         d['ex'] = list(self.ex)
         d['ey'] = list(self.ey)
@@ -164,7 +196,7 @@ class DataCurve(
             self,
             v: dict
     ) -> None:
-        super(DataCurve, self).from_dict(v)
+        super().from_dict(v)
         self.ex = np.array(v['ex'], dtype=np.float64)
         self.__dict__['ey'] = np.array(v['ey'], dtype=np.float64)
 
@@ -179,10 +211,12 @@ class DataCurve(
                 self.name,
                 '_data.txt'
             )
+        self.filename = filename
         if file_type == 'txt':
             mfm.io.ascii.Csv().save(
-                self,
-                filename
+                np.array(self[:]),
+                filename=filename,
+                **kwargs
             )
         else:
             with open(filename, 'w') as fp:
@@ -191,27 +225,38 @@ class DataCurve(
     def load(
             self,
             filename: str,
-            skiprows: int = 9,
-            file_type: str = 'txt',
+            skiprows: int = 0,
+            file_type: str = 'csv',
             **kwargs
     ) -> None:
-        if file_type == 'txt':
+        if file_type == 'csv':
             csv = mfm.io.ascii.Csv()
-            csv.load(filename, skiprows=skiprows)
-            self.x = csv.data[0]
-            self.y = csv.data[1]
-            self.ex = csv.data[2]
-            self.ex = csv.data[3]
+            csv.load(
+                filename=filename,
+                skiprows=skiprows,
+                file_type=file_type,
+                **kwargs
+            )
+            # First assume four columns
+            # if this fails use three columns
+            try:
+                self.x = csv.data[0]
+                self.y = csv.data[1]
+                self.ex = csv.data[2]
+                self.ey = csv.data[3]
+            except IndexError:
+                self.x = csv.data[0]
+                self.y = csv.data[1]
+                self.ey = csv.data[2]
+                self.ex = np.ones_like(self.ey)
 
     def set_data(
             self,
-            filename: str,
             x: np.array,
             y: np.array,
             ex: np.array = None,
             ey: np.array = None,
     ) -> None:
-        self.filename = filename
         self.x = x
         self.y = y
 
@@ -234,13 +279,17 @@ class DataCurve(
     ) -> Tuple[
         np.ndarray,
         np.ndarray,
+        np.ndarray,
         np.ndarray
     ]:
-        x, y = super(DataCurve, self).__getitem__(key)
-        return x, y, self.ey[key]
+        x, y = super().__getitem__(key)
+        return x, y, self.ex[key], self.ey[key]
 
 
-class DataGroup(list, Base):
+class DataGroup(
+    list,
+    mfm.base.Base
+):
 
     @property
     def names(
@@ -294,7 +343,7 @@ class DataGroup(list, Base):
             *args,
             **kwargs
     ):
-        super(DataGroup, self).__init__(seq)
+        super().__init__(seq)
         self._current_dataset = 0
 
 
@@ -344,7 +393,7 @@ class DataCurveGroup(DataGroup):
             *args,
             **kwargs
     ):
-        super(DataCurveGroup, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class ExperimentDataGroup(DataGroup):
@@ -366,10 +415,13 @@ class ExperimentDataGroup(DataGroup):
         pass
 
     def __init__(self, *args, **kwargs):
-        super(ExperimentDataGroup, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
-class ExperimentDataCurveGroup(ExperimentDataGroup, DataCurveGroup):
+class ExperimentDataCurveGroup(
+    ExperimentDataGroup,
+    DataCurveGroup
+):
 
     @property
     def setup(self):
@@ -380,6 +432,6 @@ class ExperimentDataCurveGroup(ExperimentDataGroup, DataCurveGroup):
         pass
 
     def __init__(self, *args, **kwargs):
-        super(ExperimentDataCurveGroup, self).__init__(
+        super().__init__(
             *args, **kwargs
         )

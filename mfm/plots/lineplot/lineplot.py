@@ -273,7 +273,7 @@ class LinePlot(plotbase.Plot):
             data_y: np.array = None,
             **kwargs
     ):
-        super(LinePlot, self).__init__(fit)
+        super().__init__(fit)
 
         # plot control dialog
         self.pltControl = LinePlotControl(

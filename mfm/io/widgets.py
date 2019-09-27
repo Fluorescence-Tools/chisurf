@@ -1,18 +1,26 @@
 from __future__ import annotations
 
 import os
-from qtpy import  QtWidgets, uic
+from qtpy import QtWidgets, uic
 
 import mfm
-from mfm.io.ascii import Csv
-from .photons import Photons
-from .tttr import filetypes
+from mfm.structure.structure import Structure
+import mfm.widgets
+
+from . import photons
+from . import tttr
 
 
-class SpcFileWidget(QtWidgets.QWidget):
+class SpcFileWidget(
+    QtWidgets.QWidget
+):
 
-    def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self)
+    def __init__(
+            self,
+            *args,
+            **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -22,9 +30,8 @@ class SpcFileWidget(QtWidgets.QWidget):
         )
 
         self._photons = None
-        self.parent = parent
         self.filenames = list()
-        self.filetypes = filetypes
+        self.filetypes = tttr.filetypes
 
         self.actionSample_changed.triggered.connect(self.onSampleChanged)
         self.actionLoad_sample.triggered.connect(self.onLoadSample)
@@ -168,18 +175,24 @@ class SpcFileWidget(QtWidgets.QWidget):
             self
     ) -> None:
         if self.fileType in ("hdf"):
-            filename = mfm.widgets.get_filename('Open Photon-HDF', 'Photon-HDF (*.photon.h5)')
+            filename = mfm.widgets.get_filename(
+                'Open Photon-HDF',
+                'Photon-HDF (*.photon.h5)'
+            )
             filenames = [filename]
             self.lineEdit_2.setText(filename)
         elif self.fileType in ("ht3"):
-            filename = mfm.widgets.open_file('Open Photon-HDF', 'Photon-HDF (*.ht3)')
+            filename = mfm.widgets.open_file(
+                'Open Photon-HDF',
+                'Photon-HDF (*.ht3)'
+            )
             filenames = [filename]
         else:
             directory = mfm.widgets.get_directory()
             filenames = [directory + '/' + s for s in os.listdir(directory)]
 
         self.filenames = filenames
-        self._photons = Photons(filenames, self.fileType)
+        self._photons = photons.Photons(filenames, self.fileType)
         self.samples = self._photons.samples
         #self.comboBox.addItems(self._photons.sample_names)
         self.onSampleChanged()
@@ -187,7 +200,7 @@ class SpcFileWidget(QtWidgets.QWidget):
     @property
     def photons(
             self
-    ) -> Photons:
+    ) -> photons.Photons:
         return self._photons
 
 
@@ -208,7 +221,10 @@ class PDBLoad(QtWidgets.QWidget):
 
     def load(self, filename=None):
         if filename is None:
-            filename = mfm.widgets.get_filename('Open PDB-Structure', 'PDB-file (*.pdb)')
+            filename = mfm.widgets.get_filename(
+                'Open PDB-Structure',
+                'PDB-file (*.pdb)'
+            )
         self.filename = filename
         self.structure = self.filename
         self.lineEdit.setText(str(self.structure.n_atoms))
@@ -232,11 +248,15 @@ class PDBLoad(QtWidgets.QWidget):
 
     @structure.setter
     def structure(self, v):
-        self._data = mfm.structure.structure.Structure(v, make_coarse=self.calcLookUp)
+        self._data = mfm.structure.structure.Structure(
+            v,
+            make_coarse=self.calcLookUp
+        )
 
 
-#class CsvWidget(Csv, QtGui.QWidget):
-class CsvWidget(QtWidgets.QWidget):
+class CsvWidget(
+    QtWidgets.QWidget
+):
 
     def __init__(self, **kwargs):
         QtWidgets.QWidget.__init__(self)
@@ -247,7 +267,6 @@ class CsvWidget(QtWidgets.QWidget):
             ),
             self
         )
-
         #Csv.__init__(self, **kwargs)
         #self.connect(self.spinBox, QtCore.SIGNAL("valueChanged(int)"), self.reload_csv)
         self.actionUseHeader.triggered.connect(self.changeUseHeader)
@@ -309,11 +328,11 @@ class CsvWidget(QtWidgets.QWidget):
 
     @property
     def data(self):
-        return Csv.data.fget(self)
+        return mfm.io.ascii.Csv.data.fget(self)
 
     @data.setter
     def data(self, v):
-        Csv.data.fset(self, v)
+        mfm.io.ascii.Csv.data.fset(self, v)
         self.lineEdit_9.setText("%d" % v.shape[1])
         bx = [self.comboBox, self.comboBox_2, self.comboBox_3, self.comboBox_4]
         if self.n_rows > 0:
@@ -343,7 +362,7 @@ class CsvWidget(QtWidgets.QWidget):
             self,
             v: str
     ):
-        Csv.filename.fset(self, v)
+        mfm.io.ascii.Csv.filename.fset(self, v)
         self.lineEdit_8.setText(v)
 
     def changeCsvType(self):
@@ -353,7 +372,7 @@ class CsvWidget(QtWidgets.QWidget):
     def load(self, filename=None, **kwargs):
         if filename is None:
             filename = mfm.widgets.get_filename('Open CSV-File', 'CSV-file (*.*)')
-        Csv.load(self, filename, **kwargs)
+        mfm.io.ascii.Csv.load(self, filename, **kwargs)
         self.filename = filename
 
 

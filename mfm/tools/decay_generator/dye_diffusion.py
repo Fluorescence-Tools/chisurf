@@ -209,7 +209,7 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
         settings = json.load(open(dye_diffusion_settings_file))
 
         print(settings)
-        super(TransientDecayGenerator, self).__init__(**settings)
+        super().__init__(**settings)
 
         QtWidgets.QWidget.__init__(self)
         uic.loadUi(

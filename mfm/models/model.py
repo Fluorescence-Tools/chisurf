@@ -4,11 +4,11 @@ from typing import List, Tuple
 import numpy as np
 from qtpy import QtWidgets, QtGui
 
+import mfm.parameter
 import mfm.curve
 import mfm.fitting.parameter
 import mfm.fitting.widgets
 import mfm.plots
-from mfm.curve import Curve
 
 
 class Model(
@@ -22,7 +22,7 @@ class Model(
             model_number: int = 0,
             **kwargs
     ):
-        super(Model, self).__init__(
+        super().__init__(
             model=self,
             **kwargs
         )
@@ -79,14 +79,12 @@ class Model(
             xmin = fit.xmin
         if xmax is None:
             xmax = fit.xmax
-        model_x, model_y = fit.model[xmin:xmax]
-        data_x, data_y, data_y_error = fit.data[xmin:xmax]
-        ml = min([len(model_y), len(data_y)])
-        wr = np.array(
-            (data_y[:ml] - model_y[:ml]) / data_y_error[:ml],
-            dtype=np.float64
+        return mfm.fitting.calculate_weighted_residuals(
+            fit.data,
+            fit.model,
+            xmin=xmin,
+            xmax=xmax
         )
-        return wr
 
     def update_model(
             self,
@@ -154,12 +152,12 @@ class ModelCurve(
             fit: mfm.fitting.fit.Fit,
             *args, **kwargs
     ):
-        super(ModelCurve, self).__init__(
+        super().__init__(
             fit,
             *args,
             **kwargs
         )
-        Curve.__init__(
+        mfm.curve.Curve.__init__(
             self,
             x=fit.data.x,
             y=np.zeros_like(fit.data.y),
@@ -224,7 +222,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
     def update(
             self
     ) -> None:
-        super(ModelWidget, self).update()
+        super().update()
         self.update_widgets()
         self.update_plots()
 
@@ -238,7 +236,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
             *args,
             **kwargs
     ):
-        super(ModelWidget, self).__init__(
+        super().__init__(
             fit,
             *args,
             **kwargs

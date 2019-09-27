@@ -1,7 +1,5 @@
 import numpy as np
 
-import mfm
-
 
 def write_open_dx(
         filename: str,

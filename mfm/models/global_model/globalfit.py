@@ -34,7 +34,10 @@ class GlobalFitModel(model.Model, Curve):
         self._global_parameters = OrderedDict()
         self.parameters_calculated = list()
         self._links = list()
-        super(GlobalFitModel, self).__init__(fit, **kwargs)
+        super().__init__(
+            fit,
+            **kwargs
+        )
 
     @property
     def weighted_residuals(
@@ -343,7 +346,7 @@ class GlobalFitModel(model.Model, Curve):
     def update(
             self
     ) -> None:
-        super(GlobalFitModel, self).update()
+        super().update()
         for f in self.fits:
             f.model.update()
 
@@ -364,7 +367,7 @@ class GlobalFitModel(model.Model, Curve):
     def finalize(
             self
     ) -> None:
-        super(GlobalFitModel, self).finalize()
+        super().finalize()
         for fit in self.fits:
             fit.model.finalize()
 
@@ -381,7 +384,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
             self,
             fit: mfm.fitting.fit.Fit
     ):
-        super(GlobalFitModelWidget, self).__init__(fit)
+        super().__init__(fit)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),

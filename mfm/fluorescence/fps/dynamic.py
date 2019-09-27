@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Tuple
 
 from collections import OrderedDict
 import time
@@ -10,13 +11,16 @@ import numexpr as ne
 import mfm
 import mfm.io
 import mfm.io.xyz
+import mfm.models
+import mfm.fitting.parameter
 from mfm.structure.structure import count_atoms
 from mfm.fluorescence.fps import _fps
-from mfm.fitting.parameter import FittingParameter
 from mfm.parameter import ParameterGroup
 
 
-ne.set_num_threads(mfm.settings.cs_settings['n_threads'])
+ne.set_num_threads(
+    mfm.settings.cs_settings['n_threads']
+)
 
 
 def simulate_trajectory(
@@ -44,7 +48,9 @@ def simulate_trajectory(
 
     http://labs.physics.berkeley.edu/mediawiki/index.php/Simulating_Brownian_Motion
     """
-    return _fps.simulate_traj_point(d, ds, dg, t_max, t_step, diffusion_coefficient, slow_fact)
+    return _fps.simulate_traj_point(
+        d, ds, dg, t_max, t_step, diffusion_coefficient, slow_fact
+    )
 
 
 class DiffusionSimulationParameter(ParameterGroup):
@@ -80,8 +86,14 @@ class DiffusionSimulationParameter(ParameterGroup):
             n_simulations: int = 4
     ):
         super(DiffusionSimulationParameter, self).__init__()
-        self._t_max = FittingParameter(value=t_max, name='t-max')
-        self._t_step = FittingParameter(value=t_step, name='t-step')
+        self._t_max = mfm.fitting.parameter.FittingParameter(
+            value=t_max,
+            name='t-max'
+        )
+        self._t_step = mfm.fitting.parameter.FittingParameter(
+            value=t_step,
+            name='t-step'
+        )
 
 
 class DiffusionSimulation(object):
@@ -140,7 +152,9 @@ class DiffusionSimulation(object):
 
     @property
     def time_axis(self):
-        return np.arange(self.quenching_trajectory.shape[0], dtype=np.float32) * self.simulation_parameter.t_step
+        return np.arange(
+            self.quenching_trajectory.shape[0], dtype=np.float32
+        ) * self.simulation_parameter.t_step
 
     @property
     def mean_xyz(self):
@@ -149,7 +163,9 @@ class DiffusionSimulation(object):
 
     @property
     def distance_to_mean(self):
-        return np.linalg.norm(self.xyz - self.mean_xyz, axis=2).flatten()
+        return np.linalg.norm(
+            self.xyz - self.mean_xyz, axis=2
+        ).flatten()
 
     @property
     def xyz(self):
@@ -169,21 +185,40 @@ class DiffusionSimulation(object):
         :return:
         """
         if mode == 'h5':
-            compression = tables.Filters(complib='zlib', shuffle=True, complevel=1)
-            h5handle = tables.open_file(filename, mode="w", title="Test file", filters=compression)
-            h5handle.create_array('/', 'topology', np.array(json.dumps(self.dye.dye_definition)).reshape(1), shape=(1,))
-            h5handle.create_earray(where='/',
-                                   name='coordinates',
-                                   atom=tables.Float32Atom(),
-                                   shape=(0, self.dye.n_atoms, 3))
-            h5handle.create_earray(where='/',
-                                   name='time',
-                                   atom=tables.Float32Atom(),
-                                   shape=(0,))
-            h5handle.create_group(where='/', name='fluorescence')
-            h5handle.create_earray(where='/fluorescence/',
-                                   name='quencher_distance',
-                                   atom=tables.Float32Atom(), shape=(0,))
+            compression = tables.Filters(
+                complib='zlib', shuffle=True, complevel=1
+            )
+            h5handle = tables.open_file(
+                filename, mode="w", title="Test file", filters=compression
+            )
+            h5handle.create_array(
+                '/',
+                'topology',
+                np.array(
+                    json.dumps(self.dye.dye_definition)
+                ).reshape(1),
+                shape=(1,)
+            )
+            h5handle.create_earray(
+                where='/',
+                name='coordinates',
+                atom=tables.Float32Atom(),
+                shape=(0, self.dye.n_atoms, 3)
+            )
+            h5handle.create_earray(
+                where='/',
+                name='time',
+                atom=tables.Float32Atom(),
+                shape=(0,)
+            )
+            h5handle.create_group(
+                where='/', name='fluorescence'
+            )
+            h5handle.create_earray(
+                where='/fluorescence/',
+                name='quencher_distance',
+                atom=tables.Float32Atom(), shape=(0,)
+            )
             # set units
             h5handle.root.time.set_attr('units', 'picoseconds')
             h5handle.root.xyz.set_attr('units', 'angstroms')
@@ -402,14 +437,35 @@ class Dye(ParameterGroup):
         self.structure = sticking.structure
         self.model = kwargs.get('model', None)
 
-        self._critical_distance = FittingParameter(value=7.0, name='RQ')
-        self._diffusion_coefficient = FittingParameter(value=5.0, name='D[A2/ns]')
-        self._tau0 = FittingParameter(value=4.0, name='tau0[ns]')
-        self._simulation_grid_resolution = FittingParameter(value=0.5, name='grid spacing')
+        self._critical_distance = mfm.fitting.parameter.FittingParameter(
+            value=7.0,
+            name='RQ'
+        )
+        self._diffusion_coefficient = mfm.fitting.parameter.FittingParameter(
+            value=5.0,
+            name='D[A2/ns]'
+        )
+        self._tau0 = mfm.fitting.parameter.FittingParameter(
+            value=4.0,
+            name='tau0[ns]'
+        )
+        self._simulation_grid_resolution = mfm.fitting.parameter.FittingParameter(
+            value=0.5,
+            name='grid spacing'
+        )
 
-        self._av_length = FittingParameter(name='L', value=20.0)
-        self._av_width = FittingParameter(name='W', value=0.5)
-        self._av_radius = FittingParameter(name='R', value=3.0)
+        self._av_length = mfm.fitting.parameter.FittingParameter(
+            name='L',
+            value=20.0
+        )
+        self._av_width = mfm.fitting.parameter.FittingParameter(
+            name='W',
+            value=0.5
+        )
+        self._av_radius = mfm.fitting.parameter.FittingParameter(
+            name='R',
+            value=3.0
+        )
 
         self.attachment_residue = kwargs.get('attachment_residue', None)
         self.attachment_atom = kwargs.get('attachment_atom', None)
@@ -422,7 +478,10 @@ class Dye(ParameterGroup):
         self.av_length = kwargs.get('av_length', 20.0)
         self.av_width = kwargs.get('av_width', 0.5)
         self.av_radius = kwargs.get('av_radius', 1.5)
-        self.simulation_grid_resolution = kwargs.get('simulation_grid_resolution', 0.5)
+        self.simulation_grid_resolution = kwargs.get(
+            'simulation_grid_resolution',
+            0.5
+        )
 
         dye_name = str(kwargs.get('dye_name', None))
         if dye_name in mfm.fluorescence.fps.dye_names[0]:
@@ -433,7 +492,8 @@ class Sticking(ParameterGroup):
 
     @property
     def slow_fact(self):
-        """Slowing factor of the dye close to a slow-center. The diffusion coefficient is multiplied by this value.
+        """Slowing factor of the dye close to a slow-center. The diffusion
+        coefficient is multiplied by this value.
         """
         return self._slow_fact.value
 
@@ -443,7 +503,8 @@ class Sticking(ParameterGroup):
 
     @property
     def slow_radius(self):
-        """The radius around the C-alpha atoms which is considered as slow part of the accessible volume
+        """The radius around the C-alpha atoms which is considered as slow part
+        of the accessible volume
         """
         return self._slow_radius.value
 
@@ -465,8 +526,10 @@ class Sticking(ParameterGroup):
 
     @property
     def sticky_mode(self):
-        """If this value is set to `quencher` only the quencher slow down the dye if it is `surface` the C-beta
-        atoms of all amino-acids slow down the dye. If the `quencher` file_type is used the `quenching_parameter`
+        """If this value is set to `quencher` only the quencher slow down the
+        dye if it is `surface` the C-beta
+        atoms of all amino-acids slow down the dye. If the `quencher` file_type
+        is used the `quenching_parameter`
         parameter has to be passed upon initialization of the class.
         """
         return self._sticky_mode
@@ -493,8 +556,14 @@ class Sticking(ParameterGroup):
         self.quenching_parameter = quenching_parameter
         self.structure = structure
         self.model = kwargs.get('model', None)
-        self._slow_radius = FittingParameter(name='Rs', value=kwargs.get('slow_radius', 8.5))
-        self._slow_fact = FittingParameter(name='slow fact', value=kwargs.get('slow_fact', 0.1))
+        self._slow_radius = mfm.fitting.parameter.FittingParameter(
+            name='Rs',
+            value=kwargs.get('slow_radius', 8.5)
+        )
+        self._slow_fact = mfm.fitting.parameter.FittingParameter(
+            name='slow fact',
+            value=kwargs.get('slow_fact', 0.1)
+        )
         # sticking file_type is either surface quencher
         self._sticky_mode = kwargs.get('sticky_mode', 'surface')
 
@@ -546,10 +615,16 @@ class ProteinQuenching(ParameterGroup):
             if self.all_atoms_quench:
                 atoms_idx = np.where(atoms['res_name'] == residue_key)[0]
             else:
-                atoms_idx = np.where((atoms['res_name'] == residue_key) & (atoms['atom_name'] == 'CB'))[0]
+                atoms_idx = np.where(
+                    (atoms['res_name'] == residue_key) & (atoms['atom_name'] == 'CB')
+                )[0]
             q_new[residue_key] = {
                 'rate': v[residue_key]['rate'],
-                'atoms': list(set(atoms[atoms_idx]['atom_name']).difference(self._excluded_atoms)),
+                'atoms': list(
+                    set(
+                        atoms[atoms_idx]['atom_name']
+                    ).difference(self._excluded_atoms)
+                ),
             }
         v = q_new
 
@@ -557,7 +632,9 @@ class ProteinQuenching(ParameterGroup):
         for residue_key in v:
             atoms_idx = []
             for atom_name in v[residue_key]['atoms']:
-                idx = np.where((atoms['res_name'] == residue_key) & (self.structure.atoms['atom_name'] == atom_name))[0]
+                idx = np.where(
+                    (atoms['res_name'] == residue_key) & (self.structure.atoms['atom_name'] == atom_name)
+                )[0]
                 atoms_idx += list(idx)
             v[residue_key]['coordinates'] = self.structure.atoms[atoms_idx]['xyz']
             v[residue_key]['atom_idx'] = np.array(atoms_idx, dtype=np.int32)
@@ -601,8 +678,14 @@ class ProteinQuenching(ParameterGroup):
 
         self._quencher = None
         self._all_atoms_quench = kwargs.get('all_atoms_quench', False)
-        self._k_quench_scale = FittingParameter(value=kwargs.get('quench_scale', 0.01), name='kQ scale')
-        self._excluded_atoms = kwargs.get('excluded_atoms', set(['CA', 'C', 'N', 'HA']))
+        self._k_quench_scale = mfm.fitting.parameter.FittingParameter(
+            value=kwargs.get('quench_scale', 0.01),
+            name='kQ scale'
+        )
+        self._excluded_atoms = kwargs.get(
+            'excluded_atoms',
+            set(['CA', 'C', 'N', 'HA'])
+        )
         self.quencher = kwargs.get('quenching_amino_acids',
                                    {
                                        'MET': {

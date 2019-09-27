@@ -36,7 +36,7 @@ class AvPlot(plotbase.Plot):
     name = "Accessible Volume"
 
     def __init__(self, fit, *args, **kwargs):
-        super(AvPlot, self).__init__(
+        super().__init__(
             fit=fit,
             *args,
             **kwargs

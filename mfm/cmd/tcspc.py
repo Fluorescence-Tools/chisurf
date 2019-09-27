@@ -1,4 +1,4 @@
-import mfm
+import mfm.experiments
 
 
 def set_linearization(

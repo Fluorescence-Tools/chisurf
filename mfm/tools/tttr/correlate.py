@@ -11,13 +11,12 @@ from PyQt5 import QtCore, QtWidgets, uic
 import qdarkstyle
 
 import mfm
+import mfm.experiments.widgets
 import mfm.tools
 import mfm.fluorescence
-import mfm.experiments
 import mfm.experiments.data
 import mfm.settings
 import mfm.widgets
-import mfm.widgets.curve
 from mfm.io.widgets import SpcFileWidget
 
 settings = mfm.settings.cs_settings['correlator']
@@ -97,7 +96,7 @@ class CorrelateTTTR(QtWidgets.QWidget):
         self.verticalLayout.addWidget(w)
         w.show()
 
-        self.cs = mfm.widgets.curve.ExperimentalDataSelector(
+        self.cs = mfm.experiments.widgets.ExperimentalDataSelector(
             get_data_sets=self.get_data_curves,
             click_close=False
         )
@@ -153,7 +152,12 @@ class Correlator(QtCore.QThread):
         elif type(tacWeighting) is np.ndarray:
             print("TAC-weighted")
             wt = tacWeighting
-        w = mfm.fluorescence.fcs.get_weights(photons.rout, photons.tac, wt, photons.nPh)
+        w = mfm.fluorescence.fcs.get_weights(
+            photons.rout,
+            photons.tac,
+            wt,
+            photons.nPh
+        )
         return w
 
     def run(self):
@@ -354,7 +358,7 @@ class CrFilterWidget(QtWidgets.QWidget):
             *args,
             **kwargs
     ):
-        super(CrFilterWidget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -421,7 +425,7 @@ class FCStttr(QtWidgets.QWidget):
     name = 'fcs-tttr'
 
     def __init__(self, parent=None):
-        super(FCStttr, self).__init__(parent)
+        super().__init__(parent)
         layout = QtWidgets.QVBoxLayout(self)
         self.parent = parent
         self.layout = layout
