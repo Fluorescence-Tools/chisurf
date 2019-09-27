@@ -25,7 +25,7 @@ class PDB2Label(QtWidgets.QWidget):
             *args,
             **kwargs
     ):
-        super(PDB2Label, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),

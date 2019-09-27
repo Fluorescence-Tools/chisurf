@@ -732,7 +732,7 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
         return float(self.doubleSpinBox.value()), float(self.doubleSpinBox_2.value())
 
     def __init__(self, *args, **kwargs):
-        super(FRETLineGeneratorWidget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),

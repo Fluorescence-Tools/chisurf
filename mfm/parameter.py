@@ -221,7 +221,7 @@ class Parameter(
         return not result
 
     def __hash__(self):
-        return super(Parameter, self).__hash__()
+        return super().__hash__()
 
     def __repr__(self):
         s = self.value.__repr__()
@@ -240,7 +240,7 @@ class Parameter(
     def to_dict(
             self
     ) -> dict:
-        d = super(Parameter, self).to_dict()
+        d = super().to_dict()
         if self.link is not None:
             d['_link'] = self.link.unique_identifier
         return d
@@ -254,7 +254,7 @@ class Parameter(
             for o in self.get_instances():
                 if unique_identifier == o.unique_identifier:
                     v['_link'] = o
-            super(Parameter, self).from_dict(v)
+            super().from_dict(v)
             if isinstance(v['_link'], str):
                 raise ValueError(
                     "The linked parameter %s is not instantiated." % unique_identifier
@@ -280,7 +280,7 @@ class Parameter(
         :param args:
         :param kwargs:
         """
-        super(Parameter, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )
@@ -310,7 +310,7 @@ class ParameterGroup(
         :param args:
         :param kwargs:
         """
-        super(ParameterGroup, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )

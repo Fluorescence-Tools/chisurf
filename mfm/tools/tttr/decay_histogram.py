@@ -11,8 +11,8 @@ from PyQt5 import QtCore, QtWidgets, uic
 import qdarkstyle
 
 import mfm
-import mfm.experiments
 import mfm.experiments.data
+import mfm.experiments.widgets
 from mfm.fluorescence.tcspc import weights
 from mfm.io.widgets import SpcFileWidget
 
@@ -88,7 +88,7 @@ class HistogramTTTR(QtWidgets.QWidget):
         self.verticalLayout.addWidget(w)
         w.show()
 
-        self.cs = mfm.widgets.curve.ExperimentalDataSelector(
+        self.cs = mfm.experiments.widgets.ExperimentalDataSelector(
             get_data_sets=self.get_data_curves,
             click_close=False
         )
@@ -132,7 +132,7 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
     histDone = QtCore.pyqtSignal()
 
     def __init__(self, parent):
-        super(TcspcTTTRWidget, self).__init__(parent)
+        super().__init__(parent)
         self.tcspcTTTRWidget = QtWidgets.QWidget(self)
         uic.loadUi(
             os.path.join(
@@ -226,7 +226,12 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
         curve = mfm.experiments.data.DataCurve(setup=self)
         curve.x = self.x
         curve.y = self.y
-        self.histDone.emit(self.nROUT, self.nTAC, self.chs, curve)
+        self.histDone.emit(
+            self.nROUT,
+            self.nTAC,
+            self.chs,
+            curve
+        )
 
     def onTacDivChanged(self):
         self.dtBase = self.spcFileWidget.dt

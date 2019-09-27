@@ -16,7 +16,8 @@ from mfm.fitting.widgets import FittingControllerWidget
 from mfm.models import parse
 from mfm.models.model import ModelWidget
 from mfm.models.tcspc.anisotropy import Anisotropy
-from mfm.models.tcspc.fret import Gaussians, DiscreteDistance, fret_settings, GaussianModel, FRETrateModel, \
+from mfm.models.tcspc.fret import Gaussians, DiscreteDistance, \
+    GaussianModel, FRETrateModel, \
     WormLikeChainModel, SingleDistanceModel
 from mfm.models.tcspc.lifetime import Lifetime, LifetimeModel
 from mfm.models.tcspc.mix_model import LifetimeMixModel
@@ -24,7 +25,7 @@ from mfm.models.tcspc.nusiance import Convolve, Corrections, Generic
 from mfm.models.parse.tcspc.tcspc_parse import ParseDecayModel
 from mfm.models.tcspc.pddem import PDDEM, PDDEMModel
 from mfm.widgets import clear_layout
-from mfm.widgets.curve import ExperimentalDataSelector
+from mfm.experiments.widgets import ExperimentalDataSelector
 
 
 class ConvolveWidget(Convolve, QtWidgets.QWidget):
@@ -44,7 +45,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         :param hide_curve_convolution:
         :param kwargs:
         """
-        super(ConvolveWidget, self).__init__(
+        super().__init__(
             fit,
             **kwargs
         )
@@ -173,7 +174,7 @@ class CorrectionsWidget(
         :param hide_corrections:
         :param kwargs:
         """
-        super(CorrectionsWidget, self).__init__(
+        super().__init__(
             fit=fit,
             threshold=0.9,
             reverse=False,
@@ -272,7 +273,7 @@ class GenericWidget(
         :param hide_generic:
         :param kwargs:
         """
-        super(GenericWidget, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.parent = kwargs.get('parent', None)
 
@@ -356,7 +357,7 @@ class AnisotropyWidget(
             self,
             **kwargs
     ):
-        super(AnisotropyWidget, self).__init__(
+        super().__init__(
             **kwargs
         )
 
@@ -545,7 +546,7 @@ class PDDEMModelWidget(ModelWidget, PDDEMModel):
     ]
 
     def __init__(self, fit, **kwargs):
-        super(PDDEMModelWidget, self).__init__(
+        super().__init__(
             fit,
             icon=QtGui.QIcon(":/icons/icons/TCSPC.ico"),
             **kwargs
@@ -635,7 +636,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
             title: str = '',
             **kwargs
     ):
-        super(LifetimeWidget, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.layout = QtWidgets.QVBoxLayout(self)
         self.gb = QtWidgets.QGroupBox()
@@ -751,7 +752,7 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
     ):
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
-        super(LifetimeModelWidgetBase, self).__init__(
+        super().__init__(
             fit=fit,
             icon=icon
         )
@@ -793,7 +794,7 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
             fit: mfm.fitting.fit.FitGroup,
             **kwargs
     ):
-        super(LifetimeModelWidget, self).__init__(
+        super().__init__(
             fit=fit,
             **kwargs
         )
@@ -815,7 +816,7 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
             model=None,
             **kwargs
     ):
-        super(GaussianWidget, self).__init__(
+        super().__init__(
             donors=donors,
             model=model,
             **kwargs
@@ -973,13 +974,26 @@ for f in cs.current_fit:
         n_rates = len(self)
         gb.setTitle('G%i' % (n_rates + 1))
         l = QtWidgets.QVBoxLayout()
-        pm = FittingParameter(name='R(%s,%i)' % (self.short, n_rates + 1),
-                              value=m, model=self.model, decimals=1,
-                              bounds_on=False, lb=fret_settings['rda_min'], ub=fret_settings['rda_max'],
-                              text='R', update_function=self.update)
-        px = FittingParameter(name='x(%s,%i)' % (self.short, n_rates + 1), value=x,
-                              model=self.model, decimals=3,
-                              bounds_on=False, text='x', update_function=self.update)
+        pm = FittingParameter(
+            name='R(%s,%i)' % (self.short, n_rates + 1),
+            value=m,
+            model=self.model,
+            decimals=1,
+            bounds_on=False,
+            lb=mfm.settings.fret['rda_min'],
+            ub=mfm.settings.fret['rda_max'],
+            text='R',
+            update_function=self.update
+        )
+        px = FittingParameter(
+            name='x(%s,%i)' % (self.short, n_rates + 1),
+            value=x,
+            model=self.model,
+            decimals=3,
+            bounds_on=False,
+            text='x',
+            update_function=self.update
+        )
         m = mfm.fitting.widgets.make_fitting_parameter_widget(pm, layout=l)
         x = mfm.fitting.widgets.make_fitting_parameter_widget(px, layout=l)
 

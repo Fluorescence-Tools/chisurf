@@ -9,6 +9,7 @@ import numpy as np
 import tempfile
 
 import mfm
+import mfm.curve
 
 
 class Tests(unittest.TestCase):
@@ -66,12 +67,18 @@ class Tests(unittest.TestCase):
 
         cdf = c2.cdf
         self.assertEqual(
-            np.array_equal(cdf.y, np.cumsum(c2.y)),
+            np.array_equal(
+                cdf.y,
+                np.cumsum(c2.y)
+            ),
             True
         )
 
         self.assertEqual(
-            np.array_equal(cdf.dx, np.diff(c2.x)),
+            np.array_equal(
+                cdf.dx,
+                np.diff(c2.x)
+            ),
             True
         )
 

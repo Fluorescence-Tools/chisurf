@@ -8,7 +8,10 @@ utils.set_search_paths(TOPDIR)
 import numpy as np
 import tempfile
 import copy
+
 import mfm
+import mfm.base
+import mfm.experiments
 
 
 def get_data_values(
@@ -41,6 +44,10 @@ class Tests(unittest.TestCase):
             len(d.data),
             8128
         )
+        self.assertEqual(
+            d.embed_data,
+            True
+        )
 
         d = mfm.base.Data(
             filename=file.name,
@@ -49,6 +56,16 @@ class Tests(unittest.TestCase):
         self.assertEqual(
             len(d.data),
             0
+        )
+
+        d.embed_data = False
+        self.assertEqual(
+            d.embed_data,
+            False
+        )
+        self.assertEqual(
+            d.data,
+            None
         )
 
     def test_data_group(self):

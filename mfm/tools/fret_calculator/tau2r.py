@@ -21,7 +21,7 @@ class FRETCalculator(QtWidgets.QWidget):
             *args,
             **kwargs
     ):
-        super(FRETCalculator, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )

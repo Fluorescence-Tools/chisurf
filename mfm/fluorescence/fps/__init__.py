@@ -721,8 +721,14 @@ class DynamicAV(BasicAV):
         self._ex_state = None
         self.rC_electron_transfer = 1.5
 
-        self.fluorescence_lifetime = kwargs.get('tau0', 4.2)
-        self._diffusion_coefficient = kwargs.get('diffusion_coefficient', 8.0)
+        self.fluorescence_lifetime = kwargs.get(
+            'tau0',
+            4.2
+        )
+        self._diffusion_coefficient = kwargs.get(
+            'diffusion_coefficient',
+            8.0
+        )
 
         # These values were "manually" optimized that the diffusion coefficient distribution
         # matches more or less what is expected by MD-simulations on nucleic acids (Stas-paper)
@@ -731,19 +737,27 @@ class DynamicAV(BasicAV):
         self.slow_factor = kwargs.get('slow_factor', 0.99)
         self.contact_distance = kwargs.get('contact_distance', 3.5)  # th
 
-        self.quencher = kwargs.get('quencher', mfm.common.quencher)
+        self.quencher = kwargs.get(
+            'quencher',
+            mfm.common.quencher
+        )
         # self.diffusion_mode = kwargs.get('diffusion_mode', 'two_state')
-        self.t_step_fl = kwargs.get('t_step_fl',
-                                    0.001)  # integration time step of fluorescence decay
-        self.t_step_eq = kwargs.get('t_step_eq',
-                                    0.02)  # integration time step of equilibration
+        self.t_step_fl = kwargs.get(
+            't_step_fl',
+            0.001
+        )  # integration time step of fluorescence decay
+        self.t_step_eq = kwargs.get(
+            't_step_eq',
+            0.02
+        )  # integration time step of equilibration
 
         self.update_diffusion_map()
         self.update_quenching_map()
 
         # Iterator for equilibration and calculation of fluorescence decay
         self._di = functions.DiffusionIterator(
-            self.diffusion_map, self.bounds,
+            self.diffusion_map,
+            self.bounds,
             self.density,
             dg=self.dg,
             t_step=self.t_step_eq

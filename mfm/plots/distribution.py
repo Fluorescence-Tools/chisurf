@@ -28,7 +28,7 @@ class DistributionPlotControl(QtWidgets.QWidget):
             parent: QtWidgets.QWidget = None,
             **kwargs
     ):
-        super(DistributionPlotControl, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )
@@ -51,7 +51,7 @@ class DistributionPlot(plotbase.Plot):
             parent: QtWidgets.QWidget,
             **kwargs
     ):
-        super(DistributionPlot, self).__init__(
+        super().__init__(
             fit=fit,
             parent=parent
         )

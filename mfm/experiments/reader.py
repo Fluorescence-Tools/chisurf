@@ -29,7 +29,7 @@ class ExperimentReader(
         :param args:
         :param kwargs:
         """
-        super(ExperimentReader, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )

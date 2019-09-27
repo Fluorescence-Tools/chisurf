@@ -93,7 +93,7 @@ class AVDecayModel(LifetimeModel):
         :param args: 
         :param kwargs: 
         """
-        super(AVDecayModel, self).__init__(
+        super().__init__(
             fit,
             **kwargs
         )

@@ -9,10 +9,12 @@ import qdarkstyle
 import numpy as np
 
 import mfm
-import mfm.base
-import mfm.cmd
-import mfm.experiments
 import mfm.widgets
+import mfm.base
+import mfm.models
+import mfm.fitting
+import mfm.experiments
+import mfm.cmd
 import mfm.tools
 import mfm.ui.resource
 
@@ -432,7 +434,7 @@ class Main(QtWidgets.QMainWindow):
             *args,
             **kwargs
     ):
-        super(Main, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )
@@ -522,7 +524,7 @@ class Main(QtWidgets.QMainWindow):
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
-        self.dataset_selector = mfm.widgets.curve.ExperimentalDataSelector(
+        self.dataset_selector = mfm.experiments.widgets.ExperimentalDataSelector(
             click_close=False,
             curve_types='all',
             change_event=self.onCurrentDatasetChanged,
@@ -538,7 +540,6 @@ if __name__ == "__main__":
     mfm.console.history_widget = win.plainTextEditHistory
     mfm.cs = win
     win.init_setups()
-
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
     #with open(mfm.settings.style_sheet_file, 'r') as fp:

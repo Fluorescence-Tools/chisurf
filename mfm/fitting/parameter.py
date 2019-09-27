@@ -13,6 +13,7 @@ import mfm
 import mfm.base
 import mfm.parameter
 import mfm.decorators
+import mfm.models.model
 
 parameter_settings = mfm.settings.parameter
 
@@ -35,7 +36,7 @@ class FittingParameter(
         :param args:
         :param kwargs:
         """
-        super(FittingParameter, self).__init__(
+        super().__init__(
             *args,
             **kwargs
         )
@@ -190,7 +191,7 @@ class GlobalFittingParameter(
         :param kwargs:
         """
         args = [f, g, formula]
-        super(GlobalFittingParameter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.f, self.g = f, g
         self.formula = formula
 
@@ -343,7 +344,7 @@ class FittingParameterGroup(
         :param args:
         :param kwargs:
         """
-        super(FittingParameterGroup, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if mfm.verbose:
             print("---------------")
             print("Class: %s" % self.__class__.name)
