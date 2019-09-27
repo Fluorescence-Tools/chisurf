@@ -27,9 +27,11 @@ def window(
     scipy.signal.lfilter
 
     :param data: 1D numpy-array (data)
-    :param window_len: the dimension of the smoothing window; should be an odd integer
-    :param window_function_type: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'\
-                   flat window will produce a moving average smoothing.
+    :param window_len: the dimension of the smoothing window; should be an odd
+    integer
+    :param window_function_type: the type of window from 'flat', 'hanning',
+    'hamming', 'bartlett', 'blackman' flat window will produce a moving average
+    smoothing.
     :return: 1D numpy-array (smoothed data)
 
     Examples
@@ -47,10 +49,16 @@ def window(
     if window_len < 3:
         return data
 
-    if not window_function_type in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
+    if not window_function_type in [
+        'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
+    ]:
+        raise ValueError(
+            "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+        )
 
-    s = np.r_[2 * data[0] - data[window_len:1:-1], data, 2 * data[-1] - data[-1:-window_len:-1]]
+    s = np.r_[
+        2 * data[0] - data[window_len:1:-1], data, 2 * data[-1] - data[-1:-window_len:-1]
+    ]
 
     if window_function_type == 'flat': # moving average
         w = np.ones(window_len, 'd')
@@ -174,12 +182,14 @@ def calculate_fwhm(
         background: float = 0.0,
         verbose: bool = False
 ) -> Tuple[float, Tuple[int, int], Tuple[float, float]]:
-    """Calculates the full-width-half-maximum (FWHM) using a linear-search from both sides of the curve
+    """Calculates the full-width-half-maximum (FWHM) using a linear-search from
+    both sides of the curve
 
     :param curve:
     :param background:
     :param verbose:
-    :return: Tuple containing the FWHM, the indices and the x-values of the used positions
+    :return: Tuple containing the FWHM, the indices and the x-values of the
+    used positions
     """
     y_values = curve.y - background
     x_values = curve.x

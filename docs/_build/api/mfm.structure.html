@@ -80,9 +80,9 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
@@ -157,9 +157,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="mfm.structure.potential.html">mfm.structure.potential package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="mfm.structure.potential.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.structure.potential.html#mfm-structure-potential-cpotentials-module">mfm.structure.potential.cPotentials module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.structure.potential.html#mfm-structure-potential-potentials-module">mfm.structure.potential.potentials module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mfm.structure.potential.html#module-contents">Module contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.structure.potential.html#module-mfm.structure.potential.cPotentials">mfm.structure.potential.cPotentials module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.structure.potential.html#module-mfm.structure.potential.potentials">mfm.structure.potential.potentials module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mfm.structure.potential.html#module-mfm.structure.potential">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -200,8 +200,278 @@
 </dd></dl>
 
 </div>
-<div class="section" id="mfm-structure-labeled-structure-module">
-<h2>mfm.structure.labeled_structure module<a class="headerlink" href="#mfm-structure-labeled-structure-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-mfm.structure.labeled_structure">
+<span id="mfm-structure-labeled-structure-module"></span><h2>mfm.structure.labeled_structure module<a class="headerlink" href="#module-mfm.structure.labeled_structure" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mfm.structure.labeled_structure.LabeledStructure">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.labeled_structure.</code><code class="sig-name descname">LabeledStructure</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/labeled_structure.html#LabeledStructure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.structure.structure.Structure</span></code></a></p>
+<p>This class is handles FRET-labeled molecule (so far only a single donor, and single acceptor) and provides
+convenience Attributes which only apply to FRET-samples</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">LabeledStructure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">donor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">acceptor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">577</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span><span class="o">.</span><span class="n">donor_label</span> <span class="o">=</span> <span class="n">donor_description</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span><span class="o">.</span><span class="n">acceptor_label</span> <span class="o">=</span> <span class="n">acceptor_description</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>donor_lifetime_spectrum</strong><span class="classifier">array</span></dt><dd><p>Interleaved array of amplitudes and lifetimes of the donor in absence of an acceptor</p>
+</dd>
+<dt><strong>donor_label</strong><span class="classifier">dict</span></dt><dd><p>A dictionary which describes the labeling position of the donor (see <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.fluorescence.fps.AV</span></code>)</p>
+</dd>
+<dt><strong>acceptor_label</strong><span class="classifier">dict</span></dt><dd><p>A dictionary which describes the labeling position of the acceptor (see <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.fluorescence.fps.AV</span></code>)</p>
+</dd>
+<dt><strong>distance_distribution: list of arrays</strong></dt><dd><p>A histogram of the donor-acceptor distance distribution for a given pair of lables</p>
+</dd>
+<dt><strong>fret_rate_spectrum: array</strong></dt><dd><p>Interleaved array of amplitudes and FRET-rate constants</p>
+</dd>
+<dt><strong>lifetime_spectrum: array</strong></dt><dd><p>Interleaved array of amplitudes and donor-lifetimes in presence of FRET</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="method">
+<dt id="mfm.structure.labeled_structure.LabeledStructure.acceptor_av">
+<em class="property">property </em><code class="sig-name descname">acceptor_av</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.acceptor_av" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.labeled_structure.LabeledStructure.acceptor_label">
+<em class="property">property </em><code class="sig-name descname">acceptor_label</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.acceptor_label" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.labeled_structure.LabeledStructure.dRDA">
+<em class="property">property </em><code class="sig-name descname">dRDA</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.dRDA" title="Permalink to this definition">¶</a></dt>
+<dd><p>average donor-acceptor distance</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.labeled_structure.LabeledStructure.dRDAE">
+<em class="property">property </em><code class="sig-name descname">dRDAE</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.dRDAE" title="Permalink to this definition">¶</a></dt>
+<dd><p>fluorescence weighted averaged donor-acceptor distance</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.labeled_structure.LabeledStructure.dRmp">
+<em class="property">property </em><code class="sig-name descname">dRmp</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.dRmp" title="Permalink to this definition">¶</a></dt>
+<dd><p>distance between the mean positions</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.labeled_structure.LabeledStructure.distance_distribution">
+<em class="property">property </em><code class="sig-name descname">distance_distribution</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.distance_distribution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.labeled_structure.LabeledStructure.donor_av">
+<em class="property">property </em><code class="sig-name descname">donor_av</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.donor_av" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.labeled_structure.LabeledStructure.donor_label">
+<em class="property">property </em><code class="sig-name descname">donor_label</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.donor_label" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.labeled_structure.LabeledStructure.donor_lifetime_spectrum">
+<em class="property">property </em><code class="sig-name descname">donor_lifetime_spectrum</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.donor_lifetime_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.labeled_structure.LabeledStructure.fret_rate_spectrum">
+<em class="property">property </em><code class="sig-name descname">fret_rate_spectrum</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.fret_rate_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.labeled_structure.LabeledStructure.lifetime_spectrum">
+<em class="property">property </em><code class="sig-name descname">lifetime_spectrum</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.lifetime_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>&lt;built-in function array&gt;</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.labeled_structure.LabeledStructure.pRDA">
+<em class="property">property </em><code class="sig-name descname">pRDA</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.pRDA" title="Permalink to this definition">¶</a></dt>
+<dd><p>donor-acceptor distance distribution</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.labeled_structure.LabeledStructure.transfer_efficency">
+<em class="property">property </em><code class="sig-name descname">transfer_efficency</code><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.transfer_efficency" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.structure.labeled_structure.LabeledStructure.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/labeled_structure.html#LabeledStructure.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.labeled_structure.LabeledStructure.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.structure.labeled_structure.av_distance_distribution">
+<code class="sig-prename descclassname">mfm.structure.labeled_structure.</code><code class="sig-name descname">av_distance_distribution</code><span class="sig-paren">(</span><em class="sig-param">structure: 'Structure'</em>, <em class="sig-param">donor_av_parameter</em>, <em class="sig-param">acceptor_av_parameter</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/labeled_structure.html#av_distance_distribution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.labeled_structure.av_distance_distribution" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Get the distance distribution between two accessible volumes defined by the parameters passed as</dt><dd><p>an argument.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param structure</dt>
+<dd class="field-odd"><p>a structure <code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></p>
+</dd>
+<dt class="field-even">param donor_av_parameter</dt>
+<dd class="field-even"><p>a dictionary of parameters defining the donor (see AV-class)</p>
+</dd>
+<dt class="field-odd">param acceptor_av_parameter</dt>
+<dd class="field-odd"><p>a dictionary of parameters defining the acceptor (see AV-class)</p>
+</dd>
+<dt class="field-even">param kwargs</dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">return</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<dl>
+<dt>import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(‘./sample_data/modelling/pdb_files/hGBP1_closed.pdb’)</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">donor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">acceptor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">577</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pRDA</span><span class="p">,</span> <span class="n">rda</span> <span class="o">=</span> <span class="n">av_distance_distribution</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">donor_description</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">acceptor_description</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.structure.labeled_structure.av_filtered_fcs_weights">
+<code class="sig-prename descclassname">mfm.structure.labeled_structure.</code><code class="sig-name descname">av_filtered_fcs_weights</code><span class="sig-paren">(</span><em class="sig-param">structure: 'Structure'</em>, <em class="sig-param">lifetime_filters</em>, <em class="sig-param">time_axis: 'np.array'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/labeled_structure.html#av_filtered_fcs_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.labeled_structure.av_filtered_fcs_weights" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Passes all <code class="docutils literal notranslate"><span class="pre">kwargs</span></code> parameters to the method in <code class="xref py py-meth docutils literal notranslate"><span class="pre">av_lifetime_spectrum()</span></code> and</dt><dd><p>calculates the filters weights for a set of lifetime filters <code class="docutils literal notranslate"><span class="pre">lifetime_filters</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param lifetime_filters</dt>
+<dd class="field-odd"><p>numpy array</p>
+</dd>
+<dt class="field-even">return</dt>
+<dd class="field-even"><p></p></dd>
+</dl>
+</dd>
+</dl>
+<p>import mfm.structure    &gt;&gt;&gt; structure_1 = mfm.structure.Structure(‘./sample_data/modelling/trajectory/h5-file/steps/0_major.pdb’)</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">structure_1</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure_2</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ls_1</span> <span class="o">=</span> <span class="n">av_lifetime_spectrum</span><span class="p">(</span><span class="n">structure_1</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ls_2</span> <span class="o">=</span> <span class="n">av_lifetime_spectrum</span><span class="p">(</span><span class="n">structure_2</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">times</span><span class="p">,</span> <span class="n">d_1</span> <span class="o">=</span> <span class="n">calculate_fluorescence_decay</span><span class="p">(</span><span class="n">ls_1</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">times</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">times</span><span class="p">,</span> <span class="n">d_2</span> <span class="o">=</span> <span class="n">calculate_fluorescence_decay</span><span class="p">(</span><span class="n">ls_2</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">times</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fraction_1</span> <span class="o">=</span> <span class="mf">0.66</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fraction_2</span> <span class="o">=</span> <span class="mf">0.33</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">experimental_decay</span> <span class="o">=</span> <span class="n">fraction_1</span> <span class="o">*</span> <span class="n">d_1</span> <span class="o">+</span> <span class="n">fraction_2</span> <span class="o">*</span> <span class="n">d_2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">decays</span> <span class="o">=</span> <span class="p">[</span><span class="n">d_1</span><span class="p">,</span> <span class="n">d_2</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lf</span> <span class="o">=</span> <span class="n">calc_lifetime_filter</span><span class="p">(</span><span class="n">decays</span><span class="o">=</span><span class="n">decays</span><span class="p">,</span> <span class="n">experimental_decay</span><span class="o">=</span><span class="n">experimental_decay</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now the trajectory of the transition using the crystal-structure as intermediate state was simulated. Using this
+trajectory weights are associated to each frame which correspond to the first and the second state.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d_av</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>  <span class="c1"># the resiude numbers are slightly shifted</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a_av</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">567</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">av_filtered_fcs_weights</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">lifetime_filters</span><span class="o">=</span><span class="n">lf</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">times</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">traj</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Using the weights which were calculated for each frame species auto-correlations and species cross-correlations
+can be calculated.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.structure.labeled_structure.av_fret_rate_spectrum">
+<code class="sig-prename descclassname">mfm.structure.labeled_structure.</code><code class="sig-name descname">av_fret_rate_spectrum</code><span class="sig-paren">(</span><em class="sig-param">structure: 'Structure'</em>, <em class="sig-param">donor_av_parameter</em>, <em class="sig-param">acceptor_av_parameter</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/labeled_structure.html#av_fret_rate_spectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.labeled_structure.av_fret_rate_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get FRET-rate spectrum for a given donor and acceptor attachment point</p>
+<blockquote>
+<div><dl class="field-list simple">
+<dt class="field-odd">param donor_av_parameter</dt>
+<dd class="field-odd"><p>parameters describing the donor accessible volume (see AV-class)</p>
+</dd>
+<dt class="field-even">param structure</dt>
+<dd class="field-even"><p>a structure</p>
+</dd>
+<dt class="field-odd">param acceptor_av_parameter</dt>
+<dd class="field-odd"><p>parameters describing the acceptor accessible volume (see AV-class)</p>
+</dd>
+<dt class="field-even">return</dt>
+<dd class="field-even"><p></p></dd>
+</dl>
+</div></blockquote>
+<p class="rubric">Examples</p>
+<dl>
+<dt>import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(‘./sample_data/modelling/pdb_files/hGBP1_closed.pdb’)</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">donor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">acceptor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">577</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rs</span> <span class="o">=</span> <span class="n">av_fret_rate_spectrum</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">donor_description</span><span class="p">,</span> <span class="n">acceptor_description</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.structure.labeled_structure.av_lifetime_spectrum">
+<code class="sig-prename descclassname">mfm.structure.labeled_structure.</code><code class="sig-name descname">av_lifetime_spectrum</code><span class="sig-paren">(</span><em class="sig-param">structure: 'Structure'</em>, <em class="sig-param">donor_lifetime_spectrum: 'np.array'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/labeled_structure.html#av_lifetime_spectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.labeled_structure.av_lifetime_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Get an interleaved lifetime spectrum for a given donor lifetime spectrum given two definitions of</dt><dd><p>a donor and an acceptor accessible volume. This function uses <code class="xref py py-meth docutils literal notranslate"><span class="pre">av_fret_rate_spectrum()</span></code>
+to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the lifetime spectrum.</p>
+<dl class="field-list simple">
+<dt class="field-odd">param donor_lifetime_spectrum</dt>
+<dd class="field-odd"><p>interleaved donor lifetime spectrum</p>
+</dd>
+<dt class="field-even">param donor_av_parameter</dt>
+<dd class="field-even"><p>definition of the donor accessible volume</p>
+</dd>
+<dt class="field-odd">param acceptor_av_parameter</dt>
+<dd class="field-odd"><p>definition of the acceptor accessible volume</p>
+</dd>
+<dt class="field-even">param kwargs</dt>
+<dd class="field-even"><p></p></dd>
+<dt class="field-odd">return</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<dl>
+<dt>import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(‘./sample_data/modelling/pdb_files/hGBP1_closed.pdb’)</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d_av</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span> <span class="c1"># donor attachment and description of the linker</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a_av</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">577</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span> <span class="c1"># acceptor description and linker</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">4.</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">])</span> <span class="c1"># donor_lifetime_spectrum</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lifetime_spectrum</span> <span class="o">=</span> <span class="n">av_lifetime_spectrum</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">ds</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 <div class="section" id="module-mfm.structure.protein">
 <span id="mfm-structure-protein-module"></span><h2>mfm.structure.protein module<a class="headerlink" href="#module-mfm.structure.protein" title="Permalink to this headline">¶</a></h2>

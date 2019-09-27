@@ -80,9 +80,9 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
@@ -371,6 +371,14 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">n_free</span>
 
+<div class="viewcode-block" id="Fit.get_curves"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit.get_curves">[docs]</a>    <span class="k">def</span> <span class="nf">get_curves</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">Curve</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+        <span class="p">}</span></div>
+
 <div class="viewcode-block" id="Fit.get_chi2"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit.get_chi2">[docs]</a>    <span class="k">def</span> <span class="nf">get_chi2</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
             <span class="n">parameter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -390,7 +398,7 @@
             <span class="n">parameter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
-    <span class="p">):</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
         <span class="k">if</span> <span class="n">parameter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -479,8 +487,9 @@
         <span class="sd">&quot;&quot;&quot;Perform a chi2-scan on a parameter of the fit.</span>
 
 <span class="sd">        :param parameter_name: the parameter name</span>
-<span class="sd">        :param rel_range: defines the scanning range as a fraction of the current value, e.g., for a</span>
-<span class="sd">        value of 2.0 a rel_range of 0.5 scans from (2.0 - 2.0*0.5) to (2.0 + 2.0*0.5)</span>
+<span class="sd">        :param rel_range: defines the scanning range as a fraction of the</span>
+<span class="sd">        current value, e.g., for a value of 2.0 a rel_range of 0.5 scans</span>
+<span class="sd">        from (2.0 - 2.0*0.5) to (2.0 + 2.0*0.5)</span>
 <span class="sd">        :param kwargs:</span>
 <span class="sd">        :return: an list containing arrays of the chi2 and the parameter-values</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -499,7 +508,10 @@
         <span class="k">return</span> <span class="n">parameter</span><span class="o">.</span><span class="n">parameter_scan</span></div></div>
 
 
-<div class="viewcode-block" id="FitGroup"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FitGroup">[docs]</a><span class="k">class</span> <span class="nc">FitGroup</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">Fit</span><span class="p">):</span>
+<div class="viewcode-block" id="FitGroup"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.FitGroup">[docs]</a><span class="k">class</span> <span class="nc">FitGroup</span><span class="p">(</span>
+    <span class="nb">list</span><span class="p">,</span>
+    <span class="n">Fit</span>
+<span class="p">):</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">selected_fit</span><span class="p">(</span>

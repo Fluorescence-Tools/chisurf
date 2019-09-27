@@ -35,7 +35,9 @@
   <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" /> 
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Input-Output" href="io.html" />
+    <link rel="prev" title="Fit and Models" href="fit.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -79,10 +81,28 @@
               
             
             
-              <ul>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tools.html">Tools</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#api-all">API All</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="experiments.html">Experiments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fit.html">Fit and Models</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Fluorescence</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#module-mfm.fluorescence">General</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#decay-generator">Decay-Generator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fret-lines">FRET-Lines</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="io.html">Input-Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lib.html">API-Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="structure.html">Structural-Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html">Tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="widgets.html">Widgets</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../use_cases.html">Use cases</a></li>
 </ul>
@@ -130,6 +150,8 @@
     
       <li><a href="../../index.html">Docs</a> &raquo;</li>
         
+          <li><a href="../api.html">API Reference</a> &raquo;</li>
+        
       <li>Fluorescence</li>
     
     
@@ -151,9 +173,10 @@
             
   <div class="section" id="fluorescence">
 <h1>Fluorescence<a class="headerlink" href="#fluorescence" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-mfm.fluorescence.fcs">
-<span id="general"></span><h2>General<a class="headerlink" href="#module-mfm.fluorescence.fcs" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
+<div class="section" id="module-mfm.fluorescence">
+<span id="general"></span><h2>General<a class="headerlink" href="#module-mfm.fluorescence" title="Permalink to this headline">¶</a></h2>
+<p>Fluorescence</p>
+<span class="target" id="module-mfm.fluorescence.fcs"></span><dl class="function">
 <dt id="mfm.fluorescence.fcs.weights">
 <code class="sig-prename descclassname">mfm.fluorescence.fcs.</code><code class="sig-name descname">weights</code><span class="sig-paren">(</span><em class="sig-param">times: 'np.array'</em>, <em class="sig-param">correlation: 'np.array'</em>, <em class="sig-param">measurement_duration</em>, <em class="sig-param">mean_count_rate</em>, <em class="sig-param">weight_type: 'str' = None</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../../_modules/mfm/fluorescence/fcs.html#weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fcs.weights" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -645,6 +668,15 @@ Forster-radius</p></li>
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="io.html" class="btn btn-neutral float-right" title="Input-Output" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="fit.html" class="btn btn-neutral float-left" title="Fit and Models" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

@@ -8,12 +8,12 @@ from typing import List
 import numpy as np
 
 import mfm.curve
+import mfm.models
 import mfm.fitting.parameter
 import mfm.experiments
 import mfm.fitting.fit
 import mfm.fitting.sample
 import mfm.fitting.widgets
-import mfm.models
 
 
 def find_fit_idx_of_model(

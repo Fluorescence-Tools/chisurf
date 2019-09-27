@@ -219,6 +219,19 @@ class Fit(
         """
         return self.model.n_free
 
+    def get_curves(
+            self
+    ) -> Dict[str, mfm.curve.Curve]:
+        """Returns a dictionary containing the current data and the
+        model as mfm.curve.Curve objects.
+
+        :return:
+        """
+        return {
+            'model': self.model,
+            'data': self.data
+        }
+
     def get_chi2(
             self,
             parameter=None,
@@ -238,7 +251,7 @@ class Fit(
             parameter=None,
             model=None,
             **kwargs
-    ):
+    ) -> np.ndarray:
         if model is None:
             model = self.model
         if parameter is not None:
@@ -327,8 +340,9 @@ class Fit(
         """Perform a chi2-scan on a parameter of the fit.
 
         :param parameter_name: the parameter name
-        :param rel_range: defines the scanning range as a fraction of the current value, e.g., for a
-        value of 2.0 a rel_range of 0.5 scans from (2.0 - 2.0*0.5) to (2.0 + 2.0*0.5)
+        :param rel_range: defines the scanning range as a fraction of the
+        current value, e.g., for a value of 2.0 a rel_range of 0.5 scans
+        from (2.0 - 2.0*0.5) to (2.0 + 2.0*0.5)
         :param kwargs:
         :return: an list containing arrays of the chi2 and the parameter-values
         """
@@ -347,7 +361,10 @@ class Fit(
         return parameter.parameter_scan
 
 
-class FitGroup(list, Fit):
+class FitGroup(
+    list,
+    Fit
+):
 
     @property
     def selected_fit(

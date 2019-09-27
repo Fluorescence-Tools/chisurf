@@ -80,9 +80,9 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
@@ -158,10 +158,13 @@
 <span class="kn">import</span> <span class="nn">mfm.math.datatools</span>
 <span class="kn">from</span> <span class="nn">mfm.models.tcspc.lifetime</span> <span class="k">import</span> <span class="n">Lifetime</span><span class="p">,</span> <span class="n">LifetimeModel</span>
 <span class="kn">from</span> <span class="nn">mfm.fluorescence.general</span> <span class="k">import</span> <span class="n">distribution2rates</span><span class="p">,</span> <span class="n">rates2lifetimes</span>
-<span class="kn">from</span> <span class="nn">mfm.fluorescence</span> <span class="k">import</span> <span class="n">rda_axis</span>
 <span class="kn">from</span> <span class="nn">mfm.fitting.parameter</span> <span class="k">import</span> <span class="n">FittingParameter</span><span class="p">,</span> <span class="n">FittingParameterGroup</span>
 
-<span class="n">fret_settings</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">]</span>
+<span class="n">rda_axis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span>
+    <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">fret</span><span class="p">[</span><span class="s1">&#39;rda_min&#39;</span><span class="p">],</span>
+    <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">fret</span><span class="p">[</span><span class="s1">&#39;rda_max&#39;</span><span class="p">],</span>
+    <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">fret</span><span class="p">[</span><span class="s1">&#39;rda_resolution&#39;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="FRETParameters"><a class="viewcode-back" href="../../../../api/mfm.fitting.models.tcspc.html#mfm.models.tcspc.fret.FRETParameters">[docs]</a><span class="k">class</span> <span class="nc">FRETParameters</span><span class="p">(</span><span class="n">FittingParameterGroup</span><span class="p">):</span>
@@ -218,8 +221,8 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
-            <span class="n">forster_radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">fret_settings</span><span class="p">[</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">],</span>
-            <span class="n">tau0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;tau0&#39;</span><span class="p">],</span>
+            <span class="n">forster_radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">fret</span><span class="p">[</span><span class="s1">&#39;forster_radius&#39;</span><span class="p">],</span>
+            <span class="n">tau0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">fret</span><span class="p">[</span><span class="s1">&#39;tau0&#39;</span><span class="p">],</span>
             <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
         <span class="c1">#kappa2 = kwargs.pop(&#39;kappa2&#39;, mfm.settings.cs_settings[&#39;fret&#39;][&#39;kappa2&#39;])</span>
@@ -314,8 +317,12 @@
 
         <span class="c1"># slow isotropic</span>
         <span class="n">k2s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">anisotropy</span><span class="o">.</span><span class="n">kappa2</span><span class="o">.</span><span class="n">p_isotropic_orientation_factor</span><span class="p">(</span><span class="n">k2s</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_k2_slow_iso</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">datatools</span><span class="o">.</span><span class="n">two_column_to_interleaved</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">k2s</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">anisotropy</span><span class="o">.</span><span class="n">kappa2</span><span class="o">.</span><span class="n">p_isotropic_orientation_factor</span><span class="p">(</span>
+            <span class="n">k2s</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_k2_slow_iso</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">datatools</span><span class="o">.</span><span class="n">two_column_to_interleaved</span><span class="p">(</span>
+            <span class="n">p</span><span class="p">,</span> <span class="n">k2s</span>
+        <span class="p">)</span>
 
         <span class="n">FittingParameterGroup</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
@@ -339,7 +346,13 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">args</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">)</span>
             <span class="n">pdf</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">rdf</span><span class="o">.</span><span class="n">distance_between_gaussian</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">sum_distribution</span><span class="p">(</span><span class="n">rda_axis</span><span class="p">,</span> <span class="n">pdf</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">sum_distribution</span><span class="p">(</span>
+            <span class="n">rda_axis</span><span class="p">,</span>
+            <span class="n">pdf</span><span class="p">,</span>
+            <span class="n">args</span><span class="p">,</span>
+            <span class="n">weights</span><span class="p">,</span>
+            <span class="n">normalize</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
 
         <span class="n">d</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">p</span><span class="p">,</span> <span class="n">rda_axis</span><span class="p">])</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
@@ -373,7 +386,9 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">amplitude</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gaussianAmplitudes</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">g</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gaussianAmplitudes</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="p">)</span>
             <span class="n">a</span> <span class="o">/=</span> <span class="n">a</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">a</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
@@ -405,10 +420,23 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">m</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;R(</span><span class="si">%s</span><span class="s1">,</span><span class="si">%i</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">mean</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;x(</span><span class="si">%s</span><span class="s1">,</span><span class="si">%i</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">s</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;s(</span><span class="si">%s</span><span class="s1">,</span><span class="si">%i</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">sigma</span><span class="p">)</span>
-        <span class="n">shape</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;k(</span><span class="si">%s</span><span class="s1">,</span><span class="si">%i</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;R(</span><span class="si">%s</span><span class="s1">,</span><span class="si">%i</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">mean</span>
+        <span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;x(</span><span class="si">%s</span><span class="s1">,</span><span class="si">%i</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">x</span>
+        <span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;s(</span><span class="si">%s</span><span class="s1">,</span><span class="si">%i</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">sigma</span>
+        <span class="p">)</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s1">&#39;k(</span><span class="si">%s</span><span class="s1">,</span><span class="si">%i</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span>
+            <span class="n">fixed</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_gaussianMeans</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_gaussianSigma</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_gaussianAmplitudes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -434,13 +462,15 @@
             <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        This class keeps the necessary parameters to perform a fit with Gaussian/Normal-disitributed</span>
-<span class="sd">        distances. New distance distributions are added using the methods append.</span>
+<span class="sd">        This class keeps the necessary parameters to perform a fit with</span>
+<span class="sd">        Gaussian/Normal-disitributed distances. New distance distributions</span>
+<span class="sd">        are added using the methods append.</span>
 
 <span class="sd">        :param donors: Lifetime</span>
 <span class="sd">            The donor-only spectrum in form of a `Lifetime` object.</span>
 <span class="sd">        :param forster_radius: float</span>
-<span class="sd">            The Forster-radius of the FRET-pair in Angstrom. By default 52.0 Angstrom (FRET-pair Alexa488/Alexa647)</span>
+<span class="sd">            The Forster-radius of the FRET-pair in Angstrom. By default 52.0</span>
+<span class="sd">            Angstrom (FRET-pair Alexa488/Alexa647)</span>
 <span class="sd">        :param kappa2: float</span>
 <span class="sd">            Orientation factor. By default 2./3.</span>
 <span class="sd">        :param t0: float</span>
@@ -450,7 +480,7 @@
 <span class="sd">        :param no_donly: bool</span>
 <span class="sd">            If this is True the donor-only fraction is not displayed/present.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Gaussians</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span>
@@ -513,10 +543,18 @@
             <span class="n">x</span><span class="p">:</span> <span class="nb">float</span>
     <span class="p">):</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">m</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;R(</span><span class="si">%s</span><span class="s1">,</span><span class="si">%i</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">mean</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;x(</span><span class="si">%s</span><span class="s1">,</span><span class="si">%i</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_distances</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_amplitudes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_distances</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">FittingParameter</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;R(</span><span class="si">%s</span><span class="s1">,</span><span class="si">%i</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">mean</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_amplitudes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">FittingParameter</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;x(</span><span class="si">%s</span><span class="s1">,</span><span class="si">%i</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">short</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">x</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
 
 <div class="viewcode-block" id="DiscreteDistance.pop"><a class="viewcode-back" href="../../../../api/mfm.fitting.models.tcspc.html#mfm.models.tcspc.fret.DiscreteDistance.pop">[docs]</a>    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -534,7 +572,7 @@
             <span class="n">short</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;G&#39;</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">DiscreteDistance</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">short</span> <span class="o">=</span> <span class="n">short</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">donors</span> <span class="o">=</span> <span class="n">Lifetime</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -574,7 +612,12 @@
         <span class="c1">#kappa2 = self.fret_parameters.kappa2</span>
         <span class="n">forster_radius</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fret_parameters</span><span class="o">.</span><span class="n">forster_radius</span>
         <span class="n">kappa2s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">orientation_parameter</span><span class="o">.</span><span class="n">orientation_spectrum</span>
-        <span class="n">rs</span> <span class="o">=</span> <span class="n">distribution2rates</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distance_distribution</span><span class="p">,</span> <span class="n">tauD0</span><span class="p">,</span> <span class="n">kappa2s</span><span class="p">,</span> <span class="n">forster_radius</span><span class="p">)</span>
+        <span class="n">rs</span> <span class="o">=</span> <span class="n">distribution2rates</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">distance_distribution</span><span class="p">,</span>
+            <span class="n">tauD0</span><span class="p">,</span>
+            <span class="n">kappa2s</span><span class="p">,</span>
+            <span class="n">forster_radius</span>
+        <span class="p">)</span>
         <span class="c1">#rs = distribution2rates(self.distance_distribution, tauD0, 2./3., forster_radius)</span>
         <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">rs</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">r</span>
@@ -584,15 +627,21 @@
             <span class="bp">self</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
         <span class="n">xDOnly</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fret_parameters</span><span class="o">.</span><span class="n">xDOnly</span>
-        <span class="n">lt</span> <span class="o">=</span> <span class="n">rates2lifetimes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fret_rate_spectrum</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">donors</span><span class="o">.</span><span class="n">rate_spectrum</span><span class="p">,</span> <span class="n">xDOnly</span><span class="p">)</span>
+        <span class="n">lt</span> <span class="o">=</span> <span class="n">rates2lifetimes</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fret_rate_spectrum</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">donors</span><span class="o">.</span><span class="n">rate_spectrum</span><span class="p">,</span>
+            <span class="n">xDOnly</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;bin_lifetime&#39;</span><span class="p">]:</span>
             <span class="n">n_lifetimes</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;lifetime_bins&#39;</span><span class="p">]</span>
             <span class="n">discriminate</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;discriminate&#39;</span><span class="p">]</span>
-            <span class="n">discriminate_amplitude</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span><span class="s1">&#39;discriminate_amplitude&#39;</span><span class="p">]</span>
-            <span class="k">return</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">bin_lifetime_spectrum</span><span class="p">(</span><span class="n">lt</span><span class="p">,</span> <span class="n">n_lifetimes</span><span class="o">=</span><span class="n">n_lifetimes</span><span class="p">,</span>
-                                                                <span class="n">discriminate</span><span class="o">=</span><span class="n">discriminate</span><span class="p">,</span>
-                                                                <span class="n">discriminator</span><span class="o">=</span><span class="n">discriminate_amplitude</span>
-                                                                <span class="p">)</span>
+            <span class="n">discriminate_amplitude</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;fret&#39;</span><span class="p">][</span>
+                <span class="s1">&#39;discriminate_amplitude&#39;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">tcspc</span><span class="o">.</span><span class="n">bin_lifetime_spectrum</span><span class="p">(</span>
+                <span class="n">lt</span><span class="p">,</span> <span class="n">n_lifetimes</span><span class="o">=</span><span class="n">n_lifetimes</span><span class="p">,</span>
+                <span class="n">discriminate</span><span class="o">=</span><span class="n">discriminate</span><span class="p">,</span>
+                <span class="n">discriminator</span><span class="o">=</span><span class="n">discriminate_amplitude</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">lt</span>
 
@@ -601,7 +650,8 @@
             <span class="bp">self</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The donor lifetime spectrum in form amplitude, lifetime, amplitude, lifetime</span>
+<span class="sd">        The donor lifetime spectrum in form amplitude, lifetime, amplitude,</span>
+<span class="sd">        lifetime.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">donors</span><span class="o">.</span><span class="n">lifetime_spectrum</span>
 
@@ -702,7 +752,7 @@
             <span class="n">lifetimes</span><span class="p">:</span> <span class="n">Lifetime</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">FRETModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">fit</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span>
@@ -730,16 +780,18 @@
 
 <div class="viewcode-block" id="GaussianModel"><a class="viewcode-back" href="../../../../api/mfm.fitting.models.tcspc.html#mfm.models.tcspc.fret.GaussianModel">[docs]</a><span class="k">class</span> <span class="nc">GaussianModel</span><span class="p">(</span><span class="n">FRETModel</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    This fit models is uses multiple Gaussian/normal distributions to fit the FRET-decay. Here the donor lifetime-</span>
-<span class="sd">    spectrum as well as the distances may be fitted. In this models it is assumed that each donor-species is fitted</span>
+<span class="sd">    This fit models is uses multiple Gaussian/normal distributions to fit</span>
+<span class="sd">    the FRET-decay. Here the donor lifetime-</span>
+<span class="sd">    spectrum as well as the distances may be fitted. In this models it is</span>
+<span class="sd">    assumed that each donor-species is fitted</span>
 <span class="sd">    by the same FRET-rate distribution.</span>
 
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
 
 <span class="sd">    .. [1]  Kalinin, S., and Johansson, L.B., Energy Migration and Transfer Rates</span>
-<span class="sd">            are Invariant to Modeling the Fluorescence Relaxation by Discrete and Continuous</span>
-<span class="sd">            Distributions of Lifetimes.</span>
+<span class="sd">            are Invariant to Modeling the Fluorescence Relaxation by Discrete</span>
+<span class="sd">            and Continuous Distributions of Lifetimes.</span>
 <span class="sd">            J. Phys. Chem. B, 108 (2004) 3092-3097.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -765,7 +817,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gaussians</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="GaussianModel.finalize"><a class="viewcode-back" href="../../../../api/mfm.fitting.models.tcspc.html#mfm.models.tcspc.fret.GaussianModel.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">FRETModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gaussians</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
@@ -773,7 +825,7 @@
             <span class="n">fit</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">FitGroup</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">GaussianModel</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">fit</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span>
@@ -823,7 +875,7 @@
 <div class="viewcode-block" id="FRETrateModel.finalize"><a class="viewcode-back" href="../../../../api/mfm.fitting.models.tcspc.html#mfm.models.tcspc.fret.FRETrateModel.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span>
             <span class="bp">self</span>
     <span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">FRETrateModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fret_rates</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
@@ -838,7 +890,11 @@
 <span class="sd">        :param fret_rates:</span>
 <span class="sd">        :param kwargs:</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">FRETModel</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">FRETModel</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">fit</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">fret_rates</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">fret_rates</span> <span class="o">=</span> <span class="n">DiscreteDistance</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fret_rates</span> <span class="o">=</span> <span class="n">fret_rates</span></div>
@@ -856,13 +912,21 @@
         <span class="n">chain_length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chain_length</span><span class="o">.</span><span class="n">value</span>
         <span class="n">kappa</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_persistence_length</span><span class="o">.</span><span class="n">value</span> <span class="o">/</span> <span class="n">chain_length</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_dye_linker</span><span class="p">:</span>
-            <span class="n">prob</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">rdf</span><span class="o">.</span><span class="n">worm_like_chain</span><span class="p">(</span><span class="n">rda_axis</span><span class="p">,</span> <span class="n">kappa</span><span class="p">,</span> <span class="n">chain_length</span><span class="p">)</span>
+            <span class="n">prob</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">rdf</span><span class="o">.</span><span class="n">worm_like_chain</span><span class="p">(</span>
+                <span class="n">rda_axis</span><span class="p">,</span>
+                <span class="n">kappa</span><span class="p">,</span>
+                <span class="n">chain_length</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">sigma_linker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sigma_linker</span><span class="o">.</span><span class="n">value</span>
-            <span class="n">prob</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">rdf</span><span class="o">.</span><span class="n">worm_like_chain_linker</span><span class="p">(</span><span class="n">rda_axis</span><span class="p">,</span> <span class="n">kappa</span><span class="p">,</span>
-                                                                 <span class="n">chain_length</span><span class="p">,</span>
-                                                                 <span class="n">sigma_linker</span><span class="p">)</span>
-        <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">prob</span><span class="p">,</span> <span class="n">rda_axis</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">fret_settings</span><span class="p">[</span><span class="s1">&#39;rda_resolution&#39;</span><span class="p">]])</span>
+            <span class="n">prob</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">rdf</span><span class="o">.</span><span class="n">worm_like_chain_linker</span><span class="p">(</span>
+                <span class="n">rda_axis</span><span class="p">,</span> <span class="n">kappa</span><span class="p">,</span>
+                <span class="n">chain_length</span><span class="p">,</span>
+                <span class="n">sigma_linker</span>
+            <span class="p">)</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">prob</span><span class="p">,</span> <span class="n">rda_axis</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+            <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">fret</span><span class="p">[</span><span class="s1">&#39;rda_resolution&#39;</span><span class="p">]]</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">dist</span>
 
     <span class="nd">@property</span>
@@ -925,7 +989,9 @@
             <span class="bp">self</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
         <span class="n">n_points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_points_dist</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">prda</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rda</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span>  <span class="n">n_points</span><span class="p">])</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span>
+            <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">prda</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rda</span><span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span>  <span class="n">n_points</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">r</span>
 
     <span class="nd">@property</span>

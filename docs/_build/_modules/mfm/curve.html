@@ -80,9 +80,9 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
@@ -168,10 +168,14 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">calculate_fwhm</span><span class="p">(</span><span class="bp">self</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">calculate_fwhm</span><span class="p">(</span>
+            <span class="bp">self</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">Curve</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">cdf</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">Curve</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;Cumulative sum of function</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span>
@@ -354,7 +358,9 @@
             <span class="p">)</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span>

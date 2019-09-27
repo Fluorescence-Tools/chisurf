@@ -35,7 +35,9 @@
   <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" /> 
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Fit and Models" href="fit.html" />
+    <link rel="prev" title="API Reference" href="../api.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -79,10 +81,26 @@
               
             
             
-              <ul>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tools.html">Tools</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#api-all">API All</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Experiments</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#module-mfm.models">Models</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fit.html">Fit and Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fluorescence.html">Fluorescence</a></li>
+<li class="toctree-l3"><a class="reference internal" href="io.html">Input-Output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lib.html">API-Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="structure.html">Structural-Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html">Tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="widgets.html">Widgets</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../use_cases.html">Use cases</a></li>
 </ul>
@@ -130,6 +148,8 @@
     
       <li><a href="../../index.html">Docs</a> &raquo;</li>
         
+          <li><a href="../api.html">API Reference</a> &raquo;</li>
+        
       <li>Experiments</li>
     
     
@@ -157,10 +177,24 @@ different experimental setups. Furthermore, it contains a set of plotting librar
 <dl class="function">
 <dt id="mfm.experiments.get_data">
 <code class="sig-prename descclassname">mfm.experiments.</code><code class="sig-name descname">get_data</code><span class="sig-paren">(</span><em class="sig-param">curve_type: 'str' = 'experiment'</em>, <em class="sig-param">data_set: 'List[data.ExperimentalData]' = None</em><span class="sig-paren">)</span> &#x2192; 'List[data.ExperimentalData]'<a class="reference internal" href="../../_modules/mfm/experiments.html#get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.get_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns all curves <cite>mfm.curve.DataCurve</cite> except if the curve is names “Global-fit”</p>
+<dd><p>Returns all curves <cite>mfm.curve.DataCurve</cite> except if the
+curve is names “Global-fit”</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentalData</span></code>]</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>curve_type</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – if this value is set to <cite>experiment</cite> only curves</p>
+</dd>
+</dl>
+<p>that are experimental curves, i.e., curves that inherit from
+<cite>mfm.experiments.data.ExperimentalData</cite> are returned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data_set</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentalData</span></code>]]) – A list containing the</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ExperimentalData</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -173,9 +207,9 @@ different experimental setups. Furthermore, it contains a set of plotting librar
 <li><p><a class="reference internal" href="#module-mfm.models.tcspc" title="mfm.models.tcspc"><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.tcspc</span></code></a></p></li>
 <li><p><a class="reference internal" href="#module-mfm.models.fcs" title="mfm.models.fcs"><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.fcs</span></code></a></p></li>
 <li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.global_model</span></code></p></li>
-<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.parse</span></code></p></li>
+<li><p><a class="reference internal" href="../../api/mfm.fitting.models.html#module-mfm.models.parse" title="mfm.models.parse"><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.parse</span></code></a></p></li>
 <li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.proteinMC</span></code></p></li>
-<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.stopped_flow</span></code></p></li>
+<li><p><a class="reference internal" href="../../api/mfm.fitting.models.html#module-mfm.models.stopped_flow" title="mfm.models.stopped_flow"><code class="xref py py-mod docutils literal notranslate"><span class="pre">models.stopped_flow</span></code></a></p></li>
 </ol>
 <div class="section" id="module-mfm.models.tcspc">
 <span id="time-resolved-fluorescence"></span><h3>Time-resolved fluorescence<a class="headerlink" href="#module-mfm.models.tcspc" title="Permalink to this headline">¶</a></h3>
@@ -339,6 +373,15 @@ J. Phys. Chem. B, 108 (2004) 3092-3097.</p>
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="fit.html" class="btn btn-neutral float-right" title="Fit and Models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../api.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

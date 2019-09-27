@@ -80,9 +80,9 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
@@ -160,8 +160,16 @@
 <span class="kn">from</span> <span class="nn">mfm.fitting.parameter</span> <span class="k">import</span> <span class="n">FittingParameterGroup</span><span class="p">,</span> <span class="n">FittingParameter</span>
 
 
-<div class="viewcode-block" id="simulate_decays"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.simulate_decays">[docs]</a><span class="k">def</span> <span class="nf">simulate_decays</span><span class="p">(</span><span class="n">dyes</span><span class="p">,</span> <span class="n">decay_parameter</span><span class="p">,</span> <span class="n">simulation_parameter</span><span class="p">,</span> <span class="n">quenching_parameter</span><span class="p">,</span> <span class="n">save_decays</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">directory</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">file_id</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">get_qy</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="simulate_decays"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.simulate_decays">[docs]</a><span class="k">def</span> <span class="nf">simulate_decays</span><span class="p">(</span>
+        <span class="n">dyes</span><span class="p">,</span>
+        <span class="n">decay_parameter</span><span class="p">,</span>
+        <span class="n">simulation_parameter</span><span class="p">,</span>
+        <span class="n">quenching_parameter</span><span class="p">,</span>
+        <span class="n">save_decays</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">directory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;./&quot;</span><span class="p">,</span>
+        <span class="n">file_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">get_qy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Function for batch procession of decays (use-case see notebooks: quenching_and_fret.ipynb)</span>
 
@@ -202,8 +210,19 @@
         <span class="k">return</span> <span class="n">dye_decays</span><span class="p">,</span> <span class="n">dye_qy</span></div>
 
 
-<div class="viewcode-block" id="simulate_fret_decays"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.simulate_fret_decays">[docs]</a><span class="k">def</span> <span class="nf">simulate_fret_decays</span><span class="p">(</span><span class="n">donors</span><span class="p">,</span> <span class="n">acceptors</span><span class="p">,</span> <span class="n">decay_parameter</span><span class="p">,</span> <span class="n">simulation_parameter</span><span class="p">,</span> <span class="n">donor_quenching</span><span class="p">,</span> <span class="n">acceptor_quenching</span><span class="p">,</span>
-                         <span class="n">fret_parameter</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">directory</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">get_number_of_av_points</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="simulate_fret_decays"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.simulate_fret_decays">[docs]</a><span class="k">def</span> <span class="nf">simulate_fret_decays</span><span class="p">(</span>
+        <span class="n">donors</span><span class="p">,</span>
+        <span class="n">acceptors</span><span class="p">,</span>
+        <span class="n">decay_parameter</span><span class="p">,</span>
+        <span class="n">simulation_parameter</span><span class="p">,</span>
+        <span class="n">donor_quenching</span><span class="p">,</span>
+        <span class="n">acceptor_quenching</span><span class="p">,</span>
+        <span class="n">fret_parameter</span><span class="p">,</span>
+        <span class="n">save</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">directory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;./&quot;</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">get_number_of_av_points</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Function for batch procession of decays (use-case see notebooks: quenching_and_fret.ipynb)</span>
 
@@ -216,6 +235,7 @@
 <span class="sd">    :param fret_parameter:</span>
 <span class="sd">    :param save:</span>
 <span class="sd">    :param directory:</span>
+<span class="sd">    :param prefix:</span>
 <span class="sd">    :return:</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">donor_keys</span> <span class="o">=</span> <span class="n">donors</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
@@ -236,39 +256,72 @@
         <span class="n">donor</span> <span class="o">=</span> <span class="n">donors</span><span class="p">[</span><span class="n">donor_key</span><span class="p">]</span>
         <span class="n">acceptor</span> <span class="o">=</span> <span class="n">acceptors</span><span class="p">[</span><span class="n">acceptor_key</span><span class="p">]</span>
 
-        <span class="n">donor_diffusion_simulation</span> <span class="o">=</span> <span class="n">DiffusionSimulation</span><span class="p">(</span><span class="n">donor</span><span class="p">,</span>
-                                                         <span class="n">donor_quenching</span><span class="p">,</span>
-                                                         <span class="n">simulation_parameter</span><span class="p">)</span>
+        <span class="n">donor_diffusion_simulation</span> <span class="o">=</span> <span class="n">DiffusionSimulation</span><span class="p">(</span>
+            <span class="n">donor</span><span class="p">,</span>
+            <span class="n">donor_quenching</span><span class="p">,</span>
+            <span class="n">simulation_parameter</span><span class="p">)</span>
         <span class="n">donor_diffusion_simulation</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-        <span class="n">donor_diffusion_simulation</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">directory</span><span class="o">+</span><span class="n">prefix</span><span class="o">+</span><span class="s1">&#39;_</span><span class="si">%s</span><span class="s1">D_diffusion.xyz&#39;</span> <span class="o">%</span> <span class="n">donor_key</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;xyz&#39;</span><span class="p">,</span> <span class="n">skip</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-        <span class="n">donor_diffusion_simulation</span><span class="o">.</span><span class="n">av</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">directory</span><span class="o">+</span><span class="n">prefix</span><span class="o">+</span><span class="s1">&#39;_</span><span class="si">%s</span><span class="s1">D&#39;</span> <span class="o">%</span> <span class="n">donor_key</span><span class="p">)</span>
+        <span class="n">donor_diffusion_simulation</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+            <span class="n">directory</span> <span class="o">+</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s1">&#39;_</span><span class="si">%s</span><span class="s1">D_diffusion.xyz&#39;</span> <span class="o">%</span> <span class="n">donor_key</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;xyz&#39;</span><span class="p">,</span>
+            <span class="n">skip</span><span class="o">=</span><span class="mi">5</span>
+        <span class="p">)</span>
+        <span class="n">donor_diffusion_simulation</span><span class="o">.</span><span class="n">av</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+            <span class="n">directory</span> <span class="o">+</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s1">&#39;_</span><span class="si">%s</span><span class="s1">D&#39;</span> <span class="o">%</span> <span class="n">donor_key</span><span class="p">)</span>
         <span class="n">n_donor</span><span class="p">[</span><span class="n">donor_key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">donor_diffusion_simulation</span><span class="o">.</span><span class="n">av</span><span class="o">.</span><span class="n">points</span><span class="p">)</span>
 
-        <span class="n">acceptor_diffusion_simulation</span> <span class="o">=</span> <span class="n">DiffusionSimulation</span><span class="p">(</span><span class="n">acceptor</span><span class="p">,</span>
-                                                            <span class="n">acceptor_quenching</span><span class="p">,</span>
-                                                            <span class="n">simulation_parameter</span><span class="p">)</span>
+        <span class="n">acceptor_diffusion_simulation</span> <span class="o">=</span> <span class="n">DiffusionSimulation</span><span class="p">(</span>
+            <span class="n">acceptor</span><span class="p">,</span>
+            <span class="n">acceptor_quenching</span><span class="p">,</span>
+            <span class="n">simulation_parameter</span>
+        <span class="p">)</span>
         <span class="n">acceptor_diffusion_simulation</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-        <span class="n">acceptor_diffusion_simulation</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">directory</span><span class="o">+</span><span class="n">prefix</span><span class="o">+</span><span class="s1">&#39;_</span><span class="si">%s</span><span class="s1">A_diffusion.xyz&#39;</span> <span class="o">%</span> <span class="n">acceptor_key</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;xyz&#39;</span><span class="p">,</span> <span class="n">skip</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-        <span class="n">acceptor_diffusion_simulation</span><span class="o">.</span><span class="n">av</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">directory</span><span class="o">+</span><span class="n">prefix</span><span class="o">+</span><span class="s1">&#39;_</span><span class="si">%s</span><span class="s1">A&#39;</span> <span class="o">%</span> <span class="n">acceptor_key</span><span class="p">)</span>
+        <span class="n">acceptor_diffusion_simulation</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+            <span class="n">directory</span> <span class="o">+</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s1">&#39;_</span><span class="si">%s</span><span class="s1">A_diffusion.xyz&#39;</span> <span class="o">%</span> <span class="n">acceptor_key</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;xyz&#39;</span><span class="p">,</span>
+            <span class="n">skip</span><span class="o">=</span><span class="mi">5</span>
+        <span class="p">)</span>
+        <span class="n">acceptor_diffusion_simulation</span><span class="o">.</span><span class="n">av</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+            <span class="n">directory</span> <span class="o">+</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s1">&#39;_</span><span class="si">%s</span><span class="s1">A&#39;</span> <span class="o">%</span> <span class="n">acceptor_key</span>
+        <span class="p">)</span>
         <span class="n">n_acceptor</span><span class="p">[</span><span class="n">acceptor_key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">acceptor_diffusion_simulation</span><span class="o">.</span><span class="n">av</span><span class="o">.</span><span class="n">points</span><span class="p">)</span>
 
-        <span class="n">fret_sim</span> <span class="o">=</span> <span class="n">FRETDecay</span><span class="p">(</span><span class="n">donor_diffusion_simulation</span><span class="p">,</span> <span class="n">acceptor_diffusion_simulation</span><span class="p">,</span>
-                             <span class="n">fret_parameter</span><span class="p">,</span> <span class="n">decay_parameter</span><span class="p">)</span>
+        <span class="n">fret_sim</span> <span class="o">=</span> <span class="n">FRETDecay</span><span class="p">(</span>
+            <span class="n">donor_diffusion_simulation</span><span class="p">,</span>
+            <span class="n">acceptor_diffusion_simulation</span><span class="p">,</span>
+            <span class="n">fret_parameter</span><span class="p">,</span> <span class="n">decay_parameter</span>
+        <span class="p">)</span>
         <span class="n">fret_sim</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
         <span class="n">decay</span> <span class="o">=</span> <span class="n">fret_sim</span><span class="o">.</span><span class="n">get_histogram</span><span class="p">()</span>
         <span class="n">decay</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">decay</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">directory</span><span class="o">+</span><span class="n">prefix</span><span class="o">+</span><span class="s2">&quot;_FRET-</span><span class="si">%s</span><span class="s2">D-</span><span class="si">%s</span><span class="s2">A-dRDA.txt&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">donor_key</span><span class="p">,</span> <span class="n">acceptor_key</span><span class="p">),</span> <span class="n">fret_sim</span><span class="o">.</span><span class="n">dRDA</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">directory</span><span class="o">+</span><span class="n">prefix</span><span class="o">+</span><span class="s2">&quot;_FRET-</span><span class="si">%s</span><span class="s2">D-</span><span class="si">%s</span><span class="s2">A.txt&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">donor_key</span><span class="p">,</span> <span class="n">acceptor_key</span><span class="p">),</span> <span class="n">decay</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span>
+                <span class="n">directory</span> <span class="o">+</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;_FRET-</span><span class="si">%s</span><span class="s2">D-</span><span class="si">%s</span><span class="s2">A-dRDA.txt&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="n">donor_key</span><span class="p">,</span> <span class="n">acceptor_key</span><span class="p">),</span>
+                <span class="n">fret_sim</span><span class="o">.</span><span class="n">dRDA</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+                <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span>
+                <span class="n">directory</span> <span class="o">+</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;_FRET-</span><span class="si">%s</span><span class="s2">D-</span><span class="si">%s</span><span class="s2">A.txt&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="n">donor_key</span><span class="p">,</span> <span class="n">acceptor_key</span><span class="p">),</span>
+                <span class="n">decay</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+                <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
         <span class="n">fret_decays</span><span class="p">[</span><span class="n">donor_key</span><span class="p">][</span><span class="n">acceptor_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">decay</span>
-        <span class="n">distances</span><span class="p">[</span><span class="n">donor_key</span><span class="p">][</span><span class="n">acceptor_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">fret_sim</span><span class="o">.</span><span class="n">dRDA</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">),</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">distances</span><span class="p">[</span><span class="n">donor_key</span><span class="p">][</span><span class="n">acceptor_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span>
+            <span class="n">fret_sim</span><span class="o">.</span><span class="n">dRDA</span><span class="p">,</span>
+            <span class="n">bins</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">150</span><span class="p">),</span>
+            <span class="n">density</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">get_number_of_av_points</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">fret_decays</span><span class="p">,</span> <span class="n">distances</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">fret_decays</span><span class="p">,</span> <span class="n">distances</span><span class="p">,</span> <span class="n">n_donor</span><span class="p">,</span> <span class="n">n_acceptor</span></div>
 
 
-<div class="viewcode-block" id="DecaySimulationParameter"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter">[docs]</a><span class="k">class</span> <span class="nc">DecaySimulationParameter</span><span class="p">(</span><span class="n">FittingParameterGroup</span><span class="p">):</span>
+<div class="viewcode-block" id="DecaySimulationParameter"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.DecaySimulationParameter">[docs]</a><span class="k">class</span> <span class="nc">DecaySimulationParameter</span><span class="p">(</span>
+    <span class="n">FittingParameterGroup</span>
+<span class="p">):</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dt_tac</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -331,8 +384,16 @@
     <span class="k">def</span> <span class="nf">tac_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_tac_range</span> <span class="o">=</span> <span class="n">v</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt_mt</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">dt_tac</span><span class="o">=</span><span class="mf">0.032</span><span class="p">,</span> <span class="n">n_tac</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span> <span class="n">n_curves</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span> <span class="n">n_photons</span><span class="o">=</span><span class="mf">10e6</span><span class="p">,</span>
-                 <span class="n">decay_mode</span><span class="o">=</span><span class="s1">&#39;photon&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">dt_mt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">,</span>
+            <span class="n">dt_tac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.032</span><span class="p">,</span>
+            <span class="n">n_tac</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4096</span><span class="p">,</span>
+            <span class="n">n_curves</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4096</span><span class="p">,</span>
+            <span class="n">n_photons</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10e6</span><span class="p">,</span>
+            <span class="n">decay_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;photon&#39;</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
         <span class="n">FittingParameterGroup</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dt_mt</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">dt_mt</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;dtMT[ns]&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dt_tac</span> <span class="o">=</span> <span class="n">FittingParameter</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">dt_tac</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;dtTAC[ns]&#39;</span><span class="p">)</span>
@@ -346,9 +407,14 @@
 
 <div class="viewcode-block" id="DyeDecay"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.DyeDecay">[docs]</a><span class="k">class</span> <span class="nc">DyeDecay</span><span class="p">(</span><span class="n">Curve</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">decay_parameter</span><span class="p">,</span> <span class="n">diffusion_simulation</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">decay_parameter</span><span class="p">,</span>
+            <span class="n">diffusion_simulation</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fit</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fit&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">DyeDecay</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">decay_parameter</span> <span class="o">=</span> <span class="n">decay_parameter</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span> <span class="o">=</span> <span class="n">diffusion_simulation</span>
@@ -388,8 +454,15 @@
     <span class="k">def</span> <span class="nf">decays</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decays</span>
 
-<div class="viewcode-block" id="DyeDecay.save_photons"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.save_photons">[docs]</a>    <span class="k">def</span> <span class="nf">save_photons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;photons&#39;</span><span class="p">,</span> <span class="n">group_title</span><span class="o">=</span><span class="s1">&#39;dye_diffusion&#39;</span><span class="p">,</span>
-                     <span class="n">hist_bins</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span> <span class="n">hist_range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="DyeDecay.save_photons"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.save_photons">[docs]</a>    <span class="k">def</span> <span class="nf">save_photons</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">filename</span><span class="p">,</span>
+            <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;photons&#39;</span><span class="p">,</span>
+            <span class="n">group_title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;dye_diffusion&#39;</span><span class="p">,</span>
+            <span class="n">hist_bins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4096</span><span class="p">,</span>
+            <span class="n">hist_range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
         <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;photons&#39;</span><span class="p">:</span>
             <span class="n">dtTAC</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">simulation_parameter</span><span class="o">.</span><span class="n">t_step</span>
@@ -416,7 +489,10 @@
                 <span class="n">header_string</span><span class="o">=</span><span class="s2">&quot;time</span><span class="se">\t</span><span class="s2">count&quot;</span>
             <span class="p">)</span></div>
 
-<div class="viewcode-block" id="DyeDecay.get_photons"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.get_photons">[docs]</a>    <span class="k">def</span> <span class="nf">get_photons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="DyeDecay.get_photons"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.get_photons">[docs]</a>    <span class="k">def</span> <span class="nf">get_photons</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
         <span class="n">n_photons</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n_photons&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay_parameter</span><span class="o">.</span><span class="n">n_photons</span><span class="p">)</span>
         <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
         <span class="n">tau0</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tau0&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusion</span><span class="o">.</span><span class="n">dye</span><span class="o">.</span><span class="n">tauD0</span><span class="p">)</span>
@@ -429,11 +505,13 @@
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;----------------&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of excitation photons: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">n_photons</span><span class="p">)</span>
 
-        <span class="n">dts</span><span class="p">,</span> <span class="n">phs</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">simulation</span><span class="o">.</span><span class="n">photon</span><span class="o">.</span><span class="n">simulate_photon_trace_rate</span><span class="p">(</span><span class="n">n_ph</span><span class="o">=</span><span class="n">n_photons</span><span class="p">,</span>
-                                                                                 <span class="n">quench</span><span class="o">=</span><span class="n">kq_array</span><span class="p">,</span>
-                                                                                 <span class="n">t_step</span><span class="o">=</span><span class="n">t_step</span><span class="p">,</span>
-                                                                                 <span class="n">tau0</span><span class="o">=</span><span class="n">tau0</span><span class="p">,</span>
-                                                                                 <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="n">dts</span><span class="p">,</span> <span class="n">phs</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">simulation</span><span class="o">.</span><span class="n">photon</span><span class="o">.</span><span class="n">simulate_photon_trace_rate</span><span class="p">(</span>
+            <span class="n">n_ph</span><span class="o">=</span><span class="n">n_photons</span><span class="p">,</span>
+            <span class="n">quench</span><span class="o">=</span><span class="n">kq_array</span><span class="p">,</span>
+            <span class="n">t_step</span><span class="o">=</span><span class="n">t_step</span><span class="p">,</span>
+            <span class="n">tau0</span><span class="o">=</span><span class="n">tau0</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span>
+        <span class="p">)</span>
 
         <span class="n">n_photons</span> <span class="o">=</span> <span class="n">phs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">n_f</span> <span class="o">=</span> <span class="n">phs</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
@@ -443,7 +521,10 @@
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Quantum yield: </span><span class="si">%.2f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">n_f</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_photons</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">dts</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">phs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="DyeDecay.get_decay"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.get_decay">[docs]</a>    <span class="k">def</span> <span class="nf">get_decay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="DyeDecay.get_decay"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.get_decay">[docs]</a>    <span class="k">def</span> <span class="nf">get_decay</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
         <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
         <span class="n">n_curves</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n_curves&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay_parameter</span><span class="o">.</span><span class="n">n_curves</span><span class="p">)</span>
         <span class="n">n_tac</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n_tac&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">decay_parameter</span><span class="o">.</span><span class="n">n_tac</span><span class="p">)</span>
@@ -465,7 +546,10 @@
                                                                  <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">decays</span></div>
 
-<div class="viewcode-block" id="DyeDecay.get_histogram"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.get_histogram">[docs]</a>    <span class="k">def</span> <span class="nf">get_histogram</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="DyeDecay.get_histogram"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.DyeDecay.get_histogram">[docs]</a>    <span class="k">def</span> <span class="nf">get_histogram</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
         <span class="n">normalize</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;normalize&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
         <span class="n">normalization_type</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;normalization_type&#39;</span><span class="p">,</span> <span class="s1">&#39;area&#39;</span><span class="p">)</span>
         <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
@@ -513,11 +597,23 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_decays</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_decay</span><span class="p">()</span></div></div>
 
 
-<div class="viewcode-block" id="FRETDecay"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.FRETDecay">[docs]</a><span class="k">class</span> <span class="nc">FRETDecay</span><span class="p">(</span><span class="n">DyeDecay</span><span class="p">):</span>
+<div class="viewcode-block" id="FRETDecay"><a class="viewcode-back" href="../../../../api/mfm.fluorescence.simulation.html#mfm.fluorescence.simulation.dye_diffusion.FRETDecay">[docs]</a><span class="k">class</span> <span class="nc">FRETDecay</span><span class="p">(</span>
+    <span class="n">DyeDecay</span>
+<span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">donor_diffusion</span><span class="p">,</span> <span class="n">acceptor_diffusion</span><span class="p">,</span>
-                 <span class="n">fret_parameter</span><span class="p">,</span> <span class="n">decay_parameter</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">DyeDecay</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">decay_parameter</span><span class="p">,</span> <span class="n">donor_diffusion</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">donor_diffusion</span><span class="p">,</span>
+            <span class="n">acceptor_diffusion</span><span class="p">,</span>
+            <span class="n">fret_parameter</span><span class="p">,</span>
+            <span class="n">decay_parameter</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">decay_parameter</span><span class="p">,</span>
+            <span class="n">donor_diffusion</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">donor_diffusion</span> <span class="o">=</span> <span class="n">donor_diffusion</span>
