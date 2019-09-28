@@ -12,9 +12,10 @@ class Experiment(
     mfm.base.Base
 ):
     """
-    All information contained within `ChiSurf` is associated to an experiment. Each experiment
-    is associated with a list of models and a list of setups. The list of models and the list
-    of setups determine the applicable models and loadable data-types respectively.
+    All information contained within `ChiSurf` is associated to an experiment.
+    Each experiment is associated with a list of models and a list of setups.
+    The list of models and the list of setups determine the applicable models
+    and loadable data-types respectively.
     """
 
     @property
@@ -45,7 +46,7 @@ class Experiment(
             self,
             model: Type[mfm.models.model.Model]
     ):
-        if model not in self._model_classes:
+        if model not in self.model_classes:
             self._model_classes.append(model)
 
     def add_model_classes(
@@ -59,7 +60,7 @@ class Experiment(
             self,
             reader: mfm.experiments.reader.ExperimentReader
     ):
-        if reader not in self._readers:
+        if reader not in self.readers:
             reader.experiment = self
             self._readers.append(reader)
 

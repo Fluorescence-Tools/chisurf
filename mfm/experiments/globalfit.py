@@ -26,7 +26,10 @@ class GlobalFitSetup(
             *args,
             **kwargs
     ):
-        super(GlobalFitSetup, self).__init__(*args, **kwargs)
+        super().__init__(
+            *args,
+            **kwargs
+        )
         self.hide()
         self.parameterWidgets = list()
         self.parameters = OrderedDict([])

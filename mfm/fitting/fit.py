@@ -11,6 +11,8 @@ import scipy.stats
 
 import mfm
 import mfm.base
+import mfm.io
+import mfm.curve
 import mfm.experiments
 import mfm.experiments.data
 import mfm.fitting.parameter
@@ -21,7 +23,9 @@ import mfm.models
 from mfm.math.optimization.leastsqbound import leastsqbound
 
 
-class Fit(mfm.base.Base):
+class Fit(
+    mfm.base.Base
+):
     """
 
     """
@@ -29,6 +33,7 @@ class Fit(mfm.base.Base):
     def __init__(
             self,
             model_class: Type[mfm.models.model.Model] = type,
+            data: mfm.experiments.data.DataCurve = None,
             xmin: int = 0,
             xmax: int = 0,
             **kwargs
@@ -43,14 +48,13 @@ class Fit(mfm.base.Base):
         super().__init__(**kwargs)
         self._model = None
         self.results = None
-
-        self._data = kwargs.get(
-            'data',
-            mfm.experiments.data.DataCurve(
+        if data is None:
+            data = mfm.experiments.data.DataCurve(
                 x=np.arange(10),
                 y=np.arange(10)
             )
-        )
+
+        self._data = data
         self.plots = list()
         self._xmin, self._xmax = xmin, xmax
         self._model_kw = kwargs.get('model_kw', {})
@@ -215,6 +219,19 @@ class Fit(mfm.base.Base):
         """
         return self.model.n_free
 
+    def get_curves(
+            self
+    ) -> Dict[str, mfm.curve.Curve]:
+        """Returns a dictionary containing the current data and the
+        model as mfm.curve.Curve objects.
+
+        :return:
+        """
+        return {
+            'model': self.model,
+            'data': self.data
+        }
+
     def get_chi2(
             self,
             parameter=None,
@@ -223,20 +240,27 @@ class Fit(mfm.base.Base):
     ) -> float:
         if model is None:
             model = self.model
-        return get_chi2(parameter, model, reduced)
+        return get_chi2(
+            parameter,
+            model,
+            reduced
+        )
 
     def get_wres(
             self,
             parameter=None,
             model=None,
             **kwargs
-    ):
+    ) -> np.ndarray:
         if model is None:
             model = self.model
         if parameter is not None:
             model.parameter_values = parameter
             model.update_model()
-        return model.get_wres(self, **kwargs)
+        return model.get_wres(
+            self,
+            **kwargs
+        )
 
     def save(
             self,
@@ -251,14 +275,26 @@ class Fit(mfm.base.Base):
             wr = self.weighted_residuals
             xmin, xmax = self.xmin, self.xmax
             x, m = self.model[xmin:xmax]
-            csv.save(np.vstack([x, wr]), filename+'_wr.txt')
-            csv.save(self.model[:], filename+'_fit.txt')
+            csv.save(
+                data=np.vstack([x, wr]),
+                filename=filename+'_wr.txt'
+            )
+            csv.save(
+                data=self.model[:],
+                filename=filename+'_fit.txt'
+            )
             if isinstance(
                     self.data,
                     mfm.curve.Curve
             ):
-                self.data.save(filename +'_data.txt', file_type='txt')
-                self.data.save(filename +'_data.json', file_type='json')
+                self.data.save(
+                    filename=filename + '_data.txt',
+                    file_type='txt'
+                )
+                self.data.save(
+                    filename=filename + '_data.json',
+                    file_type='json'
+                )
                 with open(filename+'_info.txt', 'w') as fp:
                     fp.write(str(self))
 
@@ -304,15 +340,18 @@ class Fit(mfm.base.Base):
         """Perform a chi2-scan on a parameter of the fit.
 
         :param parameter_name: the parameter name
-        :param rel_range: defines the scanning range as a fraction of the current value, e.g., for a
-        value of 2.0 a rel_range of 0.5 scans from (2.0 - 2.0*0.5) to (2.0 + 2.0*0.5)
+        :param rel_range: defines the scanning range as a fraction of the
+        current value, e.g., for a value of 2.0 a rel_range of 0.5 scans
+        from (2.0 - 2.0*0.5) to (2.0 + 2.0*0.5)
         :param kwargs:
         :return: an list containing arrays of the chi2 and the parameter-values
         """
         parameter = self.model.parameters_all_dict[parameter_name]
         if rel_range is None:
-            rel_range = max(parameter.error_estimate * 3.0 / parameter.value, 0.25)
-            rel_range = (rel_range, rel_range)
+            rel_range = max(
+                parameter.error_estimate * 3.0 / parameter.value,
+                0.25
+            )
         kwargs['rel_range'] = (rel_range, rel_range)
         parameter.parameter_scan = mfm.fitting.support_plane.scan_parameter(
             self,
@@ -322,7 +361,10 @@ class Fit(mfm.base.Base):
         return parameter.parameter_scan
 
 
-class FitGroup(list, Fit):
+class FitGroup(
+    list,
+    Fit
+):
 
     @property
     def selected_fit(
@@ -502,9 +544,15 @@ class FitGroup(list, Fit):
             self._fits.append(fit)
 
         list.__init__(self, self._fits)
-        Fit.__init__(self, data=data, **kwargs)
+        Fit.__init__(
+            self,
+            data=data,
+            **kwargs
+        )
 
-        self.global_model = mfm.models.global_model.globalfit.GlobalFitModel(self)
+        self.global_model = mfm.models.global_model.GlobalFitModel(
+            self
+        )
         self.global_model.fits = self._fits
 
     def __str__(self):
@@ -581,8 +629,8 @@ def approx_grad(
     """Approximate the derivative of a fit with respect to the parameters
     xk. The return value of the function is an array.
 
-    :param xk: values around which gradient is estimated. These values should be an array of length of the
-    free fitting parameters
+    :param xk: values around which gradient is estimated. These values should
+    be an array of length of the free fitting parameters
     :param fit: object of type 'Fit'
     :param epsilon: differential change
     :param args: additional arguments passed to 'Fit.get_wres'
@@ -617,8 +665,8 @@ def covariance_matrix(
 
     :param fit:
     :param kwargs:
-    :return: the covariance matrix and a list of of parameter indices which are "important", i.e.,
-    have a partial derivative deviating from zero.
+    :return: the covariance matrix and a list of of parameter indices which
+    are "important", i.e., have a partial derivative deviating from zero.
     """
     model = fit.model
     xk = np.array(model.parameter_values)
@@ -647,7 +695,10 @@ def covariance_matrix(
     try:
         cov_m = scipy.linalg.pinvh(0.5 * m)
     except ValueError:
-        cov_m = np.zeros_like((n_important_parameters, n_important_parameters), dtype=float)
+        cov_m = np.zeros_like(
+            (n_important_parameters, n_important_parameters),
+            dtype=float
+        )
     return cov_m, important_parameters
 
 
@@ -657,7 +708,9 @@ def get_wres(
 ) -> np.array:
     """Returns the weighted residuals for a list of parameters of a models
 
-    :param parameter: a list of the parameter values / or None. If None the models is not updated
+    :param parameter: a list of the parameter values / or None. If None
+    the models is not updated.
+
     :param model:
     :return:
     """
@@ -674,10 +727,12 @@ def get_chi2(
 ) -> float:
     """Returns either the reduced chi2 or the sum of squares (chi2)
 
-    :param parameter: a list of the parameter values or None. If None the models is not updated
+    :param parameter: a list of the parameter values or None. If None the models
+    is not updated
     :param model:
-    :param reduced: If True the returned value is divided by (n_points - n_free - 1.0) where n_points
-    is the number of data points and n_free is the number of model parameters
+    :param reduced: If True the returned value is divided by
+    (n_points - n_free - 1.0) where n_points is the number of data points
+    and n_free is the number of model parameters
     :return:
     """
     chi2 = (get_wres(parameter, model)**2.0).sum()
@@ -694,9 +749,9 @@ def lnprior(
         fit: mfm.fitting.fit.Fit,
         bounds: List[Tuple[float, float]] = None
 ) -> float:
-    """The probability determined by the prior which is given by the bounds of the models parameters.
-    If the models parameters leave the bounds, the ln of the probability is minus infinity otherwise it
-    is zero.
+    """The probability determined by the prior which is given by the bounds
+    of the models parameters. If the models parameters leave the bounds, the
+    ln of the probability is minus infinity otherwise it is zero.
     """
     if bounds is None:
         bounds = fit.model.parameter_bounds

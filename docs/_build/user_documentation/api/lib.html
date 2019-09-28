@@ -1,157 +1,175 @@
-<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta charset="utf-8" />
-    <title>API-Overview &#8212; ChiSurf  documentation</title>
-    <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../_static/bootstrap-sphinx.js"></script>
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>API-Overview &mdash; ChiSurf  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="next" title="Structural-Models" href="structure.html" />
+    <link rel="prev" title="Input-Output" href="io.html" /> 
+</head>
 
-  </head><body>
+<body class="wy-body-for-nav">
 
-  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
-    <div class="container">
-      <div class="navbar-header">
-        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="../../index.html">
-          ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b></b></span>
-      </div>
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
 
-        <div class="collapse navbar-collapse nav-collapse">
-          <ul class="nav navbar-nav">
+          
+            <a href="../../index.html" class="icon icon-home"> ChiSurf
+          
+
+          
+          </a>
+
+          
             
             
-              <li class="dropdown globaltoc-container">
-  <a role="button"
-     id="dLabelGlobalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="../../index.html">Site <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"
-      role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tools.html">Tools</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#api-all">API All</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="experiments.html">Experiments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fit.html">Fit and Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fluorescence.html">Fluorescence</a></li>
+<li class="toctree-l3"><a class="reference internal" href="io.html">Input-Output</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">API-Overview</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#module-mfm.common">Constants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#math">Math</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="structure.html">Structural-Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html">Tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="widgets.html">Widgets</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../use_cases.html">Use cases</a></li>
 </ul>
-</ul>
-</li>
-              
-                <li class="dropdown">
-  <a role="button"
-     id="dLabelLocalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="#">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"
-      role="menu"
-      aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">API-Overview</a><ul>
-<li><a class="reference internal" href="#module-mfm.common">Constants</a></li>
-<li><a class="reference internal" href="#math">Math</a><ul>
-<li><a class="reference internal" href="#module-mfm.math">General-Functions</a></li>
-<li><a class="reference internal" href="#module-mfm.math.functions">Special-Functions</a></li>
-<li><a class="reference internal" href="#module-mfm.math.linalg">Linear-Algebra</a></li>
-<li><a class="reference internal" href="#module-mfm.math.rand">Random</a></li>
-<li><a class="reference internal" href="#signal">Signal</a></li>
-<li><a class="reference internal" href="#datatools">Datatools</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</ul>
-</li>
-              
-            
-            
-              
-                
-              
-            
-            
-            
-            
-              <li class="hidden-sm">
-<div id="sourcelink">
-  <a href="../../_sources/user_documentation/api/lib.rst.txt"
-     rel="nofollow">Source</a>
-</div></li>
-            
-          </ul>
 
+            
           
-            
-<form class="navbar-form navbar-right" action="../../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
-          
-        </div>
-    </div>
-  </div>
-
-<div class="container">
-  <div class="row">
-      <div class="col-md-3">
-        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
-<li><a class="reference internal" href="#">API-Overview</a><ul>
-<li><a class="reference internal" href="#module-mfm.common">Constants</a></li>
-<li><a class="reference internal" href="#math">Math</a><ul>
-<li><a class="reference internal" href="#module-mfm.math">General-Functions</a></li>
-<li><a class="reference internal" href="#module-mfm.math.functions">Special-Functions</a></li>
-<li><a class="reference internal" href="#module-mfm.math.linalg">Linear-Algebra</a></li>
-<li><a class="reference internal" href="#module-mfm.math.rand">Random</a></li>
-<li><a class="reference internal" href="#signal">Signal</a></li>
-<li><a class="reference internal" href="#datatools">Datatools</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-
-<div id="sourcelink">
-  <a href="../../_sources/user_documentation/api/lib.rst.txt"
-     rel="nofollow">Source</a>
-</div>
-<form action="../../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
         </div>
       </div>
-    <div class="col-md-9 content">
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
       
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ChiSurf</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../api.html">API Reference</a> &raquo;</li>
+        
+      <li>API-Overview</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/user_documentation/api/lib.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
   <div class="section" id="module-mfm">
 <span id="api-overview"></span><h1>API-Overview<a class="headerlink" href="#module-mfm" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="module-mfm.common">
@@ -394,7 +412,7 @@ The radial distribution function of worm-like chains.</p>
 <span id="linear-algebra"></span><h3>Linear-Algebra<a class="headerlink" href="#module-mfm.math.linalg" title="Permalink to this headline">¶</a></h3>
 <dl class="attribute">
 <dt id="mfm.math.linalg.add3">
-<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">add3</code><span class="sig-paren">(</span><em class="sig-param">a: 'np.array'</em>, <em class="sig-param">b: 'np.array'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/math/linalg.html#add3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.add3" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">add3</code><span class="sig-paren">(</span><em class="sig-param">a: 'np.array'</em>, <em class="sig-param">b: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'np.ndarray'<a class="reference internal" href="../../_modules/mfm/math/linalg.html#add3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.add3" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds two 3D vectors</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -403,15 +421,18 @@ The radial distribution function of worm-like chains.</p>
 <li><p><strong>b</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.math.linalg.angle">
-<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">angle</code><span class="sig-paren">(</span><em class="sig-param">a: 'np.array'</em>, <em class="sig-param">b: 'np.array'</em>, <em class="sig-param">c: 'np.array'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/math/linalg.html#angle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.angle" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">angle</code><span class="sig-paren">(</span><em class="sig-param">a: 'np.array'</em>, <em class="sig-param">b: 'np.array'</em>, <em class="sig-param">c: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../../_modules/mfm/math/linalg.html#angle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.angle" title="Permalink to this definition">¶</a></dt>
 <dd><p>The angle between three vectors</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -421,8 +442,11 @@ The radial distribution function of worm-like chains.</p>
 <li><p><strong>c</strong> (<em>&lt;built-in function array&gt;</em>) – numpy array</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>angle between three vectors/points in space</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>angle between three vectors/points in space</p>
 </dd>
 </dl>
 </dd></dl>
@@ -465,7 +489,7 @@ formed of input arrays.</p>
 
 <dl class="attribute">
 <dt id="mfm.math.linalg.dihedral">
-<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">dihedral</code><span class="sig-paren">(</span><em class="sig-param">v1: 'np.array'</em>, <em class="sig-param">v2: 'np.array'</em>, <em class="sig-param">v3: 'np.array'</em>, <em class="sig-param">v4: 'np.array'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/math/linalg.html#dihedral"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.dihedral" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">dihedral</code><span class="sig-paren">(</span><em class="sig-param">v1: 'np.array'</em>, <em class="sig-param">v2: 'np.array'</em>, <em class="sig-param">v3: 'np.array'</em>, <em class="sig-param">v4: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../../_modules/mfm/math/linalg.html#dihedral"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.dihedral" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dihedral angle between four-vectors</p>
 <p>Given the coordinates of the four points, obtain the vectors b1, b2, and b3 by vector subtraction.
 Let me use the nonstandard notation &lt;v&gt; to denote v/<a href="#id2"><span class="problematic" id="id3">|v|</span></a>, the unit vector in the direction of the
@@ -486,15 +510,38 @@ when the angle is close to 0 or +-pi.)
 :type v4: &lt;built-in function array&gt;
 :param v4:</p>
 <dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>dihedral angle between four vectors</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.math.linalg.dist3">
+<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">dist3</code><span class="sig-paren">(</span><em class="sig-param">a: 'np.array'</em>, <em class="sig-param">b: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'np.ndarray'<a class="reference internal" href="../../_modules/mfm/math/linalg.html#dist3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.dist3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the distance between two 3D vectors</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>&lt;built-in function array&gt;</em>) – 3D vector</p></li>
+<li><p><strong>b</strong> (<em>&lt;built-in function array&gt;</em>) – 3D vector</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>dihedral angle between four vectors</p>
+<dd class="field-odd"><p>distance between the vectors</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.math.linalg.dot3">
-<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">dot3</code><span class="sig-paren">(</span><em class="sig-param">a: 'np.array'</em>, <em class="sig-param">b: 'np.array'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/math/linalg.html#dot3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.dot3" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">dot3</code><span class="sig-paren">(</span><em class="sig-param">a: 'np.array'</em>, <em class="sig-param">b: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../../_modules/mfm/math/linalg.html#dot3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.dot3" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dot product of 2 3D-vectors</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -503,15 +550,18 @@ when the angle is close to 0 or +-pi.)
 <li><p><strong>b</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.math.linalg.euler_matrix">
-<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">euler_matrix</code><span class="sig-paren">(</span><em class="sig-param">psi</em>, <em class="sig-param">theta</em>, <em class="sig-param">phi</em>, <em class="sig-param">approx=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/math/linalg.html#euler_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.euler_matrix" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">euler_matrix</code><span class="sig-paren">(</span><em class="sig-param">psi</em>, <em class="sig-param">theta</em>, <em class="sig-param">phi</em>, <em class="sig-param">approx: 'bool' = False</em><span class="sig-paren">)</span> &#x2192; 'np.ndarray'<a class="reference internal" href="../../_modules/mfm/math/linalg.html#euler_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.euler_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return homogeneous rotation matrix from Euler angles psi, theta and phi</p>
 <p>Here the Euler-angles are defined according to DIN 9300. For small angles the Trigonometric functions can be
 approximated by the first order if the parameter approx is True.</p>
@@ -524,78 +574,104 @@ yaw-angle</p></li>
 pitch-angle</p></li>
 <li><p><strong>phi</strong> – double
 yaw-angle</p></li>
-<li><p><strong>approx</strong> – bool</p></li>
+<li><p><strong>approx</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool</p></li>
 </ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.math.linalg.grad3d">
-<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">grad3d</code><span class="sig-paren">(</span><em class="sig-param">d</em>, <em class="sig-param">b=None</em>, <em class="sig-param">dg=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/math/linalg.html#grad3d"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.grad3d" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the gradient of a 3D scalar field within a certain shape defined the bounds.</p>
+<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">grad3d</code><span class="sig-paren">(</span><em class="sig-param">d: 'np.ndarray'</em>, <em class="sig-param">b: 'np.ndarray' = None</em>, <em class="sig-param">dg: 'float' = 1.0</em><span class="sig-paren">)</span> &#x2192; 'np.ndarray'<a class="reference internal" href="../../_modules/mfm/math/linalg.html#grad3d"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.grad3d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the gradient of a 3D scalar field within a certain shape
+defined the bounds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>d</strong> – 3D scalar field</p></li>
+<li><p><strong>d</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – 3D scalar field</p></li>
 <li><p><strong>bd</strong> – 3D bounds (1 within structure, 0 outside)</p></li>
-<li><p><strong>dg</strong> – grid spacing</p></li>
+<li><p><strong>dg</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – grid spacing</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>3D vector field as numpy-array (first axis defines x, y, z (0, 1, 2))</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>3D vector field as numpy-array (first axis defines x, y, z (0, 1, 2))</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.math.linalg.laplace3d_1">
-<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">laplace3d_1</code><span class="sig-paren">(</span><em class="sig-param">c</em>, <em class="sig-param">b=None</em>, <em class="sig-param">dg=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/math/linalg.html#laplace3d_1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.laplace3d_1" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the Laplacian of a 3D scalar field within a certain shape defined the bounds.</p>
+<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">laplace3d_1</code><span class="sig-paren">(</span><em class="sig-param">c: 'np.ndarray'</em>, <em class="sig-param">b: 'np.ndarray' = None</em>, <em class="sig-param">dg: 'float' = 1.0</em><span class="sig-paren">)</span> &#x2192; 'np.ndarray'<a class="reference internal" href="../../_modules/mfm/math/linalg.html#laplace3d_1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.laplace3d_1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the Laplacian of a 3D scalar field within a certain shape
+defined the bounds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>c</strong> – </p></li>
-<li><p><strong>b</strong> – </p></li>
-<li><p><strong>dg</strong> – </p></li>
+<li><p><strong>c</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – </p></li>
+<li><p><strong>b</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]) – </p></li>
+<li><p><strong>dg</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.math.linalg.norm3">
-<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">norm3</code><span class="sig-paren">(</span><em class="sig-param">a: 'np.array'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/math/linalg.html#norm3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.norm3" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">norm3</code><span class="sig-paren">(</span><em class="sig-param">a: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'np.ndarray'<a class="reference internal" href="../../_modules/mfm/math/linalg.html#norm3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.norm3" title="Permalink to this definition">¶</a></dt>
 <dd><p>The length of a 3D-vector</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>a</strong> (<em>&lt;built-in function array&gt;</em>) – </p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.math.linalg.quaternion_about_axis">
-<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">quaternion_about_axis</code><span class="sig-paren">(</span><em class="sig-param">angle</em>, <em class="sig-param">axis</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/math/linalg.html#quaternion_about_axis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.quaternion_about_axis" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">quaternion_about_axis</code><span class="sig-paren">(</span><em class="sig-param">angle: 'float'</em>, <em class="sig-param">axis: 'np.ndarray'</em><span class="sig-paren">)</span> &#x2192; 'np.ndarray'<a class="reference internal" href="../../_modules/mfm/math/linalg.html#quaternion_about_axis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.quaternion_about_axis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return quaternion for rotation about axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.math.linalg.quaternion_multiply">
-<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">quaternion_multiply</code><span class="sig-paren">(</span><em class="sig-param">quaternion0</em>, <em class="sig-param">quaternion1</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/math/linalg.html#quaternion_multiply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.quaternion_multiply" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">quaternion_multiply</code><span class="sig-paren">(</span><em class="sig-param">quaternion0: 'np.ndarray'</em>, <em class="sig-param">quaternion1: 'np.ndarray'</em><span class="sig-paren">)</span> &#x2192; 'np.ndarray'<a class="reference internal" href="../../_modules/mfm/math/linalg.html#quaternion_multiply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.quaternion_multiply" title="Permalink to this definition">¶</a></dt>
 <dd><p>Multiply quaternion1 to quaternion0
 (inplace, quaternion0 is modified)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.math.linalg.solve_richardson_lucy">
-<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">solve_richardson_lucy</code><span class="sig-paren">(</span><em class="sig-param">p: 'np.array'</em>, <em class="sig-param">u: 'np.array'</em>, <em class="sig-param">d: 'np.array'</em>, <em class="sig-param">max_iter: 'int'</em><span class="sig-paren">)</span> &#x2192; 'np.array'<a class="reference internal" href="../../_modules/mfm/math/linalg.html#solve_richardson_lucy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.solve_richardson_lucy" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">solve_richardson_lucy</code><span class="sig-paren">(</span><em class="sig-param">p: 'np.array'</em>, <em class="sig-param">u: 'np.array'</em>, <em class="sig-param">d: 'np.array'</em>, <em class="sig-param">max_iter: 'int'</em><span class="sig-paren">)</span> &#x2192; 'np.ndarray'<a class="reference internal" href="../../_modules/mfm/math/linalg.html#solve_richardson_lucy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.solve_richardson_lucy" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -606,7 +682,7 @@ yaw-angle</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p>&lt;built-in function array&gt;</p>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
 </dd>
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p></p>
@@ -614,10 +690,35 @@ yaw-angle</p></li>
 </dl>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="mfm.math.linalg.sub3">
+<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">sub3</code><span class="sig-paren">(</span><em class="sig-param">a: 'np.array'</em>, <em class="sig-param">b: 'np.array'</em><span class="sig-paren">)</span> &#x2192; 'np.ndarray'<a class="reference internal" href="../../_modules/mfm/math/linalg.html#sub3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.sub3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subtracts b from a and returns a vector of the difference</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>&lt;built-in function array&gt;</em>) – 3D vector</p></li>
+<li><p><strong>b</strong> (<em>&lt;built-in function array&gt;</em>) – 3D vector</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>distance between the vectors</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="function">
 <dt id="mfm.math.linalg.vector4_norm">
-<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">vector4_norm</code><span class="sig-paren">(</span><em class="sig-param">v</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/math/linalg.html#vector4_norm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.vector4_norm" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.math.linalg.</code><code class="sig-name descname">vector4_norm</code><span class="sig-paren">(</span><em class="sig-param">v: 'np.ndarray'</em><span class="sig-paren">)</span> &#x2192; 'np.ndarray'<a class="reference internal" href="../../_modules/mfm/math/linalg.html#vector4_norm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.linalg.vector4_norm" title="Permalink to this definition">¶</a></dt>
 <dd><p>Normalize a vector of length 4</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
@@ -626,7 +727,7 @@ yaw-angle</p></li>
 <p>Functions related to random numbers</p>
 <dl class="function">
 <dt id="mfm.math.rand.brownian">
-<code class="sig-prename descclassname">mfm.math.rand.</code><code class="sig-name descname">brownian</code><span class="sig-paren">(</span><em class="sig-param">x0</em>, <em class="sig-param">n</em>, <em class="sig-param">dt</em>, <em class="sig-param">delta</em>, <em class="sig-param">out=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/math/rand.html#brownian"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.rand.brownian" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.math.rand.</code><code class="sig-name descname">brownian</code><span class="sig-paren">(</span><em class="sig-param">x0: numpy.ndarray</em>, <em class="sig-param">n: int</em>, <em class="sig-param">dt: float</em>, <em class="sig-param">delta: float</em>, <em class="sig-param">out=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/math/rand.html#brownian"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.rand.brownian" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate an instance of Brownian motion (i.e. the Wiener process):</p>
 <div class="math notranslate nohighlight">
 \[X(t) = X(0) + N(0, \delta^2 \cdot t; 0, t)\]</div>
@@ -653,47 +754,63 @@ more dimension than <span class="math notranslate nohighlight">\(x_0\)</span>.</
 
 <dl class="attribute">
 <dt id="mfm.math.rand.mc">
-<code class="sig-prename descclassname">mfm.math.rand.</code><code class="sig-name descname">mc</code><span class="sig-paren">(</span><em class="sig-param">e0</em>, <em class="sig-param">e1</em>, <em class="sig-param">kT</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/math/rand.html#mc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.rand.mc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Monte-Carlo acceptance criterion</p>
+<code class="sig-prename descclassname">mfm.math.rand.</code><code class="sig-name descname">mc</code><span class="sig-paren">(</span><em class="sig-param">e0: float</em>, <em class="sig-param">e1: float</em>, <em class="sig-param">kT: float</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="../../_modules/mfm/math/rand.html#mc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.rand.mc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accept or reject a candidate in Metropolis-Algorithm by its energy
+and the energy of its predecessors using the Bennett acceptance ratio.</p>
+<ol class="arabic simple">
+<li><p>calculates the acceptance probability p_A, a candidate is accepted if it</p></li>
+<li><p>generate a uniform random number u on [0,1],</p></li>
+<li><p>and accepts a candidate if u &lt;= alpha, rejects a candidate if u &gt; alpha.</p></li>
+</ol>
+<div class="math notranslate nohighlight">
+\[p_A = min(1, exp( (E_1 - E_0) / kT))\]</div>
+<p>(see: <a class="reference external" href="https://de.wikipedia.org/wiki/Metropolis-Algorithmus">https://de.wikipedia.org/wiki/Metropolis-Algorithmus</a>)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>e0</strong> – float
+<li><p><strong>e0</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
 Previous energy</p></li>
-<li><p><strong>e1</strong> – float
-Next energy</p></li>
-<li><p><strong>kT</strong> – float
+<li><p><strong>e1</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
+Candidate energy</p></li>
+<li><p><strong>kT</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
 Temperature</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>bool</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>True if a candidate is accepted, False is a candidate is</p>
 </dd>
 </dl>
+<p>rejected.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="mfm.math.rand.random_numbers">
-<code class="sig-prename descclassname">mfm.math.rand.</code><code class="sig-name descname">random_numbers</code><span class="sig-paren">(</span><em class="sig-param">axis</em>, <em class="sig-param">cdf</em>, <em class="sig-param">n</em>, <em class="sig-param">norm_cdf=True</em>, <em class="sig-param">dtype=&lt;class 'numpy.float64'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/math/rand.html#random_numbers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.rand.random_numbers" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates an array of n random numbers according to an cumulative distribution function (CDF)</p>
+<code class="sig-prename descclassname">mfm.math.rand.</code><code class="sig-name descname">random_numbers</code><span class="sig-paren">(</span><em class="sig-param">cdf_axis</em>, <em class="sig-param">cdf_values: numpy.ndarray</em>, <em class="sig-param">n: int</em>, <em class="sig-param">norm_cdf=True</em>, <em class="sig-param">dtype=&lt;class 'numpy.float64'&gt;</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="../../_modules/mfm/math/rand.html#random_numbers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.rand.random_numbers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates an array of n random numbers according to an cumulative
+distribution function (CDF)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> – x-axis of cdf</p></li>
-<li><p><strong>cdf</strong> – CDF according to which random numbers are generated</p></li>
-<li><p><strong>n</strong> – the number of random numbers to be generated</p></li>
-<li><p><strong>norm_cdf</strong> – if True the array passed as cdf is normalized so that its last point is one</p></li>
+<li><p><strong>cdf_axis</strong> – x-axis of cdf</p></li>
+<li><p><strong>cdf_values</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – CDF according to which random numbers are generated</p></li>
+<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – the number of random numbers to be generated</p></li>
+<li><p><strong>norm_cdf</strong> – if True the array passed as cdf is normalized so that</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
 </dl>
+<p>its last point is one
+:rtype: <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>
+:return:</p>
 <p class="rubric">Examples</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.math</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pylab</span> <span class="k">as</span> <span class="nn">p</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">normal_distribution</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">rn</span> <span class="o">=</span> <span class="n">random_numbers</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">cdf</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">n</span><span class="o">=</span><span class="mi">10000000</span><span class="p">,</span> <span class="n">norm_cdf</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">hy</span><span class="p">,</span> <span class="n">hx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">rn</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">50</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rn</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">rand</span><span class="o">.</span><span class="n">random_numbers</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">cdf</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">n</span><span class="o">=</span><span class="mi">10000000</span><span class="p">,</span> <span class="n">norm_cdf</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">hy</span><span class="p">,</span> <span class="n">hx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">rn</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">hx</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">hy</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -738,21 +855,52 @@ number of random values to be generated</p></li>
 </div>
 
 
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="structure.html" class="btn btn-neutral float-right" title="Structural-Models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="io.html" class="btn btn-neutral float-left" title="Input-Output" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
     </div>
-      
-  </div>
-</div>
-<footer class="footer">
-  <div class="container">
-    <p class="pull-right">
-      <a href="#">Back to top</a>
-      
-    </p>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+        &copy; Copyright 2019, Thomas Peulen
+
     </p>
   </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
 </footer>
-  </body>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
 </html>

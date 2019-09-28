@@ -1,147 +1,154 @@
+
+
 <!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mfm.fluorescence.fps package &mdash; ChiSurf  documentation</title>
+  
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta charset="utf-8" />
-    <title>mfm.fluorescence.fps package &#8212; ChiSurf  documentation</title>
-    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
 
-  </head><body>
+<body class="wy-body-for-nav">
 
-  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
-    <div class="container">
-      <div class="navbar-header">
-        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="../index.html">
-          ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b></b></span>
-      </div>
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
 
-        <div class="collapse navbar-collapse nav-collapse">
-          <ul class="nav navbar-nav">
+          
+            <a href="../index.html" class="icon icon-home"> ChiSurf
+          
+
+          
+          </a>
+
+          
             
             
-              <li class="dropdown globaltoc-container">
-  <a role="button"
-     id="dLabelGlobalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="../index.html">Site <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"
-      role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
-</ul>
-</li>
-              
-                <li class="dropdown">
-  <a role="button"
-     id="dLabelLocalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="#">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"
-      role="menu"
-      aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">mfm.fluorescence.fps package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-mfm.fluorescence.fps.dynamic">mfm.fluorescence.fps.dynamic module</a></li>
-<li><a class="reference internal" href="#module-mfm.fluorescence.fps.functions">mfm.fluorescence.fps.functions module</a></li>
-<li><a class="reference internal" href="#module-mfm.fluorescence.fps.static">mfm.fluorescence.fps.static module</a></li>
-<li><a class="reference internal" href="#module-mfm.fluorescence.fps">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</ul>
-</li>
-              
-            
-            
-              
-                
-              
-            
-            
-            
-            
-              <li class="hidden-sm">
-<div id="sourcelink">
-  <a href="../_sources/api/mfm.fluorescence.fps.rst.txt"
-     rel="nofollow">Source</a>
-</div></li>
-            
-          </ul>
 
+            
           
-            
-<form class="navbar-form navbar-right" action="../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
-          
-        </div>
-    </div>
-  </div>
-
-<div class="container">
-  <div class="row">
-      <div class="col-md-3">
-        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
-<li><a class="reference internal" href="#">mfm.fluorescence.fps package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-mfm.fluorescence.fps.dynamic">mfm.fluorescence.fps.dynamic module</a></li>
-<li><a class="reference internal" href="#module-mfm.fluorescence.fps.functions">mfm.fluorescence.fps.functions module</a></li>
-<li><a class="reference internal" href="#module-mfm.fluorescence.fps.static">mfm.fluorescence.fps.static module</a></li>
-<li><a class="reference internal" href="#module-mfm.fluorescence.fps">Module contents</a></li>
-</ul>
-</li>
-</ul>
-
-<div id="sourcelink">
-  <a href="../_sources/api/mfm.fluorescence.fps.rst.txt"
-     rel="nofollow">Source</a>
-</div>
-<form action="../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
         </div>
       </div>
-    <div class="col-md-9 content">
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
       
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">ChiSurf</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>mfm.fluorescence.fps package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/api/mfm.fluorescence.fps.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
   <div class="section" id="mfm-fluorescence-fps-package">
 <h1>mfm.fluorescence.fps package<a class="headerlink" href="#mfm-fluorescence-fps-package" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="submodules">
@@ -365,20 +372,24 @@
 <dl class="method">
 <dt id="mfm.fluorescence.fps.dynamic.Sticking.slow_fact">
 <em class="property">property </em><code class="sig-name descname">slow_fact</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Sticking.slow_fact" title="Permalink to this definition">¶</a></dt>
-<dd><p>Slowing factor of the dye close to a slow-center. The diffusion coefficient is multiplied by this value.</p>
+<dd><p>Slowing factor of the dye close to a slow-center. The diffusion
+coefficient is multiplied by this value.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.fluorescence.fps.dynamic.Sticking.slow_radius">
 <em class="property">property </em><code class="sig-name descname">slow_radius</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Sticking.slow_radius" title="Permalink to this definition">¶</a></dt>
-<dd><p>The radius around the C-alpha atoms which is considered as slow part of the accessible volume</p>
+<dd><p>The radius around the C-alpha atoms which is considered as slow part
+of the accessible volume</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mfm.fluorescence.fps.dynamic.Sticking.sticky_mode">
 <em class="property">property </em><code class="sig-name descname">sticky_mode</code><a class="headerlink" href="#mfm.fluorescence.fps.dynamic.Sticking.sticky_mode" title="Permalink to this definition">¶</a></dt>
-<dd><p>If this value is set to <cite>quencher</cite> only the quencher slow down the dye if it is <cite>surface</cite> the C-beta
-atoms of all amino-acids slow down the dye. If the <cite>quencher</cite> file_type is used the <cite>quenching_parameter</cite>
+<dd><p>If this value is set to <cite>quencher</cite> only the quencher slow down the
+dye if it is <cite>surface</cite> the C-beta
+atoms of all amino-acids slow down the dye. If the <cite>quencher</cite> file_type
+is used the <cite>quenching_parameter</cite>
 parameter has to be passed upon initialization of the class.</p>
 </dd></dl>
 
@@ -396,7 +407,7 @@ time = tau * 1:N;       % create a time vector for plotting</p>
 <p><a class="reference external" href="http://labs.physics.berkeley.edu/mediawiki/index.php/Simulating_Brownian_Motion">http://labs.physics.berkeley.edu/mediawiki/index.php/Simulating_Brownian_Motion</a></p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>Tuple[np.array, np.array, int, int]</p>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[&lt;built-in function array&gt;, &lt;built-in function array&gt;, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -427,7 +438,7 @@ time = tau * 1:N;       % create a time vector for plotting</p>
 
 <dl class="function">
 <dt id="mfm.fluorescence.fps.functions.RDAMean">
-<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">RDAMean</code><span class="sig-paren">(</span><em class="sig-param">av1</em>, <em class="sig-param">av2</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#RDAMean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.RDAMean" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">RDAMean</code><span class="sig-paren">(</span><em class="sig-param">av1: 'mfm.fluorescence.fps.BasicAV'</em>, <em class="sig-param">av2: 'mfm.fluorescence.fps.BasicAV'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#RDAMean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.RDAMean" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the mean distance between two accessible volumes</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_filename</span> <span class="o">=</span> <span class="s1">&#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
@@ -438,11 +449,16 @@ time = tau * 1:N;       % create a time vector for plotting</p>
 <span class="go">52.93390285282142</span>
 </pre></div>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="mfm.fluorescence.fps.functions.RDAMeanE">
-<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">RDAMeanE</code><span class="sig-paren">(</span><em class="sig-param">av1</em>, <em class="sig-param">av2</em>, <em class="sig-param">R0=52.0</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#RDAMeanE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.RDAMeanE" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">RDAMeanE</code><span class="sig-paren">(</span><em class="sig-param">av1: 'mfm.fluorescence.fps.BasicAV'</em>, <em class="sig-param">av2: 'mfm.fluorescence.fps.BasicAV'</em>, <em class="sig-param">R0: 'float' = 52.0</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#RDAMeanE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.RDAMeanE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the FRET-averaged (PDA/Intensity) distance between two accessible volumes</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_filename</span> <span class="o">=</span> <span class="s1">&#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
@@ -453,6 +469,11 @@ time = tau * 1:N;       % create a time vector for plotting</p>
 <span class="go">52.602731299544686</span>
 </pre></div>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
@@ -609,7 +630,7 @@ are in proximity to the grid-point the slower the diffusion.</p>
 
 <dl class="function">
 <dt id="mfm.fluorescence.fps.functions.dRmp">
-<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">dRmp</code><span class="sig-paren">(</span><em class="sig-param">av1</em>, <em class="sig-param">av2</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#dRmp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.dRmp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">dRmp</code><span class="sig-paren">(</span><em class="sig-param">av1: 'mfm.fluorescence.fps.BasicAV'</em>, <em class="sig-param">av2: 'mfm.fluorescence.fps.BasicAV'</em><span class="sig-paren">)</span> &#x2192; 'float'<a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#dRmp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.dRmp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the distance between the mean position of two accessible volumes</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_filename</span> <span class="o">=</span> <span class="s1">&#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
@@ -620,6 +641,11 @@ are in proximity to the grid-point the slower the diffusion.</p>
 <span class="go">49.724995634807691</span>
 </pre></div>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
@@ -643,19 +669,23 @@ are in proximity to the grid-point the slower the diffusion.</p>
 
 <dl class="function">
 <dt id="mfm.fluorescence.fps.functions.histogram_rda">
-<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">histogram_rda</code><span class="sig-paren">(</span><em class="sig-param">av1</em>, <em class="sig-param">av2</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#histogram_rda"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.histogram_rda" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">histogram_rda</code><span class="sig-paren">(</span><em class="sig-param">av1: 'Type[mfm.fluorescence.fps.BasicAV]'</em>, <em class="sig-param">av2: 'Type[mfm.fluorescence.fps.BasicAV]'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'Tuple[np.ndarray, np.ndarray]'<a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#histogram_rda"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.histogram_rda" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the distance distribution with respect to a second accessible volume and returns the
 distance axis and the probability of the respective distance. By default the distance-axis “mfm.rda_axis”
 is taken to generate the histogram.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>av</strong> – Accessible volume</p></li>
+<li><p><strong>av1</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicAV</span></code></a>]) – Accessible volume</p></li>
+<li><p><strong>av2</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicAV</span></code></a>]) – Accessible volume</p></li>
 <li><p><strong>kwargs</strong> – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
@@ -748,7 +778,7 @@ list of points (x,y,z) defining the subav</p></li>
 
 <dl class="function">
 <dt id="mfm.fluorescence.fps.functions.widthRDA">
-<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">widthRDA</code><span class="sig-paren">(</span><em class="sig-param">av1</em>, <em class="sig-param">av2</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#widthRDA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.widthRDA" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.fps.functions.</code><code class="sig-name descname">widthRDA</code><span class="sig-paren">(</span><em class="sig-param">av1: 'mfm.fluorescence.fps.BasicAV'</em>, <em class="sig-param">av2: 'mfm.fluorescence.fps.BasicAV'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps/functions.html#widthRDA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.functions.widthRDA" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the width of the distance distribution between two accessible volumes</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_filename</span> <span class="o">=</span> <span class="s1">&#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
@@ -1072,7 +1102,12 @@ of the radius linker_sphere * w, where w is the linker-width</p></li>
 <dl class="method">
 <dt id="mfm.fluorescence.fps.ACV.slow_radius">
 <em class="property">property </em><code class="sig-name descname">slow_radius</code><a class="headerlink" href="#mfm.fluorescence.fps.ACV.slow_radius" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.fluorescence.fps.ACV.update">
@@ -1101,6 +1136,11 @@ of the radius linker_sphere * w, where w is the linker-width</p></li>
 <dt id="mfm.fluorescence.fps.BasicAV.Rmp">
 <em class="property">property </em><code class="sig-name descname">Rmp</code><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.Rmp" title="Permalink to this definition">¶</a></dt>
 <dd><p>The mean position of the accessible volume (average x, y, z coordinate)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1115,11 +1155,11 @@ of the radius linker_sphere * w, where w is the linker-width</p></li>
 
 <dl class="method">
 <dt id="mfm.fluorescence.fps.BasicAV.dRDA">
-<code class="sig-name descname">dRDA</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">av</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.dRDA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.dRDA" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dRDA</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">av: 'Type[BasicAV]'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.dRDA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.dRDA" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the mean distance to the second accessible volume</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>av</strong> – </p>
+<dd class="field-odd"><p><strong>av</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicAV</span></code></a>]) – </p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p></p>
@@ -1137,11 +1177,11 @@ of the radius linker_sphere * w, where w is the linker-width</p></li>
 
 <dl class="method">
 <dt id="mfm.fluorescence.fps.BasicAV.dRDAE">
-<code class="sig-name descname">dRDAE</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">av</em>, <em class="sig-param">forster_radius</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.dRDAE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.dRDAE" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dRDAE</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">av: 'Type[BasicAV]'</em>, <em class="sig-param">forster_radius: 'float'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.dRDAE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.dRDAE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the FRET-averaged mean distance to the second accessible volume</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>av</strong> – Accessible volume</p>
+<dd class="field-odd"><p><strong>av</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicAV</span></code></a>]) – Accessible volume</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p></p>
@@ -1159,11 +1199,11 @@ of the radius linker_sphere * w, where w is the linker-width</p></li>
 
 <dl class="method">
 <dt id="mfm.fluorescence.fps.BasicAV.dRmp">
-<code class="sig-name descname">dRmp</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">av</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.dRmp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.dRmp" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">dRmp</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">av: 'Type[BasicAV]'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.dRmp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.dRmp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the distance between the mean positions with respect to the accessible volume <cite>av</cite></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>av</strong> – accessible volume object</p>
+<dd class="field-odd"><p><strong>av</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicAV</span></code></a>]) – accessible volume object</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p></p>
@@ -1191,19 +1231,22 @@ of the radius linker_sphere * w, where w is the linker-width</p></li>
 
 <dl class="method">
 <dt id="mfm.fluorescence.fps.BasicAV.pRDA">
-<code class="sig-name descname">pRDA</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">av</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.pRDA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.pRDA" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">pRDA</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">av: 'Type[BasicAV]'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'Tuple[np.ndarray, np.ndarray]'<a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.pRDA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.pRDA" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the distance distribution with respect to a second accessible volume and returns the
 distance axis and the probability of the respective distance. By default the distance-axis “mfm.rda_axis”
 is taken to generate the histogram.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>av</strong> – Accessible volume</p></li>
+<li><p><strong>av</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicAV</span></code></a>]) – Accessible volume</p></li>
 <li><p><strong>kwargs</strong> – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
@@ -1223,7 +1266,7 @@ is taken to generate the histogram.</p>
 
 <dl class="method">
 <dt id="mfm.fluorescence.fps.BasicAV.save">
-<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename: str</em>, <em class="sig-param">mode: str = 'xyz'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.save" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename: 'str'</em>, <em class="sig-param">mode: 'str' = 'xyz'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Saves the accessible volume as xyz-file or open-dx density file</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
@@ -1247,11 +1290,11 @@ is taken to generate the histogram.</p>
 
 <dl class="method">
 <dt id="mfm.fluorescence.fps.BasicAV.widthRDA">
-<code class="sig-name descname">widthRDA</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">av</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.widthRDA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.widthRDA" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">widthRDA</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">av: 'Type[BasicAV]'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/fluorescence/fps.html#BasicAV.widthRDA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.fps.BasicAV.widthRDA" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the width of a DA-distance distribution</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>av</strong> – </p>
+<dd class="field-odd"><p><strong>av</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<a class="reference internal" href="#mfm.fluorescence.fps.BasicAV" title="mfm.fluorescence.fps.BasicAV"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicAV</span></code></a>]) – </p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p></p>
@@ -1381,21 +1424,43 @@ distribution by the average time of FRET.</p>
 </div>
 
 
-    </div>
-      
-  </div>
-</div>
-<footer class="footer">
-  <div class="container">
-    <p class="pull-right">
-      <a href="#">Back to top</a>
-      
-    </p>
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+        &copy; Copyright 2019, Thomas Peulen
+
     </p>
   </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
 </footer>
-  </body>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
 </html>

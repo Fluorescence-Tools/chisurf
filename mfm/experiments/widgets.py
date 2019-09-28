@@ -122,7 +122,7 @@ class ExperimentalDataSelector(
             *args,
             **kwargs
     ):
-        super(ExperimentalDataSelector, self).update(*args, **kwargs)
+        super().update(*args, **kwargs)
         try:
             window_title = self.fit.name
             self.setWindowTitle(window_title)
@@ -172,7 +172,7 @@ class ExperimentalDataSelector(
 
     def dropEvent(
             self,
-            event
+            event: QtGui.QDropEvent
     ):
         if event.mimeData().hasUrls():
             paths = [str(url.toLocalFile()) for url in event.mimeData().urls()]
@@ -244,7 +244,7 @@ class ExperimentalDataSelector(
         self.fit = fit
         self.setup = setup
 
-        super(ExperimentalDataSelector, self).__init__(
+        super().__init__(
             parent=parent
         )
         self.setWindowIcon(icon)

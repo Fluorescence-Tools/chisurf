@@ -1,8 +1,8 @@
 """
 Reactions
 
-Two types of reaction simulations are possible and are supported by two distinct modules. Stochastic reactions
-and continuous reactions
+Two types of reaction simulations are possible and are supported by two distinct
+modules. Stochastic reactions and continuous reactions
 
 1. :py:mod:`~mfm.math.reaction.continuous`
 2. :py:mod:`~mfm.math.reaction.stochastic`

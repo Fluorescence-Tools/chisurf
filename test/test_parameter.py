@@ -7,6 +7,7 @@ utils.set_search_paths(TOPDIR)
 
 import mfm
 import mfm.parameter
+import mfm.models
 import mfm.fitting
 
 
@@ -174,8 +175,14 @@ class Tests(unittest.TestCase):
         )
 
     def test_parameter_group(self):
-        p1 = mfm.parameter.Parameter(22)
-        p2 = mfm.parameter.Parameter(11)
+        p1 = mfm.parameter.Parameter(
+            value=22,
+            name='p1'
+        )
+        p2 = mfm.parameter.Parameter(
+            value=11,
+            name='p2'
+        )
         group_name = 'Parameter Gruppe'
         pg = mfm.parameter.ParameterGroup(
             name=group_name
@@ -189,6 +196,10 @@ class Tests(unittest.TestCase):
         self.assertEqual(
             pg.values,
             [22, 11]
+        )
+        self.assertListEqual(
+            pg.parameter_names,
+            ['p1', 'p2']
         )
 
     def test_fitting_parameter(self):

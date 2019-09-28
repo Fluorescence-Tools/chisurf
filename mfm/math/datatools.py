@@ -58,9 +58,11 @@ def overlapping_region(
     """
 
     :param dataset1: tuple
-        The tuple should consist of the x and y values. Whereas the x and y values have to be a numpy array.
+        The tuple should consist of the x and y values. Whereas the x and
+        y values have to be a numpy array.
     :param dataset2: tuple
-        The tuple should consist of the x and y values. Whereas the x and y values have to be a numpy array.
+        The tuple should consist of the x and y values. Whereas the x and
+        y values have to be a numpy array.
     :return: Two tuples
 
     Examples
@@ -272,7 +274,8 @@ def histogram1D(
         weights,
         n_bins: int = 101
 ):
-    """ Creates a histogram of the values the histogram is linear between the minium and the maximum value
+    """ Creates a histogram of the values the histogram is linear between the
+    minium and the maximum value
 
     :param values: the values to be binned
     :param weights: the weights of the values
@@ -421,8 +424,9 @@ def elte2(
         e2: np.array
 ) -> np.array:
     """
-    Takes two interleaved spectrum of lifetimes (a11, l11, a12, l12,...) and (a21, l21, a22, l22,...)
-    and return a new spectrum of lifetimes of the form (a11*a21, 1/(1/l11+1/l21), a12*a22, 1/(1/l22+1/l22), ...)
+    Takes two interleaved spectrum of lifetimes (a11, l11, a12, l12,...) and
+    (a21, l21, a22, l22,...) and return a new spectrum of lifetimes of the
+    form (a11*a21, 1/(1/l11+1/l21), a12*a22, 1/(1/l22+1/l22), ...)
 
     :param e1: array-like
         Lifetime spectrum 1
@@ -460,8 +464,9 @@ def ere2(
         e2: np.array
 ) -> np.array:
     """
-    Takes two interleaved spectrum of rates (a11, r11, a12, r12,...) and (a21, r21, a22, r22,...)
-    and return a new spectrum of lifetimes of the form (a11*a21, r11+r21), a12*a22, r22+r22), ...)
+    Takes two interleaved spectrum of rates (a11, r11, a12, r12,...) and
+    (a21, r21, a22, r22,...) and return a new spectrum of lifetimes of the
+    form (a11*a21, r11+r21), a12*a22, r22+r22), ...)
 
     :param e1: array-like
         Lifetime spectrum 1

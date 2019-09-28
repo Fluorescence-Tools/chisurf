@@ -286,21 +286,27 @@ class Csv(object):
             )
 
     @property
-    def n_cols(self) -> int:
+    def n_cols(
+            self
+    ) -> int:
         """
         The number of columns
         """
         return self._data.shape[1]
 
     @property
-    def n_rows(self) -> int:
+    def n_rows(
+            self
+    ) -> int:
         """
         The number of rows
         """
         return self._data.shape[0]
 
     @property
-    def data(self) -> np.array:
+    def data(
+            self
+    ) -> np.array:
         """
         Numpy array of the data
         """
@@ -323,7 +329,9 @@ class Csv(object):
         return [str(i) for i in header]
 
     @property
-    def n_points(self) -> int:
+    def n_points(
+            self
+    ) -> int:
         """
         The number of data points corresponds to the number of rows
         :py:attribute`.CSV.n_rows`

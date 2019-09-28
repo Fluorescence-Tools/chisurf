@@ -13,10 +13,16 @@ def chi2_max(
 
     :param chi2_value: the chi2 value
     :param number_of_parameters: the number of parameters of the models
-    :param conf_level: the confidence level that is used to calculate the maximum chi2
-    :param nu: the number of free degrees of freedom (number of observations - number of models parameters)
+    :param conf_level: the confidence level that is used to calculate the
+    maximum chi2
+    :param nu: the number of free degrees of freedom (number of observations
+    - number of models parameters)
     """
-    return chi2_value * (1.0 + float(number_of_parameters) / nu * scipy.stats.f.isf(1. - conf_level, number_of_parameters, nu))
+    return chi2_value * (
+            1.0 + float(number_of_parameters
+                        ) / nu * scipy.stats.f.isf(
+        1. - conf_level, number_of_parameters, nu)
+    )
 
 
 @nb.jit(nopython=True)

@@ -1,171 +1,176 @@
-<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta charset="utf-8" />
-    <title>Input-Output &#8212; ChiSurf  documentation</title>
-    <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../_static/bootstrap-sphinx.js"></script>
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Input-Output &mdash; ChiSurf  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="next" title="API-Overview" href="lib.html" />
+    <link rel="prev" title="Fluorescence" href="fluorescence.html" /> 
+</head>
 
-  </head><body>
+<body class="wy-body-for-nav">
 
-  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
-    <div class="container">
-      <div class="navbar-header">
-        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="../../index.html">
-          ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b></b></span>
-      </div>
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
 
-        <div class="collapse navbar-collapse nav-collapse">
-          <ul class="nav navbar-nav">
+          
+            <a href="../../index.html" class="icon icon-home"> ChiSurf
+          
+
+          
+          </a>
+
+          
             
             
-              <li class="dropdown globaltoc-container">
-  <a role="button"
-     id="dLabelGlobalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="../../index.html">Site <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"
-      role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tools.html">Tools</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#api-all">API All</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="experiments.html">Experiments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fit.html">Fit and Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fluorescence.html">Fluorescence</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Input-Output</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#csv-files">CSV-Files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-mfm.io.pdb">PDB-Files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-mfm.io.photons">TTTR-Files</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="lib.html">API-Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="structure.html">Structural-Models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tools.html">Tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="widgets.html">Widgets</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../use_cases.html">Use cases</a></li>
 </ul>
-</ul>
-</li>
-              
-                <li class="dropdown">
-  <a role="button"
-     id="dLabelLocalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="#">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"
-      role="menu"
-      aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">Input-Output</a><ul>
-<li><a class="reference internal" href="#csv-files">CSV-Files</a></li>
-<li><a class="reference internal" href="#module-mfm.io.pdb">PDB-Files</a><ul>
-<li><a class="reference internal" href="#requirements">Requirements</a></li>
-<li><a class="reference internal" href="#revisions">Revisions</a></li>
-<li><a class="reference internal" href="#notes">Notes</a></li>
-<li><a class="reference internal" href="#references">References</a></li>
-<li><a class="reference internal" href="#examples">Examples</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-mfm.io.photons">TTTR-Files</a><ul>
-<li><a class="reference internal" href="#id2">Requirements</a></li>
-<li><a class="reference internal" href="#id3">Revisions</a></li>
-<li><a class="reference internal" href="#id4">Notes</a></li>
-<li><a class="reference internal" href="#id5">References</a></li>
-<li><a class="reference internal" href="#id6">Examples</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</ul>
-</li>
-              
-            
-            
-              
-                
-              
-            
-            
-            
-            
-              <li class="hidden-sm">
-<div id="sourcelink">
-  <a href="../../_sources/user_documentation/api/io.rst.txt"
-     rel="nofollow">Source</a>
-</div></li>
-            
-          </ul>
 
+            
           
-            
-<form class="navbar-form navbar-right" action="../../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
-          
-        </div>
-    </div>
-  </div>
-
-<div class="container">
-  <div class="row">
-      <div class="col-md-3">
-        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
-<li><a class="reference internal" href="#">Input-Output</a><ul>
-<li><a class="reference internal" href="#csv-files">CSV-Files</a></li>
-<li><a class="reference internal" href="#module-mfm.io.pdb">PDB-Files</a><ul>
-<li><a class="reference internal" href="#requirements">Requirements</a></li>
-<li><a class="reference internal" href="#revisions">Revisions</a></li>
-<li><a class="reference internal" href="#notes">Notes</a></li>
-<li><a class="reference internal" href="#references">References</a></li>
-<li><a class="reference internal" href="#examples">Examples</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#module-mfm.io.photons">TTTR-Files</a><ul>
-<li><a class="reference internal" href="#id2">Requirements</a></li>
-<li><a class="reference internal" href="#id3">Revisions</a></li>
-<li><a class="reference internal" href="#id4">Notes</a></li>
-<li><a class="reference internal" href="#id5">References</a></li>
-<li><a class="reference internal" href="#id6">Examples</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-
-<div id="sourcelink">
-  <a href="../../_sources/user_documentation/api/io.rst.txt"
-     rel="nofollow">Source</a>
-</div>
-<form action="../../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
         </div>
       </div>
-    <div class="col-md-9 content">
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
       
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ChiSurf</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../api.html">API Reference</a> &raquo;</li>
+        
+      <li>Input-Output</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/user_documentation/api/io.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
   <div class="section" id="module-mfm.io">
 <span id="input-output"></span><h1>Input-Output<a class="headerlink" href="#module-mfm.io" title="Permalink to this headline">¶</a></h1>
 <p>The <a class="reference internal" href="#module-mfm.io" title="mfm.io"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io</span></code></a> module contains all classes, functions and modules relevant for file input and outputs.
@@ -175,7 +180,6 @@ In particular three kinds of file-types are handled:</p>
 <li><p>PDB-file <a class="reference internal" href="#module-mfm.io.pdb" title="mfm.io.pdb"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.pdb</span></code></a></p></li>
 <li><p>TTTR-files containing photon data <a class="reference internal" href="#module-mfm.io.photons" title="mfm.io.photons"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.photons</span></code></a></p></li>
 <li><p>XYZ-files containing coordinates <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.xyz</span></code></p></li>
-<li><p>PQR-files containing coordinates <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.pqr</span></code></p></li>
 <li><p>DX-files containing densities <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.dx</span></code></p></li>
 <li><p>SDT-files containing time-resolved fluorescence decays <a class="reference internal" href="../../api/mfm.io.html#module-mfm.io.sdtfile" title="mfm.io.sdtfile"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.sdtfile</span></code></a></p></li>
 </ol>
@@ -266,14 +270,13 @@ In particular three kinds of file-types are handled:</p>
 
 <dl class="function">
 <dt id="mfm.io.pdb.parse_string_pdb">
-<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">parse_string_pdb</code><span class="sig-paren">(</span><em class="sig-param">string: 'str'</em>, <em class="sig-param">assign_charge: 'bool' = False</em>, <em class="sig-param">verbose: 'bool' = True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#parse_string_pdb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.parse_string_pdb" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">parse_string_pdb</code><span class="sig-paren">(</span><em class="sig-param">string: 'str'</em>, <em class="sig-param">assign_charge: 'bool' = False</em>, <em class="sig-param">verbose: 'bool' = False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#parse_string_pdb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.parse_string_pdb" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>string</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
 <li><p><strong>assign_charge</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
 <li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
-<li><p><strong>kwargs</strong> – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -284,7 +287,7 @@ In particular three kinds of file-types are handled:</p>
 
 <dl class="function">
 <dt id="mfm.io.pdb.read">
-<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">filename: 'str'</em>, <em class="sig-param">assign_charge: 'bool' = False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.read" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">filename: 'str'</em>, <em class="sig-param">assign_charge: 'bool' = False</em>, <em class="sig-param">verbose: 'bool' = False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'np.ndarray'<a class="reference internal" href="../../_modules/mfm/io/pdb.html#read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.read" title="Permalink to this definition">¶</a></dt>
 <dd><p>Open pdb_file and read each line into pdb (a list of lines)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -293,14 +296,17 @@ In particular three kinds of file-types are handled:</p>
 <li><p><strong>assign_charge</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>numpy structured array containing the PDB info and VdW-radii and charges</p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>numpy structured array containing the PDB info and VdW-radii and charges</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_file</span> <span class="o">=</span> <span class="n">models</span><span class="s1">&#39;</span><span class="gp">&gt;&gt;&gt; </span>
-<span class="n">pdb</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb_file</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.io</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_file</span> <span class="o">=</span> <span class="n">models</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pdb</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span>
 <span class="go">array([ (0, &#39; &#39;, 7, &#39;MET&#39;, 1, &#39;N&#39;, &#39;N&#39;, [72.739, -17.501, 8.879], 0.0, 1.65, 0.0, 14.0067),</span>
 <span class="go">       (1, &#39; &#39;, 7, &#39;MET&#39;, 2, &#39;CA&#39;, &#39;C&#39;, [73.841, -17.042, 9.747], 0.0, 1.76, 0.0, 12.0107),</span>
@@ -308,7 +314,7 @@ In particular three kinds of file-types are handled:</p>
 <span class="go">       (3, &#39; &#39;, 7, &#39;MET&#39;, 4, &#39;O&#39;, &#39;O&#39;, [73.642, -18.708, 11.489], 0.0, 1.4, 0.0, 15.9994),</span>
 <span class="go">       (4, &#39; &#39;, 7, &#39;MET&#39;, 5, &#39;CB&#39;, &#39;C&#39;, [73.384, -15.89, 10.649], 0.0, 1.76, 0.0, 12.0107)],</span>
 <span class="go">      dtype=[(&#39;i&#39;, &#39;&lt;i4&#39;), (&#39;chain&#39;, &#39;S1&#39;), (&#39;res_id&#39;, &#39;&lt;i4&#39;), (&#39;res_name&#39;, &#39;S5&#39;), (&#39;atom_id&#39;, &#39;&lt;i4&#39;), (&#39;atom_name&#39;, &#39;S5</span>
-<span class="go">&#39;), (&#39;element&#39;, &#39;S1&#39;), (&#39;coord&#39;, &#39;&lt;f8&#39;, (3,)), (&#39;charge&#39;, &#39;&lt;f8&#39;), (&#39;radius&#39;, &#39;&lt;f8&#39;), (&#39;bfactor&#39;, &#39;&lt;f8&#39;), (&#39;mass&#39;, &#39;&lt;f8&#39;)</span>
+<span class="go">&#39;), (&#39;element&#39;, &#39;S1&#39;), (&#39;xyz&#39;, &#39;&lt;f8&#39;, (3,)), (&#39;charge&#39;, &#39;&lt;f8&#39;), (&#39;radius&#39;, &#39;&lt;f8&#39;), (&#39;bfactor&#39;, &#39;&lt;f8&#39;), (&#39;mass&#39;, &#39;&lt;f8&#39;)</span>
 <span class="go">])</span>
 </pre></div>
 </div>
@@ -335,15 +341,15 @@ If True the atoms are appended as a new models</p></li>
 
 <dl class="function">
 <dt id="mfm.io.pdb.write_points">
-<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">write_points</code><span class="sig-paren">(</span><em class="sig-param">filename: 'str'</em>, <em class="sig-param">points</em>, <em class="sig-param">verbose: 'bool' = False</em>, <em class="sig-param">mode='xyz'</em>, <em class="sig-param">density=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#write_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.write_points" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">write_points</code><span class="sig-paren">(</span><em class="sig-param">filename: 'str'</em>, <em class="sig-param">points: 'np.ndarray'</em>, <em class="sig-param">verbose: 'bool' = False</em>, <em class="sig-param">mode: 'str' = 'xyz'</em>, <em class="sig-param">density: 'np.ndarray' = None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#write_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.write_points" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>filename</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
-<li><p><strong>points</strong> – </p></li>
+<li><p><strong>points</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – </p></li>
 <li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
-<li><p><strong>mode</strong> – </p></li>
-<li><p><strong>density</strong> – </p></li>
+<li><p><strong>mode</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
+<li><p><strong>density</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -632,21 +638,52 @@ This is the default behavior.</p></li>
 </div>
 
 
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="lib.html" class="btn btn-neutral float-right" title="API-Overview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="fluorescence.html" class="btn btn-neutral float-left" title="Fluorescence" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
     </div>
-      
-  </div>
-</div>
-<footer class="footer">
-  <div class="container">
-    <p class="pull-right">
-      <a href="#">Back to top</a>
-      
-    </p>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+        &copy; Copyright 2019, Thomas Peulen
+
     </p>
   </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
 </footer>
-  </body>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
 </html>

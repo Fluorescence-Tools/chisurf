@@ -1,119 +1,152 @@
+
+
 <!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mfm.structure.potential.potentials &mdash; ChiSurf  documentation</title>
+  
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta charset="utf-8" />
-    <title>mfm.structure.potential.potentials &#8212; ChiSurf  documentation</title>
-    <link rel="stylesheet" href="../../../../_static/bootstrap-sphinx.css" type="text/css" />
-    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../../../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../../../_static/bootstrap-sphinx.js"></script>
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../../search.html" />
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
 
-  </head><body>
+<body class="wy-body-for-nav">
 
-  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
-    <div class="container">
-      <div class="navbar-header">
-        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="../../../../index.html">
-          ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b></b></span>
-      </div>
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
 
-        <div class="collapse navbar-collapse nav-collapse">
-          <ul class="nav navbar-nav">
+          
+            <a href="../../../../index.html" class="icon icon-home"> ChiSurf
+          
+
+          
+          </a>
+
+          
             
             
-              <li class="dropdown globaltoc-container">
-  <a role="button"
-     id="dLabelGlobalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="../../../../index.html">Site <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"
-      role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/introduction.html">Introduction</a></li>
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
-</ul>
-</li>
-              
-                <li class="dropdown">
-  <a role="button"
-     id="dLabelLocalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="#">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"
-      role="menu"
-      aria-labelledby="dLabelLocalToc"></ul>
-</li>
-              
-            
-            
-              
-                
-              
-            
-            
-            
-            
-              <li class="hidden-sm"></li>
-            
-          </ul>
 
-          
             
-<form class="navbar-form navbar-right" action="../../../../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
           
-        </div>
-    </div>
-  </div>
-
-<div class="container">
-  <div class="row">
-      <div class="col-md-3">
-        <div id="sidebar" class="bs-sidenav" role="complementary">
-<form action="../../../../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
         </div>
       </div>
-    <div class="col-md-9 content">
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
       
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">ChiSurf</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>mfm.structure.potential.potentials</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
   <h1>Source code for mfm.structure.potential.potentials</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
 
@@ -128,10 +161,10 @@
 <span class="kn">import</span> <span class="nn">scipy.stats</span>
 
 <span class="kn">import</span> <span class="nn">mfm.fluorescence</span>
-<span class="kn">from</span> <span class="nn">mfm.fluorescence.fps</span> <span class="k">import</span> <span class="n">BasicAV</span>
-<span class="kn">from</span> <span class="nn">mfm.structure.structure</span> <span class="k">import</span> <span class="n">Structure</span>
-<span class="kn">from</span> <span class="nn">mfm.structure.potential</span> <span class="k">import</span> <span class="n">cPotentials</span>
-<span class="kn">import</span> <span class="nn">mfm.widgets</span>
+<span class="kn">import</span> <span class="nn">mfm.fluorescence.fps</span>
+<span class="kn">import</span> <span class="nn">mfm.structure.structure</span>
+<span class="kn">import</span> <span class="nn">mfm.structure.potential.cPotentials</span>
+<span class="c1">#import mfm.widgets</span>
 <span class="kn">import</span> <span class="nn">mfm</span>
 
 
@@ -308,7 +341,7 @@
         <span class="n">structure</span><span class="o">.</span><span class="n">atoms</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;CA&#39;</span><span class="p">]</span>
     <span class="p">)</span>
     <span class="n">ca_atoms</span> <span class="o">=</span> <span class="n">structure</span><span class="o">.</span><span class="n">atoms</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">sel</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">lj_calpha</span><span class="p">(</span><span class="n">ca_atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">rm</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">lj_calpha</span><span class="p">(</span><span class="n">ca_atoms</span><span class="p">[</span><span class="s1">&#39;xyz&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">rm</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="gb"><a class="viewcode-back" href="../../../../api/mfm.structure.potential.html#mfm.structure.potential.potentials.gb">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">njit</span>
@@ -330,7 +363,7 @@
 
     <span class="n">nAtoms</span> <span class="o">=</span> <span class="n">xyz</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">cutoff2</span> <span class="o">=</span> <span class="n">cutoff</span> <span class="o">**</span> <span class="mi">2</span>
-    <span class="n">rs</span> <span class="o">=</span> <span class="n">xyz</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">]</span>
+    <span class="n">rs</span> <span class="o">=</span> <span class="n">xyz</span><span class="p">[</span><span class="s1">&#39;xyz&#39;</span><span class="p">]</span>
     <span class="n">a_radii</span> <span class="o">=</span> <span class="n">xyz</span><span class="p">[</span><span class="s1">&#39;radius&#39;</span><span class="p">]</span>
     <span class="n">a_charge</span> <span class="o">=</span> <span class="n">xyz</span><span class="p">[</span><span class="s1">&#39;charge&#39;</span><span class="p">]</span>
     <span class="n">pre</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="p">(</span><span class="mi">8</span> <span class="o">*</span> <span class="mf">3.14159265359</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">/</span> <span class="n">epsilon0</span> <span class="o">-</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">epsilon</span><span class="p">)</span>
@@ -420,7 +453,11 @@
 
 <div class="viewcode-block" id="Ramachandran.getEnergy"><a class="viewcode-back" href="../../../../api/mfm.structure.potential.html#mfm.structure.potential.potentials.Ramachandran.getEnergy">[docs]</a>    <span class="k">def</span> <span class="nf">getEnergy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span>
-        <span class="n">Erama</span> <span class="o">=</span> <span class="n">cPotentials</span><span class="o">.</span><span class="n">ramaEnergy</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">residue_lookup_i</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">iAtoms</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ramaPot</span><span class="p">)</span>
+        <span class="n">Erama</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">potential</span><span class="o">.</span><span class="n">cPotentials</span><span class="o">.</span><span class="n">ramaEnergy</span><span class="p">(</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">residue_lookup_i</span><span class="p">,</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">iAtoms</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ramaPot</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">Erama</span>
         <span class="k">return</span> <span class="n">Erama</span></div></div>
 
@@ -438,11 +475,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">structure</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;ele&#39;</span>
         <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;gb&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">cPotentials</span><span class="o">.</span><span class="n">gb</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">potential</span><span class="o">.</span><span class="n">cPotentials</span><span class="o">.</span><span class="n">gb</span>
 
 <div class="viewcode-block" id="Electrostatics.getEnergy"><a class="viewcode-back" href="../../../../api/mfm.structure.potential.html#mfm.structure.potential.potentials.Electrostatics.getEnergy">[docs]</a>    <span class="k">def</span> <span class="nf">getEnergy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="n">structure</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span>
-        <span class="c1">#Eel = cPotentials.gb(structure.xyz)</span>
+        <span class="c1">#Eel = mfm.structure.potential.cPotentials.gb(structure.xyz)</span>
         <span class="n">Eel</span> <span class="o">=</span> <span class="n">gb</span><span class="p">(</span><span class="n">structure</span><span class="o">.</span><span class="n">xyz</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">Eel</span>
         <span class="k">return</span> <span class="n">Eel</span></div></div>
@@ -459,7 +496,7 @@
 
 <div class="viewcode-block" id="LJ_Bead.getEnergy"><a class="viewcode-back" href="../../../../api/mfm.structure.potential.html#mfm.structure.potential.potentials.LJ_Bead.getEnergy">[docs]</a>    <span class="k">def</span> <span class="nf">getEnergy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="n">structure</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">lennard_jones_calpha</span><span class="p">(</span><span class="n">structure</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;coord&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">lennard_jones_calpha</span><span class="p">(</span><span class="n">structure</span><span class="o">.</span><span class="n">atoms</span><span class="p">[</span><span class="s1">&#39;xyz&#39;</span><span class="p">])</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">E</span></div></div>
 
 
@@ -492,7 +529,7 @@
         <span class="n">s1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span>
         <span class="n">cca2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoffCA</span> <span class="o">**</span> <span class="mi">2</span>
         <span class="n">ch2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoffH</span> <span class="o">**</span> <span class="mi">2</span>
-        <span class="n">nHbond</span><span class="p">,</span> <span class="n">Ehbond</span> <span class="o">=</span> <span class="n">cPotentials</span><span class="o">.</span><span class="n">hBondLookUpAll</span><span class="p">(</span><span class="n">s1</span><span class="o">.</span><span class="n">l_res</span><span class="p">,</span> <span class="n">s1</span><span class="o">.</span><span class="n">dist_ca</span><span class="p">,</span> <span class="n">s1</span><span class="o">.</span><span class="n">xyz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hPot</span><span class="p">,</span> <span class="n">cca2</span><span class="p">,</span> <span class="n">ch2</span><span class="p">)</span>
+        <span class="n">nHbond</span><span class="p">,</span> <span class="n">Ehbond</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">potential</span><span class="o">.</span><span class="n">cPotentials</span><span class="o">.</span><span class="n">hBondLookUpAll</span><span class="p">(</span><span class="n">s1</span><span class="o">.</span><span class="n">l_res</span><span class="p">,</span> <span class="n">s1</span><span class="o">.</span><span class="n">dist_ca</span><span class="p">,</span> <span class="n">s1</span><span class="o">.</span><span class="n">xyz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hPot</span><span class="p">,</span> <span class="n">cca2</span><span class="p">,</span> <span class="n">ch2</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">Ehbond</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nHbond</span> <span class="o">=</span> <span class="n">nHbond</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">E</span></div>
@@ -537,12 +574,12 @@
         <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span>
         <span class="n">nnEFactor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnEFactor</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">non_native_contact_on</span> <span class="k">else</span> <span class="mf">0.0</span>
         <span class="n">cutoff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cutoff</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">native_cutoff_on</span> <span class="k">else</span> <span class="mf">1e6</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">eMatrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sMatrix</span> <span class="o">=</span> <span class="n">cPotentials</span><span class="o">.</span><span class="n">go_init</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">residue_lookup_r</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dist_ca</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eMatrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sMatrix</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">potential</span><span class="o">.</span><span class="n">cPotentials</span><span class="o">.</span><span class="n">go_init</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">residue_lookup_r</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dist_ca</span><span class="p">,</span>
                                                          <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span><span class="p">,</span> <span class="n">nnEFactor</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="GoPotential.getEnergy"><a class="viewcode-back" href="../../../../api/mfm.structure.potential.html#mfm.structure.potential.potentials.GoPotential.getEnergy">[docs]</a>    <span class="k">def</span> <span class="nf">getEnergy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span>
-        <span class="n">Etot</span><span class="p">,</span> <span class="n">nNa</span><span class="p">,</span> <span class="n">Ena</span><span class="p">,</span> <span class="n">nNN</span><span class="p">,</span> <span class="n">Enn</span> <span class="o">=</span> <span class="n">cPotentials</span><span class="o">.</span><span class="n">go</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">residue_lookup_r</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dist_ca</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eMatrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sMatrix</span><span class="p">)</span>
+        <span class="n">Etot</span><span class="p">,</span> <span class="n">nNa</span><span class="p">,</span> <span class="n">Ena</span><span class="p">,</span> <span class="n">nNN</span><span class="p">,</span> <span class="n">Enn</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">potential</span><span class="o">.</span><span class="n">cPotentials</span><span class="o">.</span><span class="n">go</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">residue_lookup_r</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dist_ca</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eMatrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sMatrix</span><span class="p">)</span>
         <span class="c1">#Etot = go(c., c.dist_ca, self.eMatrix, self.sMatrix)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">Etot</span>
         <span class="k">return</span> <span class="n">Etot</span></div>
@@ -592,7 +629,7 @@
 
 <div class="viewcode-block" id="MJPotential.getEnergy"><a class="viewcode-back" href="../../../../api/mfm.structure.potential.html#mfm.structure.potential.potentials.MJPotential.getEnergy">[docs]</a>    <span class="k">def</span> <span class="nf">getEnergy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span>
-        <span class="n">nCont</span><span class="p">,</span> <span class="n">Emj</span> <span class="o">=</span> <span class="n">cPotentials</span><span class="o">.</span><span class="n">mj</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">l_res</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">residue_types</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dist_ca</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">xyz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mjPot</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ca_cutoff</span><span class="p">)</span>
+        <span class="n">nCont</span><span class="p">,</span> <span class="n">Emj</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">potential</span><span class="o">.</span><span class="n">cPotentials</span><span class="o">.</span><span class="n">mj</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">l_res</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">residue_types</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dist_ca</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">xyz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mjPot</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ca_cutoff</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">Emj</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nCont</span> <span class="o">=</span> <span class="n">nCont</span>
         <span class="k">return</span> <span class="n">Emj</span></div>
@@ -699,14 +736,23 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">structure</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">probe</span> <span class="o">=</span> <span class="n">probe</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_sphere_point</span> <span class="o">=</span> <span class="n">n_sphere_point</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sphere_points</span> <span class="o">=</span> <span class="n">cPotentials</span><span class="o">.</span><span class="n">spherePoints</span><span class="p">(</span><span class="n">n_sphere_point</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sphere_points</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">potential</span><span class="o">.</span><span class="n">cPotentials</span><span class="o">.</span><span class="n">spherePoints</span><span class="p">(</span>
+            <span class="n">n_sphere_point</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="n">radius</span>
 
 <div class="viewcode-block" id="ASA.getEnergy"><a class="viewcode-back" href="../../../../api/mfm.structure.potential.html#mfm.structure.potential.potentials.ASA.getEnergy">[docs]</a>    <span class="k">def</span> <span class="nf">getEnergy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span>
         <span class="c1">#def asa(double[:, :] xyz, int[:, :] resLookUp, double[:, :] caDist, double[:, :] sphere_points,</span>
         <span class="c1">#double probe=1.0, double radius = 2.5, char sum=1)</span>
-        <span class="n">asa</span> <span class="o">=</span> <span class="n">cPotentials</span><span class="o">.</span><span class="n">asa</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">xyz</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">l_res</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dist_ca</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sphere_points</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">probe</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span>
+        <span class="n">asa</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">potential</span><span class="o">.</span><span class="n">cPotentials</span><span class="o">.</span><span class="n">asa</span><span class="p">(</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">xyz</span><span class="p">,</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">l_res</span><span class="p">,</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">dist_ca</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sphere_points</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">probe</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">radius</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">asa</span></div></div>
 
 
@@ -742,7 +788,7 @@
 
 <div class="viewcode-block" id="ClashPotential.getEnergy"><a class="viewcode-back" href="../../../../api/mfm.structure.potential.html#mfm.structure.potential.potentials.ClashPotential.getEnergy">[docs]</a>    <span class="k">def</span> <span class="nf">getEnergy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure</span>
-        <span class="k">return</span> <span class="n">cPotentials</span><span class="o">.</span><span class="n">clash_potential</span><span class="p">(</span>
+        <span class="k">return</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">potential</span><span class="o">.</span><span class="n">cPotentials</span><span class="o">.</span><span class="n">clash_potential</span><span class="p">(</span>
             <span class="n">c</span><span class="o">.</span><span class="n">xyz</span><span class="p">,</span>
             <span class="n">c</span><span class="o">.</span><span class="n">vdw</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">clash_tolerance</span><span class="p">,</span>
@@ -848,7 +894,10 @@
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">position_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">positions</span>
         <span class="p">]</span>
-        <span class="n">avs</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">BasicAV</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">),</span> <span class="n">arguments</span><span class="p">)</span>
+        <span class="n">avs</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fluorescence</span><span class="o">.</span><span class="n">fps</span><span class="o">.</span><span class="n">BasicAV</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">),</span>
+            <span class="n">arguments</span>
+        <span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">position_key</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">positions</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">avs</span><span class="p">[</span><span class="n">position_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">avs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span></div>
 
@@ -866,7 +915,10 @@
 <span class="sd">            If this is True output to stdout is generated</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">Structure</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">structure</span><span class="p">,</span>
+                <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span>
+        <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">structure</span>
         <span class="k">for</span> <span class="n">distance_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">distances</span><span class="p">:</span>
             <span class="n">distance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distances</span><span class="p">[</span><span class="n">distance_key</span><span class="p">]</span>
@@ -890,8 +942,12 @@
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Forster-Radius </span><span class="si">%.1f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;Forster_radius&#39;</span><span class="p">])</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Distance type: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">distance_type</span><span class="p">)</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Model distance: </span><span class="si">%.1f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">d12</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Experimental distance: </span><span class="si">%.1f</span><span class="s2"> (-</span><span class="si">%.1f</span><span class="s2">, +</span><span class="si">%.1f</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">distance</span><span class="p">[</span><span class="s1">&#39;distance&#39;</span><span class="p">],</span>
-                                                                      <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;error_neg&#39;</span><span class="p">],</span> <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;error_pos&#39;</span><span class="p">]))</span></div>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;Experimental distance: </span><span class="si">%.1f</span><span class="s2"> (-</span><span class="si">%.1f</span><span class="s2">, +</span><span class="si">%.1f</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                        <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;distance&#39;</span><span class="p">],</span>
+                        <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;error_neg&#39;</span><span class="p">],</span> <span class="n">distance</span><span class="p">[</span><span class="s1">&#39;error_pos&#39;</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="p">)</span></div>
 
 <div class="viewcode-block" id="AvPotential.getChi2"><a class="viewcode-back" href="../../../../api/mfm.structure.potential.html#mfm.structure.potential.potentials.AvPotential.getChi2">[docs]</a>    <span class="k">def</span> <span class="nf">getChi2</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
@@ -911,7 +967,10 @@
 <span class="sd">        :return: A float containig the chi2 (reduced or unreduced) of the current or provided structure.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">verbose</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="ow">or</span> <span class="n">verbose</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">Structure</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">structure</span><span class="p">,</span>
+                <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span>
+        <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">structure</span>
 
         <span class="n">chi2</span> <span class="o">=</span> <span class="mf">0.0</span>
@@ -956,21 +1015,43 @@
 
 </pre></div>
 
-    </div>
-      
-  </div>
-</div>
-<footer class="footer">
-  <div class="container">
-    <p class="pull-right">
-      <a href="#">Back to top</a>
-      
-    </p>
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+        &copy; Copyright 2019, Thomas Peulen
+
     </p>
   </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
 </footer>
-  </body>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
 </html>

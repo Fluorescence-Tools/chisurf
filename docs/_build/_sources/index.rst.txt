@@ -18,10 +18,9 @@ User-Documentation
 .. toctree::
     :maxdepth: 1
 
-    user_documentation/installation.rst
-    user_documentation/introduction.rst
+    user_documentation/manual.rst
     user_documentation/tools.rst
-    user_documentation/api/api.rst
+    user_documentation/api.rst
     user_documentation/tutorials.rst
     user_documentation/use_cases.rst
 

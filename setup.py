@@ -56,6 +56,9 @@ eList = [
     ],
     [
         './mfm/structure/potential/cPotentials.pyx'
+    ],
+    [
+        './mfm/math/reaction/_reaction.pyx'
     ]
 ]
 

@@ -22,19 +22,40 @@ def get_data(
         curve_type: str = 'experiment',
         data_set: List[data.ExperimentalData] = None
 ) -> List[data.ExperimentalData]:
+    """Returns all curves `mfm.curve.DataCurve` except if the
+    curve is names "Global-fit"
+
+    :param curve_type: if this value is set to `experiment` only curves
+    that are experimental curves, i.e., curves that inherit from
+    `mfm.experiments.data.ExperimentalData` are returned.
+
+    :param data_set: A list containing the
+
+    :return:
     """
-    Returns all curves `mfm.curve.DataCurve` except if the curve is names "Global-fit"
-    """
-    if curve_type == 'all':
-        return [
-            d for d in data_set if isinstance(d, data.ExperimentalData) or isinstance(d, data.ExperimentDataGroup)
-        ]
-    elif curve_type == 'experiment':
+    if curve_type == 'experiment':
         return [
             d for d in data_set if (
-                    (isinstance(d, data.ExperimentalData) or isinstance(d, data.ExperimentDataGroup)) and
+                    (
+                            isinstance(
+                                d,
+                                data.ExperimentalData
+                            ) or
+                            isinstance(
+                                d,
+                                data.ExperimentDataGroup
+                            )
+                    ) and
                     d.name != "Global-fit"
-                                   )
-
+            )
         ]
-
+    else: #elif curve_type == 'all':
+        return [
+            d for d in data_set if
+            isinstance(
+                d,
+                data.ExperimentalData
+            ) or isinstance(
+                d, data.ExperimentDataGroup
+            )
+        ]

@@ -1,124 +1,154 @@
+
+
 <!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mfm.fluorescence.intensity &mdash; ChiSurf  documentation</title>
+  
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta charset="utf-8" />
-    <title>mfm.fluorescence.intensity &#8212; ChiSurf  documentation</title>
-    <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
-    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../../_static/doctools.js"></script>
-    <script type="text/javascript" src="../../../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
 
-  </head><body>
+<body class="wy-body-for-nav">
 
-  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
-    <div class="container">
-      <div class="navbar-header">
-        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="../../../index.html">
-          ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b></b></span>
-      </div>
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
 
-        <div class="collapse navbar-collapse nav-collapse">
-          <ul class="nav navbar-nav">
+          
+            <a href="../../../index.html" class="icon icon-home"> ChiSurf
+          
+
+          
+          </a>
+
+          
             
             
-              <li class="dropdown globaltoc-container">
-  <a role="button"
-     id="dLabelGlobalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="../../../index.html">Site <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"
-      role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/introduction.html">Introduction</a></li>
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
-</ul>
-</li>
-              
-                <li class="dropdown">
-  <a role="button"
-     id="dLabelLocalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="#">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"
-      role="menu"
-      aria-labelledby="dLabelLocalToc"></ul>
-</li>
-              
-            
-            
-              
-                
-              
-            
-            
-            
-            
-              <li class="hidden-sm"></li>
-            
-          </ul>
 
-          
             
-<form class="navbar-form navbar-right" action="../../../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
           
-        </div>
-    </div>
-  </div>
-
-<div class="container">
-  <div class="row">
-      <div class="col-md-3">
-        <div id="sidebar" class="bs-sidenav" role="complementary">
-<form action="../../../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
         </div>
       </div>
-    <div class="col-md-9 content">
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
       
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ChiSurf</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>mfm.fluorescence.intensity</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
   <h1>Source code for mfm.fluorescence.intensity</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-
-
-<div class="viewcode-block" id="nusiance"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.nusiance">[docs]</a><span class="k">def</span> <span class="nf">nusiance</span><span class="p">(</span>
+<div class="viewcode-block" id="nusiance"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.nusiance">[docs]</a><span></span><span class="k">def</span> <span class="nf">nusiance</span><span class="p">(</span>
         <span class="n">f</span><span class="p">,</span>
         <span class="o">*</span><span class="n">args</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span>
@@ -158,205 +188,45 @@
     <span class="k">return</span> <span class="n">m</span></div>
 
 
-<div class="viewcode-block" id="r_scatter"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.r_scatter">[docs]</a><span class="nd">@nusiance</span>
-<span class="k">def</span> <span class="nf">r_scatter</span><span class="p">(</span>
-        <span class="n">Ss</span><span class="p">,</span>
-        <span class="n">Sp</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span>
-<span class="p">):</span>
-    <span class="n">Fp</span> <span class="o">=</span> <span class="p">(</span><span class="n">Sp</span> <span class="o">-</span> <span class="n">Bp</span><span class="p">)</span> <span class="o">*</span> <span class="n">Gfactor</span>
-    <span class="n">Fs</span> <span class="o">=</span> <span class="n">Ss</span> <span class="o">-</span> <span class="n">Bs</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">Fp</span><span class="o">-</span><span class="n">Fs</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">Fp</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span> <span class="o">-</span> <span class="mf">3.</span> <span class="o">*</span> <span class="n">l2</span><span class="p">)</span> <span class="o">+</span> <span class="n">Fs</span><span class="o">*</span><span class="p">(</span><span class="mf">2.</span> <span class="o">-</span> <span class="mf">3.</span> <span class="o">*</span> <span class="n">l1</span><span class="p">))</span></div>
-
-<div class="viewcode-block" id="r_exp"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.r_exp">[docs]</a><span class="nd">@nusiance</span>
-<span class="k">def</span> <span class="nf">r_exp</span><span class="p">(</span>
-        <span class="n">Sp</span><span class="p">,</span>
-        <span class="n">Ss</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Experimental anisotropy</span>
-
-<span class="sd">        .. math::</span>
-
-<span class="sd">        r_{exp} = (F_p-S_s) / (F_p * (1-3*l_2) + S_s * (2-3*l_1))</span>
-<span class="sd">        F_p = S_p * Gfactor</span>
-
-<span class="sd">    :param Sp: Signal in the parallel detection channel</span>
-<span class="sd">    :param Ss: Signal in the perpendicular detection channel</span>
-<span class="sd">    :param kwargs:</span>
-<span class="sd">    :return:</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">Fp</span> <span class="o">=</span> <span class="n">Sp</span> <span class="o">*</span> <span class="n">Gfactor</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">Fp</span><span class="o">-</span><span class="n">Ss</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">Fp</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="mf">3.</span><span class="o">*</span><span class="n">l2</span><span class="p">)</span> <span class="o">+</span> <span class="n">Ss</span><span class="o">*</span><span class="p">(</span><span class="mf">2.</span><span class="o">-</span><span class="mf">3.</span><span class="o">*</span><span class="n">l1</span><span class="p">))</span></div>
-
-
-<div class="viewcode-block" id="sg_sr"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.sg_sr">[docs]</a><span class="nd">@nusiance</span>
-<span class="k">def</span> <span class="nf">sg_sr</span><span class="p">(</span>
-        <span class="n">Sg</span><span class="p">,</span>
-        <span class="n">Sr</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Ratio of the green signal Sg and the red signal Sr</span>
-
-<span class="sd">    :param Sg: green signal intensity</span>
-<span class="sd">    :param Sr: red signal intensity</span>
-<span class="sd">    :param kwargs:</span>
-<span class="sd">    :return:</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">Sr</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">Sg</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">Sr</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="fg_fr"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.fg_fr">[docs]</a><span class="nd">@nusiance</span>
-<span class="k">def</span> <span class="nf">fg_fr</span><span class="p">(</span>
-        <span class="n">Sg</span><span class="p">,</span>
-        <span class="n">Sr</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Ratio of the green fluorescence intensity and the red fluorescence</span>
-<span class="sd">    intensity. The fluorescence intensities are corrected for the background</span>
-<span class="sd">    and the cross-talk from the green dye to the red detection channel.</span>
-
-<span class="sd">    :param Sg:</span>
-<span class="sd">    :param Sr:</span>
-<span class="sd">    :param kwargs:</span>
-<span class="sd">    :return:</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">Fg</span> <span class="o">=</span> <span class="n">Sg</span> <span class="o">-</span> <span class="n">Bg</span>
-    <span class="n">Fr</span> <span class="o">=</span> <span class="n">Sr</span> <span class="o">-</span> <span class="n">Br</span> <span class="o">-</span> <span class="n">Fg</span> <span class="o">*</span> <span class="n">crosstalk</span>
-    <span class="k">return</span> <span class="n">Fg</span> <span class="o">/</span> <span class="n">Fr</span></div>
-
-
-<div class="viewcode-block" id="proximity_ratio"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.proximity_ratio">[docs]</a><span class="nd">@nusiance</span>
-<span class="k">def</span> <span class="nf">proximity_ratio</span><span class="p">(</span>
-        <span class="n">Sg</span><span class="p">,</span>
-        <span class="n">Sr</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Proximity ratio of the green and red detection channels. The</span>
-<span class="sd">    proximity ratio is calculated by Sr / (Sg + Sr) where Sr is the</span>
-<span class="sd">    uncorrected red signal, and Sg is the uncorrected green signal.</span>
-
-<span class="sd">    :param Sg:</span>
-<span class="sd">    :param Sr:</span>
-<span class="sd">    :param kwargs:</span>
-<span class="sd">    :return:</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">Sr</span> <span class="o">/</span> <span class="p">(</span><span class="n">Sg</span> <span class="o">+</span> <span class="n">Sr</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="apparent_fret_efficiency"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.apparent_fret_efficiency">[docs]</a><span class="nd">@nusiance</span>
-<span class="k">def</span> <span class="nf">apparent_fret_efficiency</span><span class="p">(</span>
-        <span class="n">Sg</span><span class="p">,</span>
-        <span class="n">Sr</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Apparent FRET efficiency (Fr / (Fg + Fr)) that is calculated using the</span>
-<span class="sd">    fluorescence intensities of the green Fg and red Fr dye. The</span>
-<span class="sd">    apparent FRET efficiency does not correct for instrumental</span>
-<span class="sd">    spectral sensitivity of the instrument for the dyes and the</span>
-<span class="sd">    fluorescence quantum yields of the dye.</span>
-
-<span class="sd">    :param Sg:</span>
-<span class="sd">    :param Sr:</span>
-<span class="sd">    :param kwargs:</span>
-<span class="sd">    :return:</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">Fg</span> <span class="o">=</span> <span class="n">Sg</span> <span class="o">-</span> <span class="n">Bg</span>
-    <span class="n">Fr</span> <span class="o">=</span> <span class="n">Sr</span> <span class="o">-</span> <span class="n">Br</span> <span class="o">-</span> <span class="n">Fg</span> <span class="o">*</span> <span class="n">crosstalk</span>
-    <span class="k">return</span> <span class="n">Fr</span> <span class="o">/</span> <span class="p">(</span><span class="n">Fg</span> <span class="o">+</span> <span class="n">Fr</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="fret_efficiency"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.fret_efficiency">[docs]</a><span class="nd">@nusiance</span>
-<span class="k">def</span> <span class="nf">fret_efficiency</span><span class="p">(</span>
-        <span class="n">Sg</span><span class="p">,</span>
-        <span class="n">Sr</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">    :param Sg:</span>
-<span class="sd">    :param Sr:</span>
-<span class="sd">    :param kwargs:</span>
-<span class="sd">    :return:</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">Fg</span> <span class="o">=</span> <span class="n">Sg</span> <span class="o">-</span> <span class="n">Bg</span>
-    <span class="n">Fa</span> <span class="o">=</span> <span class="p">(</span><span class="n">Sr</span> <span class="o">-</span> <span class="n">Br</span> <span class="o">-</span> <span class="n">Fg</span><span class="o">*</span><span class="n">crosstalk</span><span class="p">)</span> <span class="o">/</span> <span class="n">phiA</span>
-
-    <span class="k">return</span> <span class="n">Fa</span> <span class="o">/</span> <span class="p">(</span><span class="n">Fg</span> <span class="o">/</span> <span class="n">Gfactor</span> <span class="o">/</span> <span class="n">phiD</span> <span class="o">+</span> <span class="n">Fa</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="fluorescence_weighted_distance"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.fluorescence_weighted_distance">[docs]</a><span class="nd">@nusiance</span>
-<span class="k">def</span> <span class="nf">fluorescence_weighted_distance</span><span class="p">(</span>
-        <span class="n">Sg</span><span class="p">,</span>
-        <span class="n">Sr</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;The fluorescence weighted distance RDA_E</span>
-
-<span class="sd">    :param Sg:</span>
-<span class="sd">    :param Sr:</span>
-<span class="sd">    :param kwargs:</span>
-<span class="sd">    :return:</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">Fg</span> <span class="o">=</span> <span class="n">Sg</span> <span class="o">-</span> <span class="n">Bg</span>
-    <span class="n">Fa</span> <span class="o">=</span> <span class="p">(</span><span class="n">Sr</span> <span class="o">-</span> <span class="n">Br</span> <span class="o">-</span> <span class="n">Fg</span><span class="o">*</span><span class="n">crosstalk</span><span class="p">)</span> <span class="o">/</span> <span class="n">phiA</span>
-    <span class="k">return</span> <span class="n">R0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">6.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">Fg</span><span class="o">/</span><span class="n">Gfactor</span><span class="o">/</span><span class="n">phiD</span><span class="o">/</span><span class="n">Fa</span><span class="p">))</span></div>
-
-
-<div class="viewcode-block" id="fret_efficency_to_fdfa"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.fret_efficency_to_fdfa">[docs]</a><span class="nd">@nusiance</span>
-<span class="k">def</span> <span class="nf">fret_efficency_to_fdfa</span><span class="p">(</span>
-        <span class="n">E</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span>
-<span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;This function converts the transfer-efficency E to the donor-acceptor intensity ration FD/FA to</span>
-
-<span class="sd">    :param E: float</span>
-<span class="sd">        The transfer-efficency</span>
-<span class="sd">    :param phiD: float</span>
-<span class="sd">        donor quantum yield</span>
-<span class="sd">    :param phiA: float</span>
-<span class="sd">        acceptor quantum yield</span>
-<span class="sd">    :return: float, the FRET transfer efficency</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">fdfa</span> <span class="o">=</span> <span class="n">phiA</span> <span class="o">/</span> <span class="n">phiD</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">E</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">fdfa</span></div>
-
-
-<div class="viewcode-block" id="fdfa2transfer_efficency"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.intensity.fdfa2transfer_efficency">[docs]</a><span class="nd">@nusiance</span>
-<span class="k">def</span> <span class="nf">fdfa2transfer_efficency</span><span class="p">(</span><span class="n">fdfa</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;This function converts the donor-acceptor intensity ration FD/FA to the transfer-efficency E</span>
-
-<span class="sd">    :param fdfa: float</span>
-<span class="sd">        donor acceptor intensity ratio</span>
-<span class="sd">    :param phiD: float</span>
-<span class="sd">        donor quantum yield</span>
-<span class="sd">    :param phiA: float</span>
-<span class="sd">        acceptor quantum yield</span>
-<span class="sd">    :return: float, the FRET transfer efficency</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">r</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">fdfa</span> <span class="o">*</span> <span class="n">phiA</span> <span class="o">/</span> <span class="n">phiD</span>
-    <span class="n">trans</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">r</span>
-    <span class="k">return</span> <span class="n">trans</span></div>
 </pre></div>
 
-    </div>
-      
-  </div>
-</div>
-<footer class="footer">
-  <div class="container">
-    <p class="pull-right">
-      <a href="#">Back to top</a>
-      
-    </p>
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+        &copy; Copyright 2019, Thomas Peulen
+
     </p>
   </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
 </footer>
-  </body>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
 </html>

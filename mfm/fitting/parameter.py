@@ -318,12 +318,21 @@ class FittingParameterGroup(
     def finalize(self):
         pass
 
-    def __getattr__(self, item):
-        item = mfm.base.Base.__getattr__(self, item)
-        if isinstance(item, mfm.parameter.Parameter):
-            return item.value
-        else:
-            return item
+    # def __getattribute__(
+    #         self,
+    #         item_key
+    # ):
+    #     item = mfm.base.Base.__getattribute__(
+    #         self,
+    #         item_key
+    #     )
+    #     if isinstance(
+    #             item,
+    #             mfm.parameter.Parameter
+    #     ):
+    #         return item.value
+    #     else:
+    #         return item
 
     def __len__(self):
         return len(self.parameters_all)
@@ -340,11 +349,15 @@ class FittingParameterGroup(
         :param fit: the fit to which the parameter group is associated to
         :param model: the model to which the parameter group is associated to
         :param short: a short name for the parameter group
-        :param parameters: a list of the fitting parameters that are grouped by the fitting parameter group
+        :param parameters: a list of the fitting parameters that are grouped
+        by the fitting parameter group
         :param args:
         :param kwargs:
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args,
+            **kwargs
+        )
         if mfm.verbose:
             print("---------------")
             print("Class: %s" % self.__class__.name)
@@ -372,7 +385,14 @@ class FittingParameterGroup(
         current_version="19.08.23",
         details="use the mfm.fitting.widget.make_fitting_parameter_group_widget function instead"
     )
-    def to_widget(self, *args, **kwargs) -> mfm.fitting.widgets.FittingParameterGroupWidget:
-        return mfm.fitting.widgets.FittingParameterGroupWidget(self, *args, **kwargs)
+    def to_widget(
+            self,
+            *args,
+            **kwargs
+    ) -> mfm.fitting.widgets.FittingParameterGroupWidget:
+        return mfm.fitting.widgets.FittingParameterGroupWidget(
+            self, *args,
+            **kwargs
+        )
 
 

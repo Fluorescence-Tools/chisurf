@@ -1,5 +1,6 @@
+*****
 API Reference
--------------
+*****
 
 .. toctree::
    :maxdepth: 2
@@ -12,8 +13,9 @@ API Reference
    user_documentation/api/fluorescence.rst
    user_documentation/api/widgets.rst
 
+
 API All
--------
+=====
 
 .. toctree::
    :maxdepth: 2
