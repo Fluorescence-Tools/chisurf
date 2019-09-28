@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import Type
+from typing import Type, List
 
+import os
 import uuid
 import json
 import os.path
@@ -21,11 +22,13 @@ class Base(object):
 
     @property
     def name(self) -> str:
-        try:
-            name = self.__dict__['name']
-            return name() if callable(name) else name
-        except KeyError or AttributeError:
-            return self.__class__.__name__
+        # try:
+        #     name = self.__dict__['name']
+        #     return name() if callable(name) else name
+        # except KeyError or AttributeError:
+        #     return self.__class__.__name__
+        name = self.__dict__['name']
+        return name() if callable(name) else name
 
     @name.setter
     def name(
@@ -104,13 +107,15 @@ class Base(object):
         :param verbose:
         :return:
         """
-        if filename is not None:
-            with open(filename, 'r') as fp:
-                j = yaml.safe_load(fp)
-        elif yaml_string is not None:
-            j = yaml.safe_load(yaml_string)
-        else:
-            j = dict()
+        j = dict()
+        if isinstance(filename, str):
+            if os.path.isfile(filename):
+                with open(filename, 'r') as fp:
+                    j = yaml.safe_load(fp)
+        if isinstance(yaml_string, str):
+            j = yaml.safe_load(
+                yaml_string
+            )
         if verbose:
             print(j)
         self.from_dict(j)
@@ -141,13 +146,13 @@ class Base(object):
             If True additional output is printed to stdout
 
         """
-        if filename is not None:
-            with open(filename, 'r') as fp:
-                j = json.load(fp)
-        elif json_string is not None:
+        j = dict()
+        if isinstance(filename, str):
+            if os.path.isfile(filename):
+                with open(filename, 'r') as fp:
+                    j = json.load(fp)
+        if isinstance(json_string, str):
             j = json.loads(json_string)
-        else:
-            j = dict()
         if verbose:
             print(j)
         self.from_dict(j)
@@ -366,7 +371,8 @@ def clean_string(
 def find_objects(
         search_list: Iterable,
         object_type,
-        remove_double: bool = True):
+        remove_double: bool = True
+) -> List[object]:
     """Traverse a list recursively a an return all objects of type `object_type` as
     a list
 

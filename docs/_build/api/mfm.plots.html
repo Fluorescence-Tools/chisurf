@@ -1,404 +1,1698 @@
+
+
 <!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mfm.plots package &mdash; ChiSurf  documentation</title>
+  
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta charset="utf-8" />
-    <title>mfm.plots package &#8212; ChiSurf  documentation</title>
-    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
 
-  </head><body>
+<body class="wy-body-for-nav">
 
-  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
-    <div class="container">
-      <div class="navbar-header">
-        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="../index.html">
-          ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b></b></span>
-      </div>
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
 
-        <div class="collapse navbar-collapse nav-collapse">
-          <ul class="nav navbar-nav">
+          
+            <a href="../index.html" class="icon icon-home"> ChiSurf
+          
+
+          
+          </a>
+
+          
             
             
-              <li class="dropdown globaltoc-container">
-  <a role="button"
-     id="dLabelGlobalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="../index.html">Site <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"
-      role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
-</ul>
-</li>
-              
-                <li class="dropdown">
-  <a role="button"
-     id="dLabelLocalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="#">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"
-      role="menu"
-      aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">mfm.plots package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.MolView">mfm.plots.MolView module</a></li>
-<li><a class="reference internal" href="#mfm-plots-distance-module">mfm.plots.distance module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.fitinfo">mfm.plots.fitinfo module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.global_fit">mfm.plots.global_fit module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.global_tcspc">mfm.plots.global_tcspc module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.lineplot">mfm.plots.lineplot module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.parameter_scan">mfm.plots.parameter_scan module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.plot2d">mfm.plots.plot2d module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.plotbase">mfm.plots.plotbase module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.proteinMC">mfm.plots.proteinMC module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</ul>
-</li>
-              
-            
-            
-              
-                
-              
-            
-            
-            
-            
-              <li class="hidden-sm">
-<div id="sourcelink">
-  <a href="../_sources/api/mfm.plots.rst.txt"
-     rel="nofollow">Source</a>
-</div></li>
-            
-          </ul>
 
+            
           
-            
-<form class="navbar-form navbar-right" action="../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
-          
-        </div>
-    </div>
-  </div>
-
-<div class="container">
-  <div class="row">
-      <div class="col-md-3">
-        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
-<li><a class="reference internal" href="#">mfm.plots package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.MolView">mfm.plots.MolView module</a></li>
-<li><a class="reference internal" href="#mfm-plots-distance-module">mfm.plots.distance module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.fitinfo">mfm.plots.fitinfo module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.global_fit">mfm.plots.global_fit module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.global_tcspc">mfm.plots.global_tcspc module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.lineplot">mfm.plots.lineplot module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.parameter_scan">mfm.plots.parameter_scan module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.plot2d">mfm.plots.plot2d module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.plotbase">mfm.plots.plotbase module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots.proteinMC">mfm.plots.proteinMC module</a></li>
-<li><a class="reference internal" href="#module-mfm.plots">Module contents</a></li>
-</ul>
-</li>
-</ul>
-
-<div id="sourcelink">
-  <a href="../_sources/api/mfm.plots.rst.txt"
-     rel="nofollow">Source</a>
-</div>
-<form action="../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
         </div>
       </div>
-    <div class="col-md-9 content">
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
       
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">ChiSurf</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>mfm.plots package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/api/mfm.plots.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
   <div class="section" id="mfm-plots-package">
 <h1>mfm.plots package<a class="headerlink" href="#mfm-plots-package" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-mfm.plots.MolView">
-<span id="mfm-plots-molview-module"></span><h2>mfm.plots.MolView module<a class="headerlink" href="#module-mfm.plots.MolView" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="mfm.plots.MolView.ControlWidget">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">ControlWidget</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.current_state">
-<em class="property">property </em><code class="sig-name descname">current_state</code><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.current_state" title="Permalink to this definition">¶</a></dt>
+<div class="section" id="mfm-plots-molview-module">
+<h2>mfm.plots.MolView module<a class="headerlink" href="#mfm-plots-molview-module" title="Permalink to this headline">¶</a></h2>
+<p>QWidget(parent: QWidget = None, flags: Union[Qt.WindowFlags, Qt.WindowType] = Qt.WindowFlags())</p>
+<dl class="function">
+<dt id="mfm.plots.MolView.acceptDrops">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">acceptDrops</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.acceptDrops" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.first_frame">
-<em class="property">property </em><code class="sig-name descname">first_frame</code><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.first_frame" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.accessibleDescription">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">accessibleDescription</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.accessibleDescription" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.accessibleName">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">accessibleName</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.accessibleName" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.actionEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">actionEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QActionEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.actionEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.actions">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">actions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.actions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.activateWindow">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">activateWindow</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.activateWindow" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.addAction">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">addAction</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QAction</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.addAction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.addActions">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">addActions</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">object</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.addActions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.adjustSize">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">adjustSize</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.adjustSize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.autoFillBackground">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">autoFillBackground</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.autoFillBackground" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.backgroundRole">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">backgroundRole</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.backgroundRole" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.baseSize">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">baseSize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.baseSize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.blockSignals">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">blockSignals</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.blockSignals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.changeEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">changeEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.changeEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.childAt">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">childAt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.childAt" title="Permalink to this definition">¶</a></dt>
+<dd><p>childAt(self, int, int) -&gt; QWidget</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.childEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">childEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QChildEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.childEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.children">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">children</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.children" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.childrenRect">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">childrenRect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.childrenRect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.childrenRegion">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">childrenRegion</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.childrenRegion" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.clearFocus">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">clearFocus</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.clearFocus" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.clearMask">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">clearMask</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.clearMask" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.closeEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">closeEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QCloseEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.closeEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.colorCount">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">colorCount</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.colorCount" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.connectNotify">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">connectNotify</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QMetaMethod</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.connectNotify" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.contentsMargins">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">contentsMargins</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.contentsMargins" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.contentsRect">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">contentsRect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.contentsRect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.contextMenuEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">contextMenuEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QContextMenuEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.contextMenuEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.contextMenuPolicy">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">contextMenuPolicy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.contextMenuPolicy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.create">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">create</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">window: sip.voidptr = 0</em>, <em class="sig-param">initializeWindow: bool = True</em>, <em class="sig-param">destroyOldWindow: bool = True</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.create" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.createWindowContainer">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">createWindowContainer</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.createWindowContainer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.cursor">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">cursor</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.cursor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.customEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">customEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.customEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.deleteLater">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">deleteLater</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.deleteLater" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.depth">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">depth</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.depth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.destroy">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">destroy</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">destroyWindow: bool = True</em>, <em class="sig-param">destroySubWindows: bool = True</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.destroy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.devType">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">devType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.devType" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.devicePixelRatio">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">devicePixelRatio</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.devicePixelRatio" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.devicePixelRatioF">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">devicePixelRatioF</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.devicePixelRatioF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.devicePixelRatioFScale">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">devicePixelRatioFScale</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.devicePixelRatioFScale" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.disconnect">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">disconnect</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.disconnect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.disconnectNotify">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">disconnectNotify</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QMetaMethod</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.disconnectNotify" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.dragEnterEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">dragEnterEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QDragEnterEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.dragEnterEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.dragLeaveEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">dragLeaveEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QDragLeaveEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.dragLeaveEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.dragMoveEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">dragMoveEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QDragMoveEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.dragMoveEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.dropEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">dropEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QDropEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.dropEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.dumpObjectInfo">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">dumpObjectInfo</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.dumpObjectInfo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.dumpObjectTree">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">dumpObjectTree</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.dumpObjectTree" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.dynamicPropertyNames">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">dynamicPropertyNames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.dynamicPropertyNames" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.effectiveWinId">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">effectiveWinId</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.effectiveWinId" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.ensurePolished">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">ensurePolished</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.ensurePolished" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.enterEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">enterEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.enterEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.event">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">event</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.event" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.eventFilter">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">eventFilter</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.eventFilter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.find">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">find</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.find" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.findChild">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">findChild</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.findChild" title="Permalink to this definition">¶</a></dt>
+<dd><p>findChild(self, Tuple, name: str = ‘’, options: Union[Qt.FindChildOptions, Qt.FindChildOption] = Qt.FindChildrenRecursively) -&gt; QObject</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.findChildren">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">findChildren</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.findChildren" title="Permalink to this definition">¶</a></dt>
+<dd><p>findChildren(self, Tuple, name: str = ‘’, options: Union[Qt.FindChildOptions, Qt.FindChildOption] = Qt.FindChildrenRecursively) -&gt; List[QObject]
+findChildren(self, type, QRegExp, options: Union[Qt.FindChildOptions, Qt.FindChildOption] = Qt.FindChildrenRecursively) -&gt; List[QObject]
+findChildren(self, Tuple, QRegExp, options: Union[Qt.FindChildOptions, Qt.FindChildOption] = Qt.FindChildrenRecursively) -&gt; List[QObject]
+findChildren(self, type, QRegularExpression, options: Union[Qt.FindChildOptions, Qt.FindChildOption] = Qt.FindChildrenRecursively) -&gt; List[QObject]
+findChildren(self, Tuple, QRegularExpression, options: Union[Qt.FindChildOptions, Qt.FindChildOption] = Qt.FindChildrenRecursively) -&gt; List[QObject]</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.focusInEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">focusInEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QFocusEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.focusInEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.focusNextChild">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">focusNextChild</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.focusNextChild" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.focusNextPrevChild">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">focusNextPrevChild</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.focusNextPrevChild" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.focusOutEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">focusOutEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QFocusEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.focusOutEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.focusPolicy">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">focusPolicy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.focusPolicy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.focusPreviousChild">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">focusPreviousChild</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.focusPreviousChild" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.focusProxy">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">focusProxy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.focusProxy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.focusWidget">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">focusWidget</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.focusWidget" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.font">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">font</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.font" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.fontInfo">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">fontInfo</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.fontInfo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.fontMetrics">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">fontMetrics</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.fontMetrics" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.foregroundRole">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">foregroundRole</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.foregroundRole" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.frameGeometry">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">frameGeometry</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.frameGeometry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.frameSize">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">frameSize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.frameSize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.geometry">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">geometry</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.geometry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.getContentsMargins">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">getContentsMargins</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.getContentsMargins" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.grab">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">grab</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.grab" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.grabGesture">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">grabGesture</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">Qt.GestureType</em>, <em class="sig-param">flags: Union[Qt.GestureFlags</em>, <em class="sig-param">Qt.GestureFlag] = Qt.GestureFlags()</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.grabGesture" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.grabKeyboard">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">grabKeyboard</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.grabKeyboard" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.grabMouse">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">grabMouse</code><span class="sig-paren">(</span><em class="sig-param">self) grabMouse(self, Union[QCursor, Qt.CursorShape]</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.grabMouse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.grabShortcut">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">grabShortcut</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.grabShortcut" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.graphicsEffect">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">graphicsEffect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.graphicsEffect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.graphicsProxyWidget">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">graphicsProxyWidget</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.graphicsProxyWidget" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.hasFocus">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">hasFocus</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.hasFocus" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.hasHeightForWidth">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">hasHeightForWidth</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.hasHeightForWidth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.hasMouseTracking">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">hasMouseTracking</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.hasMouseTracking" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.hasTabletTracking">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">hasTabletTracking</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.hasTabletTracking" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.height">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">height</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.height" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.heightForWidth">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">heightForWidth</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.heightForWidth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.heightMM">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">heightMM</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.heightMM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.hide">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">hide</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.hide" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.hideEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">hideEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QHideEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.hideEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.inherits">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">inherits</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.inherits" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.initPainter">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">initPainter</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QPainter</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.initPainter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.inputMethodEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">inputMethodEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QInputMethodEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.inputMethodEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.inputMethodHints">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">inputMethodHints</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.inputMethodHints" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.inputMethodQuery">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">inputMethodQuery</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.inputMethodQuery" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.insertAction">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">insertAction</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QAction</em>, <em class="sig-param">QAction</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.insertAction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.insertActions">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">insertActions</code><span class="sig-paren">(</span><em class="sig-param">self, QAction, Iterable[QAction]</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.insertActions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.installEventFilter">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">installEventFilter</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QObject</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.installEventFilter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isActiveWindow">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isActiveWindow</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isActiveWindow" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isAncestorOf">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isAncestorOf</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isAncestorOf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isEnabled">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isEnabled</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isEnabled" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isEnabledTo">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isEnabledTo</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isEnabledTo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isFullScreen">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isFullScreen</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isFullScreen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isHidden">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isHidden</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isHidden" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isLeftToRight">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isLeftToRight</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isLeftToRight" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isMaximized">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isMaximized</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isMaximized" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isMinimized">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isMinimized</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isMinimized" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isModal">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isModal</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isModal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isRightToLeft">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isRightToLeft</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isRightToLeft" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isSignalConnected">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isSignalConnected</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isSignalConnected" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isVisible">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isVisible</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isVisible" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isVisibleTo">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isVisibleTo</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isVisibleTo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isWidgetType">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isWidgetType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isWidgetType" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isWindow">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isWindow</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isWindow" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isWindowModified">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isWindowModified</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isWindowModified" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.isWindowType">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">isWindowType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.isWindowType" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.keyPressEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">keyPressEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QKeyEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.keyPressEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.keyReleaseEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">keyReleaseEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QKeyEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.keyReleaseEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.keyboardGrabber">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">keyboardGrabber</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.keyboardGrabber" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.killTimer">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">killTimer</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.killTimer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.layout">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">layout</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.layout" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.layoutDirection">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">layoutDirection</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.layoutDirection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.leaveEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">leaveEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.leaveEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.locale">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">locale</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.locale" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.logicalDpiX">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">logicalDpiX</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.logicalDpiX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.logicalDpiY">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">logicalDpiY</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.logicalDpiY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.lower">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">lower</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.lower" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.mapFrom">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">mapFrom</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.mapFrom" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.mapFromGlobal">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">mapFromGlobal</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.mapFromGlobal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.mapFromParent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">mapFromParent</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.mapFromParent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.mapTo">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">mapTo</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.mapTo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.mapToGlobal">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">mapToGlobal</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.mapToGlobal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.mapToParent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">mapToParent</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.mapToParent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.mask">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">mask</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.mask" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.maximumHeight">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">maximumHeight</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.maximumHeight" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.maximumSize">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">maximumSize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.maximumSize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.maximumWidth">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">maximumWidth</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.maximumWidth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.metaObject">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">metaObject</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.metaObject" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.metric">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">metric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.metric" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.minimumHeight">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">minimumHeight</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.minimumHeight" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.minimumSize">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">minimumSize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.minimumSize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.minimumSizeHint">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">minimumSizeHint</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.minimumSizeHint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.minimumWidth">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">minimumWidth</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.minimumWidth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.mouseDoubleClickEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">mouseDoubleClickEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QMouseEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.mouseDoubleClickEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.mouseGrabber">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">mouseGrabber</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.mouseGrabber" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.mouseMoveEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">mouseMoveEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QMouseEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.mouseMoveEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.mousePressEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">mousePressEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QMouseEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.mousePressEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.mouseReleaseEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">mouseReleaseEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QMouseEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.mouseReleaseEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.move">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">move</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QPoint) move(self</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.move" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.moveEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">moveEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QMoveEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.moveEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.moveToThread">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">moveToThread</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QThread</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.moveToThread" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
-<dt id="mfm.plots.MolView.ControlWidget.history">
-<code class="sig-name descname">history</code><em class="property"> = ['spectrum count, rainbow_rev, all, byres=1', 'intra_fit all']</em><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.history" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.last_frame">
-<em class="property">property </em><code class="sig-name descname">last_frame</code><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.last_frame" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.n_states">
-<em class="property">property </em><code class="sig-name descname">n_states</code><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.n_states" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.normalOutputWritten">
-<code class="sig-name descname">normalOutputWritten</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">text</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.normalOutputWritten"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.normalOutputWritten" title="Permalink to this definition">¶</a></dt>
-<dd><p>Append name to the QTextEdit.</p>
+<dt id="mfm.plots.MolView.name">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">name</code><a class="headerlink" href="#mfm.plots.MolView.name" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.onCurrentStateChanged">
-<code class="sig-name descname">onCurrentStateChanged</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onCurrentStateChanged"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onCurrentStateChanged" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.nativeEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">nativeEvent</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.nativeEvent" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.onExeCommand">
-<code class="sig-name descname">onExeCommand</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onExeCommand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onExeCommand" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.nativeParentWidget">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">nativeParentWidget</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.nativeParentWidget" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.onFirstState">
-<code class="sig-name descname">onFirstState</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onFirstState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onFirstState" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.nextInFocusChain">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">nextInFocusChain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.nextInFocusChain" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.onHighlightQuencher">
-<code class="sig-name descname">onHighlightQuencher</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onHighlightQuencher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onHighlightQuencher" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.normalGeometry">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">normalGeometry</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.normalGeometry" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.onIntrafit">
-<code class="sig-name descname">onIntrafit</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onIntrafit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onIntrafit" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.objectName">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">objectName</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.objectName" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.onLastState">
-<code class="sig-name descname">onLastState</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onLastState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onLastState" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.overrideWindowFlags">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">overrideWindowFlags</code><span class="sig-paren">(</span><em class="sig-param">self, Union[Qt.WindowFlags, Qt.WindowType]</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.overrideWindowFlags" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.onNextFrame">
-<code class="sig-name descname">onNextFrame</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onNextFrame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onNextFrame" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.overrideWindowState">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">overrideWindowState</code><span class="sig-paren">(</span><em class="sig-param">self, Union[Qt.WindowStates, Qt.WindowState]</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.overrideWindowState" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.onPlayPymol">
-<code class="sig-name descname">onPlayPymol</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onPlayPymol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onPlayPymol" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.paintEngine">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">paintEngine</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.paintEngine" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.onPreviousFrame">
-<code class="sig-name descname">onPreviousFrame</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onPreviousFrame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onPreviousFrame" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.paintEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">paintEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QPaintEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.paintEvent" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.onReset">
-<code class="sig-name descname">onReset</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onReset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onReset" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.paintingActive">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">paintingActive</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.paintingActive" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.onStopPymol">
-<code class="sig-name descname">onStopPymol</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onStopPymol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onStopPymol" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.palette">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">palette</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.palette" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.onUpdateSpectrum">
-<code class="sig-name descname">onUpdateSpectrum</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#ControlWidget.onUpdateSpectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.onUpdateSpectrum" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.parent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">parent</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.parent" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.pymol">
-<em class="property">property </em><code class="sig-name descname">pymol</code><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.pymol" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.parentWidget">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">parentWidget</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.parentWidget" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.spectrum_type">
-<em class="property">property </em><code class="sig-name descname">spectrum_type</code><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.spectrum_type" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.physicalDpiX">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">physicalDpiX</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.physicalDpiX" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.ControlWidget.step">
-<em class="property">property </em><code class="sig-name descname">step</code><a class="headerlink" href="#mfm.plots.MolView.ControlWidget.step" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.physicalDpiY">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">physicalDpiY</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.physicalDpiY" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-</dd></dl>
+<dl class="function">
+<dt id="mfm.plots.MolView.pos">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">pos</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.pos" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
-<dl class="class">
-<dt id="mfm.plots.MolView.EmittingStream">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">EmittingStream</code><span class="sig-paren">(</span><em class="sig-param">parent: QObject = None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#EmittingStream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.EmittingStream" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtCore.QObject</span></code></p>
+<dl class="function">
+<dt id="mfm.plots.MolView.previousInFocusChain">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">previousInFocusChain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.previousInFocusChain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.property">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">property</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.property" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="attribute">
-<dt id="mfm.plots.MolView.EmittingStream.textWritten">
-<code class="sig-name descname">textWritten</code><a class="headerlink" href="#mfm.plots.MolView.EmittingStream.textWritten" title="Permalink to this definition">¶</a></dt>
+<dt id="mfm.plots.MolView.pymol">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">pymol</code><a class="headerlink" href="#mfm.plots.MolView.pymol" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.EmittingStream.write">
-<code class="sig-name descname">write</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">text</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#EmittingStream.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.EmittingStream.write" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<dl class="function">
+<dt id="mfm.plots.MolView.pyqtConfigure">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">pyqtConfigure</code><span class="sig-paren">(</span><em class="sig-param">...</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.pyqtConfigure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Each keyword argument is either the name of a Qt property or a Qt signal.
+For properties the property is set to the given value which should be of an
+appropriate type.
+For signals the signal is connected to the given value which should be a
+callable.</p>
 </dd></dl>
 
-<dl class="class">
-<dt id="mfm.plots.MolView.MolQtWidget">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">MolQtWidget</code><span class="sig-paren">(</span><em class="sig-param">parent</em>, <em class="sig-param">enableUi=True</em>, <em class="sig-param">File=''</em>, <em class="sig-param">play=False</em>, <em class="sig-param">sequence=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtOpenGL.QGLWidget</span></code></p>
-<p><a class="reference external" href="http://www.mail-archive.com/pymol-users&#64;lists.sourceforge.net/msg09609.html">http://www.mail-archive.com/pymol-users&#64;lists.sourceforge.net/msg09609.html</a>
-maybe later use this…: <a class="reference external" href="http://www.plosone.org/article/info:doi/10.1371/journal.pone.0021931">http://www.plosone.org/article/info:doi/10.1371/journal.pone.0021931</a></p>
-<dl class="method">
-<dt id="mfm.plots.MolView.MolQtWidget.initializeGL">
-<code class="sig-name descname">initializeGL</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.initializeGL"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.initializeGL" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.raise_">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">raise_</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.raise_" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolQtWidget.mouseMoveEvent">
-<code class="sig-name descname">mouseMoveEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QMouseEvent</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.mouseMoveEvent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.mouseMoveEvent" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.receivers">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">receivers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.receivers" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolQtWidget.mousePressEvent">
-<code class="sig-name descname">mousePressEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QMouseEvent</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.mousePressEvent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.mousePressEvent" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.rect">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">rect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.rect" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolQtWidget.mouseReleaseEvent">
-<code class="sig-name descname">mouseReleaseEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QMouseEvent</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.mouseReleaseEvent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.mouseReleaseEvent" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.releaseKeyboard">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">releaseKeyboard</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.releaseKeyboard" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolQtWidget.openFile">
-<code class="sig-name descname">openFile</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">File</em>, <em class="sig-param">frame=None</em>, <em class="sig-param">mode=None</em>, <em class="sig-param">verbose=True</em>, <em class="sig-param">object_name=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.openFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.openFile" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.releaseMouse">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">releaseMouse</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.releaseMouse" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolQtWidget.paintGL">
-<code class="sig-name descname">paintGL</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.paintGL"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.paintGL" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.releaseShortcut">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">releaseShortcut</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.releaseShortcut" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolQtWidget.redoSizing">
-<code class="sig-name descname">redoSizing</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.redoSizing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.redoSizing" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.removeAction">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">removeAction</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QAction</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.removeAction" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolQtWidget.reset">
-<code class="sig-name descname">reset</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.reset" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.removeEventFilter">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">removeEventFilter</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QObject</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.removeEventFilter" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolQtWidget.resizeGL">
-<code class="sig-name descname">resizeGL</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.resizeGL"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.resizeGL" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.render">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">render</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QPaintDevice</em>, <em class="sig-param">targetOffset: QPoint = QPoint()</em>, <em class="sig-param">sourceRegion: QRegion = QRegion()</em>, <em class="sig-param">flags: Union[QWidget.RenderFlags</em>, <em class="sig-param">QWidget.RenderFlag] = QWidget.RenderFlags(QWidget.DrawWindowBackground|QWidget.DrawChildren)) render(self</em>, <em class="sig-param">QPainter</em>, <em class="sig-param">targetOffset: QPoint = QPoint()</em>, <em class="sig-param">sourceRegion: QRegion = QRegion()</em>, <em class="sig-param">flags: Union[QWidget.RenderFlags</em>, <em class="sig-param">QWidget.RenderFlag] = QWidget.RenderFlags(QWidget.DrawWindowBackground|QWidget.DrawChildren)</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.render" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolQtWidget.strPDB">
-<code class="sig-name descname">strPDB</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">str</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolQtWidget.strPDB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolQtWidget.strPDB" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.repaint">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">repaint</code><span class="sig-paren">(</span><em class="sig-param">self) repaint(self</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em>, <em class="sig-param">int) repaint(self</em>, <em class="sig-param">QRect) repaint(self</em>, <em class="sig-param">QRegion</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.repaint" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-</dd></dl>
-
-<dl class="class">
-<dt id="mfm.plots.MolView.MolView">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">MolView</code><span class="sig-paren">(</span><em class="sig-param">parent: QWidget = None</em>, <em class="sig-param">flags: Union[Qt.WindowFlags</em>, <em class="sig-param">Qt.WindowType] = Qt.WindowFlags()</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#mfm.plots.plotbase.Plot" title="mfm.plots.plotbase.Plot"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.plots.plotbase.Plot</span></code></a></p>
-<dl class="method">
-<dt id="mfm.plots.MolView.MolView.append_structure">
-<code class="sig-name descname">append_structure</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">structure</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.append_structure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.append_structure" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.resize">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">resize</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QSize) resize(self</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.resize" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolView.colorStates">
-<code class="sig-name descname">colorStates</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">rgbColors</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.colorStates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.colorStates" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.resizeEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">resizeEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QResizeEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.resizeEvent" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolView.open_file">
-<code class="sig-name descname">open_file</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename</em>, <em class="sig-param">bfact=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.open_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.open_file" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.restoreGeometry">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">restoreGeometry</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.restoreGeometry" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolView.open_structure">
-<code class="sig-name descname">open_structure</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">structure</em>, <em class="sig-param">bfact=None</em>, <em class="sig-param">mode=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.open_structure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.open_structure" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.saveGeometry">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">saveGeometry</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.saveGeometry" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolView.pymol">
-<em class="property">property </em><code class="sig-name descname">pymol</code><a class="headerlink" href="#mfm.plots.MolView.MolView.pymol" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.scroll">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">scroll</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em>, <em class="sig-param">int) scroll(self</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em>, <em class="sig-param">QRect</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.scroll" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolView.replace_structure">
-<code class="sig-name descname">replace_structure</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">structure</em>, <em class="sig-param">bfact</em>, <em class="sig-param">stateNbr=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.replace_structure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.replace_structure" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.sender">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">sender</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.sender" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolView.reset">
-<code class="sig-name descname">reset</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.reset" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.senderSignalIndex">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">senderSignalIndex</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.senderSignalIndex" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolView.setState">
-<code class="sig-name descname">setState</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">nbr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.setState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.setState" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.setAcceptDrops">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setAcceptDrops</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">bool</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setAcceptDrops" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mfm.plots.MolView.MolView.set_bfactor">
-<code class="sig-name descname">set_bfactor</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">bfact=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/plots/MolView.html#MolView.set_bfactor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.plots.MolView.MolView.set_bfactor" title="Permalink to this definition">¶</a></dt>
+<dl class="function">
+<dt id="mfm.plots.MolView.setAccessibleDescription">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setAccessibleDescription</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">str</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setAccessibleDescription" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-</dd></dl>
+<dl class="function">
+<dt id="mfm.plots.MolView.setAccessibleName">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setAccessibleName</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">str</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setAccessibleName" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setAttribute">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setAttribute</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">Qt.WidgetAttribute</em>, <em class="sig-param">on: bool = True</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setAttribute" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setAutoFillBackground">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setAutoFillBackground</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">bool</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setAutoFillBackground" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setBackgroundRole">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setBackgroundRole</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QPalette.ColorRole</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setBackgroundRole" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setBaseSize">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setBaseSize</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em>, <em class="sig-param">int) setBaseSize(self</em>, <em class="sig-param">QSize</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setBaseSize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setContentsMargins">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setContentsMargins</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em>, <em class="sig-param">int) setContentsMargins(self</em>, <em class="sig-param">QMargins</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setContentsMargins" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setContextMenuPolicy">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setContextMenuPolicy</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">Qt.ContextMenuPolicy</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setContextMenuPolicy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setCursor">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setCursor</code><span class="sig-paren">(</span><em class="sig-param">self, Union[QCursor, Qt.CursorShape]</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setCursor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setDisabled">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setDisabled</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">bool</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setDisabled" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setEnabled">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setEnabled</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">bool</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setEnabled" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setFixedHeight">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setFixedHeight</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setFixedHeight" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setFixedSize">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setFixedSize</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QSize) setFixedSize(self</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setFixedSize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setFixedWidth">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setFixedWidth</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setFixedWidth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setFocus">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setFocus</code><span class="sig-paren">(</span><em class="sig-param">self) setFocus(self</em>, <em class="sig-param">Qt.FocusReason</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setFocus" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setFocusPolicy">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setFocusPolicy</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">Qt.FocusPolicy</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setFocusPolicy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setFocusProxy">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setFocusProxy</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QWidget</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setFocusProxy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setFont">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setFont</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QFont</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setFont" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setForegroundRole">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setForegroundRole</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QPalette.ColorRole</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setForegroundRole" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setGeometry">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setGeometry</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QRect) setGeometry(self</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setGeometry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setGraphicsEffect">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setGraphicsEffect</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QGraphicsEffect</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setGraphicsEffect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setHidden">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setHidden</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">bool</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setHidden" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setInputMethodHints">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setInputMethodHints</code><span class="sig-paren">(</span><em class="sig-param">self, Union[Qt.InputMethodHints, Qt.InputMethodHint]</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setInputMethodHints" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setLayout">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setLayout</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QLayout</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setLayout" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setLayoutDirection">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setLayoutDirection</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">Qt.LayoutDirection</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setLayoutDirection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setLocale">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setLocale</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QLocale</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setLocale" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setMask">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setMask</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QBitmap) setMask(self</em>, <em class="sig-param">QRegion</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setMask" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setMaximumHeight">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setMaximumHeight</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setMaximumHeight" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setMaximumSize">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setMaximumSize</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em>, <em class="sig-param">int) setMaximumSize(self</em>, <em class="sig-param">QSize</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setMaximumSize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setMaximumWidth">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setMaximumWidth</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setMaximumWidth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setMinimumHeight">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setMinimumHeight</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setMinimumHeight" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setMinimumSize">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setMinimumSize</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em>, <em class="sig-param">int) setMinimumSize(self</em>, <em class="sig-param">QSize</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setMinimumSize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setMinimumWidth">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setMinimumWidth</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setMinimumWidth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setMouseTracking">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setMouseTracking</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">bool</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setMouseTracking" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setObjectName">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setObjectName</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">str</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setObjectName" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setPalette">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setPalette</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QPalette</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setPalette" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setParent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setParent</code><span class="sig-paren">(</span><em class="sig-param">self, QWidget) setParent(self, QWidget, Union[Qt.WindowFlags, Qt.WindowType]</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setParent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setProperty">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setProperty</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setProperty" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setShortcutAutoRepeat">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setShortcutAutoRepeat</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em>, <em class="sig-param">enabled: bool = True</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setShortcutAutoRepeat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setShortcutEnabled">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setShortcutEnabled</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em>, <em class="sig-param">enabled: bool = True</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setShortcutEnabled" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setSizeIncrement">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setSizeIncrement</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em>, <em class="sig-param">int) setSizeIncrement(self</em>, <em class="sig-param">QSize</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setSizeIncrement" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setSizePolicy">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setSizePolicy</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QSizePolicy) setSizePolicy(self</em>, <em class="sig-param">QSizePolicy.Policy</em>, <em class="sig-param">QSizePolicy.Policy</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setSizePolicy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setStatusTip">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setStatusTip</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">str</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setStatusTip" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setStyle">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setStyle</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QStyle</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setStyle" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setStyleSheet">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setStyleSheet</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">str</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setStyleSheet" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setTabOrder">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setTabOrder</code><span class="sig-paren">(</span><em class="sig-param">QWidget</em>, <em class="sig-param">QWidget</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setTabOrder" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setTabletTracking">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setTabletTracking</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">bool</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setTabletTracking" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setToolTip">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setToolTip</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">str</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setToolTip" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setToolTipDuration">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setToolTipDuration</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setToolTipDuration" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setUpdatesEnabled">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setUpdatesEnabled</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">bool</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setUpdatesEnabled" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setVisible">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setVisible</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">bool</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setVisible" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setWhatsThis">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setWhatsThis</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">str</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setWhatsThis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setWindowFilePath">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setWindowFilePath</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">str</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setWindowFilePath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setWindowFlag">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setWindowFlag</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">Qt.WindowType</em>, <em class="sig-param">on: bool = True</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setWindowFlag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setWindowFlags">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setWindowFlags</code><span class="sig-paren">(</span><em class="sig-param">self, Union[Qt.WindowFlags, Qt.WindowType]</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setWindowFlags" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setWindowIcon">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setWindowIcon</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QIcon</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setWindowIcon" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setWindowIconText">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setWindowIconText</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">str</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setWindowIconText" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setWindowModality">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setWindowModality</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">Qt.WindowModality</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setWindowModality" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setWindowModified">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setWindowModified</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">bool</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setWindowModified" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setWindowOpacity">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setWindowOpacity</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">float</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setWindowOpacity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setWindowRole">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setWindowRole</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">str</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setWindowRole" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setWindowState">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setWindowState</code><span class="sig-paren">(</span><em class="sig-param">self, Union[Qt.WindowStates, Qt.WindowState]</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setWindowState" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.setWindowTitle">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">setWindowTitle</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">str</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.setWindowTitle" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.sharedPainter">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">sharedPainter</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.sharedPainter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.show">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">show</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.show" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.showEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">showEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QShowEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.showEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.showFullScreen">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">showFullScreen</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.showFullScreen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.showMaximized">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">showMaximized</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.showMaximized" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.showMinimized">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">showMinimized</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.showMinimized" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.showNormal">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">showNormal</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.showNormal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.signalsBlocked">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">signalsBlocked</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.signalsBlocked" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.size">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">size</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.sizeHint">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">sizeHint</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.sizeHint" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.sizeIncrement">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">sizeIncrement</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.sizeIncrement" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.sizePolicy">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">sizePolicy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.sizePolicy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.stackUnder">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">stackUnder</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QWidget</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.stackUnder" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.startTimer">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">startTimer</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.startTimer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.statusTip">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">statusTip</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.statusTip" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.style">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">style</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.style" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.styleSheet">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">styleSheet</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.styleSheet" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.tabletEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">tabletEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QTabletEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.tabletEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.testAttribute">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">testAttribute</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.testAttribute" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.thread">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">thread</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.thread" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.timerEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">timerEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QTimerEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.timerEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.toolTip">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">toolTip</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.toolTip" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.toolTipDuration">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">toolTipDuration</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.toolTipDuration" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.tr">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">tr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.tr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.underMouse">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">underMouse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.underMouse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.ungrabGesture">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">ungrabGesture</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">Qt.GestureType</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.ungrabGesture" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.unsetCursor">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">unsetCursor</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.unsetCursor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.unsetLayoutDirection">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">unsetLayoutDirection</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.unsetLayoutDirection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.unsetLocale">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">unsetLocale</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.unsetLocale" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.update">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">update</code><span class="sig-paren">(</span><em class="sig-param">self) update(self</em>, <em class="sig-param">QRect) update(self</em>, <em class="sig-param">QRegion) update(self</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em>, <em class="sig-param">int</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.updateGeometry">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">updateGeometry</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.updateGeometry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.updateMicroFocus">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">updateMicroFocus</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.updateMicroFocus" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.updatesEnabled">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">updatesEnabled</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.updatesEnabled" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.visibleRegion">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">visibleRegion</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.visibleRegion" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.whatsThis">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">whatsThis</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.whatsThis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.wheelEvent">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">wheelEvent</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">QWheelEvent</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.wheelEvent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.width">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">width</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.width" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.widthMM">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">widthMM</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.widthMM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.winId">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">winId</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.winId" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.window">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">window</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.window" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.windowFilePath">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">windowFilePath</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.windowFilePath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.windowFlags">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">windowFlags</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.windowFlags" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.windowHandle">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">windowHandle</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.windowHandle" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.windowIcon">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">windowIcon</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.windowIcon" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.windowIconText">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">windowIconText</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.windowIconText" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.windowModality">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">windowModality</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.windowModality" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.windowOpacity">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">windowOpacity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.windowOpacity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.windowRole">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">windowRole</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.windowRole" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.windowState">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">windowState</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.windowState" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.windowTitle">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">windowTitle</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.windowTitle" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.windowType">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">windowType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.windowType" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.x">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">x</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.x" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.plots.MolView.y">
+<code class="sig-prename descclassname">mfm.plots.MolView.</code><code class="sig-name descname">y</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mfm.plots.MolView.y" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
 <div class="section" id="mfm-plots-distance-module">
@@ -812,21 +2106,43 @@ wres_y = fit.weighted_residuals</p>
 </div>
 
 
-    </div>
-      
-  </div>
-</div>
-<footer class="footer">
-  <div class="container">
-    <p class="pull-right">
-      <a href="#">Back to top</a>
-      
-    </p>
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+        &copy; Copyright 2019, Thomas Peulen
+
     </p>
   </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
 </footer>
-  </body>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
 </html>

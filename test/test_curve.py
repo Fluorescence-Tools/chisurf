@@ -45,7 +45,62 @@ class Tests(unittest.TestCase):
             np.array_equal(c1.y, c2.y),
             True
         )
-        self.assertEqual(c2.name, name)
+        self.assertEqual(
+            c2.name,
+            name
+        )
+        c3 = mfm.curve.Curve()
+        c3.from_json(
+            json_string=c2.to_json()
+        )
+        self.assertEqual(
+            c2.to_dict(),
+            c3.to_dict()
+        )
+
+        # test no copy option
+        x = np.linspace(0, 2.0 * np.pi, 20)
+        y = np.sin(x)
+        c4 = mfm.curve.Curve(
+            x=x,
+            y=y,
+            copy_array=False
+        )
+        c4.x[0] = 11
+        self.assertEqual(
+            x[0],
+            11
+        )
+
+        # test curve shift
+        c5 = c4 << 1.0
+        self.assertEqual(
+            type(c5),
+            type(c4)
+        )
+
+        # test length
+        self.assertEqual(
+            len(c5),
+            len(c5.y)
+        )
+
+        # test getitem
+        x, y = c5[:5]
+        self.assertEqual(
+            np.allclose(
+                y,
+                c5.y[:5]
+            ),
+            True
+        )
+        self.assertEqual(
+            np.allclose(
+                x,
+                c5.x[:5]
+            ),
+            True
+        )
 
     def test_attributes(self):
         import scipy.stats

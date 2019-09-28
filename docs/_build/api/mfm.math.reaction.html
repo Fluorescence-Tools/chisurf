@@ -1,145 +1,154 @@
+
+
 <!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mfm.math.reaction package &mdash; ChiSurf  documentation</title>
+  
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta charset="utf-8" />
-    <title>mfm.math.reaction package &#8212; ChiSurf  documentation</title>
-    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-    <script type="text/javascript" src="../_static/jquery.js"></script>
-    <script type="text/javascript" src="../_static/underscore.js"></script>
-    <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="../_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-<meta charset='utf-8'>
-<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
-<meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
 
-  </head><body>
+<body class="wy-body-for-nav">
 
-  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
-    <div class="container">
-      <div class="navbar-header">
-        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="../index.html">
-          ChiSurf</a>
-        <span class="navbar-text navbar-version pull-left"><b></b></span>
-      </div>
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
 
-        <div class="collapse navbar-collapse nav-collapse">
-          <ul class="nav navbar-nav">
+          
+            <a href="../index.html" class="icon icon-home"> ChiSurf
+          
+
+          
+          </a>
+
+          
             
             
-              <li class="dropdown globaltoc-container">
-  <a role="button"
-     id="dLabelGlobalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="../index.html">Site <b class="caret"></b></a>
-  <ul class="dropdown-menu globaltoc"
-      role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../user_documentation/introduction.html">Introduction</a></li>
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/manual.html">Manual</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_documentation/api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user_documentation/use_cases.html">Use cases</a></li>
 </ul>
-</ul>
-</li>
-              
-                <li class="dropdown">
-  <a role="button"
-     id="dLabelLocalToc"
-     data-toggle="dropdown"
-     data-target="#"
-     href="#">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"
-      role="menu"
-      aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">mfm.math.reaction package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-mfm.math.reaction.continuous">mfm.math.reaction.continuous module</a></li>
-<li><a class="reference internal" href="#module-mfm.math.reaction.stochastic">mfm.math.reaction.stochastic module</a></li>
-<li><a class="reference internal" href="#module-mfm.math.reaction">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</ul>
-</li>
-              
-            
-            
-              
-                
-              
-            
-            
-            
-            
-              <li class="hidden-sm">
-<div id="sourcelink">
-  <a href="../_sources/api/mfm.math.reaction.rst.txt"
-     rel="nofollow">Source</a>
-</div></li>
-            
-          </ul>
 
+            
           
-            
-<form class="navbar-form navbar-right" action="../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
-          
-        </div>
-    </div>
-  </div>
-
-<div class="container">
-  <div class="row">
-      <div class="col-md-3">
-        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
-<li><a class="reference internal" href="#">mfm.math.reaction package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-mfm.math.reaction.continuous">mfm.math.reaction.continuous module</a></li>
-<li><a class="reference internal" href="#module-mfm.math.reaction.stochastic">mfm.math.reaction.stochastic module</a></li>
-<li><a class="reference internal" href="#module-mfm.math.reaction">Module contents</a></li>
-</ul>
-</li>
-</ul>
-
-<div id="sourcelink">
-  <a href="../_sources/api/mfm.math.reaction.rst.txt"
-     rel="nofollow">Source</a>
-</div>
-<form action="../search.html" method="get">
- <div class="form-group">
-  <input type="text" name="q" class="form-control" placeholder="Search" />
- </div>
-  <input type="hidden" name="check_keywords" value="yes" />
-  <input type="hidden" name="area" value="default" />
-</form>
         </div>
       </div>
-    <div class="col-md-9 content">
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
       
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">ChiSurf</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>mfm.math.reaction package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/api/mfm.math.reaction.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
   <div class="section" id="mfm-math-reaction-package">
 <h1>mfm.math.reaction package<a class="headerlink" href="#mfm-math-reaction-package" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="submodules">
@@ -154,18 +163,28 @@
 <dl class="method">
 <dt id="mfm.math.reaction.continuous.ChemicalSpecies.description">
 <em class="property">property </em><code class="sig-name descname">description</code><a class="headerlink" href="#mfm.math.reaction.continuous.ChemicalSpecies.description" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.math.reaction.continuous.ChemicalSpecies.name">
 <em class="property">property </em><code class="sig-name descname">name</code><a class="headerlink" href="#mfm.math.reaction.continuous.ChemicalSpecies.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="mfm.math.reaction.continuous.ReactionSystem">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.math.reaction.continuous.</code><code class="sig-name descname">ReactionSystem</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/math/reaction/continuous.html#ReactionSystem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.reaction.continuous.ReactionSystem" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.math.reaction.continuous.</code><code class="sig-name descname">ReactionSystem</code><span class="sig-paren">(</span><em class="sig-param">verbose=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/math/reaction/continuous.html#ReactionSystem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.reaction.continuous.ReactionSystem" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="mfm.math.reaction.continuous.ReactionSystem.add_reaction">
@@ -206,8 +225,10 @@
 
 <dl class="method">
 <dt id="mfm.math.reaction.continuous.ReactionSystem.plot">
-<code class="sig-name descname">plot</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">t_divisor=1.0</em>, <em class="sig-param">normalize=False</em>, <em class="sig-param">show=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/math/reaction/continuous.html#ReactionSystem.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.reaction.continuous.ReactionSystem.plot" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates a plot of the currently calculated time dependent concentrations
+<code class="sig-name descname">plot</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">t_divisor: 'float' = 1.0</em>, <em class="sig-param">normalize: 'bool' = False</em>, <em class="sig-param">show: 'bool' = True</em><span class="sig-paren">)</span> &#x2192; 'None'<a class="reference internal" href="../_modules/mfm/math/reaction/continuous.html#ReactionSystem.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.reaction.continuous.ReactionSystem.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a plot of the currently calculated time dependent
+concentrations
+:type t_divisor: <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>
 :param t_divisor: float</p>
 <blockquote>
 <div><p>The time-axis is divided byt this number</p>
@@ -215,14 +236,17 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>normalize</strong> – bool
+<li><p><strong>normalize</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool
 If True the signal intensity is divided by the maximum intensity.</p></li>
-<li><p><strong>show</strong> – bool
+<li><p><strong>show</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool
 If True the generated Matplotlib plot is shown</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -281,12 +305,22 @@ list of tuples as obtained by the attribute <code class="xref py py-attr docutil
 <dl class="method">
 <dt id="mfm.math.reaction.continuous.ReactionSystem.signal_intensity">
 <em class="property">property </em><code class="sig-name descname">signal_intensity</code><a class="headerlink" href="#mfm.math.reaction.continuous.ReactionSystem.signal_intensity" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.math.reaction.continuous.ReactionSystem.species_brightness">
 <em class="property">property </em><code class="sig-name descname">species_brightness</code><a class="headerlink" href="#mfm.math.reaction.continuous.ReactionSystem.species_brightness" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.math.reaction.continuous.ReactionSystem.species_fractions">
@@ -302,12 +336,12 @@ list of tuples as obtained by the attribute <code class="xref py py-attr docutil
 
 <dl class="function">
 <dt id="mfm.math.reaction.continuous.stoichometry_matrix">
-<code class="sig-prename descclassname">mfm.math.reaction.continuous.</code><code class="sig-name descname">stoichometry_matrix</code><span class="sig-paren">(</span><em class="sig-param">n_species</em>, <em class="sig-param">educts</em>, <em class="sig-param">products</em>, <em class="sig-param">educts_stoichometry</em>, <em class="sig-param">products_stoichometry</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/math/reaction/continuous.html#stoichometry_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.reaction.continuous.stoichometry_matrix" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.math.reaction.continuous.</code><code class="sig-name descname">stoichometry_matrix</code><span class="sig-paren">(</span><em class="sig-param">n_species: 'int'</em>, <em class="sig-param">educts</em>, <em class="sig-param">products</em>, <em class="sig-param">educts_stoichometry</em>, <em class="sig-param">products_stoichometry</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/math/reaction/continuous.html#stoichometry_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.reaction.continuous.stoichometry_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference external" href="http://en.wikipedia.org/wiki/Rate_equation">http://en.wikipedia.org/wiki/Rate_equation</a></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n_species</strong> – int
+<li><p><strong>n_species</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – int
 number of species</p></li>
 <li><p><strong>educts</strong> – list of list
 educts</p></li>
@@ -376,12 +410,138 @@ educt of type [1] are consumed</p>
 <div class="section" id="module-mfm.math.reaction.stochastic">
 <span id="mfm-math-reaction-stochastic-module"></span><h2>mfm.math.reaction.stochastic module<a class="headerlink" href="#module-mfm.math.reaction.stochastic" title="Permalink to this headline">¶</a></h2>
 <p>Stochastic reaction simulation</p>
+<dl class="class">
+<dt id="mfm.math.reaction.stochastic.Model">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.math.reaction.stochastic.</code><code class="sig-name descname">Model</code><span class="sig-paren">(</span><em class="sig-param">variable_names</em>, <em class="sig-param">rate_constants</em>, <em class="sig-param">inits</em>, <em class="sig-param">transition_matrix</em>, <em class="sig-param">propensity</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/math/reaction/stochastic.html#Model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.reaction.stochastic.Model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="mfm.math.reaction.stochastic.Model.CR">
+<code class="sig-name descname">CR</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">pv</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/math/reaction/stochastic.html#Model.CR"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.reaction.stochastic.Model.CR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Composition reaction algorithm</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.math.reaction.stochastic.Model.GSSA">
+<code class="sig-name descname">GSSA</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">tmax: 'int' = 50</em>, <em class="sig-param">round: 'int' = 0</em><span class="sig-paren">)</span> &#x2192; 'int'<a class="reference internal" href="../_modules/mfm/math/reaction/stochastic.html#Model.GSSA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.reaction.stochastic.Model.GSSA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gillespie Direct algorithm</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tmax</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+<li><p><strong>round</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.math.reaction.stochastic.Model.getStats">
+<code class="sig-name descname">getStats</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'Tuple[np.ndarray, np.ndarray, np.ndarray]'<a class="reference internal" href="../_modules/mfm/math/reaction/stochastic.html#Model.getStats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.reaction.stochastic.Model.getStats" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mfm.math.reaction.stochastic.Model.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">method: 'str' = 'SSA'</em>, <em class="sig-param">tmax: 'int' = 10</em>, <em class="sig-param">reps: 'int' = 1</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/math/reaction/stochastic.html#Model.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.reaction.stochastic.Model.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="mfm.math.reaction.stochastic.main">
+<code class="sig-prename descclassname">mfm.math.reaction.stochastic.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/math/reaction/stochastic.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.math.reaction.stochastic.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mfm.math.reaction.stochastic.multinomial">
+<code class="sig-prename descclassname">mfm.math.reaction.stochastic.</code><code class="sig-name descname">multinomial</code><span class="sig-paren">(</span><em class="sig-param">n</em>, <em class="sig-param">pvals</em>, <em class="sig-param">size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mfm.math.reaction.stochastic.multinomial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw samples from a multinomial distribution.</p>
+<p>The multinomial distribution is a multivariate generalization of the
+binomial distribution.  Take an experiment with one of <code class="docutils literal notranslate"><span class="pre">p</span></code>
+possible outcomes.  An example of such an experiment is throwing a dice,
+where the outcome can be 1 through 6.  Each sample drawn from the
+distribution represents <cite>n</cite> such experiments.  Its values,
+<code class="docutils literal notranslate"><span class="pre">X_i</span> <span class="pre">=</span> <span class="pre">[X_0,</span> <span class="pre">X_1,</span> <span class="pre">...,</span> <span class="pre">X_p]</span></code>, represent the number of times the
+outcome was <code class="docutils literal notranslate"><span class="pre">i</span></code>.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>n</strong><span class="classifier">int</span></dt><dd><p>Number of experiments.</p>
+</dd>
+<dt><strong>pvals</strong><span class="classifier">sequence of floats, length p</span></dt><dd><p>Probabilities of each of the <code class="docutils literal notranslate"><span class="pre">p</span></code> different outcomes.  These
+must sum to 1 (however, the last element is always assumed to
+account for the remaining probability, as long as
+<code class="docutils literal notranslate"><span class="pre">sum(pvals[:-1])</span> <span class="pre">&lt;=</span> <span class="pre">1)</span></code>.</p>
+</dd>
+<dt><strong>size</strong><span class="classifier">int or tuple of ints, optional</span></dt><dd><p>Output shape.  If the given shape is, e.g., <code class="docutils literal notranslate"><span class="pre">(m,</span> <span class="pre">n,</span> <span class="pre">k)</span></code>, then
+<code class="docutils literal notranslate"><span class="pre">m</span> <span class="pre">*</span> <span class="pre">n</span> <span class="pre">*</span> <span class="pre">k</span></code> samples are drawn.  Default is None, in which case a
+single value is returned.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>out</strong><span class="classifier">ndarray</span></dt><dd><p>The drawn samples, of shape <em>size</em>, if that was provided.  If not,
+the shape is <code class="docutils literal notranslate"><span class="pre">(N,)</span></code>.</p>
+<p>In other words, each entry <code class="docutils literal notranslate"><span class="pre">out[i,j,...,:]</span></code> is an N-dimensional
+value drawn from the distribution.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Throw a dice 20 times:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mf">6.</span><span class="p">]</span><span class="o">*</span><span class="mi">6</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">array([[4, 1, 7, 5, 2, 1]]) # random</span>
+</pre></div>
+</div>
+<p>It landed 4 times on 1, once on 2, etc.</p>
+<p>Now, throw the dice 20 times, and 20 times again:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mf">6.</span><span class="p">]</span><span class="o">*</span><span class="mi">6</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">array([[3, 4, 3, 3, 4, 3], # random</span>
+<span class="go">       [2, 4, 3, 4, 0, 7]])</span>
+</pre></div>
+</div>
+<p>For the first run, we threw 3 times 1, 4 times 2, etc.  For the second,
+we threw 2 times 1, 4 times 2, etc.</p>
+<p>A loaded die is more likely to land on number 6:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mf">7.</span><span class="p">]</span><span class="o">*</span><span class="mi">5</span> <span class="o">+</span> <span class="p">[</span><span class="mi">2</span><span class="o">/</span><span class="mf">7.</span><span class="p">])</span>
+<span class="go">array([11, 16, 14, 17, 16, 26]) # random</span>
+</pre></div>
+</div>
+<p>The probability inputs should be normalized. As an implementation
+detail, the value of the last entry is ignored and assumed to take
+up any leftover probability mass, but this should not be relied on.
+A biased coin which has twice as much weight on one side as on the
+other should be sampled like so:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="mi">3</span><span class="p">,</span> <span class="mf">2.0</span> <span class="o">/</span> <span class="mi">3</span><span class="p">])</span>  <span class="c1"># RIGHT</span>
+<span class="go">array([38, 62]) # random</span>
+</pre></div>
+</div>
+<p>not like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])</span>  <span class="c1"># WRONG</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="gr">ValueError</span>: <span class="n">pvals &lt; 0, pvals &gt; 1 or pvals contains NaNs</span>
+</pre></div>
+</div>
+</dd></dl>
+
 </div>
 <div class="section" id="module-mfm.math.reaction">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mfm.math.reaction" title="Permalink to this headline">¶</a></h2>
 <p>Reactions</p>
-<p>Two types of reaction simulations are possible and are supported by two distinct modules. Stochastic reactions
-and continuous reactions</p>
+<p>Two types of reaction simulations are possible and are supported by two distinct
+modules. Stochastic reactions and continuous reactions</p>
 <ol class="arabic simple">
 <li><p><a class="reference internal" href="#module-mfm.math.reaction.continuous" title="mfm.math.reaction.continuous"><code class="xref py py-mod docutils literal notranslate"><span class="pre">continuous</span></code></a></p></li>
 <li><p><a class="reference internal" href="#module-mfm.math.reaction.stochastic" title="mfm.math.reaction.stochastic"><code class="xref py py-mod docutils literal notranslate"><span class="pre">stochastic</span></code></a></p></li>
@@ -390,21 +550,43 @@ and continuous reactions</p>
 </div>
 
 
-    </div>
-      
-  </div>
-</div>
-<footer class="footer">
-  <div class="container">
-    <p class="pull-right">
-      <a href="#">Back to top</a>
-      
-    </p>
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
     <p>
-        &copy; Copyright 2019, Thomas Peulen.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+        &copy; Copyright 2019, Thomas Peulen
+
     </p>
   </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
 </footer>
-  </body>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
 </html>

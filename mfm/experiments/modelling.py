@@ -7,7 +7,8 @@ from qtpy import QtWidgets
 
 import mfm
 import mfm.base
-import mfm.widgets.pdb.pdb
+import mfm.io
+import mfm.widgets.pdb
 from . reader import ExperimentReader
 
 

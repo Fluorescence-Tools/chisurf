@@ -11,6 +11,7 @@ import numpy as np
 import mfm
 import mfm.base
 import mfm.curve
+import mfm.io
 import mfm.experiments.experiment
 
 
@@ -54,8 +55,8 @@ class ExperimentalData(
 
     def __init__(
             self,
-            data_reader=None,
-            experiment=None,
+            data_reader: mfm.experiments.reader.ExperimentReader = None,
+            experiment: mfm.experiments.experiment.Experiment = None,
             *args,
             **kwargs
     ):

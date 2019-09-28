@@ -167,8 +167,12 @@ class OrientationParameter(FittingParameterGroup):
 
         # slow isotropic
         k2s = np.linspace(0.01, 4, 50)
-        p = mfm.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(k2s)
-        self._k2_slow_iso = mfm.math.datatools.two_column_to_interleaved(p, k2s)
+        p = mfm.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(
+            k2s
+        )
+        self._k2_slow_iso = mfm.math.datatools.two_column_to_interleaved(
+            p, k2s
+        )
 
         FittingParameterGroup.__init__(self, *args, **kwargs)
 
@@ -192,7 +196,13 @@ class Gaussians(FittingParameterGroup):
         else:
             args = zip(self.mean, self.sigma)
             pdf = mfm.math.functions.rdf.distance_between_gaussian
-        p = mfm.math.functions.distributions.sum_distribution(rda_axis, pdf, args, weights, normalize=True)
+        p = mfm.math.functions.distributions.sum_distribution(
+            rda_axis,
+            pdf,
+            args,
+            weights,
+            normalize=True
+        )
 
         d.append([p, rda_axis])
         d = np.array(d)
@@ -226,7 +236,9 @@ class Gaussians(FittingParameterGroup):
     @property
     def amplitude(self):
         try:
-            a = np.sqrt(np.array([g.value for g in self._gaussianAmplitudes]) ** 2)
+            a = np.sqrt(
+                np.array([g.value for g in self._gaussianAmplitudes]) ** 2
+            )
             a /= a.sum()
             return a
         except AttributeError:
@@ -258,10 +270,23 @@ class Gaussians(FittingParameterGroup):
 
         """
         n = len(self)
-        m = FittingParameter(name='R(%s,%i)' % (self.short, n + 1), value=mean)
-        x = FittingParameter(name='x(%s,%i)' % (self.short, n + 1), value=x)
-        s = FittingParameter(name='s(%s,%i)' % (self.short, n + 1), value=sigma)
-        shape = FittingParameter(name='k(%s,%i)' % (self.short, n + 1), value=shape, fixed=True)
+        m = FittingParameter(
+            name='R(%s,%i)' % (self.short, n + 1),
+            value=mean
+        )
+        x = FittingParameter(
+            name='x(%s,%i)' % (self.short, n + 1),
+            value=x
+        )
+        s = FittingParameter(
+            name='s(%s,%i)' % (self.short, n + 1),
+            value=sigma
+        )
+        shape = FittingParameter(
+            name='k(%s,%i)' % (self.short, n + 1),
+            value=shape,
+            fixed=True
+        )
         self._gaussianMeans.append(m)
         self._gaussianSigma.append(s)
         self._gaussianAmplitudes.append(x)
@@ -287,13 +312,15 @@ class Gaussians(FittingParameterGroup):
             **kwargs
     ):
         """
-        This class keeps the necessary parameters to perform a fit with Gaussian/Normal-disitributed
-        distances. New distance distributions are added using the methods append.
+        This class keeps the necessary parameters to perform a fit with
+        Gaussian/Normal-disitributed distances. New distance distributions
+        are added using the methods append.
 
         :param donors: Lifetime
             The donor-only spectrum in form of a `Lifetime` object.
         :param forster_radius: float
-            The Forster-radius of the FRET-pair in Angstrom. By default 52.0 Angstrom (FRET-pair Alexa488/Alexa647)
+            The Forster-radius of the FRET-pair in Angstrom. By default 52.0
+            Angstrom (FRET-pair Alexa488/Alexa647)
         :param kappa2: float
             Orientation factor. By default 2./3.
         :param t0: float
@@ -366,10 +393,18 @@ class DiscreteDistance(FittingParameterGroup):
             x: float
     ):
         n = len(self)
-        m = FittingParameter(name='R(%s,%i)' % (self.short, n + 1), value=mean)
-        x = FittingParameter(name='x(%s,%i)' % (self.short, n + 1), value=x)
-        self._distances.append(m)
-        self._amplitudes.append(x)
+        self._distances.append(
+            FittingParameter(
+                name='R(%s,%i)' % (self.short, n + 1),
+                value=mean
+            )
+        )
+        self._amplitudes.append(
+            FittingParameter(
+                name='x(%s,%i)' % (self.short, n + 1),
+                value=x
+            )
+        )
 
     def pop(self):
         """
@@ -427,7 +462,12 @@ class FRETModel(LifetimeModel):
         #kappa2 = self.fret_parameters.kappa2
         forster_radius = self.fret_parameters.forster_radius
         kappa2s = self.orientation_parameter.orientation_spectrum
-        rs = distribution2rates(self.distance_distribution, tauD0, kappa2s, forster_radius)
+        rs = distribution2rates(
+            self.distance_distribution,
+            tauD0,
+            kappa2s,
+            forster_radius
+        )
         #rs = distribution2rates(self.distance_distribution, tauD0, 2./3., forster_radius)
         r = np.hstack(rs).ravel([-1])
         return r
@@ -437,15 +477,21 @@ class FRETModel(LifetimeModel):
             self
     ) -> np.array:
         xDOnly = self.fret_parameters.xDOnly
-        lt = rates2lifetimes(self.fret_rate_spectrum, self.donors.rate_spectrum, xDOnly)
+        lt = rates2lifetimes(
+            self.fret_rate_spectrum,
+            self.donors.rate_spectrum,
+            xDOnly
+        )
         if mfm.settings.cs_settings['fret']['bin_lifetime']:
             n_lifetimes = mfm.settings.cs_settings['fret']['lifetime_bins']
             discriminate = mfm.settings.cs_settings['fret']['discriminate']
-            discriminate_amplitude = mfm.settings.cs_settings['fret']['discriminate_amplitude']
-            return mfm.fluorescence.tcspc.bin_lifetime_spectrum(lt, n_lifetimes=n_lifetimes,
-                                                                discriminate=discriminate,
-                                                                discriminator=discriminate_amplitude
-                                                                )
+            discriminate_amplitude = mfm.settings.cs_settings['fret'][
+                'discriminate_amplitude']
+            return mfm.fluorescence.tcspc.bin_lifetime_spectrum(
+                lt, n_lifetimes=n_lifetimes,
+                discriminate=discriminate,
+                discriminator=discriminate_amplitude
+            )
         else:
             return lt
 
@@ -454,7 +500,8 @@ class FRETModel(LifetimeModel):
             self
     ) -> np.array:
         """
-        The donor lifetime spectrum in form amplitude, lifetime, amplitude, lifetime
+        The donor lifetime spectrum in form amplitude, lifetime, amplitude,
+        lifetime.
         """
         return self.donors.lifetime_spectrum
 
@@ -583,16 +630,18 @@ class FRETModel(LifetimeModel):
 
 class GaussianModel(FRETModel):
     """
-    This fit models is uses multiple Gaussian/normal distributions to fit the FRET-decay. Here the donor lifetime-
-    spectrum as well as the distances may be fitted. In this models it is assumed that each donor-species is fitted
+    This fit models is uses multiple Gaussian/normal distributions to fit
+    the FRET-decay. Here the donor lifetime-
+    spectrum as well as the distances may be fitted. In this models it is
+    assumed that each donor-species is fitted
     by the same FRET-rate distribution.
 
     References
     ----------
 
     .. [1]  Kalinin, S., and Johansson, L.B., Energy Migration and Transfer Rates
-            are Invariant to Modeling the Fluorescence Relaxation by Discrete and Continuous
-            Distributions of Lifetimes.
+            are Invariant to Modeling the Fluorescence Relaxation by Discrete
+            and Continuous Distributions of Lifetimes.
             J. Phys. Chem. B, 108 (2004) 3092-3097.
 
     """
@@ -691,7 +740,11 @@ class FRETrateModel(FRETModel):
         :param fret_rates:
         :param kwargs:
         """
-        FRETModel.__init__(self, fit, **kwargs)
+        FRETModel.__init__(
+            self,
+            fit,
+            **kwargs
+        )
         if fret_rates is None:
             fret_rates = DiscreteDistance(**kwargs)
         self.fret_rates = fret_rates
@@ -709,13 +762,21 @@ class WormLikeChainModel(FRETModel):
         chain_length = self._chain_length.value
         kappa = self._persistence_length.value / chain_length
         if not self.use_dye_linker:
-            prob = mfm.math.functions.rdf.worm_like_chain(rda_axis, kappa, chain_length)
+            prob = mfm.math.functions.rdf.worm_like_chain(
+                rda_axis,
+                kappa,
+                chain_length
+            )
         else:
             sigma_linker = self._sigma_linker.value
-            prob = mfm.math.functions.rdf.worm_like_chain_linker(rda_axis, kappa,
-                                                                 chain_length,
-                                                                 sigma_linker)
-        dist = np.array([prob, rda_axis]).reshape([1, 2, fret_settings['rda_resolution']])
+            prob = mfm.math.functions.rdf.worm_like_chain_linker(
+                rda_axis, kappa,
+                chain_length,
+                sigma_linker
+            )
+        dist = np.array([prob, rda_axis]).reshape(
+            [1, 2, mfm.settings.fret['rda_resolution']]
+        )
         return dist
 
     @property
@@ -778,7 +839,9 @@ class SingleDistanceModel(FRETModel):
             self
     ) -> np.array:
         n_points = self.n_points_dist
-        r = np.vstack([self.prda, self.rda]).reshape([1, 2,  n_points])
+        r = np.vstack(
+            [self.prda, self.rda]
+        ).reshape([1, 2,  n_points])
         return r
 
     @property

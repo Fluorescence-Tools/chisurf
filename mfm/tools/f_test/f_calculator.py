@@ -9,6 +9,7 @@ import qdarkstyle
 from scipy.stats import f as fdist
 
 import mfm
+import mfm.models
 import mfm.fitting.fit
 import mfm.math.statistics
 

@@ -10,10 +10,16 @@ import mfm.fluorescence
 from mfm.plots import plotbase
 
 
-class AvPlotControl(QtWidgets.QWidget):
+class AvPlotControl(
+    QtWidgets.QWidget
+):
 
-    def __init__(self, *args, **kwargs):
-        QtWidgets.QWidget.__init__(self, *args, **kwargs)
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super().__init__(*args, **kwargs)
 
 
 class AvPlot(plotbase.Plot):
@@ -35,7 +41,12 @@ class AvPlot(plotbase.Plot):
 
     name = "Accessible Volume"
 
-    def __init__(self, fit, *args, **kwargs):
+    def __init__(
+            self,
+            fit,
+            *args,
+            **kwargs
+    ):
         super().__init__(
             fit=fit,
             *args,

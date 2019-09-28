@@ -162,7 +162,9 @@ class Main(QtWidgets.QMainWindow):
                         break
 
             self.current_fit_widget = sub_window.fit_widget
-            window_title = mfm.__name__ + "(" + mfm.__version__ + "): " + str(self.current_fit.name)
+            window_title = mfm.__name__ + \
+                           "(" + mfm.__version__ + "): " + \
+                           self.current_fit.name
 
             self.setWindowTitle(window_title)
 
@@ -174,7 +176,10 @@ class Main(QtWidgets.QMainWindow):
             sub_window.current_plt_ctrl.show()
 
     def onRunMacro(self):
-        filename = mfm.widgets.get_filename("Python macros", file_type="Python file (*.py)")
+        filename = mfm.widgets.get_filename(
+            "Python macros",
+            file_type="Python file (*.py)"
+        )
         mfm.run("mfm.console.run_macro(filename='%s')" % filename)
 
     def onTileWindows(self):
@@ -420,7 +425,9 @@ class Main(QtWidgets.QMainWindow):
         global_fit.add_reader(global_setup)
         mfm.experiment.append(global_fit)
 
-        self.experiment_names = [b.name for b in mfm.experiment if b.name is not 'Global']
+        self.experiment_names = [
+            b.name for b in mfm.experiment if b.name is not 'Global'
+        ]
         self.comboBox_experimentSelect.addItems(self.experiment_names)
 
         mfm.cmd.add_dataset(
