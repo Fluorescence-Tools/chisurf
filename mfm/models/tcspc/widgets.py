@@ -114,16 +114,20 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         self.radioButton_3.clicked.connect(self.onConvolutionModeChanged)
         self.radioButton_2.clicked.connect(self.onConvolutionModeChanged)
         self.radioButton.clicked.connect(self.onConvolutionModeChanged)
-        self.groupBox.toggled.connect(self.onDoConvolutionChanged)
+        self.groupBox.toggled.connect(self.onConvolutionModeChanged)
 
     def onConvolutionModeChanged(self):
-        t = "for f in cs.current_fit:\n" \
-            "   f.model.convolve.file_type = '%s'\n" % self.gui_mode
-        mfm.run(t)
-        mfm.run("cs.current_fit.update()")
-
-    def onDoConvolutionChanged(self):
-        mfm.run("cs.current_fit.model.convolve.do_convolution = %s" % self.groupBox.isChecked())
+        mfm.run(
+            "\n".join(
+                [
+                    "for f in cs.current_fit:\n"
+                    "   f.model.convolve.file_type = '%s'\n" % self.gui_mode,
+                    "cs.current_fit.model.convolve.do_convolution = %s" %
+                    self.groupBox.isChecked(),
+                    "cs.current_fit.update()"
+                ]
+            )
+        )
 
     def change_irf(self):
         idx = self.irf_select.selected_curve_index
@@ -215,20 +219,32 @@ class CorrectionsWidget(
 
         self.actionSelect_lintable.triggered.connect(self.lin_select.show)
 
-        self.checkBox_3.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.model.corrections.correct_pile_up = %s\n" % self.checkBox_3.isChecked())
+        self.checkBox_3.toggled.connect(
+            lambda: mfm.run(
+                "cs.current_fit.model.corrections.correct_pile_up = %s\n" %
+                self.checkBox_3.isChecked()
+            )
         )
 
-        self.checkBox_2.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.model.corrections.reverse = %s" % self.checkBox_2.isChecked())
+        self.checkBox_2.toggled.connect(
+            lambda: mfm.run(
+                "cs.current_fit.model.corrections.reverse = %s" %
+                self.checkBox_2.isChecked()
+            )
         )
 
-        self.checkBox.toggled.connect(lambda: mfm.run(
-            "cs.current_fit.model.corrections.correct_dnl = %s" % self.checkBox.isChecked())
+        self.checkBox.toggled.connect(
+            lambda: mfm.run(
+                "cs.current_fit.model.corrections.correct_dnl = %s" %
+                self.checkBox.isChecked()
+            )
         )
 
-        self.comboBox.currentIndexChanged.connect(lambda: mfm.run(
-            "cs.current_fit.model.corrections.window_function = '%s'" % self.comboBox.currentText())
+        self.comboBox.currentIndexChanged.connect(
+            lambda: mfm.run(
+                "cs.current_fit.model.corrections.window_function = '%s'" %
+                self.comboBox.currentText()
+            )
         )
 
     def onChangeLin(self):
@@ -376,16 +392,28 @@ class AnisotropyWidget(
         self.radioButtonVM = QtWidgets.QRadioButton("VM")
         self.radioButtonVM.setToolTip("Excitation: Vertical\nDetection: Magic-Angle")
         self.radioButtonVM.setChecked(True)
-        self.radioButtonVM.clicked.connect(lambda: mfm.run("cs.current_fit.model.anisotropy.polarization_type = 'vm'"))
+        self.radioButtonVM.clicked.connect(
+            lambda: mfm.run(
+                "cs.current_fit.model.anisotropy.polarization_type = 'vm'"
+            )
+        )
         self.radioButtonVM.clicked.connect(self.hide_roation_parameters)
 
         self.radioButtonVV = QtWidgets.QRadioButton("VV")
         self.radioButtonVV.setToolTip("Excitation: Vertical\nDetection: Vertical")
-        self.radioButtonVV.clicked.connect(lambda: mfm.run("cs.current_fit.model.anisotropy.polarization_type = 'vv'"))
+        self.radioButtonVV.clicked.connect(
+            lambda: mfm.run(
+                "cs.current_fit.model.anisotropy.polarization_type = 'vv'"
+            )
+        )
 
         self.radioButtonVH = QtWidgets.QRadioButton("VH")
         self.radioButtonVH.setToolTip("Excitation: Vertical\nDetection: Horizontal")
-        self.radioButtonVH.clicked.connect(lambda: mfm.run("cs.current_fit.model.anisotropy.polarization_type = 'vh'"))
+        self.radioButtonVH.clicked.connect(
+            lambda: mfm.run(
+                "cs.current_fit.model.anisotropy.polarization_type = 'vh'"
+            )
+        )
 
         layout = QtWidgets.QHBoxLayout()
 
@@ -399,7 +427,9 @@ class AnisotropyWidget(
         layout.addWidget(remove_rho)
         remove_rho.clicked.connect(self.onRemoveRotation)
 
-        spacerItem = QtWidgets.QSpacerItem(20, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        spacerItem = QtWidgets.QSpacerItem(
+            0, 0, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
         layout.addItem(spacerItem)
 
         layout.addWidget(self.radioButtonVM)
@@ -565,7 +595,13 @@ class PDDEMModelWidget(ModelWidget, PDDEMModel):
         self.generic = GenericWidget(fit=fit, model=self, parent=self, **kwargs)
         self.anisotropy = AnisotropyWidget(model=self, short='rL', **kwargs)
         self.pddem = PDDEMWidget(parent=self, model=self, short='P')
-        self.gaussians = GaussianWidget(donors=None,  model=self.model, short='G', no_donly=True, name='gaussians')
+        self.gaussians = GaussianWidget(
+            donors=None,
+            model=self.model,
+            short='G',
+            no_donly=True,
+            name='gaussians'
+        )
 
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
@@ -574,8 +610,18 @@ class PDDEMModelWidget(ModelWidget, PDDEMModel):
         self.layout.addWidget(self.generic)
         self.layout.addWidget(self.pddem)
 
-        self.fa = LifetimeWidget(title='Lifetimes-A', model=self.model, short='A', name='fa')
-        self.fb = LifetimeWidget(title='Lifetimes-B', model=self.model, short='B', name='fb')
+        self.fa = LifetimeWidget(
+            title='Lifetimes-A',
+            model=self.model,
+            short='A',
+            name='fa'
+        )
+        self.fb = LifetimeWidget(
+            title='Lifetimes-B',
+            model=self.model,
+            short='B',
+            name='fb'
+        )
 
         self.layout.addWidget(self.fa)
         self.layout.addWidget(self.fb)
@@ -595,7 +641,10 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         def linkcall():
             for key in self.parameter_dict:
                 v = target.parameters_all_dict[key].value
-                mfm.run("cs.current_fit.model.parameters_all_dict['%s'].value = %s" % (key, v))
+                mfm.run(
+                    "cs.current_fit.model.parameters_all_dict['%s'].value = %s" %
+                    (key, v)
+                )
             mfm.run("cs.current_fit.update()")
         return linkcall
 

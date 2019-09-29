@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-from typing import List, Type
+from typing import List, Type, Tuple
 
 import mfm.base
 import mfm.models
@@ -58,18 +58,28 @@ class Experiment(
 
     def add_reader(
             self,
-            reader: mfm.experiments.reader.ExperimentReader
+            reader: mfm.experiments.reader.ExperimentReader,
+            controller: mfm.experiments.reader.ExperimentReaderController = None
     ):
         if reader not in self.readers:
             reader.experiment = self
+            reader.controller = controller
             self._readers.append(reader)
 
     def add_readers(
             self,
-            setups: List[mfm.experiments.reader.ExperimentReader]
+            setups: List[
+                Tuple[
+                    mfm.experiments.reader.ExperimentReader,
+                    mfm.experiments.reader.ExperimentReaderController
+                ]
+            ]
     ):
-        for reader in setups:
-            self.add_reader(reader)
+        for reader, controller in setups:
+            self.add_reader(
+                reader,
+                controller
+            )
 
     def get_readers(
             self

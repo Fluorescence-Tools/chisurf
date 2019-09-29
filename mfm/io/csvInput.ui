@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>312</width>
-    <height>140</height>
+    <width>372</width>
+    <height>148</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,16 @@
    <property name="spacing">
     <number>0</number>
    </property>
-   <property name="margin">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
     <number>0</number>
    </property>
    <item>
@@ -26,7 +35,16 @@
       <string>Format</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <property name="margin">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
        <number>0</number>
       </property>
       <property name="spacing">
@@ -44,6 +62,9 @@
         <property name="enabled">
          <bool>true</bool>
         </property>
+        <property name="toolTip">
+         <string>The filename of the currently opened file</string>
+        </property>
         <property name="dragEnabled">
          <bool>false</bool>
         </property>
@@ -57,6 +78,9 @@
       </item>
       <item row="3" column="0">
        <widget class="QRadioButton" name="radioButton_2">
+        <property name="toolTip">
+         <string>Select this if the file that is being opened is a comma separated value file.</string>
+        </property>
         <property name="text">
          <string>csv</string>
         </property>
@@ -77,6 +101,9 @@
         <property name="enabled">
          <bool>true</bool>
         </property>
+        <property name="toolTip">
+         <string>If this checkbox is checked, the column header of the file is processed</string>
+        </property>
         <property name="text">
          <string>Header</string>
         </property>
@@ -87,6 +114,9 @@
       </item>
       <item row="3" column="3">
        <widget class="QSpinBox" name="spinBox">
+        <property name="toolTip">
+         <string>This corresponds to the number of lines that are being skipped before the header of the columns</string>
+        </property>
         <property name="maximum">
          <number>9999</number>
         </property>
@@ -125,7 +155,16 @@
          <property name="spacing">
           <number>0</number>
          </property>
-         <property name="margin">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
           <number>0</number>
          </property>
          <item>
@@ -133,67 +172,17 @@
            <property name="spacing">
             <number>0</number>
            </property>
-           <item row="1" column="0">
-            <widget class="QCheckBox" name="checkBox">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>x-values</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="1">
-            <widget class="QComboBox" name="comboBox">
-             <property name="editable">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_5">
-             <property name="text">
-              <string>nPoints</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QLabel" name="label_3">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>y-values</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="3">
-            <widget class="QComboBox" name="comboBox_2">
-             <property name="editable">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1" colspan="3">
-            <widget class="QLineEdit" name="lineEdit_9">
+            <widget class="QComboBox" name="comboBox_error_x_column">
              <property name="enabled">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
-             <property name="readOnly">
-              <bool>true</bool>
+             <property name="editable">
+              <bool>false</bool>
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
+           <item row="1" column="0">
             <widget class="QCheckBox" name="checkBox_3">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -209,17 +198,14 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="1">
-            <widget class="QComboBox" name="comboBox_3">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
+           <item row="0" column="3">
+            <widget class="QComboBox" name="comboBox_y_column">
              <property name="editable">
               <bool>false</bool>
              </property>
             </widget>
            </item>
-           <item row="2" column="2">
+           <item row="1" column="2">
             <widget class="QCheckBox" name="checkBox_4">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -235,13 +221,49 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="3">
-            <widget class="QComboBox" name="comboBox_4">
+           <item row="1" column="3">
+            <widget class="QComboBox" name="comboBox_error_y_column">
              <property name="enabled">
               <bool>false</bool>
              </property>
              <property name="editable">
               <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QCheckBox" name="checkBox">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>x-values</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="comboBox_x_column">
+             <property name="editable">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QLabel" name="label_3">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>y-values</string>
              </property>
             </widget>
            </item>
@@ -284,13 +306,18 @@
     <string>ReverseData</string>
    </property>
   </action>
+  <action name="actionColumnsChanged">
+   <property name="text">
+    <string>ColumnsChanged</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections>
   <connection>
    <sender>checkBox_3</sender>
    <signal>toggled(bool)</signal>
-   <receiver>comboBox_3</receiver>
+   <receiver>comboBox_error_x_column</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -306,7 +333,7 @@
   <connection>
    <sender>checkBox_4</sender>
    <signal>toggled(bool)</signal>
-   <receiver>comboBox_4</receiver>
+   <receiver>comboBox_error_y_column</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -322,7 +349,7 @@
   <connection>
    <sender>checkBox</sender>
    <signal>toggled(bool)</signal>
-   <receiver>comboBox</receiver>
+   <receiver>comboBox_x_column</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">

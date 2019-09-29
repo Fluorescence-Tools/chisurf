@@ -30,7 +30,9 @@ class Tests(unittest.TestCase):
             True
         )
         experiment.add_model_classes(
-            [mfm.models.model.Model]
+            [
+                mfm.models.model.Model
+            ]
         )
 
         # Models are unique
@@ -55,7 +57,9 @@ class Tests(unittest.TestCase):
         )
 
         experiment.add_readers(
-            [experiment_reader]
+            [
+                (experiment_reader, None)
+            ]
         )
 
         self.assertListEqual(
@@ -131,8 +135,15 @@ class Tests(unittest.TestCase):
         ec.call('read')
 
     def test_CsvTCSPC(self):
-        g1 = mfm.experiments.tcspc.tcspc.CsvTCSPC()
-        g2 = mfm.experiments.tcspc.tcspc.CsvTCSPC()
+        ex = mfm.experiments.experiment.Experiment(
+            'TCSPC'
+        )
+        g1 = mfm.experiments.tcspc.TCSPCReader(
+            experiment=ex
+        )
+        g2 = mfm.experiments.tcspc.TCSPCReader(
+            experiment=ex
+        )
         g2.from_dict(
             g1.to_dict()
         )
@@ -140,7 +151,6 @@ class Tests(unittest.TestCase):
             g1.to_dict(),
             g2.to_dict()
         )
-
 
     def test_DataCurve(self):
         x = np.linspace(0, np.pi * 2.0)
