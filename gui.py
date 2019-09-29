@@ -65,7 +65,9 @@ class Main(QtWidgets.QMainWindow):
 
     @property
     def current_experiment(self) -> mfm.experiments.experiment.Experiment:
-        return mfm.experiment[self.current_experiment_idx]
+        return mfm.experiment[
+            self.current_experiment_idx
+        ]
 
     @current_experiment.setter
     def current_experiment(
@@ -94,12 +96,19 @@ class Main(QtWidgets.QMainWindow):
         self.comboBox_setupSelect.setCurrentIndex(v)
 
     @property
+    def current_setup_name(self):
+        return str(
+            self.comboBox_setupSelect.currentText()
+        )
+
+    @property
     def current_setup(
             self
     ) -> mfm.experiments.reader.ExperimentReader:
-        return self.current_experiment.readers[
+        current_setup = self.current_experiment.readers[
             self.current_setup_idx
         ]
+        return current_setup
 
     @current_setup.setter
     def current_setup(
@@ -108,7 +117,9 @@ class Main(QtWidgets.QMainWindow):
     ) -> None:
         i = self.current_setup_idx
         j = i
-        for j, s in enumerate(self.current_experiment.readers):
+        for j, s in enumerate(
+                self.current_experiment.readers
+        ):
             if s.name == name:
                 break
         if j != i:
@@ -118,7 +129,9 @@ class Main(QtWidgets.QMainWindow):
     def current_model_name(
             self
     ) -> str:
-        return str(self.comboBox_Model.currentText())
+        return str(
+            self.comboBox_Model.currentText()
+        )
 
     @property
     def current_fit(
@@ -216,7 +229,9 @@ class Main(QtWidgets.QMainWindow):
         # Add setups for selected experiment
         self.comboBox_setupSelect.blockSignals(True)
         self.comboBox_setupSelect.clear()
-        self.comboBox_setupSelect.addItems(self.current_experiment.reader_names)
+        self.comboBox_setupSelect.addItems(
+            self.current_experiment.reader_names
+        )
         self.comboBox_setupSelect.blockSignals(False)
         self.onSetupChanged()
 
@@ -232,11 +247,22 @@ class Main(QtWidgets.QMainWindow):
         mfm.run("mfm.cmd.load_fit_result(%s, %s)" % (self.fit_idx, filename))
 
     def onSetupChanged(self):
-        mfm.widgets.hide_items_in_layout(self.verticalLayout_5)
-        setup_name = self.comboBox_setupSelect.currentText()
-        mfm.run("cs.current_setup = '%s'" % setup_name)
-        self.verticalLayout_5.addWidget(self.current_setup)
-        self.current_setup.show()
+        mfm.widgets.hide_items_in_layout(
+            self.layout_experiment_reader
+        )
+        mfm.run(
+            "cs.current_setup = '%s'" % self.current_setup_name
+        )
+        try:
+            self.layout_experiment_reader.addWidget(
+                self.current_setup
+            )
+            self.current_setup.show()
+        except TypeError:
+            self.layout_experiment_reader.addWidget(
+                self.current_setup.controller
+            )
+            self.current_setup.controller.show()
 
     def onCloseAllFits(self):
         for sub_window in mfm.fit_windows:
@@ -247,7 +273,27 @@ class Main(QtWidgets.QMainWindow):
         mfm.fit_windows = list()
 
     def onAddDataset(self):
-        mfm.cmd.add_dataset(self.current_setup)
+        try:
+            filename = self.current_setup.controller.get_filename()
+        except AttributeError:
+            filename = None
+
+        if isinstance(
+            self.current_setup,
+            mfm.experiments.reader.ExperimentReader
+        ):
+            mfm.cmd.add_dataset(
+                self.current_setup,
+                filename=filename
+            )
+        if isinstance(
+                self.current_setup,
+                mfm.experiments.reader.ExperimentReaderController
+        ):
+            mfm.cmd.add_dataset(
+                self.current_setup.experiment_reader,
+                filename=filename
+            )
 
     def onSaveFits(
             self,
@@ -352,35 +398,48 @@ class Main(QtWidgets.QMainWindow):
         #      (Commented widgets don't work at the moment       #
         ##########################################################
         # This needs to move to the QtApplication or it needs to be
-        # independent as new Widgets can only be created once a QApplication has been created
-        structure = mfm.experiments.experiment.Experiment('Modelling')
-        structure.add_readers(
-            [
-                mfm.experiments.modelling.LoadStructure(
-                    experiment=structure
-                )
-            ]
-        )
-        structure.add_model_classes(
-            [
-                mfm.models.tcspc.widgets.LifetimeModelWidget
-            ]
-        )
-        mfm.experiment.append(structure)
+        # independent as new Widgets can only be created once a QApplication
+        # has been created
 
+        ##########################################################
+        #       Structure                                        #
+        ##########################################################
+        # structure = mfm.experiments.experiment.Experiment('Modelling')
+        # structure.add_readers(
+        #     [
+        #         mfm.experiments.modelling.LoadStructure(
+        #             experiment=structure
+        #         )
+        #     ]
+        # )
+        # structure.add_model_classes(
+        #     [
+        #         mfm.models.tcspc.widgets.LifetimeModelWidget
+        #     ]
+        # )
+        # mfm.experiment.append(structure)
+
+        ##########################################################
+        #       TCSPC                                            #
+        ##########################################################
         tcspc = mfm.experiments.experiment.Experiment('TCSPC')
+        tcspc_reader = mfm.experiments.tcspc.TCSPCReader(
+            experiment=tcspc
+        )
+        tcspc_reader.controller = mfm.experiments.tcspc.TCSPCReaderControlWidget(
+            experiment_reader=tcspc_reader,
+            **mfm.settings.cs_settings['tcspc_csv'],
+        )
+
         tcspc.add_readers(
             [
-                mfm.experiments.tcspc.TCSPCSetupWidget(
-                    experiment=tcspc,
-                    **mfm.settings.cs_settings['tcspc_csv'],
-                ),
+                tcspc_reader,
                 mfm.experiments.tcspc.TCSPCSetupSDTWidget(
                     experiment=tcspc
                 ),
-                mfm.experiments.tcspc.TCSPCSetupDummyWidget(
-                    experiment=tcspc
-                )
+                # mfm.experiments.tcspc.TCSPCSetupDummyWidget(
+                #     experiment=tcspc
+                # )
             ]
         )
         tcspc.add_model_classes(
@@ -394,6 +453,9 @@ class Main(QtWidgets.QMainWindow):
         )
         mfm.experiment.append(tcspc)
 
+        ##########################################################
+        #       FCS                                              #
+        ##########################################################
         fcs = mfm.experiments.experiment.Experiment('FCS')
         fcs.add_readers(
             [
@@ -412,29 +474,35 @@ class Main(QtWidgets.QMainWindow):
         )
         mfm.experiment.append(fcs)
 
-        global_fit = mfm.experiments.experiment.Experiment('Global')
-        global_setup = mfm.experiments.globalfit.GlobalFitSetup(
-            name='Global-Fit',
-            experiment=global_fit
-        )
-        global_fit.add_model_classes(
-            models=[
-                mfm.models.global_model.GlobalFitModelWidget
-            ]
-        )
-        global_fit.add_reader(global_setup)
-        mfm.experiment.append(global_fit)
+        ##########################################################
+        #       Global datasets                                  #
+        ##########################################################
+        # global_fit = mfm.experiments.experiment.Experiment('Global')
+        # global_setup = mfm.experiments.globalfit.GlobalFitSetup(
+        #     name='Global-Fit',
+        #     experiment=global_fit
+        # )
+        # global_fit.add_model_classes(
+        #     models=[
+        #         mfm.models.global_model.GlobalFitModelWidget
+        #     ]
+        # )
+        # global_fit.add_reader(global_setup)
+        # mfm.experiment.append(global_fit)
+        #
+        #
+        # mfm.cmd.add_dataset(
+        #     setup=global_setup,
+        #     experiment=global_fit
+        # )
 
+        ##########################################################
+        #       Update UI                                        #
+        ##########################################################
         self.experiment_names = [
             b.name for b in mfm.experiment if b.name is not 'Global'
         ]
         self.comboBox_experimentSelect.addItems(self.experiment_names)
-
-        mfm.cmd.add_dataset(
-            setup=global_setup,
-            experiment=global_fit
-        )
-        #self.onAddDataset(experiment=global_fit, data_reader=global_setup)  # Add Global-Dataset by default
 
     def __init__(
             self,
@@ -455,6 +523,7 @@ class Main(QtWidgets.QMainWindow):
 
         self.current_fit_widget = None
         self._current_fit = None
+        self.experiment_names = list()
 
         self.setCentralWidget(self.mdiarea)
         self.init_widgets()

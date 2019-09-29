@@ -74,7 +74,19 @@ class Experiment(
     def get_readers(
             self
     ) -> List[mfm.experiments.reader.ExperimentReader]:
-        return list(self._readers)
+        readers = list()
+        for v in self._readers:
+            if isinstance(
+                    v,
+                    mfm.experiments.reader.ExperimentReader
+            ):
+                readers.append(v)
+            elif isinstance(
+                    v,
+                    mfm.experiments.reader.ExperimentReaderController
+            ):
+                readers.append(v.experiment_reader)
+        return readers
 
     def get_reader_names(self) -> List[str]:
         names = list()

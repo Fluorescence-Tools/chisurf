@@ -130,7 +130,7 @@
    </property>
    <property name="font">
     <font>
-     <family>MS Shell Dlg 2</family>
+     <family>.SF NS Text</family>
      <pointsize>13</pointsize>
     </font>
    </property>
@@ -737,7 +737,7 @@
             <number>0</number>
            </property>
            <item>
-            <layout class="QVBoxLayout" name="verticalLayout_5">
+            <layout class="QVBoxLayout" name="layout_experiment_reader">
              <property name="spacing">
               <number>0</number>
              </property>

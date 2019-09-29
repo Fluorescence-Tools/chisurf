@@ -7,16 +7,20 @@ import os
 
 import mfm
 import mfm.experiments
+import mfm.base
+import mfm.fluorescence
 import mfm.experiments.data
 import mfm.widgets
-from .. reader import ExperimentReader
-from mfm.fluorescence.tcspc import weights, fitrange, weights_ps
 from mfm.io import sdtfile
 from mfm.io.ascii import Csv
 from mfm.io.widgets import CsvWidget
 
+from .. import reader
 
-class CsvTCSPC(object):
+
+class CsvTCSPC(
+    mfm.base.Base
+):
 
     def __init__(
             self,
@@ -44,8 +48,7 @@ class CsvTCSPC(object):
 
 
 class CsvTCSPCWidget(
-    CsvTCSPC,
-    QtWidgets.QWidget
+    QtWidgets.QWidget,
 ):
 
     def __init__(
@@ -53,14 +56,15 @@ class CsvTCSPCWidget(
             *args,
             **kwargs
     ):
-        QtWidgets.QWidget.__init__(
-            self,
+        super().__init__(
             *args,
             **kwargs
         )
         uic.loadUi(
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
+                os.path.dirname(
+                    os.path.abspath(__file__)
+                ),
                 "csvTCSPCWidget.ui"
             ),
             self
@@ -113,12 +117,14 @@ class CsvTCSPCWidget(
 
     def onDtChanged(self):
         rebin = int(self.comboBox.currentText())
-        dt = float(self.doubleSpinBox_2.value()) * rebin if self.checkBox_2.isChecked() else 1.0 * rebin
+        dt = float(
+            self.doubleSpinBox_2.value()
+        ) * rebin if self.checkBox_2.isChecked() else 1.0 * rebin
         mfm.run("cs.current_setup.dt = %s" % dt)
 
 
 class TCSPCReader(
-    ExperimentReader
+    reader.ExperimentReader
 ):
 
     def __init__(
@@ -172,7 +178,7 @@ class TCSPCReader(
             'threshold',
             mfm.settings.cs_settings['tcspc']['fit_count_threshold']
         )
-        return fitrange(
+        return mfm.fluorescence.tcspc.fitrange(
             data.y,
             threshold,
             fit_area
@@ -216,18 +222,21 @@ class TCSPCReader(
 
             if self.polarization == 'vv':
                 y = c1
-                ey = weights(c1)
+                ey = mfm.fluorescence.tcspc.weights(c1)
             elif self.polarization == 'vh':
                 y = c2
-                ey = weights(c2)
+                ey = mfm.fluorescence.tcspc.weights(c2)
             elif self.polarization == 'vv/vh':
-                e1, e2 = weights(c1), weights(c2)
+                e1 = mfm.fluorescence.tcspc.weights(c1)
+                e2 = mfm.fluorescence.tcspc.weights(c2)
                 y = np.vstack([c1, c2])
                 ey = np.vstack([e1, e2])
             else:
                 f2 = 2.0 * self.g_factor
                 y = c1 + f2 * c2
-                ey = weights_ps(c1, c2, f2)
+                ey = mfm.fluorescence.tcspc.weights_ps(
+                    c1, c2, f2
+                )
             x = np.arange(n_data_points, dtype=np.float64) * dt
         else:
             x = data[0] * dt
@@ -236,8 +245,10 @@ class TCSPCReader(
             n_datasets, n_data_points = y.shape
             n_data_points = int(n_data_points / rebin_y)
             y = y.reshape([n_datasets, n_data_points, rebin_y]).sum(axis=2)
-            ey = weights(y)
-            x = np.average(x.reshape([n_data_points, rebin_y]), axis=1) / rebin_y
+            ey = mfm.fluorescence.tcspc.weights(y)
+            x = np.average(
+                x.reshape([n_data_points, rebin_y]), axis=1
+            ) / rebin_y
 
         # TODO: in future adaptive binning of time axis
         #from scipy.stats import binned_statistic
@@ -286,9 +297,8 @@ class TCSPCReader(
         return data_group
 
 
-class TCSPCSetupWidget(
-    TCSPCReader,
-    mfm.io.ascii.Csv,
+class TCSPCReaderControlWidget(
+    reader.ExperimentReaderController,
     QtWidgets.QWidget
 ):
 
@@ -306,13 +316,19 @@ class TCSPCSetupWidget(
             )
         if os.path.isfile(filename):
             kwargs['filename'] = filename
-            return TCSPCReader.read(
-                self,
+            return self._experiment_reader.read(
                 *args,
                 **kwargs
             )
-        else:
-            return None
+
+    def get_filename(
+            self
+    ) -> str:
+        return mfm.widgets.get_filename(
+            description='CSV-TCSPC file',
+            file_type='All files (*.*)',
+            working_path=None
+        )
 
     def __init__(
             self,
@@ -323,21 +339,14 @@ class TCSPCSetupWidget(
             *args,
             **kwargs
         )
-        QtWidgets.QWidget.__init__(self)
-        #TCSPCReader.__init__(self, *args, **kwargs)
-
-        csvSetup = CsvWidget(parent=self)
-        csvTCSPC = CsvTCSPCWidget(**kwargs)
-        csvSetup.widget.hide()
-
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
-        self.layout.addWidget(csvTCSPC)
-        self.layout.addWidget(csvSetup)
-
-        #TCSPCReader.__init__(self, *args, **kwargs)
-        # Overwrite non-widget attributes by widgets
-        self.csvTCSPC = csvTCSPC
+        self.layout.addWidget(
+            CsvWidget()
+        )
+        self.layout.addWidget(
+            CsvTCSPCWidget()
+        )
 
 
 class TcspcSDTWidget(
@@ -434,7 +443,7 @@ class TcspcSDTWidget(
             self
     ) -> mfm.experiments.data.DataCurve:
         y = self.ph_counts
-        w = weights(y)
+        w = mfm.fluorescence.tcspc.weights(y)
         d = mfm.experiments.data.DataCurve(
             setup=self,
             x=self.times,
@@ -600,7 +609,7 @@ class TCSPCSetupDummy(
 
         x = np.arange(self.n_tac) * self.dt
         y = np.exp(-x/self.lifetime) * self.p0
-        ey = 1./weights(y)
+        ey = 1./mfm.fluorescence.tcspc.weights(y)
 
         d = mfm.experiments.data.DataCurve(
             x=x,
