@@ -110,6 +110,38 @@ class Tests(unittest.TestCase):
         )
         # TODO: test to_dict and to_json
 
+    def test_ExperimentReaderController(self):
+        import mfm.experiments
+        experiment = mfm.experiments.experiment.Experiment(
+            name="TestExperiment"
+        )
+        experiment_reader = mfm.experiments.reader.ExperimentReader(
+            experiment=experiment
+        )
+        ec = mfm.experiments.reader.ExperimentReaderController(
+            experiment_reader=experiment_reader
+        )
+        ec.add_call(
+            'read',
+            experiment_reader.read,  # this calls mfm.Base.load
+            {
+                'filename': None
+            }
+        )
+        ec.call('read')
+
+    def test_CsvTCSPC(self):
+        g1 = mfm.experiments.tcspc.tcspc.CsvTCSPC()
+        g2 = mfm.experiments.tcspc.tcspc.CsvTCSPC()
+        g2.from_dict(
+            g1.to_dict()
+        )
+        self.assertDictEqual(
+            g1.to_dict(),
+            g2.to_dict()
+        )
+
+
     def test_DataCurve(self):
         x = np.linspace(0, np.pi * 2.0)
         y = np.sin(x)
