@@ -423,16 +423,16 @@ class LinePlot(plotbase.Plot):
         x_shift = plt_ctrl.x_shift
 
         # Model function
-        #model_x, model_y = fit.model[fit.xmin:fit.xmax]
-        model_x, model_y = curves['model'].x, curves['model'].y
+        model_x, model_y = fit.model[fit.xmin:fit.xmax]
+        #model_x, model_y = curves['model'].x, curves['model'].y
         model_x = np.copy(model_x) + x_shift
         model_y = np.copy(model_y) + y_shift
 
         # Update fitting-region
-        #data_y = self.fit.data.y
-        #data_x = self.fit.data.x
+        data_y = self.fit.data.y
+        data_x = self.fit.data.x
+        #data_x, data_y = curves['data'].x, curves['data'].y
 
-        data_x, data_y = curves['data'].x, curves['data'].y
         data_x = np.copy(data_x) + x_shift
         data_y = np.copy(data_y) + y_shift
         # Weighted residuals + Autocorrelation
