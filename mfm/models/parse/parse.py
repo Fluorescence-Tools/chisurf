@@ -14,6 +14,7 @@ from qtpy import QtCore, QtWidgets, uic, QtWebEngineWidgets
 from qtpy.QtCore import QFile, QFileInfo, QTextStream, QUrl
 
 import mfm
+import mfm.widgets
 from mfm.models.model import ModelWidget, ModelCurve
 from mfm.fitting.parameter import FittingParameter, FittingParameterGroup
 
@@ -310,14 +311,28 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
 
     def onUpdateFunc(self):
         function_str = str(self.plainTextEdit.toPlainText())
-        mfm.run("cs.current_fit.model.parse.func = '%s'" % function_str)
-        mfm.run("cs.current_fit.update()")
+        mfm.run(
+            "\n".join(
+                [
+                    "cs.current_fit.model.parse.func = '%s'" % function_str,
+                    "cs.current_fit.update()"
+                ]
+            )
+        )
         self.onUpdateEquation()
 
     def onModelChanged(self):
-        mfm.run("cs.current_fit.model.parse.model_name = '%s'" % self.model_name)
-        mfm.run("cs.current_fit.model.parse.func = '%s'" % self.models[self.model_name]['equation'])
-        mfm.run("cs.current_fit.update()")
+        mfm.run(
+            "\n".join(
+                [
+                    "cs.current_fit.model.parse.model_name = '%s'" %
+                    self.model_name,
+                    "cs.current_fit.model.parse.func = '%s'" %
+                    self.models[self.model_name]['equation'],
+                    "cs.current_fit.update()"
+                ]
+            )
+        )
         self.onUpdateEquation()
 
     def onLoadModelFile(

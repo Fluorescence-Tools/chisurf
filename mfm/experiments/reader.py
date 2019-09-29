@@ -4,7 +4,7 @@
 from __future__ import annotations
 from typing import Tuple, Callable, Dict
 
-from abc import abstractmethod
+from abc import abstractmethod, abstractproperty
 
 import mfm.base
 import mfm.curve
@@ -50,9 +50,9 @@ class ExperimentReader(
     ):
         self._controller = v
 
-    @staticmethod
     @abstractmethod
     def autofitrange(
+            self,
             data: mfm.base.Data,
             **kwargs
     ) -> Tuple[int, int]:
@@ -114,7 +114,7 @@ class ExperimentReaderController(
 
     def __init__(
             self,
-            experiment_reader: ExperimentReader,
+            experiment_reader: ExperimentReader = None,
             *args,
             **kwargs
     ):
@@ -124,7 +124,11 @@ class ExperimentReaderController(
         )
         self._experiment_reader = experiment_reader
         self._call_dict = dict()
-        experiment_reader.controller = self
+        if isinstance(
+                experiment_reader,
+                ExperimentReader
+        ):
+            experiment_reader.controller = self
 
     def add_call(
             self,
@@ -160,6 +164,12 @@ class ExperimentReaderController(
         return self._experiment_reader.__getattribute__(
             item
         )
+
+    @abstractproperty
+    def filename(
+            self
+    ) -> str:
+        pass
 
     @abstractmethod
     def get_filename(

@@ -199,7 +199,7 @@ class DataCurve(
     ) -> None:
         super().from_dict(v)
         self.ex = np.array(v['ex'], dtype=np.float64)
-        self.__dict__['ey'] = np.array(v['ey'], dtype=np.float64)
+        self.ey = np.array(v['ey'], dtype=np.float64)
 
     def save(
             self,

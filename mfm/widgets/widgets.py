@@ -62,10 +62,21 @@ class QIPythonWidget(
 
     def execute(
             self,
+            source: str,
             *args,
             hidden: bool = False,
             **kwargs
     ):
+        """
+
+        :param source: the source code that is executed via the command line
+        interface.
+        :param args:
+        :param hidden: if hidden is True the execution is neither recorded in
+        the session file nor displayed in the execution history widget
+        :param kwargs:
+        :return:
+        """
         if not hidden:
             try:
                 new_text = args[0] + '\n'
@@ -80,7 +91,12 @@ class QIPythonWidget(
                     self.history_widget.insertPlainText(new_text)
             except IndexError:
                 pass
-        RichJupyterWidget.execute(self, *args, **kwargs)
+        RichJupyterWidget.execute(
+            self,
+            source,
+            *args,
+            **kwargs
+        )
 
     def execute_function(
             self,
@@ -364,9 +380,10 @@ def save_file(
         file_type: str = 'All files (*.*)',
         working_path: str = None
 ):
-    """Same as open see above a file within a working path. If no path is specified the last
-    path is used. After using this function the current working path of the
-    running program (ChiSurf) is updated according to the folder of the opened
+    """Same as open see above a file within a working path. If no path is
+    specified the last path is used. After using this function the current
+    working path of the running program (ChiSurf) is updated according to the
+    folder of the opened
     file.
 
     :param working_path:
