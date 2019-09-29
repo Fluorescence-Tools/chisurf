@@ -267,8 +267,6 @@ class CsvWidget(
             ),
             self
         )
-        #Csv.__init__(self, **kwargs)
-        #self.connect(self.spinBox, QtCore.SIGNAL("valueChanged(int)"), self.reload_csv)
         self.actionUseHeader.triggered.connect(self.changeUseHeader)
         self.actionSkiprows.triggered.connect(self.changeSkiprows)
         self.actionColspecs.triggered.connect(self.changeColspecs)
@@ -326,20 +324,20 @@ class CsvWidget(
         # TODO
         pass
 
-    @property
-    def data(self):
-        return mfm.io.ascii.Csv.data.fget(self)
-
-    @data.setter
-    def data(self, v):
-        mfm.io.ascii.Csv.data.fset(self, v)
-        self.lineEdit_9.setText("%d" % v.shape[1])
-        bx = [self.comboBox, self.comboBox_2, self.comboBox_3, self.comboBox_4]
-        if self.n_rows > 0:
-            for i, b in enumerate(bx):
-                b.clear()
-                b.addItems(self.header)
-                b.setCurrentIndex(i % self.n_rows)
+    # @property
+    # def data(self):
+    #     return mfm.io.ascii.Csv.data.fget(self)
+    #
+    # @data.setter
+    # def data(self, v):
+    #     mfm.io.ascii.Csv.data.fset(self, v)
+    #     self.lineEdit_9.setText("%d" % v.shape[1])
+    #     bx = [self.comboBox, self.comboBox_2, self.comboBox_3, self.comboBox_4]
+    #     if self.n_rows > 0:
+    #         for i, b in enumerate(bx):
+    #             b.clear()
+    #             b.addItems(self.header)
+    #             b.setCurrentIndex(i % self.n_rows)
 
     def changeSkiprows(self):
         n_skip = int(self.spinBox.value())
@@ -369,11 +367,18 @@ class CsvWidget(
         mode = 'csv' if self.radioButton_2.isChecked() else 'fwf'
         mfm.run("cs.current_setup.file_type = '%s'" % mode)
 
-    def load(self, filename=None, **kwargs):
-        if filename is None:
-            filename = mfm.widgets.get_filename('Open CSV-File', 'CSV-file (*.*)')
-        mfm.io.ascii.Csv.load(self, filename, **kwargs)
-        self.filename = filename
+    # def load(self, filename=None, **kwargs):
+    #     if filename is None:
+    #         filename = mfm.widgets.get_filename(
+    #             'Open CSV-File',
+    #             'CSV-file (*.*)'
+    #         )
+    #     mfm.io.ascii.Csv.load(
+    #         self,
+    #         filename,
+    #         **kwargs
+    #     )
+    #     self.filename = filename
 
 
 class CSVFileWidget(QtWidgets.QWidget):

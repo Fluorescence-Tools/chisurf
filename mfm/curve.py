@@ -11,7 +11,9 @@ import mfm.math
 T = TypeVar('T', bound='Curve')
 
 
-class Curve(mfm.base.Base):
+class Curve(
+    mfm.base.Base
+):
     """
 
     """

@@ -23,7 +23,9 @@ os.environ['PYZMQ_BACKEND'] = 'cython'
 DEFAULT_INSTANCE_ARGS = ['qtconsole','--pylab=inline', '--colors=linux']
 
 
-class QIPythonWidget(RichJupyterWidget):
+class QIPythonWidget(
+    RichJupyterWidget
+):
 
     def start_recording(self):
         self._macro = ""
@@ -37,7 +39,10 @@ class QIPythonWidget(RichJupyterWidget):
             filename: str = None
     ):
         if filename is None:
-            filename = mfm.widgets.get_filename("Python macros", file_type="Python file (*.py)")
+            filename = mfm.widgets.get_filename(
+                "Python macros",
+                file_type="Python file (*.py)"
+            )
         with open(filename, mode='r') as fp:
             text = fp.read()
             self.execute(text, hidden=False)
@@ -48,7 +53,10 @@ class QIPythonWidget(RichJupyterWidget):
     ):
         self.stop_recording()
         if filename is None:
-            filename = mfm.widgets.save_file("Python macros", file_type="Python file (*.py)")
+            filename = mfm.widgets.save_file(
+                "Python macros",
+                file_type="Python file (*.py)"
+            )
         with open(filename, mode='w') as fp:
             fp.write(self._macro)
 
@@ -65,7 +73,10 @@ class QIPythonWidget(RichJupyterWidget):
                     fp.write(new_text)
                 if self.recording:
                     self._macro += new_text
-                if isinstance(self.history_widget, QtWidgets.QPlainTextEdit):
+                if isinstance(
+                        self.history_widget,
+                        QtWidgets.QPlainTextEdit
+                ):
                     self.history_widget.insertPlainText(new_text)
             except IndexError:
                 pass
@@ -130,7 +141,8 @@ class QIPythonWidget(RichJupyterWidget):
         )
 
     def pushVariables(self, variableDict):
-        """ Given a dictionary containing name / value pairs, push those variables to the IPython console widget """
+        """ Given a dictionary containing name / value pairs, push those
+        variables to the IPython console widget """
         self.kernel_manager.kernel.shell.push(variableDict)
 
     def clearTerminal(self):
@@ -178,7 +190,9 @@ def hide_items_in_layout(
             item.widget().hide()
 
 
-class MyMessageBox(QtWidgets.QMessageBox):
+class MyMessageBox(
+    QtWidgets.QMessageBox
+):
 
     def __init__(
             self,
@@ -198,7 +212,10 @@ class MyMessageBox(QtWidgets.QMessageBox):
             self.setInformativeText(fortune)
             self.exec_()
             self.setMinimumWidth(450)
-            self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+            self.setSizePolicy(
+                QtWidgets.QSizePolicy.Expanding,
+                QtWidgets.QSizePolicy.Expanding
+            )
         else:
             self.close()
 
@@ -208,7 +225,10 @@ class MyMessageBox(QtWidgets.QMessageBox):
         self.setMinimumHeight(0)
         self.setMaximumHeight(16777215)
         self.setMaximumWidth(16777215)
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Expanding
+        )
 
         text_edit = self.findChild(QtWidgets.QTextEdit)
         if text_edit is not None:
@@ -216,7 +236,10 @@ class MyMessageBox(QtWidgets.QMessageBox):
             text_edit.setMaximumHeight(16777215)
             text_edit.setMinimumWidth(0)
             text_edit.setMaximumWidth(16777215)
-            text_edit.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+            text_edit.setSizePolicy(
+                QtWidgets.QSizePolicy.Expanding,
+                QtWidgets.QSizePolicy.Expanding
+            )
 
         return result
 
@@ -271,7 +294,9 @@ class FileList(QtWidgets.QListWidget):
 
         if accept_drops:
             self.setAcceptDrops(True)
-            self.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+            self.setDragDropMode(
+                QtWidgets.QAbstractItemView.InternalMove
+            )
 
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/list-add.png")
@@ -380,9 +405,19 @@ def get_directory(
     if directory is None:
         directory = mfm.working_path
     if isinstance(directory, str):
-        directory = str(QtWidgets.QFileDialog.getExistingDirectory(None, "Select Directory", directory))
+        directory = str(
+            QtWidgets.QFileDialog.getExistingDirectory(
+                None,
+                "Select Directory", directory
+            )
+        )
     else:
-        directory = str(QtWidgets.QFileDialog.getExistingDirectory(None, "Select Directory"))
+        directory = str(
+            QtWidgets.QFileDialog.getExistingDirectory(
+                None,
+                "Select Directory"
+            )
+        )
     mfm.working_path = directory
     if not get_files:
         return directory
@@ -410,7 +445,10 @@ def make_widget_from_yaml(
     :param name: 
     :return: 
     """
-    def make_group(d, name=''):
+    def make_group(
+            d,
+            name: str = ''
+    ):
         g = QtWidgets.QGroupBox()
         g.setTitle(str(name))
         layout = QtWidgets.QFormLayout()
