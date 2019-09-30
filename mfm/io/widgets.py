@@ -281,73 +281,15 @@ class CsvWidget(
             ),
             self
         )
-        self.actionUseHeader.triggered.connect(self.changeUseHeader)
-        self.actionSkiprows.triggered.connect(self.changeSkiprows)
-        self.actionColspecs.triggered.connect(self.changeColspecs)
-        self.actionCsvType.triggered.connect(self.changeCsvType)
-        self.actionSetError.triggered.connect(self.changeError)
+        self.actionUseHeader.triggered.connect(self.changeCsvParameter)
+        self.actionSkiprows.triggered.connect(self.changeCsvParameter)
+        self.actionColspecs.triggered.connect(self.changeCsvParameter)
+        self.actionCsvType.triggered.connect(self.changeCsvParameter)
+        self.actionSetError.triggered.connect(self.changeCsvParameter)
         self.actionColumnsChanged.triggered.connect(
             self.change_axis_selection
         )
         self.verbose = kwargs.get('verbose', mfm.verbose)
-
-    # @property
-    # def col_ex(self) -> int:
-    #     return self.comboBox_error_x_column.currentIndex()
-    #
-    # @col_ex.setter
-    # def col_ex(self, v):
-    #     pass
-
-    @property
-    def x_on(self) -> bool:
-        return self.checkBox.isChecked()
-
-    @x_on.setter
-    def x_on(
-            self,
-            v: bool
-    ):
-        self.checkBox.setChecked(bool(v))
-
-    @property
-    def col_x(self) -> int:
-        return self.comboBox.currentIndex()
-
-    @col_x.setter
-    def col_x(
-            self,
-            v: int
-    ):
-        # TODO
-        pass
-
-    @property
-    def col_y(self) -> int:
-        return self.comboBox_2.currentIndex()
-
-    @col_y.setter
-    def col_y(
-            self,
-            v: int
-    ):
-        # TODO
-        pass
-
-    # @property
-    # def data(self):
-    #     return mfm.io.ascii.Csv.data.fget(self)
-    #
-    # @data.setter
-    # def data(self, v):
-    #     mfm.io.ascii.Csv.data.fset(self, v)
-    #     self.lineEdit_9.setText("%d" % v.shape[1])
-    #     bx = [self.comboBox, self.comboBox_2, self.comboBox_error_x_column, self.comboBox_4]
-    #     if self.n_rows > 0:
-    #         for i, b in enumerate(bx):
-    #             b.clear()
-    #             b.addItems(self.header)
-    #             b.setCurrentIndex(i % self.n_rows)
 
     def change_axis_selection(self):
         mfm.run(
@@ -369,33 +311,25 @@ class CsvWidget(
             )
         )
 
-    def changeSkiprows(self):
-        n_skip = int(self.spinBox.value())
-        mfm.run("cs.current_setup.skiprows = %s" % n_skip)
-
-    def changeUseHeader(self):
-        use_header = bool(self.checkBox_2.isChecked())
-        mfm.run("cs.current_setup.use_header = %s" % use_header)
-
-    def changeColspecs(self):
-        colspecs = str(self.lineEdit.text())
-        mfm.run("cs.current_setup.colspecs = '%s'" % colspecs)
-
-    def changeError(self):
+    def changeCsvParameter(self):
         set_errx_on = bool(self.checkBox_3.isChecked())
         set_erry_on = bool(self.checkBox_4.isChecked())
+        colspecs = str(self.lineEdit.text())
+        use_header = bool(self.checkBox_2.isChecked())
+        n_skip = int(self.spinBox.value())
+        mode = 'csv' if self.radioButton_2.isChecked() else 'fwf'
         mfm.run(
             "\n".join(
                 [
                     "cs.current_setup.error_y_on = %s" % set_erry_on,
-                    "cs.current_setup.error_x_on = %s" % set_errx_on
+                    "cs.current_setup.error_x_on = %s" % set_errx_on,
+                    "cs.current_setup.colspecs = '%s'" % colspecs,
+                    "cs.current_setup.use_header = %s" % use_header,
+                    "cs.current_setup.skiprows = %s" % n_skip,
+                    "cs.current_setup.file_type = '%s'" % mode
                 ]
             )
         )
-
-    def changeCsvType(self):
-        mode = 'csv' if self.radioButton_2.isChecked() else 'fwf'
-        mfm.run("cs.current_setup.file_type = '%s'" % mode)
 
     @property
     def filename(self) -> str:
@@ -408,19 +342,6 @@ class CsvWidget(
     ):
         #mfm.io.ascii.Csv.filename.fset(self, v)
         self.lineEdit_8.setText(v)
-
-    # def load(self, filename=None, **kwargs):
-    #     if filename is None:
-    #         filename = mfm.widgets.get_filename(
-    #             'Open CSV-File',
-    #             'CSV-file (*.*)'
-    #         )
-    #     mfm.io.ascii.Csv.load(
-    #         self,
-    #         filename,
-    #         **kwargs
-    #     )
-    #     self.filename = filename
 
 
 class CSVFileWidget(QtWidgets.QWidget):

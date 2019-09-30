@@ -407,14 +407,26 @@ class FittingParameterWidget(QtWidgets.QWidget):
             (self.fitting_parameter.name, self.widget_bounds_on.isChecked()))
         )
 
-        self.widget_lower_bound.editingFinished.connect(lambda: mfm.run(
-            "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
-            (self.fitting_parameter.name, self.widget_lower_bound.value(), self.widget_upper_bound.value()))
+        self.widget_lower_bound.editingFinished.connect(
+            lambda: mfm.run(
+                "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
+                (
+                    self.fitting_parameter.name,
+                    self.widget_lower_bound.value(),
+                    self.widget_upper_bound.value()
+                )
+            )
         )
 
-        self.widget_upper_bound.editingFinished.connect(lambda: mfm.run(
-            "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
-            (self.fitting_parameter.name, self.widget_lower_bound.value(), self.widget_upper_bound.value()))
+        self.widget_upper_bound.editingFinished.connect(
+            lambda: mfm.run(
+                "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
+                (
+                    self.fitting_parameter.name,
+                    self.widget_lower_bound.value(),
+                    self.widget_upper_bound.value()
+                )
+            )
         )
 
         self.widget_link.clicked.connect(self.onLinkFitGroup)
@@ -428,7 +440,10 @@ class FittingParameterWidget(QtWidgets.QWidget):
         self.widget_link.setCheckState(QtCore.Qt.Checked)
         self.widget_value.setEnabled(False)
         mfm.run(
-            "mfm.cmd.fitting_parameter_name(%s, %s)" % (self.fitting_parameter.name, cs)
+            "mfm.cmd.fitting_parameter_name(%s, %s)" % (
+                self.fitting_parameter.name,
+                cs
+            )
         )
         self.widget_value.setEnabled(True)
         self.widget_link.setCheckState(QtCore.Qt.Unchecked)
@@ -518,7 +533,6 @@ def make_fitting_parameter_widget(
         'decimals': decimals,
         'layout': layout
     }
-
     widget = FittingParameterWidget(fitting_parameter, **kw)
     fitting_parameter.controller = widget
     return widget

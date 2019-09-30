@@ -482,9 +482,12 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
     def onAddGlobalVariable(self):
         variable_name = self.current_global_variable_name
         if len(variable_name) > 0 and variable_name not in list(self._global_parameters.keys()):
-            mfm.run("cs.current_fit.model.append_global_parameter(mfm.parameter.FittingParameterWidget(name='%s'))" % self.current_global_variable_name)
-            l = self.verticalLayout
-            l.addWidget(self._global_parameters.values()[-1])
+            mfm.run(
+                "cs.current_fit.model.append_global_parameter(mfm.parameter.FittingParameterWidget(name='%s'))" %
+                self.current_global_variable_name
+            )
+            layout = self.verticalLayout
+            layout.addWidget(self._global_parameters.values()[-1])
         else:
             print("No variable name defined.")
 
@@ -500,7 +503,9 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         local_fits_idx = self.local_fit_idx
         fit_indeces = range(len(local_fits)) if self.add_all_fits else [self.current_fit_index]
         for fitIndex in fit_indeces:
-            mfm.run("cs.current_fit.model.append_fit(mfm.fits[%s])" % local_fits_idx[fitIndex])
+            mfm.run(
+                "cs.current_fit.model.append_fit(mfm.fits[%s])" % local_fits_idx[fitIndex]
+            )
 
     def append_fit(
             self,

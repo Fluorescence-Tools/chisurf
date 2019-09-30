@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import numpy as np
 from qtpy import QtWidgets
 
 import mfm
@@ -9,6 +8,7 @@ import mfm.io.widgets
 import mfm.widgets
 import mfm.fluorescence
 import mfm.experiments.data
+import mfm.io.fluorescence
 from . import reader
 
 
@@ -89,54 +89,19 @@ class FCSKristine(
             verbose: bool = None,
             **kwargs
     ):
-        """Uses either the error provided by the correlator (4. column)
-        or calculates the error based on the correlation curve,
-        the aquisition time and the count-rate.
-
-        :param filename:
-        :param verbose:
-        :param kwargs:
-        :return:
-        """
-        d = mfm.experiments.data.DataCurve(setup=self)
-        d.setup = self
         if filename is None:
             filename = mfm.widgets.get_filename(
                 'Kristine-Correlation file',
                 file_type='All files (*.cor)'
             )
-
         self.load(
             filename=filename,
             skiprows=0,
             use_header=None,
             verbose=verbose
         )
-
-        # In Kristine file-type
-        # First try to use experimental errors
-        x, y = self.data[0], self.data[1]
-        i = np.where(x > 0.0)
-        x = x[i]
-        y = y[i]
-        try:
-            w = 1. / self.data[3][i]
-        except IndexError:
-            # In case this doesnt work
-            # use calculated errors using count-rate and duration
-            try:
-                dur, cr = self.data[2, 0], self.data[2, 1]
-                w = mfm.fluorescence.fcs.weights(x, y, dur, cr)
-            except IndexError:
-                # In case everything fails
-                # Use no errors at all but uniform weighting
-                w = np.ones_like(y)
-        d.set_data(
-            self.filename,
-            x,
-            y,
-            ey=w
+        return mfm.io.fluorescence.read_kristine(
+            data=self.data
         )
-        return d
 
 
