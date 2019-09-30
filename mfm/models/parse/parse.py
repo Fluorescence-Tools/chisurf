@@ -344,7 +344,9 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
                 'Open models-file',
                 'link file (*.yaml)'
             )
-        mfm.run("cs.current_fit.model.parse.load_model_file(%s)" % filename)
+        mfm.run(
+            "cs.current_fit.model.parse.load_model_file(%s)" % filename
+        )
 
 
 class ParseModelWidget(ParseModel, ModelWidget):

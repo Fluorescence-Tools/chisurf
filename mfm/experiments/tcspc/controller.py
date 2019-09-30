@@ -30,29 +30,28 @@ class CsvTCSPCWidget(
             ),
             self
         )
-        self.actionDtChanged.triggered.connect(self.onDtChanged)
-        self.actionRebinChanged.triggered.connect(self.onRebinChanged)
-        self.actionRepratechange.triggered.connect(self.onRepratechange)
-        self.actionPolarizationChange.triggered.connect(self.onPolarizationChange)
-        self.actionGfactorChanged.triggered.connect(self.onGfactorChanged)
-        self.actionIsjordiChanged.triggered.connect(self.onIsjordiChanged)
-        self.actionMatrixColumnsChanged.triggered.connect(self.onMatrixColumnsChanged)
+        self.actionDtChanged.triggered.connect(self.onParametersChanged)
+        self.actionRebinChanged.triggered.connect(self.onParametersChanged)
+        self.actionRepratechange.triggered.connect(self.onParametersChanged)
+        self.actionPolarizationChange.triggered.connect(self.onParametersChanged)
+        self.actionGfactorChanged.triggered.connect(self.onParametersChanged)
+        self.actionIsjordiChanged.triggered.connect(self.onParametersChanged)
+        self.actionMatrixColumnsChanged.triggered.connect(self.onParametersChanged)
 
-    def onMatrixColumnsChanged(self):
-        s = str(self.lineEdit.text())
-        matrix_columns = map(int, s.strip().split(' '))
-        mfm.run("cs.current_setup.matrix_columns = %s" % matrix_columns)
-
-    def onIsjordiChanged(self):
+    def onParametersChanged(self):
         is_jordi = bool(self.checkBox_3.isChecked())
-        mfm.run("cs.current_setup.is_jordi = %s" % is_jordi)
-        mfm.run("cs.current_setup.use_header = %s" % (not is_jordi))
-
-    def onGfactorChanged(self):
+        try:
+            matrix_columns = list(
+                map(
+                    int,
+                    str(
+                        self.lineEdit.text()
+                    ).strip().split(' ')
+                )
+            )
+        except ValueError:
+            matrix_columns = []
         gfactor = float(self.doubleSpinBox_3.value())
-        mfm.run("cs.current_setup.g_factor = %f" % gfactor)
-
-    def onPolarizationChange(self):
         pol = 'vm'
         if self.radioButton_4.isChecked():
             pol = 'vv/vh'
@@ -62,24 +61,29 @@ class CsvTCSPCWidget(
             pol = 'vh'
         elif self.radioButton.isChecked():
             pol = 'vm'
-        mfm.run("cs.current_setup.polarization = '%s'" % pol)
-
-    def onRepratechange(self):
         rep_rate = self.doubleSpinBox.value()
-        mfm.run("cs.current_setup.rep_rate = %s" % rep_rate)
 
-    def onRebinChanged(self):
         rebin_y = int(self.comboBox.currentText())
         rebin_x = int(self.comboBox_2.currentText())
-        mfm.run("cs.current_setup.rebin = (%s, %s)" % (rebin_x, rebin_y))
-        self.onDtChanged()
-
-    def onDtChanged(self):
         rebin = int(self.comboBox.currentText())
         dt = float(
             self.doubleSpinBox_2.value()
         ) * rebin if self.checkBox_2.isChecked() else 1.0 * rebin
-        mfm.run("cs.current_setup.dt = %s" % dt)
+
+        mfm.run(
+            "\n".join(
+                [
+                    "cs.current_setup.is_jordi = %s" % is_jordi,
+                    "cs.current_setup.use_header = %s" % (not is_jordi),
+                    "cs.current_setup.matrix_columns = %s" % matrix_columns,
+                    "cs.current_setup.g_factor = %f" % gfactor,
+                    "cs.current_setup.polarization = '%s'" % pol,
+                    "cs.current_setup.rep_rate = %s" % rep_rate,
+                    "cs.current_setup.rebin = (%s, %s)" % (rebin_x, rebin_y),
+                    "cs.current_setup.dt = %s" % dt
+                ]
+            )
+        )
 
 
 class TCSPCReaderControlWidget(

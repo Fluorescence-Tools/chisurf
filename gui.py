@@ -246,7 +246,12 @@ class Main(QtWidgets.QMainWindow):
             description="Load results into fit-models",
             **kwargs
         )
-        mfm.run("mfm.cmd.load_fit_result(%s, %s)" % (self.fit_idx, filename))
+        mfm.run(
+            "mfm.cmd.load_fit_result(%s, %s)" % (
+                self.fit_idx,
+                filename
+            )
+        )
 
     def onSetupChanged(self):
         mfm.widgets.hide_items_in_layout(
