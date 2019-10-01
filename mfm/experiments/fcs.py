@@ -13,15 +13,14 @@ from . import reader
 
 
 class FCS(
-    reader.ExperimentReader,
-    mfm.io.widgets.CsvWidget
+    reader.ExperimentReader
 ):
-
-    name = "FCS"
 
     def __init__(
             self,
+            name: str,
             use_header: bool = False,
+            experiment_reader='Kristine',
             skiprows: int = 0,
             *args,
             **kwargs
@@ -30,58 +29,10 @@ class FCS(
             *args,
             **kwargs
         )
-
-        self.hide()
+        self.name = name
         self.skiprows = skiprows
         self.use_header = use_header
-        self.spinBox.setEnabled(False)
-        self.parent = kwargs.get('parent', None)
-        self.groupBox.hide()
-
-    def read(
-            self,
-            filename: str = None,
-            **kwargs
-    ):
-        d = mfm.experiments.data.DataCurve(
-            setup=self
-        )
-        d.setup = self
-
-        mfm.io.widgets.CsvWidget.load(
-            self,
-            filename=filename,
-            skiprows=0,
-            use_header=None,
-            verbose=mfm.verbose
-        )
-
-        x, y = self.data[0], self.data[1]
-        w = self.data[2]
-
-        d.set_data(self.filename, x, y, w)
-        return d
-
-
-class FCSKristine(
-    mfm.io.ascii.Csv,
-    FCS
-):
-
-    name = 'Kristine'
-
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
-        FCS.__init__(
-            self,
-            *args,
-            **kwargs
-        )
-        QtWidgets.QWidget.__init__(self)
-        mfm.io.ascii.Csv.__init__(self, **kwargs)
+        self.experiment_reader = experiment_reader
 
     def read(
             self,
@@ -89,19 +40,53 @@ class FCSKristine(
             verbose: bool = None,
             **kwargs
     ):
-        if filename is None:
-            filename = mfm.widgets.get_filename(
-                'Kristine-Correlation file',
-                file_type='All files (*.cor)'
+        if self.experiment_reader == 'Kristine':
+            return mfm.io.fluorescence.read_fcs_kristine(
+                filename=filename,
+                verbose=verbose
             )
-        self.load(
-            filename=filename,
-            skiprows=0,
-            use_header=None,
-            verbose=verbose
+        else:
+            return mfm.io.fluorescence.read_fcs(
+                filename=filename,
+                setup=self,
+                skiprows=self.skiprows,
+                use_header=self.use_header
+            )
+
+
+class FCSController(
+    reader.ExperimentReaderController,
+    QtWidgets.QWidget
+):
+
+    @property
+    def filename(
+            self
+    ) -> str:
+        return self.get_filename()
+
+    def __init__(
+            self,
+            file_type='Kristine files (*.cor)',
+            *args,
+            **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self.file_type = file_type
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        self.layout = layout
+        self.layout.addWidget(
+            mfm.io.widgets.CsvWidget()
         )
-        return mfm.io.fluorescence.read_kristine(
-            data=self.data
-        )
+
+    def get_filename(
+            self
+    ) -> str:
+        return mfm.widgets.get_filename(
+                'FCS-CSV files',
+                file_type=self.file_type
+            )
 
 
