@@ -62,7 +62,6 @@ class CsvTCSPCWidget(
         elif self.radioButton.isChecked():
             pol = 'vm'
         rep_rate = self.doubleSpinBox.value()
-
         rebin_y = int(self.comboBox.currentText())
         rebin_x = int(self.comboBox_2.currentText())
         rebin = int(self.comboBox.currentText())
@@ -126,3 +125,46 @@ class TCSPCReaderControlWidget(
             CsvTCSPCWidget()
         )
 
+
+class TCSPCSetupDummyWidget(
+    QtWidgets.QWidget
+):
+
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super().__init__(
+            *args,
+            **kwargs
+        )
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(
+                    os.path.abspath(__file__)
+                ),
+                "tcspcDummy.ui"
+            ),
+            self
+        )
+        self.actionParametersChanged.triggered.connect(self.onParametersChanged)
+
+    def onParametersChanged(self):
+        dt = self.doubleSpinBox.value()
+        n_tac = self.spinBox.value()
+        lifetime = self.doubleSpinBox_2.value()
+        p0 = self.spinBox_2.value()
+        sample_name = str(self.lineEdit.text())
+        mfm.run(
+            "\n".join(
+                [
+                    "cs.current_setup.sample_name = '%s'" % sample_name,
+                    "cs.current_setup.dt = %s" % dt,
+                    "cs.current_setup.lifetime_spectrum = [1.0, %s]" %
+                    lifetime,
+                    "cs.current_setup.n_tac = %s" % n_tac,
+                    "cs.current_setup.p0 = %s" % p0
+                ]
+            )
+        )

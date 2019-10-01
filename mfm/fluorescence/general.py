@@ -1,20 +1,38 @@
 from __future__ import annotations
-from typing import List
+from typing import List, Tuple
 
 import numba as nb
-import numexpr as ne
 import numpy as np
 
 import scipy.optimize
 
 import mfm.math.datatools
 
-rate2lifetime = lambda rate, lifetime: ne.evaluate("1. / (1. / lifetime + rate)")
-et = lambda fd0, fda: fda / fd0
+
+@nb.jit(nopython=True)
+def rate2lifetime(
+        rate: float,
+        lifetime: float
+):
+    return 1. / (1. / lifetime + rate)
+
+
+@nb.jit(nopython=True)
+def et(
+        fd0: np.ndarray,
+        fda: np.ndarray
+) -> np.ndarray:
+    """Calculates the FRET induced donor decay
+
+    :param fd0: the fluorescence decay of the donor in the absence of FRET
+    :param fda: the fluorescence decay of the donor in the presence of FRET
+    :return:
+    """
+    return fda / fd0
 
 
 def fretrate_to_distance(fretrate, forster_radius, tau0, kappa2=2. / 3.):
-    """Calculate the distance given a FRET-rate
+    """Calculates the distance given a FRET-rate
 
     :param fretrate: FRET-rate
     :param forster_radius: Forster radius
@@ -548,21 +566,34 @@ def rates2lifetimes_new(
     :param x_donly: float
 
     """
-    rate_spectrum = mfm.math.datatools.ere2(fret_rate_spectrum, donor_rate_spectrum)
-    scaled_fret = mfm.math.datatools.e1tn(rate_spectrum, 1. - x_donly)
-    scaled_donor = mfm.math.datatools.e1tn(donor_rate_spectrum, x_donly)
-    rs = np.append(scaled_fret, scaled_donor)
+    rate_spectrum = mfm.math.datatools.ere2(
+        fret_rate_spectrum,
+        donor_rate_spectrum
+    )
+    scaled_fret = mfm.math.datatools.e1tn(
+        rate_spectrum,
+        1. - x_donly
+    )
+    scaled_donor = mfm.math.datatools.e1tn(
+        donor_rate_spectrum,
+        x_donly
+    )
+    rs = np.append(
+        scaled_fret,
+        scaled_donor
+    )
     return mfm.math.datatools.invert_interleaved(rs)
+
 
 rates2lifetimes = rates2lifetimes_new
 
 
 @nb.jit
 def calculate_fluorescence_decay(
-        lifetime_spectrum: np.array,
-        time_axis: np.array,
+        lifetime_spectrum: np.ndarray,
+        time_axis: np.ndarray,
         normalize: bool = True
-) -> (np.array, np.array):
+) -> Tuple[np.ndarray, np.ndarray]:
     """Converts a interleaved lifetime spectrum into a intensity decay
 
     :param lifetime_spectrum: interleaved lifetime spectrum
@@ -573,15 +604,16 @@ def calculate_fluorescence_decay(
     Examples
     --------
 
+    >>> import mfm.structure.structure
     >>> time_axis = np.linspace(0, 20, num=100)
-    >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+    >>> structure = mfm.structure.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
     >>> donor_description = {'residue_seq_number': 344, 'atom_name': 'CB'}
     >>> acceptor_description = {'residue_seq_number': 496, 'atom_name': 'CB'}
     >>> donor_lifetime_spectrum = np.array([1., 4.])
     >>> lifetime_spectrum = structure.av_lifetime_spectrum(donor_lifetime_spectrum, donor_description, acceptor_description)
     >>> time_axis, decay = calculate_fluorescence_decay(lifetime_spectrum, time_axis)
     """
-    decay = np.zeros(time_axis.shape)
+    decay = np.zeros_like(time_axis)
     am = lifetime_spectrum[0::2]
     if normalize:
         am /= am.sum()

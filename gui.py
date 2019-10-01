@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+import webbrowser
 
 from qtpy import QtCore, QtGui, QtWidgets, uic
 import qdarkstyle
@@ -9,6 +10,7 @@ import qdarkstyle
 import numpy as np
 
 import mfm
+import mfm.experiments.tcspc.controller
 import mfm.widgets
 import mfm.base
 import mfm.models
@@ -321,6 +323,12 @@ class Main(QtWidgets.QMainWindow):
         mfm.working_path = directory
         mfm.console.run('mfm.cmd.save_fit()')
 
+    def onOpenHelp(
+            self
+    ):
+        url = 'https://github.com/Fluorescence-Tools/chisurf'
+        webbrowser.open_new(url)
+
     def init_widgets(self):
         #self.decay_generator = mfm.tools.dye_diffusion.TransientDecayGenerator()
         #self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
@@ -388,6 +396,11 @@ class Main(QtWidgets.QMainWindow):
         self.f_test = mfm.tools.f_test.f_calculator.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
 
+        ##########################################################
+        #      Help                                              #
+        ##########################################################
+        self.actionHelp_2.triggered.connect(self.onOpenHelp)
+
     def init_console(self):
         self.verticalLayout_4.addWidget(mfm.console)
         mfm.console.pushVariables({'cs': self})
@@ -450,10 +463,10 @@ class Main(QtWidgets.QMainWindow):
                     None
                 ),
                 (
-                    mfm.experiments.tcspc.dummy.TCSPCSetupDummyWidget(
+                    mfm.experiments.tcspc.dummy.TCSPCSetupDummy(
                         experiment=tcspc
                     ),
-                    None
+                    mfm.experiments.tcspc.controller.TCSPCSetupDummyWidget()
                 )
             ]
         )
