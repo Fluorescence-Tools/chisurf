@@ -453,6 +453,7 @@ class Main(QtWidgets.QMainWindow):
                         experiment=tcspc
                     ),
                     mfm.experiments.tcspc.controller.TCSPCReaderControlWidget(
+                        name='CSV/PQ/IBH',
                         **mfm.settings.cs_settings['tcspc_csv'],
                     )
                 ),
@@ -488,16 +489,22 @@ class Main(QtWidgets.QMainWindow):
         fcs.add_readers(
             [
                 (
-                    mfm.experiments.fcs.FCSKristine(
-                        experiment=mfm.experiments.fcs.FCS
+                    mfm.experiments.fcs.FCS(
+                        name='FCS-CSV',
+                        experiment=fcs
                     ),
-                    None
+                    mfm.experiments.fcs.FCSController(
+                        file_type='All files (*.*)'
+                    )
                 ),
                 (
                     mfm.experiments.fcs.FCS(
-                        experiment=mfm.experiments.fcs.FCS
+                        name='Kristine',
+                        experiment=fcs
                     ),
-                    None
+                    mfm.experiments.fcs.FCSController(
+                        file_type='Kristine files (*.cor)'
+                    )
                 )
             ]
         )

@@ -182,7 +182,7 @@ class Csv(object):
             delimiter: str = None,
             file_type: str = None,
             **kwargs
-    ):
+    ) -> None:
         """
         This method loads a filename to the `Csv` object
         :param filename: string specifying the file
@@ -192,6 +192,8 @@ class Csv(object):
         the verbose attribute of the instance is
         True.
         """
+        if filename is None:
+            return None
         if file_type is None:
             file_type = self.file_type
         if use_header is None:

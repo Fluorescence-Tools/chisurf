@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>372</width>
-    <height>148</height>
+    <width>428</width>
+    <height>156</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -172,11 +172,18 @@
            <property name="spacing">
             <number>0</number>
            </property>
-           <item row="1" column="1">
+           <item row="1" column="2">
             <widget class="QComboBox" name="comboBox_error_x_column">
              <property name="enabled">
               <bool>false</bool>
              </property>
+             <property name="editable">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="5">
+            <widget class="QComboBox" name="comboBox_y_column">
              <property name="editable">
               <bool>false</bool>
              </property>
@@ -198,14 +205,7 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="3">
-            <widget class="QComboBox" name="comboBox_y_column">
-             <property name="editable">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
+           <item row="1" column="3">
             <widget class="QCheckBox" name="checkBox_4">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -221,7 +221,7 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="3">
+           <item row="1" column="5">
             <widget class="QComboBox" name="comboBox_error_y_column">
              <property name="enabled">
               <bool>false</bool>
@@ -247,14 +247,14 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
+           <item row="0" column="2">
             <widget class="QComboBox" name="comboBox_x_column">
              <property name="editable">
               <bool>false</bool>
              </property>
             </widget>
            </item>
-           <item row="0" column="2">
+           <item row="0" column="3">
             <widget class="QLabel" name="label_3">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -266,6 +266,18 @@
               <string>y-values</string>
              </property>
             </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QSpinBox" name="spinBox_3"/>
+           </item>
+           <item row="0" column="1">
+            <widget class="QSpinBox" name="spinBox_2"/>
+           </item>
+           <item row="0" column="4">
+            <widget class="QSpinBox" name="spinBox_4"/>
+           </item>
+           <item row="1" column="4">
+            <widget class="QSpinBox" name="spinBox_5"/>
            </item>
           </layout>
          </item>
@@ -435,6 +447,70 @@
     <hint type="sourcelabel">
      <x>163</x>
      <y>127</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spinBox_2</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>actionColumnsChanged</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>96</x>
+     <y>108</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spinBox_3</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>actionColspecs</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>96</x>
+     <y>135</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spinBox_4</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>actionColspecs</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>299</x>
+     <y>108</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spinBox_5</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>actionColumnsChanged</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>299</x>
+     <y>135</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>

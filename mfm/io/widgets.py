@@ -287,29 +287,9 @@ class CsvWidget(
         self.actionCsvType.triggered.connect(self.changeCsvParameter)
         self.actionSetError.triggered.connect(self.changeCsvParameter)
         self.actionColumnsChanged.triggered.connect(
-            self.change_axis_selection
+            self.changeCsvParameter
         )
         self.verbose = kwargs.get('verbose', mfm.verbose)
-
-    def change_axis_selection(self):
-        mfm.run(
-            "\n".join(
-                [
-                    "cs.current_setup.col_ey = %s" % int(
-                        self.comboBox_error_y_column.currentText()
-                    ),
-                    "cs.current_setup.col_ex = %s" % int(
-                        self.comboBox_error_x_column.currentText()
-                    ),
-                    "cs.current_setup.col_x = %s" % int(
-                        self.comboBox_x_column.currentText()
-                    ),
-                    "cs.current_setup.col_y = %s" % int(
-                        self.comboBox_y_column.currentText()
-                    )
-                ]
-            )
-        )
 
     def changeCsvParameter(self):
         set_errx_on = bool(self.checkBox_3.isChecked())
@@ -326,7 +306,11 @@ class CsvWidget(
                     "cs.current_setup.colspecs = '%s'" % colspecs,
                     "cs.current_setup.use_header = %s" % use_header,
                     "cs.current_setup.skiprows = %s" % n_skip,
-                    "cs.current_setup.file_type = '%s'" % mode
+                    "cs.current_setup.file_type = '%s'" % mode,
+                    "cs.current_setup.col_ey = %s" % self.spinBox_5.value(),
+                    "cs.current_setup.col_ex = %s" % self.spinBox_3.value(),
+                    "cs.current_setup.col_x = %s" % self.spinBox_2.value(),
+                    "cs.current_setup.col_y = %s" % self.spinBox_4.value()
                 ]
             )
         )

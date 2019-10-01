@@ -11,49 +11,6 @@ from mfm.experiments import reader
 from mfm.io.ascii import Csv
 
 
-def read_kristine(
-        experiment_reader: mfm.experiments.reader.ExperimentReader = None,
-        data: np.ndarray = None,
-) -> mfm.experiments.data.DataCurve:
-    """Uses either the error provided by the correlator (4. column)
-    or calculates the error based on the correlation curve,
-    the aquisition time and the count-rate.
-
-    :param experiment_reader:
-    :param data:
-    :return:
-    """
-    d = mfm.experiments.data.DataCurve(
-        setup=experiment_reader
-    )
-
-    # In Kristine file-type
-    # First try to use experimental errors
-    x, y = data[0], data[1]
-    i = np.where(x > 0.0)
-    x = x[i]
-    y = y[i]
-    try:
-        w = 1. / data[3][i]
-    except IndexError:
-        # In case this doesnt work
-        # use calculated errors using count-rate and duration
-        try:
-            dur, cr = data[2, 0], data[2, 1]
-            w = mfm.fluorescence.fcs.weights(x, y, dur, cr)
-        except IndexError:
-            # In case everything fails
-            # Use no errors at all but uniform weighting
-            w = np.ones_like(y)
-    d.set_data(
-        x=x,
-        y=y,
-        ex=np.ones_like(x),
-        ey=w
-    )
-    return d
-
-
 def read_tcspc_csv(
         filename: str = None,
         skiprows: int = None,
@@ -193,3 +150,81 @@ def read_tcspc_csv(
         filename,
     )
     return data_group
+
+
+def read_fcs(
+        filename: str,
+        setup: reader.ExperimentReader = None,
+        *args,
+        **kwargs
+) -> mfm.experiments.data.DataCurve:
+    csv = mfm.io.ascii.Csv()
+    csv.load(
+        filename=filename,
+        verbose=mfm.verbose,
+        *args,
+        **kwargs
+    )
+    x, y = csv.data[0], csv.data[1]
+    w = csv.data[2]
+    d = mfm.experiments.data.DataCurve(
+        setup=setup,
+        x=x,
+        y=y,
+        ey=w,
+        ex=np.ones_like(x)
+    )
+    return d
+
+
+def read_fcs_kristine(
+        filename: str,
+        experiment_reader: mfm.experiments.reader.ExperimentReader = None,
+        verbose=mfm.verbose
+) -> mfm.experiments.data.DataCurve:
+    """Uses either the error provided by the correlator (4. column)
+    or calculates the error based on the correlation curve,
+    the aquisition time and the count-rate.
+
+    :param experiment_reader:
+    :param filename:
+    :param verbose:
+
+    :return:
+    """
+    csv = mfm.io.ascii.Csv(
+        skiprows=0,
+        use_header=False,
+        filename=filename,
+        verbose=verbose
+    )
+    data = csv.data
+    d = mfm.experiments.data.DataCurve(
+        setup=experiment_reader
+    )
+
+    # In Kristine file-type
+    # First try to use experimental errors
+    x, y = data[0], data[1]
+    i = np.where(x > 0.0)
+    x = x[i]
+    y = y[i]
+    try:
+        w = 1. / data[3][i]
+    except IndexError:
+        # In case this doesnt work
+        # use calculated errors using count-rate and duration
+        try:
+            dur, cr = data[2, 0], data[2, 1]
+            w = mfm.fluorescence.fcs.weights(x, y, dur, cr)
+        except IndexError:
+            # In case everything fails
+            # Use no errors at all but uniform weighting
+            w = np.ones_like(y)
+    d.set_data(
+        x=x,
+        y=y,
+        ex=np.ones_like(x),
+        ey=w
+    )
+    return d
