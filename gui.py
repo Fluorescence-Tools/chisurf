@@ -616,7 +616,6 @@ class Main(QtWidgets.QMainWindow):
         self.tabifyDockWidget(self.dockWidgetReadData, self.dockWidgetDatasets)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetAnalysis)
         self.tabifyDockWidget(self.dockWidgetAnalysis, self.dockWidgetPlot)
-        self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetFits)
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
         self.editor = mfm.widgets.text_editor.CodeEditor()
