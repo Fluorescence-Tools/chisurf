@@ -85,7 +85,7 @@ class ExperimentalDataSelector(
 
     def onRemoveDataset(self):
         dataset_idx = [selected_index.row() for selected_index in self.selectedIndexes()]
-        mfm.console.execute('mfm.cmd.remove_datasets(%s)' % dataset_idx)
+        mfm.run('mfm.cmd.remove_datasets(%s)' % dataset_idx)
         self.update()
 
     def onSaveDataset(self):
@@ -177,9 +177,13 @@ class ExperimentalDataSelector(
         if event.mimeData().hasUrls():
             paths = [str(url.toLocalFile()) for url in event.mimeData().urls()]
             paths.sort()
-            for path in paths:
-                s = "cs.add_dataset(filename='%s')" % path
-                mfm.run(s)
+            mfm.run(
+                "\n".join(
+                    [
+                        "mfm.cmd.add_dataset(filename='%s')" % p for p in paths
+                    ]
+                )
+            )
             event.acceptProposedAction()
         else:
             super(ExperimentalDataSelector, self).dropEvent(event)

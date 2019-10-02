@@ -18,9 +18,7 @@ from IPython.lib import guisupport
 
 import mfm
 import mfm.curve
-
-os.environ['PYZMQ_BACKEND'] = 'cython'
-DEFAULT_INSTANCE_ARGS = ['qtconsole','--pylab=inline', '--colors=linux']
+import mfm.fitting
 
 
 class QIPythonWidget(
@@ -62,7 +60,6 @@ class QIPythonWidget(
 
     def execute(
             self,
-            source: str,
             *args,
             hidden: bool = False,
             **kwargs
@@ -93,7 +90,6 @@ class QIPythonWidget(
                 pass
         RichJupyterWidget.execute(
             self,
-            source,
             *args,
             **kwargs
         )
@@ -410,11 +406,12 @@ def get_directory(
         get_files: bool = False,
         directory: str = None
 ):
-    """Opens a new window where you can choose a directory. The current working path
-    is updated to this directory.
+    """Opens a new window where you can choose a directory. The current
+    working path is updated to this directory.
 
-    It either returns the directory or the files within the directory (if get_files is True).
-    The returned files can be filtered for the filename ending using the kwarg filename_ending.
+    It either returns the directory or the files within the directory (if
+    get_files is True). The returned files can be filtered for the filename
+    ending using the kwarg filename_ending.
 
     :return: directory str
     """

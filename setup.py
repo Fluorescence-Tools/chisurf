@@ -120,7 +120,9 @@ setup(
         'pyopencl',
         'qdarkstyle',
         'qtpy',
-        'mrcfile'
+        'mrcfile',
+        'qtconsole',
+        'ipython'
     ],
     ext_modules=extensions,
     cmdclass={

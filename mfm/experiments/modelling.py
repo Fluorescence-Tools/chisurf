@@ -52,7 +52,7 @@ class LoadStructure(
             data: mfm.base.Data,
             **kwargs
     ):
-        return None, None
+        return None
 
 
 class LoadStructureFolder(
