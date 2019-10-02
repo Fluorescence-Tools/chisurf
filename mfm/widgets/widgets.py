@@ -18,7 +18,6 @@ from IPython.lib import guisupport
 
 import mfm
 import mfm.curve
-import mfm.fitting
 
 
 class QIPythonWidget(
