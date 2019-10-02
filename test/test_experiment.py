@@ -134,12 +134,17 @@ class Tests(unittest.TestCase):
         )
         ec.call('read')
 
-    def test_CsvTCSPC(self):
+    def test_TCSPCReader(self):
+        filename = "./sample_data/tcspc/ibh_sample/Decay_577D.txt"
         ex = mfm.experiments.experiment.Experiment(
             'TCSPC'
         )
+        dt = 0.0141
         g1 = mfm.experiments.tcspc.TCSPCReader(
-            experiment=ex
+            experiment=ex,
+            skiprows=8,
+            rebin=(1, 8),
+            dt=dt
         )
         g2 = mfm.experiments.tcspc.TCSPCReader(
             experiment=ex
@@ -150,6 +155,24 @@ class Tests(unittest.TestCase):
         self.assertDictEqual(
             g1.to_dict(),
             g2.to_dict()
+        )
+
+        # Test binning
+        d1 = g1.read(
+            filename=filename,
+        )
+        self.assertEqual(
+            len(d1.x),
+            512
+        )
+
+        g1.rebin = (1, 1)
+        d2 = g1.read(
+            filename=filename
+        )
+        self.assertEqual(
+            len(d2.x),
+            4096
         )
 
     def test_DataCurve(self):

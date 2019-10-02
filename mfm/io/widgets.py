@@ -324,57 +324,55 @@ class CsvWidget(
             self,
             v: str
     ):
-        #mfm.io.ascii.Csv.filename.fset(self, v)
         self.lineEdit_8.setText(v)
 
 
-class CSVFileWidget(QtWidgets.QWidget):
+# To be deleted
+#
+# class CSVFileWidget(QtWidgets.QWidget):
+#
+#     def __init__(
+#             self,
+#             *args,
+#             **kwargs
+#     ):
+#         super().__init__(
+#             *args,
+#             **kwargs
+#         )
+#
+#         layout = QtWidgets.QVBoxLayout(self)
+#         layout.setSpacing(0)
+#         layout.setContentsMargins(0, 0, 0, 0)
+#
+#         self.layout = layout
+#         self.csvWidget = CsvWidget(**kwargs)
+#         self.layout.addWidget(self.csvWidget)
+#
+#     def load_data(
+#             self,
+#             filename: str = None
+#     ) -> mfm.experiment.data.DataCurve:
+#         """
+#         Loads csv-data into a Curve-object
+#         :param filename:
+#         :return: Curve-object
+#         """
+#         d = mfm.experiment.data.DataCurve(setup=None)
+#         if filename is not None:
+#             self.csvWidget.load(filename)
+#             d.filename = filename
+#         else:
+#             self.csvWidget.load()
+#             d.filename = self.csvWidget.filename
+#
+#         d.x, d.y = self.csvWidget.data_x, self.csvWidget.data_y
+#         if self.weight_calculation is None:
+#             d.set_weights(self.csvWidget.error_y)
+#         else:
+#             d.set_weights(self.weight_calculation(d.y))
+#         return d
+#
+#     def get_data(self, *args, **kwargs):
+#         return self.load_data(*args, **kwargs)
 
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
-        # self.parent = kwargs.get('parent', None)
-        # self.name = kwargs.get('name', 'CSV-File')
-        # self.weight_calculation = kwargs.get('weight_calculation', None)
-        #
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        self.layout = layout
-        self.csvWidget = CsvWidget(**kwargs)
-        self.layout.addWidget(self.csvWidget)
-
-    def load_data(
-            self,
-            filename: str = None
-    ):
-        """
-        Loads csv-data into a Curve-object
-        :param filename:
-        :return: Curve-object
-        """
-        d = mfm.experiments.data.DataCurve(setup=None)
-        if filename is not None:
-            self.csvWidget.load(filename)
-            d.filename = filename
-        else:
-            self.csvWidget.load()
-            d.filename = self.csvWidget.filename
-
-        d.x, d.y = self.csvWidget.data_x, self.csvWidget.data_y
-        if self.weight_calculation is None:
-            d.set_weights(self.csvWidget.error_y)
-        else:
-            d.set_weights(self.weight_calculation(d.y))
-        return d
-
-    def get_data(self, *args, **kwargs):
-        return self.load_data(*args, **kwargs)

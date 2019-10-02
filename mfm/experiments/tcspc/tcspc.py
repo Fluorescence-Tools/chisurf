@@ -6,7 +6,6 @@ import mfm.experiments
 import mfm.base
 import mfm.fluorescence
 import mfm.experiments.data
-import mfm.widgets
 import mfm.io.fluorescence
 
 from .. import reader
@@ -49,6 +48,16 @@ class TCSPCReader(
         :param fit_count_threshold:
         :param args:
         :param kwargs:
+
+        Example
+        -------
+
+        >>> import mfm.experiments
+        >>> filename = "./sample_data/tcspc/ibh_sample/Decay_577D.txt"
+        >>> ex = mfm.experiments.experiment.Experiment('TCSPC')
+        >>> dt = 0.0141
+        >>> g1 = mfm.experiments.tcspc.TCSPCReader(experiment=ex, skiprows=8, rebin=(1, 8), dt=dt)
+
         """
         super().__init__(
             *args,
