@@ -6,9 +6,12 @@ from typing import List, Callable
 from qtpy import QtWidgets, QtCore, QtGui
 
 import mfm.experiments.data
+import mfm.fitting
 import mfm.widgets
+import mfm.decorators
 
 
+@mfm.decorators.register
 class ExperimentalDataSelector(
     QtWidgets.QTreeWidget
 ):
@@ -109,13 +112,14 @@ class ExperimentalDataSelector(
         self.update()
 
     def contextMenuEvent(self, event):
-        menu = QtWidgets.QMenu(self)
-        menu.setTitle("Datasets")
-        menu.addAction("Save").triggered.connect(self.onSaveDataset)
-        menu.addAction("Remove").triggered.connect(self.onRemoveDataset)
-        menu.addAction("Group").triggered.connect(self.onGroupDatasets)
-        menu.addAction("Ungroup").triggered.connect(self.onUnGroupDatasets)
-        menu.exec_(event.globalPos())
+        if self.context_menu_enabled:
+            menu = QtWidgets.QMenu(self)
+            menu.setTitle("Datasets")
+            menu.addAction("Save").triggered.connect(self.onSaveDataset)
+            menu.addAction("Remove").triggered.connect(self.onRemoveDataset)
+            menu.addAction("Group").triggered.connect(self.onGroupDatasets)
+            menu.addAction("Ungroup").triggered.connect(self.onUnGroupDatasets)
+            menu.exec_(event.globalPos())
 
     def update(
             self,
@@ -211,7 +215,8 @@ class ExperimentalDataSelector(
             curve_types: str = 'experiment',
             get_data_sets: Callable = None,
             parent: QtWidgets.QWidget = None,
-            icon: QtGui.QIcon = None
+            icon: QtGui.QIcon = None,
+            context_menu_enabled: bool = True
     ):
         """
 
@@ -224,6 +229,7 @@ class ExperimentalDataSelector(
         :param get_data_sets:
         :param parent:
         :param icon:
+        :param context_menu_enabled: if True there is a context menu
         """
         if get_data_sets is None:
 
@@ -247,6 +253,7 @@ class ExperimentalDataSelector(
         self.click_close = click_close
         self.fit = fit
         self.setup = setup
+        self.context_menu_enabled = context_menu_enabled
 
         super().__init__(
             parent=parent

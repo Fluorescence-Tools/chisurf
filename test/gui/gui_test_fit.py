@@ -40,18 +40,18 @@ class Tests(unittest.TestCase):
         mfm.cmd.add_dataset(
             cs.current_setup,
             None,
-            filename="../sample_data/tcspc/ibh_sample/Decay_577D.txt"
+            filename="../test/data/tcspc/ibh_sample/Decay_577D.txt"
         )
         mfm.cmd.add_dataset(
             cs.current_setup,
             None,
-            filename="../sample_data/tcspc/ibh_sample/Prompt.txt"
+            filename="../test/data/tcspc/ibh_sample/Prompt.txt"
         )
         print(mfm.imported_datasets)
         mfm.cmd.add_fit(model_name='Lifetime fit', dataset_indices=[1])
         mfm.cmd.tcspc.change_irf(
             2,
-            '../sample_data/tcspc/ibh_sample/Decay_577D.txt'
+            '../test/data/tcspc/ibh_sample/Decay_577D.txt'
         )
         self.cs = cs
 

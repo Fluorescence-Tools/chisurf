@@ -10,9 +10,10 @@ import qdarkstyle
 import numpy as np
 
 import mfm
+import mfm.base
+import mfm.experiments.widgets
 import mfm.experiments.tcspc.controller
 import mfm.widgets
-import mfm.base
 import mfm.models
 import mfm.fitting
 import mfm.experiments

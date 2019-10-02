@@ -72,7 +72,7 @@ class Csv(object):
 
     >>> import mfm.io.ascii
     >>> csv = mfm.io.ascii.Csv(skiprows=10)
-    >>> filename = './sample_data/tcspc/ibh_sample/Decay_577D.txt'
+    >>> filename = './test/data/tcspc/ibh_sample/Decay_577D.txt'
     >>> csv.load(filename)
     >>> csv.data
     array([  1.00000000e+00,   2.00000000e+00,   3.00000000e+00, ...,
@@ -85,7 +85,7 @@ class Csv(object):
     One-column Jordi data
 
     >>> csv = mfm.io.ascii.Csv(skiprows=11)
-    >>> filename =  './sample_data/tcspc/ibh_sample/Decay_577D.txt'
+    >>> filename =  './test/data/tcspc/ibh_sample/Decay_577D.txt'
     >>> csv.load(filename)
     >>> csv.data_x
     array([  1.00000000e+00,   2.00000000e+00,   3.00000000e+00, ...,

@@ -135,7 +135,7 @@ class Tests(unittest.TestCase):
         ec.call('read')
 
     def test_TCSPCReader(self):
-        filename = "./sample_data/tcspc/ibh_sample/Decay_577D.txt"
+        filename = "./test/data/tcspc/ibh_sample/Decay_577D.txt"
         ex = mfm.experiments.experiment.Experiment(
             'TCSPC'
         )

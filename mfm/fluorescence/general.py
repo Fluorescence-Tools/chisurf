@@ -606,7 +606,7 @@ def calculate_fluorescence_decay(
 
     >>> import mfm.structure.structure
     >>> time_axis = np.linspace(0, 20, num=100)
-    >>> structure = mfm.structure.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+    >>> structure = mfm.structure.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
     >>> donor_description = {'residue_seq_number': 344, 'atom_name': 'CB'}
     >>> acceptor_description = {'residue_seq_number': 496, 'atom_name': 'CB'}
     >>> donor_lifetime_spectrum = np.array([1., 4.])

@@ -53,7 +53,7 @@ class TCSPCReader(
         -------
 
         >>> import mfm.experiments
-        >>> filename = "./sample_data/tcspc/ibh_sample/Decay_577D.txt"
+        >>> filename = "./test/data/tcspc/ibh_sample/Decay_577D.txt"
         >>> ex = mfm.experiments.experiment.Experiment('TCSPC')
         >>> dt = 0.0141
         >>> g1 = mfm.experiments.tcspc.TCSPCReader(experiment=ex, skiprows=8, rebin=(1, 8), dt=dt)

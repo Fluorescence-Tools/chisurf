@@ -63,8 +63,8 @@ class Structure(mfm.base.Base):
     >>> import mfm.structure
     >>> structure = mfm.structure.structure.Structure('1dg3', verbose=True)
     ======================================
-    Filename: ../sample_data/structure/HM_1FN5_Naming.pdb
-    Path: ../sample_data/structure
+    Filename: ../test/data/structure/HM_1FN5_Naming.pdb
+    Path: ../test/data/structure
     Number of atoms: 9316
     >>> print(str(structure)[:324])
     ATOM      1    N HIS A   6     -18.863  20.262  33.465  0.00  0.00             N
@@ -275,7 +275,7 @@ class Structure(mfm.base.Base):
         --------
 
         >>> import mfm.structure
-        >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True)
+        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True)
         >>> structure.append_potential(mfm.structure.potential.lennard_jones_calpha)
         >>> structure.energy
         -948.0396693387753
@@ -392,7 +392,7 @@ def rmsd(
     --------
 
     >>> import mfm
-    >>> times = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+    >>> times = mfm.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', file_type='r', stride=1)
     >>> s1 = times[10]
     >>> s1
     <mfm.structure.structure.Structure at 0x135f3ad0>
@@ -462,7 +462,7 @@ def find_best(target, reference, atom_indices=None):
     --------
 
     >>> import mfm
-    >>> times = times = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+    >>> times = times = mfm.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', file_type='r', stride=1)
     >>> find_best(times.mdtraj, times.mdtraj[2])
     (2, <mdtraj.Trajectory with 1 frames, 2495 atoms, 164 residues, without unitcells at 0x13570b30>)
     """
@@ -502,10 +502,10 @@ def get_coordinates_of_residues(atoms, quencher, verbose=False):
     >>> import mfm
     >>> pdb_file = models
     >>> pdb = mfm.io.pdb_file.read(pdb_file, verbose=True)
-    Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb
+    Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb
     ======================================
-    Filename: ./sample_data/model/hgbp1/hGBP1_closed.pdb
-    Path: ./sample_data/model/hgbp1
+    Filename: ./test/data/model/hgbp1/hGBP1_closed.pdb
+    Path: ./test/data/model/hgbp1
     Number of atoms: 9316
     --------------------------------------
     >>> mfm.tools.dye_diffusion.dye_diffusion.get_quencher_coordinates(pdb, {'TRP': ['CA']})
@@ -548,10 +548,10 @@ def get_atom_index_of_residue_types(
     >>> import mfm
     >>> pdb_file = models
     >>> pdb = mfm.io.PDB.read(pdb_file, verbose=True)
-    Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb
+    Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb
     ======================================
-    Filename: ./sample_data/model/hgbp1/hGBP1_closed.pdb
-    Path: ./sample_data/model/hgbp1
+    Filename: ./test/data/model/hgbp1/hGBP1_closed.pdb
+    Path: ./test/data/model/hgbp1
     Number of atoms: 9316
     --------------------------
 
@@ -592,12 +592,12 @@ def get_atom_index_by_name(
     --------
 
     >>> import mfm
-    >>> pdb_file = './sample_data/model/hgbp1/hGBP1_closed.pdb'
+    >>> pdb_file = './test/data/model/hgbp1/hGBP1_closed.pdb'
     >>> pdb = mfm.io.PDB.read(pdb_file, verbose=True)
-    Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb
+    Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb
     ======================================
-    Filename: ./sample_data/model/hgbp1/hGBP1_closed.pdb
-    Path: ./sample_data/model/hgbp1
+    Filename: ./test/data/model/hgbp1/hGBP1_closed.pdb
+    Path: ./test/data/model/hgbp1
     Number of atoms: 9316
     --------------------------
 
@@ -662,7 +662,7 @@ def average(
     --------
 
     >>> import mfm
-    >>> times = mfm.structure.trajectory.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+    >>> times = mfm.structure.trajectory.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', file_type='r', stride=1)
     >>> avg = times.average
     >>> avg
     <mfm.structure.structure.Structure at 0x117ff770>

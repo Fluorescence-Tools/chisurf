@@ -58,7 +58,7 @@ def read_burst_ids(
     --------
 
     >>> import mfm, glob
-    >>> directory = "./sample_data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\BID"
+    >>> directory = "./test/data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\BID"
     >>> files = glob.glob(directory+'/*.bst')
     >>> bids = mfm.io.photons.read_burst_ids(files)
     >>> bids[1]
@@ -133,16 +133,16 @@ class Photons(object):
 
     >>> import glob
     >>> import mfm
-    >>> directory = "../sample_data/tttr/spc132/smDNA"
+    >>> directory = "../test/data/tttr/spc132/smDNA"
     >>> spc_files = glob.glob(directory+'/*.spc')
     >>> photons = mfm.io.photons.Photons(spc_files, file_type="bh132")
     >>> print(photons)
     File-type: bh132
     Filename(s):
-            ./sample_data/tttr/spc132/hGBP1_18D\m000.spc
-            ./sample_data/tttr/spc132/hGBP1_18D\m001.spc
-            ./sample_data/tttr/spc132/hGBP1_18D\m002.spc
-            ./sample_data/tttr/spc132/hGBP1_18D\m003.spc
+            ./test/data/tttr/spc132/hGBP1_18D\m000.spc
+            ./test/data/tttr/spc132/hGBP1_18D\m001.spc
+            ./test/data/tttr/spc132/hGBP1_18D\m002.spc
+            ./test/data/tttr/spc132/hGBP1_18D\m003.spc
     nTAC:   4095
     nROUT:  255
     MTCLK [ms]:     1.36000003815e-05

@@ -106,8 +106,8 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
     >>> import mfm
     >>> import mfm.structure
     >>> from mfm.structure.trajectory import TrajectoryFile
-    >>> s = mfm.structure.structure.Structure('./sample_data/modelling/trajectory/h5-file/T4L_Topology.pdb', verbose=True, make_coarse=False)
-    >>> traj = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', s, file_type='w')
+    >>> s = mfm.structure.structure.Structure('./test/data/modelling/trajectory/h5-file/T4L_Topology.pdb', verbose=True, make_coarse=False)
+    >>> traj = mfm.structure.TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', s, file_type='w')
     >>> traj[0]
     <mfm.structure.structure.mfm.structure.Structure at 0x11f34e10>
     >>> print(traj[0])
@@ -122,7 +122,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
 
     >>> import mfm
     >>> from mfm.structure.trajectory import TrajectoryFile
-    >>> traj = TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
+    >>> traj = TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
     >>> print(traj[0:3])
     [<mfm.structure.structure.mfm.structure.Structure at 0x1345d5d0>,
     <mfm.structure.structure.mfm.structure.Structure at 0x1345d610>,
@@ -131,13 +131,13 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
     Name of the trajectory
 
     >>> print(traj.name)
-    '/ sample_data/ structure/ sample_data/ structure/ T4L_Trajectory.h5'
+    '/ data/ structure/ data/ structure/ T4L_Trajectory.h5'
 
     initialize with mdtraj.Trajectory
 
     >>> import mfm
     >>> from mfm.structure.trajectory import TrajectoryFile
-    >>> traj = TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
+    >>> traj = TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
     >>> t2 = TrajectoryFile(traj.mdtraj, filename='test.h5')
 
     Attributes:
@@ -407,7 +407,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
 
         >>> import mfm
         >>> from mfm.structure.trajectory import TrajectoryFile
-        >>> traj = TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+        >>> traj = TrajectoryFile('./test/data/structure/2807_8_9_b.h5', file_type='r', stride=1)
         >>> traj
         <mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x117f3b70>
         >>> traj.values
@@ -452,7 +452,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
 
         >>> import mfm
         >>> from mfm.structure.trajectory import TrajectoryFile
-        >>> traj = TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+        >>> traj = TrajectoryFile('./test/data/structure/2807_8_9_b.h5', file_type='r', stride=1)
         >>> traj
         <mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x11762b70>
         >>> t.append(traj[0])
@@ -494,7 +494,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
         Implements iterator
         >>> import mfm
         >>> from mfm.structure.trajectory import TrajectoryFile
-        >>> traj = TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+        >>> traj = TrajectoryFile('./test/data/structure/2807_8_9_b.h5', file_type='r', stride=1)
         >>> for s in traj:
         >>>     print(s)
         [<mfm.structure.structure.mfm.structure.Structure object at 0x12FAE330>, <mfm.structure.structure.mfm.structure.Structure object at 0x12FAE3B0>, <li
@@ -518,7 +518,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
         -------
 
         >>> import mfm
-        >>> traj = mfm.structure.trajectory.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
+        >>> traj = mfm.structure.trajectory.TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
         >>> s = str(traj.next())
         >>> print(s[:500])
         ATOM      1    N MET A   1       7.332 -10.706 -15.034  0.00  0.00             N
