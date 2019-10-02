@@ -1,22 +1,21 @@
 from __future__ import annotations
 from typing import List, TypeVar, Tuple, Type
 
-import weakref
 import numpy as np
 
 import mfm.base
+import mfm.decorators
 
 T = TypeVar('T', bound='Parameter')
 
 
+@mfm.decorators.register
 class Parameter(
     mfm.base.Base
 ):
     """
 
     """
-
-    _instances = set()
 
     @property
     def bounds(
@@ -108,19 +107,6 @@ class Parameter(
             self
     ) -> bool:
         return isinstance(self._link, Parameter)
-
-    @classmethod
-    def get_instances(
-            cls
-    ) -> List[Parameter]:
-        dead = set()
-        for ref in cls._instances:
-            obj = ref()
-            if obj is not None:
-                yield obj
-            else:
-                dead.add(ref)
-        cls._instances -= dead
 
     def __add__(
             self,
@@ -285,7 +271,6 @@ class Parameter(
             **kwargs
         )
         self._bounds_on = bounds_on
-        self._instances.add(weakref.ref(self))
         self._link = link
         self._value = value
         self._lb = lb

@@ -34,7 +34,7 @@ class BasicAV(object):
     --------
 
     >>> import mfm
-    >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+    >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
     >>> av = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
 
     """
@@ -151,7 +151,7 @@ class BasicAV(object):
         --------
 
         >>> import mfm
-        >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> av = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
         >>> av.save('c:/temp/test', file_type='xyz')
         >>> av.save('c:/temp/test', file_type='dx')
@@ -196,7 +196,7 @@ class BasicAV(object):
         --------
 
         >>> import mfm
-        >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
         >>> av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av1.dRmp(av2)
@@ -217,7 +217,7 @@ class BasicAV(object):
         --------
 
         >>> import mfm
-        >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
         >>> av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av1.dRDA(av2)
@@ -237,7 +237,7 @@ class BasicAV(object):
         --------
 
         >>> import mfm
-        >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
         >>> av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av1.widthRDA(av2)
@@ -259,7 +259,7 @@ class BasicAV(object):
         --------
 
         >>> import mfm
-        >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
         >>> av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av1.dRDAE(av2)
@@ -286,7 +286,7 @@ class BasicAV(object):
         --------
 
         >>> import mfm
-        >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
         >>> av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> y, x = av1.pRDA(av2)
@@ -317,7 +317,7 @@ class ACV(BasicAV):
     -------
 
     >>> import mfm
-    >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+    >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
     >>> trapped_fraction = 0.5
     >>> av1 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=18, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
     >>> av2 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=577, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
@@ -325,7 +325,7 @@ class ACV(BasicAV):
     >>> y1, x1 = av1.pRDA(av2)
 
     >>> import mfm
-    >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+    >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
     >>> trapped_fraction = 0.9
     >>> av1 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=18, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
     >>> av2 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=577, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
@@ -494,7 +494,7 @@ class DynamicAV(BasicAV):
         -------
         >>> import mfm
         >>> import mfm.fluorescence
-        >>> structure = mfm.structure.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> structure = mfm.structure.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> free_diffusion = 8.0
         >>> av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=18, atom_name='CB', slow_factor=0.9, contact_distance=1.5, diffusion_coefficients=free_diffusion)
         >>> p.imshow(av.bounds[:,:,20])
@@ -544,7 +544,7 @@ class DynamicAV(BasicAV):
         Example
         -------
         >>> import mfm
-        >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> free_diffusion = 8.0
         >>> av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name='CB', slow_factor=0.985, contact_distance=3.5, diffusion_coefficients=free_diffusion, simulation_grid_resolution=2.0)
         >>> p.imshow(av.diffusion_map[:,:,20])
@@ -582,7 +582,7 @@ class DynamicAV(BasicAV):
         -------
 
         >>> import mfm
-        >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=18, atom_name='CB')
         >>> p.imshow(av.quenching_rate_map[:,:,20])
         >>> p.show()
@@ -619,7 +619,7 @@ class DynamicAV(BasicAV):
         -------
 
         >>> import mfm
-        >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> av_d = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=18, atom_name='CB')
         >>> av_a = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av_d.update_fret_map(av_a)
@@ -671,15 +671,15 @@ class DynamicAV(BasicAV):
         Example
         -------
         >>> import mfm
-        >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> p.imshow(av.density[:,:,20])
         >>> p.show()
         >>> t_step = 0.0141
         >>> times, density, counts = av.get_donor_only_decay(n_it=4095, t_step=0.0141, n_out=1)
         >>> av.save(filename='c:/temp/0t2', density=density, file_type='dx')
-        >>> irf = mfm.curve.DataCurve(filename='./sample_data/tcspc/ibh_sample/Prompt.txt', skiprows=9)
-        >>> data = mfm.experiments.c.DataCurve(filename='./sample_data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)
+        >>> irf = mfm.curve.DataCurve(filename='./test/data/tcspc/ibh_sample/Prompt.txt', skiprows=9)
+        >>> data = mfm.experiments.c.DataCurve(filename='./test/data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)
         >>> irf.x *= t_step; data.x *= t_step
         >>> convolve = mfm.fluorescence.tcspc.convolve.Convolve(fit=None, dt=t_step, rep_rate=10, irf=irf, data=data)
         >>> decay = convolve.convolve(counts, file_type='full')

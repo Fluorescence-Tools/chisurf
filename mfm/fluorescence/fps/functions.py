@@ -33,7 +33,7 @@ def histogram_rda(
     --------
 
     >>> import mfm
-    >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+    >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
     >>> av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
     >>> av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
     >>> y, x = av1.pRDA(av2)
@@ -59,7 +59,7 @@ def RDAMean(
     """Calculate the mean distance between two accessible volumes
 
     >>> import mfm
-    >>> pdb_filename = '/sample_data/structure/T4L_Topology.pdb'
+    >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = mfm.structure.Structure(pdb_filename)
     >>> av1 = mfm.fluorescence.fps.AV(structure, residue_seq_number=72, atom_name='CB')
     >>> av2 = mfm.fluorescence.fps.AV(structure, residue_seq_number=134, atom_name='CB')
@@ -79,7 +79,7 @@ def widthRDA(
     """Calculate the width of the distance distribution between two accessible volumes
 
     >>> import mfm
-    >>> pdb_filename = '/sample_data/structure/T4L_Topology.pdb'
+    >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = mfm.structure.Structure(pdb_filename)
     >>> av1 = mfm.fluorescence.fps.AV(structure, residue_seq_number=72, atom_name='CB')
     >>> av2 = mfm.fluorescence.fps.AV(structure, residue_seq_number=134, atom_name='CB')
@@ -103,7 +103,7 @@ def RDAMeanE(
     """Calculate the FRET-averaged (PDA/Intensity) distance between two accessible volumes
 
     >>> import mfm
-    >>> pdb_filename = '/sample_data/structure/T4L_Topology.pdb'
+    >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = mfm.Structure(pdb_filename)
     >>> av1 = mfm.fps.AV(structure, residue_seq_number=72, atom_name='CB')
     >>> av2 = mfm.fps.AV(structure, residue_seq_number=134, atom_name='CB')
@@ -126,7 +126,7 @@ def dRmp(
     """Calculate the distance between the mean position of two accessible volumes
 
     >>> import mfm
-    >>> pdb_filename = '/sample_data/structure/T4L_Topology.pdb'
+    >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = mfm.Structure(pdb_filename)
     >>> av1 = mfm.fps.AV(structure, residue_seq_number=72, atom_name='CB')
     >>> av2 = mfm.fps.AV(structure, residue_seq_number=134, atom_name='CB')

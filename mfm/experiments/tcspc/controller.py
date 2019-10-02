@@ -5,6 +5,7 @@ from qtpy import QtWidgets, uic
 import mfm
 import mfm.widgets
 from mfm.experiments import reader
+import mfm.experiments.widgets
 import mfm.io.widgets
 
 
@@ -147,6 +148,14 @@ class TCSPCSetupDummyWidget(
                 "tcspcDummy.ui"
             ),
             self
+        )
+        self.selector = mfm.experiments.widgets.ExperimentalDataSelector(
+            click_close=False,
+            parent=self,
+            context_menu_enabled=False
+        )
+        self.verticalLayout_2.addWidget(
+            self.selector
         )
         self.actionParametersChanged.triggered.connect(self.onParametersChanged)
 

@@ -133,7 +133,7 @@ class Base(object):
 
         >>> import mfm.experiments
         >>> dc = mfm.experiments.data.DataCurve()
-        >>> dc.from_json(filename='./sample_data/internal_types/datacurve.json')
+        >>> dc.from_json(filename='./test/data/internal_types/datacurve.json')
 
 
         Parameters
