@@ -12,7 +12,7 @@ import mfm
 import mfm.io
 import mfm.io.xyz
 import mfm.models
-import mfm.fitting.parameter
+import mfm.parameter
 from mfm.structure.structure import count_atoms
 from mfm.fluorescence.fps import _fps
 from mfm.parameter import ParameterGroup
@@ -86,11 +86,11 @@ class DiffusionSimulationParameter(ParameterGroup):
             n_simulations: int = 4
     ):
         super(DiffusionSimulationParameter, self).__init__()
-        self._t_max = mfm.fitting.parameter.FittingParameter(
+        self._t_max = mfm.parameter.Parameter(
             value=t_max,
             name='t-max'
         )
-        self._t_step = mfm.fitting.parameter.FittingParameter(
+        self._t_step = mfm.parameter.Parameter(
             value=t_step,
             name='t-step'
         )
@@ -437,32 +437,32 @@ class Dye(ParameterGroup):
         self.structure = sticking.structure
         self.model = kwargs.get('model', None)
 
-        self._critical_distance = mfm.fitting.parameter.FittingParameter(
+        self._critical_distance = mfm.parameter.Parameter(
             value=7.0,
             name='RQ'
         )
-        self._diffusion_coefficient = mfm.fitting.parameter.FittingParameter(
+        self._diffusion_coefficient = mfm.parameter.Parameter(
             value=5.0,
             name='D[A2/ns]'
         )
-        self._tau0 = mfm.fitting.parameter.FittingParameter(
+        self._tau0 = mfm.parameter.Parameter(
             value=4.0,
             name='tau0[ns]'
         )
-        self._simulation_grid_resolution = mfm.fitting.parameter.FittingParameter(
+        self._simulation_grid_resolution = mfm.parameter.Parameter(
             value=0.5,
             name='grid spacing'
         )
 
-        self._av_length = mfm.fitting.parameter.FittingParameter(
+        self._av_length = mfm.parameter.Parameter(
             name='L',
             value=20.0
         )
-        self._av_width = mfm.fitting.parameter.FittingParameter(
+        self._av_width = mfm.parameter.Parameter(
             name='W',
             value=0.5
         )
-        self._av_radius = mfm.fitting.parameter.FittingParameter(
+        self._av_radius = mfm.parameter.Parameter(
             name='R',
             value=3.0
         )
@@ -556,11 +556,11 @@ class Sticking(ParameterGroup):
         self.quenching_parameter = quenching_parameter
         self.structure = structure
         self.model = kwargs.get('model', None)
-        self._slow_radius = mfm.fitting.parameter.FittingParameter(
+        self._slow_radius = mfm.parameter.Parameter(
             name='Rs',
             value=kwargs.get('slow_radius', 8.5)
         )
-        self._slow_fact = mfm.fitting.parameter.FittingParameter(
+        self._slow_fact = mfm.parameter.Parameter(
             name='slow fact',
             value=kwargs.get('slow_fact', 0.1)
         )
@@ -678,7 +678,7 @@ class ProteinQuenching(ParameterGroup):
 
         self._quencher = None
         self._all_atoms_quench = kwargs.get('all_atoms_quench', False)
-        self._k_quench_scale = mfm.fitting.parameter.FittingParameter(
+        self._k_quench_scale = mfm.parameter.Parameter(
             value=kwargs.get('quench_scale', 0.01),
             name='kQ scale'
         )

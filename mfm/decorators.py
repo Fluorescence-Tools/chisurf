@@ -102,12 +102,14 @@ def register(cls):
             self._instances.add(
                 weakref.ref(self)
             )
+            self.__class__.__name__ = cls.__name__
+            # for name, member in self.__class__.__dict__.items():
+            #     print(name)
+            #     print(member)
+            #     if not getattr(member, '__doc__'):
+            #         self.__class__.__doc__ = getattr(cls, name).__doc__
             super().__init__(*args, **kwargs)
 
-    try:
-        RegisteredClass.__doc__ = cls.__doc__
-    except AttributeError:
-        pass
     return RegisteredClass
 
 
