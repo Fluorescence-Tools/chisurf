@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+import webbrowser
 
 from qtpy import QtCore, QtGui, QtWidgets, uic
 import qdarkstyle
@@ -9,8 +10,10 @@ import qdarkstyle
 import numpy as np
 
 import mfm
-import mfm.widgets
 import mfm.base
+import mfm.experiments.widgets
+import mfm.experiments.tcspc.controller
+import mfm.widgets
 import mfm.models
 import mfm.fitting
 import mfm.experiments
@@ -49,11 +52,11 @@ class Main(QtWidgets.QMainWindow):
             for fit_idx, f in enumerate(mfm.fits):
                 if f == subwindow.fit:
                     return fit_idx
-        else:
-            return None
 
     @property
-    def current_experiment_idx(self) -> int:
+    def current_experiment_idx(
+            self
+    ) -> int:
         return self.comboBox_experimentSelect.currentIndex()
 
     @current_experiment_idx.setter
@@ -64,7 +67,9 @@ class Main(QtWidgets.QMainWindow):
         self.comboBox_experimentSelect.setCurrentIndex(v)
 
     @property
-    def current_experiment(self) -> mfm.experiments.experiment.Experiment:
+    def current_experiment(
+            self
+    ) -> mfm.experiments.experiment.Experiment:
         return mfm.experiment[
             self.current_experiment_idx
         ]
@@ -244,7 +249,12 @@ class Main(QtWidgets.QMainWindow):
             description="Load results into fit-models",
             **kwargs
         )
-        mfm.run("mfm.cmd.load_fit_result(%s, %s)" % (self.fit_idx, filename))
+        mfm.run(
+            "mfm.cmd.load_fit_result(%s, %s)" % (
+                self.fit_idx,
+                filename
+            )
+        )
 
     def onSetupChanged(self):
         mfm.widgets.hide_items_in_layout(
@@ -274,7 +284,7 @@ class Main(QtWidgets.QMainWindow):
 
     def onAddDataset(self):
         try:
-            filename = self.current_setup.controller.get_filename()
+            filename = self.current_setup.controller.filename
         except AttributeError:
             filename = None
 
@@ -313,6 +323,12 @@ class Main(QtWidgets.QMainWindow):
             mfm.working_path = mfm.widgets.get_directory(**kwargs)
         mfm.working_path = directory
         mfm.console.run('mfm.cmd.save_fit()')
+
+    def onOpenHelp(
+            self
+    ):
+        url = 'https://github.com/Fluorescence-Tools/chisurf'
+        webbrowser.open_new(url)
 
     def init_widgets(self):
         #self.decay_generator = mfm.tools.dye_diffusion.TransientDecayGenerator()
@@ -381,6 +397,11 @@ class Main(QtWidgets.QMainWindow):
         self.f_test = mfm.tools.f_test.f_calculator.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
 
+        ##########################################################
+        #      Help                                              #
+        ##########################################################
+        self.actionHelp_2.triggered.connect(self.onOpenHelp)
+
     def init_console(self):
         self.verticalLayout_4.addWidget(mfm.console)
         mfm.console.pushVariables({'cs': self})
@@ -404,42 +425,51 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #       Structure                                        #
         ##########################################################
-        # structure = mfm.experiments.experiment.Experiment('Modelling')
-        # structure.add_readers(
-        #     [
-        #         mfm.experiments.modelling.LoadStructure(
-        #             experiment=structure
-        #         )
-        #     ]
-        # )
-        # structure.add_model_classes(
-        #     [
-        #         mfm.models.tcspc.widgets.LifetimeModelWidget
-        #     ]
-        # )
-        # mfm.experiment.append(structure)
+        structure = mfm.experiments.experiment.Experiment('Modelling')
+        structure.add_readers(
+            [
+                (
+                    mfm.experiments.modelling.LoadStructure(
+                        experiment=structure
+                    ),
+                    None
+                )
+            ]
+        )
+        structure.add_model_classes(
+            [
+                mfm.models.tcspc.widgets.LifetimeModelWidget
+            ]
+        )
+        mfm.experiment.append(structure)
 
         ##########################################################
         #       TCSPC                                            #
         ##########################################################
         tcspc = mfm.experiments.experiment.Experiment('TCSPC')
-        tcspc_reader = mfm.experiments.tcspc.TCSPCReader(
-            experiment=tcspc
-        )
-        tcspc_reader.controller = mfm.experiments.tcspc.TCSPCReaderControlWidget(
-            experiment_reader=tcspc_reader,
-            **mfm.settings.cs_settings['tcspc_csv'],
-        )
-
         tcspc.add_readers(
             [
-                tcspc_reader,
-                mfm.experiments.tcspc.TCSPCSetupSDTWidget(
-                    experiment=tcspc
+                (
+                    mfm.experiments.tcspc.TCSPCReader(
+                        experiment=tcspc
+                    ),
+                    mfm.experiments.tcspc.controller.TCSPCReaderControlWidget(
+                        name='CSV/PQ/IBH',
+                        **mfm.settings.cs_settings['tcspc_csv'],
+                    )
                 ),
-                # mfm.experiments.tcspc.TCSPCSetupDummyWidget(
-                #     experiment=tcspc
-                # )
+                (
+                    mfm.experiments.tcspc.bh_sdt.TCSPCSetupSDTWidget(
+                        experiment=tcspc
+                    ),
+                    None
+                ),
+                (
+                    mfm.experiments.tcspc.dummy.TCSPCSetupDummy(
+                        experiment=tcspc
+                    ),
+                    mfm.experiments.tcspc.controller.TCSPCSetupDummyWidget()
+                )
             ]
         )
         tcspc.add_model_classes(
@@ -459,11 +489,23 @@ class Main(QtWidgets.QMainWindow):
         fcs = mfm.experiments.experiment.Experiment('FCS')
         fcs.add_readers(
             [
-                mfm.experiments.fcs.FCSKristine(
-                    experiment=mfm.experiments.fcs.FCS
+                (
+                    mfm.experiments.fcs.FCS(
+                        name='FCS-CSV',
+                        experiment=fcs
+                    ),
+                    mfm.experiments.fcs.FCSController(
+                        file_type='All files (*.*)'
+                    )
                 ),
-                mfm.experiments.fcs.FCS(
-                    experiment=mfm.experiments.fcs.FCS
+                (
+                    mfm.experiments.fcs.FCS(
+                        name='Kristine',
+                        experiment=fcs
+                    ),
+                    mfm.experiments.fcs.FCSController(
+                        file_type='Kristine files (*.cor)'
+                    )
                 )
             ]
         )
@@ -477,24 +519,23 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #       Global datasets                                  #
         ##########################################################
-        # global_fit = mfm.experiments.experiment.Experiment('Global')
-        # global_setup = mfm.experiments.globalfit.GlobalFitSetup(
-        #     name='Global-Fit',
-        #     experiment=global_fit
-        # )
-        # global_fit.add_model_classes(
-        #     models=[
-        #         mfm.models.global_model.GlobalFitModelWidget
-        #     ]
-        # )
-        # global_fit.add_reader(global_setup)
-        # mfm.experiment.append(global_fit)
-        #
-        #
-        # mfm.cmd.add_dataset(
-        #     setup=global_setup,
-        #     experiment=global_fit
-        # )
+        global_fit = mfm.experiments.experiment.Experiment('Global')
+        global_setup = mfm.experiments.globalfit.GlobalFitSetup(
+            name='Global-Fit',
+            experiment=global_fit
+        )
+        global_fit.add_model_classes(
+            models=[
+                mfm.models.global_model.GlobalFitModelWidget
+            ]
+        )
+        global_fit.add_reader(global_setup)
+        mfm.experiment.append(global_fit)
+
+        mfm.cmd.add_dataset(
+            setup=global_setup,
+            experiment=global_fit
+        )
 
         ##########################################################
         #       Update UI                                        #
@@ -502,7 +543,9 @@ class Main(QtWidgets.QMainWindow):
         self.experiment_names = [
             b.name for b in mfm.experiment if b.name is not 'Global'
         ]
-        self.comboBox_experimentSelect.addItems(self.experiment_names)
+        self.comboBox_experimentSelect.addItems(
+            self.experiment_names
+        )
 
     def __init__(
             self,
@@ -515,7 +558,9 @@ class Main(QtWidgets.QMainWindow):
         )
         uic.loadUi(
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
+                os.path.dirname(
+                    os.path.abspath(__file__)
+                ),
                 "gui.ui"
             ),
             self
@@ -568,9 +613,9 @@ class Main(QtWidgets.QMainWindow):
         #      Arrange Docks and window positions                #
         #      Window-controls tile, stack etc.                  #
         ##########################################################
+        self.tabifyDockWidget(self.dockWidgetReadData, self.dockWidgetDatasets)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetAnalysis)
         self.tabifyDockWidget(self.dockWidgetAnalysis, self.dockWidgetPlot)
-        self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetFits)
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
         self.editor = mfm.widgets.text_editor.CodeEditor()
@@ -578,7 +623,7 @@ class Main(QtWidgets.QMainWindow):
 
         self.modelLayout.setAlignment(QtCore.Qt.AlignTop)
         self.plotOptionsLayout.setAlignment(QtCore.Qt.AlignTop)
-        self.dockWidgetDatasets.raise_()
+        self.dockWidgetReadData.raise_()
 
         self.actionTile_windows.triggered.connect(self.onTileWindows)
         self.actionTab_windows.triggered.connect(self.onTabWindows)

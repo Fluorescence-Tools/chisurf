@@ -46,18 +46,19 @@ def fitrange(
         y,
         threshold: float = 10.0,
         area: float = 0.999
-) -> Tuple[float, float]:
+) -> Tuple[int, int]:
     """
-    Determines the fitting range based on the total number of photons to be fitted (fitting area).
+    Determines the fitting range based on the total number of photons to be
+    fitted (fitting area).
 
     :param y: numpy-array
         a numpy array containing the photon counts
     :param threshold: float
-        a threshold value. Lowest index of the fitting range is the first encountered bin with a photon count
-        higher than the threshold.
+        a threshold value. Lowest index of the fitting range is the first
+        encountered bin with a photon count higher than the threshold.
     :param area: float
-        The area which should be considered for fitting. Here 1.0 corresponds to all measured photons. 0.9 to 90%
-        of the total measured photons.
+        The area which should be considered for fitting. Here 1.0 corresponds
+        to all measured photons. 0.9 to 90% of the total measured photons.
     :return:
     """
     xmin = np.where(y > threshold)[0][0]

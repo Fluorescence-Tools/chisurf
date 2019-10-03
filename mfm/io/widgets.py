@@ -4,7 +4,8 @@ import os
 from qtpy import QtWidgets, uic
 
 import mfm
-from mfm.structure.structure import Structure
+import mfm.base
+import mfm.structure.structure
 import mfm.widgets
 
 from . import photons
@@ -20,7 +21,10 @@ class SpcFileWidget(
             *args,
             **kwargs,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args,
+            **kwargs
+        )
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -255,101 +259,61 @@ class PDBLoad(QtWidgets.QWidget):
 
 
 class CsvWidget(
+    mfm.base.Base,
     QtWidgets.QWidget
 ):
 
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super().__init__(
+            *args,
+            **kwargs
+        )
         uic.loadUi(
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
+                os.path.dirname(
+                    os.path.abspath(__file__)
+                ),
                 "csvInput.ui"
             ),
             self
         )
-        self.actionUseHeader.triggered.connect(self.changeUseHeader)
-        self.actionSkiprows.triggered.connect(self.changeSkiprows)
-        self.actionColspecs.triggered.connect(self.changeColspecs)
-        self.actionCsvType.triggered.connect(self.changeCsvType)
-        self.actionSetError.triggered.connect(self.changeError)
+        self.actionUseHeader.triggered.connect(self.changeCsvParameter)
+        self.actionSkiprows.triggered.connect(self.changeCsvParameter)
+        self.actionColspecs.triggered.connect(self.changeCsvParameter)
+        self.actionCsvType.triggered.connect(self.changeCsvParameter)
+        self.actionSetError.triggered.connect(self.changeCsvParameter)
+        self.actionColumnsChanged.triggered.connect(
+            self.changeCsvParameter
+        )
         self.verbose = kwargs.get('verbose', mfm.verbose)
 
-    @property
-    def col_ex(self) -> int:
-        return self.comboBox_3.currentIndex()
-
-    @col_ex.setter
-    def col_ex(self, v):
-        pass
-
-    def changeError(self):
+    def changeCsvParameter(self):
         set_errx_on = bool(self.checkBox_3.isChecked())
         set_erry_on = bool(self.checkBox_4.isChecked())
-
-        mfm.run("cs.current_setup.error_x_on = %s" % set_errx_on)
-        mfm.run("cs.current_setup.error_y_on = %s" % set_erry_on)
-
-    @property
-    def x_on(self) -> bool:
-        return self.checkBox.isChecked()
-
-    @x_on.setter
-    def x_on(
-            self,
-            v: bool
-    ):
-        self.checkBox.setChecked(bool(v))
-
-    @property
-    def col_x(self) -> int:
-        return self.comboBox.currentIndex()
-
-    @col_x.setter
-    def col_x(
-            self,
-            v: int
-    ):
-        # TODO
-        pass
-
-    @property
-    def col_y(self) -> int:
-        return self.comboBox_2.currentIndex()
-
-    @col_y.setter
-    def col_y(
-            self,
-            v: int
-    ):
-        # TODO
-        pass
-
-    # @property
-    # def data(self):
-    #     return mfm.io.ascii.Csv.data.fget(self)
-    #
-    # @data.setter
-    # def data(self, v):
-    #     mfm.io.ascii.Csv.data.fset(self, v)
-    #     self.lineEdit_9.setText("%d" % v.shape[1])
-    #     bx = [self.comboBox, self.comboBox_2, self.comboBox_3, self.comboBox_4]
-    #     if self.n_rows > 0:
-    #         for i, b in enumerate(bx):
-    #             b.clear()
-    #             b.addItems(self.header)
-    #             b.setCurrentIndex(i % self.n_rows)
-
-    def changeSkiprows(self):
-        n_skip = int(self.spinBox.value())
-        mfm.run("cs.current_setup.skiprows = %s" % n_skip)
-
-    def changeUseHeader(self):
-        use_header = bool(self.checkBox_2.isChecked())
-        mfm.run("cs.current_setup.use_header = %s" % use_header)
-
-    def changeColspecs(self):
         colspecs = str(self.lineEdit.text())
-        mfm.run("cs.current_setup.colspecs = '%s'" % colspecs)
+        use_header = bool(self.checkBox_2.isChecked())
+        n_skip = int(self.spinBox.value())
+        mode = 'csv' if self.radioButton_2.isChecked() else 'fwf'
+        mfm.run(
+            "\n".join(
+                [
+                    "cs.current_setup.error_y_on = %s" % set_erry_on,
+                    "cs.current_setup.error_x_on = %s" % set_errx_on,
+                    "cs.current_setup.colspecs = '%s'" % colspecs,
+                    "cs.current_setup.use_header = %s" % use_header,
+                    "cs.current_setup.skiprows = %s" % n_skip,
+                    "cs.current_setup.file_type = '%s'" % mode,
+                    "cs.current_setup.col_ey = %s" % self.spinBox_5.value(),
+                    "cs.current_setup.col_ex = %s" % self.spinBox_3.value(),
+                    "cs.current_setup.col_x = %s" % self.spinBox_2.value(),
+                    "cs.current_setup.col_y = %s" % self.spinBox_4.value()
+                ]
+            )
+        )
 
     @property
     def filename(self) -> str:
@@ -360,60 +324,55 @@ class CsvWidget(
             self,
             v: str
     ):
-        mfm.io.ascii.Csv.filename.fset(self, v)
         self.lineEdit_8.setText(v)
 
-    def changeCsvType(self):
-        mode = 'csv' if self.radioButton_2.isChecked() else 'fwf'
-        mfm.run("cs.current_setup.file_type = '%s'" % mode)
 
-    # def load(self, filename=None, **kwargs):
-    #     if filename is None:
-    #         filename = mfm.widgets.get_filename(
-    #             'Open CSV-File',
-    #             'CSV-file (*.*)'
-    #         )
-    #     mfm.io.ascii.Csv.load(
-    #         self,
-    #         filename,
-    #         **kwargs
-    #     )
-    #     self.filename = filename
+# To be deleted
+#
+# class CSVFileWidget(QtWidgets.QWidget):
+#
+#     def __init__(
+#             self,
+#             *args,
+#             **kwargs
+#     ):
+#         super().__init__(
+#             *args,
+#             **kwargs
+#         )
+#
+#         layout = QtWidgets.QVBoxLayout(self)
+#         layout.setSpacing(0)
+#         layout.setContentsMargins(0, 0, 0, 0)
+#
+#         self.layout = layout
+#         self.csvWidget = CsvWidget(**kwargs)
+#         self.layout.addWidget(self.csvWidget)
+#
+#     def load_data(
+#             self,
+#             filename: str = None
+#     ) -> mfm.experiment.data.DataCurve:
+#         """
+#         Loads csv-data into a Curve-object
+#         :param filename:
+#         :return: Curve-object
+#         """
+#         d = mfm.experiment.data.DataCurve(setup=None)
+#         if filename is not None:
+#             self.csvWidget.load(filename)
+#             d.filename = filename
+#         else:
+#             self.csvWidget.load()
+#             d.filename = self.csvWidget.filename
+#
+#         d.x, d.y = self.csvWidget.data_x, self.csvWidget.data_y
+#         if self.weight_calculation is None:
+#             d.set_weights(self.csvWidget.error_y)
+#         else:
+#             d.set_weights(self.weight_calculation(d.y))
+#         return d
+#
+#     def get_data(self, *args, **kwargs):
+#         return self.load_data(*args, **kwargs)
 
-
-class CSVFileWidget(QtWidgets.QWidget):
-
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        self.parent = kwargs.get('parent', None)
-        self.name = kwargs.get('name', 'CSV-File')
-        self.weight_calculation = kwargs.get('weight_calculation', None)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        self.layout = layout
-        self.csvWidget = CsvWidget(**kwargs)
-        self.layout.addWidget(self.csvWidget)
-
-    def load_data(self, filename=None):
-        """
-        Loads csv-data into a Curve-object
-        :param filename:
-        :return: Curve-object
-        """
-        d = mfm.experiments.data.DataCurve(setup=None)
-        if filename is not None:
-            self.csvWidget.load(filename)
-            d.filename = filename
-        else:
-            self.csvWidget.load()
-            d.filename = self.csvWidget.filename
-
-        d.x, d.y = self.csvWidget.data_x, self.csvWidget.data_y
-        if self.weight_calculation is None:
-            d.set_weights(self.csvWidget.error_y)
-        else:
-            d.set_weights(self.weight_calculation(d.y))
-        return d
-
-    def get_data(self, *args, **kwargs):
-        return self.load_data(*args, **kwargs)

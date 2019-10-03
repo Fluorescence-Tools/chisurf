@@ -3,6 +3,7 @@ import sys
 import numpy
 import yaml
 import os
+import platform
 
 from Cython.Distutils import build_ext
 from setuptools import setup, find_packages
@@ -33,15 +34,24 @@ def make_extension(ext):
     name = name.replace("/", ".")
     name = name.replace("\\", ".")
     sources = ext[0:]
+
+    if platform.system() == "Darwin":
+        extra_compile_args = ["-O3", "-stdlib=libc++"]
+        extra_link_args = ["-stdlib=libc++"]
+    else:
+        extra_compile_args = []
+        extra_link_args = []
+
     return Extension(
         name,
         sources=sources,
         include_dirs=[numpy.get_include(), "."],
-        extra_compile_args=list(),
-        extra_link_args=list(),
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
         libraries=list(),
         library_dirs=["."],
-        language="c++")
+        language="c++"
+    )
 
 
 # and build up the set of Extension objects
@@ -110,7 +120,9 @@ setup(
         'pyopencl',
         'qdarkstyle',
         'qtpy',
-        'mrcfile'
+        'mrcfile',
+        'qtconsole',
+        'ipython'
     ],
     ext_modules=extensions,
     cmdclass={

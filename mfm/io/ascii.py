@@ -29,7 +29,10 @@ def save_xy(
     """
     if verbose:
         print("Writing histogram to file: %s" % filename)
-    with open(filename, 'w') as fp:
+    with mfm.io.zipped.open_maybe_zipped(
+            filename=filename,
+            mode='w'
+    ) as fp:
         if header_string is not None:
             fp.write(header_string)
         for p in zip(x, y):
@@ -72,7 +75,7 @@ class Csv(object):
 
     >>> import mfm.io.ascii
     >>> csv = mfm.io.ascii.Csv(skiprows=10)
-    >>> filename = './sample_data/tcspc/ibh_sample/Decay_577D.txt'
+    >>> filename = './test/data/tcspc/ibh_sample/Decay_577D.txt'
     >>> csv.load(filename)
     >>> csv.data
     array([  1.00000000e+00,   2.00000000e+00,   3.00000000e+00, ...,
@@ -85,7 +88,7 @@ class Csv(object):
     One-column Jordi data
 
     >>> csv = mfm.io.ascii.Csv(skiprows=11)
-    >>> filename =  './sample_data/tcspc/ibh_sample/Decay_577D.txt'
+    >>> filename =  './test/data/tcspc/ibh_sample/Decay_577D.txt'
     >>> csv.load(filename)
     >>> csv.data_x
     array([  1.00000000e+00,   2.00000000e+00,   3.00000000e+00, ...,
@@ -182,7 +185,7 @@ class Csv(object):
             delimiter: str = None,
             file_type: str = None,
             **kwargs
-    ):
+    ) -> None:
         """
         This method loads a filename to the `Csv` object
         :param filename: string specifying the file
@@ -192,6 +195,8 @@ class Csv(object):
         the verbose attribute of the instance is
         True.
         """
+        if filename is None:
+            return None
         if file_type is None:
             file_type = self.file_type
         if use_header is None:
@@ -202,7 +207,10 @@ class Csv(object):
         # process header
         header = 'infer' if use_header else None
         if use_header:
-            with open(file=filename, mode='r') as fp:
+            with mfm.io.zipped.open_maybe_zipped(
+                    filename=filename,
+                    mode='r'
+            ) as fp:
                 for _ in range(skiprows):
                     fp.readline()
                 header_line = fp.readline()
@@ -217,12 +225,18 @@ class Csv(object):
                 print("Reading: {}".format(filename))
                 print("Skip rows: {}".format(skiprows))
                 print("Use header: {}".format(use_header))
-                with open(filename, 'r') as csvfile:
+                with mfm.io.zipped.open_maybe_zipped(
+                        filename=filename,
+                        mode='r'
+                ) as csvfile:
                     print(csvfile.read()[:512])
 
             if file_type == 'csv':
                 if delimiter is None:
-                    with open(filename, 'r') as csvfile:
+                    with mfm.io.zipped.open_maybe_zipped(
+                            filename=filename,
+                            mode='r'
+                    ) as csvfile:
                         for _ in range(skiprows):
                             csvfile.readline()
                         dialect = csv.Sniffer().sniff(

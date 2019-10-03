@@ -18,14 +18,14 @@ class AVDecayModel(LifetimeModel):
         Example
         -------
         >>> import mfm
-        >>> data_set = mfm.curve.DataCurve(filename='./sample_data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)
-        >>> lin = mfm.curve.DataCurve(filename='./sample_data/tcspc/ibh_sample/whitelight.txt', skiprows=9)
+        >>> data_set = mfm.curve.DataCurve(filename='./test/data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)
+        >>> lin = mfm.curve.DataCurve(filename='./test/data/tcspc/ibh_sample/whitelight.txt', skiprows=9)
         >>> data_set.weights = mfm.fluorescence.tcspc.weights(data_set.y)
-        >>> irf = mfm.curve.DataCurve(filename='./sample_data/tcspc/ibh_sample/Prompt.txt', skiprows=9)
+        >>> irf = mfm.curve.DataCurve(filename='./test/data/tcspc/ibh_sample/Prompt.txt', skiprows=9)
         >>> data_set.x *= 0.0141
         >>> irf.x *= 0.0141
         >>> data_set = mfm.curve.ExperimentDataCurveGroup(data_set)
-        >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> from mfm.fitting.model.tcspc.av_decay import AVDecayModel
         >>> model_kw={'structure': structure, 'residue_seq_number': 577, 'atom_name': 'CB'}
         >>> fit = mfm.fitting.FitGroup(data=data_set, model_class=AVDecayModel, model_kw=model_kw)

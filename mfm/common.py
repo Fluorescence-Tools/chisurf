@@ -34,18 +34,21 @@ TITR_ATOM = structure_data['TITR_ATOM']
 """Atom on which to place charge in amino-acid"""
 
 TITR_ATOM_COARSE = structure_data['TITR_ATOM_COARSE']
-"""Atom on which to place charge in amino-acid (Coarse grained default position C-Beta)"""
+"""Atom on which to place charge in amino-acid (Coarse grained default 
+position C-Beta)"""
 
 MW_DICT = structure_data['MW_DICT']
-"""Dictionary of amino acid molecular weights.  The the molecular weight of water
-should be subtracted for each peptide bond to calculate a protein molecular
-weight."""
+"""Dictionary of amino acid molecular weights.  The the molecular weight of 
+water should be subtracted for each peptide bond to calculate a protein 
+molecular weight."""
 
 MW_H2O = 18.0
 """Molecular weight of water"""
 
 VDW_DICT = dict(
-    (key, structure_data["Periodic Table"][key]["vdW radius"]) for key in structure_data["Periodic Table"].keys())
+    (key, structure_data["Periodic Table"][key]["vdW radius"])
+    for key in structure_data["Periodic Table"].keys()
+)
 """Dictionary of van der Waal radii
 CR - coarse grained Carbon/Calpha
 """

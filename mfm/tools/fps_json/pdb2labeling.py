@@ -71,7 +71,12 @@ class PDB2Label(QtWidgets.QWidget):
             'JSON-Files (*.fps.json)'
         )
         self.json_file = filename
-        p = json.load(open(self.json_file, 'r'))
+        p = json.load(
+            mfm.io.zipped.open_maybe_zipped(
+                filename=self.json_file,
+                mode='r'
+            )
+        )
         self.distances = p["Distances"]
         self.positions = p["Positions"]
         self.onUpdateJSON()
@@ -229,7 +234,7 @@ class PDB2Label(QtWidgets.QWidget):
             )
             self.json_file = filename
 
-        with open(self.json_file, 'r') as fp:
+        with mfm.io.zipped.open_maybe_zipped(self.json_file, 'r') as fp:
             p = json.load(
                 fp,
                 sort_keys=True,

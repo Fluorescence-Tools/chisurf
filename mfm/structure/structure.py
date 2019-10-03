@@ -11,6 +11,7 @@ from typing import List
 import mdtraj as md
 import numpy as np
 
+import mfm.io
 import mfm.io.pdb
 import mfm.base
 
@@ -23,16 +24,19 @@ class Structure(mfm.base.Base):
     Attributes
     ----------
     max_atom_residue : int
-        Maximum atoms per residue. The maximum atoms per residue have to be limited, because of the
-        residue/atom lookup tables. By default maximum 16 atoms per residue are allowed.
+        Maximum atoms per residue. The maximum atoms per residue have to be
+        limited, because of the residue/atom lookup tables. By default
+        maximum 16 atoms per residue are allowed.
 
     xyz : numpy-array
-        The xyz-attribute is an array of the cartesian coordinates represented by the attribute atom
+        The xyz-attribute is an array of the cartesian coordinates represented
+        by the attribute atom
 
     residue_names: list
-        residue names is a list of the residue-names. Here the residues are represented by the same
-        name as the initial PDB-file, usually 3-letter amino-acid code. The residue_names attribute
-        may look like: ['TYR', 'HIS', 'ARG']
+        residue names is a list of the residue-names. Here the residues are
+        represented by the same name as the initial PDB-file, usually 3-letter
+        amino-acid code. The residue_names attribute may look like:
+        ['TYR', 'HIS', 'ARG']
 
     n_atoms: int
         The number of atoms
@@ -41,21 +45,23 @@ class Structure(mfm.base.Base):
         An array of the b-factors.
 
     radius_gyration: float
-        The attribute radius_gyration returns the radius of gyration of the structure. The radius of gyration
-        is given by: rG = (np.sqrt((coord - rM) ** 2).sum(axis=1)).mean()
+        The attribute radius_gyration returns the radius of gyration of the
+        structure. The radius of gyration is given by:
+        rG = (np.sqrt((coord - rM) ** 2).sum(axis=1)).mean()
         Here rM are the mean coordinates of the structure.
 
 
     :param filename: str
         Path to the pdb file on disk
     :param make_coarse: bool
-        Conversion to coarse representation using internal coordinates. Side-chains are
-        not considered. The Cbeta-atoms is moved to center of mass of the side-chain.
+        Conversion to coarse representation using internal coordinates.
+        Side-chains are not considered. The Cbeta-atoms is moved to center of
+        mass of the side-chain.
     :param verbose: bool
         print output to stdout
     :param auto_update: bool
-        update cartesian-coordiantes automatically after change of internal coordinates.
-        This only applies for coarse-grained coordinates
+        update cartesian-coordiantes automatically after change of internal
+        coordinates. This only applies for coarse-grained coordinates
 
     Examples
     --------
@@ -63,8 +69,8 @@ class Structure(mfm.base.Base):
     >>> import mfm.structure
     >>> structure = mfm.structure.structure.Structure('1dg3', verbose=True)
     ======================================
-    Filename: ../sample_data/structure/HM_1FN5_Naming.pdb
-    Path: ../sample_data/structure
+    Filename: ../test/data/structure/HM_1FN5_Naming.pdb
+    Path: ../test/data/structure
     Number of atoms: 9316
     >>> print(str(structure)[:324])
     ATOM      1    N HIS A   6     -18.863  20.262  33.465  0.00  0.00             N
@@ -90,9 +96,10 @@ class Structure(mfm.base.Base):
             auto_update: bool = False,
             filename: str = None,
             verbose: bool = False,
+            pdb_id: str = None,
             **kwargs
     ):
-        super(Structure, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.auto_update = auto_update
         self._filename = filename
         self._atoms = None
@@ -100,26 +107,38 @@ class Structure(mfm.base.Base):
         self._potentials = list()
         self._sequence = None
         self.verbose = verbose
-
         self.io = mfm.io.pdb
         self.pdbid = None
+
+        if isinstance(pdb_id, str):
+            self.pdbid = pdb_id
+            p_object = pdb_id
+        if isinstance(filename, str):
+            p_object = filename
+
         ####################################################
         #              Load ATOM COORDINATES               #
         ####################################################
-        if isinstance(p_object, Structure):
+        if isinstance(
+                p_object,
+                Structure
+        ):
             self.atoms = np.copy(p_object.atoms)
             self.filename = copy.copy(p_object.filename)
         elif p_object is None:
             self._atoms = None
             self._filename = None
-        else:
-            try:
+        elif isinstance(
+                p_object,
+                str
+        ):
+            if os.path.isfile(p_object):
                 self._atoms = self.io.read(
                     p_object,
                     verbose=self.verbose
                 )
                 self.filename = p_object
-            except:
+            else:
                 self._atoms = self.io.fetch_pdb(p_object)
                 self.pdbid = p_object
 
@@ -147,7 +166,13 @@ class Structure(mfm.base.Base):
         if isinstance(self._atoms, np.ndarray):
             return self._atoms
         else:
-            return np.zeros(1, dtype={'names': mfm.io.pdb.keys, 'formats': mfm.io.pdb.formats})
+            return np.zeros(
+                1,
+                dtype={
+                    'names': mfm.io.pdb.keys,
+                    'formats': mfm.io.pdb.formats
+                }
+            )
 
     @atoms.setter
     def atoms(
@@ -254,10 +279,12 @@ class Structure(mfm.base.Base):
             s._atoms[ai]['bfactor'] = bi
 
     @property
-    def radius_gyration(self):
+    def radius_gyration(
+            self
+    ) -> float:
         coord = self.xyz
-        rM = coord[:, :].distance(axis=0)
-        rG = (np.sqrt((coord - rM) ** 2).sum(axis=1)).distance()
+        rM = coord[:, :].mean(axis=0)
+        rG = (np.sqrt((coord - rM) ** 2).sum(axis=1)).mean()
         return float(rG)
 
     def append_potential(
@@ -275,7 +302,7 @@ class Structure(mfm.base.Base):
         --------
 
         >>> import mfm.structure
-        >>> structure = mfm.structure.Structure('./sample_data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True)
+        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True)
         >>> structure.append_potential(mfm.structure.potential.lennard_jones_calpha)
         >>> structure.energy
         -948.0396693387753
@@ -294,8 +321,9 @@ class Structure(mfm.base.Base):
 
     def write(
             self,
-            *args,
-            **kwargs
+            filename: str = None,
+            append_model: bool = False,
+            append_coordinates: bool = False,
     ):
         """
         Write the structure to a filename. By default it uses PDB files
@@ -304,14 +332,16 @@ class Structure(mfm.base.Base):
         :param append_model: bool
             If True the structure is appended to the filename as a new model otherwise the file is overwritten
         """
-        filename = kwargs.get('filename', self._filename)
-        append_model = kwargs.get('append_model', False)
-        append_coordinates = kwargs.get('append_coordinates', False)
-        if len(args) > 0:
-            filename = args[0]
+        if filename is None:
+            filename = self._filename
         aw = np.copy(self.atoms)
         aw['xyz'] = self.xyz
-        self.io.write_pdb(filename, aw, append_model=append_model, append_coordinates=append_coordinates)
+        self.io.write_pdb(
+            filename,
+            aw,
+            append_model=append_model,
+            append_coordinates=append_coordinates
+        )
 
     def update(
             self,
@@ -392,7 +422,7 @@ def rmsd(
     --------
 
     >>> import mfm
-    >>> times = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+    >>> times = mfm.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', file_type='r', stride=1)
     >>> s1 = times[10]
     >>> s1
     <mfm.structure.structure.Structure at 0x135f3ad0>
@@ -462,7 +492,7 @@ def find_best(target, reference, atom_indices=None):
     --------
 
     >>> import mfm
-    >>> times = times = mfm.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+    >>> times = times = mfm.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', file_type='r', stride=1)
     >>> find_best(times.mdtraj, times.mdtraj[2])
     (2, <mdtraj.Trajectory with 1 frames, 2495 atoms, 164 residues, without unitcells at 0x13570b30>)
     """
@@ -502,10 +532,10 @@ def get_coordinates_of_residues(atoms, quencher, verbose=False):
     >>> import mfm
     >>> pdb_file = models
     >>> pdb = mfm.io.pdb_file.read(pdb_file, verbose=True)
-    Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb
+    Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb
     ======================================
-    Filename: ./sample_data/model/hgbp1/hGBP1_closed.pdb
-    Path: ./sample_data/model/hgbp1
+    Filename: ./test/data/model/hgbp1/hGBP1_closed.pdb
+    Path: ./test/data/model/hgbp1
     Number of atoms: 9316
     --------------------------------------
     >>> mfm.tools.dye_diffusion.dye_diffusion.get_quencher_coordinates(pdb, {'TRP': ['CA']})
@@ -548,10 +578,10 @@ def get_atom_index_of_residue_types(
     >>> import mfm
     >>> pdb_file = models
     >>> pdb = mfm.io.PDB.read(pdb_file, verbose=True)
-    Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb
+    Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb
     ======================================
-    Filename: ./sample_data/model/hgbp1/hGBP1_closed.pdb
-    Path: ./sample_data/model/hgbp1
+    Filename: ./test/data/model/hgbp1/hGBP1_closed.pdb
+    Path: ./test/data/model/hgbp1
     Number of atoms: 9316
     --------------------------
 
@@ -592,12 +622,12 @@ def get_atom_index_by_name(
     --------
 
     >>> import mfm
-    >>> pdb_file = './sample_data/model/hgbp1/hGBP1_closed.pdb'
+    >>> pdb_file = './test/data/model/hgbp1/hGBP1_closed.pdb'
     >>> pdb = mfm.io.PDB.read(pdb_file, verbose=True)
-    Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb
+    Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb
     ======================================
-    Filename: ./sample_data/model/hgbp1/hGBP1_closed.pdb
-    Path: ./sample_data/model/hgbp1
+    Filename: ./test/data/model/hgbp1/hGBP1_closed.pdb
+    Path: ./test/data/model/hgbp1
     Number of atoms: 9316
     --------------------------
 
@@ -662,7 +692,7 @@ def average(
     --------
 
     >>> import mfm
-    >>> times = mfm.structure.trajectory.TrajectoryFile('./sample_data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+    >>> times = mfm.structure.trajectory.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', file_type='r', stride=1)
     >>> avg = times.average
     >>> avg
     <mfm.structure.structure.Structure at 0x117ff770>

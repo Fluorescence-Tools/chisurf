@@ -1,4 +1,27 @@
+from __future__ import annotations
+
 import numpy as np
+import os
+import mfm.io.zipped
+
+
+def save_bvox(
+    data: np.ndarray,
+    filename: str
+) -> None:
+    """Saves as 3D voxel array containing for instance densities as a
+    bvox (binary voxel) file that can be opened in Blender.
+
+    :param data: A 3D density map
+    :param filename: The output filename
+    :return:
+    """
+    nx, ny, nz = data.shape
+    header = np.array([nx, ny, nz, 1])
+    filename = "".join(os.path.abspath(filename).split(".")[:-1]) + ".bvox"
+    with mfm.io.zipped.open_maybe_zipped(filename, 'wb') as binfile:
+        header.astype('<i4').tofile(binfile)
+        data.astype('<f4').tofile(binfile)
 
 
 def write_open_dx(
@@ -27,7 +50,10 @@ def write_open_dx(
 
     :return:
     """
-    with open(filename + '.dx', 'w') as fp:
+    with mfm.io.zipped.open_maybe_zipped(
+            filename=filename + '.dx',
+            mode='w'
+    ) as fp:
         s = open_dx(density, r0, (nx, ny, nz), (dx, dy, dz))
         fp.write(s)
 

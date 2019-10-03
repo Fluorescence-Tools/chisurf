@@ -295,7 +295,10 @@ class Fit(
                     filename=filename + '_data.json',
                     file_type='json'
                 )
-                with open(filename+'_info.txt', 'w') as fp:
+                with mfm.io.zipped.open_maybe_zipped(
+                        filename=filename+'_info.txt',
+                        mode='w'
+                ) as fp:
                     fp.write(str(self))
 
     def run(

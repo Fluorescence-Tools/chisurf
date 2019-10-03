@@ -237,23 +237,23 @@ def remove_datasets(
 
 
 def add_dataset(
-        setup: mfm.experiments.reader.ExperimentReader,
+        setup: mfm.experiments.reader.ExperimentReader = None,
         dataset: mfm.base.Data = None,
         **kwargs
 ) -> None:
     cs = mfm.cs
+    if setup is None:
+        setup = cs.current_setup
     if dataset is None:
         dataset = setup.get_data(
             **kwargs
         )
-
     dataset_group = dataset if isinstance(
         dataset,
         mfm.experiments.data.ExperimentDataGroup
     ) else mfm.experiments.data.ExperimentDataCurveGroup(
         dataset
     )
-
     if len(dataset_group) == 1:
         mfm.imported_datasets.append(dataset_group[0])
     else:

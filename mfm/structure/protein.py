@@ -271,10 +271,10 @@ class ProteinCentroid(Structure):
     --------
 
     >>> import mfm
-    >>> sp = mfm.structure.protein.ProteinCentroid('../sample_data/structure/HM_1FN5_Naming.pdb', verbose=True, make_coarse=True)
+    >>> sp = mfm.structure.protein.ProteinCentroid('../test/data/structure/HM_1FN5_Naming.pdb', verbose=True, make_coarse=True)
     ======================================
-    Filename: /sample_data/structure/HM_1FN5_Naming.pdb
-    Path: /sample_data/structure
+    Filename: /data/structure/HM_1FN5_Naming.pdb
+    Path: /data/structure
     Number of atoms: 9316
     --------------------------------------
     Atoms internal: 3457
@@ -288,7 +288,7 @@ class ProteinCentroid(Structure):
     ATOM   2273    C ALA   386      47.799  59.970  21.123  0.00  0.00             C
     ATOM   2274    O ALA   386      47.600  59.096  20.280  0.00  0.00             O
     >>> sp.write('test_out.pdb')
-    >>> s_aa = mfm.structure.protein.ProteinCentroid('/sample_data/structure/HM_1FN5_Naming.pdb', verbose=True, make_coarse=False)
+    >>> s_aa = mfm.structure.protein.ProteinCentroid('./test/data/structure/HM_1FN5_Naming.pdb', verbose=True, make_coarse=False)
     >>> print(s_aa)
     ATOM   9312    H MET   583      40.848  10.075  17.847  0.00  0.00             H
     ATOM   9313   HA MET   583      40.666   8.204  15.667  0.00  0.00             H
@@ -432,7 +432,7 @@ class ProteinCentroid(Structure):
         Examples
         --------
 
-        >>> s_aa = mfm.structure.ProteinCentroid('./sample_data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True, make_coarse=False)
+        >>> s_aa = mfm.structure.ProteinCentroid('./test/data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True, make_coarse=False)
         >>> print(s_aa)
         ATOM   9312    H MET   583      40.848  10.075  17.847  0.00  0.00             H
         ATOM   9313   HA MET   583      40.666   8.204  15.667  0.00  0.00             H
@@ -485,7 +485,7 @@ class ProteinCentroid(Structure):
 class ProteinBead(Structure):
 
     """
-    >>> s_aa = mfm.structure.protein.ProteinBead('./sample_data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True)
+    >>> s_aa = mfm.structure.protein.ProteinBead('./test/data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True)
     """
 
     max_atom_residue = 2

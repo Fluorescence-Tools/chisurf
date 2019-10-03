@@ -180,7 +180,10 @@ class ParameterEditor(QtWidgets.QWidget):
             self,
             v: str
     ):
-        with open(v, 'r') as fp:
+        with mfm.io.zipped.open_maybe_zipped(
+                filename=v,
+                mode='r'
+        ) as fp:
             self._dict = json.load(fp)
         self._json_file = v
 

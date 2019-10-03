@@ -76,7 +76,7 @@ def calculate_1_radius(l, w, r, atom_i, x, y, z, vdw, **kwargs):
     Calculating accessible volume using provided pdb-file
 
     >>> import mfm
-    >>> pdb_filename = '/sample_data/structure/T4L_Topology.pdb'
+    >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> residue_number = 18
     >>> atom_name = 'CB'
     >>> attachment_atom = 1
@@ -85,7 +85,7 @@ def calculate_1_radius(l, w, r, atom_i, x, y, z, vdw, **kwargs):
     Calculating accessible volume using provided Structure object
 
     >>> import mfm
-    >>> pdb_filename = '/sample_data/structure/T4L_Topology.pdb'
+    >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = mfm.Structure(pdb_filename)
     >>> av = mfm.fps.AV(structure, attachment_atom=1, verbose=True)
     Calculating accessible volume
@@ -107,7 +107,7 @@ def calculate_1_radius(l, w, r, atom_i, x, y, z, vdw, **kwargs):
     chain_identifier. However, only if a single-chain is present.
 
     >>> import mfm
-    >>> pdb_filename = '/sample_data/structure/T4L_Topology.pdb'
+    >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = mfm.Structure(pdb_filename)
     >>> av = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=11, atom_name='CB', verbose=True)
 
@@ -116,7 +116,7 @@ def calculate_1_radius(l, w, r, atom_i, x, y, z, vdw, **kwargs):
 
     >>> import mfm.fluorescence
     >>> import mfm.structure
-    >>> pdb_filename = '/sample_data/structure/T4L_Topology.pdb'
+    >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = mfm.structure.Structure(pdb_filename)
     >>> av = mfm.fluorescence.fps.AV(structure, residue_seq_number=11, atom_name='CB', verbose=True, save_av=True, output_file='test')
     Calculating accessible volume
@@ -277,7 +277,7 @@ def atoms_in_reach(xyz, vdw, dmaxsq, atom_i):
 
     Example
     -------
-    >>> pdb_filename = './sample_data/modelling/pdb_files/hGBP1_open.pdb'
+    >>> pdb_filename = './test/data/modelling/pdb_files/hGBP1_open.pdb'
     >>> structure = mfm.structure.Structure(pdb_filename)
     >>> xs, vs = atoms_in_reach(structure.xyz, structure.vdw, 10.0, 1)
 
@@ -465,7 +465,7 @@ def calc_av1_py(l, w, r, atom_i, ng, xyz, vdw, vdw_max=3.5, linker_sphere=2.0, l
 
     >>> import mfm
     >>> import pylab as p
-    >>> pdb_filename = './sample_data/modelling/pdb_files/hGBP1_open.pdb'
+    >>> pdb_filename = './test/data/modelling/pdb_files/hGBP1_open.pdb'
     >>> structure = mfm.structure.Structure(pdb_filename)
     >>> av = calc_av1_py(l=20.0, w=2.0, r=3.5, atom_i=1, ng=33, xyz=structure.xyz, vdw=structure.vdw)
     >>> l=20.0
