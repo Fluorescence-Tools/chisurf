@@ -8,6 +8,7 @@ utils.set_search_paths(TOPDIR)
 
 import mfm.io
 import tempfile
+import glob
 import numpy as np
 
 
@@ -227,6 +228,12 @@ class Tests(unittest.TestCase):
             ),
             True
         )
+
+    def test_photons(self):
+        directory = './data/tttr/BH/'
+        spc_files = glob.glob(directory + '/BH_SPC132.spc')
+        photons = mfm.io.photons.Photons(spc_files, file_type="bh132")
+        ch8 = np.where(photons.rout == 8)[0]
 
 
 if __name__ == '__main__':

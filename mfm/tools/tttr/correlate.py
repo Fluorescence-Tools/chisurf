@@ -38,7 +38,9 @@ class CorrelateTTTR(QtWidgets.QWidget):
             return s
 
     def onRemoveDataset(self):
-        selected_index = [i.row() for i in self.cs.selectedIndexes()]
+        selected_index = [
+            i.row() for i in self.cs.selectedIndexes()
+        ]
         l = list()
         for i, c in enumerate(self._curves):
             if i not in selected_index:
@@ -80,8 +82,11 @@ class CorrelateTTTR(QtWidgets.QWidget):
         self.cs.update()
         self.plot_curves()
 
-    def __init__(self):
-        QtWidgets.QWidget.__init__(self)
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            *args,
+            **kwargs
+        )
         self._curves = list()
         uic.loadUi(
             os.path.join(
@@ -102,7 +107,9 @@ class CorrelateTTTR(QtWidgets.QWidget):
         )
         self.verticalLayout_6.addWidget(self.cs)
 
-        w.correlator.pushButton_3.clicked.connect(w.correlator.correlator_thread.start)
+        w.correlator.pushButton_3.clicked.connect(
+            w.correlator.correlator_thread.start
+        )
         w.correlator.correlator_thread.finished.connect(self.add_curve)
         #self.cs.itemClicked[QListWidgetItem].connect(self.plot_curves)
 
@@ -120,27 +127,38 @@ class Correlator(QtCore.QThread):
 
     @property
     def data(self):
-        if isinstance(self._data, mfm.experiments.data.DataCurve):
+        if isinstance(
+                self._data,
+                mfm.experiments.data.DataCurve
+        ):
             return self._data
         else:
-            return mfm.experiments.data.DataCurve(setup=self)
+            return mfm.experiments.data.DataCurve(
+                setup=self
+            )
 
-    def __init__(self, parent):
-        QtCore.QThread.__init__(self, parent)
-        self.p = parent
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.p = kwargs.get('parent', None)
         self.exiting = False
         self._data = None
         self._results = list()
         self._dt1 = 0
         self._dt2 = 0
 
-    def getWeightStream(self, tacWeighting):
+    def getWeightStream(
+            self,
+            tacWeighting
+    ):
         """
-        :param tacWeighting: is either a list of integers or a numpy-array. If it's a list of integers\
-        the integers correspond to channel-numbers. In this case all photons have an equal weight of one.\
-        If tacWeighting is a numpy-array it should be of shape [max-routing, number of TAC channels]. The\
-        array contains np.floats with weights for photons arriving at different TAC-times.
-        :return: numpy-array with same length as photon-stream, each photon is associated to one weight.
+        :param tacWeighting: is either a list of integers or a numpy-array.
+        If it's a list of integers the integers correspond to channel-numbers.
+        In this case all photons have an equal weight of one. If tacWeighting
+        is a numpy-array it should be of shape [max-routing, number of TAC
+        channels]. The array contains np.floats with weights for photons
+        arriving at different TAC-times.
+        :return: numpy-array with same length as photon-stream, each photon
+        is associated to one weight.
         """
         print("Correlator:getWeightStream")
         photons = self.p.photon_source.photons
@@ -152,7 +170,7 @@ class Correlator(QtCore.QThread):
         elif type(tacWeighting) is np.ndarray:
             print("TAC-weighted")
             wt = tacWeighting
-        w = mfm.fluorescence.fcs.get_weights(
+        w = mfm.fluorescence.fcs.correlate.get_weights(
             photons.rout,
             photons.tac,
             wt,
@@ -181,10 +199,14 @@ class Correlator(QtCore.QThread):
             p = photons[i:i + nGroup]
             wi1, wi2 = w1[i:i + nGroup], w2[i:i + nGroup]
             if self.p.method == 'tp':
-                np1, np2, dt1, dt2, tau, corr = mfm.fluorescence.fcs.log_corr(p.mt, p.tac, p.rout, p.cr_filter,
-                                                          wi1, wi2, self.p.B, self.p.nCasc,
-                                                          self.p.fine, photons.n_tac)
-                cr = mfm.fluorescence.fcs.normalize(np1, np2, dt1, dt2, tau, corr, self.p.B)
+                np1, np2, dt1, dt2, tau, corr = mfm.fluorescence.fcs.correlate.log_corr(
+                    p.mt, p.tac, p.rout, p.cr_filter,
+                    wi1, wi2, self.p.B, self.p.nCasc,
+                    self.p.fine, photons.n_tac
+                )
+                cr = mfm.fluorescence.fcs.correlate.normalize(
+                    np1, np2, dt1, dt2, tau, corr, self.p.B
+                )
                 cr /= self.p.dt
                 dur = float(min(dt1, dt2)) * self.p.dt / 1000  # seconds
                 tau = tau.astype(np.float64)
@@ -223,9 +245,13 @@ class Correlator(QtCore.QThread):
         cr = count-rate in kHz
         """
         if self.p.weighting == 1:
-            return mfm.fluorescence.fcs.weights(tau, cor, dur, cr, type='uniform')
+            return mfm.fluorescence.fcs.weights(
+                tau, cor, dur, cr, type='uniform'
+            )
         elif self.p.weighting == 0:
-            return mfm.fluorescence.fcs.weights(tau, cor, dur, cr, type='suren')
+            return mfm.fluorescence.fcs.weights(
+                tau, cor, dur, cr, type='suren'
+            )
 
 
 class CorrelatorWidget(QtWidgets.QWidget):
@@ -237,6 +263,11 @@ class CorrelatorWidget(QtWidgets.QWidget):
             ch1: int = '0',
             ch2: int = '8',
             setup=None,
+            nCasc: int = settings['nCasc'],
+            B: int = settings['B'],
+            split: int = settings['split'],
+            weighting: str = settings['weighting'],
+            fine: bool = settings['fine'],
             **kwargs
     ):
         QtWidgets.QWidget.__init__(self)
@@ -248,12 +279,11 @@ class CorrelatorWidget(QtWidgets.QWidget):
             self
         )
 
-        self.nCasc = kwargs.get('nCasc', settings['nCasc'])
-        self.B = kwargs.get('B', settings['B'])
-        self.split = kwargs.get('split', settings['split'])
-        self.weighting = kwargs.get('weighting', settings['weighting'])
-        self.fine = kwargs.get('fine', settings['fine'])
-
+        self.nCasc = nCasc
+        self.B = B
+        self.split = split
+        self.weighting = weighting
+        self.fine = fine
         self.setup = setup
         self.parent = parent
         self.cr = 0.0
@@ -413,7 +443,13 @@ class CrFilterWidget(QtWidgets.QWidget):
             mt = photons.mt
             n_ph = mt.shape[0]
             w = np.ones(n_ph, dtype=np.float32)
-            mfm.fluorescence.fcs.count_rate_filter(mt, tw, n_ph_max, w, n_ph)
+            mfm.fluorescence.fcs.count_rate_filter(
+                mt,
+                tw,
+                n_ph_max,
+                w,
+                n_ph
+            )
             photons.cr_filter = w
             return photons
         else:
