@@ -25,7 +25,8 @@ def weights(
     :param correlation: correlation amplitude
     :param measurement_duration: measurement duration [s]
     :param mean_count_rate: count-rate [kHz]
-    :param weight_type: weight type 'type' either 'suren' or 'uniform' for uniform weighting or Suren-weighting
+    :param weight_type: weight type 'type' either 'suren' or 'uniform' for
+    uniform weighting or Suren-weighting
     """
     if weight_type is None:
         weight_type = cs_settings['fcs']['weight_type']
@@ -44,8 +45,10 @@ def weights(
         A = np.exp(-2 * dt / tmaxhalf)
         B = np.exp(-2 * times / tmaxhalf)
         m = times / dt
-        S = (b * b / ns * ((1 + A) * (1 + B) + 2 * m * (1 - A) * B) / (1 - A) + 2 * b / ns / na * (1 + B) + (
-                    1 + b * np.sqrt(B)) / (ns * na * na)) * syn
+        S = (b * b / ns * ((1 + A) * (1 + B) + 2 * m * (1 - A) * B) / (1 - A) +
+             2 * b / ns / na * (1 + B) + (
+                     1 + b * np.sqrt(B)) / (ns * na * na)
+             ) * syn
         S = np.abs(S)
         return 1. / np.sqrt(S)
     elif weight_type == 'uniform':

@@ -149,7 +149,10 @@ class CodeEditor(QWidget):
         print("saving macros")
         if self.filename is None or self.filename == '':
             self.filename = mfm.widgets.save_file(file_type='Python script (*.py)')
-        with open(self.filename, 'w') as fp:
+        with mfm.io.zipped.open_maybe_zipped(
+                filename=self.filename,
+                mode='w'
+        ) as fp:
             text = str(self.editor.text())
             fp.write(text)
             self.line_edit.setText(self.filename)

@@ -320,9 +320,12 @@ class DiffusionIterator:
             # define NG %s
             # define NG2 %s
             ''' % (idg2, ng, ng ** 2)
-        f = open(filename, 'r')
-        kernel = defines + "".join(f.readlines())
-        return cl.Program(self.ctx, kernel).build()
+        with mfm.io.zipped.open_maybe_zipped(
+            filename, 'r'
+        ) as f:
+            kernel = defines + "".join(f.readlines())
+            return cl.Program(self.ctx, kernel).build()
+        return None
 
     def to_device(self, **kwargs):
         self.t_step = t_step = kwargs.get('t_step', None)

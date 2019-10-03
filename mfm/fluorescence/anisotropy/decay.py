@@ -39,7 +39,7 @@ def vm_rt_to_vv_vh(
     >>> times = np.linspace(0, 50, 4096)
     >>> lifetime_spectrum = np.array([1., 4], dtype=np.float)
     >>> times, vm = mfm.fluorescence.general.calculate_fluorescence_decay(lifetime_spectrum=lifetime_spectrum, time_axis=times)
-    >>> anisotropy_spectrum = [0.1, 8.0, 0.38-0.1, 10.0]
+    >>> anisotropy_spectrum = np.array([0.1, 8.0, 0.38-0.1, 10.0])
     >>> vv, vh = vm_rt_to_vv_vh(times, vm, anisotropy_spectrum)
     >>> p.plot(times, vv)
     >>> p.plot(times, vh)

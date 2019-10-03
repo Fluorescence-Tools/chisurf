@@ -49,7 +49,10 @@ class Base(object):
             txt = self.to_json()
         if verbose:
             print(txt)
-        with open(filename, 'w') as fp:
+        with mfm.io.zipped.open_maybe_zipped(
+                filename=filename,
+                mode='w'
+        ) as fp:
             fp.write(txt)
 
     def load(
@@ -110,7 +113,7 @@ class Base(object):
         j = dict()
         if isinstance(filename, str):
             if os.path.isfile(filename):
-                with open(filename, 'r') as fp:
+                with mfm.io.zipped.open_maybe_zipped(filename, 'r') as fp:
                     j = yaml.safe_load(fp)
         if isinstance(yaml_string, str):
             j = yaml.safe_load(
@@ -149,7 +152,7 @@ class Base(object):
         j = dict()
         if isinstance(filename, str):
             if os.path.isfile(filename):
-                with open(filename, 'r') as fp:
+                with mfm.io.zipped.open_maybe_zipped(filename, 'r') as fp:
                     j = json.load(fp)
         if isinstance(json_string, str):
             j = json.loads(json_string)

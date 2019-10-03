@@ -7,11 +7,39 @@ import numpy as np
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('min_bin', metavar='lower', type=float, default=0.0, help='The lower end of the bins')
-    parser.add_argument('max_bin', metavar='upper', type=float, default=100, help='The upper end of the bins')
-    parser.add_argument('n_bins', metavar='n_bins', type=int, default=101, help='The number of bins')
-    parser.add_argument('normalize', metavar='norm', type=bool, help='Normalize the histogram')
-    parser.add_argument('filename', metavar='file', type=str, help='The filename used to generate the histogram')
+    parser.add_argument(
+        'min_bin',
+        metavar='lower',
+        type=float,
+        default=0.0,
+        help='The lower end of the bins'
+    )
+    parser.add_argument(
+        'max_bin',
+        metavar='upper',
+        type=float,
+        default=100,
+        help='The upper end of the bins'
+    )
+    parser.add_argument(
+        'n_bins',
+        metavar='n_bins',
+        type=int,
+        default=101,
+        help='The number of bins'
+    )
+    parser.add_argument(
+        'normalize',
+        metavar='norm',
+        type=bool,
+        help='Normalize the histogram'
+    )
+    parser.add_argument(
+        'filename',
+        metavar='file',
+        type=str,
+        help='The filename used to generate the histogram'
+    )
 
     args = parser.parse_args()
     print("Make histogram")

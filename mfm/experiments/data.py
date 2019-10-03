@@ -220,7 +220,7 @@ class DataCurve(
                 **kwargs
             )
         else:
-            with open(filename, 'w') as fp:
+            with mfm.io.zipped.open_maybe_zipped(filename, 'w') as fp:
                 fp.write(self.to_json())
 
     def load(

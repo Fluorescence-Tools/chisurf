@@ -104,8 +104,14 @@ class DiffusionSimulation(object):
             quenching_parameter,
             diffusion_simulation_parameter,
             verbose: bool = None,
-            **kwargs
     ):
+        """
+
+        :param dye:
+        :param quenching_parameter:
+        :param diffusion_simulation_parameter:
+        :param verbose:
+        """
         if verbose is None:
             verbose = mfm.verbose
         self.verbose = verbose
@@ -317,7 +323,10 @@ class Dye(ParameterGroup):
         return self._simulation_grid_resolution.value
 
     @simulation_grid_resolution.setter
-    def simulation_grid_resolution(self, v):
+    def simulation_grid_resolution(
+            self,
+            v: float
+    ):
         self._simulation_grid_resolution.value = v
 
     @property
@@ -325,7 +334,10 @@ class Dye(ParameterGroup):
         return self._tau0.value
 
     @tau0.setter
-    def tau0(self, v):
+    def tau0(
+            self,
+            v: float
+    ):
         self._tau0.value = v
 
     @property

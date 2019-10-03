@@ -203,7 +203,10 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
     def onSaveStructureTable(self):
         print("onSaveStructureTable")
         filename = str(QtWidgets.QFileDialog.getSaveFileName(self, 'Save structure table', '.txt'))[0]
-        with open(filename, 'w') as fp:
+        with mfm.io.zipped.open_maybe_zipped(
+                filename=filename,
+                mode='w'
+        ) as fp:
             s = "SN\tchi2\trmsd\tcl\tfilename\n"
             fp.write(s)
             for r in range(self.tableWidget.rowCount()):
@@ -376,7 +379,7 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
     def onSaveClusterTable(self):
         print("onSaveClusterTable")
         filename = str(QtWidgets.QFileDialog.getSaveFileName(self, 'Save cluster table', '.txt'))[0]
-        with open(filename, 'w') as fp:
+        with mfm.io.zipped.open_maybe_zipped(filename, 'w') as fp:
             s = "Cl\tsize\tSN\tchi2Rep\trmsd\tchi2M\tchi2SD\tfilename\n"
             fp.write(s)
             clKeys = list(self.clClusters.keys())
@@ -409,7 +412,7 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
 
         if os.path.isfile(filename):
             self.onClearStructures()
-            with open(filename, 'r') as fp:
+            with mfm.io.zipped.open_maybe_zipped(filename, 'r') as fp:
                 filenames = []
                 lines = fp.readlines()
                 for r, l in enumerate(lines[1:]):

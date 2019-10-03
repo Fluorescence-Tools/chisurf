@@ -12,6 +12,42 @@ import mfm.fluorescence
 
 class Tests(unittest.TestCase):
 
+    def test_s2delta(self):
+        r0 = 0.38
+        s2donor = 0.3
+        s2acceptor = 0.3
+        r_inf_AD = 0.05
+        v = mfm.fluorescence.anisotropy.kappa2.s2delta(
+            r_0=r0,
+            s2donor=s2donor,
+            s2acceptor=s2acceptor,
+            r_inf_AD=r_inf_AD)
+        self.assertAlmostEqual(
+            v,
+            1.4619883040935675
+        )
+
+    def test_p_isotropic_orientation_factor(self):
+        k2 = np.linspace(0.1, 4, 32)
+        p_k2 = mfm.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(
+            k2=k2
+        )
+        p_k2_ref = np.array(
+            [0.17922824, 0.11927194, 0.09558154, 0.08202693, 0.07297372,
+               0.06637936, 0.06130055, 0.05723353, 0.04075886, 0.03302977,
+               0.0276794, 0.02359627, 0.02032998, 0.01763876, 0.01537433,
+               0.01343829, 0.01176177, 0.01029467, 0.00899941, 0.00784718,
+               0.00681541, 0.00588615, 0.00504489, 0.0042798, 0.0035811,
+               0.00294063, 0.00235153, 0.001808, 0.00130506, 0.00083845,
+               0.0004045, 0.]
+        )
+        self.assertEqual(
+            np.allclose(
+                p_k2_ref, p_k2
+            ),
+            True
+        )
+
     def test_kappa(self):
         distance_reference, kappa_reference = 0.8660254037844386, 1.0000000000000002
         donor_dipole = np.array(

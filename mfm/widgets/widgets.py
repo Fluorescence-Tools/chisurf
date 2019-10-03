@@ -40,7 +40,10 @@ class QIPythonWidget(
                 "Python macros",
                 file_type="Python file (*.py)"
             )
-        with open(filename, mode='r') as fp:
+        with mfm.io.zipped.open_maybe_zipped(
+                filename=filename,
+                mode='r'
+        ) as fp:
             text = fp.read()
             self.execute(text, hidden=False)
 
@@ -54,7 +57,10 @@ class QIPythonWidget(
                 "Python macros",
                 file_type="Python file (*.py)"
             )
-        with open(filename, mode='w') as fp:
+        with mfm.io.zipped.open_maybe_zipped(
+                filename=filename,
+                mode='w'
+        ) as fp:
             fp.write(self._macro)
 
     def execute(

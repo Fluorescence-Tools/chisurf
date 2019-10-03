@@ -22,7 +22,10 @@ def write_xyz(
     if verbose:
         print("write_xyz\n")
         print("Filename: %s\n" % filename)
-    with open(filename, 'w') as fp:
+    with mfm.io.zipped.open_maybe_zipped(
+            filename=filename,
+            mode='w'
+    ) as fp:
         npoints = len(points)
         fp.write('%i\n' % npoints)
         fp.write('Name\n')
