@@ -65,9 +65,17 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         for p in self.universe.potentials:
             s += '%s\t' % p.name
         s += '\n'
-        open(energy_file, 'w').write(s)
+        mfm.io.zipped.open_maybe_zipped(
+            filename=energy_file,
+            mode='w'
+        ).write(s)
 
-        self.structure = TrajectoryFile(mdtraj.load_frame(self.trajectory_file, 0), make_coarse=True)[0]
+        self.structure = TrajectoryFile(
+            mdtraj.load_frame(
+                self.trajectory_file, 0
+            ),
+            make_coarse=True
+        )[0]
         i = 0
         for chunk in mdtraj.iterload(self.trajectory_file):
             for frame in chunk:

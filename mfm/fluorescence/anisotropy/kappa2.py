@@ -19,10 +19,10 @@ def kappasqAllDelta(
     """
 
     :param delta:
-    :param sD2:
-    :param sA2:
+    :param sD2: structure factor S2 of the donor
+    :param sA2: structure factor S2 of the acceptor
     :param step: step-size in degree
-    :param n_bins:
+    :param n_bins: number of bins
     :return:
     """
     #beta angles
@@ -35,7 +35,8 @@ def kappasqAllDelta(
     # kappa-square values for allowed betas
     k2 = np.zeros((n, m))
     k2hist = np.zeros(n_bins - 1)
-    k2scale = np.linspace(0, 4, n_bins) # histogram bin edges
+    # histogram bin edges
+    k2scale = np.linspace(0, 4, n_bins)
 
     for i in range(n):
         d1 = np.array([np.cos(beta1[i]),  0, np.sin(beta1[i])])
@@ -210,9 +211,22 @@ def s2delta(
     :param s2acceptor: np.sqrt(self.r_Ainf/self.r_0)
     :param r_inf_AD:
 
-    Accurate Distance Determination of Nucleic Acids via Foerster Resonance Energy Transfer:
-    Implications of Dye Linker Length and Rigidity
+    Accurate Distance Determination of Nucleic Acids via Foerster Resonance
+    Energy Transfer: Implications of Dye Linker Length and Rigidity
+
     http://pubs.acs.org/doi/full/10.1021/ja105725e
+
+    Example
+    -------
+
+    >>> import numpy as np
+    >>> r0 = 0.38
+    >>> s2donor = 0.3
+    >>> s2acceptor = 0.3
+    >>> r_inf_AD = 0.05
+    >>> s2delta(r_0=r0, s2donor=s2donor, s2acceptor=s2acceptor, r_inf_AD=r_inf_AD)
+    1.4619883040935675
+
     """
     delta = r_inf_AD/(r_0*s2donor*s2acceptor)
     return delta
@@ -225,8 +239,8 @@ def calculate_kappa_distance(
         aia1: int,
         aia2: int
 ):
-    """Calculates the orientation factor kappa2 and the distance of a trajectory given the atom-indices of the
-    donor and the acceptor.
+    """Calculates the orientation factor kappa2 and the distance of a
+    trajectory given the atom-indices of the donor and the acceptor.
 
     :param xyz: numpy-array (frame, atom, xyz)
     :param aid1: int, atom-index of d-dipole 1
@@ -287,14 +301,34 @@ def kappasq(
     return k2
 
 
-def p_isotropic_orientation_factor(k2, normalize=True):
+def p_isotropic_orientation_factor(
+        k2,
+        normalize: bool = True
+):
     """Calculates an the probability of a given kappa2 according to
     an isotropic orientation factor distribution
     http://www.fretresearch.org/kappasquaredchapter.pdf
 
     :param k2: kappa squared
-    :param normalize: if True (
-    :return:
+    :param normalize: if True the calculated distribution is normalized to
+    unity
+
+    Example
+    -------
+
+    >>> import mfm.fluorescence
+    >>> k2 = np.linspace(0.1, 4, 32)
+    >>> p_k2 = mfm.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(k2=k2)
+    >>> p_k2
+    np.array(
+            [0.17922824, 0.11927194, 0.09558154, 0.08202693, 0.07297372,
+               0.06637936, 0.06130055, 0.05723353, 0.04075886, 0.03302977,
+               0.0276794, 0.02359627, 0.02032998, 0.01763876, 0.01537433,
+               0.01343829, 0.01176177, 0.01029467, 0.00899941, 0.00784718,
+               0.00681541, 0.00588615, 0.00504489, 0.0042798, 0.0035811,
+               0.00294063, 0.00235153, 0.001808, 0.00130506, 0.00083845,
+               0.0004045, 0.]
+        )
     """
     ks = np.sqrt(k2)
     s3 = np.sqrt(3.)

@@ -29,7 +29,10 @@ def save_xy(
     """
     if verbose:
         print("Writing histogram to file: %s" % filename)
-    with open(filename, 'w') as fp:
+    with mfm.io.zipped.open_maybe_zipped(
+            filename=filename,
+            mode='w'
+    ) as fp:
         if header_string is not None:
             fp.write(header_string)
         for p in zip(x, y):
@@ -204,7 +207,10 @@ class Csv(object):
         # process header
         header = 'infer' if use_header else None
         if use_header:
-            with open(file=filename, mode='r') as fp:
+            with mfm.io.zipped.open_maybe_zipped(
+                    filename=filename,
+                    mode='r'
+            ) as fp:
                 for _ in range(skiprows):
                     fp.readline()
                 header_line = fp.readline()
@@ -219,12 +225,18 @@ class Csv(object):
                 print("Reading: {}".format(filename))
                 print("Skip rows: {}".format(skiprows))
                 print("Use header: {}".format(use_header))
-                with open(filename, 'r') as csvfile:
+                with mfm.io.zipped.open_maybe_zipped(
+                        filename=filename,
+                        mode='r'
+                ) as csvfile:
                     print(csvfile.read()[:512])
 
             if file_type == 'csv':
                 if delimiter is None:
-                    with open(filename, 'r') as csvfile:
+                    with mfm.io.zipped.open_maybe_zipped(
+                            filename=filename,
+                            mode='r'
+                    ) as csvfile:
                         for _ in range(skiprows):
                             csvfile.readline()
                         dialect = csv.Sniffer().sniff(

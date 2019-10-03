@@ -5,16 +5,16 @@ import json
 import os
 import numpy as np
 
-import mfm.io.dx
-from . import dynamic
 import mfm
 import mfm.base
+import mfm.io.density
+
+from . import dynamic
 from . import static
-from mfm.fluorescence.fps import functions
-from mfm.structure.structure import Structure
 from . import functions
-from .functions import assign_diffusion_to_grid_1, assign_diffusion_to_grid_2, \
-    get_kQ_rC, create_quenching_map, assign_diffusion_to_grid_3
+from mfm.structure.structure import Structure
+#from .functions import assign_diffusion_to_grid_1, assign_diffusion_to_grid_2, \
+#    get_kQ_rC, create_quenching_map, assign_diffusion_to_grid_3
 from .static import calculate_1_radius, calculate_3_radius
 
 package_directory = os.path.dirname(__file__)
@@ -33,38 +33,52 @@ class BasicAV(object):
     Examples
     --------
 
-    >>> import mfm
-    >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
+    >>> import mfm.structure
+    >>> import mfm.fluorescence
+    >>> structure = mfm.structure.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
     >>> av = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
 
     """
 
-    def __init__(self, structure, *args, **kwargs):
+    def __init__(
+            self,
+            structure: mfm.structure.structure.Structure,
+            simulation_grid_resolution: float = None,
+            allowed_sphere_radius: float = None,
+            radius1: float = 1.5,
+            radius2: float = 4.5,
+            radius3: float = 3.5,
+            linker_width: float = 1.5,
+            linker_length: float = 20.5,
+            simulation_type: str = "AV1",
+            chain_identifier: str = None,
+            residue_name: str = None,
+            residue_seq_number: int = None,
+            atom_name: str = None,
+            position_name: str = None,
+            *args,
+            **kwargs
+    ):
         super(BasicAV, self).__init__(*args, **kwargs)
+        if simulation_grid_resolution is None:
+            simulation_grid_resolution = mfm.settings['fps']['simulation_grid_resolution']
+        self.dg = simulation_grid_resolution
+        if allowed_sphere_radius is None:
+            allowed_sphere_radius = mfm.settings['fps']['allowed_sphere_radius']
+        self.allowed_sphere_radius = allowed_sphere_radius
 
-        self.dg = kwargs.get('simulation_grid_resolution',
-                             mfm.settings['fps']['simulation_grid_resolution'])
-        self.allowed_sphere_radius = kwargs.get('allowed_sphere_radius',
-                                                mfm.settings['fps'][
-                                                    'allowed_sphere_radius'])
-        self.position_name = kwargs.get('position_name', None)
-        self.residue_name = kwargs.get('residue_name', None)
-        self.attachment_residue = kwargs.get('residue_seq_number', None)
-        self.attachment_atom = kwargs.get('atom_name', None)
+        self.position_name = position_name
+        self.residue_name = residue_name
+        self.attachment_residue = residue_seq_number
+        self.attachment_atom = atom_name
 
-        chain_identifier = kwargs.get('chain_identifier', None)
-        self.radius1 = kwargs.get('radius1', 1.5)
-        self.radius2 = kwargs.get('radius2', 4.5)
-        self.radius3 = kwargs.get('radius3', 3.5)
-        self.linker_width = kwargs.get('linker_width', 1.5)
-
-        self.linker_length = kwargs.get('linker_length', 20.5)
-        self.simulation_type = kwargs.get('simulation_type', 'AV1')
-
-        if isinstance(structure, Structure):
-            self.structure = structure
-        elif isinstance(structure, str):
-            self.structure = Structure(structure, **kwargs)
+        self.radius1 = radius1
+        self.radius2 = radius2
+        self.radius3 = radius3
+        self.linker_width = linker_width
+        self.linker_length = linker_length
+        self.simulation_type = simulation_type
+        self.structure = structure
 
         attachment_atom_index = kwargs.get(
             'attachment_atom_index',
@@ -83,23 +97,27 @@ class BasicAV(object):
         vdw = self.atoms['radius']
 
         if self.simulation_type == 'AV3':
-            density, ng, x0 = calculate_3_radius(self.linker_length,
-                                                 self.linker_width,
-                                                 self.radius1,
-                                                 self.radius2,
-                                                 self.radius3,
-                                                 attachment_atom_index,
-                                                 x, y, z, vdw,
-                                                 linkersphere=self.allowed_sphere_radius,
-                                                 dg=self.dg, **kwargs)
+            density, ng, x0 = calculate_3_radius(
+                self.linker_length,
+                self.linker_width,
+                self.radius1,
+                self.radius2,
+                self.radius3,
+                attachment_atom_index,
+                x, y, z, vdw,
+                linkersphere=self.allowed_sphere_radius,
+                dg=self.dg, **kwargs
+            )
         else:
-            density, ng, x0 = calculate_1_radius(self.linker_length,
-                                                 self.linker_width,
-                                                 self.radius1,
-                                                 attachment_atom_index,
-                                                 x, y, z, vdw,
-                                                 linkersphere=self.allowed_sphere_radius,
-                                                 dg=self.dg, **kwargs)
+            density, ng, x0 = calculate_1_radius(
+                self.linker_length,
+                self.linker_width,
+                self.radius1,
+                attachment_atom_index,
+                x, y, z, vdw,
+                linkersphere=self.allowed_sphere_radius,
+                dg=self.dg, **kwargs
+            )
 
         self.x0 = x0
         self._bounds = density.astype(dtype=np.uint8)
@@ -126,10 +144,10 @@ class BasicAV(object):
         return self._points
 
     @property
-    def atoms(self):
+    def atoms(self) -> np.ndarray:
         return self.structure.atoms
 
-    def update_points(self):
+    def update_points(self) -> None:
         ng = self.ng
         density = self.density
         x0, dg = self.x0, self.dg
@@ -163,12 +181,12 @@ class BasicAV(object):
             ng = self.ng
             dg = self.dg
             offset = (ng - 1) / 2 * dg
-            mfm.io.dx.write_open_dx(filename,
-                                    d,
-                                    self.x0 - offset,
-                                    ng, ng, ng,
-                                    dg, dg, dg
-                                    )
+            mfm.io.density.write_open_dx(filename,
+                                         d,
+                                         self.x0 - offset,
+                                         ng, ng, ng,
+                                         dg, dg, dg
+                                         )
         else:
             p = kwargs.get('points', self.points)
             d = p[:, [3]].flatten()
@@ -226,7 +244,7 @@ class BasicAV(object):
 
     def widthRDA(
             self,
-            av: Type[BasicAV],
+            av: BasicAV,
     ):
         """Calculates the width of a DA-distance distribution
 
@@ -525,17 +543,21 @@ class DynamicAV(BasicAV):
             s1, s2, s3 = 0.47, 11.8, 1.54
             b = -11.0
             y = a1 * np.exp(-.5 * ((x - m1) / s1) ** 2) / (
-                        s1 * (2 * np.pi) ** .5) + \
-                a2 * np.exp(-.5 * ((x - m2) / s2) ** 2) / (
-                            s2 * (2 * np.pi) ** .5) + \
-                a3 * np.exp(-.5 * ((x - m3) / s3) ** 2) / (
-                            s3 * (2 * np.pi) ** .5) + \
-                b
+                        s1 * (2 * np.pi) ** .5
+            ) + a2 * np.exp(-.5 * ((x - m2) / s2) ** 2) / (
+                            s2 * (2 * np.pi) ** .5
+            ) + a3 * np.exp(-.5 * ((x - m3) / s3) ** 2) / (
+                            s3 * (2 * np.pi) ** .5
+            ) + b
             return np.maximum(y, 0)
 
-        d_map = assign_diffusion_to_grid_3(density, r0, dg, f)
-        d_map = assign_diffusion_to_grid_1(d_map, density, r0, dg, coordinates,
-                                           ds_sq, slow_factor)
+        d_map = functions.assign_diffusion_to_grid_3(
+            density, r0, dg, f
+        )
+        d_map = functions.assign_diffusion_to_grid_1(
+            d_map, density, r0, dg, coordinates,
+            ds_sq, slow_factor
+        )
         # d_map = assign_diffusion_to_grid_2(density, r0, dg, diffusion_coefficient, coordinates, stick_distance, slow_factor)
         self._diffusion_coefficient_map = d_map
 
@@ -543,8 +565,9 @@ class DynamicAV(BasicAV):
         """ Updates the equilibrium probabilities of the dye
         Example
         -------
-        >>> import mfm
-        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> import mfm.structure
+        >>> import mfm.fluorescence
+        >>> structure = mfm.structure.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> free_diffusion = 8.0
         >>> av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name='CB', slow_factor=0.985, contact_distance=3.5, diffusion_coefficients=free_diffusion, simulation_grid_resolution=2.0)
         >>> p.imshow(av.diffusion_map[:,:,20])
@@ -581,8 +604,9 @@ class DynamicAV(BasicAV):
         Example
         -------
 
-        >>> import mfm
-        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> import mfm.structure
+        >>> import mfm.fluorescence
+        >>> structure = mfm.structure.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=18, atom_name='CB')
         >>> p.imshow(av.quenching_rate_map[:,:,20])
         >>> p.show()
@@ -596,12 +620,14 @@ class DynamicAV(BasicAV):
         density = av.density
 
         quencher = self.quencher = kwargs.get('quencher', self.quencher)
-        kQ, rC = get_kQ_rC(atoms, quencher=quencher)
+        kQ, rC = functions.get_kQ_rC(
+            atoms, quencher=quencher
+        )
         tau0 = self.fluorescence_lifetime
         dye_radius = min(self.radius1, self.radius2, self.radius3)
         # self._quenching_rate_map = create_quenching_map(density, r0, dg, atoms['xyz'], tau0, kQ, rC, dye_radius)
         v = np.ones_like(rC) * self.rC_electron_transfer
-        self._quenching_rate_map = create_quenching_map(
+        self._quenching_rate_map = functions.create_quenching_map(
             density, r0, dg,
             atoms['xyz'], tau0, kQ,
             v, dye_radius
@@ -618,8 +644,9 @@ class DynamicAV(BasicAV):
         Example
         -------
 
-        >>> import mfm
-        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> import mfm.structure
+        >>> import mfm.fluorescence
+        >>> structure = mfm.structure.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> av_d = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=18, atom_name='CB')
         >>> av_a = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av_d.update_fret_map(av_a)
@@ -670,8 +697,10 @@ class DynamicAV(BasicAV):
 
         Example
         -------
-        >>> import mfm
-        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> import mfm.structure
+        >>> import mfm.fluorescence
+        >>> import mfm.curve
+        >>> structure = mfm.structure.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> p.imshow(av.density[:,:,20])
         >>> p.show()

@@ -147,7 +147,10 @@ class ParseFormula(FittingParameterGroup):
             self._parameters.append(p)
 
     def load_model_file(self, filename):
-        with open(filename, 'r') as fp:
+        with mfm.io.zipped.open_maybe_zipped(
+                filename=filename,
+                mode='r'
+        ) as fp:
             self._model_file = filename
             self.models = yaml.safe_load(fp)
 
