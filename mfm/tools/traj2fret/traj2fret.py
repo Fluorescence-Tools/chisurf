@@ -264,7 +264,10 @@ class CalculateTransfer(object):
             print("-------------------------")
 
         # Write header
-        open(output_file, 'w').write(b'Frame\ttime[ns]\tRDA[Ang]\tkappa\tkappa2\tFRETrate[1/ns]\n')
+        mfm.io.zipped.open_maybe_zipped(
+            filename=output_file,
+            mode='w'
+        ).write(b'Frame\ttime[ns]\tRDA[Ang]\tkappa\tkappa2\tFRETrate[1/ns]\n')
         n = 0
         try:
             for chunk in md.iterload(trajectory_file, stride=self.stride, chunk=chunk):

@@ -476,7 +476,7 @@ def spc2hdf(
 
     >>> import mfm
     >>> import glob
-    >>> directory = "./sample_data/tttr/spc132/hGBP1_18D"
+    >>> directory = "./test/data/tttr/spc132/hGBP1_18D"
     >>> spc_files = glob.glob(directory+'/*.spc')
     >>> h5 = mfm.io.photons.spc2hdf(spc_files, filename='test.h5', title='hGBP1_18D')
 
@@ -576,7 +576,7 @@ def read_header(
     Reading Seidel-BID files
 
     >>> import glob, mfm
-    >>> directory = "./sample_data/tttr/spc132/hGBP1_18D"
+    >>> directory = "./test/data/tttr/spc132/hGBP1_18D"
     >>> spc_files = glob.glob(directory+'/*.spc')
     >>> b = np.fromfile(spc_files[0], dtype=np.uint8)
     >>> header = mfm.io.photons.read_header(b, 'bh132')

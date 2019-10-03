@@ -496,7 +496,7 @@ class CEPotential(object):
     >>> import mfm.structure
     >>> import mfm.structure.potential
 
-    >>> s = mfm..structure.structure.Structure('./sample_data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
+    >>> s = mfm..structure.structure.Structure('./test/data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
     >>> pce = mfm.structure.potential.potentials.CEPotential(s, ca_cutoff=64.0)
     >>> pce.getEnergy()
     -0.15896629131635745
@@ -627,7 +627,7 @@ class ClashPotential(object):
         >>> import mfm.structure
         >>> import mfm.structure.potential
 
-        >>> s = mfm.structure.structure.Structure('./sample_data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
+        >>> s = mfm.structure.structure.Structure('./test/data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
         >>> pce = mfm.structure.potential.potentials.ClashPotential(structure=s, clash_tolerance=6.0)
         >>> pce.getEnergy()
 
@@ -656,13 +656,13 @@ class AvPotential(object):
     --------
 
     >>> import json
-    >>> labeling_file = './sample_data/model/labeling.json'
+    >>> labeling_file = './test/data/model/labeling.json'
     >>> labeling = json.load(open(labeling_file, 'r'))
     >>> distances = labeling['Distances']
     >>> positions = labeling['Positions']
     >>> import mfm
     >>> av_potential = mfm.structure.potential.potentials.AvPotential(distances=distances, positions=positions)
-    >>> structure = mfm.structure.structure.Structure('/sample_data/model/HM_1FN5_Naming.pdb')
+    >>> structure = mfm.structure.structure.Structure('./test/data/model/HM_1FN5_Naming.pdb')
     >>> av_potential.getChi2(structure)
 
     """

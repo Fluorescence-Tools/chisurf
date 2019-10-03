@@ -9,10 +9,13 @@ import zipfile
 from mdtraj.utils.six import PY2, StringIO
 
 
-def open_maybe_zipped(filename, mode, force_overwrite=True):
-    # TODO: make it work with numpy and gzip files
+def open_maybe_zipped(
+        filename: str,
+        mode: str,
+        force_overwrite: bool = True
+):
     """Open a file in name (not binary) file_type, transparently handling
-    .gz or .bz2 compresssion, with utf-8 encoding.
+    .gz or .bz2 compression, with utf-8 encoding.
 
     Parameters
     ----------
@@ -34,16 +37,13 @@ def open_maybe_zipped(filename, mode, force_overwrite=True):
     if mode == 'r':
         if extension == '.gz':
             with gzip.GzipFile(filename, 'r') as gz_f:
-                #return StringIO(gz_f.read().decode('utf-8'))
-                return gz_f
+                return StringIO(gz_f.read().decode('utf-8'))
         elif extension == '.bz2':
             with bz2.BZ2File(filename, 'r') as bz2_f:
                 return StringIO(bz2_f.read().decode('utf-8'))
-                #return bz2_f
         elif extension == '.zip':
             with zipfile.ZipFile(filename, 'r') as zip_f:
                 return StringIO(zip_f.read().decode('utf-8'))
-                #return zip_f
         else:
             return open(filename, 'r')
     elif mode == 'w':

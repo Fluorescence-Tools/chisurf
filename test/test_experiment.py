@@ -30,7 +30,9 @@ class Tests(unittest.TestCase):
             True
         )
         experiment.add_model_classes(
-            [mfm.models.model.Model]
+            [
+                mfm.models.model.Model
+            ]
         )
 
         # Models are unique
@@ -55,7 +57,9 @@ class Tests(unittest.TestCase):
         )
 
         experiment.add_readers(
-            [experiment_reader]
+            [
+                (experiment_reader, None)
+            ]
         )
 
         self.assertListEqual(
@@ -130,9 +134,21 @@ class Tests(unittest.TestCase):
         )
         ec.call('read')
 
-    def test_CsvTCSPC(self):
-        g1 = mfm.experiments.tcspc.tcspc.CsvTCSPC()
-        g2 = mfm.experiments.tcspc.tcspc.CsvTCSPC()
+    def test_TCSPCReader(self):
+        filename = "./data/tcspc/ibh_sample/Decay_577D.txt"
+        ex = mfm.experiments.experiment.Experiment(
+            'TCSPC'
+        )
+        dt = 0.0141
+        g1 = mfm.experiments.tcspc.TCSPCReader(
+            experiment=ex,
+            skiprows=8,
+            rebin=(1, 8),
+            dt=dt
+        )
+        g2 = mfm.experiments.tcspc.TCSPCReader(
+            experiment=ex
+        )
         g2.from_dict(
             g1.to_dict()
         )
@@ -141,6 +157,23 @@ class Tests(unittest.TestCase):
             g2.to_dict()
         )
 
+        # Test binning
+        d1 = g1.read(
+            filename=filename,
+        )
+        self.assertEqual(
+            len(d1.x),
+            512
+        )
+
+        g1.rebin = (1, 1)
+        d2 = g1.read(
+            filename=filename
+        )
+        self.assertEqual(
+            len(d2.x),
+            4096
+        )
 
     def test_DataCurve(self):
         x = np.linspace(0, np.pi * 2.0)

@@ -207,7 +207,12 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
         fn = os.path.join(mfm.package_directory, './settings/sample.json')
         dye_diffusion_settings_file = kwargs.get('dye_diffusion_settings_file', fn)
         self.verbose = kwargs.get('verbose', mfm.verbose)
-        settings = json.load(open(dye_diffusion_settings_file))
+        settings = json.load(
+            mfm.io.zipped.open_maybe_zipped(
+                filename=dye_diffusion_settings_file,
+                mode='r'
+            )
+        )
 
         super().__init__(*args, **settings)
 

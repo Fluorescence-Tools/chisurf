@@ -198,7 +198,10 @@ class Tests(unittest.TestCase):
         file = tempfile.NamedTemporaryFile(
             suffix='.pdb'
         )
-        with open(file=file.name, mode='w') as fp:
+        with mfm.io.zipped.open_maybe_zipped(
+                filename=file.name,
+                mode='w'
+        ) as fp:
             fp.write(
                 mfm.io.pdb.fetch_pdb_string(pdb_id)
             )

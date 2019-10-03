@@ -107,7 +107,6 @@ tcspc_csv:
   rebin: [1, 1]
   skiprows: 11
   use_header: true
-  name: CSV/PQ/IBH
 tcspc:
   shift_bg_with_irf: true
   default_convolution_mode: per

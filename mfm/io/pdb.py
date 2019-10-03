@@ -96,7 +96,8 @@ def assign_element_to_atom_name(
         # isdigit() check on last two characters to avoid mis-assignment of
         # hydrogens atoms (GLN HE21 for example)
         # Hs may have digit in [0]
-        putative_element = atom_name[1] if atom_name[0].isdigit() else atom_name[0]
+        putative_element = atom_name[1] if atom_name[0].isdigit() else \
+            atom_name[0]
         if putative_element.capitalize() in common.atom_weights.keys():
             element = putative_element
     return element
@@ -142,8 +143,11 @@ def parse_string_pdb(
             try:
                 if assign_charge:
                     if atoms['res_name'][ni] in common.CHARGE_DICT:
-                        if atoms['atom_name'][ni] == common.TITR_ATOM_COARSE[atoms['res_name'][ni]]:
-                            atoms['charge'][ni] = common.CHARGE_DICT[atoms['res_name'][ni]]
+                        if atoms['atom_name'][ni] == common.TITR_ATOM_COARSE[
+                            atoms['res_name'][ni]]:
+                            atoms['charge'][ni] = common.CHARGE_DICT[
+                                atoms['res_name'][ni]
+                            ]
                 atoms['mass'][ni] = common.atom_weights[atoms['element'][ni]]
                 atoms['radius'][ni] = common.VDW_DICT[atoms['element'][ni]]
             except KeyError:
@@ -184,16 +188,21 @@ def read(
     '), ('element', 'S1'), ('xyz', '<f8', (3,)), ('charge', '<f8'), ('radius', '<f8'), ('bfactor', '<f8'), ('mass', '<f8')
     ])
     """
-    with open(filename, 'r') as f:
+    with mfm.io.zipped.open_maybe_zipped(
+            filename=filename,
+            mode='r'
+    ) as f:
         string = f.read()
         if verbose:
             path, baseName = os.path.split(filename)
             print("======================================")
             print("Filename: %s" % filename)
             print("Path: %s" % path)
-        if filename.endswith('.pdb'):
+        fn1, ext1 = os.path.splitext(filename)
+        _, ext2 = os.path.splitext(fn1)
+        if '.pdb' in [ext1, ext2]:
             atoms = parse_string_pdb(string, assign_charge, **kwargs)
-        else: #elif filename.endswith('.pqr'):
+        else:  # elif filename.endswith('.pqr'):
             atoms = parse_string_pqr(string, **kwargs)
         return atoms
 
@@ -219,15 +228,22 @@ def write_pdb(
         If True the coordinates are appended to the file
 
     """
-    mode = 'a+' if append_model or append_coordinates else 'w+'
+    mode = 'a+' if append_model or append_coordinates else 'w'
     if verbose:
         print("Writing to file: ", filename)
-    with open(filename, mode) as fp:
+    with mfm.io.zipped.open_maybe_zipped(
+            filename=filename,
+            mode=mode
+    ) as fp:
         # http://cupnet.net/pdb_format/
         al = [
             "%-6s%5d %4s%1s%3s %1s%4d%1s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s%2s\n" %
-            ("ATOM ", at['atom_id'], at['atom_name'], " ", at['res_name'], at['chain'], at['res_id'], " ",
-             at['xyz'][0], at['xyz'][1], at['xyz'][2], 0.0, at['bfactor'], at['element'], "  ")
+            (
+                "ATOM ", at['atom_id'], at['atom_name'], " ", at['res_name'],
+                at['chain'], at['res_id'], " ",
+                at['xyz'][0], at['xyz'][1], at['xyz'][2], 0.0, at['bfactor'],
+                at['element'], "  "
+            )
             for at in atoms
         ]
         if append_model:
@@ -284,7 +300,9 @@ def get_atom_index(
     """
     # Determine Labeling position
     if residue_seq_number is None or atom_name is None:
-        raise ValueError("Either attachment_atom number or residue and atom_name have to be provided.")
+        raise ValueError(
+            "Either attachment_atom number or residue and atom_name have to be provided."
+        )
     verbose = kwargs.get('verbose', mfm.verbose)
     ignore_multiple_selections = kwargs.get('ignore_multiple_selections', True)
     if verbose:
@@ -295,12 +313,16 @@ def get_atom_index(
         print("Atom name: %s" % atom_name)
 
     if chain_identifier is None or chain_identifier == '':
-        attachment_atom_index = np.where((atoms['res_id'] == residue_seq_number) &
-                                         (atoms['atom_name'] == atom_name))[0]
+        attachment_atom_index = np.where(
+            (atoms['res_id'] == residue_seq_number) &
+            (atoms['atom_name'] == atom_name)
+        )[0]
     else:
-        attachment_atom_index = np.where((atoms['res_id'] == residue_seq_number) &
-                                         (atoms['atom_name'] == atom_name) &
-                                         (atoms['chain'] == chain_identifier))[0]
+        attachment_atom_index = np.where(
+            (atoms['res_id'] == residue_seq_number) &
+            (atoms['atom_name'] == atom_name) &
+            (atoms['chain'] == chain_identifier)
+        )[0]
     if len(attachment_atom_index) != 1 and not ignore_multiple_selections:
         print("Labeling position")
         print("Chain ID: %s" % chain_identifier)

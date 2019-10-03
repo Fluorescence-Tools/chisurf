@@ -14,6 +14,7 @@ from qtpy import QtCore, QtWidgets, uic, QtWebEngineWidgets
 from qtpy.QtCore import QFile, QFileInfo, QTextStream, QUrl
 
 import mfm
+import mfm.widgets
 from mfm.models.model import ModelWidget, ModelCurve
 from mfm.fitting.parameter import FittingParameter, FittingParameterGroup
 
@@ -146,7 +147,10 @@ class ParseFormula(FittingParameterGroup):
             self._parameters.append(p)
 
     def load_model_file(self, filename):
-        with open(filename, 'r') as fp:
+        with mfm.io.zipped.open_maybe_zipped(
+                filename=filename,
+                mode='r'
+        ) as fp:
             self._model_file = filename
             self.models = yaml.safe_load(fp)
 
@@ -310,14 +314,28 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
 
     def onUpdateFunc(self):
         function_str = str(self.plainTextEdit.toPlainText())
-        mfm.run("cs.current_fit.model.parse.func = '%s'" % function_str)
-        mfm.run("cs.current_fit.update()")
+        mfm.run(
+            "\n".join(
+                [
+                    "cs.current_fit.model.parse.func = '%s'" % function_str,
+                    "cs.current_fit.update()"
+                ]
+            )
+        )
         self.onUpdateEquation()
 
     def onModelChanged(self):
-        mfm.run("cs.current_fit.model.parse.model_name = '%s'" % self.model_name)
-        mfm.run("cs.current_fit.model.parse.func = '%s'" % self.models[self.model_name]['equation'])
-        mfm.run("cs.current_fit.update()")
+        mfm.run(
+            "\n".join(
+                [
+                    "cs.current_fit.model.parse.model_name = '%s'" %
+                    self.model_name,
+                    "cs.current_fit.model.parse.func = '%s'" %
+                    self.models[self.model_name]['equation'],
+                    "cs.current_fit.update()"
+                ]
+            )
+        )
         self.onUpdateEquation()
 
     def onLoadModelFile(
@@ -329,7 +347,9 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
                 'Open models-file',
                 'link file (*.yaml)'
             )
-        mfm.run("cs.current_fit.model.parse.load_model_file(%s)" % filename)
+        mfm.run(
+            "cs.current_fit.model.parse.load_model_file(%s)" % filename
+        )
 
 
 class ParseModelWidget(ParseModel, ModelWidget):

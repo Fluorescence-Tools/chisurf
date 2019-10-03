@@ -1,6 +1,7 @@
 # #
 # # import warnings
-# import functools
+import weakref
+
 # import os
 # from qtpy import uic
 #
@@ -41,52 +42,75 @@
 #     return new_func
 #
 #
-# def register(*args, **kwargs):
-#
-#     def class_rebuilder(cls):
-#
-#         #@wraps(cls)
-#         class RegisteredClass(cls):
-#
-#             _instances = kwargs.get('instances', set())
-#
-#             @classmethod
-#             def getinstances(cls):
-#                 """Returns all instances of the class as an generator
-#                 """
-#                 dead = set()
-#                 for ref in cls._instances:
-#                     obj = ref()
-#                     if obj is not None:
-#                         yield obj
-#                     else:
-#                         dead.add(ref)
-#                 cls._instances -= dead
-#
-#             def __init__(self, *args, **kwargs):
-#                 self._instances.add(weakref.ref(self))
-#                 #super(cls.mro()[1], self).__init__(*args, **kwargs)
-#                 #RegisteredClass.mro()[1].__init__(self, *args, **kwargs)
-#                 super(RegisteredClass, self).__init__(*args, **kwargs)
-#                 #super(cls, self).__init__(*args, **kwargs)
-#                 #cls.__init__(self, *args, **kwargs)
-#
-#             def __getattribute__(self, attr_name):
-#                 obj = super(RegisteredClass, self).__getattribute__(attr_name)
-#                 if hasattr(obj, '__call__') and attr_name == '_instances':
-#                     return self._instances
-#                 return obj
-#
-#             #def __repr__(self):
-#             #    return super(RegisteredClass, self).__repr__()
-#
-#         try:
-#             RegisteredClass.__doc__ = cls.__doc__
-#         except AttributeError:
-#             pass
-#         return RegisteredClass
-#
-#     return class_rebuilder
+
+
+def register(cls):
+    """Decorator to make a class a registered class.
+
+    Example usage::
+
+    @mfm.decorators.register
+    class A1():
+        pass
+
+    @mfm.decorators.register
+    class B():
+        pass
+
+    @mfm.decorators.register
+    class A2(A1):
+        pass
+
+    class A3(A1):
+        pass
+
+    a1_1 = A1()
+    a1_2 = A1()
+    a2_1 = A2()
+    a3_1 = A3()
+    b = B()
+
+    assert a1_2 in a1_1.get_instances()
+    assert a2_1 not in a1_1.get_instances()
+    assert a3_1 in a1_1.get_instances()
+    assert b not in a1_1.get_instances()
+
+    """
+
+    class RegisteredClass(cls):
+
+        _instances = set()
+
+        @classmethod
+        def get_instances(cls):
+            """Returns all instances of the class as an generator
+            """
+            dead = set()
+            for ref in cls._instances:
+                obj = ref()
+                if obj is not None:
+                    yield obj
+                else:
+                    dead.add(ref)
+            cls._instances -= dead
+
+        def __init__(
+                self,
+                *args,
+                **kwargs
+        ):
+            self._instances.add(
+                weakref.ref(self)
+            )
+            self.__class__.__name__ = cls.__name__
+            # for name, member in self.__class__.__dict__.items():
+            #     print(name)
+            #     print(member)
+            #     if not getattr(member, '__doc__'):
+            #         self.__class__.__doc__ = getattr(cls, name).__doc__
+            super().__init__(*args, **kwargs)
+
+    return RegisteredClass
 
 
 def set_module(module):

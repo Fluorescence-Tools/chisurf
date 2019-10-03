@@ -19,9 +19,6 @@ from IPython.lib import guisupport
 import mfm
 import mfm.curve
 
-os.environ['PYZMQ_BACKEND'] = 'cython'
-DEFAULT_INSTANCE_ARGS = ['qtconsole','--pylab=inline', '--colors=linux']
-
 
 class QIPythonWidget(
     RichJupyterWidget
@@ -43,7 +40,10 @@ class QIPythonWidget(
                 "Python macros",
                 file_type="Python file (*.py)"
             )
-        with open(filename, mode='r') as fp:
+        with mfm.io.zipped.open_maybe_zipped(
+                filename=filename,
+                mode='r'
+        ) as fp:
             text = fp.read()
             self.execute(text, hidden=False)
 
@@ -57,7 +57,10 @@ class QIPythonWidget(
                 "Python macros",
                 file_type="Python file (*.py)"
             )
-        with open(filename, mode='w') as fp:
+        with mfm.io.zipped.open_maybe_zipped(
+                filename=filename,
+                mode='w'
+        ) as fp:
             fp.write(self._macro)
 
     def execute(
@@ -66,6 +69,16 @@ class QIPythonWidget(
             hidden: bool = False,
             **kwargs
     ):
+        """
+
+        :param source: the source code that is executed via the command line
+        interface.
+        :param args:
+        :param hidden: if hidden is True the execution is neither recorded in
+        the session file nor displayed in the execution history widget
+        :param kwargs:
+        :return:
+        """
         if not hidden:
             try:
                 new_text = args[0] + '\n'
@@ -80,7 +93,11 @@ class QIPythonWidget(
                     self.history_widget.insertPlainText(new_text)
             except IndexError:
                 pass
-        RichJupyterWidget.execute(self, *args, **kwargs)
+        RichJupyterWidget.execute(
+            self,
+            *args,
+            **kwargs
+        )
 
     def execute_function(
             self,
@@ -364,9 +381,10 @@ def save_file(
         file_type: str = 'All files (*.*)',
         working_path: str = None
 ):
-    """Same as open see above a file within a working path. If no path is specified the last
-    path is used. After using this function the current working path of the
-    running program (ChiSurf) is updated according to the folder of the opened
+    """Same as open see above a file within a working path. If no path is
+    specified the last path is used. After using this function the current
+    working path of the running program (ChiSurf) is updated according to the
+    folder of the opened
     file.
 
     :param working_path:
@@ -393,11 +411,12 @@ def get_directory(
         get_files: bool = False,
         directory: str = None
 ):
-    """Opens a new window where you can choose a directory. The current working path
-    is updated to this directory.
+    """Opens a new window where you can choose a directory. The current
+    working path is updated to this directory.
 
-    It either returns the directory or the files within the directory (if get_files is True).
-    The returned files can be filtered for the filename ending using the kwarg filename_ending.
+    It either returns the directory or the files within the directory (if
+    get_files is True). The returned files can be filtered for the filename
+    ending using the kwarg filename_ending.
 
     :return: directory str
     """

@@ -330,8 +330,7 @@ def simulate_traj_points(np.ndarray[dtype=np.float32_t, ndim=3] av_d,
     >>> import mfm
 
     Now make a new structure
-    >>> pdb_filename = './sample_data/model/hgbp1/hGBP1_closed.pdb'
-    >>> structure = mfm.Structure(pdb_filename)
+    >>> pdb_filename = datdatatructure = mfm.Structure(pdb_filename)
 
     Calculate an accessible volume at an given attachment point
     >>> residue_number = 18

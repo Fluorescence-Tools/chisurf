@@ -19,7 +19,7 @@ Finally, the `LabeledStructure` is labeled by a donor and acceptor. This is acco
 which describe the Accessible volumes. These dictionaries are internally passed to
 :py:class:`mfm.fluorescence.fps.AV`.
 
->>> t = mfm.structure.TrajectoryFile('./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5', mode='r', stride=1)
+>>> t = mfm.structure.TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', mode='r', stride=1)
 >>> structure = mfm.structure.LabeledStructure(t[0])
 >>> donor_description = {'residue_seq_number': 338, 'atom_name': 'CB'}
 >>> acceptor_description = {'residue_seq_number': 564, 'atom_name': 'CB'}
