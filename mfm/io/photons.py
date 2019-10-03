@@ -118,13 +118,14 @@ class Photons(object):
     """
 
     :param p_object:
-        Is either a list of filenames or a single string containing the path to one file. If the first argument
-        is n
+        Is either a list of filenames or a single string containing the path to
+        one file. If the first argument is n
     :param file_type:
-        The file type of the files passed using the first argument (p_object) is specified using the
-        'file_type' parameter. This string is either 'hdf' or 'bh132', 'bh630_x48', 'ht3', 'iss'. If
-        the file type is not an hdf file the files are temporarily converted to hdf-files to guarantee
-        a consistent interface.
+        The file type of the files passed using the first argument (p_object)
+        is specified using the 'file_type' parameter. This string is either
+        'hdf' or 'bh132', 'bh630_x48', 'ht3', 'iss'. If the file type is not
+        an hdf file the files are temporarily converted to hdf-files to
+        guarantee a consistent interface.
     :param kwargs:
     :return:
 
@@ -132,9 +133,9 @@ class Photons(object):
     --------
 
     >>> import glob
-    >>> import mfm
-    >>> directory = "../test/data/tttr/spc132/smDNA"
-    >>> spc_files = glob.glob(directory+'/*.spc')
+    >>> import mfm.io
+    >>> directory = './test/data/tttr/BH/'
+    >>> spc_files = glob.glob(directory+'/BH_SPC132.spc')
     >>> photons = mfm.io.photons.Photons(spc_files, file_type="bh132")
     >>> print(photons)
     File-type: bh132
@@ -171,15 +172,28 @@ class Photons(object):
 
             if file_type == 'hdf':
                 try:
-                    self._h5 = tables.open_file(p_object[0], mode='r')
+                    self._h5 = tables.open_file(
+                        p_object[0], mode='r'
+                    )
                 except IOError:
                     tttr.make_hdf(**kwargs)
-            elif file_type == 'bh132':
-                self._tempfile = tempfile.mkstemp(".photons.h5")
-                self._h5 = tttr.spc2hdf(self._filenames, routine_name=file_type, filename=self._tempfile)
-            elif file_type == 'iss':
-                self._tempfile = tempfile.mkstemp(".photons.h5")
-                self._h5 = tttr.spc2hdf(self._filenames, routine_name=file_type, filename=self._tempfile)
+            else:
+                file = tempfile.NamedTemporaryFile(
+                    suffix=".photons.h5"
+                )
+                self._tempfile = file.name
+                if file_type == 'bh132':
+                    self._h5 = tttr.spc2hdf(
+                        self._filenames,
+                        routine_name=file_type,
+                        filename=self._tempfile
+                    )
+                elif file_type == 'iss':
+                    self._h5 = tttr.spc2hdf(
+                        self._filenames,
+                        routine_name=file_type,
+                        filename=self._tempfile
+                    )
         else:
             self._h5 = p_object
             self._filenames = []

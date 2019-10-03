@@ -5,9 +5,12 @@ import unittest
 TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
 
+import glob
 import numpy as np
 import mfm
+import mfm.io
 import mfm.fluorescence
+import mfm.fluorescence.fret
 
 
 class Tests(unittest.TestCase):
@@ -137,3 +140,55 @@ class Tests(unittest.TestCase):
             ),
             True
         )
+
+    def test_fcs(self):
+        directory = './data/tttr/BH/'
+        spc_files = glob.glob(directory + '/BH_SPC132.spc')
+        photons = mfm.io.photons.Photons(spc_files, file_type="bh132")
+        cr_filter = np.ones_like(photons.mt, dtype=np.float)
+        w1 = np.ones_like(photons.mt, dtype=np.float)
+        w2 = np.ones_like(photons.mt, dtype=np.float)
+        result = mfm.fluorescence.fcs.correlate.log_corr(
+            macro_times=photons.mt,
+            tac_channels=photons.tac,
+            rout=photons.rout,
+            cr_filter=cr_filter,
+            weights_1=w1,
+            weights_2=w2,
+            B=5,
+            nc=10,
+            fine=False,
+            number_of_tac_channels= 4096#photons.n_tac
+        )
+
+    def test_acceptor(self):
+        times = np.linspace(0, 50, 1024)
+        tau_da = 3.5
+        decay_da = np.exp(-times / tau_da)
+        acceptor_lifetime_spectrum = np.array([0.1, 0.5, 0.9, 2.0])
+
+        transfer_efficiency = 0.3
+        decay_ad = mfm.fluorescence.fret.acceptor.da_a0_to_ad(
+            times=times,
+            decay_da=decay_da,
+            acceptor_lifetime_spectrum=acceptor_lifetime_spectrum,
+            transfer_efficiency=transfer_efficiency
+        )
+        eff = decay_ad.sum() / (decay_ad.sum() + decay_da.sum())
+
+        self.assertAlmostEqual(
+            eff,
+            transfer_efficiency
+        )
+
+        for target_value in np.linspace(0.1, 0.9):
+            scaled_acceptor = mfm.fluorescence.fret.acceptor.scale_acceptor(
+                donor=decay_da,
+                acceptor=decay_ad,
+                transfer_efficiency=target_value
+            )
+            eff = sum(scaled_acceptor) / (sum(scaled_acceptor) + sum(decay_da))
+            self.assertAlmostEqual(
+                eff,
+                target_value
+            )
