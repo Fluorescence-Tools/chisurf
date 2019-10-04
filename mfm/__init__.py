@@ -9,7 +9,7 @@ from collections.abc import Iterable
 #        SETTINGS  & CONSTANTS                        #
 #######################################################
 import mfm.settings
-import mfm.parameter
+#import mfm.parameter
 package_directory = os.path.dirname(os.path.abspath(__file__))
 verbose = mfm.settings.cs_settings['verbose']
 __version__ = mfm.settings.cs_settings['version']

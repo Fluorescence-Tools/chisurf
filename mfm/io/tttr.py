@@ -468,6 +468,9 @@ def make_hdf(
 def spc2hdf(
         spc_files: List[str],
         routine_name: str = "bh132",
+        title: str = "spc",
+        verbose: bool = mfm.verbose,
+        filename: str = None,
         **kwargs
 ):
     """
@@ -480,6 +483,8 @@ def spc2hdf(
         "bh630_x48"
     :param verbose: bool
         By default False
+    : param filename: str
+        If no filename is provided a temporary file will be created.
     :param kwargs:
         If the parameter 'filename' is not provided only a temporary hdf (.h5)
         file is created. If the parameter 'title' is provided the data is
@@ -491,23 +496,18 @@ def spc2hdf(
     Examples
     --------
     If the HDF-File doesn't exist it will be created
-
-    >>> import mfm
-    >>> import glob
-    >>> directory = BH >>> spc_files = glob.glob(directory+'/*.spc')
-    >>> h5 = mfm.io.photons.spc2hdf(spc_files, filename='test.h5', title='hGBP1_18D')
-
     To an existing HDF-File simply a new group with the title will be created
-
-    >>> h5 = mfm.io.photons.spc2hdf(spc_files, filename='test.h5', title='hGBP1_18D_2')
-
     After finished work with the HDF-File it should be closed.
 
+    >>> import mfm.io.tttr
+    >>> import mfm.io.photons
+    >>> import glob
+    >>> spc_files = glob.glob('./test/data/tttr/BH/132/*.spc')
+    >>> h5 = mfm.io.tttr.spc2hdf(spc_files, filename='test.h5', title='hGBP1_18D')
+    >>> h5 = mfm.io.photons.spc2hdf(spc_files, filename='test.h5', title='hGBP1_18D_2')
     >>> h5.close()
-    """
-    verbose = kwargs.get('verbose', mfm.verbose)
-    title = kwargs.get('title', "spc")
 
+    """
     if isinstance(spc_files, str):
         spc_files = [spc_files]
     read = filetypes[routine_name]['read']
@@ -520,7 +520,9 @@ def spc2hdf(
     spcs = list()
 
     fn_ending = filetypes[routine_name]['ending']
-    for i, spc_file in enumerate(fnmatch.filter(spc_files, "*" + fn_ending)):
+    for i, spc_file in enumerate(
+            fnmatch.filter(spc_files, "*" + fn_ending)
+    ):
         with mfm.io.zipped.open_maybe_zipped(
                 filename=spc_file, mode='r'
         ) as fp:
@@ -549,7 +551,12 @@ def spc2hdf(
         print(" Total number of files: %i " % (len(spc_files)))
         print("===========================================")
 
-    h5 = make_hdf(**kwargs)
+    h5 = make_hdf(
+        title=title,
+        filename=filename,
+        verbose=verbose,
+        **kwargs
+    )
     headertable = h5.get_node('/'+title+'/header')
     header = headertable.row
     photontable = h5.get_node('/'+title+'/photons')

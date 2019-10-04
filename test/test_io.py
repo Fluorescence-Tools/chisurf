@@ -229,13 +229,31 @@ class Tests(unittest.TestCase):
             True
         )
 
+    def test_spc2hdf(self):
+        import mfm.io.tttr
+        import glob
+        import tempfile
+
+        filetype = "bh132"
+        file = tempfile.NamedTemporaryFile(
+            suffix='.photon.h5'
+        )
+        output = file.name
+        spc_files = glob.glob("./test/data/tttr/BH/BH_SPC132.spc")
+        h5 = mfm.io.tttr.spc2hdf(
+            spc_files,
+            routine_name=filetype,
+            filename=output
+        )
+        h5.close()
+
     def test_photons(self):
         import mfm.io
-        directory = './data/tttr/BH/'
+        directory = './data/tttr/'
         test_data = [
             {
                 "routine": "bh132",
-                "files": glob.glob(directory + '/BH_SPC132.spc'),
+                "files": glob.glob(directory + '/BH/132/*.spc'),
                 "n_tac": 4095,
                 "measurement_time": 62.328307194000004,
                 "n_rout": 255,
