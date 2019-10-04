@@ -10,7 +10,7 @@ import numbers
 import os
 from datetime import datetime
 
-from qtpy import QtGui, QtWidgets
+from qtpy import QtGui, QtWidgets, uic
 import pyqtgraph as pg
 from qtconsole.qtconsoleapp import RichJupyterWidget
 from qtconsole.inprocess import QtInProcessKernelManager
@@ -492,4 +492,19 @@ def make_widget_from_yaml(
         return g
 
     return make_group(variable_dictionary, name)
+
+
+def load_ui(
+        target: QtWidgets.QWidget,
+        ui_filename: str,
+        path: str
+):
+    filename = os.path.join(
+        path,
+        ui_filename
+    )
+    uic.loadUi(
+        filename,
+        target
+    )
 

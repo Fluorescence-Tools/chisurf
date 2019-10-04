@@ -3,6 +3,7 @@ import os
 import numpy as np
 from qtpy import  QtWidgets, uic, QtCore
 
+import mfm
 import mfm.io
 from mfm.structure.structure import Structure
 from mfm.structure.trajectory import TrajectoryFile

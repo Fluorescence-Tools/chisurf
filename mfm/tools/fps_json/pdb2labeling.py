@@ -12,6 +12,7 @@ import qdarkstyle
 
 import mfm
 import mfm.widgets
+import mfm.widgets.accessible_volume
 import mfm.decorators
 import mfm.structure
 import mfm.structure.structure

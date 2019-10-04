@@ -190,16 +190,22 @@ class Correlator(QtCore.QThread):
             p = photons[i:i + nGroup]
             wi1, wi2 = w1[i:i + nGroup], w2[i:i + nGroup]
             if self.p.method == 'tp':
-                np1, np2, dt1, dt2, tau, corr = mfm.fluorescence.fcs.correlate.log_corr(
+                results = mfm.fluorescence.fcs.correlate.log_corr(
                     p.mt, p.tac, p.rout, p.cr_filter,
                     wi1, wi2, self.p.B, self.p.nCasc,
                     self.p.fine, photons.n_tac
                 )
+                np_1 = results['number_of_photons_ch1']
+                np_2 = results['number_of_photons_ch2']
+                dt_1 = results['measurement_time_ch1']
+                dt_2 = results['measurement_time_ch2']
+                tau = results['correlation_time_axis']
+                corr = results['correlation_amplitude']
                 cr = mfm.fluorescence.fcs.correlate.normalize(
-                    np1, np2, dt1, dt2, tau, corr, self.p.B
+                    np_1, np_2, dt_1, dt_2, tau, corr, self.p.B
                 )
                 cr /= self.p.dt
-                dur = float(min(dt1, dt2)) * self.p.dt / 1000  # seconds
+                dur = float(min(dt_1, dt_2)) * self.p.dt / 1000  # seconds
                 tau = tau.astype(np.float64)
                 tau *= self.p.dt
                 self._results.append([cr, dur, tau, corr])

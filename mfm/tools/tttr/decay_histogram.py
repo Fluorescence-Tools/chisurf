@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sys
 import os
-import copy
 import re
 
 import numpy as np
@@ -69,8 +68,7 @@ class HistogramTTTR(QtWidgets.QWidget):
 
     def add_curve(self):
         d = self.decay.load_data()
-
-        self._curves.append(copy.deepcopy(d))
+        self._curves.append(d)
         self.cs.update()
         self.plot_curves()
 
@@ -89,8 +87,6 @@ class HistogramTTTR(QtWidgets.QWidget):
         self.verticalLayout_6.addWidget(self.cs)
 
         w.tcspcTTTR.tcspcTTTRWidget.pushButton.clicked.connect(self.add_curve)
-        #self.cs.itemClicked[QListWidgetItem].connect(self.plot_curves)
-
         self.plot = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])
         plot = self.plot.getPlotItem()
         self.verticalLayout_9.addWidget(self.plot)
@@ -109,20 +105,26 @@ class TCSPCSetupTTTRWidget(QtWidgets.QWidget):
         self.rep_rate = self.tcspcTTTR.rep_rate
         self.layout.addWidget(self.tcspcTTTR)
 
-    def load_data(self, **kwargs):
-        d = mfm.experiments.data.DataCurve()
-        self.tcspcTTTR.makeHist()
-        d.filename = self.tcspcTTTR.spcFileWidget.sample_name
-        d.name = self.tcspcTTTR.spcFileWidget.sample_name + "_" + str(self.tcspcTTTR.chs)
+    def load_data(
+            self,
+            **kwargs
+    ):
+        self.tcspcTTTR.make_histogram()
         x = self.tcspcTTTR.x
         y = self.tcspcTTTR.y
         w = weights(y)
-        d.x, d.y = x, y
-        d.set_weights(w)
+        name = self.tcspcTTTR.spcFileWidget.sample_name + "_" + str(self.tcspcTTTR.chs)
+        #d.filename = self.tcspcTTTR.spcFileWidget.sample_name
+        d = mfm.experiments.data.DataCurve(
+            x=x,
+            y=y,
+            ey=1./w,
+        )
         return d
 
 
 class TcspcTTTRWidget(QtWidgets.QWidget):
+
     histDone = QtCore.pyqtSignal()
 
     def __init__(self, parent):
@@ -145,7 +147,9 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
         self.spcFileWidget.actionDt_changed.triggered.connect(self.onTacDivChanged)
 
     @property
-    def nPh(self):
+    def nPh(
+            self
+    ) -> int:
         return int(self.tcspcTTTRWidget.lineEdit_5.text())
 
     @nPh.setter
@@ -153,8 +157,12 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
         self.tcspcTTTRWidget.lineEdit_5.setText("%d" % v)
 
     @property
-    def div(self):
-        return int(self.tcspcTTTRWidget.comboBox.currentText())
+    def div(
+            self
+    ) -> int:
+        return int(
+            self.tcspcTTTRWidget.comboBox.currentText()
+        )
 
     @property
     def rep_rate(self):
@@ -184,20 +192,32 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
     def nTAC(self, v):
         self.tcspcTTTRWidget.lineEdit_4.setText("%d" % v)
 
-    def makeHist(self):
+    def make_histogram(self):
         # get right data
-        h5 = self.spcFileWidget._photons.h5
-        nodeName = self.spcFileWidget._photons.sample_names[0] #str(self.spcFileWidget.comboBox.currentText())
+        h5 = self.spcFileWidget.photons.h5
+        nodeName = self.spcFileWidget.photons.sample_names[0] #str(self.spcFileWidget.comboBox.currentText())
         table = h5.get_node('/' + nodeName, 'photons')
-        selection_tac = np.ma.array([row['TAC'] for row in table.where(self.histSelection)])[:-1]
+        selection_tac = np.ma.array(
+            [
+                row['TAC'] for row in table.where(self.histSelection)
+            ]
+        )[:-1]
 
         if self.use_dtmin:
             if self.inverted_selection:
                 print("inverted selection")
-                selection_mask = np.diff(np.array([row['MT'] for row in table.where(self.histSelection)])) < self.dt_min
+                selection_mask = np.diff(
+                    np.array(
+                        [row['MT'] for row in table.where(self.histSelection)]
+                    )
+                ) < self.dt_min
             else:
                 print("normal selection")
-                selection_mask = np.diff(np.array([row['MT'] for row in table.where(self.histSelection)])) > self.dt_min
+                selection_mask = np.diff(
+                    np.array(
+                        [row['MT'] for row in table.where(self.histSelection)]
+                    )
+                ) > self.dt_min
             print("dMTmin: %s" % self.dt_min)
             selection_tac.mask = selection_mask
             self.nPh = selection_mask.sum()
@@ -206,7 +226,7 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
         print("nPh: %s" % self.nPh)
 
         ta = selection_tac.compressed().astype(np.int32)
-        ta /= self.div
+        ta //= self.div
         hist = np.bincount(ta, minlength=self.nTAC)
         self.y = hist.astype(np.float64)
         self.x = np.arange(len(hist), dtype=np.float64) + 1.0
@@ -220,12 +240,13 @@ class TcspcTTTRWidget(QtWidgets.QWidget):
         curve = mfm.experiments.data.DataCurve(setup=self)
         curve.x = self.x
         curve.y = self.y
-        self.histDone.emit(
-            self.nROUT,
-            self.nTAC,
-            self.chs,
-            curve
-        )
+
+        # self.histDone.emit(
+        #     self.nROUT,
+        #     self.nTAC,
+        #     self.chs,
+        #     curve
+        # )
 
     def onTacDivChanged(self):
         self.dtBase = self.spcFileWidget.dt

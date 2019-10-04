@@ -461,8 +461,8 @@ class Photons(object):
     def __del__(self):
         if self.h5 is not None:
             self.h5.close()
-            if self.filetype in ['bh132', 'bh630_x48']:
-                os.unlink(self._tempfile)
+            #if self.filetype in ['bh132', 'bh630_x48']:
+            #    os.unlink(self._tempfile)
 
     def __len__(self):
         return self.nPh

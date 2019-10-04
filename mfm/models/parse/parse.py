@@ -10,7 +10,7 @@ from numpy import *
 from sympy.printing.latex import latex
 from re import Scanner
 
-from qtpy import QtCore, QtWidgets, uic, QtWebEngineWidgets
+from qtpy import QtCore, QtWidgets, QtWebEngineWidgets
 from qtpy.QtCore import QFile, QFileInfo, QTextStream, QUrl
 
 import mfm

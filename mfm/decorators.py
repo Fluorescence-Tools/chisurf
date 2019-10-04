@@ -6,7 +6,9 @@ import weakref
 
 import os
 import inspect
-from qtpy import uic, QtWidgets
+from qtpy import QtWidgets
+
+import mfm.widgets
 
 
 class init_with_ui(object):
@@ -30,10 +32,6 @@ class init_with_ui(object):
         It is assumed that the ui file is in the same path as the file
         of the class that is being initialized.
 
-        :param target: The QtWidget object that is initialized by the
-        ui file. If no object is provided, the ui file initializes the
-        class of the __init__ method.
-
         """
         self.ui_filename = ui_filename
         self.path = path
@@ -47,7 +45,6 @@ class init_with_ui(object):
                 *args,
                 **kwargs
         ):
-
             if self.path is None:
                 path = os.path.dirname(
                     inspect.getfile(
@@ -56,19 +53,15 @@ class init_with_ui(object):
                 )
             else:
                 path = self.path
-
-            ui_filename = os.path.join(
-                path,
-                self.ui_filename
-            )
             super(cls.__class__, cls).__init__(
                 *args,
                 **kwargs
             )
             target = cls
-            uic.loadUi(
-                ui_filename,
-                target
+            mfm.widgets.load_ui(
+                target=target,
+                path=path,
+                ui_filename=self.ui_filename
             )
             f(cls, *args, **kwargs)
 

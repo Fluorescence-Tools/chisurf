@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-from typing import Tuple
+from typing import Dict
 
 from math import floor, pow
 import numba as nb
@@ -225,11 +225,7 @@ def log_corr(
         fine: bool,
         number_of_tac_channels: int,
         verbose: bool = False
-) -> Tuple[
-    int, int,
-    int, int,
-    np.array, np.array
-]:
+) -> Dict:
     """Correlate macros-times and micro-times using a logarit
 
     :param macro_times: the macros-time array
@@ -276,5 +272,13 @@ def log_corr(
             w=w
         )
         coarsen(t, w)
-    return np1, np2, dt1, dt2, taus, corr
+    results = {
+        'number_of_photons_ch1': np1,
+        'number_of_photons_ch2': np2,
+        'measurement_time_ch1': dt1,
+        'measurement_time_ch2': dt2,
+        'correlation_time_axis': taus,
+        'correlation_amplitude': corr
+    }
+    return results
 

@@ -142,24 +142,44 @@ class Tests(unittest.TestCase):
         )
 
     def test_fcs(self):
-        directory = './data/tttr/BH/'
+        import numpy as np
+        import glob
+        import mfm.fluorescence
+        import mfm.io
+        import pylab as p
+        directory = './data/tttr/BH/132/'
         spc_files = glob.glob(directory + '/BH_SPC132.spc')
         photons = mfm.io.photons.Photons(spc_files, reading_routine="bh132")
         cr_filter = np.ones_like(photons.mt, dtype=np.float)
         w1 = np.ones_like(photons.mt, dtype=np.float)
         w2 = np.ones_like(photons.mt, dtype=np.float)
-        result = mfm.fluorescence.fcs.correlate.log_corr(
+        points_per_decade = 5
+        number_of_decades = 10
+        results = mfm.fluorescence.fcs.correlate.log_corr(
             macro_times=photons.mt,
             tac_channels=photons.tac,
             rout=photons.rout,
             cr_filter=cr_filter,
             weights_1=w1,
             weights_2=w2,
-            B=5,
-            nc=10,
+            B=points_per_decade,
+            nc=number_of_decades,
             fine=False,
-            number_of_tac_channels=4096 #photons.n_tac
+            number_of_tac_channels=photons.n_tac
         )
+        np_1 = results['number_of_photons_ch1']
+        np_2 = results['number_of_photons_ch2']
+        dt_1 = results['measurement_time_ch1']
+        dt_2 = results['measurement_time_ch2']
+        tau = results['correlation_time_axis']
+        corr = results['correlation_amplitude']
+        cr = mfm.fluorescence.fcs.correlate.normalize(
+            np_1, np_2, dt_1, dt_2, tau, corr, points_per_decade
+        )
+        cr /= photons.dt
+        dur = float(min(dt_1, dt_2)) * photons.dt / 1000.  # seconds
+        tau = tau.astype(np.float64)
+        tau *= photons.dt
 
     def test_acceptor(self):
         times = np.linspace(0, 50, 1024)

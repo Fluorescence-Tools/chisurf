@@ -33,7 +33,7 @@ class TTTRConvert(QtWidgets.QWidget):
 
     @property
     def filenames(self):
-        return self.filelist.filenames
+        return self.file_list.filenames
 
     @mfm.decorators.init_with_ui(ui_filename="tttr_convert.ui")
     def __init__(
@@ -46,22 +46,29 @@ class TTTRConvert(QtWidgets.QWidget):
         )
         self.hide()
 
-        self.filelist = mfm.widgets.FileList(filename_ending=self.ending)
-        self.actionClear_list.triggered.connect(self.filelist.clear)
+        self.file_list = mfm.widgets.FileList(filename_ending=self.ending)
+        self.actionClear_list.triggered.connect(self.file_list.clear)
         self.actionOpen_Target.triggered.connect(self.open_target)
         self.actionEnding_changed.triggered.connect(self.ending_changed)
 
-        self.verticalLayout.addWidget(self.filelist)
+        self.verticalLayout.addWidget(self.file_list)
 
     def ending_changed(self):
-        self.filelist.filename_ending = self.ending
+        self.file_list.filename_ending = self.ending
 
-    def open_target(self, filename=None):
-        if filename is None:
-            filename = mfm.widgets.save_file(file_type="*.photon.h5")
+    def open_target(
+            self
+    ):
+        filename = mfm.widgets.save_file(
+            file_type="Photon-HDF (*.photon.h5)"
+        )
         self.lineEdit.setText(filename)
         spc_files = self.filenames
-        h5 = mfm.io.tttr.spc2hdf(spc_files, routine_name=self.filetype, filename=filename)
+        h5 = mfm.io.tttr.spc2hdf(
+            spc_files,
+            routine_name=self.filetype,
+            filename=filename
+        )
         h5.close()
 
 
