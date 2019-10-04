@@ -4,14 +4,15 @@ This module contain a small tool to generate JSON-labeling files
 from __future__ import annotations
 
 import sys
-import os
 import json
 from collections import OrderedDict
 
-from qtpy import QtWidgets, uic
+from qtpy import QtWidgets
 import qdarkstyle
 
 import mfm
+import mfm.widgets
+import mfm.decorators
 import mfm.structure
 import mfm.structure.structure
 
@@ -20,19 +21,12 @@ class PDB2Label(QtWidgets.QWidget):
 
     name = "PDB2Label"
 
+    @mfm.decorators.init_with_ui(ui_filename="fps_json_edit.ui")
     def __init__(
             self,
             *args,
             **kwargs
     ):
-        super().__init__(*args, **kwargs)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "fps_json_edit.ui"
-            ),
-            self
-        )
         self.toolButton_4.clicked.connect(self.onLoadReferencePDB)
         self.pushButton_2.clicked.connect(self.onAddLabel)
         self.pushButton_3.clicked.connect(self.onAddDistance)

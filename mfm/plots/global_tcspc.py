@@ -1,39 +1,29 @@
 from __future__ import annotations
 
-import os
 import numpy as np
-from qtpy import  QtCore, QtWidgets, uic
+from qtpy import QtCore, QtWidgets
 from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
 
 import mfm
+import mfm.decorators
 from mfm.math.signal import autocorr
 from mfm.plots.plotbase import Plot
 
 
 class LinePlotWidget(QtWidgets.QWidget):
 
+    @mfm.decorators.init_with_ui(ui_filename="linePlotWidget.ui")
     def __init__(
             self,
-            parent=None,
             d_scalex='lin',
             d_scaley='log',
             r_scalex='lin',
             r_scaley='lin',
+            *args,
             **kwargs
     ):
-        super(LinePlotWidget, self).__init__(
-            parent=parent
-        )
         self.verbose = kwargs.get('verbose', mfm.verbose)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "linePlotWidget.ui"
-            ),
-            self
-        )
-
         self.checkBox.stateChanged [int].connect(self.SetLog)
         self.checkBox_2.stateChanged [int].connect(self.SetLog)
         self.checkBox_3.stateChanged [int].connect(self.SetLog)
@@ -270,6 +260,7 @@ class GlobalEt(Plot):
 
     name = "GlobalEt"
 
+    @mfm.decorators.init_with_ui(ui_filename="et_plot_layout.ui")
     def __init__(
             self,
             fit: mfm.fitting.fit.FitGroup,
@@ -277,20 +268,9 @@ class GlobalEt(Plot):
             f_scaley: str = 'lin',
             e_scalex: str = 'log',
             e_scaley: str = 'lin',
-            parent: QtWidgets.QWidget = None
+            *args,
+            **kwargs
     ):
-        super(GlobalEt, self).__init__(
-            fit=fit,
-            parent=parent
-        )
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "et_plot_layout.ui"
-            ),
-            self
-        )
-
         self.fit = fit
 
         ## Distance distribution plot

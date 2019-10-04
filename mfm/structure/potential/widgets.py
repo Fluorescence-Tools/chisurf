@@ -114,12 +114,16 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
 
 class GoPotentialWidget(GoPotential, QtWidgets.QWidget):
 
-    def __init__(self, structure):
+    @mfm.decorators.init_with_ui(ui_filename="Potential-CaLJ.ui")
+    def __init__(
+            self,
+            structure
+    ):
         super(GoPotentialWidget, self).__init__(structure)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
-                "Potential-CaLJ.ui"
+                ".ui"
             ),
             self
         )

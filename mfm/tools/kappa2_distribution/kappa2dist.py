@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import sys
-import os
 import numpy as np
 from qtpy import QtWidgets, uic
 import pyqtgraph as pg
 import pyqtgraph.dockarea
 import qdarkstyle
 
+import mfm.decorators
 import mfm.fluorescence.anisotropy.kappa2
 from mfm.fluorescence.anisotropy.kappa2 import s2delta
 from mfm.fluorescence.anisotropy.kappa2 import kappasqAllDelta, kappasq_all
@@ -17,28 +17,33 @@ class Kappa2Dist(QtWidgets.QWidget):
 
     name = "Kappa2Dist"
 
-    def __init__(self, kappa2=0.667):
-        QtWidgets.QWidget.__init__(self)
+    @mfm.decorators.init_with_ui(ui_filename="kappa2_dist.ui")
+    def __init__(
+            self,
+            kappa2=0.667,
+            *args,
+            **kwargs
+    ):
         self.k2 = list()
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                'kappa2_dist.ui'
-            ),
-            self
-        )
         self.kappa2 = kappa2
 
         ## pyqtgraph
         area = pyqtgraph.dockarea.DockArea()
         self.verticalLayout.addWidget(area)
-        d1 = pyqtgraph.dockarea.Dock("res", size=(500, 80), hideTitle=True)
+        d1 = pyqtgraph.dockarea.Dock(
+            "res",
+            size=(500, 80),
+            hideTitle=True
+        )
         p1 = pg.PlotWidget()
         d1.addWidget(p1)
         area.addDock(d1, 'top')
         self.kappa2_plot = p1.getPlotItem()
-        self.kappa2_curve = self.kappa2_plot.plot(x=[0.0], y=[0.0], name='kappa2')
-
+        self.kappa2_curve = self.kappa2_plot.plot(
+            x=[0.0],
+            y=[0.0],
+            name='kappa2'
+        )
         ## Connections
         self.pushButton.clicked.connect(self.onUpdateHist)
         self.doubleSpinBox_4.valueChanged.connect(self.onUpdateRapp)
@@ -47,9 +52,13 @@ class Kappa2Dist(QtWidgets.QWidget):
     def onUpdateHist(self):
         if self.model == "cone":
             if self.rAD_known:
-                x, k2hist, self.k2 = kappasqAllDelta(self.delta, self.SD2, self.SA2, self.step, self.n_bins)
+                x, k2hist, self.k2 = kappasqAllDelta(
+                    self.delta, self.SD2, self.SA2, self.step, self.n_bins
+                )
             else:
-                x, k2hist, self.k2 = kappasq_all(self.SD2, self.SA2, n=self.n_bins, m=self.n_bins)
+                x, k2hist, self.k2 = kappasq_all(
+                    self.SD2, self.SA2, n=self.n_bins, m=self.n_bins
+                )
         elif self.model == "diffusion":
             pass
         self.k2scale = x
@@ -71,7 +80,6 @@ class Kappa2Dist(QtWidgets.QWidget):
         # kappa2
         self.k2_mean = np.dot(k2hist, k2scale)/sum(k2hist)
         self.k2_sd = np.sqrt(np.dot(k2hist, (k2scale-self.k2_mean)**2) / sum(k2hist))
-
 
     @property
     def model(self):

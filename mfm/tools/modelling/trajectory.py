@@ -11,7 +11,8 @@ import mdtraj as md
 import tables
 import mdtraj.scripts.mdconvert as mdconvert
 
-from mfm.widgets.widgets import MyMessageBox
+import mfm.decorators
+import mfm.widgets.widgets
 
 
 @nb.jit
@@ -144,18 +145,9 @@ class AlignTrajectoryWidget(QtWidgets.QWidget):
     def trajectory_filename(self, v):
         self.lineEdit.setText(str(v))
 
+    @mfm.decorators.init_with_ui(ui_filename="align_trajectory.ui")
     def __init__(self, **kwargs):
         self.trajectory = None
-
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "align_trajectory.ui"
-            ),
-            self
-        )
-
         self.actionOpen_trajectory.triggered.connect(self.onOpenTrajectory)
         self.actionSave_aligned_trajectory.triggered.connect(self.onSaveTrajectory)
 
@@ -227,15 +219,12 @@ class JoinTrajectoriesWidget(QtWidgets.QWidget):
         else:
             return 'atoms'
 
-    def __init__(self, **kwargs):
-        super().__init__()
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "join_traj.ui"
-            ),
-            self
-        )
+    @mfm.decorators.init_with_ui(ui_filename="join_traj.ui")
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
         self.actionOpen_first_trajectory.triggered.connect(self.onOpenTrajectory_1)
         self.actionOpen_second_trajectory.triggered.connect(self.onOpenTrajectory_2)
         self.actionSave_joined_trajectory.triggered.connect(self.onJoinTrajectories)
@@ -298,15 +287,12 @@ class SaveTopology(QtWidgets.QWidget):
     def trajectory_filename(self, v):
         self.lineEdit.setText(str(v))
 
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "save_topology.ui"
-            ),
-            self
-        )
+    @mfm.decorators.init_with_ui(ui_filename="save_topology.ui")
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
         self.actionOpen_trajectory.triggered.connect(self.onOpenTrajectory)
         self.actionSave_clash_free_trajectory.triggered.connect(self.onSaveTopology)
 
@@ -382,17 +368,10 @@ class RotateTranslateTrajectoryWidget(QtWidgets.QWidget):
     ):
         self.lineEdit.setText(str(v))
 
+    @mfm.decorators.init_with_ui(ui_filename="rotate_translate_traj.ui")
     def __init__(self, **kwargs):
         self.trajectory = None
         self.verbose = kwargs.get('verbose', mfm.verbose)
-        super().__init__()
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "rotate_translate_traj.ui"
-            ),
-            self
-        )
         self.actionOpen_trajectory.triggered.connect(self.onOpenTrajectory)
         self.actionSave_trajectory.triggered.connect(self.onSaveTrajectory)
 
@@ -440,19 +419,15 @@ class Object(object):
 
 class MDConverter(QtWidgets.QWidget):
 
-
     name = "MC-Converter"
 
-    def __init__(self, parent=None, **kwargs):
-        QtWidgets.QWidget.__init__(self, parent=parent)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "convert_structures.ui"
-            ),
-            self
-        )
-
+    @mfm.decorators.init_with_ui(ui_filename="convert_structures.ui")
+    def __init__(
+            self,
+            parent=None,
+            *args,
+            **kwargs
+    ):
         self.toolButton.clicked.connect(self.onLoadHDFFile)
         self.toolButton_2.clicked.connect(self.onSelecteTargetDir)
         self.pushButton_3.clicked.connect(self.onConvert)
@@ -496,10 +471,17 @@ class MDConverter(QtWidgets.QWidget):
 
         if self.split:
             i = 0
-            for chunk in md.iterload(self.trajectory, chunk=args.chunk, top=self.topology_file):
+            for chunk in md.iterload(
+                    self.trajectory,
+                    chunk=args.chunk,
+                    top=self.topology_file
+            ):
                 for s in chunk:
                     try:
-                        fn = os.path.join(self.target_directory, self.filename + '_%0*d' % (8, i) + self.ending)
+                        fn = os.path.join(
+                            self.target_directory,
+                            self.filename + '_%0*d' % (8, i) + self.ending
+                        )
                         if verbose:
                             print(fn)
                         s.save(fn)
@@ -507,9 +489,12 @@ class MDConverter(QtWidgets.QWidget):
                         pass
                     i += 1
         else:
-            args.output = os.path.join(self.target_directory, self.filename + self.ending)
+            args.output = os.path.join(
+                self.target_directory,
+                self.filename + self.ending
+            )
             mdconvert.main(args)
-        MyMessageBox('Conversion done!')
+        mfm.widgets.widgets.MyMessageBox('Conversion done!')
 
     @property
     def first_frame(self):

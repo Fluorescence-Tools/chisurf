@@ -10,7 +10,7 @@ import numexpr as ne
 
 import mfm
 import mfm.io
-import mfm.io.xyz
+import mfm.io.coordinates
 import mfm.models
 import mfm.parameter
 from mfm.structure.structure import count_atoms
@@ -238,7 +238,7 @@ class DiffusionSimulation(object):
             coordinates = self.xyz[::skip]
             n_frames = coordinates.shape[0]
             coordinates = coordinates.reshape(n_frames, 3)
-            mfm.io.xyz.write_xyz(filename, coordinates)
+            mfm.io.coordinates.write_xyz(filename, coordinates)
         elif mode == 'npy':
             np.save(filename, self.xyz)
 
@@ -540,7 +540,7 @@ class Sticking(ParameterGroup):
     def sticky_mode(self):
         """If this value is set to `quencher` only the quencher slow down the
         dye if it is `surface` the C-beta
-        atoms of all amino-acids slow down the dye. If the `quencher` file_type
+        atoms of all amino-acids slow down the dye. If the `quencher` reading_routine
         is used the `quenching_parameter`
         parameter has to be passed upon initialization of the class.
         """
@@ -576,7 +576,7 @@ class Sticking(ParameterGroup):
             name='slow fact',
             value=kwargs.get('slow_fact', 0.1)
         )
-        # sticking file_type is either surface quencher
+        # sticking reading_routine is either surface quencher
         self._sticky_mode = kwargs.get('sticky_mode', 'surface')
 
 

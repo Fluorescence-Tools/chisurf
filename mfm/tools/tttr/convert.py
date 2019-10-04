@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import sys
-import os
 import copy
 
-from qtpy import QtWidgets, uic
+from qtpy import QtWidgets
 import qdarkstyle
 
 import mfm
+import mfm.decorators
 import mfm.io.tttr
 import mfm.widgets
 
@@ -35,20 +35,12 @@ class TTTRConvert(QtWidgets.QWidget):
     def filenames(self):
         return self.filelist.filenames
 
+    @mfm.decorators.init_with_ui(ui_filename="tttr_convert.ui")
     def __init__(
             self,
             *args,
             **kwargs
     ):
-        super().__init__(*args, **kwargs)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "tttr_convert.ui"
-            ),
-            self
-        )
-
         self.comboBox.addItems(
             filetypes.keys()
         )

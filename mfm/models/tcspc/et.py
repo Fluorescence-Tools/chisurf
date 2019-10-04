@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import os
 import numpy as np
-from qtpy import QtCore, QtGui, QtWidgets, uic
+from qtpy import QtCore, QtGui, QtWidgets
 
 import mfm
+import mfm.decorators
 import mfm.fluorescence
 import mfm.fluorescence.general
 import mfm.math
@@ -342,7 +342,7 @@ class EtModelFree(
     @property
     def t_mode(self):
         """
-        Calculation file_type of the time-axis (either 'lin' or 'log')
+        Calculation reading_routine of the time-axis (either 'lin' or 'log')
         """
         return self._t_mode
 
@@ -571,30 +571,19 @@ class EtModelFreeWidget(
         (plots.SurfacePlot, {})
     ]
 
+    @mfm.decorators.init_with_ui(ui_filename="et_model_free.ui")
     def __init__(
             self,
             fit: mfm.fitting.fit.FitGroup,
             icon: QtGui.QIcon = None,
+            *args,
             **kwargs
     ):
         # TODO, refactor L-Curve (make L-Curve widget)
         # TODO, refactor Phasor (make Phasor widget)
-        super().__init__()
-        QtWidgets.QWidget.__init__(self)
-
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/TCSPC.ico")
         self.icon = icon
-
-        EtModelFree.__init__(self, fit)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "et_model_free.ui"
-            ),
-            self
-        )
-
         phasor = PhasorWidget()
         self.verticalLayout_2.addWidget(phasor)
         self.fits = []

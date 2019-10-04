@@ -3,11 +3,12 @@
 """
 from __future__ import annotations
 
-from qtpy import  QtWidgets, uic, QtCore, QtGui
+from qtpy import QtWidgets, uic, QtCore, QtGui
 
 import os
 
 import mfm
+import mfm.decorators
 import mfm.math
 import mfm.models
 from mfm import plots
@@ -33,10 +34,12 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
     """
 
+    @mfm.decorators.init_with_ui(ui_filename="convolveWidget.ui")
     def __init__(
             self,
             fit: mfm.fitting.fit.Fit,
             hide_curve_convolution: bool = True,
+            *args,
             **kwargs
     ):
         """
@@ -45,18 +48,6 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         :param hide_curve_convolution:
         :param kwargs:
         """
-        super().__init__(
-            fit,
-            **kwargs
-        )
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "convolveWidget.ui"
-            ),
-            self
-        )
-
         if hide_curve_convolution:
             self.radioButton_3.setVisible(not hide_curve_convolution)
 
@@ -121,7 +112,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             "\n".join(
                 [
                     "for f in cs.current_fit:\n"
-                    "   f.model.convolve.file_type = '%s'\n" % self.gui_mode,
+                    "   f.model.convolve.reading_routine = '%s'\n" % self.gui_mode,
                     "cs.current_fit.model.convolve.do_convolution = %s" %
                     self.groupBox.isChecked(),
                     "cs.current_fit.update()"

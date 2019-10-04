@@ -14,6 +14,7 @@ from qtpy import QtCore, QtWidgets, uic, QtWebEngineWidgets
 from qtpy.QtCore import QFile, QFileInfo, QTextStream, QUrl
 
 import mfm
+import mfm.decorators
 import mfm.widgets
 from mfm.models.model import ModelWidget, ModelCurve
 from mfm.fitting.parameter import FittingParameter, FittingParameterGroup
@@ -192,8 +193,12 @@ class ParseModel(ModelCurve):
         self._y = y
 
 
-class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
+class ParseFormulaWidget(
+    ParseFormula,
+    QtWidgets.QWidget
+):
 
+    @mfm.decorators.init_with_ui(ui_filename="parseWidget.ui")
     def __init__(
             self,
             fit: mfm.fitting.fit.FitGroup,
@@ -203,19 +208,6 @@ class ParseFormulaWidget(ParseFormula, QtWidgets.QWidget):
             n_columns: int = None,
             **kwargs
     ):
-        self.widget = uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "parseWidget.ui"
-            )
-        )
-        super().__init__(
-            fit=fit,
-            model=model,
-            short=short,
-            parameters=parameters,
-            **kwargs
-        )
         if n_columns is None:
             n_columns = mfm.settings.gui['fit_models']['n_columns']
         self.n_columns = n_columns

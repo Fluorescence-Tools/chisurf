@@ -251,7 +251,7 @@ class DecaySimulationParameter(
         self._n_curves = FittingParameter(value=n_curves, name='n curves')
         self._n_photons = FittingParameter(value=n_photons, name='n photons')
         self._tac_range = kwargs.get('tac_range', (0, 50))
-        # decay file_type has to be either photons or curve
+        # decay reading_routine has to be either photons or curve
         self._decay_mode = decay_mode
 
 
@@ -412,7 +412,7 @@ class DyeDecay(Curve):
         if verbose:
             print("Making histogram")
             print("================")
-            print("Decay-file_type: %s" % decay_mode)
+            print("Decay-reading_routine: %s" % decay_mode)
 
         if decay_mode == 'photon':
             if verbose:

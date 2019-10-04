@@ -117,7 +117,7 @@ class PDBSelector(
         atom_name = self.atom_name
         chain = self.chain_id
 
-        w = mfm.io.pdb.get_atom_index(
+        w = mfm.io.coordinates.get_atom_index(
             self.atoms,
             chain,
             residue_key,

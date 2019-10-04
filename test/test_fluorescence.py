@@ -144,7 +144,7 @@ class Tests(unittest.TestCase):
     def test_fcs(self):
         directory = './data/tttr/BH/'
         spc_files = glob.glob(directory + '/BH_SPC132.spc')
-        photons = mfm.io.photons.Photons(spc_files, file_type="bh132")
+        photons = mfm.io.photons.Photons(spc_files, reading_routine="bh132")
         cr_filter = np.ones_like(photons.mt, dtype=np.float)
         w1 = np.ones_like(photons.mt, dtype=np.float)
         w2 = np.ones_like(photons.mt, dtype=np.float)
@@ -158,14 +158,16 @@ class Tests(unittest.TestCase):
             B=5,
             nc=10,
             fine=False,
-            number_of_tac_channels= 4096#photons.n_tac
+            number_of_tac_channels=4096 #photons.n_tac
         )
 
     def test_acceptor(self):
         times = np.linspace(0, 50, 1024)
         tau_da = 3.5
         decay_da = np.exp(-times / tau_da)
-        acceptor_lifetime_spectrum = np.array([0.1, 0.5, 0.9, 2.0])
+        acceptor_lifetime_spectrum = np.array(
+            [0.1, 0.5, 0.9, 2.0]
+        )
 
         transfer_efficiency = 0.3
         decay_ad = mfm.fluorescence.fret.acceptor.da_a0_to_ad(

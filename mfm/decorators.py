@@ -1,47 +1,78 @@
-# #
+from __future__ import annotations
+from typing import Callable
+
 # # import warnings
 import weakref
 
-# import os
-# from qtpy import uic
-#
-#
-#
-# def load_ui(ui_file):
-#     """This is a decorator which can be used to mark functions
-#     as deprecated. It will result in a warning being emitted
-#     when the function is used."""
-#
-#     def new_func(func, *args, **kwargs):
-#         super(func.__class__, ).__init__(*args, **kwargs)
-#         uic.loadUi(
-#             os.path.join(
-#                 os.path.dirname(os.path.abspath(func.__module__.__file__)),
-#                 ui_file
-#             ),
-#             args[0]
-#         )
-#         return func(*args, **kwargs)
-#
-#     return new_func
-#
+import os
+import inspect
+from qtpy import uic, QtWidgets
 
-#
-# def deprecated(func):
-#     """This is a decorator which can be used to mark functions
-#     as deprecated. It will result in a warning being emitted
-#     when the function is used."""
-#     @functools.wraps(func)
-#     def new_func(*args, **kwargs):
-#         warnings.simplefilter('always', DeprecationWarning)  # turn off filter
-#         warnings.warn("Call to deprecated function {}.".format(func.__name__),
-#                       category=DeprecationWarning,
-#                       stacklevel=2)
-#         warnings.simplefilter('default', DeprecationWarning)  # reset filter
-#         return func(*args, **kwargs)
-#     return new_func
-#
-#
+
+class init_with_ui(object):
+    """
+    This is a decorator for __init__ methods of QtWidget objects.
+    The decorator accepts a ui_filename, calls the super class of
+    the object, and initializes the ui file to a target specified
+    by the target option. If no target is provided the ui file
+    is initialized into the object of the __init__ function.
+
+    """
+
+    def __init__(
+            self,
+            ui_filename: str,
+            path: str = None
+    ):
+        """
+
+        :param ui_filename: The filename (without path) of the ui file.
+        It is assumed that the ui file is in the same path as the file
+        of the class that is being initialized.
+
+        :param target: The QtWidget object that is initialized by the
+        ui file. If no object is provided, the ui file initializes the
+        class of the __init__ method.
+
+        """
+        self.ui_filename = ui_filename
+        self.path = path
+
+    def __call__(
+            self,
+            f: Callable
+    ):
+        def wrapped(
+                cls: QtWidgets.QWidget,
+                *args,
+                **kwargs
+        ):
+
+            if self.path is None:
+                path = os.path.dirname(
+                    inspect.getfile(
+                        cls.__class__
+                    )
+                )
+            else:
+                path = self.path
+
+            ui_filename = os.path.join(
+                path,
+                self.ui_filename
+            )
+            super(cls.__class__, cls).__init__(
+                *args,
+                **kwargs
+            )
+            target = cls
+            uic.loadUi(
+                ui_filename,
+                target
+            )
+            f(cls, *args, **kwargs)
+
+        return wrapped
 
 
 def register(cls):

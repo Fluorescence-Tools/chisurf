@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-import os
 import sys
 
-from qtpy import QtCore, QtWidgets, uic
+from qtpy import QtCore, QtWidgets
 import qdarkstyle
 
 import mdtraj
+
 import mfm
+import mfm.decorators
 from mfm.structure.potential import potentialDict
 from mfm.structure.trajectory import TrajectoryFile, Universe
 
@@ -16,20 +17,14 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
 
     name = "Potential-Energy calculator"
 
+    @mfm.decorators.init_with_ui(ui_filename="calculate_potential.ui")
     def __init__(
             self,
             verbose: bool = False,
             structure: mfm.structure.structure.Structure = None,
+            *args,
             **kwargs
     ):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "calculate_potential.ui"
-            ),
-            self
-        )
         self._trajectory_file = ''
         self.potential_weight = 1.0
         self.energies = list()
