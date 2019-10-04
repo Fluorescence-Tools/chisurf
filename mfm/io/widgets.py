@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import os
-from qtpy import QtWidgets, uic
+from qtpy import QtWidgets
 
 import mfm
+import mfm.decorators
 import mfm.base
 import mfm.structure.structure
 import mfm.widgets
@@ -16,23 +17,12 @@ class SpcFileWidget(
     QtWidgets.QWidget
 ):
 
+    @mfm.decorators.init_with_ui(ui_filename="spcSampleSelectWidget.ui")
     def __init__(
             self,
             *args,
             **kwargs,
     ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "spcSampleSelectWidget.ui"
-            ),
-            self
-        )
-
         self._photons = None
         self.filenames = list()
         self.filetypes = tttr.filetypes
@@ -210,16 +200,8 @@ class SpcFileWidget(
 
 class PDBLoad(QtWidgets.QWidget):
 
-    def __init__(self, parent=None):
-        super(PDBLoad, self).__init__()
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "proteinMCLoad.ui"
-            ),
-            self
-        )
-
+    @mfm.decorators.init_with_ui(ui_filename="proteinMCLoad.ui")
+    def __init__(self, *args, **kwargs):
         self._data = None
         self._filename = ''
 
@@ -263,24 +245,12 @@ class CsvWidget(
     QtWidgets.QWidget
 ):
 
+    @mfm.decorators.init_with_ui(ui_filename="csvInput.ui")
     def __init__(
             self,
             *args,
             **kwargs
     ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(
-                    os.path.abspath(__file__)
-                ),
-                "csvInput.ui"
-            ),
-            self
-        )
         self.actionUseHeader.triggered.connect(self.changeCsvParameter)
         self.actionSkiprows.triggered.connect(self.changeCsvParameter)
         self.actionColspecs.triggered.connect(self.changeCsvParameter)
@@ -306,7 +276,7 @@ class CsvWidget(
                     "cs.current_setup.colspecs = '%s'" % colspecs,
                     "cs.current_setup.use_header = %s" % use_header,
                     "cs.current_setup.skiprows = %s" % n_skip,
-                    "cs.current_setup.file_type = '%s'" % mode,
+                    "cs.current_setup.reading_routine = '%s'" % mode,
                     "cs.current_setup.col_ey = %s" % self.spinBox_5.value(),
                     "cs.current_setup.col_ex = %s" % self.spinBox_3.value(),
                     "cs.current_setup.col_x = %s" % self.spinBox_2.value(),

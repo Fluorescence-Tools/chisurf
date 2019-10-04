@@ -62,21 +62,18 @@ def pq_photons(
             tac[g] = ((b3 & 15) << 8 | b2)
             ovfl = ov * 65536
             mt[g] = ((b1 << 8 |b0) + ovfl)
-
             if (inv == 15) & (((b3 & 15) << 8 | b2) > 0):
                 can[g] = ((b3 & 15) << 8 | b2)+64
             else:
                 can[g] = ((b3 & 240) >> 4)
-
             g += 1
 
     return g, mt, tac, can
 
 
-@nb.jit()
+@nb.jit(nopython=True)
 def bh132_photons(
-        b: np.array,
-        invert_tac: bool = True
+        b: np.array
 ) -> Tuple[
     np.array,
     np.array,
@@ -125,11 +122,7 @@ def bh132_photons(
             else:
                 if inv == 1 and mtov == 1:
                     ov += ((b3 & 15) << 24) | ((b2 << 16) | ((b1 << 8) | b0))
-
-    if invert_tac:
-        return g, mt, 4095 - tac, can
-    else:
-        return g, mt, tac, can
+    return g, mt, tac, can
 
 
 @nb.jit()
@@ -141,6 +134,11 @@ def ht3_photons(
     np.array,
     np.array
 ]:
+    """Processes the time-tagged entries of HT3 files.
+
+    :param b: A binary numpy array of the entries
+    :return:
+    """
     length = (b.shape[0]) // 4
     event = np.zeros(length, dtype=np.uint64)
     mt = np.zeros(length, dtype=np.uint64)
@@ -173,13 +171,20 @@ def ht3_photons(
 @nb.jit()
 def ht3_sf(
         b: np.array,
-        stage=0
+        stage: int = 0
 ) -> Tuple[
     np.array,
     np.array,
     np.array,
     np.array
 ]:
+    """Processes the time-tagged entries of HT3 files that was compressed
+    by Suren Felekyans HT3 conversion
+
+    :param b:
+    :param stage:
+    :return:
+    """
     length = (b.shape[0]) // 4
     event = np.zeros(length, dtype=np.uint64)
     mt = np.zeros(length, dtype=np.uint64)
@@ -219,13 +224,13 @@ def ht3_sf(
 @nb.jit()
 def iss_16(
         b: np.array,
-        can,
-        tac,
-        mt,
-        length,
-        step,
-        phMode,
-        offset
+        can: np.ndarray,
+        tac: np.ndarray,
+        mt: np.ndarray,
+        length: int,
+        step: int,
+        phMode: bool,
+        offset: int
 ) -> np.array:
     """
     Reading of ISS-photon format (fcs-measurements)
@@ -287,7 +292,6 @@ def iss_32(
     :param data:
     :return:
     """
-
     #Data is saved as 0: 16-bit or 1: 32-bit
     if step == 1:
         k = 1 if phMode else 0
@@ -339,8 +343,8 @@ def iss_photons(
 
     # CHANNEL PHOTON MODE (first 2 bytes)
     # in brackets int values
-    # H (72)one channel time file_type, h (104) one channel photon file_type
-    # X (88) two channel time file_type, x (120) two channel photon file_type
+    # H (72)one channel time reading_routine, h (104) one channel photon reading_routine
+    # X (88) two channel time reading_routine, x (120) two channel photon reading_routine
 
     :param data:
     :param kwargs:
@@ -350,18 +354,18 @@ def iss_photons(
     verbose = kwargs.get('verbose', mfm.verbose)
     step = 1 if (data[1] == 72) or (data[1] == 104) else 2
 
-    #  X (88) two channel time file_type, x (120) two channel photon file_type
-    phMode = 0 if (data[1] == 72) or (data[1] == 88) else 1
+    #  X (88) two channel time reading_routine, x (120) two channel photon reading_routine
+    phMode = False if (data[1] == 72) or (data[1] == 88) else True
 
     #  Data is saved as 0: 16-bit or 1: 32-bit
     data_32 = data[10]
 
     if data_32:
         b = data.view(dtype=np.uint32)
-        offset = 256 / 2
+        offset = 256 // 2
     else:
         b = data.view(dtype=np.uint16)
-        offset = 256 / 4
+        offset = 256 // 4
 
     if verbose:
         print("Ph-Mode (0/1):\t%s" % phMode)
@@ -377,10 +381,8 @@ def iss_photons(
     can = np.zeros(length, dtype=np.uint8)
 
     if data_32:
-        #k = _tttrlib.iss_32(b, can, tac, mt, length, step, phMode, offset)
         k = iss_32(b, can, tac, mt, length, step, phMode, offset)
     else:
-        #k = _tttrlib.iss_16(b, can, tac, mt, length, step, phMode, offset)
         k = iss_16(b, can, tac, mt, length, step, phMode, offset)
 
     return k, mt[:k], tac[:k], can[:k]
@@ -522,17 +524,17 @@ def spc2hdf(
         with mfm.io.zipped.open_maybe_zipped(
                 filename=spc_file, mode='r'
         ) as fp:
-            b = np.fromfile(
-                fp, dtype=np.uint8
-            )
+            b = np.fromfile(fp, dtype=np.uint8)
             header = read_header(b, routine_name)
             nPh, aMT, aTAC, aROUT = read(b)
-            spc = {'filename': spc_file, 'header': header,
-                   'photon': {
-                       'ROUT': aROUT[:nPh],
-                       'MT': aMT[:nPh],
-                       'TAC': aTAC[:nPh]
-                   }
+            spc = {
+                'filename': spc_file,
+                'header': header,
+                'photon': {
+                    'ROUT': aROUT[:nPh],
+                    'MT': aMT[:nPh],
+                    'TAC': aTAC[:nPh]
+                }
             }
             spc['photon']['MT'] += max(spcs[-1]['photon']['MT']) if i > 0 else 0
             spcs.append(spc)
@@ -923,19 +925,18 @@ def read_ptu(
 
             hw = tags['TTResultFormat_TTTRRecType']
             n_rec = tags["TTResult_NumberOfRecords"]
-
             data = np.fromfile(fp, dtype=np.uint32)
-            fp.close()
 
             read = pq_hardware[hw]['read']
             args = pq_hardware[hw]['args']
             t3 = read(data, n_rec, **args)
-            rt = dict(version=version,
-                      tags=tags,
-                      special_bits=t3[0],
-                      macro_time=t3[1],
-                      micro_time=t3[2],
-                      channel=t3[3]
+            rt = dict(
+                version=version,
+                tags=tags,
+                special_bits=t3[0],
+                macro_time=t3[1],
+                micro_time=t3[2],
+                channel=t3[3]
             )
             return rt
         else:

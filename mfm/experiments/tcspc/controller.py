@@ -1,8 +1,9 @@
 import os
 
-from qtpy import QtWidgets, uic
+from qtpy import QtWidgets
 
 import mfm
+import mfm.decorators
 import mfm.widgets
 from mfm.experiments import reader
 import mfm.experiments.widgets
@@ -13,24 +14,12 @@ class CsvTCSPCWidget(
     QtWidgets.QWidget,
 ):
 
+    @mfm.decorators.init_with_ui(ui_filename="csvTCSPCWidget.ui")
     def __init__(
             self,
             *args,
             **kwargs
     ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(
-                    os.path.abspath(__file__)
-                ),
-                "csvTCSPCWidget.ui"
-            ),
-            self
-        )
         self.actionDtChanged.triggered.connect(self.onParametersChanged)
         self.actionRebinChanged.triggered.connect(self.onParametersChanged)
         self.actionRepratechange.triggered.connect(self.onParametersChanged)
@@ -131,24 +120,12 @@ class TCSPCSetupDummyWidget(
     QtWidgets.QWidget
 ):
 
+    @mfm.decorators.init_with_ui(ui_filename="tcspcDummy.ui")
     def __init__(
             self,
             *args,
             **kwargs
     ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(
-                    os.path.abspath(__file__)
-                ),
-                "tcspcDummy.ui"
-            ),
-            self
-        )
         self.selector = mfm.experiments.widgets.ExperimentalDataSelector(
             click_close=False,
             parent=self,

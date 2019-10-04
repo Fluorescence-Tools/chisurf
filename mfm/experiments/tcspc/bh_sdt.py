@@ -7,6 +7,7 @@ from qtpy import QtWidgets, uic
 
 import mfm
 import mfm.fluorescence
+import mfm.decorators
 import mfm.experiments.data
 from mfm.experiments.tcspc import TCSPCReader
 from mfm.io import sdtfile
@@ -133,26 +134,16 @@ class TcspcSDTWidget(
         self.curve_number = curve_nbr
         self.textBrowser.setPlainText(str(self.sdt.info))
 
+    @mfm.decorators.init_with_ui(ui_filename="sdtfile.ui")
     def __init__(
             self,
             *args,
             **kwargs
     ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(
-                    os.path.abspath(__file__)
-                ),
-                "sdtfile.ui"
-            ),
-            self
-        )
         self._sdt = None
-        self.actionOpen_SDT_file.triggered.connect(self.onOpenFile)
+        self.actionOpen_SDT_file.triggered.connect(
+            self.onOpenFile
+        )
 
 
 class TCSPCSetupSDTWidget(

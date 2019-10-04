@@ -3,22 +3,16 @@ from __future__ import annotations
 import os
 
 from qtpy import QtWidgets, uic
+import mfm.decorators
 
 
 class AVProperties(QtWidgets.QWidget):
 
+    @mfm.decorators.init_with_ui(ui_filename="av_property.ui")
     def __init__(
             self,
             av_type: str = "AV1"
     ):
-        super(AVProperties, self).__init__()
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "av_property.ui"
-            ),
-            self
-        )
         self._av_type = av_type
         self.av_type = av_type
         self.groupBox.hide()

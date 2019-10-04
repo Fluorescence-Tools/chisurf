@@ -69,7 +69,9 @@ class CorrelateTTTR(QtWidgets.QWidget):
         current_curve = self.cs.selected_curve_index
         for i, curve in enumerate(self._curves):
             l = lw * 0.5 if i != current_curve else 1.5 * lw
-            color = mfm.settings.colors[i % len(mfm.settings.colors)]['hex']
+            color = mfm.settings.colors[
+                i % len(mfm.settings.colors)
+                ]['hex']
             plot.plot(x=curve.x, y=curve.y,
                       pen=pg.mkPen(color, width=l),
                       name=curve.name)
@@ -82,20 +84,9 @@ class CorrelateTTTR(QtWidgets.QWidget):
         self.cs.update()
         self.plot_curves()
 
+    @mfm.decorators.init_with_ui(ui_filename="tttr_correlate.ui")
     def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args,
-            **kwargs
-        )
         self._curves = list()
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "tttr_correlate.ui"
-            ),
-            self
-        )
-
         w = mfm.tools.tttr.correlate.FCStttr()
         self.corr = w
         self.verticalLayout.addWidget(w)
@@ -268,9 +259,10 @@ class CorrelatorWidget(QtWidgets.QWidget):
             split: int = settings['split'],
             weighting: str = settings['weighting'],
             fine: bool = settings['fine'],
+            *args,
             **kwargs
     ):
-        QtWidgets.QWidget.__init__(self)
+        super().__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -443,7 +435,7 @@ class CrFilterWidget(QtWidgets.QWidget):
             mt = photons.mt
             n_ph = mt.shape[0]
             w = np.ones(n_ph, dtype=np.float32)
-            mfm.fluorescence.fcs.count_rate_filter(
+            mfm.fluorescence.fcs.correlate.count_rate_filter(
                 mt,
                 tw,
                 n_ph_max,

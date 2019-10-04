@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import sys
-import os
 
-from qtpy import QtWidgets, uic
+from qtpy import QtWidgets
 import qdarkstyle
 
 from scipy.stats import f as fdist
 
 import mfm
+import mfm.decorators
 import mfm.models
 import mfm.fitting.fit
 import mfm.math.statistics
@@ -42,7 +42,9 @@ class FTestWidget(QtWidgets.QWidget):
             for fs in f:
                 Action = menu.addAction(fs.name)
                 Action.triggered.connect(
-                    self.read_values((fs, self.spinBox_4, self.spinBox_3, self.doubleSpinBox_5))
+                    self.read_values(
+                        (fs, self.spinBox_4, self.spinBox_3, self.doubleSpinBox_5)
+                    )
                 )
         self.toolButton_3.setMenu(menu)
 
@@ -66,19 +68,12 @@ class FTestWidget(QtWidgets.QWidget):
                 )
         self.toolButton_2.setMenu(menu)
 
+    @mfm.decorators.init_with_ui(ui_filename="F-Calculator.ui")
     def __init__(
             self,
             *args,
             **kwargs
     ):
-        super().__init__(*args, **kwargs)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "F-Calculator.ui"
-            ),
-            self
-        )
         self._selected_fit = None
 
         # Upper part of F-Calculator

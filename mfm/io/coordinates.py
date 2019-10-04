@@ -33,7 +33,6 @@ import urllib.request
 import numpy as np
 
 import mfm
-import mfm.io.xyz
 import mfm.common as common
 
 keys_formats = [
@@ -143,8 +142,7 @@ def parse_string_pdb(
             try:
                 if assign_charge:
                     if atoms['res_name'][ni] in common.CHARGE_DICT:
-                        if atoms['atom_name'][ni] == common.TITR_ATOM_COARSE[
-                            atoms['res_name'][ni]]:
+                        if atoms['atom_name'][ni] == common.TITR_ATOM_COARSE[atoms['res_name'][ni]]:
                             atoms['charge'][ni] = common.CHARGE_DICT[
                                 atoms['res_name'][ni]
                             ]
@@ -177,7 +175,7 @@ def read(
 
     >>> import mfm.io
     >>> pdb_file = models
-    >>> pdb = mfm.io.pdb.read(pdb_file, verbose=True)
+    >>> pdb = mfm.io.coordinates.read(pdb_file, verbose=True)
     >>> pdb[:5]
     array([ (0, ' ', 7, 'MET', 1, 'N', 'N', [72.739, -17.501, 8.879], 0.0, 1.65, 0.0, 14.0067),
            (1, ' ', 7, 'MET', 2, 'CA', 'C', [73.841, -17.042, 9.747], 0.0, 1.76, 0.0, 12.0107),
@@ -270,13 +268,27 @@ def write_points(
     :return:
     """
     if mode == 'pdb':
-        atoms = np.empty(len(points), dtype={'names': keys, 'formats': formats})
+        atoms = np.empty(
+            len(points),
+            dtype={
+                'names': keys,
+                'formats': formats
+            }
+        )
         atoms['xyz'] = points
         if density is not None:
             atoms['bfactor'] = density
-        write_pdb(filename, atoms, verbose=verbose)
+        write_pdb(
+            filename,
+            atoms,
+            verbose=verbose
+        )
     else:
-        mfm.io.xyz.write_xyz(filename, points, verbose=verbose)
+        write_xyz(
+            filename,
+            points,
+            verbose=verbose
+        )
 
 
 def get_atom_index(
@@ -364,3 +376,43 @@ def parse_string_pqr(
     if verbose:
         print("Number of atoms: %s" % (ni + 1))
     return atoms
+
+
+def write_xyz(
+        filename: str,
+        points: np.array,
+        verbose: bool = mfm.verbose
+):
+    """
+    Writes the points as xyz-format file. The xyz-format file can be opened and displayed for instance
+    in PyMol
+
+    :param filename: string
+    :param points: array
+    :param verbose: bool
+
+    """
+    if verbose:
+        print("write_xyz\n")
+        print("Filename: %s\n" % filename)
+    with mfm.io.zipped.open_maybe_zipped(
+            filename=filename,
+            mode='w'
+    ) as fp:
+        npoints = len(points)
+        fp.write('%i\n' % npoints)
+        fp.write('Name\n')
+        for p in points:
+            fp.write('D %.3f %.3f %.3f\n' % (p[0], p[1], p[2]))
+
+
+def read_xyz(
+        filename: str
+) -> np.array:
+    t = np.loadtxt(
+        filename,
+        skiprows=2,
+        usecols=(1, 2, 3),
+        delimiter=" "
+    )
+    return t

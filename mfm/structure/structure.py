@@ -12,7 +12,7 @@ import mdtraj as md
 import numpy as np
 
 import mfm.io
-import mfm.io.pdb
+import mfm.io.coordinates
 import mfm.base
 
 clusterCriteria = ['maxclust', 'inconsistent', 'distance']
@@ -107,7 +107,7 @@ class Structure(mfm.base.Base):
         self._potentials = list()
         self._sequence = None
         self.verbose = verbose
-        self.io = mfm.io.pdb
+        self.io = mfm.io.coordinates
         self.pdbid = None
 
         if isinstance(pdb_id, str):
@@ -169,8 +169,8 @@ class Structure(mfm.base.Base):
             return np.zeros(
                 1,
                 dtype={
-                    'names': mfm.io.pdb.keys,
-                    'formats': mfm.io.pdb.formats
+                    'names': mfm.io.coordinates.keys,
+                    'formats': mfm.io.coordinates.formats
                 }
             )
 
@@ -422,7 +422,7 @@ def rmsd(
     --------
 
     >>> import mfm
-    >>> times = mfm.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+    >>> times = mfm.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
     >>> s1 = times[10]
     >>> s1
     <mfm.structure.structure.Structure at 0x135f3ad0>
@@ -492,7 +492,7 @@ def find_best(target, reference, atom_indices=None):
     --------
 
     >>> import mfm
-    >>> times = times = mfm.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+    >>> times = times = mfm.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
     >>> find_best(times.mdtraj, times.mdtraj[2])
     (2, <mdtraj.Trajectory with 1 frames, 2495 atoms, 164 residues, without unitcells at 0x13570b30>)
     """
@@ -692,7 +692,7 @@ def average(
     --------
 
     >>> import mfm
-    >>> times = mfm.structure.trajectory.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+    >>> times = mfm.structure.trajectory.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
     >>> avg = times.average
     >>> avg
     <mfm.structure.structure.Structure at 0x117ff770>

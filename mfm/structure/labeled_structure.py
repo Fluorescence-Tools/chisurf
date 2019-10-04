@@ -192,7 +192,7 @@ import mfm.structure    >>> structure_1 = mfm.structure.Structure('./test/data/m
     Now the trajectory of the transition using the crystal-structure as intermediate state was simulated. Using this
     trajectory weights are associated to each frame which correspond to the first and the second state.
 
-    >>> traj = TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r')
+    >>> traj = TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', reading_routine='r')
     >>> d_av = {'residue_seq_number': 12, 'atom_name': 'CB'}  # the resiude numbers are slightly shifted
     >>> a_av = {'residue_seq_number': 567, 'atom_name': 'CB'}
     >>> weights = [av_filtered_fcs_weights(s, lifetime_filters=lf, time_axis=times, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av) for s in traj]

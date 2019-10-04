@@ -1,14 +1,13 @@
 from __future__ import annotations
 from typing import Tuple
 
-import os
-
 import numpy as np
 import pyqtgraph as pg
-from qtpy import  QtWidgets, uic
+from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
 import mfm
+import mfm.decorators
 from mfm.plots import plotbase
 
 plot_settings = mfm.settings.gui['plot']
@@ -18,20 +17,13 @@ color_scheme = mfm.settings.colors
 lw = plot_settings['line_width']
 
 
+@mfm.decorators.init_with_ui(ui_filename="parameter_scan.ui")
 class ParameterScanWidget(QtWidgets.QWidget):
     def __init__(
             self,
             model: mfm.models.model.Model,
             parent
     ):
-        super(ParameterScanWidget, self).__init__()
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "parameter_scan.ui"
-            ),
-            self
-        )
 
         self.model = model
         self.parent = parent

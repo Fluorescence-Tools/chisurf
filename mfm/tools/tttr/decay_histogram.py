@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtWidgets, uic
 import qdarkstyle
 
 import mfm
+import mfm.decorators
 import mfm.experiments.data
 import mfm.experiments.widgets
 from mfm.fluorescence.tcspc import weights
@@ -73,16 +74,9 @@ class HistogramTTTR(QtWidgets.QWidget):
         self.cs.update()
         self.plot_curves()
 
+    @mfm.decorators.init_with_ui(ui_filename="tttr_histogram.ui")
     def __init__(self):
-        QtWidgets.QWidget.__init__(self)
         self._curves = list()
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "tttr_histogram.ui"
-            ),
-            self
-        )
         w = TCSPCSetupTTTRWidget()
         self.decay = w
         self.verticalLayout.addWidget(w)

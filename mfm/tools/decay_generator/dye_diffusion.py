@@ -12,7 +12,7 @@ from guiqwt.plot import CurveDialog
 import qdarkstyle
 
 import mfm
-import mfm.io.xyz
+import mfm.io.coordinates
 import mfm.fluorescence.fps.widgets
 from mfm.fluorescence.simulation.dye_diffusion import DyeDecay
 from mfm.plots.molview.MolView import MolQtWidget
@@ -381,13 +381,13 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
         if verbose:
             print("\nSaving slow AV...")
             print("Trajectory filename: %s" % av_slow_file)
-        mfm.io.xyz.write_xyz(av_slow_file, self.av.points_slow)
+        mfm.io.coordinates.write_xyz(av_slow_file, self.av.points_slow)
 
         av_fast_file = os.path.join(directory, self.filename_prefix + '_av_fast.xyz')
         if verbose:
             print("\nSaving slow AV...")
             print("Trajectory filename: %s" % av_fast_file)
-        mfm.io.xyz.write_xyz(av_fast_file, self.av.points_fast)
+        mfm.io.coordinates.write_xyz(av_fast_file, self.av.points_fast)
         return diff_file, av_slow_file, av_fast_file
 
     def onSimulationDtChanged(self):

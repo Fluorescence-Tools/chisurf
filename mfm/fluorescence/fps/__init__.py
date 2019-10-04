@@ -82,7 +82,7 @@ class BasicAV(object):
 
         attachment_atom_index = kwargs.get(
             'attachment_atom_index',
-            mfm.io.pdb.get_atom_index(
+            mfm.io.coordinates.get_atom_index(
                 self.atoms,
                 chain_identifier,
                 self.attachment_residue,
@@ -171,8 +171,8 @@ class BasicAV(object):
         >>> import mfm
         >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
         >>> av = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
-        >>> av.save('c:/temp/test', file_type='xyz')
-        >>> av.save('c:/temp/test', file_type='dx')
+        >>> av.save('c:/temp/test', reading_routine='xyz')
+        >>> av.save('c:/temp/test', reading_routine='dx')
 
         """
         if mode == 'dx':
@@ -192,7 +192,7 @@ class BasicAV(object):
             d = p[:, [3]].flatten()
             d /= max(d) * 50.0
             xyz = p[:, [0, 1, 2]]
-            mfm.io.pdb.write_points(
+            mfm.io.coordinates.write_points(
                 filename=filename + '.' + mode,
                 points=xyz,
                 mode=mode,
@@ -339,7 +339,7 @@ class ACV(BasicAV):
     >>> trapped_fraction = 0.5
     >>> av1 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=18, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
     >>> av2 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=577, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
-    >>> av1.save('c:/temp/test_05', file_type='dx')
+    >>> av1.save('c:/temp/test_05', reading_routine='dx')
     >>> y1, x1 = av1.pRDA(av2)
 
     >>> import mfm
@@ -347,7 +347,7 @@ class ACV(BasicAV):
     >>> trapped_fraction = 0.9
     >>> av1 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=18, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
     >>> av2 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=577, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
-    >>> av1.save('c:/temp/test_09', file_type='dx')
+    >>> av1.save('c:/temp/test_09', reading_routine='dx')
     >>> y2, x2 = av1.pRDA(av2)
 
     """
@@ -706,12 +706,12 @@ class DynamicAV(BasicAV):
         >>> p.show()
         >>> t_step = 0.0141
         >>> times, density, counts = av.get_donor_only_decay(n_it=4095, t_step=0.0141, n_out=1)
-        >>> av.save(filename='c:/temp/0t2', density=density, file_type='dx')
+        >>> av.save(filename='c:/temp/0t2', density=density, reading_routine='dx')
         >>> irf = mfm.curve.DataCurve(filename='./test/data/tcspc/ibh_sample/Prompt.txt', skiprows=9)
         >>> data = mfm.experiments.c.DataCurve(filename='./test/data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)
         >>> irf.x *= t_step; data.x *= t_step
         >>> convolve = mfm.fluorescence.tcspc.convolve.Convolve(fit=None, dt=t_step, rep_rate=10, irf=irf, data=data)
-        >>> decay = convolve.convolve(counts, file_type='full')
+        >>> decay = convolve.convolve(counts, reading_routine='full')
         >>> p.semilogy(times, decay)
         
         """
