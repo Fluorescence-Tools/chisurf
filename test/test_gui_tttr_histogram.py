@@ -42,7 +42,7 @@ class Tests(unittest.TestCase):
         )
 
         spcFileWidget = self.form.tcspc_setup_widget.spcFileWidget
-        filenames = glob.glob("../data/tttr/BH/132/*.spc")
+        filenames = glob.glob("./data/tttr/BH/132/*.spc")
         file_type = "bh132"
         spcFileWidget.onLoadSample(
             event=None,
