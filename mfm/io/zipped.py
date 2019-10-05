@@ -14,7 +14,7 @@ def open_maybe_zipped(
         mode: str,
         force_overwrite: bool = True
 ):
-    """Open a file in name (not binary) file_type, transparently handling
+    """Open a file in name (not binary) reading_routine, transparently handling
     .gz or .bz2 compression, with utf-8 encoding.
 
     Parameters
@@ -67,4 +67,4 @@ def open_maybe_zipped(
         else:
             return open(filename, 'w')
     else:
-        raise ValueError('Invalid file_type "%s"' % mode)
+        raise ValueError('Invalid reading_routine "%s"' % mode)

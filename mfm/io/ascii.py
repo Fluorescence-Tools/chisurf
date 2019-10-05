@@ -274,7 +274,7 @@ class Csv(object):
             s = """Saving
             ------
             filename: %s
-            file_type: %s
+            reading_routine: %s
             delimiter: %s
             Object-type: %s
             """ % (filename, file_type, delimiter, type(data))

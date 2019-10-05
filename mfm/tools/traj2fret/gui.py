@@ -1,31 +1,31 @@
 from __future__ import annotations
 
-import os
 import tempfile
 
 import mdtraj as md
-from qtpy import QtWidgets, uic
+from qtpy import QtWidgets
 
-from mfm.io import pdb
+import mfm.decorators
+from mfm.io import coordinates
 import mfm.widgets
 from mfm.widgets.pdb import PDBSelector
 from mfm.tools.traj2fret import CalculateTransfer
 
 
-class Structure2Transfer(QtWidgets.QWidget, CalculateTransfer):
+class Structure2Transfer(
+    QtWidgets.QWidget,
+    CalculateTransfer
+):
 
-    name = "Kappa2Dist"
+    name = "Structure2Transfer"
 
-    def __init__(self, verbose=True):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "structure2transfer.ui"
-            ),
-            self
-        )
-        CalculateTransfer.__init__(self)
+    @mfm.decorators.init_with_ui(ui_filename="structure2transfer.ui")
+    def __init__(
+            self,
+            verbose=True,
+            *args,
+            **kwargs
+    ):
         self._trajectory_file = ''
         self.filenames = list()
         self._settings = {
@@ -104,7 +104,7 @@ class Structure2Transfer(QtWidgets.QWidget, CalculateTransfer):
     @pdb.setter
     def pdb(self, v):
         if isinstance(v, str):
-            v = pdb.read(v, verbose=self.verbose)
+            v = coordinates.read(v, verbose=self.verbose)
         self._pdb = v
 
     @property

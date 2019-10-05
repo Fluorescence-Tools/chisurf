@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import sys
-import os
 
-from qtpy import QtWidgets, uic
+from qtpy import QtWidgets
 import qdarkstyle
 
 import mdtraj as md
@@ -11,6 +10,8 @@ import numpy as np
 import tables
 
 import mfm
+import mfm.decorators
+import mfm.widgets
 from mfm.tools.modelling.trajectory import below_min_distance
 
 
@@ -73,16 +74,12 @@ class RemoveClashedFrames(QtWidgets.QWidget):
             filename = mfm.widgets.get_filename('Open H5-Model file', 'H5-files (*.h5)')
             self.trajectory_filename = filename
 
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                'remove_clashes.ui'
-            ),
-            self
-        )
-
+    @mfm.decorators.init_with_ui(ui_filename="remove_clashes.ui")
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
         self.actionOpen_trajectory.triggered.connect(self.onOpenTrajectory)
         self.actionSave_clash_free_trajectory.triggered.connect(self.onRemoveClashes)
 

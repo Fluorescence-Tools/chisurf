@@ -1,15 +1,15 @@
 from __future__ import annotations
 from typing import List, Tuple, Dict
 
-import os
 import pickle
 import threading
 from collections import OrderedDict
-from qtpy import QtCore, QtWidgets, uic
+from qtpy import QtCore, QtWidgets
 
 import numpy as np
 
 import mfm
+import mfm.decorators
 from mfm import plots
 from mfm.curve import Curve
 import mfm.fitting.fit
@@ -380,19 +380,11 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         #,(plots.SurfacePlot, {})
     ]
 
+    @mfm.decorators.init_with_ui(ui_filename="globalfit_2.ui")
     def __init__(
             self,
             fit: mfm.fitting.fit.Fit
     ):
-        super().__init__(fit)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "globalfit_2.ui"
-            ),
-            self
-        )
-
         self.actionOnAddToLocalFitList.triggered.connect(self.onAddToLocalFitList)
         self.actionOn_clear_local_fits.triggered.connect(self.onClearLocalFits)
         self.actionUpdate_widgets.triggered.connect(self.update_widgets)

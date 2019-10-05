@@ -26,8 +26,9 @@ Examples
 
 
 from __future__ import annotations
-from typing import List
+from typing import List, Tuple
 
+import os
 import tempfile
 import numpy as np
 import tables
@@ -118,13 +119,14 @@ class Photons(object):
     """
 
     :param p_object:
-        Is either a list of filenames or a single string containing the path to one file. If the first argument
-        is n
-    :param file_type:
-        The file type of the files passed using the first argument (p_object) is specified using the
-        'file_type' parameter. This string is either 'hdf' or 'bh132', 'bh630_x48', 'ht3', 'iss'. If
-        the file type is not an hdf file the files are temporarily converted to hdf-files to guarantee
-        a consistent interface.
+        Is either a list of filenames or a single string containing the path to
+        one file. If the first argument is n
+    :param reading_routine:
+        The file type of the files passed using the first argument (p_object)
+        is specified using the 'file_type' parameter. This string is either
+        'hdf' or 'bh132', 'bh630_x48', 'ht3', 'iss'. If the file type is not
+        an hdf file the files are temporarily converted to hdf-files to
+        guarantee a consistent interface.
     :param kwargs:
     :return:
 
@@ -132,9 +134,9 @@ class Photons(object):
     --------
 
     >>> import glob
-    >>> import mfm
-    >>> directory = "../test/data/tttr/spc132/smDNA"
-    >>> spc_files = glob.glob(directory+'/*.spc')
+    >>> import mfm.io
+    >>> directory = './test/data/tttr/BH/'
+    >>> spc_files = glob.glob(directory+'/BH_SPC132.spc')
     >>> photons = mfm.io.photons.Photons(spc_files, file_type="bh132")
     >>> print(photons)
     File-type: bh132
@@ -158,7 +160,7 @@ class Photons(object):
     def __init__(
             self,
             p_object,
-            file_type: str = None,
+            reading_routine: str = None,
             **kwargs
     ):
         self._tempfile = None
@@ -169,23 +171,36 @@ class Photons(object):
                 p_object.sort()
             self._filenames = p_object
 
-            if file_type == 'hdf':
+            if reading_routine == 'hdf':
                 try:
-                    self._h5 = tables.open_file(p_object[0], mode='r')
+                    self._h5 = tables.open_file(
+                        p_object[0], mode='r'
+                    )
                 except IOError:
                     tttr.make_hdf(**kwargs)
-            elif file_type == 'bh132':
-                self._tempfile = tempfile.mkstemp(".photons.h5")
-                self._h5 = tttr.spc2hdf(self._filenames, routine_name=file_type, filename=self._tempfile)
-            elif file_type == 'iss':
-                self._tempfile = tempfile.mkstemp(".photons.h5")
-                self._h5 = tttr.spc2hdf(self._filenames, routine_name=file_type, filename=self._tempfile)
+            else:
+                file = tempfile.NamedTemporaryFile(
+                    suffix=".photons.h5"
+                )
+                self._tempfile = file.name
+                if reading_routine == 'bh132':
+                    self._h5 = tttr.spc2hdf(
+                        self._filenames,
+                        routine_name=reading_routine,
+                        filename=self._tempfile
+                    )
+                elif reading_routine == 'iss':
+                    self._h5 = tttr.spc2hdf(
+                        self._filenames,
+                        routine_name=reading_routine,
+                        filename=self._tempfile
+                    )
         else:
             self._h5 = p_object
             self._filenames = []
 
         self._photon_array = None
-        self.filetype = file_type
+        self.filetype = reading_routine
         self._sample_name = None
         self._cr_filter = None
         self._selection = None
@@ -200,7 +215,9 @@ class Photons(object):
     @selection.setter
     def selection(self, v):
         self._selection = v
-        self._photon_array = self.photon_table.read_coordinates(self._selection)
+        self._photon_array = self.photon_table.read_coordinates(
+            self._selection
+        )
 
     @property
     def photon_table(self):
@@ -257,7 +274,7 @@ class Photons(object):
     @property
     def shape(
             self
-    ) -> int:
+    ) -> Tuple[int]:
         return self.rout.shape
 
     @property
@@ -303,7 +320,7 @@ class Photons(object):
         """
         Number of TAC channels
         """
-        return self.sample.header[0]['nTAC'] if self._number_of_tac_channels is None else self._number_of_tac_channels
+        return self.sample.header[0]['nTAC']# if self._number_of_tac_channels is None else self._number_of_tac_channels
 
     @n_tac.setter
     def n_tac(
@@ -333,7 +350,8 @@ class Photons(object):
             self
     ) -> float:
         """
-        Macro-time clock of the data (time between the macrotime events in milli-seconds)
+        Macro-time clock of the data (time between the macrotime events
+        in milli-seconds)
         """
         return self.sample.header[0]['MTCLK'] * 1e-6 if self._MTCLK is None else self._MTCLK
 
@@ -372,14 +390,20 @@ class Photons(object):
         """
         return [sample._v_name for sample in self.h5.root]
 
-    def read_where(self, selection):
+    def read_where(
+            self,
+            selection: np.ndarray
+    ):
         """This function uses the pytables selection syntax
 
         :param selection:
         :return:
         """
-        if isinstance(selection, np.ndarray):
-            selection = np.intersect1d(self._selection, selection, assume_unique=True)
+        selection = np.intersect1d(
+            self._selection,
+            selection,
+            assume_unique=True
+        )
 
         re = Photons(None)
         re._h5 = self._h5
@@ -395,16 +419,21 @@ class Photons(object):
 
         return re
 
-    def take(self, keys):
+    def take(
+            self,
+            keys
+    ):
         re = Photons(None)
         if isinstance(self.selection, np.ndarray):
-            selection = np.intersect1d(self._selection, keys, assume_unique=True)
+            selection = np.intersect1d(
+                self._selection,
+                keys,
+                assume_unique=True
+            )
         else:
             selection = keys
-
         re._h5 = self._h5
         re.selection = selection
-
         self.filetype = self.filetype
         self._sample_name = self._sample_name
         self._cr_filter = self._cr_filter
@@ -412,7 +441,6 @@ class Photons(object):
         self._number_of_tac_channels = self._number_of_tac_channels
         self._number_of_routing_channels = self._number_of_routing_channels
         self._MTCLK = self._MTCLK
-
         return re
 
     def __str__(self):
@@ -430,13 +458,11 @@ class Photons(object):
         s += "MTCLK [ms]:\t%s\n" % self.mt_clk
         return s
 
-    """
     def __del__(self):
         if self.h5 is not None:
             self.h5.close()
-            if self.filetype in ['bh132', 'bh630_x48']:
-                os.unlink(self._tempfile)
-    """
+            #if self.filetype in ['bh132', 'bh630_x48']:
+            #    os.unlink(self._tempfile)
 
     def __len__(self):
         return self.nPh

@@ -3,6 +3,7 @@ import os
 import numpy as np
 from qtpy import  QtWidgets, uic, QtCore
 
+import mfm
 import mfm.io
 from mfm.structure.structure import Structure
 from mfm.structure.trajectory import TrajectoryFile
@@ -117,7 +118,7 @@ class PDBSelector(
         atom_name = self.atom_name
         chain = self.chain_id
 
-        w = mfm.io.pdb.get_atom_index(
+        w = mfm.io.coordinates.get_atom_index(
             self.atoms,
             chain,
             residue_key,

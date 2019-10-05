@@ -69,15 +69,17 @@ class Universe(object):
 class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
 
     """
-    Creates an Trajectory of mfm.structure.Structures given a HDF5-File using mdtraj.HDF5TrajectoryFile
+    Creates an Trajectory of mfm.structure.Structures given a HDF5-File using
+    mdtraj.HDF5TrajectoryFile
 
     Parameters
     ----------
 
     structure : string / mfm.structure.Structure
         determines the topology
-        is either a string containing the filename of a PDB-File or an instance of mfm.structure.Structure()
-        Obligatory in write file_type, not needed in reading file_type
+        is either a string containing the filename of a PDB-File or an instance
+        of mfm.structure.Structure() Obligatory in write reading_routine, not
+        needed in reading reading_routine
 
     filename_hdf : string
         the filename of the HDF5-file
@@ -90,8 +92,8 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
         Only read every stride-th frame.
 
     frame : integer or None
-        If frame is an integer only the frame number provided by the integer is loaded otherwise the whole trajectory
-        is loaded.
+        If frame is an integer only the frame number provided by the integer is
+        loaded otherwise the whole trajectory is loaded.
 
     See Also
     --------
@@ -107,7 +109,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
     >>> import mfm.structure
     >>> from mfm.structure.trajectory import TrajectoryFile
     >>> s = mfm.structure.structure.Structure('./test/data/modelling/trajectory/h5-file/T4L_Topology.pdb', verbose=True, make_coarse=False)
-    >>> traj = mfm.structure.TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', s, file_type='w')
+    >>> traj = mfm.structure.TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', s, reading_routine='w')
     >>> traj[0]
     <mfm.structure.structure.mfm.structure.Structure at 0x11f34e10>
     >>> print(traj[0])
@@ -122,7 +124,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
 
     >>> import mfm
     >>> from mfm.structure.trajectory import TrajectoryFile
-    >>> traj = TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
+    >>> traj = TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', reading_routine='r', stride=1)
     >>> print(traj[0:3])
     [<mfm.structure.structure.mfm.structure.Structure at 0x1345d5d0>,
     <mfm.structure.structure.mfm.structure.Structure at 0x1345d610>,
@@ -137,7 +139,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
 
     >>> import mfm
     >>> from mfm.structure.trajectory import TrajectoryFile
-    >>> traj = TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
+    >>> traj = TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', reading_routine='r', stride=1)
     >>> t2 = TrajectoryFile(traj.mdtraj, filename='test.h5')
 
     Attributes:
@@ -170,7 +172,8 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
         ----------
 
         pdb_model : int
-            the models number of the pdb (optional argument). By default the first models in the PDB-File is used.
+            the models number of the pdb (optional argument). By default the
+            first models in the PDB-File is used.
 
         """
         self.mode = mode
@@ -276,7 +279,8 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
     def xyz(self):
         """Cartesian coordinates of each atom in each simulation frame
 
-        If the attribute :py:attribute:`.TrajectoryFile.invert` is True the oder of the trajectory is inverted
+        If the attribute :py:attribute:`.TrajectoryFile.invert` is True the 
+        oder of the trajectory is inverted
         """
         if self.invert:
             return self._xyz[::-1]
@@ -355,7 +359,8 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
     def rmsd_ref_state(
             self
     ) -> int:
-        """The index (frame number) of the reference state used for the RMSD calculation
+        """The index (frame number) of the reference state used for the RMSD
+        calculation
         """
         return self._rmsd_ref_state
 
@@ -379,8 +384,9 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
     def reference(
             self
     ) -> mfm.structure.structure.Structure:
-        """The reference structure used for RMSD-calculation. This cannot be set directly but has to be set via the number
-        of the reference state :py:attribute`.rmsd_ref_state`
+        """The reference structure used for RMSD-calculation. This cannot be
+        set directly but has to be set via the number of the reference state
+         :py:attribute`.rmsd_ref_state`
         """
         if self.rmsd_ref_state == 'average':
             return self.average
@@ -392,7 +398,8 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
             self
     ) -> mfm.structure.structure.Structure:
         """
-        The average structure (:py:class:`~mfm.structure.mfm.structure.Structure`) of the trajectory
+        The average structure (:py:class:`~mfm.structure.mfm.structure.Structure`)
+        of the trajectory
         """
         return mfm.structure.structure.average(self[:len(self)])
 
@@ -400,14 +407,15 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
     def values(
             self
     ) -> np.array:
-        """A 2D-numpy array containing the RMSD, dRMSD, energy and the chi2 values of the trajectory
+        """A 2D-numpy array containing the RMSD, dRMSD, energy and the chi2
+        values of the trajectory
 
         Examples
         --------
 
         >>> import mfm
         >>> from mfm.structure.trajectory import TrajectoryFile
-        >>> traj = TrajectoryFile('./test/data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+        >>> traj = TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
         >>> traj
         <mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x117f3b70>
         >>> traj.values
@@ -436,7 +444,8 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
             energy_fret: float = np.inf,
             verbose: bool = True
     ):
-        """Append a structure of type :py::class`mfm.mfm.structure.Structure` to the trajectory
+        """Append a structure of type :py::class`mfm.mfm.structure.Structure`
+        to the trajectory
 
         :param structure: mfm.structure.Structure
         :param update_rmsd: bool
@@ -445,14 +454,15 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
         :param energy_fret: float
             Energy of the FRET-potential
         :param verbose: bool
-            By default True. If True energy, energy_fret, RMSD and dRMSD are printed to std-out.
+            By default True. If True energy, energy_fret, RMSD and dRMSD are
+            printed to std-out.
 
         Examples
         --------
 
         >>> import mfm
         >>> from mfm.structure.trajectory import TrajectoryFile
-        >>> traj = TrajectoryFile('./test/data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+        >>> traj = TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
         >>> traj
         <mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x11762b70>
         >>> t.append(traj[0])
@@ -494,7 +504,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
         Implements iterator
         >>> import mfm
         >>> from mfm.structure.trajectory import TrajectoryFile
-        >>> traj = TrajectoryFile('./test/data/structure/2807_8_9_b.h5', file_type='r', stride=1)
+        >>> traj = TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
         >>> for s in traj:
         >>>     print(s)
         [<mfm.structure.structure.mfm.structure.Structure object at 0x12FAE330>, <mfm.structure.structure.mfm.structure.Structure object at 0x12FAE3B0>, <li
@@ -518,7 +528,7 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
         -------
 
         >>> import mfm
-        >>> traj = mfm.structure.trajectory.TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', file_type='r', stride=1)
+        >>> traj = mfm.structure.trajectory.TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', reading_routine='r', stride=1)
         >>> s = str(traj.next())
         >>> print(s[:500])
         ATOM      1    N MET A   1       7.332 -10.706 -15.034  0.00  0.00             N

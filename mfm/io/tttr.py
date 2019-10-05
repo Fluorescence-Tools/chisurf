@@ -30,7 +30,7 @@ class Header(tables.IsDescription):
     routine = tables.StringCol(10)
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def pq_photons(
         b: np.array,
         invert_tac: bool = True
@@ -62,36 +62,34 @@ def pq_photons(
             tac[g] = ((b3 & 15) << 8 | b2)
             ovfl = ov * 65536
             mt[g] = ((b1 << 8 |b0) + ovfl)
-
             if (inv == 15) & (((b3 & 15) << 8 | b2) > 0):
                 can[g] = ((b3 & 15) << 8 | b2)+64
             else:
                 can[g] = ((b3 & 240) >> 4)
-
             g += 1
 
     return g, mt, tac, can
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def bh132_photons(
-        b: np.array,
-        invert_tac: bool = True
+        b: np.array
 ) -> Tuple[
     np.array,
     np.array,
     np.array,
     np.array
 ]:
-    """Get the macros-time, micro-time and the routing channel number of a BH132-file contained in a
-    binary numpy-array of 8-bit chars.
+    """Get the macros-time, micro-time and the routing channel number of a
+    BH132-file contained in a binary numpy-array of 8-bit chars.
 
     :param b: numpy-array
         a numpy array of chars containing the binary information of a
         BH132-file
     :return: list
-        a list containing the number of photons, numpy-array of macros-time (64-bit unsigned integers),
-        numpy-array of TAC-values (32-bit unsigned integers), numpy-array of channel numbers (8-bit unsigned integers)
+        a list containing the number of photons, numpy-array of macros-time
+        (64-bit unsigned integers), numpy-array of TAC-values (32-bit unsigned
+        integers), numpy-array of channel numbers (8-bit unsigned integers)
     """
     length = (b.shape[0] - 4) // 4
     event = np.zeros(length, dtype=np.uint64)
@@ -124,14 +122,10 @@ def bh132_photons(
             else:
                 if inv == 1 and mtov == 1:
                     ov += ((b3 & 15) << 24) | ((b2 << 16) | ((b1 << 8) | b0))
-
-    if invert_tac:
-        return g, mt, 4095 - tac, can
-    else:
-        return g, mt, tac, can
+    return g, mt, tac, can
 
 
-@nb.jit
+@nb.jit()
 def ht3_photons(
         b: np.array
 ) -> Tuple[
@@ -140,6 +134,11 @@ def ht3_photons(
     np.array,
     np.array
 ]:
+    """Processes the time-tagged entries of HT3 files.
+
+    :param b: A binary numpy array of the entries
+    :return:
+    """
     length = (b.shape[0]) // 4
     event = np.zeros(length, dtype=np.uint64)
     mt = np.zeros(length, dtype=np.uint64)
@@ -169,16 +168,23 @@ def ht3_photons(
     return g, mt, tac, can
 
 
-@nb.jit
+@nb.jit()
 def ht3_sf(
         b: np.array,
-        stage=0
+        stage: int = 0
 ) -> Tuple[
     np.array,
     np.array,
     np.array,
     np.array
 ]:
+    """Processes the time-tagged entries of HT3 files that was compressed
+    by Suren Felekyans HT3 conversion
+
+    :param b:
+    :param stage:
+    :return:
+    """
     length = (b.shape[0]) // 4
     event = np.zeros(length, dtype=np.uint64)
     mt = np.zeros(length, dtype=np.uint64)
@@ -215,17 +221,16 @@ def ht3_sf(
     return nph, mt, tac, can
 
 
-
 @nb.jit()
 def iss_16(
         b: np.array,
-        can,
-        tac,
-        mt,
-        length,
-        step,
-        phMode,
-        offset
+        can: np.ndarray,
+        tac: np.ndarray,
+        mt: np.ndarray,
+        length: int,
+        step: int,
+        phMode: bool,
+        offset: int
 ) -> np.array:
     """
     Reading of ISS-photon format (fcs-measurements)
@@ -287,7 +292,6 @@ def iss_32(
     :param data:
     :return:
     """
-
     #Data is saved as 0: 16-bit or 1: 32-bit
     if step == 1:
         k = 1 if phMode else 0
@@ -339,8 +343,8 @@ def iss_photons(
 
     # CHANNEL PHOTON MODE (first 2 bytes)
     # in brackets int values
-    # H (72)one channel time file_type, h (104) one channel photon file_type
-    # X (88) two channel time file_type, x (120) two channel photon file_type
+    # H (72)one channel time reading_routine, h (104) one channel photon reading_routine
+    # X (88) two channel time reading_routine, x (120) two channel photon reading_routine
 
     :param data:
     :param kwargs:
@@ -350,18 +354,18 @@ def iss_photons(
     verbose = kwargs.get('verbose', mfm.verbose)
     step = 1 if (data[1] == 72) or (data[1] == 104) else 2
 
-    #  X (88) two channel time file_type, x (120) two channel photon file_type
-    phMode = 0 if (data[1] == 72) or (data[1] == 88) else 1
+    #  X (88) two channel time reading_routine, x (120) two channel photon reading_routine
+    phMode = False if (data[1] == 72) or (data[1] == 88) else True
 
     #  Data is saved as 0: 16-bit or 1: 32-bit
     data_32 = data[10]
 
     if data_32:
         b = data.view(dtype=np.uint32)
-        offset = 256 / 2
+        offset = 256 // 2
     else:
         b = data.view(dtype=np.uint16)
-        offset = 256 / 4
+        offset = 256 // 4
 
     if verbose:
         print("Ph-Mode (0/1):\t%s" % phMode)
@@ -377,10 +381,8 @@ def iss_photons(
     can = np.zeros(length, dtype=np.uint8)
 
     if data_32:
-        #k = _tttrlib.iss_32(b, can, tac, mt, length, step, phMode, offset)
         k = iss_32(b, can, tac, mt, length, step, phMode, offset)
     else:
-        #k = _tttrlib.iss_16(b, can, tac, mt, length, step, phMode, offset)
         k = iss_16(b, can, tac, mt, length, step, phMode, offset)
 
     return k, mt[:k], tac[:k], can[:k]
@@ -421,6 +423,10 @@ def ht3_header(
 
 
 def make_hdf(
+        title: str = None,
+        filename: str = None,
+        verbose: bool = mfm.verbose,
+        complib: str = mfm.settings.cs_settings['photons']['complib'],
         **kwargs
 ):
     """
@@ -430,19 +436,28 @@ def make_hdf(
     :param kwargs:
     :return: hdf-file handle (pytables)
     """
-    title = kwargs.get('title', str(mfm.settings.cs_settings['photons']['title']))
-    filename = kwargs.get('filename', tempfile.mkstemp(".photons.h5"))
-    verbose = kwargs.get('verbose', mfm.verbose)
-    complib = kwargs.get('complib', str(mfm.settings.cs_settings['photons']['complib']))
-    complevel = kwargs.get('complevel', int(mfm.settings.cs_settings['photons']['complevel']))
+    if title is None:
+        title = str(mfm.settings.cs_settings['photons']['title'])
+    if filename is None:
+        file = tempfile.NamedTemporaryFile(
+            suffix=".photons.h5"
+        )
+        filename = file.name
+    complevel = kwargs.get('', int(mfm.settings.cs_settings['photons']['complevel']))
     if verbose:
         print("-------------------------------------------")
         print("Make Photon HDF-File")
         print(" Filename: %s" % filename)
         print("-------------------------------------------")
-
-    h5 = tables.open_file(filename, mode="a", title=title)
-    filters = tables.Filters(complib=complib, complevel=complevel)
+    h5 = tables.open_file(
+        filename,
+        mode="a",
+        title=title
+    )
+    filters = tables.Filters(
+        complib=complib,
+        complevel=complevel
+    )
     h5.create_group("/", title, 'Name of measurement: %s' % title)
     h5.create_table('/' + title, 'header', description=Header, filters=filters)
     h5.create_table('/' + title, 'photons', description=Photon, filters=filters)
@@ -453,6 +468,9 @@ def make_hdf(
 def spc2hdf(
         spc_files: List[str],
         routine_name: str = "bh132",
+        title: str = "spc",
+        verbose: bool = mfm.verbose,
+        filename: str = None,
         **kwargs
 ):
     """
@@ -461,36 +479,35 @@ def spc2hdf(
     :param spc_files: list
         A list of spc-files
     :param routine_name:
-        Name of the used reading routine by default "bh132" alternatively "bh630_x48"
+        Name of the used reading routine by default "bh132" alternatively
+        "bh630_x48"
     :param verbose: bool
         By default False
+    : param filename: str
+        If no filename is provided a temporary file will be created.
     :param kwargs:
-        If the parameter 'filename' is not provided only a temporary hdf (.h5) file is created
-        If the parameter 'title' is provided the data is stored in the hdf-group provided by the parameter 'title.
-        Otherwise the default 'title' spc is used to store the data within the HDF-File.
+        If the parameter 'filename' is not provided only a temporary hdf (.h5)
+        file is created. If the parameter 'title' is provided the data is
+        stored in the hdf-group provided by the parameter 'title.
+        Otherwise the default 'title' spc is used to store the data within
+        the HDF-File.
     :return: tables.file.File
 
     Examples
     --------
     If the HDF-File doesn't exist it will be created
-
-    >>> import mfm
-    >>> import glob
-    >>> directory = "./test/data/tttr/spc132/hGBP1_18D"
-    >>> spc_files = glob.glob(directory+'/*.spc')
-    >>> h5 = mfm.io.photons.spc2hdf(spc_files, filename='test.h5', title='hGBP1_18D')
-
     To an existing HDF-File simply a new group with the title will be created
-
-    >>> h5 = mfm.io.photons.spc2hdf(spc_files, filename='test.h5', title='hGBP1_18D_2')
-
     After finished work with the HDF-File it should be closed.
 
+    >>> import mfm.io.tttr
+    >>> import mfm.io.photons
+    >>> import glob
+    >>> spc_files = glob.glob('./test/data/tttr/BH/132/*.spc')
+    >>> h5 = mfm.io.tttr.spc2hdf(spc_files, filename='test.h5', title='hGBP1_18D')
+    >>> h5 = mfm.io.photons.spc2hdf(spc_files, filename='test.h5', title='hGBP1_18D_2')
     >>> h5.close()
-    """
-    verbose = kwargs.get('verbose', mfm.verbose)
-    title = kwargs.get('title', "spc")
 
+    """
     if isinstance(spc_files, str):
         spc_files = [spc_files]
     read = filetypes[routine_name]['read']
@@ -503,18 +520,23 @@ def spc2hdf(
     spcs = list()
 
     fn_ending = filetypes[routine_name]['ending']
-    for i, spc_file in enumerate(fnmatch.filter(spc_files, "*" + fn_ending)):
-        # TODO: gzip files dont work
-        with mfm.io.zipped.open_maybe_zipped(filename=spc_file, mode='r') as fp:
+    for i, spc_file in enumerate(
+            fnmatch.filter(spc_files, "*" + fn_ending)
+    ):
+        with mfm.io.zipped.open_maybe_zipped(
+                filename=spc_file, mode='r'
+        ) as fp:
             b = np.fromfile(fp, dtype=np.uint8)
             header = read_header(b, routine_name)
             nPh, aMT, aTAC, aROUT = read(b)
-            spc = {'filename': spc_file, 'header': header,
-                   'photon': {
-                       'ROUT': aROUT[:nPh],
-                       'MT': aMT[:nPh],
-                       'TAC': aTAC[:nPh]
-                   }
+            spc = {
+                'filename': spc_file,
+                'header': header,
+                'photon': {
+                    'ROUT': aROUT[:nPh],
+                    'MT': aMT[:nPh],
+                    'TAC': aTAC[:nPh]
+                }
             }
             spc['photon']['MT'] += max(spcs[-1]['photon']['MT']) if i > 0 else 0
             spcs.append(spc)
@@ -529,7 +551,12 @@ def spc2hdf(
         print(" Total number of files: %i " % (len(spc_files)))
         print("===========================================")
 
-    h5 = make_hdf(**kwargs)
+    h5 = make_hdf(
+        title=title,
+        filename=filename,
+        verbose=verbose,
+        **kwargs
+    )
     headertable = h5.get_node('/'+title+'/header')
     header = headertable.row
     photontable = h5.get_node('/'+title+'/photons')
@@ -544,8 +571,17 @@ def spc2hdf(
         header['nTAC'] = nTAC
         header.append()
         # Add Photons
-        fileID = np.zeros(spc['photon']['MT'].shape, np.uint16) + fileID
-        photonA = np.rec.array((fileID, spc['photon']['MT'], spc['photon']['ROUT'], spc['photon']['TAC']))
+        fileID = np.zeros(
+            spc['photon']['MT'].shape, np.uint16
+        ) + fileID
+        photonA = np.rec.array(
+            (
+                fileID,
+                spc['photon']['MT'],
+                spc['photon']['ROUT'],
+                spc['photon']['TAC']
+            )
+        )
         photontable.append(photonA)
 
     photontable.cols.ROUT.create_index()
@@ -576,7 +612,7 @@ def read_header(
     Reading Seidel-BID files
 
     >>> import glob, mfm
-    >>> directory = "./test/data/tttr/spc132/hGBP1_18D"
+    >>> directory = "./test/data/tttr/BH/hGBP1_18D"
     >>> spc_files = glob.glob(directory+'/*.spc')
     >>> b = np.fromfile(spc_files[0], dtype=np.uint8)
     >>> header = mfm.io.photons.read_header(b, 'bh132')
@@ -876,7 +912,9 @@ def read_ptu(
             version = fp.read(8).strip("\x00")
             sf = struct.Struct('32s i I q')
             while True:
-                TagIdent, TagIdx, TagType, TagValue = sf.unpack_from(fp.read(sf.size))
+                TagIdent, TagIdx, TagType, TagValue = sf.unpack_from(
+                    fp.read(sf.size)
+                )
                 TagIdent = TagIdent.strip("\x00")
                 if TagIdx > 0:
                     TagIdent += '(%s)' % TagIdx
@@ -894,19 +932,18 @@ def read_ptu(
 
             hw = tags['TTResultFormat_TTTRRecType']
             n_rec = tags["TTResult_NumberOfRecords"]
-
             data = np.fromfile(fp, dtype=np.uint32)
-            fp.close()
 
             read = pq_hardware[hw]['read']
             args = pq_hardware[hw]['args']
             t3 = read(data, n_rec, **args)
-            rt = dict(version=version,
-                      tags=tags,
-                      special_bits=t3[0],
-                      macro_time=t3[1],
-                      micro_time=t3[2],
-                      channel=t3[3]
+            rt = dict(
+                version=version,
+                tags=tags,
+                special_bits=t3[0],
+                macro_time=t3[1],
+                micro_time=t3[2],
+                channel=t3[3]
             )
             return rt
         else:
