@@ -26,7 +26,7 @@ class SpcFileWidget(
         self._photons = None
         self.filenames = list()
         self.filetypes = tttr.filetypes
-
+        # Actions
         self.actionSample_changed.triggered.connect(self.onSampleChanged)
         self.actionLoad_sample.triggered.connect(self.onLoadSample)
         #self.connect(self.comboBox_2, QtCore.SIGNAL("currentIndexChanged(int)"), self.onFileTypeChanged)
@@ -150,7 +150,7 @@ class SpcFileWidget(
         #    self.comboBox.setDisabled(True)
 
     @property
-    def fileType(
+    def file_type(
             self
     ) -> str:
         return "hdf"
@@ -166,27 +166,39 @@ class SpcFileWidget(
             return "--"
 
     def onLoadSample(
-            self
+            self,
+            event,
+            filenames: str = None,
+            file_type: str = None
     ) -> None:
-        if self.fileType in ("hdf"):
-            filename = mfm.widgets.get_filename(
-                'Open Photon-HDF',
-                'Photon-HDF (*.photon.h5)'
-            )
-            filenames = [filename]
-            self.lineEdit_2.setText(filename)
-        elif self.fileType in ("ht3"):
-            filename = mfm.widgets.open_file(
-                'Open Photon-HDF',
-                'Photon-HDF (*.ht3)'
-            )
-            filenames = [filename]
-        else:
-            directory = mfm.widgets.get_directory()
-            filenames = [directory + '/' + s for s in os.listdir(directory)]
 
+        if file_type is None:
+            file_type = self.file_type
+        if filenames is None:
+            if file_type in ("hdf"):
+                filename = mfm.widgets.get_filename(
+                    'Open Photon-HDF',
+                    'Photon-HDF (*.photon.h5)'
+                )
+                filenames = [filename]
+            elif file_type in ("ht3"):
+                filename = mfm.widgets.get_filename(
+                    'Open Photon-HDF',
+                    'Photon-HDF (*.ht3)'
+                )
+                filenames = [filename]
+            else:
+                directory = mfm.widgets.get_directory()
+                filenames = [
+                    directory + '/' + s for s in os.listdir(directory)
+                ]
+
+        self.lineEdit_2.setText(filenames[0])
         self.filenames = filenames
-        self._photons = photons.Photons(filenames, self.fileType)
+        self._photons = photons.Photons(
+            filenames,
+            file_type
+        )
         self.samples = self._photons.samples
         #self.comboBox.addItems(self._photons.sample_names)
         self.onSampleChanged()

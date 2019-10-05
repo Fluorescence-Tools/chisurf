@@ -102,7 +102,7 @@ class CorrelateTTTR(QtWidgets.QWidget):
             w.correlator.correlator_thread.start
         )
         w.correlator.correlator_thread.finished.connect(self.add_curve)
-        #self.cs.itemClicked[QListWidgetItem].connect(self.plot_curves)
+        #self.curve_selector.itemClicked[QListWidgetItem].connect(self.plot_curves)
 
         self.plot = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])
         plot = self.plot.getPlotItem()
