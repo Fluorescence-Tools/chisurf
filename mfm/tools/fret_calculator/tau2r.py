@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import sys
-import os
 
-from qtpy import QtWidgets, uic
+from qtpy import QtWidgets
 import qdarkstyle
 
+import mfm.decorators
 from mfm.fluorescence.general import \
     distance_to_fret_rate_constant, distance_to_fret_efficiency, fret_efficiency_to_lifetime, \
     lifetime_to_fret_efficiency, fretrate_to_distance, fret_efficiency_to_distance
@@ -15,23 +15,13 @@ class FRETCalculator(QtWidgets.QWidget):
 
     name = "FRET-Calculator"
 
+    @mfm.decorators.init_with_ui(ui_filename="calc_tau2r.ui")
     def __init__(
             self,
             kappa2=0.667,
             *args,
             **kwargs
     ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "calc_tau2r.ui"
-            ),
-            self
-        )
         self.kappa2 = kappa2
 
         ## User-interface

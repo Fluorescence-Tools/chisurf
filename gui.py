@@ -10,6 +10,7 @@ import qdarkstyle
 import numpy as np
 
 import mfm
+import mfm.decorators
 import mfm.base
 import mfm.experiments.widgets
 import mfm.experiments.tcspc.controller

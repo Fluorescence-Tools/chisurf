@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import os
-from qtpy import QtWidgets, uic
+from qtpy import QtWidgets
 
 import mfm
+import mfm.decorators
 import mfm.base
 import mfm.structure.structure
 import mfm.widgets
@@ -16,27 +17,16 @@ class SpcFileWidget(
     QtWidgets.QWidget
 ):
 
+    @mfm.decorators.init_with_ui(ui_filename="spcSampleSelectWidget.ui")
     def __init__(
             self,
             *args,
             **kwargs,
     ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "spcSampleSelectWidget.ui"
-            ),
-            self
-        )
-
         self._photons = None
         self.filenames = list()
         self.filetypes = tttr.filetypes
-
+        # Actions
         self.actionSample_changed.triggered.connect(self.onSampleChanged)
         self.actionLoad_sample.triggered.connect(self.onLoadSample)
         #self.connect(self.comboBox_2, QtCore.SIGNAL("currentIndexChanged(int)"), self.onFileTypeChanged)
@@ -160,7 +150,7 @@ class SpcFileWidget(
         #    self.comboBox.setDisabled(True)
 
     @property
-    def fileType(
+    def file_type(
             self
     ) -> str:
         return "hdf"
@@ -176,27 +166,39 @@ class SpcFileWidget(
             return "--"
 
     def onLoadSample(
-            self
+            self,
+            event,
+            filenames: str = None,
+            file_type: str = None
     ) -> None:
-        if self.fileType in ("hdf"):
-            filename = mfm.widgets.get_filename(
-                'Open Photon-HDF',
-                'Photon-HDF (*.photon.h5)'
-            )
-            filenames = [filename]
-            self.lineEdit_2.setText(filename)
-        elif self.fileType in ("ht3"):
-            filename = mfm.widgets.open_file(
-                'Open Photon-HDF',
-                'Photon-HDF (*.ht3)'
-            )
-            filenames = [filename]
-        else:
-            directory = mfm.widgets.get_directory()
-            filenames = [directory + '/' + s for s in os.listdir(directory)]
 
+        if file_type is None:
+            file_type = self.file_type
+        if filenames is None:
+            if file_type in ("hdf"):
+                filename = mfm.widgets.get_filename(
+                    'Open Photon-HDF',
+                    'Photon-HDF (*.photon.h5)'
+                )
+                filenames = [filename]
+            elif file_type in ("ht3"):
+                filename = mfm.widgets.get_filename(
+                    'Open Photon-HDF',
+                    'Photon-HDF (*.ht3)'
+                )
+                filenames = [filename]
+            else:
+                directory = mfm.widgets.get_directory()
+                filenames = [
+                    directory + '/' + s for s in os.listdir(directory)
+                ]
+
+        self.lineEdit_2.setText(filenames[0])
         self.filenames = filenames
-        self._photons = photons.Photons(filenames, self.fileType)
+        self._photons = photons.Photons(
+            filenames,
+            file_type
+        )
         self.samples = self._photons.samples
         #self.comboBox.addItems(self._photons.sample_names)
         self.onSampleChanged()
@@ -210,16 +212,8 @@ class SpcFileWidget(
 
 class PDBLoad(QtWidgets.QWidget):
 
-    def __init__(self, parent=None):
-        super(PDBLoad, self).__init__()
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "proteinMCLoad.ui"
-            ),
-            self
-        )
-
+    @mfm.decorators.init_with_ui(ui_filename="proteinMCLoad.ui")
+    def __init__(self, *args, **kwargs):
         self._data = None
         self._filename = ''
 
@@ -263,24 +257,12 @@ class CsvWidget(
     QtWidgets.QWidget
 ):
 
+    @mfm.decorators.init_with_ui(ui_filename="csvInput.ui")
     def __init__(
             self,
             *args,
             **kwargs
     ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(
-                    os.path.abspath(__file__)
-                ),
-                "csvInput.ui"
-            ),
-            self
-        )
         self.actionUseHeader.triggered.connect(self.changeCsvParameter)
         self.actionSkiprows.triggered.connect(self.changeCsvParameter)
         self.actionColspecs.triggered.connect(self.changeCsvParameter)
@@ -306,7 +288,7 @@ class CsvWidget(
                     "cs.current_setup.colspecs = '%s'" % colspecs,
                     "cs.current_setup.use_header = %s" % use_header,
                     "cs.current_setup.skiprows = %s" % n_skip,
-                    "cs.current_setup.file_type = '%s'" % mode,
+                    "cs.current_setup.reading_routine = '%s'" % mode,
                     "cs.current_setup.col_ey = %s" % self.spinBox_5.value(),
                     "cs.current_setup.col_ex = %s" % self.spinBox_3.value(),
                     "cs.current_setup.col_x = %s" % self.spinBox_2.value(),

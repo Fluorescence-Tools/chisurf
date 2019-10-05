@@ -8,6 +8,7 @@ utils.set_search_paths(TOPDIR)
 
 import mfm.io
 import tempfile
+import glob
 import numpy as np
 
 
@@ -163,7 +164,7 @@ class Tests(unittest.TestCase):
 
     def test_fetch_pdb(self):
         pdb_id = "148L"
-        s = mfm.io.pdb.fetch_pdb_string(pdb_id)
+        s = mfm.io.coordinates.fetch_pdb_string(pdb_id)
         self.assertEqual(
             'HEADER    HYDROLASE/HYDROLASE SUBSTRATE           27-OCT-93   148L              \nTITLE     A COVALEN',
             s[:100]
@@ -171,8 +172,8 @@ class Tests(unittest.TestCase):
 
     def test_parse_string_pdb(self):
         pdb_id = "148L"
-        s = mfm.io.pdb.fetch_pdb_string(pdb_id)
-        atoms = mfm.io.pdb.parse_string_pdb(s)
+        s = mfm.io.coordinates.fetch_pdb_string(pdb_id)
+        atoms = mfm.io.coordinates.parse_string_pdb(s)
         atoms_reference = np.array(
             [[7.71, 28.561, 39.546],
              [8.253, 29.664, 38.758],
@@ -203,10 +204,10 @@ class Tests(unittest.TestCase):
                 mode='w'
         ) as fp:
             fp.write(
-                mfm.io.pdb.fetch_pdb_string(pdb_id)
+                mfm.io.coordinates.fetch_pdb_string(pdb_id)
             )
 
-        atoms = mfm.io.pdb.read(
+        atoms = mfm.io.coordinates.read(
             filename=file.name
         )
         atoms_reference = np.array(
@@ -227,6 +228,84 @@ class Tests(unittest.TestCase):
             ),
             True
         )
+
+    def test_spc2hdf(self):
+        import mfm.io.tttr
+        import glob
+        import tempfile
+
+        filetype = "bh132"
+        file = tempfile.NamedTemporaryFile(
+            suffix='.photon.h5'
+        )
+        output = file.name
+        spc_files = glob.glob("./test/data/tttr/BH/BH_SPC132.spc")
+        h5 = mfm.io.tttr.spc2hdf(
+            spc_files,
+            routine_name=filetype,
+            filename=output
+        )
+        h5.close()
+
+    def test_photons(self):
+        import mfm.io
+        directory = './data/tttr/'
+        test_data = [
+            {
+                "routine": "bh132",
+                "files": glob.glob(directory + '/BH/132/*.spc'),
+                "n_tac": 4095,
+                "measurement_time": 62.328307194000004,
+                "n_rout": 255,
+                "n_photons": 183656,
+                "mt_clk": 1.35e-05,
+                "dt": 3.2967032967032967e-09
+            },
+            # {
+            #     "routine": "bh132",
+            #     "files": glob.glob(directory + '/BH_SPC630_256.spc'),
+            #     "n_tac": 4095,
+            #     "measurement_time": 62.328307194000004,
+            #     "n_rout": 255,
+            #     "n_photons": 183656,
+            #     "mt_clk": 1.35e-05,
+            #     "dt": 3.2967032967032967e-09
+            # },
+        ]
+        for d in test_data:
+            photons = mfm.io.photons.Photons(
+                d["files"],
+                reading_routine=d["routine"]
+            )
+            print(d["files"])
+            self.assertListEqual(
+                photons.filenames,
+                d["files"]
+            )
+            self.assertAlmostEqual(
+                photons.measurement_time,
+                d["measurement_time"]
+            )
+            self.assertEqual(
+                photons.n_rout,
+                d["n_rout"]
+            )
+            self.assertEqual(
+                photons.n_tac,
+                d["n_tac"]
+            )
+            self.assertEqual(
+                photons.shape[0],
+                d["n_photons"]
+            )
+            self.assertAlmostEqual(
+                photons.mt_clk,
+                d["mt_clk"]
+            )
+            self.assertAlmostEqual(
+                photons.dt,
+                d["dt"]
+            )
 
 
 if __name__ == '__main__':

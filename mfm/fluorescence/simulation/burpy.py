@@ -526,10 +526,10 @@ return N_ph;
 }
 
 // everything -> burbulator.dll
-// cl /TP /O2 /EHsc /MD /Feburbulator.dll data2spc_tac.cpp smdif_ov4.cpp smdif_ov3.cpp smdif_misc.cpp focus.cpp rotdiff.cpp mt19937cok.cpp /link /dll /def:burbulator.def
+// f /TP /O2 /EHsc /MD /Feburbulator.dll data2spc_tac.cpp smdif_ov4.cpp smdif_ov3.cpp smdif_misc.cpp focus.cpp rotdiff.cpp mt19937cok.cpp /link /dll /def:burbulator.def
 // VC8: mt /manifest burbulator.dll.manifest /outputresource:"burbulator.dll;#2"
 
 // everything -> burbulator_x64.dll
-// cl /TP /O2 /EHsc /MD /Feburbulator_x64.dll data2spc_tac.cpp smdif_ov4.cpp smdif_ov3.cpp smdif_misc.cpp focus.cpp rotdiff.cpp mt19937cok.cpp /link /dll /def:burbulator_x64.def
+// f /TP /O2 /EHsc /MD /Feburbulator_x64.dll data2spc_tac.cpp smdif_ov4.cpp smdif_ov3.cpp smdif_misc.cpp focus.cpp rotdiff.cpp mt19937cok.cpp /link /dll /def:burbulator_x64.def
 // VC8: mt /manifest burbulator_x64.dll.manifest /outputresource:"burbulator_x64.dll;#2"
 """

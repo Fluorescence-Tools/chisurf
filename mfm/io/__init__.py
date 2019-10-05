@@ -12,7 +12,7 @@ In particular three kinds of file-types are handled:
 """
 
 import mfm.io.ascii
-import mfm.io.pdb
+import mfm.io.coordinates
 import mfm.io.tttr
 import mfm.io.photons
 import mfm.io.sdtfile

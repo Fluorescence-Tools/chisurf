@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import pickle
 
-from qtpy import QtCore, QtWidgets, uic
+from qtpy import QtCore, QtWidgets
 import numpy as np
 from scipy.stats import f
 
@@ -19,23 +19,26 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
     name = "Screening"
     modelID = 0
 
-    def __init__(self, fit, parent):
-        super().__init__(parent)
+    @mfm.decorators.init_with_ui(ui_filename="filterStructures.ui")
+    def __init__(
+            self,
+            fit,
+            parent,
+            *args,
+            **kwargs
+    ):
         self.structure_table_data = []
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "filterStructures.ui"
-            ),
-            self
-        )
         try:
             filenames = fit.data.filenames
             load_structures = False
         except AttributeError:
             filenames = [fit.data.labeling_file]
             load_structures = True
-        TrajectoryFile.__init__(self, filenames=filenames, load_structures=load_structures)
+        TrajectoryFile.__init__(
+            self,
+            filenames=filenames,
+            load_structures=load_structures
+        )
         self.calc_drmsd()
         self.calc_rmsd()
 
@@ -207,7 +210,7 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
                 filename=filename,
                 mode='w'
         ) as fp:
-            s = "SN\tchi2\trmsd\tcl\tfilename\n"
+            s = "SN\tchi2\trmsd\tf\tfilename\n"
             fp.write(s)
             for r in range(self.tableWidget.rowCount()):
                 filename = self.tableWidget.item(r, 1).text()

@@ -1,12 +1,22 @@
+dist: xenial
 language: python
 sudo: required
-os:
-  - linux
-#  - osx
-services:
-  - xvfb
 python:
   - "3.7"
+addons:
+  apt:
+    packages:
+      - libglew-dev
+      - libicu-dev
+      - libpng-dev
+      - libsdl2-dev
+      - libsdl2-image-dev
+      - libsdl2-mixer-dev
+      - libsdl2-ttf-dev
+      - zlib1g-dev
+
+services:
+  - xvfb
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MINICONDA_OS=Linux; else MINICONDA_OS=MacOSX; fi
   - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$MINICONDA_OS-x86_64.sh -O miniconda.sh
@@ -26,8 +36,8 @@ script:
   - conda install nose coverage
   - ln -sf $(which nosetests) $(pwd)/test/
   - cd $(pwd)/test/
-  #- xvfb-run --server-args="-screen 0 1280x1024x24" nosetests --with-coverage test_*.py
-  - nosetests --with-coverage test_*.py
+  - xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test_*.py
+  #- nosetests --with-coverage test_*.py
 after_success:
   - source activate chisurf
   - pip install codacy-coverage

@@ -2,9 +2,8 @@ from __future__ import annotations
 from typing import Tuple
 
 import sys
-import os
 
-from qtpy import QtWidgets, uic
+from qtpy import QtWidgets
 from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
 import qdarkstyle
@@ -12,6 +11,7 @@ import qdarkstyle
 import numpy as np
 
 import mfm
+import mfm.decorators
 import mfm.experiments
 import mfm.experiments.data
 import mfm.models.tcspc
@@ -731,15 +731,12 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
     def parameter_range(self):
         return float(self.doubleSpinBox.value()), float(self.doubleSpinBox_2.value())
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "fret_line.ui"
-            ),
-            self
-        )
+    @mfm.decorators.init_with_ui(ui_filename="fret_line.ui")
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
         win = CurveDialog(edit=False, toolbar=True)
 
         # Make Plot

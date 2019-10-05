@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import os
 import numpy as np
 import pyqtgraph as pg
-from qtpy import QtWidgets, uic
+from qtpy import QtWidgets
 import matplotlib.colors as mpl_colors
 
 import mfm
+import mfm.decorators
 import mfm.math
 import mfm.fitting
 import mfm.math.statistics
@@ -21,6 +21,7 @@ class LinePlotControl(
     QtWidgets.QWidget
 ):
 
+    @mfm.decorators.init_with_ui(ui_filename="linePlotWidget.ui")
     def __init__(
             self,
             parent=None,
@@ -34,14 +35,6 @@ class LinePlotControl(
             **kwargs
 
     ):
-        super().__init__(*args, **kwargs)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "linePlotWidget.ui"
-            ),
-            self
-        )
         self.parent = parent
         self.use_reference = reference_curve
 
