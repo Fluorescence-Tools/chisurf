@@ -17,17 +17,14 @@ before_install:
   - conda env create -f environment.yaml
   - source activate chisurf
   - python setup.py build_ext --inplace --force
-  - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -ac -screen 0 1280x1024x16"
 install:
   - python setup.py install
-before_script:
-  - "export DISPLAY=:99.0"
 script:
   - source activate chisurf
   - conda install nose coverage
   - ln -sf $(which nosetests) $(pwd)/test/
   - cd $(pwd)/test/
-  - xvfb-run --server-args="-screen 0 1280x1024x24" nosetests --with-coverage test_*.py
+  - xvfb-run -a nosetests --with-coverage test_*.py
   #- nosetests --with-coverage test_*.py
 after_success:
   - source activate chisurf
