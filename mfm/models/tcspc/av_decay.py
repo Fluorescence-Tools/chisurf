@@ -25,7 +25,7 @@ class AVDecayModel(LifetimeModel):
         >>> data_set.x *= 0.0141
         >>> irf.x *= 0.0141
         >>> data_set = mfm.curve.ExperimentDataCurveGroup(data_set)
-        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
+        >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
         >>> from mfm.fitting.model.tcspc.av_decay import AVDecayModel
         >>> model_kw={'structure': structure, 'residue_seq_number': 577, 'atom_name': 'CB'}
         >>> fit = mfm.fitting.FitGroup(data=data_set, model_class=AVDecayModel, model_kw=model_kw)

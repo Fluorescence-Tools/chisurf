@@ -31,6 +31,7 @@ from __future__ import annotations
 import os
 import urllib.request
 import numpy as np
+import mmcif.io.PdbxReader
 
 import mfm
 import mfm.common as common
@@ -416,3 +417,26 @@ def read_xyz(
         delimiter=" "
     )
     return t
+
+
+def read_mmcif(
+        filename: str
+):
+    data = []
+    with mfm.io.zipped.open_maybe_zipped(
+            filename=filename,
+            mode='r'
+    ) as fp:
+        reader = mmcif.io.PdbxReader.PdbxReader(fp)
+        reader.read(data)
+    mmcif_atoms = data[0]['atom_site']
+    n_atoms = len(mmcif_atoms)
+    atoms = np.zeros(n_atoms, dtype={'names': keys, 'formats': formats})
+    for i, d in enumerate(mmcif_atoms):
+        if d[0] == "ATOM":
+            atoms[i]['xyz'] = float(d[10]), float(d[11]), float(d[12])
+            atoms[i]['i'] = int(d[1])
+            atoms[i]['element'] = int(d[2])
+        else:
+            continue
+

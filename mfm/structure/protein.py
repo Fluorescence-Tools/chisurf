@@ -485,7 +485,7 @@ class ProteinCentroid(Structure):
 class ProteinBead(Structure):
 
     """
-    >>> s_aa = mfm.structure.protein.ProteinBead('./test/data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True)
+    >>> s_aa = mfm.structure.protein.ProteinBead(atomic_coordinates, verbose=True)
     """
 
     max_atom_residue = 2
