@@ -11,7 +11,9 @@ from qtpy import QtWidgets
 import qdarkstyle
 
 import mfm
+import mfm.io
 import mfm.widgets
+import mfm.widgets.pdb
 import mfm.widgets.accessible_volume
 import mfm.decorators
 import mfm.structure
@@ -28,6 +30,11 @@ class PDB2Label(QtWidgets.QWidget):
             *args,
             **kwargs
     ):
+        self.atom_select = mfm.widgets.pdb.PDBSelector()
+        self.verticalLayout_3.addWidget(self.atom_select)
+        self.av_properties = mfm.widgets.accessible_volume.accessible_volume.AVProperties()
+        self.verticalLayout_4.addWidget(self.av_properties)
+
         self.toolButton_4.clicked.connect(self.onLoadReferencePDB)
         self.pushButton_2.clicked.connect(self.onAddLabel)
         self.pushButton_3.clicked.connect(self.onAddDistance)
@@ -35,15 +42,7 @@ class PDB2Label(QtWidgets.QWidget):
         self.actionClear.triggered.connect(self.onClear)
         self.actionLoad.triggered.connect(self.onLoadJSON)
         self.actionReadTextEdit.triggered.connect(self.onReadTextEdit)
-
         self.comboBox.currentIndexChanged[int].connect(self.onSimulationTypeChanged)
-        #self.listWidget.itemDoubleClicked[QListWidgetItem].connect(self.onLabelingListDoubleClicked)
-        #self.listWidget_2.itemDoubleClicked[QListWidgetItem].connect(self.onDistanceListDoubleClicked)
-
-        self.atom_select = mfm.widgets.pdb.pdb.PDBSelector()
-        self.verticalLayout_3.addWidget(self.atom_select)
-        self.av_properties = mfm.widgets.accessible_volume.accessible_volume.AVProperties()
-        self.verticalLayout_4.addWidget(self.av_properties)
 
         self.structure = None
         self.json_file = None
@@ -59,8 +58,6 @@ class PDB2Label(QtWidgets.QWidget):
         self.onUpdateInterface()
 
     def onLoadJSON(self):
-        #self.json_file = str(QtGui.QFileDialog.getOpenFileName(self, 'Open JSON Labeling-File',
-        #                                                       '.', 'JSON-Files (*.fps.json)'))
         filename = mfm.widgets.get_filename(
             'Open JSON Labeling-File',
             'JSON-Files (*.fps.json)'
@@ -163,10 +160,9 @@ class PDB2Label(QtWidgets.QWidget):
         return str(self.lineEdit_2.text())
 
     def onLoadReferencePDB(self):
-        #self.pdb_filename = str(QtGui.QFileDialog.getOpenFileName(self, 'Open PDB-File', '.pdb', 'PDB-Files (*.pdb)'))
         filename = mfm.widgets.get_filename(
             'Open PDB-File',
-            'PDB-Files (*.pdb)'
+            'PDB-Files (*.pdb);;PDB-GZ (*.pdb.gz)'
         )
         self.pdb_filename = filename
         self.structure = mfm.structure.structure.Structure(self.pdb_filename)

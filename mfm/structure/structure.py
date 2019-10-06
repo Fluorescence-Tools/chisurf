@@ -138,9 +138,11 @@ class Structure(mfm.base.Base):
                     verbose=self.verbose
                 )
                 self.filename = p_object
-            else:
+            elif len(p_object) == 4:
                 self._atoms = self.io.fetch_pdb(p_object)
                 self.pdbid = p_object
+            else:
+                return
 
     @property
     def sequence(self) -> Dict:
@@ -302,7 +304,7 @@ class Structure(mfm.base.Base):
         --------
 
         >>> import mfm.structure
-        >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True)
+        >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb', verbose=True)
         >>> structure.append_potential(mfm.structure.potential.lennard_jones_calpha)
         >>> structure.energy
         -948.0396693387753
