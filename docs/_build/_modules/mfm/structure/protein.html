@@ -421,10 +421,10 @@
 <span class="sd">    --------</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; sp = mfm.structure.protein.ProteinCentroid(&#39;../sample_data/structure/HM_1FN5_Naming.pdb&#39;, verbose=True, make_coarse=True)</span>
+<span class="sd">    &gt;&gt;&gt; sp = mfm.structure.protein.ProteinCentroid(&#39;../test/data/structure/HM_1FN5_Naming.pdb&#39;, verbose=True, make_coarse=True)</span>
 <span class="sd">    ======================================</span>
-<span class="sd">    Filename: /sample_data/structure/HM_1FN5_Naming.pdb</span>
-<span class="sd">    Path: /sample_data/structure</span>
+<span class="sd">    Filename: /data/structure/HM_1FN5_Naming.pdb</span>
+<span class="sd">    Path: /data/structure</span>
 <span class="sd">    Number of atoms: 9316</span>
 <span class="sd">    --------------------------------------</span>
 <span class="sd">    Atoms internal: 3457</span>
@@ -438,7 +438,7 @@
 <span class="sd">    ATOM   2273    C ALA   386      47.799  59.970  21.123  0.00  0.00             C</span>
 <span class="sd">    ATOM   2274    O ALA   386      47.600  59.096  20.280  0.00  0.00             O</span>
 <span class="sd">    &gt;&gt;&gt; sp.write(&#39;test_out.pdb&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; s_aa = mfm.structure.protein.ProteinCentroid(&#39;/sample_data/structure/HM_1FN5_Naming.pdb&#39;, verbose=True, make_coarse=False)</span>
+<span class="sd">    &gt;&gt;&gt; s_aa = mfm.structure.protein.ProteinCentroid(&#39;./test/data/structure/HM_1FN5_Naming.pdb&#39;, verbose=True, make_coarse=False)</span>
 <span class="sd">    &gt;&gt;&gt; print(s_aa)</span>
 <span class="sd">    ATOM   9312    H MET   583      40.848  10.075  17.847  0.00  0.00             H</span>
 <span class="sd">    ATOM   9313   HA MET   583      40.666   8.204  15.667  0.00  0.00             H</span>
@@ -582,7 +582,7 @@
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
 
-<span class="sd">        &gt;&gt;&gt; s_aa = mfm.structure.ProteinCentroid(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;, verbose=True, make_coarse=False)</span>
+<span class="sd">        &gt;&gt;&gt; s_aa = mfm.structure.ProteinCentroid(&#39;./test/data/modelling/pdb_files/hGBP1_closed.pdb&#39;, verbose=True, make_coarse=False)</span>
 <span class="sd">        &gt;&gt;&gt; print(s_aa)</span>
 <span class="sd">        ATOM   9312    H MET   583      40.848  10.075  17.847  0.00  0.00             H</span>
 <span class="sd">        ATOM   9313   HA MET   583      40.666   8.204  15.667  0.00  0.00             H</span>
@@ -635,7 +635,7 @@
 <div class="viewcode-block" id="ProteinBead"><a class="viewcode-back" href="../../../api/mfm.structure.html#mfm.structure.protein.ProteinBead">[docs]</a><span class="k">class</span> <span class="nc">ProteinBead</span><span class="p">(</span><span class="n">Structure</span><span class="p">):</span>
 
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    &gt;&gt;&gt; s_aa = mfm.structure.protein.ProteinBead(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;, verbose=True)</span>
+<span class="sd">    &gt;&gt;&gt; s_aa = mfm.structure.protein.ProteinBead(atomic_coordinates, verbose=True)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">max_atom_residue</span> <span class="o">=</span> <span class="mi">2</span>

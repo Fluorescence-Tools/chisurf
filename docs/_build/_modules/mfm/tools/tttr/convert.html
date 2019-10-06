@@ -151,13 +151,13 @@
 <span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">copy</span>
 
-<span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span> <span class="n">QtWidgets</span><span class="p">,</span> <span class="n">uic</span>
+<span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span> <span class="n">QtWidgets</span>
 <span class="kn">import</span> <span class="nn">qdarkstyle</span>
 
 <span class="kn">import</span> <span class="nn">mfm</span>
+<span class="kn">import</span> <span class="nn">mfm.decorators</span>
 <span class="kn">import</span> <span class="nn">mfm.io.tttr</span>
 <span class="kn">import</span> <span class="nn">mfm.widgets</span>
 
@@ -183,43 +183,42 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">filenames</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filelist</span><span class="o">.</span><span class="n">filenames</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_list</span><span class="o">.</span><span class="n">filenames</span>
 
+    <span class="nd">@mfm</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">init_with_ui</span><span class="p">(</span><span class="n">ui_filename</span><span class="o">=</span><span class="s2">&quot;tttr_convert.ui&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
             <span class="o">*</span><span class="n">args</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span>
-                <span class="s2">&quot;tttr_convert.ui&quot;</span>
-            <span class="p">),</span>
-            <span class="bp">self</span>
-        <span class="p">)</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span>
             <span class="n">filetypes</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">hide</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">filelist</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">FileList</span><span class="p">(</span><span class="n">filename_ending</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ending</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">actionClear_list</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filelist</span><span class="o">.</span><span class="n">clear</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_list</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">FileList</span><span class="p">(</span><span class="n">filename_ending</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ending</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actionClear_list</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_list</span><span class="o">.</span><span class="n">clear</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">actionOpen_Target</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">open_target</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">actionEnding_changed</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ending_changed</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filelist</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verticalLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_list</span><span class="p">)</span>
 
 <div class="viewcode-block" id="TTTRConvert.ending_changed"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.convert.TTTRConvert.ending_changed">[docs]</a>    <span class="k">def</span> <span class="nf">ending_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">filelist</span><span class="o">.</span><span class="n">filename_ending</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ending</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_list</span><span class="o">.</span><span class="n">filename_ending</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ending</span></div>
 
-<div class="viewcode-block" id="TTTRConvert.open_target"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.convert.TTTRConvert.open_target">[docs]</a>    <span class="k">def</span> <span class="nf">open_target</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">save_file</span><span class="p">(</span><span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;*.photon.h5&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="TTTRConvert.open_target"><a class="viewcode-back" href="../../../../api/mfm.tools.tttr.html#mfm.tools.tttr.convert.TTTRConvert.open_target">[docs]</a>    <span class="k">def</span> <span class="nf">open_target</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">):</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">save_file</span><span class="p">(</span>
+            <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;Photon-HDF (*.photon.h5)&quot;</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
         <span class="n">spc_files</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span>
-        <span class="n">h5</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">tttr</span><span class="o">.</span><span class="n">spc2hdf</span><span class="p">(</span><span class="n">spc_files</span><span class="p">,</span> <span class="n">routine_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">filetype</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">h5</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">tttr</span><span class="o">.</span><span class="n">spc2hdf</span><span class="p">(</span>
+            <span class="n">spc_files</span><span class="p">,</span>
+            <span class="n">routine_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">filetype</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="n">filename</span>
+        <span class="p">)</span>
         <span class="n">h5</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div></div>
 
 

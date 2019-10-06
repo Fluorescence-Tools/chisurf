@@ -20,9 +20,11 @@ import mfm.structure
 import mfm.structure.structure
 
 
-class PDB2Label(QtWidgets.QWidget):
+class LabelStructure(
+    QtWidgets.QWidget
+):
 
-    name = "PDB2Label"
+    name = "LabelStructure"
 
     @mfm.decorators.init_with_ui(ui_filename="fps_json_edit.ui")
     def __init__(
@@ -254,7 +256,7 @@ class PDB2Label(QtWidgets.QWidget):
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    win = PDB2Label()
+    win = LabelStructure()
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win.show()
     sys.exit(app.exec_())

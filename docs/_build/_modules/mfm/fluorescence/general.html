@@ -149,22 +149,40 @@
             
   <h1>Source code for mfm.fluorescence.general</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">numba</span> <span class="k">as</span> <span class="nn">nb</span>
-<span class="kn">import</span> <span class="nn">numexpr</span> <span class="k">as</span> <span class="nn">ne</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">import</span> <span class="nn">scipy.optimize</span>
 
 <span class="kn">import</span> <span class="nn">mfm.math.datatools</span>
 
-<span class="n">rate2lifetime</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">rate</span><span class="p">,</span> <span class="n">lifetime</span><span class="p">:</span> <span class="n">ne</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="s2">&quot;1. / (1. / lifetime + rate)&quot;</span><span class="p">)</span>
-<span class="n">et</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">fd0</span><span class="p">,</span> <span class="n">fda</span><span class="p">:</span> <span class="n">fda</span> <span class="o">/</span> <span class="n">fd0</span>
+
+<div class="viewcode-block" id="rate2lifetime"><a class="viewcode-back" href="../../../api/mfm.fluorescence.html#mfm.fluorescence.general.rate2lifetime">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">rate2lifetime</span><span class="p">(</span>
+        <span class="n">rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">lifetime</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">):</span>
+    <span class="k">return</span> <span class="mf">1.</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">/</span> <span class="n">lifetime</span> <span class="o">+</span> <span class="n">rate</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="et"><a class="viewcode-back" href="../../../user_documentation/api/fluorescence.html#mfm.fluorescence.general.et">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">et</span><span class="p">(</span>
+        <span class="n">fd0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">fda</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Calculates the FRET induced donor decay</span>
+
+<span class="sd">    :param fd0: the fluorescence decay of the donor in the absence of FRET</span>
+<span class="sd">    :param fda: the fluorescence decay of the donor in the presence of FRET</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">fda</span> <span class="o">/</span> <span class="n">fd0</span></div>
 
 
 <div class="viewcode-block" id="fretrate_to_distance"><a class="viewcode-back" href="../../../user_documentation/api/fluorescence.html#mfm.fluorescence.general.fretrate_to_distance">[docs]</a><span class="k">def</span> <span class="nf">fretrate_to_distance</span><span class="p">(</span><span class="n">fretrate</span><span class="p">,</span> <span class="n">forster_radius</span><span class="p">,</span> <span class="n">tau0</span><span class="p">,</span> <span class="n">kappa2</span><span class="o">=</span><span class="mf">2.</span> <span class="o">/</span> <span class="mf">3.</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Calculate the distance given a FRET-rate</span>
+    <span class="sd">&quot;&quot;&quot;Calculates the distance given a FRET-rate</span>
 
 <span class="sd">    :param fretrate: FRET-rate</span>
 <span class="sd">    :param forster_radius: Forster radius</span>
@@ -698,21 +716,34 @@
 <span class="sd">    :param x_donly: float</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">rate_spectrum</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">datatools</span><span class="o">.</span><span class="n">ere2</span><span class="p">(</span><span class="n">fret_rate_spectrum</span><span class="p">,</span> <span class="n">donor_rate_spectrum</span><span class="p">)</span>
-    <span class="n">scaled_fret</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">datatools</span><span class="o">.</span><span class="n">e1tn</span><span class="p">(</span><span class="n">rate_spectrum</span><span class="p">,</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">x_donly</span><span class="p">)</span>
-    <span class="n">scaled_donor</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">datatools</span><span class="o">.</span><span class="n">e1tn</span><span class="p">(</span><span class="n">donor_rate_spectrum</span><span class="p">,</span> <span class="n">x_donly</span><span class="p">)</span>
-    <span class="n">rs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">scaled_fret</span><span class="p">,</span> <span class="n">scaled_donor</span><span class="p">)</span>
+    <span class="n">rate_spectrum</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">datatools</span><span class="o">.</span><span class="n">ere2</span><span class="p">(</span>
+        <span class="n">fret_rate_spectrum</span><span class="p">,</span>
+        <span class="n">donor_rate_spectrum</span>
+    <span class="p">)</span>
+    <span class="n">scaled_fret</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">datatools</span><span class="o">.</span><span class="n">e1tn</span><span class="p">(</span>
+        <span class="n">rate_spectrum</span><span class="p">,</span>
+        <span class="mf">1.</span> <span class="o">-</span> <span class="n">x_donly</span>
+    <span class="p">)</span>
+    <span class="n">scaled_donor</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">datatools</span><span class="o">.</span><span class="n">e1tn</span><span class="p">(</span>
+        <span class="n">donor_rate_spectrum</span><span class="p">,</span>
+        <span class="n">x_donly</span>
+    <span class="p">)</span>
+    <span class="n">rs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">scaled_fret</span><span class="p">,</span>
+        <span class="n">scaled_donor</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">mfm</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">datatools</span><span class="o">.</span><span class="n">invert_interleaved</span><span class="p">(</span><span class="n">rs</span><span class="p">)</span></div>
+
 
 <span class="n">rates2lifetimes</span> <span class="o">=</span> <span class="n">rates2lifetimes_new</span>
 
 
 <div class="viewcode-block" id="calculate_fluorescence_decay"><a class="viewcode-back" href="../../../user_documentation/api/fluorescence.html#mfm.fluorescence.general.calculate_fluorescence_decay">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span>
 <span class="k">def</span> <span class="nf">calculate_fluorescence_decay</span><span class="p">(</span>
-        <span class="n">lifetime_spectrum</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
-        <span class="n">time_axis</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
+        <span class="n">lifetime_spectrum</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">time_axis</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
         <span class="n">normalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">):</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;Converts a interleaved lifetime spectrum into a intensity decay</span>
 
 <span class="sd">    :param lifetime_spectrum: interleaved lifetime spectrum</span>
@@ -723,15 +754,16 @@
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 
+<span class="sd">    &gt;&gt;&gt; import mfm.structure.structure</span>
 <span class="sd">    &gt;&gt;&gt; time_axis = np.linspace(0, 20, num=100)</span>
-<span class="sd">    &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; structure = mfm.structure.structure.Structure(&#39;./test/data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; donor_description = {&#39;residue_seq_number&#39;: 344, &#39;atom_name&#39;: &#39;CB&#39;}</span>
 <span class="sd">    &gt;&gt;&gt; acceptor_description = {&#39;residue_seq_number&#39;: 496, &#39;atom_name&#39;: &#39;CB&#39;}</span>
 <span class="sd">    &gt;&gt;&gt; donor_lifetime_spectrum = np.array([1., 4.])</span>
 <span class="sd">    &gt;&gt;&gt; lifetime_spectrum = structure.av_lifetime_spectrum(donor_lifetime_spectrum, donor_description, acceptor_description)</span>
 <span class="sd">    &gt;&gt;&gt; time_axis, decay = calculate_fluorescence_decay(lifetime_spectrum, time_axis)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">decay</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">time_axis</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">decay</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">time_axis</span><span class="p">)</span>
     <span class="n">am</span> <span class="o">=</span> <span class="n">lifetime_spectrum</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">normalize</span><span class="p">:</span>
         <span class="n">am</span> <span class="o">/=</span> <span class="n">am</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>

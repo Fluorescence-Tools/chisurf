@@ -114,7 +114,7 @@ def bh132_photons(
             if inv == 0 and mtov == 1:
                 ov += 1
                 event[g] = g
-                tac[g] = (b3 & 0x0F) << 8 | b2
+                tac[g] = 4095 - ((b3 & 0x0F) << 8 | b2)
                 ovfl = ov * 4096
                 mt[g] = ((b1 & 15) << 8 | b0) + ovfl
                 can[g] = (b1 & 0xF0) >> 4

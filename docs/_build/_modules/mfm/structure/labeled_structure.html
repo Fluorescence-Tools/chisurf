@@ -175,7 +175,7 @@
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 
-<span class="sd">import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./test/data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; donor_description = {&#39;residue_seq_number&#39;: 18, &#39;atom_name&#39;: &#39;CB&#39;}</span>
 <span class="sd">    &gt;&gt;&gt; acceptor_description = {&#39;residue_seq_number&#39;: 577, &#39;atom_name&#39;: &#39;CB&#39;}</span>
 <span class="sd">    &gt;&gt;&gt; pRDA, rda = av_distance_distribution(structure, donor_av_parameter=donor_description, acceptor_av_parameter=acceptor_description)</span>
@@ -203,7 +203,7 @@
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 
-<span class="sd">import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./test/data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; donor_description = {&#39;residue_seq_number&#39;: 18, &#39;atom_name&#39;: &#39;CB&#39;}</span>
 <span class="sd">    &gt;&gt;&gt; acceptor_description = {&#39;residue_seq_number&#39;: 577, &#39;atom_name&#39;: &#39;CB&#39;}</span>
 <span class="sd">    &gt;&gt;&gt; rs = av_fret_rate_spectrum(structure, donor_description, acceptor_description)</span>
@@ -245,7 +245,7 @@
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 
-<span class="sd">import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./test/data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; d_av = {&#39;residue_seq_number&#39;: 18, &#39;atom_name&#39;: &#39;CB&#39;} # donor attachment and description of the linker</span>
 <span class="sd">    &gt;&gt;&gt; a_av = {&#39;residue_seq_number&#39;: 577, &#39;atom_name&#39;: &#39;CB&#39;} # acceptor description and linker</span>
 <span class="sd">    &gt;&gt;&gt; ds = np.array([0.8, 4., 0.2, 1.5]) # donor_lifetime_spectrum</span>
@@ -288,9 +288,9 @@
 
 <span class="sd">    Load a set of structures</span>
 
-<span class="sd">    &gt;&gt;&gt; structure_closed = Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; structure_open = Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_open.pdb&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; structure_middle = Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_middle.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; structure_closed = Structure(&#39;./test/data/modelling/pdb_files/hGBP1_closed.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; structure_open = Structure(&#39;./test/data/modelling/pdb_files/hGBP1_open.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; structure_middle = Structure(&#39;./test/data/modelling/pdb_files/hGBP1_middle.pdb&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; ls_closed = av_lifetime_spectrum(structure_closed, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)</span>
 <span class="sd">    &gt;&gt;&gt; ls_open = av_lifetime_spectrum(structure_open, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)</span>
 <span class="sd">    &gt;&gt;&gt; ls_middle = av_lifetime_spectrum(structure_middle, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)</span>
@@ -324,10 +324,10 @@
 <span class="sd">    hGBP1 two limiting states are known, with the fraction 0.66 (state-1) and 0.33 (state-2). Using corase-grained</span>
 <span class="sd">    models of these limiting states fluorescence decays are calculated and the filters are determined.</span>
 
-<span class="sd">import mfm.structure    &gt;&gt;&gt; structure_1 = mfm.structure.Structure(&#39;./sample_data/modelling/trajectory/h5-file/steps/0_major.pdb&#39;)</span>
+<span class="sd">import mfm.structure    &gt;&gt;&gt; structure_1 = mfm.structure.Structure(&#39;./test/data/modelling/trajectory/h5-file/steps/0_major.pdb&#39;)</span>
 
-<span class="sd">    &gt;&gt;&gt; structure_1 = Structure(&#39;./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; structure_2 = Structure(&#39;./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; structure_1 = Structure(&#39;./test/data/modelling/trajectory/h5-file/steps/3_minor.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; structure_2 = Structure(&#39;./test/data/modelling/trajectory/h5-file/steps/3_minor.pdb&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; ls_1 = av_lifetime_spectrum(structure_1, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)</span>
 <span class="sd">    &gt;&gt;&gt; ls_2 = av_lifetime_spectrum(structure_2, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av)</span>
 <span class="sd">    &gt;&gt;&gt; times = np.linspace(0, 20, num=50)</span>
@@ -342,7 +342,7 @@
 <span class="sd">    Now the trajectory of the transition using the crystal-structure as intermediate state was simulated. Using this</span>
 <span class="sd">    trajectory weights are associated to each frame which correspond to the first and the second state.</span>
 
-<span class="sd">    &gt;&gt;&gt; traj = TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, file_type=&#39;r&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; traj = TrajectoryFile(&#39;./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, reading_routine=&#39;r&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; d_av = {&#39;residue_seq_number&#39;: 12, &#39;atom_name&#39;: &#39;CB&#39;}  # the resiude numbers are slightly shifted</span>
 <span class="sd">    &gt;&gt;&gt; a_av = {&#39;residue_seq_number&#39;: 567, &#39;atom_name&#39;: &#39;CB&#39;}</span>
 <span class="sd">    &gt;&gt;&gt; weights = [av_filtered_fcs_weights(s, lifetime_filters=lf, time_axis=times, donor_lifetime_spectrum=dl, donor_av_parameter=d_av, acceptor_av_parameter=a_av) for s in traj]</span>
@@ -390,7 +390,7 @@
 <span class="sd">    --------</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; structure = mfm.structure.structure.LabeledStructure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;, verbose=True)</span>
+<span class="sd">    &gt;&gt;&gt; structure = mfm.structure.structure.LabeledStructure(&#39;./test/data/modelling/pdb_files/hGBP1_closed.pdb&#39;, verbose=True)</span>
 <span class="sd">    &gt;&gt;&gt; donor_description = {&#39;residue_seq_number&#39;: 18, &#39;atom_name&#39;: &#39;CB&#39;}</span>
 <span class="sd">    &gt;&gt;&gt; acceptor_description = {&#39;residue_seq_number&#39;: 577, &#39;atom_name&#39;: &#39;CB&#39;}</span>
 <span class="sd">    &gt;&gt;&gt; structure.donor_label = donor_description</span>

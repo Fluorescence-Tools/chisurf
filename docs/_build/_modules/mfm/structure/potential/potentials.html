@@ -646,7 +646,7 @@
 <span class="sd">    &gt;&gt;&gt; import mfm.structure</span>
 <span class="sd">    &gt;&gt;&gt; import mfm.structure.potential</span>
 
-<span class="sd">    &gt;&gt;&gt; s = mfm..structure.structure.Structure(&#39;./sample_data/model/hgbp1/hGBP1_closed.pdb&#39;, verbose=True, make_coarse=True)</span>
+<span class="sd">    &gt;&gt;&gt; s = mfm..structure.structure.Structure(&#39;./test/data/model/hgbp1/hGBP1_closed.pdb&#39;, verbose=True, make_coarse=True)</span>
 <span class="sd">    &gt;&gt;&gt; pce = mfm.structure.potential.potentials.CEPotential(s, ca_cutoff=64.0)</span>
 <span class="sd">    &gt;&gt;&gt; pce.getEnergy()</span>
 <span class="sd">    -0.15896629131635745</span>
@@ -777,7 +777,7 @@
 <span class="sd">        &gt;&gt;&gt; import mfm.structure</span>
 <span class="sd">        &gt;&gt;&gt; import mfm.structure.potential</span>
 
-<span class="sd">        &gt;&gt;&gt; s = mfm.structure.structure.Structure(&#39;./sample_data/model/hgbp1/hGBP1_closed.pdb&#39;, verbose=True, make_coarse=True)</span>
+<span class="sd">        &gt;&gt;&gt; s = mfm.structure.structure.Structure(&#39;./test/data/model/hgbp1/hGBP1_closed.pdb&#39;, verbose=True, make_coarse=True)</span>
 <span class="sd">        &gt;&gt;&gt; pce = mfm.structure.potential.potentials.ClashPotential(structure=s, clash_tolerance=6.0)</span>
 <span class="sd">        &gt;&gt;&gt; pce.getEnergy()</span>
 
@@ -806,13 +806,13 @@
 <span class="sd">    --------</span>
 
 <span class="sd">    &gt;&gt;&gt; import json</span>
-<span class="sd">    &gt;&gt;&gt; labeling_file = &#39;./sample_data/model/labeling.json&#39;</span>
+<span class="sd">    &gt;&gt;&gt; labeling_file = &#39;./test/data/model/labeling.json&#39;</span>
 <span class="sd">    &gt;&gt;&gt; labeling = json.load(open(labeling_file, &#39;r&#39;))</span>
 <span class="sd">    &gt;&gt;&gt; distances = labeling[&#39;Distances&#39;]</span>
 <span class="sd">    &gt;&gt;&gt; positions = labeling[&#39;Positions&#39;]</span>
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
 <span class="sd">    &gt;&gt;&gt; av_potential = mfm.structure.potential.potentials.AvPotential(distances=distances, positions=positions)</span>
-<span class="sd">    &gt;&gt;&gt; structure = mfm.structure.structure.Structure(&#39;/sample_data/model/HM_1FN5_Naming.pdb&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; structure = mfm.structure.structure.Structure(&#39;./test/data/model/HM_1FN5_Naming.pdb&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; av_potential.getChi2(structure)</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
