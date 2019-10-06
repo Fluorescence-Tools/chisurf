@@ -374,7 +374,7 @@ class Main(QtWidgets.QMainWindow):
         self.calculate_potential = mfm.tools.modelling.potential_enery.PotentialEnergyWidget()
         self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
 
-        self.pdb2label = mfm.tools.fps_json.pdb2labeling.PDB2Label()
+        self.pdb2label = mfm.tools.fps_json.label_structure.LabelStructure()
         self.actionPDB2Label.triggered.connect(self.pdb2label.show)
 
         self.structure2transfer = mfm.tools.traj2fret.gui.Structure2Transfer()

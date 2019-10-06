@@ -180,7 +180,7 @@
     <span class="n">routine</span> <span class="o">=</span> <span class="n">tables</span><span class="o">.</span><span class="n">StringCol</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="pq_photons"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.pq_photons">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span>
+<div class="viewcode-block" id="pq_photons"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.pq_photons">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">pq_photons</span><span class="p">(</span>
         <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
         <span class="n">invert_tac</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
@@ -212,36 +212,34 @@
             <span class="n">tac</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">b3</span> <span class="o">&amp;</span> <span class="mi">15</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span> <span class="o">|</span> <span class="n">b2</span><span class="p">)</span>
             <span class="n">ovfl</span> <span class="o">=</span> <span class="n">ov</span> <span class="o">*</span> <span class="mi">65536</span>
             <span class="n">mt</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">b1</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span> <span class="o">|</span><span class="n">b0</span><span class="p">)</span> <span class="o">+</span> <span class="n">ovfl</span><span class="p">)</span>
-
             <span class="k">if</span> <span class="p">(</span><span class="n">inv</span> <span class="o">==</span> <span class="mi">15</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(((</span><span class="n">b3</span> <span class="o">&amp;</span> <span class="mi">15</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span> <span class="o">|</span> <span class="n">b2</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
                 <span class="n">can</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">b3</span> <span class="o">&amp;</span> <span class="mi">15</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span> <span class="o">|</span> <span class="n">b2</span><span class="p">)</span><span class="o">+</span><span class="mi">64</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">can</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">b3</span> <span class="o">&amp;</span> <span class="mi">240</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">4</span><span class="p">)</span>
-
             <span class="n">g</span> <span class="o">+=</span> <span class="mi">1</span>
 
     <span class="k">return</span> <span class="n">g</span><span class="p">,</span> <span class="n">mt</span><span class="p">,</span> <span class="n">tac</span><span class="p">,</span> <span class="n">can</span></div>
 
 
-<div class="viewcode-block" id="bh132_photons"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.bh132_photons">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span>
+<div class="viewcode-block" id="bh132_photons"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.bh132_photons">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">bh132_photons</span><span class="p">(</span>
-        <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
-        <span class="n">invert_tac</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
     <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
     <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
     <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
     <span class="n">np</span><span class="o">.</span><span class="n">array</span>
 <span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;Get the macros-time, micro-time and the routing channel number of a BH132-file contained in a</span>
-<span class="sd">    binary numpy-array of 8-bit chars.</span>
+    <span class="sd">&quot;&quot;&quot;Get the macros-time, micro-time and the routing channel number of a</span>
+<span class="sd">    BH132-file contained in a binary numpy-array of 8-bit chars.</span>
 
 <span class="sd">    :param b: numpy-array</span>
 <span class="sd">        a numpy array of chars containing the binary information of a</span>
 <span class="sd">        BH132-file</span>
 <span class="sd">    :return: list</span>
-<span class="sd">        a list containing the number of photons, numpy-array of macros-time (64-bit unsigned integers),</span>
-<span class="sd">        numpy-array of TAC-values (32-bit unsigned integers), numpy-array of channel numbers (8-bit unsigned integers)</span>
+<span class="sd">        a list containing the number of photons, numpy-array of macros-time</span>
+<span class="sd">        (64-bit unsigned integers), numpy-array of TAC-values (32-bit unsigned</span>
+<span class="sd">        integers), numpy-array of channel numbers (8-bit unsigned integers)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">4</span><span class="p">)</span> <span class="o">//</span> <span class="mi">4</span>
     <span class="n">event</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
@@ -266,7 +264,7 @@
             <span class="k">if</span> <span class="n">inv</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">mtov</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">ov</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">event</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="n">g</span>
-                <span class="n">tac</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">b3</span> <span class="o">&amp;</span> <span class="mh">0x0F</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span> <span class="o">|</span> <span class="n">b2</span>
+                <span class="n">tac</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4095</span> <span class="o">-</span> <span class="p">((</span><span class="n">b3</span> <span class="o">&amp;</span> <span class="mh">0x0F</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span> <span class="o">|</span> <span class="n">b2</span><span class="p">)</span>
                 <span class="n">ovfl</span> <span class="o">=</span> <span class="n">ov</span> <span class="o">*</span> <span class="mi">4096</span>
                 <span class="n">mt</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">b1</span> <span class="o">&amp;</span> <span class="mi">15</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span> <span class="o">|</span> <span class="n">b0</span><span class="p">)</span> <span class="o">+</span> <span class="n">ovfl</span>
                 <span class="n">can</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">b1</span> <span class="o">&amp;</span> <span class="mh">0xF0</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">4</span>
@@ -274,14 +272,10 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">inv</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">mtov</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                     <span class="n">ov</span> <span class="o">+=</span> <span class="p">((</span><span class="n">b3</span> <span class="o">&amp;</span> <span class="mi">15</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">24</span><span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="n">b2</span> <span class="o">&lt;&lt;</span> <span class="mi">16</span><span class="p">)</span> <span class="o">|</span> <span class="p">((</span><span class="n">b1</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="n">b0</span><span class="p">))</span>
-
-    <span class="k">if</span> <span class="n">invert_tac</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">g</span><span class="p">,</span> <span class="n">mt</span><span class="p">,</span> <span class="mi">4095</span> <span class="o">-</span> <span class="n">tac</span><span class="p">,</span> <span class="n">can</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">g</span><span class="p">,</span> <span class="n">mt</span><span class="p">,</span> <span class="n">tac</span><span class="p">,</span> <span class="n">can</span></div>
+    <span class="k">return</span> <span class="n">g</span><span class="p">,</span> <span class="n">mt</span><span class="p">,</span> <span class="n">tac</span><span class="p">,</span> <span class="n">can</span></div>
 
 
-<div class="viewcode-block" id="ht3_photons"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.ht3_photons">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span>
+<div class="viewcode-block" id="ht3_photons"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.ht3_photons">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">()</span>
 <span class="k">def</span> <span class="nf">ht3_photons</span><span class="p">(</span>
         <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
@@ -290,6 +284,11 @@
     <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
     <span class="n">np</span><span class="o">.</span><span class="n">array</span>
 <span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Processes the time-tagged entries of HT3 files.</span>
+
+<span class="sd">    :param b: A binary numpy array of the entries</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">//</span> <span class="mi">4</span>
     <span class="n">event</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
     <span class="n">mt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
@@ -319,16 +318,23 @@
     <span class="k">return</span> <span class="n">g</span><span class="p">,</span> <span class="n">mt</span><span class="p">,</span> <span class="n">tac</span><span class="p">,</span> <span class="n">can</span></div>
 
 
-<div class="viewcode-block" id="ht3_sf"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.ht3_sf">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span>
+<div class="viewcode-block" id="ht3_sf"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.ht3_sf">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">()</span>
 <span class="k">def</span> <span class="nf">ht3_sf</span><span class="p">(</span>
         <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
-        <span class="n">stage</span><span class="o">=</span><span class="mi">0</span>
+        <span class="n">stage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
     <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
     <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
     <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
     <span class="n">np</span><span class="o">.</span><span class="n">array</span>
 <span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Processes the time-tagged entries of HT3 files that was compressed</span>
+<span class="sd">    by Suren Felekyans HT3 conversion</span>
+
+<span class="sd">    :param b:</span>
+<span class="sd">    :param stage:</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">//</span> <span class="mi">4</span>
     <span class="n">event</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
     <span class="n">mt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
@@ -365,17 +371,16 @@
     <span class="k">return</span> <span class="n">nph</span><span class="p">,</span> <span class="n">mt</span><span class="p">,</span> <span class="n">tac</span><span class="p">,</span> <span class="n">can</span></div>
 
 
-
 <div class="viewcode-block" id="iss_16"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.iss_16">[docs]</a><span class="nd">@nb</span><span class="o">.</span><span class="n">jit</span><span class="p">()</span>
 <span class="k">def</span> <span class="nf">iss_16</span><span class="p">(</span>
         <span class="n">b</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">,</span>
-        <span class="n">can</span><span class="p">,</span>
-        <span class="n">tac</span><span class="p">,</span>
-        <span class="n">mt</span><span class="p">,</span>
-        <span class="n">length</span><span class="p">,</span>
-        <span class="n">step</span><span class="p">,</span>
-        <span class="n">phMode</span><span class="p">,</span>
-        <span class="n">offset</span>
+        <span class="n">can</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">tac</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">mt</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">phMode</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reading of ISS-photon format (fcs-measurements)</span>
@@ -437,7 +442,6 @@
 <span class="sd">    :param data:</span>
 <span class="sd">    :return:</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="c1">#Data is saved as 0: 16-bit or 1: 32-bit</span>
     <span class="k">if</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">k</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">phMode</span> <span class="k">else</span> <span class="mi">0</span>
@@ -489,8 +493,8 @@
 
 <span class="sd">    # CHANNEL PHOTON MODE (first 2 bytes)</span>
 <span class="sd">    # in brackets int values</span>
-<span class="sd">    # H (72)one channel time file_type, h (104) one channel photon file_type</span>
-<span class="sd">    # X (88) two channel time file_type, x (120) two channel photon file_type</span>
+<span class="sd">    # H (72)one channel time reading_routine, h (104) one channel photon reading_routine</span>
+<span class="sd">    # X (88) two channel time reading_routine, x (120) two channel photon reading_routine</span>
 
 <span class="sd">    :param data:</span>
 <span class="sd">    :param kwargs:</span>
@@ -500,18 +504,18 @@
     <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
     <span class="n">step</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">72</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">104</span><span class="p">)</span> <span class="k">else</span> <span class="mi">2</span>
 
-    <span class="c1">#  X (88) two channel time file_type, x (120) two channel photon file_type</span>
-    <span class="n">phMode</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">72</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">88</span><span class="p">)</span> <span class="k">else</span> <span class="mi">1</span>
+    <span class="c1">#  X (88) two channel time reading_routine, x (120) two channel photon reading_routine</span>
+    <span class="n">phMode</span> <span class="o">=</span> <span class="kc">False</span> <span class="k">if</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">72</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">88</span><span class="p">)</span> <span class="k">else</span> <span class="kc">True</span>
 
     <span class="c1">#  Data is saved as 0: 16-bit or 1: 32-bit</span>
     <span class="n">data_32</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="n">data_32</span><span class="p">:</span>
         <span class="n">b</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
-        <span class="n">offset</span> <span class="o">=</span> <span class="mi">256</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="mi">256</span> <span class="o">//</span> <span class="mi">2</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">b</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span>
-        <span class="n">offset</span> <span class="o">=</span> <span class="mi">256</span> <span class="o">/</span> <span class="mi">4</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="mi">256</span> <span class="o">//</span> <span class="mi">4</span>
 
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Ph-Mode (0/1):</span><span class="se">\t</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">phMode</span><span class="p">)</span>
@@ -527,10 +531,8 @@
     <span class="n">can</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">data_32</span><span class="p">:</span>
-        <span class="c1">#k = _tttrlib.iss_32(b, can, tac, mt, length, step, phMode, offset)</span>
         <span class="n">k</span> <span class="o">=</span> <span class="n">iss_32</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">can</span><span class="p">,</span> <span class="n">tac</span><span class="p">,</span> <span class="n">mt</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">phMode</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="c1">#k = _tttrlib.iss_16(b, can, tac, mt, length, step, phMode, offset)</span>
         <span class="n">k</span> <span class="o">=</span> <span class="n">iss_16</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">can</span><span class="p">,</span> <span class="n">tac</span><span class="p">,</span> <span class="n">mt</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">phMode</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">k</span><span class="p">,</span> <span class="n">mt</span><span class="p">[:</span><span class="n">k</span><span class="p">],</span> <span class="n">tac</span><span class="p">[:</span><span class="n">k</span><span class="p">],</span> <span class="n">can</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span></div>
@@ -571,6 +573,10 @@
 
 
 <div class="viewcode-block" id="make_hdf"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.make_hdf">[docs]</a><span class="k">def</span> <span class="nf">make_hdf</span><span class="p">(</span>
+        <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">,</span>
+        <span class="n">complib</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;photons&#39;</span><span class="p">][</span><span class="s1">&#39;complib&#39;</span><span class="p">],</span>
         <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -580,19 +586,28 @@
 <span class="sd">    :param kwargs:</span>
 <span class="sd">    :return: hdf-file handle (pytables)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">title</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;photons&#39;</span><span class="p">][</span><span class="s1">&#39;title&#39;</span><span class="p">]))</span>
-    <span class="n">filename</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;filename&#39;</span><span class="p">,</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="s2">&quot;.photons.h5&quot;</span><span class="p">))</span>
-    <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
-    <span class="n">complib</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;complib&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;photons&#39;</span><span class="p">][</span><span class="s1">&#39;complib&#39;</span><span class="p">]))</span>
-    <span class="n">complevel</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;complevel&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;photons&#39;</span><span class="p">][</span><span class="s1">&#39;complevel&#39;</span><span class="p">]))</span>
+    <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;photons&#39;</span><span class="p">][</span><span class="s1">&#39;title&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
+            <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.photons.h5&quot;</span>
+        <span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">complevel</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">cs_settings</span><span class="p">[</span><span class="s1">&#39;photons&#39;</span><span class="p">][</span><span class="s1">&#39;complevel&#39;</span><span class="p">]))</span>
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-------------------------------------------&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Make Photon HDF-File&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; Filename: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">filename</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-------------------------------------------&quot;</span><span class="p">)</span>
-
-    <span class="n">h5</span> <span class="o">=</span> <span class="n">tables</span><span class="o">.</span><span class="n">open_file</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">)</span>
-    <span class="n">filters</span> <span class="o">=</span> <span class="n">tables</span><span class="o">.</span><span class="n">Filters</span><span class="p">(</span><span class="n">complib</span><span class="o">=</span><span class="n">complib</span><span class="p">,</span> <span class="n">complevel</span><span class="o">=</span><span class="n">complevel</span><span class="p">)</span>
+    <span class="n">h5</span> <span class="o">=</span> <span class="n">tables</span><span class="o">.</span><span class="n">open_file</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;a&quot;</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="n">title</span>
+    <span class="p">)</span>
+    <span class="n">filters</span> <span class="o">=</span> <span class="n">tables</span><span class="o">.</span><span class="n">Filters</span><span class="p">(</span>
+        <span class="n">complib</span><span class="o">=</span><span class="n">complib</span><span class="p">,</span>
+        <span class="n">complevel</span><span class="o">=</span><span class="n">complevel</span>
+    <span class="p">)</span>
     <span class="n">h5</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="s1">&#39;Name of measurement: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">title</span><span class="p">)</span>
     <span class="n">h5</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">title</span><span class="p">,</span> <span class="s1">&#39;header&#39;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">Header</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">)</span>
     <span class="n">h5</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">title</span><span class="p">,</span> <span class="s1">&#39;photons&#39;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">Photon</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">)</span>
@@ -603,6 +618,9 @@
 <div class="viewcode-block" id="spc2hdf"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.tttr.spc2hdf">[docs]</a><span class="k">def</span> <span class="nf">spc2hdf</span><span class="p">(</span>
         <span class="n">spc_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">routine_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;bh132&quot;</span><span class="p">,</span>
+        <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;spc&quot;</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">,</span>
+        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -611,36 +629,35 @@
 <span class="sd">    :param spc_files: list</span>
 <span class="sd">        A list of spc-files</span>
 <span class="sd">    :param routine_name:</span>
-<span class="sd">        Name of the used reading routine by default &quot;bh132&quot; alternatively &quot;bh630_x48&quot;</span>
+<span class="sd">        Name of the used reading routine by default &quot;bh132&quot; alternatively</span>
+<span class="sd">        &quot;bh630_x48&quot;</span>
 <span class="sd">    :param verbose: bool</span>
 <span class="sd">        By default False</span>
+<span class="sd">    : param filename: str</span>
+<span class="sd">        If no filename is provided a temporary file will be created.</span>
 <span class="sd">    :param kwargs:</span>
-<span class="sd">        If the parameter &#39;filename&#39; is not provided only a temporary hdf (.h5) file is created</span>
-<span class="sd">        If the parameter &#39;title&#39; is provided the data is stored in the hdf-group provided by the parameter &#39;title.</span>
-<span class="sd">        Otherwise the default &#39;title&#39; spc is used to store the data within the HDF-File.</span>
+<span class="sd">        If the parameter &#39;filename&#39; is not provided only a temporary hdf (.h5)</span>
+<span class="sd">        file is created. If the parameter &#39;title&#39; is provided the data is</span>
+<span class="sd">        stored in the hdf-group provided by the parameter &#39;title.</span>
+<span class="sd">        Otherwise the default &#39;title&#39; spc is used to store the data within</span>
+<span class="sd">        the HDF-File.</span>
 <span class="sd">    :return: tables.file.File</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 <span class="sd">    If the HDF-File doesn&#39;t exist it will be created</span>
-
-<span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; import glob</span>
-<span class="sd">    &gt;&gt;&gt; directory = &quot;./sample_data/tttr/spc132/hGBP1_18D&quot;</span>
-<span class="sd">    &gt;&gt;&gt; spc_files = glob.glob(directory+&#39;/*.spc&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; h5 = mfm.io.photons.spc2hdf(spc_files, filename=&#39;test.h5&#39;, title=&#39;hGBP1_18D&#39;)</span>
-
 <span class="sd">    To an existing HDF-File simply a new group with the title will be created</span>
-
-<span class="sd">    &gt;&gt;&gt; h5 = mfm.io.photons.spc2hdf(spc_files, filename=&#39;test.h5&#39;, title=&#39;hGBP1_18D_2&#39;)</span>
-
 <span class="sd">    After finished work with the HDF-File it should be closed.</span>
 
+<span class="sd">    &gt;&gt;&gt; import mfm.io.tttr</span>
+<span class="sd">    &gt;&gt;&gt; import mfm.io.photons</span>
+<span class="sd">    &gt;&gt;&gt; import glob</span>
+<span class="sd">    &gt;&gt;&gt; spc_files = glob.glob(&#39;./test/data/tttr/BH/132/*.spc&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; h5 = mfm.io.tttr.spc2hdf(spc_files, filename=&#39;test.h5&#39;, title=&#39;hGBP1_18D&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; h5 = mfm.io.photons.spc2hdf(spc_files, filename=&#39;test.h5&#39;, title=&#39;hGBP1_18D_2&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; h5.close()</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
-    <span class="n">title</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">,</span> <span class="s2">&quot;spc&quot;</span><span class="p">)</span>
 
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spc_files</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="n">spc_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">spc_files</span><span class="p">]</span>
     <span class="n">read</span> <span class="o">=</span> <span class="n">filetypes</span><span class="p">[</span><span class="n">routine_name</span><span class="p">][</span><span class="s1">&#39;read&#39;</span><span class="p">]</span>
@@ -653,18 +670,23 @@
     <span class="n">spcs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 
     <span class="n">fn_ending</span> <span class="o">=</span> <span class="n">filetypes</span><span class="p">[</span><span class="n">routine_name</span><span class="p">][</span><span class="s1">&#39;ending&#39;</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">spc_file</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">spc_files</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span> <span class="o">+</span> <span class="n">fn_ending</span><span class="p">)):</span>
-        <span class="c1"># TODO: gzip files dont work</span>
-        <span class="k">with</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">zipped</span><span class="o">.</span><span class="n">open_maybe_zipped</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">spc_file</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">spc_file</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+            <span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">spc_files</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span> <span class="o">+</span> <span class="n">fn_ending</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="k">with</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">zipped</span><span class="o">.</span><span class="n">open_maybe_zipped</span><span class="p">(</span>
+                <span class="n">filename</span><span class="o">=</span><span class="n">spc_file</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
             <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
             <span class="n">header</span> <span class="o">=</span> <span class="n">read_header</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">routine_name</span><span class="p">)</span>
             <span class="n">nPh</span><span class="p">,</span> <span class="n">aMT</span><span class="p">,</span> <span class="n">aTAC</span><span class="p">,</span> <span class="n">aROUT</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
-            <span class="n">spc</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="n">spc_file</span><span class="p">,</span> <span class="s1">&#39;header&#39;</span><span class="p">:</span> <span class="n">header</span><span class="p">,</span>
-                   <span class="s1">&#39;photon&#39;</span><span class="p">:</span> <span class="p">{</span>
-                       <span class="s1">&#39;ROUT&#39;</span><span class="p">:</span> <span class="n">aROUT</span><span class="p">[:</span><span class="n">nPh</span><span class="p">],</span>
-                       <span class="s1">&#39;MT&#39;</span><span class="p">:</span> <span class="n">aMT</span><span class="p">[:</span><span class="n">nPh</span><span class="p">],</span>
-                       <span class="s1">&#39;TAC&#39;</span><span class="p">:</span> <span class="n">aTAC</span><span class="p">[:</span><span class="n">nPh</span><span class="p">]</span>
-                   <span class="p">}</span>
+            <span class="n">spc</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="n">spc_file</span><span class="p">,</span>
+                <span class="s1">&#39;header&#39;</span><span class="p">:</span> <span class="n">header</span><span class="p">,</span>
+                <span class="s1">&#39;photon&#39;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s1">&#39;ROUT&#39;</span><span class="p">:</span> <span class="n">aROUT</span><span class="p">[:</span><span class="n">nPh</span><span class="p">],</span>
+                    <span class="s1">&#39;MT&#39;</span><span class="p">:</span> <span class="n">aMT</span><span class="p">[:</span><span class="n">nPh</span><span class="p">],</span>
+                    <span class="s1">&#39;TAC&#39;</span><span class="p">:</span> <span class="n">aTAC</span><span class="p">[:</span><span class="n">nPh</span><span class="p">]</span>
+                <span class="p">}</span>
             <span class="p">}</span>
             <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;photon&#39;</span><span class="p">][</span><span class="s1">&#39;MT&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="n">spcs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;photon&#39;</span><span class="p">][</span><span class="s1">&#39;MT&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
             <span class="n">spcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spc</span><span class="p">)</span>
@@ -679,7 +701,12 @@
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; Total number of files: </span><span class="si">%i</span><span class="s2"> &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">spc_files</span><span class="p">)))</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;===========================================&quot;</span><span class="p">)</span>
 
-    <span class="n">h5</span> <span class="o">=</span> <span class="n">make_hdf</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">h5</span> <span class="o">=</span> <span class="n">make_hdf</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+        <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span>
     <span class="n">headertable</span> <span class="o">=</span> <span class="n">h5</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="n">title</span><span class="o">+</span><span class="s1">&#39;/header&#39;</span><span class="p">)</span>
     <span class="n">header</span> <span class="o">=</span> <span class="n">headertable</span><span class="o">.</span><span class="n">row</span>
     <span class="n">photontable</span> <span class="o">=</span> <span class="n">h5</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="n">title</span><span class="o">+</span><span class="s1">&#39;/photons&#39;</span><span class="p">)</span>
@@ -694,8 +721,17 @@
         <span class="n">header</span><span class="p">[</span><span class="s1">&#39;nTAC&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">nTAC</span>
         <span class="n">header</span><span class="o">.</span><span class="n">append</span><span class="p">()</span>
         <span class="c1"># Add Photons</span>
-        <span class="n">fileID</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">spc</span><span class="p">[</span><span class="s1">&#39;photon&#39;</span><span class="p">][</span><span class="s1">&#39;MT&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span> <span class="o">+</span> <span class="n">fileID</span>
-        <span class="n">photonA</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rec</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="n">fileID</span><span class="p">,</span> <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;photon&#39;</span><span class="p">][</span><span class="s1">&#39;MT&#39;</span><span class="p">],</span> <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;photon&#39;</span><span class="p">][</span><span class="s1">&#39;ROUT&#39;</span><span class="p">],</span> <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;photon&#39;</span><span class="p">][</span><span class="s1">&#39;TAC&#39;</span><span class="p">]))</span>
+        <span class="n">fileID</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;photon&#39;</span><span class="p">][</span><span class="s1">&#39;MT&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint16</span>
+        <span class="p">)</span> <span class="o">+</span> <span class="n">fileID</span>
+        <span class="n">photonA</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rec</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">fileID</span><span class="p">,</span>
+                <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;photon&#39;</span><span class="p">][</span><span class="s1">&#39;MT&#39;</span><span class="p">],</span>
+                <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;photon&#39;</span><span class="p">][</span><span class="s1">&#39;ROUT&#39;</span><span class="p">],</span>
+                <span class="n">spc</span><span class="p">[</span><span class="s1">&#39;photon&#39;</span><span class="p">][</span><span class="s1">&#39;TAC&#39;</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
         <span class="n">photontable</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">photonA</span><span class="p">)</span>
 
     <span class="n">photontable</span><span class="o">.</span><span class="n">cols</span><span class="o">.</span><span class="n">ROUT</span><span class="o">.</span><span class="n">create_index</span><span class="p">()</span>
@@ -726,7 +762,7 @@
 <span class="sd">    Reading Seidel-BID files</span>
 
 <span class="sd">    &gt;&gt;&gt; import glob, mfm</span>
-<span class="sd">    &gt;&gt;&gt; directory = &quot;./sample_data/tttr/spc132/hGBP1_18D&quot;</span>
+<span class="sd">    &gt;&gt;&gt; directory = &quot;./test/data/tttr/BH/hGBP1_18D&quot;</span>
 <span class="sd">    &gt;&gt;&gt; spc_files = glob.glob(directory+&#39;/*.spc&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; b = np.fromfile(spc_files[0], dtype=np.uint8)</span>
 <span class="sd">    &gt;&gt;&gt; header = mfm.io.photons.read_header(b, &#39;bh132&#39;)</span>
@@ -1026,7 +1062,9 @@
             <span class="n">version</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">sf</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">Struct</span><span class="p">(</span><span class="s1">&#39;32s i I q&#39;</span><span class="p">)</span>
             <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-                <span class="n">TagIdent</span><span class="p">,</span> <span class="n">TagIdx</span><span class="p">,</span> <span class="n">TagType</span><span class="p">,</span> <span class="n">TagValue</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">unpack_from</span><span class="p">(</span><span class="n">fp</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+                <span class="n">TagIdent</span><span class="p">,</span> <span class="n">TagIdx</span><span class="p">,</span> <span class="n">TagType</span><span class="p">,</span> <span class="n">TagValue</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">unpack_from</span><span class="p">(</span>
+                    <span class="n">fp</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">sf</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+                <span class="p">)</span>
                 <span class="n">TagIdent</span> <span class="o">=</span> <span class="n">TagIdent</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">TagIdx</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">TagIdent</span> <span class="o">+=</span> <span class="s1">&#39;(</span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="n">TagIdx</span>
@@ -1044,19 +1082,18 @@
 
             <span class="n">hw</span> <span class="o">=</span> <span class="n">tags</span><span class="p">[</span><span class="s1">&#39;TTResultFormat_TTTRRecType&#39;</span><span class="p">]</span>
             <span class="n">n_rec</span> <span class="o">=</span> <span class="n">tags</span><span class="p">[</span><span class="s2">&quot;TTResult_NumberOfRecords&quot;</span><span class="p">]</span>
-
             <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span>
-            <span class="n">fp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
             <span class="n">read</span> <span class="o">=</span> <span class="n">pq_hardware</span><span class="p">[</span><span class="n">hw</span><span class="p">][</span><span class="s1">&#39;read&#39;</span><span class="p">]</span>
             <span class="n">args</span> <span class="o">=</span> <span class="n">pq_hardware</span><span class="p">[</span><span class="n">hw</span><span class="p">][</span><span class="s1">&#39;args&#39;</span><span class="p">]</span>
             <span class="n">t3</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">n_rec</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span>
-            <span class="n">rt</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
-                      <span class="n">tags</span><span class="o">=</span><span class="n">tags</span><span class="p">,</span>
-                      <span class="n">special_bits</span><span class="o">=</span><span class="n">t3</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                      <span class="n">macro_time</span><span class="o">=</span><span class="n">t3</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
-                      <span class="n">micro_time</span><span class="o">=</span><span class="n">t3</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
-                      <span class="n">channel</span><span class="o">=</span><span class="n">t3</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+            <span class="n">rt</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span>
+                <span class="n">tags</span><span class="o">=</span><span class="n">tags</span><span class="p">,</span>
+                <span class="n">special_bits</span><span class="o">=</span><span class="n">t3</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">macro_time</span><span class="o">=</span><span class="n">t3</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">micro_time</span><span class="o">=</span><span class="n">t3</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                <span class="n">channel</span><span class="o">=</span><span class="n">t3</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
             <span class="p">)</span>
             <span class="k">return</span> <span class="n">rt</span>
         <span class="k">else</span><span class="p">:</span>

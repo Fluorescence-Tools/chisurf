@@ -161,7 +161,8 @@
 <span class="kn">import</span> <span class="nn">mdtraj</span> <span class="k">as</span> <span class="nn">md</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<span class="kn">import</span> <span class="nn">mfm.io.pdb</span>
+<span class="kn">import</span> <span class="nn">mfm.io</span>
+<span class="kn">import</span> <span class="nn">mfm.io.coordinates</span>
 <span class="kn">import</span> <span class="nn">mfm.base</span>
 
 <span class="n">clusterCriteria</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;maxclust&#39;</span><span class="p">,</span> <span class="s1">&#39;inconsistent&#39;</span><span class="p">,</span> <span class="s1">&#39;distance&#39;</span><span class="p">]</span>
@@ -173,16 +174,19 @@
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
 <span class="sd">    max_atom_residue : int</span>
-<span class="sd">        Maximum atoms per residue. The maximum atoms per residue have to be limited, because of the</span>
-<span class="sd">        residue/atom lookup tables. By default maximum 16 atoms per residue are allowed.</span>
+<span class="sd">        Maximum atoms per residue. The maximum atoms per residue have to be</span>
+<span class="sd">        limited, because of the residue/atom lookup tables. By default</span>
+<span class="sd">        maximum 16 atoms per residue are allowed.</span>
 
 <span class="sd">    xyz : numpy-array</span>
-<span class="sd">        The xyz-attribute is an array of the cartesian coordinates represented by the attribute atom</span>
+<span class="sd">        The xyz-attribute is an array of the cartesian coordinates represented</span>
+<span class="sd">        by the attribute atom</span>
 
 <span class="sd">    residue_names: list</span>
-<span class="sd">        residue names is a list of the residue-names. Here the residues are represented by the same</span>
-<span class="sd">        name as the initial PDB-file, usually 3-letter amino-acid code. The residue_names attribute</span>
-<span class="sd">        may look like: [&#39;TYR&#39;, &#39;HIS&#39;, &#39;ARG&#39;]</span>
+<span class="sd">        residue names is a list of the residue-names. Here the residues are</span>
+<span class="sd">        represented by the same name as the initial PDB-file, usually 3-letter</span>
+<span class="sd">        amino-acid code. The residue_names attribute may look like:</span>
+<span class="sd">        [&#39;TYR&#39;, &#39;HIS&#39;, &#39;ARG&#39;]</span>
 
 <span class="sd">    n_atoms: int</span>
 <span class="sd">        The number of atoms</span>
@@ -191,21 +195,23 @@
 <span class="sd">        An array of the b-factors.</span>
 
 <span class="sd">    radius_gyration: float</span>
-<span class="sd">        The attribute radius_gyration returns the radius of gyration of the structure. The radius of gyration</span>
-<span class="sd">        is given by: rG = (np.sqrt((coord - rM) ** 2).sum(axis=1)).mean()</span>
+<span class="sd">        The attribute radius_gyration returns the radius of gyration of the</span>
+<span class="sd">        structure. The radius of gyration is given by:</span>
+<span class="sd">        rG = (np.sqrt((coord - rM) ** 2).sum(axis=1)).mean()</span>
 <span class="sd">        Here rM are the mean coordinates of the structure.</span>
 
 
 <span class="sd">    :param filename: str</span>
 <span class="sd">        Path to the pdb file on disk</span>
 <span class="sd">    :param make_coarse: bool</span>
-<span class="sd">        Conversion to coarse representation using internal coordinates. Side-chains are</span>
-<span class="sd">        not considered. The Cbeta-atoms is moved to center of mass of the side-chain.</span>
+<span class="sd">        Conversion to coarse representation using internal coordinates.</span>
+<span class="sd">        Side-chains are not considered. The Cbeta-atoms is moved to center of</span>
+<span class="sd">        mass of the side-chain.</span>
 <span class="sd">    :param verbose: bool</span>
 <span class="sd">        print output to stdout</span>
 <span class="sd">    :param auto_update: bool</span>
-<span class="sd">        update cartesian-coordiantes automatically after change of internal coordinates.</span>
-<span class="sd">        This only applies for coarse-grained coordinates</span>
+<span class="sd">        update cartesian-coordiantes automatically after change of internal</span>
+<span class="sd">        coordinates. This only applies for coarse-grained coordinates</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
@@ -213,8 +219,8 @@
 <span class="sd">    &gt;&gt;&gt; import mfm.structure</span>
 <span class="sd">    &gt;&gt;&gt; structure = mfm.structure.structure.Structure(&#39;1dg3&#39;, verbose=True)</span>
 <span class="sd">    ======================================</span>
-<span class="sd">    Filename: ../sample_data/structure/HM_1FN5_Naming.pdb</span>
-<span class="sd">    Path: ../sample_data/structure</span>
+<span class="sd">    Filename: ../test/data/structure/HM_1FN5_Naming.pdb</span>
+<span class="sd">    Path: ../test/data/structure</span>
 <span class="sd">    Number of atoms: 9316</span>
 <span class="sd">    &gt;&gt;&gt; print(str(structure)[:324])</span>
 <span class="sd">    ATOM      1    N HIS A   6     -18.863  20.262  33.465  0.00  0.00             N</span>
@@ -240,9 +246,10 @@
             <span class="n">auto_update</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
             <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="n">pdb_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Structure</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">auto_update</span> <span class="o">=</span> <span class="n">auto_update</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="n">filename</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_atoms</span> <span class="o">=</span> <span class="kc">None</span>
@@ -250,28 +257,42 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_potentials</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sequence</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">io</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">io</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">coordinates</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pdbid</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pdb_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pdbid</span> <span class="o">=</span> <span class="n">pdb_id</span>
+            <span class="n">p_object</span> <span class="o">=</span> <span class="n">pdb_id</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">p_object</span> <span class="o">=</span> <span class="n">filename</span>
+
         <span class="c1">####################################################</span>
         <span class="c1">#              Load ATOM COORDINATES               #</span>
         <span class="c1">####################################################</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p_object</span><span class="p">,</span> <span class="n">Structure</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">p_object</span><span class="p">,</span>
+                <span class="n">Structure</span>
+        <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">p_object</span><span class="o">.</span><span class="n">atoms</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">p_object</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">p_object</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_atoms</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">p_object</span><span class="p">,</span>
+                <span class="nb">str</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">p_object</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_atoms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span>
                     <span class="n">p_object</span><span class="p">,</span>
                     <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span>
                 <span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">p_object</span>
-            <span class="k">except</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_object</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_atoms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">fetch_pdb</span><span class="p">(</span><span class="n">p_object</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">pdbid</span> <span class="o">=</span> <span class="n">p_object</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
@@ -297,7 +318,13 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_atoms</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_atoms</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;names&#39;</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb</span><span class="o">.</span><span class="n">keys</span><span class="p">,</span> <span class="s1">&#39;formats&#39;</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb</span><span class="o">.</span><span class="n">formats</span><span class="p">})</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="mi">1</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s1">&#39;names&#39;</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">coordinates</span><span class="o">.</span><span class="n">keys</span><span class="p">,</span>
+                    <span class="s1">&#39;formats&#39;</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">coordinates</span><span class="o">.</span><span class="n">formats</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
 
     <span class="nd">@atoms</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">atoms</span><span class="p">(</span>
@@ -404,10 +431,12 @@
             <span class="n">s</span><span class="o">.</span><span class="n">_atoms</span><span class="p">[</span><span class="n">ai</span><span class="p">][</span><span class="s1">&#39;bfactor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bi</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">radius_gyration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">radius_gyration</span><span class="p">(</span>
+            <span class="bp">self</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="n">coord</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xyz</span>
-        <span class="n">rM</span> <span class="o">=</span> <span class="n">coord</span><span class="p">[:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">rG</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">coord</span> <span class="o">-</span> <span class="n">rM</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">distance</span><span class="p">()</span>
+        <span class="n">rM</span> <span class="o">=</span> <span class="n">coord</span><span class="p">[:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">rG</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">coord</span> <span class="o">-</span> <span class="n">rM</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">rG</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Structure.append_potential"><a class="viewcode-back" href="../../../user_documentation/api/structure.html#mfm.structure.structure.Structure.append_potential">[docs]</a>    <span class="k">def</span> <span class="nf">append_potential</span><span class="p">(</span>
@@ -425,7 +454,7 @@
 <span class="sd">        --------</span>
 
 <span class="sd">        &gt;&gt;&gt; import mfm.structure</span>
-<span class="sd">        &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;, verbose=True)</span>
+<span class="sd">        &gt;&gt;&gt; structure = mfm.structure.Structure(&#39;./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb&#39;, verbose=True)</span>
 <span class="sd">        &gt;&gt;&gt; structure.append_potential(mfm.structure.potential.lennard_jones_calpha)</span>
 <span class="sd">        &gt;&gt;&gt; structure.energy</span>
 <span class="sd">        -948.0396693387753</span>
@@ -444,8 +473,9 @@
 
 <div class="viewcode-block" id="Structure.write"><a class="viewcode-back" href="../../../user_documentation/api/structure.html#mfm.structure.structure.Structure.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
-            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">kwargs</span>
+            <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">append_model</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="n">append_coordinates</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Write the structure to a filename. By default it uses PDB files</span>
@@ -454,14 +484,16 @@
 <span class="sd">        :param append_model: bool</span>
 <span class="sd">            If True the structure is appended to the filename as a new model otherwise the file is overwritten</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;filename&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">)</span>
-        <span class="n">append_model</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;append_model&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-        <span class="n">append_coordinates</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;append_coordinates&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">filename</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span>
         <span class="n">aw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="p">)</span>
         <span class="n">aw</span><span class="p">[</span><span class="s1">&#39;xyz&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xyz</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write_pdb</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">aw</span><span class="p">,</span> <span class="n">append_model</span><span class="o">=</span><span class="n">append_model</span><span class="p">,</span> <span class="n">append_coordinates</span><span class="o">=</span><span class="n">append_coordinates</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write_pdb</span><span class="p">(</span>
+            <span class="n">filename</span><span class="p">,</span>
+            <span class="n">aw</span><span class="p">,</span>
+            <span class="n">append_model</span><span class="o">=</span><span class="n">append_model</span><span class="p">,</span>
+            <span class="n">append_coordinates</span><span class="o">=</span><span class="n">append_coordinates</span>
+        <span class="p">)</span></div>
 
 <div class="viewcode-block" id="Structure.update"><a class="viewcode-back" href="../../../api/mfm.structure.html#mfm.structure.structure.Structure.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
@@ -542,7 +574,7 @@
 <span class="sd">    --------</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; times = mfm.TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
+<span class="sd">    &gt;&gt;&gt; times = mfm.TrajectoryFile(&#39;./test/data/structure/2807_8_9_b.h5&#39;, reading_routine=&#39;r&#39;, stride=1)</span>
 <span class="sd">    &gt;&gt;&gt; s1 = times[10]</span>
 <span class="sd">    &gt;&gt;&gt; s1</span>
 <span class="sd">    &lt;mfm.structure.structure.Structure at 0x135f3ad0&gt;</span>
@@ -612,7 +644,7 @@
 <span class="sd">    --------</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; times = times = mfm.TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
+<span class="sd">    &gt;&gt;&gt; times = times = mfm.TrajectoryFile(&#39;./test/data/structure/2807_8_9_b.h5&#39;, reading_routine=&#39;r&#39;, stride=1)</span>
 <span class="sd">    &gt;&gt;&gt; find_best(times.mdtraj, times.mdtraj[2])</span>
 <span class="sd">    (2, &lt;mdtraj.Trajectory with 1 frames, 2495 atoms, 164 residues, without unitcells at 0x13570b30&gt;)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -652,10 +684,10 @@
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
 <span class="sd">    &gt;&gt;&gt; pdb_file = models</span>
 <span class="sd">    &gt;&gt;&gt; pdb = mfm.io.pdb_file.read(pdb_file, verbose=True)</span>
-<span class="sd">    Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb</span>
+<span class="sd">    Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb</span>
 <span class="sd">    ======================================</span>
-<span class="sd">    Filename: ./sample_data/model/hgbp1/hGBP1_closed.pdb</span>
-<span class="sd">    Path: ./sample_data/model/hgbp1</span>
+<span class="sd">    Filename: ./test/data/model/hgbp1/hGBP1_closed.pdb</span>
+<span class="sd">    Path: ./test/data/model/hgbp1</span>
 <span class="sd">    Number of atoms: 9316</span>
 <span class="sd">    --------------------------------------</span>
 <span class="sd">    &gt;&gt;&gt; mfm.tools.dye_diffusion.dye_diffusion.get_quencher_coordinates(pdb, {&#39;TRP&#39;: [&#39;CA&#39;]})</span>
@@ -698,10 +730,10 @@
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
 <span class="sd">    &gt;&gt;&gt; pdb_file = models</span>
 <span class="sd">    &gt;&gt;&gt; pdb = mfm.io.PDB.read(pdb_file, verbose=True)</span>
-<span class="sd">    Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb</span>
+<span class="sd">    Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb</span>
 <span class="sd">    ======================================</span>
-<span class="sd">    Filename: ./sample_data/model/hgbp1/hGBP1_closed.pdb</span>
-<span class="sd">    Path: ./sample_data/model/hgbp1</span>
+<span class="sd">    Filename: ./test/data/model/hgbp1/hGBP1_closed.pdb</span>
+<span class="sd">    Path: ./test/data/model/hgbp1</span>
 <span class="sd">    Number of atoms: 9316</span>
 <span class="sd">    --------------------------</span>
 
@@ -742,12 +774,12 @@
 <span class="sd">    --------</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; pdb_file = &#39;./sample_data/model/hgbp1/hGBP1_closed.pdb&#39;</span>
+<span class="sd">    &gt;&gt;&gt; pdb_file = &#39;./test/data/model/hgbp1/hGBP1_closed.pdb&#39;</span>
 <span class="sd">    &gt;&gt;&gt; pdb = mfm.io.PDB.read(pdb_file, verbose=True)</span>
-<span class="sd">    Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb</span>
+<span class="sd">    Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb</span>
 <span class="sd">    ======================================</span>
-<span class="sd">    Filename: ./sample_data/model/hgbp1/hGBP1_closed.pdb</span>
-<span class="sd">    Path: ./sample_data/model/hgbp1</span>
+<span class="sd">    Filename: ./test/data/model/hgbp1/hGBP1_closed.pdb</span>
+<span class="sd">    Path: ./test/data/model/hgbp1</span>
 <span class="sd">    Number of atoms: 9316</span>
 <span class="sd">    --------------------------</span>
 
@@ -812,7 +844,7 @@
 <span class="sd">    --------</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; times = mfm.structure.trajectory.TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
+<span class="sd">    &gt;&gt;&gt; times = mfm.structure.trajectory.TrajectoryFile(&#39;./test/data/structure/2807_8_9_b.h5&#39;, reading_routine=&#39;r&#39;, stride=1)</span>
 <span class="sd">    &gt;&gt;&gt; avg = times.average</span>
 <span class="sd">    &gt;&gt;&gt; avg</span>
 <span class="sd">    &lt;mfm.structure.structure.Structure at 0x117ff770&gt;</span>

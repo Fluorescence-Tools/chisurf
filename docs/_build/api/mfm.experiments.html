@@ -158,16 +158,11 @@
 <span id="mfm-experiments-fcs-module"></span><h2>mfm.experiments.fcs module<a class="headerlink" href="#module-mfm.experiments.fcs" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mfm.experiments.fcs.FCS">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.fcs.</code><code class="sig-name descname">FCS</code><span class="sig-paren">(</span><em class="sig-param">use_header=False</em>, <em class="sig-param">skiprows=0</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.reader.ExperimentReader</span></code>, <a class="reference internal" href="../user_documentation/api/widgets.html#mfm.io.widgets.CsvWidget" title="mfm.io.widgets.CsvWidget"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.io.widgets.CsvWidget</span></code></a></p>
-<dl class="attribute">
-<dt id="mfm.experiments.fcs.FCS.name">
-<code class="sig-name descname">name</code><em class="property"> = 'FCS'</em><a class="headerlink" href="#mfm.experiments.fcs.FCS.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.fcs.</code><code class="sig-name descname">FCS</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">use_header=False</em>, <em class="sig-param">experiment_reader='Kristine'</em>, <em class="sig-param">skiprows=0</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.reader.ExperimentReader</span></code></p>
 <dl class="method">
 <dt id="mfm.experiments.fcs.FCS.read">
-<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename: 'str' = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCS.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCS.read" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename: 'str' = None</em>, <em class="sig-param">verbose: 'bool' = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCS.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCS.read" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -184,30 +179,25 @@
 </dd></dl>
 
 <dl class="class">
-<dt id="mfm.experiments.fcs.FCSKristine">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.fcs.</code><code class="sig-name descname">FCSKristine</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCSKristine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCSKristine" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="mfm.io.html#mfm.io.ascii.Csv" title="mfm.io.ascii.Csv"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.io.ascii.Csv</span></code></a>, <a class="reference internal" href="#mfm.experiments.fcs.FCS" title="mfm.experiments.fcs.FCS"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.fcs.FCS</span></code></a></p>
-<dl class="attribute">
-<dt id="mfm.experiments.fcs.FCSKristine.name">
-<code class="sig-name descname">name</code><em class="property"> = 'Kristine'</em><a class="headerlink" href="#mfm.experiments.fcs.FCSKristine.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="mfm.experiments.fcs.FCSController">
+<em class="property">class </em><code class="sig-prename descclassname">mfm.experiments.fcs.</code><code class="sig-name descname">FCSController</code><span class="sig-paren">(</span><em class="sig-param">file_type='Kristine files (*.cor)'</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCSController"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCSController" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.experiments.reader.ExperimentReaderController</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">PyQt5.QtWidgets.QWidget</span></code></p>
+<dl class="method">
+<dt id="mfm.experiments.fcs.FCSController.filename">
+<em class="property">property </em><code class="sig-name descname">filename</code><a class="headerlink" href="#mfm.experiments.fcs.FCSController.filename" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
-<dt id="mfm.experiments.fcs.FCSKristine.read">
-<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename: 'str' = None</em>, <em class="sig-param">verbose: 'bool' = None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCSKristine.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCSKristine.read" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uses either the error provided by the correlator (4. column)
-or calculates the error based on the correlation curve,
-the aquisition time and the count-rate.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – </p></li>
-<li><p><strong>verbose</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>]) – </p></li>
-<li><p><strong>kwargs</strong> – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt id="mfm.experiments.fcs.FCSController.get_filename">
+<code class="sig-name descname">get_filename</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span> &#x2192; 'str'<a class="reference internal" href="../_modules/mfm/experiments/fcs.html#FCSController.get_filename"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.experiments.fcs.FCSController.get_filename" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
 </dd>
 </dl>
 </dd></dl>

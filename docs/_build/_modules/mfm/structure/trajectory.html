@@ -219,15 +219,17 @@
 <div class="viewcode-block" id="TrajectoryFile"><a class="viewcode-back" href="../../../user_documentation/api/structure.html#mfm.structure.trajectory.TrajectoryFile">[docs]</a><span class="k">class</span> <span class="nc">TrajectoryFile</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Base</span><span class="p">,</span> <span class="n">mdtraj</span><span class="o">.</span><span class="n">Trajectory</span><span class="p">):</span>
 
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Creates an Trajectory of mfm.structure.Structures given a HDF5-File using mdtraj.HDF5TrajectoryFile</span>
+<span class="sd">    Creates an Trajectory of mfm.structure.Structures given a HDF5-File using</span>
+<span class="sd">    mdtraj.HDF5TrajectoryFile</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 
 <span class="sd">    structure : string / mfm.structure.Structure</span>
 <span class="sd">        determines the topology</span>
-<span class="sd">        is either a string containing the filename of a PDB-File or an instance of mfm.structure.Structure()</span>
-<span class="sd">        Obligatory in write file_type, not needed in reading file_type</span>
+<span class="sd">        is either a string containing the filename of a PDB-File or an instance</span>
+<span class="sd">        of mfm.structure.Structure() Obligatory in write reading_routine, not</span>
+<span class="sd">        needed in reading reading_routine</span>
 
 <span class="sd">    filename_hdf : string</span>
 <span class="sd">        the filename of the HDF5-file</span>
@@ -240,8 +242,8 @@
 <span class="sd">        Only read every stride-th frame.</span>
 
 <span class="sd">    frame : integer or None</span>
-<span class="sd">        If frame is an integer only the frame number provided by the integer is loaded otherwise the whole trajectory</span>
-<span class="sd">        is loaded.</span>
+<span class="sd">        If frame is an integer only the frame number provided by the integer is</span>
+<span class="sd">        loaded otherwise the whole trajectory is loaded.</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
@@ -256,8 +258,8 @@
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
 <span class="sd">    &gt;&gt;&gt; import mfm.structure</span>
 <span class="sd">    &gt;&gt;&gt; from mfm.structure.trajectory import TrajectoryFile</span>
-<span class="sd">    &gt;&gt;&gt; s = mfm.structure.structure.Structure(&#39;./sample_data/modelling/trajectory/h5-file/T4L_Topology.pdb&#39;, verbose=True, make_coarse=False)</span>
-<span class="sd">    &gt;&gt;&gt; traj = mfm.structure.TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, s, file_type=&#39;w&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; s = mfm.structure.structure.Structure(&#39;./test/data/modelling/trajectory/h5-file/T4L_Topology.pdb&#39;, verbose=True, make_coarse=False)</span>
+<span class="sd">    &gt;&gt;&gt; traj = mfm.structure.TrajectoryFile(&#39;./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, s, reading_routine=&#39;w&#39;)</span>
 <span class="sd">    &gt;&gt;&gt; traj[0]</span>
 <span class="sd">    &lt;mfm.structure.structure.mfm.structure.Structure at 0x11f34e10&gt;</span>
 <span class="sd">    &gt;&gt;&gt; print(traj[0])</span>
@@ -272,7 +274,7 @@
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
 <span class="sd">    &gt;&gt;&gt; from mfm.structure.trajectory import TrajectoryFile</span>
-<span class="sd">    &gt;&gt;&gt; traj = TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
+<span class="sd">    &gt;&gt;&gt; traj = TrajectoryFile(&#39;./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, reading_routine=&#39;r&#39;, stride=1)</span>
 <span class="sd">    &gt;&gt;&gt; print(traj[0:3])</span>
 <span class="sd">    [&lt;mfm.structure.structure.mfm.structure.Structure at 0x1345d5d0&gt;,</span>
 <span class="sd">    &lt;mfm.structure.structure.mfm.structure.Structure at 0x1345d610&gt;,</span>
@@ -281,13 +283,13 @@
 <span class="sd">    Name of the trajectory</span>
 
 <span class="sd">    &gt;&gt;&gt; print(traj.name)</span>
-<span class="sd">    &#39;/ sample_data/ structure/ sample_data/ structure/ T4L_Trajectory.h5&#39;</span>
+<span class="sd">    &#39;/ data/ structure/ data/ structure/ T4L_Trajectory.h5&#39;</span>
 
 <span class="sd">    initialize with mdtraj.Trajectory</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
 <span class="sd">    &gt;&gt;&gt; from mfm.structure.trajectory import TrajectoryFile</span>
-<span class="sd">    &gt;&gt;&gt; traj = TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
+<span class="sd">    &gt;&gt;&gt; traj = TrajectoryFile(&#39;./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, reading_routine=&#39;r&#39;, stride=1)</span>
 <span class="sd">    &gt;&gt;&gt; t2 = TrajectoryFile(traj.mdtraj, filename=&#39;test.h5&#39;)</span>
 
 <span class="sd">    Attributes:</span>
@@ -320,7 +322,8 @@
 <span class="sd">        ----------</span>
 
 <span class="sd">        pdb_model : int</span>
-<span class="sd">            the models number of the pdb (optional argument). By default the first models in the PDB-File is used.</span>
+<span class="sd">            the models number of the pdb (optional argument). By default the</span>
+<span class="sd">            first models in the PDB-File is used.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
@@ -426,7 +429,8 @@
 <span class="sd">    def xyz(self):</span>
 <span class="sd">        &quot;&quot;&quot;Cartesian coordinates of each atom in each simulation frame</span>
 
-<span class="sd">        If the attribute :py:attribute:`.TrajectoryFile.invert` is True the oder of the trajectory is inverted</span>
+<span class="sd">        If the attribute :py:attribute:`.TrajectoryFile.invert` is True the </span>
+<span class="sd">        oder of the trajectory is inverted</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 <span class="sd">        if self.invert:</span>
 <span class="sd">            return self._xyz[::-1]</span>
@@ -505,7 +509,8 @@
     <span class="k">def</span> <span class="nf">rmsd_ref_state</span><span class="p">(</span>
             <span class="bp">self</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;The index (frame number) of the reference state used for the RMSD calculation</span>
+        <span class="sd">&quot;&quot;&quot;The index (frame number) of the reference state used for the RMSD</span>
+<span class="sd">        calculation</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rmsd_ref_state</span>
 
@@ -529,8 +534,9 @@
     <span class="k">def</span> <span class="nf">reference</span><span class="p">(</span>
             <span class="bp">self</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;The reference structure used for RMSD-calculation. This cannot be set directly but has to be set via the number</span>
-<span class="sd">        of the reference state :py:attribute`.rmsd_ref_state`</span>
+        <span class="sd">&quot;&quot;&quot;The reference structure used for RMSD-calculation. This cannot be</span>
+<span class="sd">        set directly but has to be set via the number of the reference state</span>
+<span class="sd">         :py:attribute`.rmsd_ref_state`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rmsd_ref_state</span> <span class="o">==</span> <span class="s1">&#39;average&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">average</span>
@@ -542,7 +548,8 @@
             <span class="bp">self</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The average structure (:py:class:`~mfm.structure.mfm.structure.Structure`) of the trajectory</span>
+<span class="sd">        The average structure (:py:class:`~mfm.structure.mfm.structure.Structure`)</span>
+<span class="sd">        of the trajectory</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="bp">self</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)])</span>
 
@@ -550,14 +557,15 @@
     <span class="k">def</span> <span class="nf">values</span><span class="p">(</span>
             <span class="bp">self</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;A 2D-numpy array containing the RMSD, dRMSD, energy and the chi2 values of the trajectory</span>
+        <span class="sd">&quot;&quot;&quot;A 2D-numpy array containing the RMSD, dRMSD, energy and the chi2</span>
+<span class="sd">        values of the trajectory</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
 
 <span class="sd">        &gt;&gt;&gt; import mfm</span>
 <span class="sd">        &gt;&gt;&gt; from mfm.structure.trajectory import TrajectoryFile</span>
-<span class="sd">        &gt;&gt;&gt; traj = TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
+<span class="sd">        &gt;&gt;&gt; traj = TrajectoryFile(&#39;./test/data/structure/2807_8_9_b.h5&#39;, reading_routine=&#39;r&#39;, stride=1)</span>
 <span class="sd">        &gt;&gt;&gt; traj</span>
 <span class="sd">        &lt;mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x117f3b70&gt;</span>
 <span class="sd">        &gt;&gt;&gt; traj.values</span>
@@ -586,7 +594,8 @@
             <span class="n">energy_fret</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
             <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Append a structure of type :py::class`mfm.mfm.structure.Structure` to the trajectory</span>
+        <span class="sd">&quot;&quot;&quot;Append a structure of type :py::class`mfm.mfm.structure.Structure`</span>
+<span class="sd">        to the trajectory</span>
 
 <span class="sd">        :param structure: mfm.structure.Structure</span>
 <span class="sd">        :param update_rmsd: bool</span>
@@ -595,14 +604,15 @@
 <span class="sd">        :param energy_fret: float</span>
 <span class="sd">            Energy of the FRET-potential</span>
 <span class="sd">        :param verbose: bool</span>
-<span class="sd">            By default True. If True energy, energy_fret, RMSD and dRMSD are printed to std-out.</span>
+<span class="sd">            By default True. If True energy, energy_fret, RMSD and dRMSD are</span>
+<span class="sd">            printed to std-out.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
 
 <span class="sd">        &gt;&gt;&gt; import mfm</span>
 <span class="sd">        &gt;&gt;&gt; from mfm.structure.trajectory import TrajectoryFile</span>
-<span class="sd">        &gt;&gt;&gt; traj = TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
+<span class="sd">        &gt;&gt;&gt; traj = TrajectoryFile(&#39;./test/data/structure/2807_8_9_b.h5&#39;, reading_routine=&#39;r&#39;, stride=1)</span>
 <span class="sd">        &gt;&gt;&gt; traj</span>
 <span class="sd">        &lt;mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x11762b70&gt;</span>
 <span class="sd">        &gt;&gt;&gt; t.append(traj[0])</span>
@@ -644,7 +654,7 @@
 <span class="sd">        Implements iterator</span>
 <span class="sd">        &gt;&gt;&gt; import mfm</span>
 <span class="sd">        &gt;&gt;&gt; from mfm.structure.trajectory import TrajectoryFile</span>
-<span class="sd">        &gt;&gt;&gt; traj = TrajectoryFile(&#39;./sample_data/structure/2807_8_9_b.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
+<span class="sd">        &gt;&gt;&gt; traj = TrajectoryFile(&#39;./test/data/structure/2807_8_9_b.h5&#39;, reading_routine=&#39;r&#39;, stride=1)</span>
 <span class="sd">        &gt;&gt;&gt; for s in traj:</span>
 <span class="sd">        &gt;&gt;&gt;     print(s)</span>
 <span class="sd">        [&lt;mfm.structure.structure.mfm.structure.Structure object at 0x12FAE330&gt;, &lt;mfm.structure.structure.mfm.structure.Structure object at 0x12FAE3B0&gt;, &lt;li</span>
@@ -668,7 +678,7 @@
 <span class="sd">        -------</span>
 
 <span class="sd">        &gt;&gt;&gt; import mfm</span>
-<span class="sd">        &gt;&gt;&gt; traj = mfm.structure.trajectory.TrajectoryFile(&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, file_type=&#39;r&#39;, stride=1)</span>
+<span class="sd">        &gt;&gt;&gt; traj = mfm.structure.trajectory.TrajectoryFile(&#39;./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;, reading_routine=&#39;r&#39;, stride=1)</span>
 <span class="sd">        &gt;&gt;&gt; s = str(traj.next())</span>
 <span class="sd">        &gt;&gt;&gt; print(s[:500])</span>
 <span class="sd">        ATOM      1    N MET A   1       7.332 -10.706 -15.034  0.00  0.00             N</span>

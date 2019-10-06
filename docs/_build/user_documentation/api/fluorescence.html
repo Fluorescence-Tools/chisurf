@@ -187,10 +187,11 @@
 <li><p><strong>correlation</strong> (<em>&lt;built-in function array&gt;</em>) – correlation amplitude</p></li>
 <li><p><strong>measurement_duration</strong> – measurement duration [s]</p></li>
 <li><p><strong>mean_count_rate</strong> – count-rate [kHz]</p></li>
-<li><p><strong>weight_type</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – weight type ‘type’ either ‘suren’ or ‘uniform’ for uniform weighting or Suren-weighting</p></li>
+<li><p><strong>weight_type</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – weight type ‘type’ either ‘suren’ or ‘uniform’ for</p></li>
 </ul>
 </dd>
 </dl>
+<p>uniform weighting or Suren-weighting</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>&lt;built-in function array&gt;</p>
@@ -261,23 +262,27 @@ replaced by zero-rates</p>
 
 <dl class="attribute">
 <dt id="mfm.fluorescence.general.calculate_fluorescence_decay">
-<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">calculate_fluorescence_decay</code><span class="sig-paren">(</span><em class="sig-param">lifetime_spectrum: 'np.array'</em>, <em class="sig-param">time_axis: 'np.array'</em>, <em class="sig-param">normalize: 'bool' = True</em><span class="sig-paren">)</span> &#x2192; '(np.array, np.array)'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#calculate_fluorescence_decay"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.calculate_fluorescence_decay" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">calculate_fluorescence_decay</code><span class="sig-paren">(</span><em class="sig-param">lifetime_spectrum: 'np.ndarray'</em>, <em class="sig-param">time_axis: 'np.ndarray'</em>, <em class="sig-param">normalize: 'bool' = True</em><span class="sig-paren">)</span> &#x2192; 'Tuple[np.ndarray, np.ndarray]'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#calculate_fluorescence_decay"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.calculate_fluorescence_decay" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts a interleaved lifetime spectrum into a intensity decay</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>lifetime_spectrum</strong> – interleaved lifetime spectrum</p></li>
-<li><p><strong>time_axis</strong> – time-axis</p></li>
-<li><p><strong>normalize</strong> – </p></li>
+<li><p><strong>lifetime_spectrum</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – interleaved lifetime spectrum</p></li>
+<li><p><strong>time_axis</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – time-axis</p></li>
+<li><p><strong>normalize</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">time_axis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.structure.structure</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">time_axis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./test/data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">donor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">344</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">acceptor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">496</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">donor_lifetime_spectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">])</span>
@@ -349,6 +354,26 @@ replaced by zero-rates</p>
 <li><p><strong>kappa2</strong> – a interleaved list of orientation factors (orientation factor spectrum)</p></li>
 <li><p><strong>forster_radius</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – </p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mfm.fluorescence.general.et">
+<code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">et</code><span class="sig-paren">(</span><em class="sig-param">fd0: 'np.ndarray'</em>, <em class="sig-param">fda: 'np.ndarray'</em><span class="sig-paren">)</span> &#x2192; 'np.ndarray'<a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#et"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.et" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the FRET induced donor decay</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fd0</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – the fluorescence decay of the donor in the absence of FRET</p></li>
+<li><p><strong>fda</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – the fluorescence decay of the donor in the presence of FRET</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
 </dd>
 </dl>
 </dd></dl>
@@ -455,7 +480,7 @@ on th lifetime spectrum</p></li>
 <dl class="function">
 <dt id="mfm.fluorescence.general.fretrate_to_distance">
 <code class="sig-prename descclassname">mfm.fluorescence.general.</code><code class="sig-name descname">fretrate_to_distance</code><span class="sig-paren">(</span><em class="sig-param">fretrate</em>, <em class="sig-param">forster_radius</em>, <em class="sig-param">tau0</em>, <em class="sig-param">kappa2=0.6666666666666666</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/fluorescence/general.html#fretrate_to_distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.fluorescence.general.fretrate_to_distance" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate the distance given a FRET-rate</p>
+<dd><p>Calculates the distance given a FRET-rate</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">

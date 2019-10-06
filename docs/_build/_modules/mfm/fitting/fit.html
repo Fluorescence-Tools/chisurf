@@ -447,7 +447,10 @@
                     <span class="n">filename</span><span class="o">=</span><span class="n">filename</span> <span class="o">+</span> <span class="s1">&#39;_data.json&#39;</span><span class="p">,</span>
                     <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;json&#39;</span>
                 <span class="p">)</span>
-                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_info.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">zipped</span><span class="o">.</span><span class="n">open_maybe_zipped</span><span class="p">(</span>
+                        <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_info.txt&#39;</span><span class="p">,</span>
+                        <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span>
+                <span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
                     <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="Fit.run"><a class="viewcode-back" href="../../../api/mfm.fitting.html#mfm.fitting.fit.Fit.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span>
