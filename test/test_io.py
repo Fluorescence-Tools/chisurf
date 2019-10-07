@@ -307,6 +307,21 @@ class Tests(unittest.TestCase):
                 d["dt"]
             )
 
+    def test_mmcif_read(self):
+        import mmcif.io.PdbxReader
+        import mfm.io.zipped
+        filename = "./data/atomic_coordinates/mmcif/1ffk.cif.gz"
+
+        data = []
+        with mfm.io.zipped.open_maybe_zipped(
+                filename=filename,
+                mode='r'
+        ) as fp:
+            reader = mmcif.io.PdbxReader.PdbxReader(fp)
+            reader.read(data)
+        #mfm.io.coordinates.keys
+        #atoms = data[0]['atom_site']
+
 
 if __name__ == '__main__':
     unittest.main()

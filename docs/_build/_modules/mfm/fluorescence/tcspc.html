@@ -196,18 +196,19 @@
         <span class="n">y</span><span class="p">,</span>
         <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span>
         <span class="n">area</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.999</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Determines the fitting range based on the total number of photons to be fitted (fitting area).</span>
+<span class="sd">    Determines the fitting range based on the total number of photons to be</span>
+<span class="sd">    fitted (fitting area).</span>
 
 <span class="sd">    :param y: numpy-array</span>
 <span class="sd">        a numpy array containing the photon counts</span>
 <span class="sd">    :param threshold: float</span>
-<span class="sd">        a threshold value. Lowest index of the fitting range is the first encountered bin with a photon count</span>
-<span class="sd">        higher than the threshold.</span>
+<span class="sd">        a threshold value. Lowest index of the fitting range is the first</span>
+<span class="sd">        encountered bin with a photon count higher than the threshold.</span>
 <span class="sd">    :param area: float</span>
-<span class="sd">        The area which should be considered for fitting. Here 1.0 corresponds to all measured photons. 0.9 to 90%</span>
-<span class="sd">        of the total measured photons.</span>
+<span class="sd">        The area which should be considered for fitting. Here 1.0 corresponds</span>
+<span class="sd">        to all measured photons. 0.9 to 90% of the total measured photons.</span>
 <span class="sd">    :return:</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">xmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">y</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>

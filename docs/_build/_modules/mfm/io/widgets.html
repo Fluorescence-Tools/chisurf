@@ -151,10 +151,12 @@
 <span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span> <span class="n">QtWidgets</span><span class="p">,</span> <span class="n">uic</span>
+<span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span> <span class="n">QtWidgets</span>
 
 <span class="kn">import</span> <span class="nn">mfm</span>
-<span class="kn">from</span> <span class="nn">mfm.structure.structure</span> <span class="k">import</span> <span class="n">Structure</span>
+<span class="kn">import</span> <span class="nn">mfm.decorators</span>
+<span class="kn">import</span> <span class="nn">mfm.base</span>
+<span class="kn">import</span> <span class="nn">mfm.structure.structure</span>
 <span class="kn">import</span> <span class="nn">mfm.widgets</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">photons</span>
@@ -165,24 +167,16 @@
     <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span>
 <span class="p">):</span>
 
+    <span class="nd">@mfm</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">init_with_ui</span><span class="p">(</span><span class="n">ui_filename</span><span class="o">=</span><span class="s2">&quot;spcSampleSelectWidget.ui&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
             <span class="o">*</span><span class="n">args</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span>
-                <span class="s2">&quot;spcSampleSelectWidget.ui&quot;</span>
-            <span class="p">),</span>
-            <span class="bp">self</span>
-        <span class="p">)</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">_photons</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">filetypes</span> <span class="o">=</span> <span class="n">tttr</span><span class="o">.</span><span class="n">filetypes</span>
-
+        <span class="c1"># Actions</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">actionSample_changed</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onSampleChanged</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">actionLoad_sample</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onLoadSample</span><span class="p">)</span>
         <span class="c1">#self.connect(self.comboBox_2, QtCore.SIGNAL(&quot;currentIndexChanged(int)&quot;), self.onFileTypeChanged)</span>
@@ -306,7 +300,7 @@
         <span class="c1">#    self.comboBox.setDisabled(True)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">fileType</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">file_type</span><span class="p">(</span>
             <span class="bp">self</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;hdf&quot;</span>
@@ -322,27 +316,39 @@
             <span class="k">return</span> <span class="s2">&quot;--&quot;</span>
 
 <div class="viewcode-block" id="SpcFileWidget.onLoadSample"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.widgets.SpcFileWidget.onLoadSample">[docs]</a>    <span class="k">def</span> <span class="nf">onLoadSample</span><span class="p">(</span>
-            <span class="bp">self</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">event</span><span class="p">,</span>
+            <span class="n">filenames</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">file_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileType</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;hdf&quot;</span><span class="p">):</span>
-            <span class="n">filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">get_filename</span><span class="p">(</span>
-                <span class="s1">&#39;Open Photon-HDF&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;Photon-HDF (*.photon.h5)&#39;</span>
-            <span class="p">)</span>
-            <span class="n">filenames</span> <span class="o">=</span> <span class="p">[</span><span class="n">filename</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_2</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileType</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;ht3&quot;</span><span class="p">):</span>
-            <span class="n">filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">open_file</span><span class="p">(</span>
-                <span class="s1">&#39;Open Photon-HDF&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;Photon-HDF (*.ht3)&#39;</span>
-            <span class="p">)</span>
-            <span class="n">filenames</span> <span class="o">=</span> <span class="p">[</span><span class="n">filename</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">directory</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">get_directory</span><span class="p">()</span>
-            <span class="n">filenames</span> <span class="o">=</span> <span class="p">[</span><span class="n">directory</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">directory</span><span class="p">)]</span>
 
+        <span class="k">if</span> <span class="n">file_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">file_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_type</span>
+        <span class="k">if</span> <span class="n">filenames</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">file_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;hdf&quot;</span><span class="p">):</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">get_filename</span><span class="p">(</span>
+                    <span class="s1">&#39;Open Photon-HDF&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;Photon-HDF (*.photon.h5)&#39;</span>
+                <span class="p">)</span>
+                <span class="n">filenames</span> <span class="o">=</span> <span class="p">[</span><span class="n">filename</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">file_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;ht3&quot;</span><span class="p">):</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">get_filename</span><span class="p">(</span>
+                    <span class="s1">&#39;Open Photon-HDF&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;Photon-HDF (*.ht3)&#39;</span>
+                <span class="p">)</span>
+                <span class="n">filenames</span> <span class="o">=</span> <span class="p">[</span><span class="n">filename</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">directory</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">get_directory</span><span class="p">()</span>
+                <span class="n">filenames</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">directory</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+                <span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_2</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">filenames</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span> <span class="o">=</span> <span class="n">filenames</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_photons</span> <span class="o">=</span> <span class="n">photons</span><span class="o">.</span><span class="n">Photons</span><span class="p">(</span><span class="n">filenames</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileType</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_photons</span> <span class="o">=</span> <span class="n">photons</span><span class="o">.</span><span class="n">Photons</span><span class="p">(</span>
+            <span class="n">filenames</span><span class="p">,</span>
+            <span class="n">file_type</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_photons</span><span class="o">.</span><span class="n">samples</span>
         <span class="c1">#self.comboBox.addItems(self._photons.sample_names)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">onSampleChanged</span><span class="p">()</span></div>
@@ -356,16 +362,8 @@
 
 <div class="viewcode-block" id="PDBLoad"><a class="viewcode-back" href="../../../user_documentation/api/widgets.html#mfm.io.widgets.PDBLoad">[docs]</a><span class="k">class</span> <span class="nc">PDBLoad</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">PDBLoad</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span>
-                <span class="s2">&quot;proteinMCLoad.ui&quot;</span>
-            <span class="p">),</span>
-            <span class="bp">self</span>
-        <span class="p">)</span>
-
+    <span class="nd">@mfm</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">init_with_ui</span><span class="p">(</span><span class="n">ui_filename</span><span class="o">=</span><span class="s2">&quot;proteinMCLoad.ui&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
 
@@ -405,103 +403,49 @@
 
 
 <div class="viewcode-block" id="CsvWidget"><a class="viewcode-back" href="../../../user_documentation/api/widgets.html#mfm.io.widgets.CsvWidget">[docs]</a><span class="k">class</span> <span class="nc">CsvWidget</span><span class="p">(</span>
+    <span class="n">mfm</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Base</span><span class="p">,</span>
     <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span>
 <span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span>
-                <span class="s2">&quot;csvInput.ui&quot;</span>
-            <span class="p">),</span>
-            <span class="bp">self</span>
+    <span class="nd">@mfm</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">init_with_ui</span><span class="p">(</span><span class="n">ui_filename</span><span class="o">=</span><span class="s2">&quot;csvInput.ui&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actionUseHeader</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">changeCsvParameter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actionSkiprows</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">changeCsvParameter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actionColspecs</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">changeCsvParameter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actionCsvType</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">changeCsvParameter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actionSetError</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">changeCsvParameter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actionColumnsChanged</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">changeCsvParameter</span>
         <span class="p">)</span>
-        <span class="c1">#Csv.__init__(self, **kwargs)</span>
-        <span class="c1">#self.connect(self.spinBox, QtCore.SIGNAL(&quot;valueChanged(int)&quot;), self.reload_csv)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">actionUseHeader</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">changeUseHeader</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">actionSkiprows</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">changeSkiprows</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">actionColspecs</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">changeColspecs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">actionCsvType</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">changeCsvType</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">actionSetError</span><span class="o">.</span><span class="n">triggered</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">changeError</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">col_ex</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_3</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">()</span>
-
-    <span class="nd">@col_ex</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">col_ex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="k">pass</span>
-
-<div class="viewcode-block" id="CsvWidget.changeError"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.widgets.CsvWidget.changeError">[docs]</a>    <span class="k">def</span> <span class="nf">changeError</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CsvWidget.changeCsvParameter"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.widgets.CsvWidget.changeCsvParameter">[docs]</a>    <span class="k">def</span> <span class="nf">changeCsvParameter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">set_errx_on</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_3</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span>
         <span class="n">set_erry_on</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_4</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span>
-
-        <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;cs.current_setup.error_x_on = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">set_errx_on</span><span class="p">)</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;cs.current_setup.error_y_on = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">set_erry_on</span><span class="p">)</span></div>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">x_on</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="o">.</span><span class="n">isChecked</span><span class="p">()</span>
-
-    <span class="nd">@x_on</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">x_on</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span>
-            <span class="n">v</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">checkBox</span><span class="o">.</span><span class="n">setChecked</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">col_x</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">()</span>
-
-    <span class="nd">@col_x</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">col_x</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span>
-            <span class="n">v</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">):</span>
-        <span class="c1"># TODO</span>
-        <span class="k">pass</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">col_y</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">()</span>
-
-    <span class="nd">@col_y</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">col_y</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span>
-            <span class="n">v</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">):</span>
-        <span class="c1"># TODO</span>
-        <span class="k">pass</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ascii</span><span class="o">.</span><span class="n">Csv</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fget</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-
-    <span class="nd">@data</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ascii</span><span class="o">.</span><span class="n">Csv</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_9</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-        <span class="n">bx</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">comboBox</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_3</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">comboBox_4</span><span class="p">]</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_rows</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bx</span><span class="p">):</span>
-                <span class="n">b</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-                <span class="n">b</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">header</span><span class="p">)</span>
-                <span class="n">b</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="n">i</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_rows</span><span class="p">)</span>
-
-<div class="viewcode-block" id="CsvWidget.changeSkiprows"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.widgets.CsvWidget.changeSkiprows">[docs]</a>    <span class="k">def</span> <span class="nf">changeSkiprows</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">n_skip</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;cs.current_setup.skiprows = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">n_skip</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="CsvWidget.changeUseHeader"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.widgets.CsvWidget.changeUseHeader">[docs]</a>    <span class="k">def</span> <span class="nf">changeUseHeader</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">use_header</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_2</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;cs.current_setup.use_header = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">use_header</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="CsvWidget.changeColspecs"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.widgets.CsvWidget.changeColspecs">[docs]</a>    <span class="k">def</span> <span class="nf">changeColspecs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">colspecs</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lineEdit</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;cs.current_setup.colspecs = &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">colspecs</span><span class="p">)</span></div>
+        <span class="n">use_header</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkBox_2</span><span class="o">.</span><span class="n">isChecked</span><span class="p">())</span>
+        <span class="n">n_skip</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spinBox</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;csv&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">radioButton_2</span><span class="o">.</span><span class="n">isChecked</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;fwf&#39;</span>
+        <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="s2">&quot;cs.current_setup.error_y_on = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">set_erry_on</span><span class="p">,</span>
+                    <span class="s2">&quot;cs.current_setup.error_x_on = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">set_errx_on</span><span class="p">,</span>
+                    <span class="s2">&quot;cs.current_setup.colspecs = &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">colspecs</span><span class="p">,</span>
+                    <span class="s2">&quot;cs.current_setup.use_header = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">use_header</span><span class="p">,</span>
+                    <span class="s2">&quot;cs.current_setup.skiprows = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">n_skip</span><span class="p">,</span>
+                    <span class="s2">&quot;cs.current_setup.reading_routine = &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">mode</span><span class="p">,</span>
+                    <span class="s2">&quot;cs.current_setup.col_ey = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">spinBox_5</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span>
+                    <span class="s2">&quot;cs.current_setup.col_ex = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">spinBox_3</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span>
+                    <span class="s2">&quot;cs.current_setup.col_x = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">spinBox_2</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span>
+                    <span class="s2">&quot;cs.current_setup.col_y = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">spinBox_4</span><span class="o">.</span><span class="n">value</span><span class="p">()</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">filename</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -512,56 +456,58 @@
             <span class="bp">self</span><span class="p">,</span>
             <span class="n">v</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">):</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ascii</span><span class="o">.</span><span class="n">Csv</span><span class="o">.</span><span class="n">filename</span><span class="o">.</span><span class="n">fset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_8</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-
-<div class="viewcode-block" id="CsvWidget.changeCsvType"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.widgets.CsvWidget.changeCsvType">[docs]</a>    <span class="k">def</span> <span class="nf">changeCsvType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;csv&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">radioButton_2</span><span class="o">.</span><span class="n">isChecked</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;fwf&#39;</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;cs.current_setup.file_type = &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">mode</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="CsvWidget.load"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.widgets.CsvWidget.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">filename</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">get_filename</span><span class="p">(</span><span class="s1">&#39;Open CSV-File&#39;</span><span class="p">,</span> <span class="s1">&#39;CSV-file (*.*)&#39;</span><span class="p">)</span>
-        <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ascii</span><span class="o">.</span><span class="n">Csv</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lineEdit_8</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="CSVFileWidget"><a class="viewcode-back" href="../../../user_documentation/api/widgets.html#mfm.io.widgets.CSVFileWidget">[docs]</a><span class="k">class</span> <span class="nc">CSVFileWidget</span><span class="p">(</span><span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+<span class="c1"># To be deleted</span>
+<span class="c1">#</span>
+<span class="c1"># class CSVFileWidget(QtWidgets.QWidget):</span>
+<span class="c1">#</span>
+<span class="c1">#     def __init__(</span>
+<span class="c1">#             self,</span>
+<span class="c1">#             *args,</span>
+<span class="c1">#             **kwargs</span>
+<span class="c1">#     ):</span>
+<span class="c1">#         super().__init__(</span>
+<span class="c1">#             *args,</span>
+<span class="c1">#             **kwargs</span>
+<span class="c1">#         )</span>
+<span class="c1">#</span>
+<span class="c1">#         layout = QtWidgets.QVBoxLayout(self)</span>
+<span class="c1">#         layout.setSpacing(0)</span>
+<span class="c1">#         layout.setContentsMargins(0, 0, 0, 0)</span>
+<span class="c1">#</span>
+<span class="c1">#         self.layout = layout</span>
+<span class="c1">#         self.csvWidget = CsvWidget(**kwargs)</span>
+<span class="c1">#         self.layout.addWidget(self.csvWidget)</span>
+<span class="c1">#</span>
+<span class="c1">#     def load_data(</span>
+<span class="c1">#             self,</span>
+<span class="c1">#             filename: str = None</span>
+<span class="c1">#     ) -&gt; mfm.experiment.data.DataCurve:</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         Loads csv-data into a Curve-object</span>
+<span class="c1">#         :param filename:</span>
+<span class="c1">#         :return: Curve-object</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         d = mfm.experiment.data.DataCurve(setup=None)</span>
+<span class="c1">#         if filename is not None:</span>
+<span class="c1">#             self.csvWidget.load(filename)</span>
+<span class="c1">#             d.filename = filename</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             self.csvWidget.load()</span>
+<span class="c1">#             d.filename = self.csvWidget.filename</span>
+<span class="c1">#</span>
+<span class="c1">#         d.x, d.y = self.csvWidget.data_x, self.csvWidget.data_y</span>
+<span class="c1">#         if self.weight_calculation is None:</span>
+<span class="c1">#             d.set_weights(self.csvWidget.error_y)</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             d.set_weights(self.weight_calculation(d.y))</span>
+<span class="c1">#         return d</span>
+<span class="c1">#</span>
+<span class="c1">#     def get_data(self, *args, **kwargs):</span>
+<span class="c1">#         return self.load_data(*args, **kwargs)</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;parent&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;CSV-File&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">weight_calculation</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;weight_calculation&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-
-        <span class="n">layout</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">layout</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">csvWidget</span> <span class="o">=</span> <span class="n">CsvWidget</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">csvWidget</span><span class="p">)</span>
-
-<div class="viewcode-block" id="CSVFileWidget.load_data"><a class="viewcode-back" href="../../../user_documentation/api/widgets.html#mfm.io.widgets.CSVFileWidget.load_data">[docs]</a>    <span class="k">def</span> <span class="nf">load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Loads csv-data into a Curve-object</span>
-<span class="sd">        :param filename:</span>
-<span class="sd">        :return: Curve-object</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataCurve</span><span class="p">(</span><span class="n">setup</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">csvWidget</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-            <span class="n">d</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">csvWidget</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
-            <span class="n">d</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">csvWidget</span><span class="o">.</span><span class="n">filename</span>
-
-        <span class="n">d</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">csvWidget</span><span class="o">.</span><span class="n">data_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">csvWidget</span><span class="o">.</span><span class="n">data_y</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_calculation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">d</span><span class="o">.</span><span class="n">set_weights</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">csvWidget</span><span class="o">.</span><span class="n">error_y</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">d</span><span class="o">.</span><span class="n">set_weights</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weight_calculation</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">d</span></div>
-
-<div class="viewcode-block" id="CSVFileWidget.get_data"><a class="viewcode-back" href="../../../api/mfm.io.html#mfm.io.widgets.CSVFileWidget.get_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
 </pre></div>
 
            </div>

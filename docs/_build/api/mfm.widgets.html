@@ -217,38 +217,18 @@
 <dl class="method">
 <dt id="mfm.widgets.widgets.QIPythonWidget.execute">
 <code class="sig-name descname">execute</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">*args</em>, <em class="sig-param">hidden: 'bool' = False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/widgets/widgets.html#QIPythonWidget.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.widgets.widgets.QIPythonWidget.execute" title="Permalink to this definition">¶</a></dt>
-<dd><p>Executes source or the input buffer, possibly prompting for more
-input.</p>
-<dl class="field-list simple">
+<dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>source</strong><span class="classifier">str, optional</span></dt><dd><p>The source to execute. If not specified, the input buffer will be
-used. If specified and ‘hidden’ is False, the input buffer will be
-replaced with the source before execution.</p>
-</dd>
-<dt><strong>hidden</strong><span class="classifier">bool, optional (default False)</span></dt><dd><p>If set, no output will be shown and the prompt will not be modified.
-In other words, it will be completely invisible to the user that
-an execution has occurred.</p>
-</dd>
-<dt><strong>interactive</strong><span class="classifier">bool, optional (default False)</span></dt><dd><p>Whether the console is to treat the source as having been manually
-entered by the user. The effect of this parameter depends on the
-subclass implementation.</p>
+<dd class="field-odd"><p><strong>source</strong> – the source code that is executed via the command line</p>
 </dd>
 </dl>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>A boolean indicating whether the source was executed.</dt><dd></dd>
-</dl>
-</dd>
-<dt class="field-odd">Raises</dt>
-<dd class="field-odd"><dl class="simple">
-<dt>RuntimeError</dt><dd><p>If incomplete input is given and ‘hidden’ is True. In this case,
-it is not possible to prompt for more input.</p>
-</dd>
-</dl>
-</dd>
-</dl>
+<p>interface.
+:param args:
+:type hidden: <code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>
+:param hidden: if hidden is True the execution is neither recorded in
+the session file nor displayed in the execution history widget
+:param kwargs:
+:return:</p>
 </dd></dl>
 
 <dl class="method">
@@ -283,7 +263,8 @@ it is not possible to prompt for more input.</p>
 <dl class="method">
 <dt id="mfm.widgets.widgets.QIPythonWidget.pushVariables">
 <code class="sig-name descname">pushVariables</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">variableDict</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/widgets/widgets.html#QIPythonWidget.pushVariables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.widgets.widgets.QIPythonWidget.pushVariables" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given a dictionary containing name / value pairs, push those variables to the IPython console widget</p>
+<dd><p>Given a dictionary containing name / value pairs, push those
+variables to the IPython console widget</p>
 </dd></dl>
 
 <dl class="method">
@@ -317,10 +298,11 @@ it is not possible to prompt for more input.</p>
 <dl class="function">
 <dt id="mfm.widgets.widgets.get_directory">
 <code class="sig-prename descclassname">mfm.widgets.widgets.</code><code class="sig-name descname">get_directory</code><span class="sig-paren">(</span><em class="sig-param">filename_ending: 'str' = None</em>, <em class="sig-param">get_files: 'bool' = False</em>, <em class="sig-param">directory: 'str' = None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/widgets/widgets.html#get_directory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.widgets.widgets.get_directory" title="Permalink to this definition">¶</a></dt>
-<dd><p>Opens a new window where you can choose a directory. The current working path
-is updated to this directory.</p>
-<p>It either returns the directory or the files within the directory (if get_files is True).
-The returned files can be filtered for the filename ending using the kwarg filename_ending.</p>
+<dd><p>Opens a new window where you can choose a directory. The current
+working path is updated to this directory.</p>
+<p>It either returns the directory or the files within the directory (if
+get_files is True). The returned files can be filtered for the filename
+ending using the kwarg filename_ending.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>directory str</p>
@@ -365,6 +347,11 @@ file.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="mfm.widgets.widgets.load_ui">
+<code class="sig-prename descclassname">mfm.widgets.widgets.</code><code class="sig-name descname">load_ui</code><span class="sig-paren">(</span><em class="sig-param">target: 'QtWidgets.QWidget'</em>, <em class="sig-param">ui_filename: 'str'</em>, <em class="sig-param">path: 'str'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/widgets/widgets.html#load_ui"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.widgets.widgets.load_ui" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="mfm.widgets.widgets.make_widget_from_yaml">
 <code class="sig-prename descclassname">mfm.widgets.widgets.</code><code class="sig-name descname">make_widget_from_yaml</code><span class="sig-paren">(</span><em class="sig-param">variable_dictionary</em>, <em class="sig-param">name: 'str' = ''</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/widgets/widgets.html#make_widget_from_yaml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.widgets.widgets.make_widget_from_yaml" title="Permalink to this definition">¶</a></dt>
 <dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numbers</span>
@@ -407,9 +394,10 @@ file.</p>
 <dl class="function">
 <dt id="mfm.widgets.widgets.save_file">
 <code class="sig-prename descclassname">mfm.widgets.widgets.</code><code class="sig-name descname">save_file</code><span class="sig-paren">(</span><em class="sig-param">description: 'str' = ''</em>, <em class="sig-param">file_type: 'str' = 'All files (*.*)'</em>, <em class="sig-param">working_path: 'str' = None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/widgets/widgets.html#save_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.widgets.widgets.save_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Same as open see above a file within a working path. If no path is specified the last
-path is used. After using this function the current working path of the
-running program (ChiSurf) is updated according to the folder of the opened
+<dd><p>Same as open see above a file within a working path. If no path is
+specified the last path is used. After using this function the current
+working path of the running program (ChiSurf) is updated according to the
+folder of the opened
 file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

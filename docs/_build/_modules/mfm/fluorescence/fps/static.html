@@ -228,7 +228,7 @@
 <span class="sd">    Calculating accessible volume using provided pdb-file</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
+<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;./test/data/structure/T4L_Topology.pdb&#39;</span>
 <span class="sd">    &gt;&gt;&gt; residue_number = 18</span>
 <span class="sd">    &gt;&gt;&gt; atom_name = &#39;CB&#39;</span>
 <span class="sd">    &gt;&gt;&gt; attachment_atom = 1</span>
@@ -237,7 +237,7 @@
 <span class="sd">    Calculating accessible volume using provided Structure object</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
+<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;./test/data/structure/T4L_Topology.pdb&#39;</span>
 <span class="sd">    &gt;&gt;&gt; structure = mfm.Structure(pdb_filename)</span>
 <span class="sd">    &gt;&gt;&gt; av = mfm.fps.AV(structure, attachment_atom=1, verbose=True)</span>
 <span class="sd">    Calculating accessible volume</span>
@@ -259,7 +259,7 @@
 <span class="sd">    chain_identifier. However, only if a single-chain is present.</span>
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
-<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
+<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;./test/data/structure/T4L_Topology.pdb&#39;</span>
 <span class="sd">    &gt;&gt;&gt; structure = mfm.Structure(pdb_filename)</span>
 <span class="sd">    &gt;&gt;&gt; av = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=11, atom_name=&#39;CB&#39;, verbose=True)</span>
 
@@ -268,7 +268,7 @@
 
 <span class="sd">    &gt;&gt;&gt; import mfm.fluorescence</span>
 <span class="sd">    &gt;&gt;&gt; import mfm.structure</span>
-<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;/sample_data/structure/T4L_Topology.pdb&#39;</span>
+<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;./test/data/structure/T4L_Topology.pdb&#39;</span>
 <span class="sd">    &gt;&gt;&gt; structure = mfm.structure.Structure(pdb_filename)</span>
 <span class="sd">    &gt;&gt;&gt; av = mfm.fluorescence.fps.AV(structure, residue_seq_number=11, atom_name=&#39;CB&#39;, verbose=True, save_av=True, output_file=&#39;test&#39;)</span>
 <span class="sd">    Calculating accessible volume</span>
@@ -429,7 +429,7 @@
 
 <span class="sd">    Example</span>
 <span class="sd">    -------</span>
-<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;./sample_data/modelling/pdb_files/hGBP1_open.pdb&#39;</span>
+<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;./test/data/modelling/pdb_files/hGBP1_open.pdb&#39;</span>
 <span class="sd">    &gt;&gt;&gt; structure = mfm.structure.Structure(pdb_filename)</span>
 <span class="sd">    &gt;&gt;&gt; xs, vs = atoms_in_reach(structure.xyz, structure.vdw, 10.0, 1)</span>
 
@@ -617,7 +617,7 @@
 
 <span class="sd">    &gt;&gt;&gt; import mfm</span>
 <span class="sd">    &gt;&gt;&gt; import pylab as p</span>
-<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;./sample_data/modelling/pdb_files/hGBP1_open.pdb&#39;</span>
+<span class="sd">    &gt;&gt;&gt; pdb_filename = &#39;./test/data/modelling/pdb_files/hGBP1_open.pdb&#39;</span>
 <span class="sd">    &gt;&gt;&gt; structure = mfm.structure.Structure(pdb_filename)</span>
 <span class="sd">    &gt;&gt;&gt; av = calc_av1_py(l=20.0, w=2.0, r=3.5, atom_i=1, ng=33, xyz=structure.xyz, vdw=structure.vdw)</span>
 <span class="sd">    &gt;&gt;&gt; l=20.0</span>

@@ -76,7 +76,7 @@ class AvPlot(plotbase.Plot):
     def update_all(self, only_fit_range=False, *args, **kwargs):
         fit = self.fit
 
-        pdb_filename = './test/data/modelling/pdb_files/hGBP1_closed.pdb'
+        pdb_filename = './test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb'
         residue_number = 18
         atom_name = 'CB'
         free_diffusion = 8.0

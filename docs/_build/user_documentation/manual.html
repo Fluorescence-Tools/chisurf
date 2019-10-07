@@ -1,0 +1,391 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Manual &mdash; ChiSurf  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Tools" href="tools.html" />
+    <link rel="prev" title="ChiSurf" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> ChiSurf
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Manual</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#major-releases">Major releases</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#conda-releases">Conda releases</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#current-release">Current release</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#general">General</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#experiment-types">Experiment types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#datasets">Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fits">Fits</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#variables">Variables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plots">Plots</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#error-estimation">Error-estimation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#support-plane-analysis">Support-Plane analysis</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="use_cases.html">Use cases</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">ChiSurf</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Manual</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/user_documentation/manual.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="manual">
+<h1>Manual<a class="headerlink" href="#manual" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="major-releases">
+<h3>Major releases<a class="headerlink" href="#major-releases" title="Permalink to this headline">¶</a></h3>
+<p>Major releases are distributed using pre-packed installation files for Windows
+and MacOS. These installation files can be downloaded from the GitHub repository.</p>
+<p><a class="reference external" href="https://github.com/Fluorescence-Tools/ChiSurf/releases">The Python language</a></p>
+</div>
+<div class="section" id="conda-releases">
+<h3>Conda releases<a class="headerlink" href="#conda-releases" title="Permalink to this headline">¶</a></h3>
+<p>Alternatively the software can be installed using the Conda</p>
+<p><a class="reference external" href="https://docs.conda.io/en/latest/miniconda.html">Miniconda</a></p>
+<p>distribution system from the conda channel <cite>fluorescence-tools</cite>.</p>
+</div>
+<div class="section" id="current-release">
+<h3>Current release<a class="headerlink" href="#current-release" title="Permalink to this headline">¶</a></h3>
+<p>The current release / the development version of the software can be installed
+directly from the GitHub repository.</p>
+<p><a class="reference external" href="https://github.com/Fluorescence-Tools/chisurf/releases">Releases</a></p>
+<p>It is recommended not to use development releases for productive purposes.</p>
+</div>
+</div>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="general">
+<h3>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h3>
+<div class="align-left figure align-right" id="id1" style="width: 45%">
+<img alt="../_images/fig1_user_interface_overview.png" src="../_images/fig1_user_interface_overview.png" />
+<p class="caption"><span class="caption-text">General overview: The different areas of the main program window</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<p>The main program window contains different areas:</p>
+<ol class="arabic simple">
+<li><p>Adding of data creation of new fits</p></li>
+<li><p>Fitting and adjustment of fitting parameter of the currently selected fit</p></li>
+<li><p>Change of plotting options of the current plot</p></li>
+<li><p>Adding of a new dataset</p></li>
+<li><p>List of loaded datasets</p></li>
+<li><p>Adding of a new fit to the dataset currentls selected in 5)</p></li>
+<li><p>Currently selected fit</p></li>
+<li><p>Delete currently selected fit</p></li>
+<li><p>Plotting area</p></li>
+</ol>
+<p>By default three different docks (<em>Load</em>, <em>Analysis</em> and <em>Plot</em>) are displayed
+on the left side of the window. By clicking on the names of the docks the user
+can change the content displayed in the left dock. In (1) the user can add new
+datasets and fits to the programm. In (2) the user can change the fitting
+parameters of the fit currently selected in (7). In (3) the user can change
+plotting options of the plot selected in (9) of the current fit (see Fig 1).</p>
+</div>
+<div class="section" id="experiment-types">
+<h3>Experiment types<a class="headerlink" href="#experiment-types" title="Permalink to this headline">¶</a></h3>
+<div class="align-left figure align-right" id="id2" style="width: 45%">
+<img alt="../_images/fig2_introduction_experiment_types.png" src="../_images/fig2_introduction_experiment_types.png" />
+<p class="caption"><span class="caption-text">Selection of experiment types and setups</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+</div>
+<p>Before creation of a new fit the user has to choose the experiment type.
+Depending on the experiment type and the experimental-setup associated
+to the experiment type the content within the group-box “Load data”
+changes (compare Fig. 2).</p>
+</div>
+<div class="section" id="datasets">
+<h3>Datasets<a class="headerlink" href="#datasets" title="Permalink to this headline">¶</a></h3>
+<div class="align-left figure align-right" id="id3">
+<a class="reference internal image-reference" href="../_images/intro_fig3_datasets.png"><img alt="../_images/intro_fig3_datasets.png" src="../_images/intro_fig3_datasets.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Adding datasets</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
+</div>
+<p>Before performing a fit or any data analysis the user has to add
+a dataset to the program. First the user has to choose the experiment
+type and specify all relevant parameters (details see sections below).
+As intermediate step</p>
+<ol class="arabic simple">
+<li><p>Adjust data-file parameters</p></li>
+<li><p>Load-data</p></li>
+<li><p>Optionally data-processing (correlation, creation of histograms)</p></li>
+<li><p>Add-dataset</p></li>
+</ol>
+<p>After addition of dataset at first nothing happens except that
+the dataset is now listed in the dataset-table. By clicking on the row
+of a loaded dataset the currently selected dataset is changed.
+The selected dataset is highlighted in green. If the user double clicks
+an element in the datasets table the dataset and all related fits within
+the program are removed.</p>
+</div>
+<div class="section" id="fits">
+<h3>Fits<a class="headerlink" href="#fits" title="Permalink to this headline">¶</a></h3>
+<div class="align-left figure align-right" id="id4">
+<a class="reference internal image-reference" href="../_images/intro_fig4_fits.png"><img alt="../_images/intro_fig4_fits.png" src="../_images/intro_fig4_fits.png" style="width: 350px;" /></a>
+<p class="caption"><span class="caption-text">Selection of datasets and adding fits</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+</div>
+<p>New fits can be added by the user to the currently selected dataset by
+clicking on <em>add fit</em>. This creates a new fit containing the currently
+selected model and the currently selected dataset. After addition of
+the fit the dataset and the fit are listed in (7). The currently active
+fit is chosen by the user using the dropdown list (7). The content of
+the plotting area (9), the fitting parameters (2) and the
+plotting-options area (3) depends on the currently selected fit.</p>
+<div class="align-left figure align-right" id="id5">
+<a class="reference internal image-reference" href="../_images/intro_fig5_changing_active_fit.png"><img alt="../_images/intro_fig5_changing_active_fit.png" src="../_images/intro_fig5_changing_active_fit.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Changing active fits</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+</div>
+<p>By selecting another fit out of the dropdown list the plot and fitting
+parameter are automatically updated. In the Fitting pane all parameters
+of the currently selected fit are displayed. The fitting
+range is usually determined automatically. It can be specified by
+unchecking the <em>autorange</em> checkbox.</p>
+</div>
+<div class="section" id="variables">
+<h3>Variables<a class="headerlink" href="#variables" title="Permalink to this headline">¶</a></h3>
+<div class="align-left figure align-right" id="id6">
+<a class="reference internal image-reference" href="../_images/intro_fig6_variables.png"><img alt="../_images/intro_fig6_variables.png" src="../_images/intro_fig6_variables.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Possible parameters of a fitting variable</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
+</div>
+<p>All fitting variables have a name, are either fixed or not and can be
+linked to other fitting variables. Fixing of fitting varibales is
+achived by checking the first checkbox. So far variables can only be linked
+via a global-fit. If the fitting variable is linked the second checkbox
+is checked. The user can determine the target of the link using the
+tooltip of the value field. Optionally Fitting variables have a lower or
+upper limit. The lower and upper limit are either displayed or not. This
+is up to the developer of the
+fitting model.</p>
+</div>
+<div class="section" id="plots">
+<h3>Plots<a class="headerlink" href="#plots" title="Permalink to this headline">¶</a></h3>
+<div class="align-left figure align-center" id="id7">
+<a class="reference internal image-reference" href="../_images/intro_fig7_plots.png"><img alt="../_images/intro_fig7_plots.png" src="../_images/intro_fig7_plots.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Plot area and plot option area</span><a class="headerlink" href="#id7" title="Permalink to this image">¶</a></p>
+</div>
+<p>Each fitting model may contain different plot to represent the data
+and the fitting model. Depending on the selected plot the content
+of the plot option area changes. The user may change the plot
+displayed in the plotting area by changing the pane highlighted
+in red in Figure.</p>
+<div class="align-left figure align-center" id="id8">
+<a class="reference internal image-reference" href="../_images/intro_fig8_plots_save.png"><img alt="../_images/intro_fig8_plots_save.png" src="../_images/intro_fig8_plots_save.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Curves can be exported as CSV by right click on the curve and exporting the curve-data.</span><a class="headerlink" href="#id8" title="Permalink to this image">¶</a></p>
+</div>
+<p>By default one dimensional data is plotted as blue line and
+the fitted curve is displayed as green line. The colors and
+can be changed using the parameter window accessed using the
+right mouse button</p>
+<div class="align-left figure align-center" id="id9">
+<a class="reference internal image-reference" href="../_images/intro_fig9_plots_surface_1.png"><img alt="../_images/intro_fig9_plots_surface_1.png" src="../_images/intro_fig9_plots_surface_1.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Selection of plotted parameters</span><a class="headerlink" href="#id9" title="Permalink to this image">¶</a></p>
+</div>
+<div class="align-left figure align-center" id="id10">
+<a class="reference internal image-reference" href="../_images/intro_fig9_plots_surface_2.png"><img alt="../_images/intro_fig9_plots_surface_2.png" src="../_images/intro_fig9_plots_surface_2.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Inverting selections</span><a class="headerlink" href="#id10" title="Permalink to this image">¶</a></p>
+</div>
+<div class="align-left figure align-center" id="id11">
+<a class="reference internal image-reference" href="../_images/intro_fig9_plots_surface_3.png"><img alt="../_images/intro_fig9_plots_surface_3.png" src="../_images/intro_fig9_plots_surface_3.png" style="width: 45%;" /></a>
+<p class="caption"><span class="caption-text">Enabling and disabling selections</span><a class="headerlink" href="#id11" title="Permalink to this image">¶</a></p>
+</div>
+</div>
+</div>
+<div class="section" id="error-estimation">
+<h2>Error-estimation<a class="headerlink" href="#error-estimation" title="Permalink to this headline">¶</a></h2>
+<p>Error estimation either by emcee or plain mcmc.
+Short description</p>
+<div class="section" id="support-plane-analysis">
+<h3>Support-Plane analysis<a class="headerlink" href="#support-plane-analysis" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="tools.html" class="btn btn-neutral float-right" title="Tools" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../index.html" class="btn btn-neutral float-left" title="ChiSurf" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Thomas Peulen
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

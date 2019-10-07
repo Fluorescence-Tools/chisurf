@@ -162,9 +162,9 @@
 
 <span class="kn">import</span> <span class="nn">mfm</span>
 <span class="kn">import</span> <span class="nn">mfm.io</span>
-<span class="kn">import</span> <span class="nn">mfm.io.xyz</span>
+<span class="kn">import</span> <span class="nn">mfm.io.coordinates</span>
 <span class="kn">import</span> <span class="nn">mfm.models</span>
-<span class="kn">import</span> <span class="nn">mfm.fitting.parameter</span>
+<span class="kn">import</span> <span class="nn">mfm.parameter</span>
 <span class="kn">from</span> <span class="nn">mfm.structure.structure</span> <span class="k">import</span> <span class="n">count_atoms</span>
 <span class="kn">from</span> <span class="nn">mfm.fluorescence.fps</span> <span class="k">import</span> <span class="n">_fps</span>
 <span class="kn">from</span> <span class="nn">mfm.parameter</span> <span class="k">import</span> <span class="n">ParameterGroup</span>
@@ -238,11 +238,11 @@
             <span class="n">n_simulations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">DiffusionSimulationParameter</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_t_max</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">FittingParameter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_t_max</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
             <span class="n">value</span><span class="o">=</span><span class="n">t_max</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;t-max&#39;</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_t_step</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">FittingParameter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_t_step</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
             <span class="n">value</span><span class="o">=</span><span class="n">t_step</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;t-step&#39;</span>
         <span class="p">)</span></div>
@@ -256,8 +256,14 @@
             <span class="n">quenching_parameter</span><span class="p">,</span>
             <span class="n">diffusion_simulation_parameter</span><span class="p">,</span>
             <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param dye:</span>
+<span class="sd">        :param quenching_parameter:</span>
+<span class="sd">        :param diffusion_simulation_parameter:</span>
+<span class="sd">        :param verbose:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">verbose</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">verbose</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
@@ -384,7 +390,7 @@
             <span class="n">coordinates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xyz</span><span class="p">[::</span><span class="n">skip</span><span class="p">]</span>
             <span class="n">n_frames</span> <span class="o">=</span> <span class="n">coordinates</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">coordinates</span> <span class="o">=</span> <span class="n">coordinates</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n_frames</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-            <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">xyz</span><span class="o">.</span><span class="n">write_xyz</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">coordinates</span><span class="p">)</span>
+            <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">coordinates</span><span class="o">.</span><span class="n">write_xyz</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">coordinates</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;npy&#39;</span><span class="p">:</span>
             <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xyz</span><span class="p">)</span></div>
 
@@ -469,7 +475,10 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_simulation_grid_resolution</span><span class="o">.</span><span class="n">value</span>
 
     <span class="nd">@simulation_grid_resolution</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">simulation_grid_resolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">simulation_grid_resolution</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_simulation_grid_resolution</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
@@ -477,7 +486,10 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tau0</span><span class="o">.</span><span class="n">value</span>
 
     <span class="nd">@tau0</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">tau0</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">tau0</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">v</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_tau0</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">v</span>
 
     <span class="nd">@property</span>
@@ -589,32 +601,32 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">sticking</span><span class="o">.</span><span class="n">structure</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_critical_distance</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">FittingParameter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_critical_distance</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
             <span class="n">value</span><span class="o">=</span><span class="mf">7.0</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;RQ&#39;</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_diffusion_coefficient</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">FittingParameter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_diffusion_coefficient</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
             <span class="n">value</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;D[A2/ns]&#39;</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_tau0</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">FittingParameter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tau0</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
             <span class="n">value</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;tau0[ns]&#39;</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_simulation_grid_resolution</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">FittingParameter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_simulation_grid_resolution</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
             <span class="n">value</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;grid spacing&#39;</span>
         <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_av_length</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">FittingParameter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_av_length</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;L&#39;</span><span class="p">,</span>
             <span class="n">value</span><span class="o">=</span><span class="mf">20.0</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_av_width</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">FittingParameter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_av_width</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W&#39;</span><span class="p">,</span>
             <span class="n">value</span><span class="o">=</span><span class="mf">0.5</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_av_radius</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">FittingParameter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_av_radius</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;R&#39;</span><span class="p">,</span>
             <span class="n">value</span><span class="o">=</span><span class="mf">3.0</span>
         <span class="p">)</span>
@@ -680,7 +692,7 @@
     <span class="k">def</span> <span class="nf">sticky_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;If this value is set to `quencher` only the quencher slow down the</span>
 <span class="sd">        dye if it is `surface` the C-beta</span>
-<span class="sd">        atoms of all amino-acids slow down the dye. If the `quencher` file_type</span>
+<span class="sd">        atoms of all amino-acids slow down the dye. If the `quencher` reading_routine</span>
 <span class="sd">        is used the `quenching_parameter`</span>
 <span class="sd">        parameter has to be passed upon initialization of the class.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -708,15 +720,15 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">quenching_parameter</span> <span class="o">=</span> <span class="n">quenching_parameter</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">structure</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_slow_radius</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">FittingParameter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_slow_radius</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Rs&#39;</span><span class="p">,</span>
             <span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;slow_radius&#39;</span><span class="p">,</span> <span class="mf">8.5</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_slow_fact</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">FittingParameter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_slow_fact</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;slow fact&#39;</span><span class="p">,</span>
             <span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;slow_fact&#39;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="c1"># sticking file_type is either surface quencher</span>
+        <span class="c1"># sticking reading_routine is either surface quencher</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sticky_mode</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sticky_mode&#39;</span><span class="p">,</span> <span class="s1">&#39;surface&#39;</span><span class="p">)</span></div>
 
 
@@ -830,7 +842,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_quencher</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_all_atoms_quench</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;all_atoms_quench&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_k_quench_scale</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">fitting</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">FittingParameter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_k_quench_scale</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">parameter</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
             <span class="n">value</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;quench_scale&#39;</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">),</span>
             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;kQ scale&#39;</span>
         <span class="p">)</span>

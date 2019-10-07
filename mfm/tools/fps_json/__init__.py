@@ -1,1 +1,1 @@
-from . import pdb2labeling
+from . import label_structure

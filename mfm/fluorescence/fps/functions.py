@@ -33,7 +33,7 @@ def histogram_rda(
     --------
 
     >>> import mfm
-    >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
+    >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
     >>> av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
     >>> av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
     >>> y, x = av1.pRDA(av2)

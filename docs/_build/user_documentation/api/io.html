@@ -90,20 +90,13 @@
 <li class="toctree-l2"><a class="reference internal" href="fluorescence.html">Fluorescence</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Input-Output</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#csv-files">CSV-Files</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-mfm.io.pdb">PDB-Files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pdb-files">PDB-Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-mfm.io.photons">TTTR-Files</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#requirements">Requirements</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#revisions">Revisions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#notes">Notes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#references">References</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#examples">Examples</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#module-mfm.io.photons">TTTR-Files</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#id2">Requirements</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id3">Revisions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id4">Notes</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id5">References</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id6">Examples</a></li>
 </ul>
 </li>
 </ul>
@@ -188,7 +181,7 @@
 In particular three kinds of file-types are handled:</p>
 <ol class="arabic simple">
 <li><p>Comma-separated files <a class="reference internal" href="../../api/mfm.io.html#module-mfm.io.ascii" title="mfm.io.ascii"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.ascii</span></code></a></p></li>
-<li><p>PDB-file <a class="reference internal" href="#module-mfm.io.pdb" title="mfm.io.pdb"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.pdb</span></code></a></p></li>
+<li><p>PDB-file <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.pdb</span></code></p></li>
 <li><p>TTTR-files containing photon data <a class="reference internal" href="#module-mfm.io.photons" title="mfm.io.photons"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.photons</span></code></a></p></li>
 <li><p>XYZ-files containing coordinates <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.xyz</span></code></p></li>
 <li><p>DX-files containing densities <code class="xref py py-mod docutils literal notranslate"><span class="pre">mfm.io.dx</span></code></p></li>
@@ -197,11 +190,14 @@ In particular three kinds of file-types are handled:</p>
 <div class="section" id="csv-files">
 <h2>CSV-Files<a class="headerlink" href="#csv-files" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-mfm.io.pdb">
-<span id="pdb-files"></span><h2>PDB-Files<a class="headerlink" href="#module-mfm.io.pdb" title="Permalink to this headline">¶</a></h2>
-<p>Read PDB files.</p>
-<p>PDB files contain atomic coordinates.</p>
-<p><a class="reference external" href="http://www.wwpdb.org/documentation/file-format">PDB</a></p>
+<div class="section" id="pdb-files">
+<h2>PDB-Files<a class="headerlink" href="#pdb-files" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mfm.io.photons">
+<span id="tttr-files"></span><h2>TTTR-Files<a class="headerlink" href="#module-mfm.io.photons" title="Permalink to this headline">¶</a></h2>
+<p>Read TTTR files.</p>
+<p>TTTR files contain time-tagged-time-resolved records typically recorded
+in single-molecule experiments and on confocal laser scanning setups.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Author</dt>
 <dd class="field-odd"><p><a class="reference external" href="http://tpeulen.github.io">Thomas-Otavio Peulen</a></p>
@@ -222,192 +218,19 @@ In particular three kinds of file-types are handled:</p>
 </div>
 <div class="section" id="examples">
 <h3>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
-<dl class="function">
-<dt id="mfm.io.pdb.assign_element_to_atom_name">
-<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">assign_element_to_atom_name</code><span class="sig-paren">(</span><em class="sig-param">atom_name: 'str'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#assign_element_to_atom_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.assign_element_to_atom_name" title="Permalink to this definition">¶</a></dt>
-<dd><p>Tries to guess element from atom name if not recognised.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>atom_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – string</p>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">assign_element_to_atom_name</span><span class="p">(</span><span class="s1">&#39;CA&#39;</span><span class="p">)</span>
-<span class="go">C</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="function">
-<dt id="mfm.io.pdb.fetch_pdb_string">
-<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">fetch_pdb_string</code><span class="sig-paren">(</span><em class="sig-param">pdb_id: 'str'</em><span class="sig-paren">)</span> &#x2192; 'str'<a class="reference internal" href="../../_modules/mfm/io/pdb.html#fetch_pdb_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.fetch_pdb_string" title="Permalink to this definition">¶</a></dt>
-<dd><p>Downloads from the RCSB a PDB file with the specified PDB-ID</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>pdb_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The PDB-ID that is downloaded</p></li>
-<li><p><strong>get_binary</strong> – If get_binary is True a binary string is returned.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="mfm.io.pdb.get_atom_index">
-<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">get_atom_index</code><span class="sig-paren">(</span><em class="sig-param">atoms: 'np.array'</em>, <em class="sig-param">chain_identifier: 'str'</em>, <em class="sig-param">residue_seq_number: 'int'</em>, <em class="sig-param">atom_name: 'str'</em>, <em class="sig-param">residue_name: 'str'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#get_atom_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.get_atom_index" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the atom index by the the identifier</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>atoms</strong> (<em>&lt;built-in function array&gt;</em>) – </p></li>
-<li><p><strong>chain_identifier</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
-<li><p><strong>residue_seq_number</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – </p></li>
-<li><p><strong>atom_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
-<li><p><strong>residue_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
-<li><p><strong>kwargs</strong> – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="mfm.io.pdb.parse_string_pdb">
-<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">parse_string_pdb</code><span class="sig-paren">(</span><em class="sig-param">string: 'str'</em>, <em class="sig-param">assign_charge: 'bool' = False</em>, <em class="sig-param">verbose: 'bool' = False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#parse_string_pdb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.parse_string_pdb" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>string</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
-<li><p><strong>assign_charge</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
-<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="mfm.io.pdb.read">
-<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param">filename: 'str'</em>, <em class="sig-param">assign_charge: 'bool' = False</em>, <em class="sig-param">verbose: 'bool' = False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span> &#x2192; 'np.ndarray'<a class="reference internal" href="../../_modules/mfm/io/pdb.html#read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.read" title="Permalink to this definition">¶</a></dt>
-<dd><p>Open pdb_file and read each line into pdb (a list of lines)</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
-<li><p><strong>assign_charge</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>numpy structured array containing the PDB info and VdW-radii and charges</p>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.io</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_file</span> <span class="o">=</span> <span class="n">models</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span>
-<span class="go">array([ (0, &#39; &#39;, 7, &#39;MET&#39;, 1, &#39;N&#39;, &#39;N&#39;, [72.739, -17.501, 8.879], 0.0, 1.65, 0.0, 14.0067),</span>
-<span class="go">       (1, &#39; &#39;, 7, &#39;MET&#39;, 2, &#39;CA&#39;, &#39;C&#39;, [73.841, -17.042, 9.747], 0.0, 1.76, 0.0, 12.0107),</span>
-<span class="go">       (2, &#39; &#39;, 7, &#39;MET&#39;, 3, &#39;C&#39;, &#39;C&#39;, [74.361, -18.178, 10.643], 0.0, 1.76, 0.0, 12.0107),</span>
-<span class="go">       (3, &#39; &#39;, 7, &#39;MET&#39;, 4, &#39;O&#39;, &#39;O&#39;, [73.642, -18.708, 11.489], 0.0, 1.4, 0.0, 15.9994),</span>
-<span class="go">       (4, &#39; &#39;, 7, &#39;MET&#39;, 5, &#39;CB&#39;, &#39;C&#39;, [73.384, -15.89, 10.649], 0.0, 1.76, 0.0, 12.0107)],</span>
-<span class="go">      dtype=[(&#39;i&#39;, &#39;&lt;i4&#39;), (&#39;chain&#39;, &#39;S1&#39;), (&#39;res_id&#39;, &#39;&lt;i4&#39;), (&#39;res_name&#39;, &#39;S5&#39;), (&#39;atom_id&#39;, &#39;&lt;i4&#39;), (&#39;atom_name&#39;, &#39;S5</span>
-<span class="go">&#39;), (&#39;element&#39;, &#39;S1&#39;), (&#39;xyz&#39;, &#39;&lt;f8&#39;, (3,)), (&#39;charge&#39;, &#39;&lt;f8&#39;), (&#39;radius&#39;, &#39;&lt;f8&#39;), (&#39;bfactor&#39;, &#39;&lt;f8&#39;), (&#39;mass&#39;, &#39;&lt;f8&#39;)</span>
-<span class="go">])</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="function">
-<dt id="mfm.io.pdb.write_pdb">
-<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">write_pdb</code><span class="sig-paren">(</span><em class="sig-param">filename: 'str'</em>, <em class="sig-param">atoms=None</em>, <em class="sig-param">append_model: 'bool' = False</em>, <em class="sig-param">append_coordinates: 'bool' = False</em>, <em class="sig-param">verbose: 'bool' = False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#write_pdb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.write_pdb" title="Permalink to this definition">¶</a></dt>
-<dd><p>Writes a structured numpy array containing the PDB-info to a PDB-file</p>
-<p>If append_model and append_coordinates are False the file is overwritten. Otherwise the atomic-coordinates
-are appended to the existing file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – target-filename</p></li>
-<li><p><strong>atoms</strong> – structured numpy array</p></li>
-<li><p><strong>append_model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool
-If True the atoms are appended as a new models</p></li>
-<li><p><strong>append_coordinates</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If True the coordinates are appended to the file</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="mfm.io.pdb.write_points">
-<code class="sig-prename descclassname">mfm.io.pdb.</code><code class="sig-name descname">write_points</code><span class="sig-paren">(</span><em class="sig-param">filename: 'str'</em>, <em class="sig-param">points: 'np.ndarray'</em>, <em class="sig-param">verbose: 'bool' = False</em>, <em class="sig-param">mode: 'str' = 'xyz'</em>, <em class="sig-param">density: 'np.ndarray' = None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/pdb.html#write_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.pdb.write_points" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
-<li><p><strong>points</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – </p></li>
-<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – </p></li>
-<li><p><strong>mode</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – </p></li>
-<li><p><strong>density</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>]) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-</dl>
-</dd></dl>
-
-</div>
-</div>
-<div class="section" id="module-mfm.io.photons">
-<span id="tttr-files"></span><h2>TTTR-Files<a class="headerlink" href="#module-mfm.io.photons" title="Permalink to this headline">¶</a></h2>
-<p>Read TTTR files.</p>
-<p>TTTR files contain time-tagged-time-resolved records typically recorded
-in single-molecule experiments and on confocal laser scanning setups.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Author</dt>
-<dd class="field-odd"><p><a class="reference external" href="http://tpeulen.github.io">Thomas-Otavio Peulen</a></p>
-</dd>
-</dl>
-<div class="section" id="id2">
-<h3>Requirements<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
-</div>
-<div class="section" id="id3">
-<h3>Revisions<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
-</div>
-<div class="section" id="id4">
-<h3>Notes<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
-<p>The API is not stable yet and might change between revisions.</p>
-</div>
-<div class="section" id="id5">
-<h3>References<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
-</div>
-<div class="section" id="id6">
-<h3>Examples<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="mfm.io.photons.Photons">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.io.photons.</code><code class="sig-name descname">Photons</code><span class="sig-paren">(</span><em class="sig-param">p_object</em>, <em class="sig-param">file_type=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/photons.html#Photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.photons.Photons" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.io.photons.</code><code class="sig-name descname">Photons</code><span class="sig-paren">(</span><em class="sig-param">p_object</em>, <em class="sig-param">reading_routine=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/photons.html#Photons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.photons.Photons" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>p_object</strong> – Is either a list of filenames or a single string containing the path to one file. If the first argument
-is n</p></li>
-<li><p><strong>file_type</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The file type of the files passed using the first argument (p_object) is specified using the
-‘file_type’ parameter. This string is either ‘hdf’ or ‘bh132’, ‘bh630_x48’, ‘ht3’, ‘iss’. If
-the file type is not an hdf file the files are temporarily converted to hdf-files to guarantee
-a consistent interface.</p></li>
+<li><p><strong>p_object</strong> – Is either a list of filenames or a single string containing the path to
+one file. If the first argument is n</p></li>
+<li><p><strong>reading_routine</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The file type of the files passed using the first argument (p_object)
+is specified using the ‘file_type’ parameter. This string is either
+‘hdf’ or ‘bh132’, ‘bh630_x48’, ‘ht3’, ‘iss’. If the file type is not
+an hdf file the files are temporarily converted to hdf-files to
+guarantee a consistent interface.</p></li>
 <li><p><strong>kwargs</strong> – </p></li>
 </ul>
 </dd>
@@ -417,17 +240,17 @@ a consistent interface.</p></li>
 </dl>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">glob</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">directory</span> <span class="o">=</span> <span class="s2">&quot;../sample_data/tttr/spc132/smDNA&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">spc_files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">directory</span><span class="o">+</span><span class="s1">&#39;/*.spc&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.io</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">directory</span> <span class="o">=</span> <span class="s1">&#39;./test/data/tttr/BH/&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">spc_files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">directory</span><span class="o">+</span><span class="s1">&#39;/BH_SPC132.spc&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">photons</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">photons</span><span class="o">.</span><span class="n">Photons</span><span class="p">(</span><span class="n">spc_files</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;bh132&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">photons</span><span class="p">)</span>
 <span class="go">File-type: bh132</span>
 <span class="go">Filename(s):</span>
-<span class="go">        ./sample_data/tttr/spc132/hGBP1_18D\m000.spc</span>
-<span class="go">        ./sample_data/tttr/spc132/hGBP1_18D\m001.spc</span>
-<span class="go">        ./sample_data/tttr/spc132/hGBP1_18D\m002.spc</span>
-<span class="go">        ./sample_data/tttr/spc132/hGBP1_18D\m003.spc</span>
+<span class="go">        ./test/data/tttr/spc132/hGBP1_18D\m000.spc</span>
+<span class="go">        ./test/data/tttr/spc132/hGBP1_18D\m001.spc</span>
+<span class="go">        ./test/data/tttr/spc132/hGBP1_18D\m002.spc</span>
+<span class="go">        ./test/data/tttr/spc132/hGBP1_18D\m003.spc</span>
 <span class="go">nTAC:   4095</span>
 <span class="go">nROUT:  255</span>
 <span class="go">MTCLK [ms]:     1.36000003815e-05</span>
@@ -494,7 +317,8 @@ a consistent interface.</p></li>
 <dl class="method">
 <dt id="mfm.io.photons.Photons.mt_clk">
 <em class="property">property </em><code class="sig-name descname">mt_clk</code><a class="headerlink" href="#mfm.io.photons.Photons.mt_clk" title="Permalink to this definition">¶</a></dt>
-<dd><p>Macro-time clock of the data (time between the macrotime events in milli-seconds)</p>
+<dd><p>Macro-time clock of the data (time between the macrotime events
+in milli-seconds)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
@@ -537,11 +361,11 @@ a consistent interface.</p></li>
 
 <dl class="method">
 <dt id="mfm.io.photons.Photons.read_where">
-<code class="sig-name descname">read_where</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">selection</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/photons.html#Photons.read_where"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.photons.Photons.read_where" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">read_where</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">selection: 'np.ndarray'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mfm/io/photons.html#Photons.read_where"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.io.photons.Photons.read_where" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function uses the pytables selection syntax</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>selection</strong> – </p>
+<dd class="field-odd"><p><strong>selection</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – </p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p></p>
@@ -605,7 +429,7 @@ This is the default behavior.</p></li>
 </dl>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span><span class="o">,</span> <span class="nn">glob</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">directory</span> <span class="o">=</span> <span class="s2">&quot;./sample_data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\BID&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">directory</span> <span class="o">=</span> <span class="s2">&quot;./test/data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\BID&quot;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">directory</span><span class="o">+</span><span class="s1">&#39;/*.bst&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">bids</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">photons</span><span class="o">.</span><span class="n">read_burst_ids</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">bids</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
