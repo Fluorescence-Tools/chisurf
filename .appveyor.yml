@@ -1,0 +1,17 @@
+environment:
+  matrix:
+    - PYTHON: "C:\\Miniconda3-x64"
+
+install:
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - conda env create -f environment.yaml
+  - conda activate chisurf
+  - conda install nose coverage
+  - python.exe setup.py build_ext --inplace
+  - python setup.py install
+
+build: off
+
+test_script:
+  - "nosetests --with-coverage test_*.py"
+
