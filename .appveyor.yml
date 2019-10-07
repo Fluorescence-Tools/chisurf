@@ -17,8 +17,8 @@ build: off
 
 test_script:
   - conda install nose coverage
-  - echo %CD%
-  - ps: cd .\test\
-  - echo %CD%
+  - cmd: echo %CD%
+  - cmd: cd C:\projects\chisurf\test\
+  - cmd: echo %CD%
 #  - nosetests --with-coverage test_*.py
 #
