@@ -124,9 +124,18 @@ setup(
         'qtconsole',
         'ipython'
     ],
+    setup_requires=[
+        "cython",
+        'numpy',
+        'yaml',
+        'setuptools'
+    ],
     ext_modules=extensions,
     cmdclass={
         'build_ext': build_ext
+    },
+    entry_points={
+        "gui_scripts": ["chisurf=gui"]
     }
 )
 
