@@ -14,5 +14,6 @@ build: off
 
 test_script:
   - conda install nose coverage
+  - cd test
   - nosetests --with-coverage test_*.py
 
