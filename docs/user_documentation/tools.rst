@@ -156,14 +156,15 @@ given the D-A distance and the orientation
 factor the FRET-rate was calculated according to
 
 .. math::
-    `{k_{FRET}} = \left( {{3 \mathord{\left/ {\vphantom {3 2}} \right. \kern-\nulldelimiterspace} 2}} \right) \cdot {\kappa ^2} \cdot \left( {{1 \mathord{\left/{\vphantom {1 {{\tau _0}}}} \right.\kern-\nulldelimiterspace} {{\tau _0}}}} \right) \cdot {\left( {{{{R_0}} \mathord{\left/{\vphantom {{{R_0}} {{R_{DA}}}}} \right.\kern-\nulldelimiterspace} {{R_{DA}}}}} \right)^6}`
+    {k_{FRET}} = \frac{3}{2} \cdot {\kappa ^2} \cdot \frac{1}{\tau_0}  \cdot {\left( \frac{R_0}{R_{DA}} \right)^6}
 
 in which :math:`\tau_0` is 2.6ns and the Forster radius,
 R0, of GFP and mCherry is 52 Ang including :math:`\kappa^2=2/3`.
 The steady-state FRET efficiency Ess was determined
 using
+
 .. math::
-    `{E_{ss}} = {{{k_{FRET}}} \mathord{\left/ {\vphantom {{{k_{FRET}}} {\left( {{k_{FRET}} + {k_0}} \right)}}} \right. \kern-\nulldelimiterspace} {\left( {{k_{FRET}} + {k_0}} \right)}}`.
+    E_{ss} = \frac{k_{FRET}}{k_{FRET} + k_0}
 
 .. image:: ./figures/structure2transfer/structure2transfer_fig2.png
 
