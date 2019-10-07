@@ -128,8 +128,15 @@ class Correlator(QtCore.QThread):
                 setup=self
             )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super().__init__(
+            *args,
+            **kwargs
+        )
         self.p = kwargs.get('parent', None)
         self.exiting = False
         self._data = None

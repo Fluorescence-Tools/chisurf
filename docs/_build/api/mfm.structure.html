@@ -210,7 +210,7 @@
 convenience Attributes which only apply to FRET-samples</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">LabeledStructure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">LabeledStructure</span><span class="p">(</span><span class="s1">&#39;./test/data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">donor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">acceptor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">577</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span><span class="o">.</span><span class="n">donor_label</span> <span class="o">=</span> <span class="n">donor_description</span>
@@ -355,7 +355,7 @@ convenience Attributes which only apply to FRET-samples</p>
 </dl>
 <p class="rubric">Examples</p>
 <dl>
-<dt>import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(‘./sample_data/modelling/pdb_files/hGBP1_closed.pdb’)</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">donor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
+<dt>import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(‘./test/data/modelling/pdb_files/hGBP1_closed.pdb’)</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">donor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">acceptor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">577</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pRDA</span><span class="p">,</span> <span class="n">rda</span> <span class="o">=</span> <span class="n">av_distance_distribution</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">donor_description</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">acceptor_description</span><span class="p">)</span>
 </pre></div>
@@ -378,10 +378,10 @@ convenience Attributes which only apply to FRET-samples</p>
 </dl>
 </dd>
 </dl>
-<p>import mfm.structure    &gt;&gt;&gt; structure_1 = mfm.structure.Structure(‘./sample_data/modelling/trajectory/h5-file/steps/0_major.pdb’)</p>
+<p>import mfm.structure    &gt;&gt;&gt; structure_1 = mfm.structure.Structure(‘./test/data/modelling/trajectory/h5-file/steps/0_major.pdb’)</p>
 <blockquote>
-<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">structure_1</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">structure_2</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/steps/3_minor.pdb&#39;</span><span class="p">)</span>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">structure_1</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./test/data/modelling/trajectory/h5-file/steps/3_minor.pdb&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure_2</span> <span class="o">=</span> <span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./test/data/modelling/trajectory/h5-file/steps/3_minor.pdb&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ls_1</span> <span class="o">=</span> <span class="n">av_lifetime_spectrum</span><span class="p">(</span><span class="n">structure_1</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ls_2</span> <span class="o">=</span> <span class="n">av_lifetime_spectrum</span><span class="p">(</span><span class="n">structure_2</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
@@ -396,7 +396,7 @@ convenience Attributes which only apply to FRET-samples</p>
 </div>
 <p>Now the trajectory of the transition using the crystal-structure as intermediate state was simulated. Using this
 trajectory weights are associated to each frame which correspond to the first and the second state.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">reading_routine</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">d_av</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>  <span class="c1"># the resiude numbers are slightly shifted</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a_av</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">567</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">av_filtered_fcs_weights</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">lifetime_filters</span><span class="o">=</span><span class="n">lf</span><span class="p">,</span> <span class="n">time_axis</span><span class="o">=</span><span class="n">times</span><span class="p">,</span> <span class="n">donor_lifetime_spectrum</span><span class="o">=</span><span class="n">dl</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">traj</span><span class="p">]</span>
@@ -428,7 +428,7 @@ can be calculated.</p>
 </div></blockquote>
 <p class="rubric">Examples</p>
 <dl>
-<dt>import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(‘./sample_data/modelling/pdb_files/hGBP1_closed.pdb’)</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">donor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
+<dt>import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(‘./test/data/modelling/pdb_files/hGBP1_closed.pdb’)</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">donor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">acceptor_description</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">577</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">rs</span> <span class="o">=</span> <span class="n">av_fret_rate_spectrum</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">donor_description</span><span class="p">,</span> <span class="n">acceptor_description</span><span class="p">)</span>
 </pre></div>
@@ -462,7 +462,7 @@ to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the
 </dl>
 <p class="rubric">Examples</p>
 <dl>
-<dt>import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(‘./sample_data/modelling/pdb_files/hGBP1_closed.pdb’)</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d_av</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span> <span class="c1"># donor attachment and description of the linker</span>
+<dt>import mfm.structure    &gt;&gt;&gt; structure = mfm.structure.Structure(‘./test/data/modelling/pdb_files/hGBP1_closed.pdb’)</dt><dd><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d_av</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span> <span class="c1"># donor attachment and description of the linker</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a_av</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;residue_seq_number&#39;</span><span class="p">:</span> <span class="mi">577</span><span class="p">,</span> <span class="s1">&#39;atom_name&#39;</span><span class="p">:</span> <span class="s1">&#39;CB&#39;</span><span class="p">}</span> <span class="c1"># acceptor description and linker</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">4.</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">])</span> <span class="c1"># donor_lifetime_spectrum</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">lifetime_spectrum</span> <span class="o">=</span> <span class="n">av_lifetime_spectrum</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">ds</span><span class="p">,</span> <span class="n">donor_av_parameter</span><span class="o">=</span><span class="n">d_av</span><span class="p">,</span> <span class="n">acceptor_av_parameter</span><span class="o">=</span><span class="n">a_av</span><span class="p">)</span>
@@ -479,7 +479,7 @@ to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the
 <dt id="mfm.structure.protein.ProteinBead">
 <em class="property">class </em><code class="sig-prename descclassname">mfm.structure.protein.</code><code class="sig-name descname">ProteinBead</code><span class="sig-paren">(</span><em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/protein.html#ProteinBead"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.protein.ProteinBead" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.structure.structure.Structure</span></code></a></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s_aa</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">protein</span><span class="o">.</span><span class="n">ProteinBead</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s_aa</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">protein</span><span class="o">.</span><span class="n">ProteinBead</span><span class="p">(</span><span class="n">atomic_coordinates</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="method">
@@ -515,10 +515,10 @@ to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the
 <dd><p>Bases: <a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.structure.structure.Structure</span></code></a></p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">sp</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">protein</span><span class="o">.</span><span class="n">ProteinCentroid</span><span class="p">(</span><span class="s1">&#39;../sample_data/structure/HM_1FN5_Naming.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sp</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">protein</span><span class="o">.</span><span class="n">ProteinCentroid</span><span class="p">(</span><span class="s1">&#39;../test/data/structure/HM_1FN5_Naming.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="go">======================================</span>
-<span class="go">Filename: /sample_data/structure/HM_1FN5_Naming.pdb</span>
-<span class="go">Path: /sample_data/structure</span>
+<span class="go">Filename: /data/structure/HM_1FN5_Naming.pdb</span>
+<span class="go">Path: /data/structure</span>
 <span class="go">Number of atoms: 9316</span>
 <span class="go">--------------------------------------</span>
 <span class="go">Atoms internal: 3457</span>
@@ -532,7 +532,7 @@ to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the
 <span class="go">ATOM   2273    C ALA   386      47.799  59.970  21.123  0.00  0.00             C</span>
 <span class="go">ATOM   2274    O ALA   386      47.600  59.096  20.280  0.00  0.00             O</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;test_out.pdb&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">s_aa</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">protein</span><span class="o">.</span><span class="n">ProteinCentroid</span><span class="p">(</span><span class="s1">&#39;/sample_data/structure/HM_1FN5_Naming.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s_aa</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">protein</span><span class="o">.</span><span class="n">ProteinCentroid</span><span class="p">(</span><span class="s1">&#39;./test/data/structure/HM_1FN5_Naming.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">s_aa</span><span class="p">)</span>
 <span class="go">ATOM   9312    H MET   583      40.848  10.075  17.847  0.00  0.00             H</span>
 <span class="go">ATOM   9313   HA MET   583      40.666   8.204  15.667  0.00  0.00             H</span>
@@ -586,7 +586,7 @@ to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the
 <code class="sig-name descname">to_coarse</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/protein.html#ProteinCentroid.to_coarse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.protein.ProteinCentroid.to_coarse" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts the structure-instance into a coarse structure.</p>
 <p class="rubric">Examples</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s_aa</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">ProteinCentroid</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s_aa</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">ProteinCentroid</span><span class="p">(</span><span class="s1">&#39;./test/data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">s_aa</span><span class="p">)</span>
 <span class="go">ATOM   9312    H MET   583      40.848  10.075  17.847  0.00  0.00             H</span>
 <span class="go">ATOM   9313   HA MET   583      40.666   8.204  15.667  0.00  0.00             H</span>
@@ -684,14 +684,14 @@ to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the
 <span id="mfm-structure-structure-module"></span><h2>mfm.structure.structure module<a class="headerlink" href="#module-mfm.structure.structure" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="mfm.structure.structure.Structure">
-<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.structure.</code><code class="sig-name descname">Structure</code><span class="sig-paren">(</span><em class="sig-param">p_object=None</em>, <em class="sig-param">*args</em>, <em class="sig-param">auto_update=False</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#Structure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.Structure" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mfm.structure.structure.</code><code class="sig-name descname">Structure</code><span class="sig-paren">(</span><em class="sig-param">p_object=None</em>, <em class="sig-param">*args</em>, <em class="sig-param">auto_update=False</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">pdb_id=None</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#Structure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.Structure" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.base.Base</span></code></p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.structure</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;1dg3&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="go">======================================</span>
-<span class="go">Filename: ../sample_data/structure/HM_1FN5_Naming.pdb</span>
-<span class="go">Path: ../sample_data/structure</span>
+<span class="go">Filename: ../test/data/structure/HM_1FN5_Naming.pdb</span>
+<span class="go">Path: ../test/data/structure</span>
 <span class="go">Number of atoms: 9316</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">structure</span><span class="p">)[:</span><span class="mi">324</span><span class="p">])</span>
 <span class="go">ATOM      1    N HIS A   6     -18.863  20.262  33.465  0.00  0.00             N</span>
@@ -712,32 +712,36 @@ to calculate the FRET-rate spectrum and uses this rate-spectrum to calculate the
 <dl class="field-list simple">
 <dt class="field-odd">Attributes</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>max_atom_residue</strong><span class="classifier">int</span></dt><dd><p>Maximum atoms per residue. The maximum atoms per residue have to be limited, because of the
-residue/atom lookup tables. By default maximum 16 atoms per residue are allowed.</p>
+<dt><strong>max_atom_residue</strong><span class="classifier">int</span></dt><dd><p>Maximum atoms per residue. The maximum atoms per residue have to be
+limited, because of the residue/atom lookup tables. By default
+maximum 16 atoms per residue are allowed.</p>
 </dd>
 <dt><a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure.xyz" title="mfm.structure.structure.Structure.xyz"><code class="xref py py-obj docutils literal notranslate"><span class="pre">xyz</span></code></a><span class="classifier">numpy-array</span></dt><dd><p>Cartesian coordinates of all atoms</p>
 </dd>
-<dt><strong>residue_names: list</strong></dt><dd><p>residue names is a list of the residue-names. Here the residues are represented by the same
-name as the initial PDB-file, usually 3-letter amino-acid code. The residue_names attribute
-may look like: [‘TYR’, ‘HIS’, ‘ARG’]</p>
+<dt><strong>residue_names: list</strong></dt><dd><p>residue names is a list of the residue-names. Here the residues are
+represented by the same name as the initial PDB-file, usually 3-letter
+amino-acid code. The residue_names attribute may look like:
+[‘TYR’, ‘HIS’, ‘ARG’]</p>
 </dd>
 <dt><strong>n_atoms: int</strong></dt><dd><p>The number of atoms</p>
 </dd>
 <dt><strong>b_factos: array</strong></dt><dd><p>An array of the b-factors.</p>
 </dd>
-<dt><strong>radius_gyration: float</strong></dt><dd><p>The attribute radius_gyration returns the radius of gyration of the structure. The radius of gyration
-is given by: rG = (np.sqrt((coord - rM) ** 2).sum(axis=1)).mean()
+<dt><strong>radius_gyration: float</strong></dt><dd><p>The attribute radius_gyration returns the radius of gyration of the
+structure. The radius of gyration is given by:
+rG = (np.sqrt((coord - rM) ** 2).sum(axis=1)).mean()
 Here rM are the mean coordinates of the structure.</p>
 </dd>
 <dt><strong>:param filename: str</strong></dt><dd><p>Path to the pdb file on disk</p>
 </dd>
-<dt><strong>:param make_coarse: bool</strong></dt><dd><p>Conversion to coarse representation using internal coordinates. Side-chains are
-not considered. The Cbeta-atoms is moved to center of mass of the side-chain.</p>
+<dt><strong>:param make_coarse: bool</strong></dt><dd><p>Conversion to coarse representation using internal coordinates.
+Side-chains are not considered. The Cbeta-atoms is moved to center of
+mass of the side-chain.</p>
 </dd>
 <dt><strong>:param verbose: bool</strong></dt><dd><p>print output to stdout</p>
 </dd>
-<dt><strong>:param auto_update: bool</strong></dt><dd><p>update cartesian-coordiantes automatically after change of internal coordinates.
-This only applies for coarse-grained coordinates</p>
+<dt><strong>:param auto_update: bool</strong></dt><dd><p>update cartesian-coordiantes automatically after change of internal
+coordinates. This only applies for coarse-grained coordinates</p>
 </dd>
 </dl>
 </dd>
@@ -758,7 +762,7 @@ This only applies for coarse-grained coordinates</p>
 </dl>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.structure</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span><span class="o">.</span><span class="n">append_potential</span><span class="p">(</span><span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">potential</span><span class="o">.</span><span class="n">lennard_jones_calpha</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">structure</span><span class="o">.</span><span class="n">energy</span>
 <span class="go">-948.0396693387753</span>
@@ -842,7 +846,12 @@ This only applies for coarse-grained coordinates</p>
 <dl class="method">
 <dt id="mfm.structure.structure.Structure.radius_gyration">
 <em class="property">property </em><code class="sig-name descname">radius_gyration</code><a class="headerlink" href="#mfm.structure.structure.Structure.radius_gyration" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mfm.structure.structure.Structure.residue_dict">
@@ -902,13 +911,13 @@ This only applies for coarse-grained coordinates</p>
 
 <dl class="method">
 <dt id="mfm.structure.structure.Structure.write">
-<code class="sig-name descname">write</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#Structure.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.Structure.write" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">write</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">filename: 'str' = None</em>, <em class="sig-param">append_model: 'bool' = False</em>, <em class="sig-param">append_coordinates: 'bool' = False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/structure.html#Structure.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.structure.Structure.write" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write the structure to a filename. By default it uses PDB files</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filename</strong> – The filename</p></li>
-<li><p><strong>append_model</strong> – bool
+<li><p><strong>filename</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The filename</p></li>
+<li><p><strong>append_model</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool
 If True the structure is appended to the filename as a new model otherwise the file is overwritten</p></li>
 </ul>
 </dd>
@@ -937,7 +946,7 @@ if filename not provided makes new “average.pdb” file in temp-folder
 of the system</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">times</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">trajectory</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">times</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">trajectory</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./test/data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">reading_routine</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">avg</span> <span class="o">=</span> <span class="n">times</span><span class="o">.</span><span class="n">average</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">avg</span>
 <span class="go">&lt;mfm.structure.structure.Structure at 0x117ff770&gt;</span>
@@ -975,7 +984,7 @@ reference is of length 1, target of arbitrary length</p>
 <p>returns a Structure object and the index within the trajectory</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">times</span> <span class="o">=</span> <span class="n">times</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">times</span> <span class="o">=</span> <span class="n">times</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./test/data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">reading_routine</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">find_best</span><span class="p">(</span><span class="n">times</span><span class="o">.</span><span class="n">mdtraj</span><span class="p">,</span> <span class="n">times</span><span class="o">.</span><span class="n">mdtraj</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
 <span class="go">(2, &lt;mdtraj.Trajectory with 1 frames, 2495 atoms, 164 residues, without unitcells at 0x13570b30&gt;)</span>
 </pre></div>
@@ -1000,12 +1009,12 @@ reference is of length 1, target of arbitrary length</p>
 </dl>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_file</span> <span class="o">=</span> <span class="s1">&#39;./sample_data/model/hgbp1/hGBP1_closed.pdb&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_file</span> <span class="o">=</span> <span class="s1">&#39;./test/data/model/hgbp1/hGBP1_closed.pdb&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pdb</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">PDB</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="go">Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb</span>
+<span class="go">Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb</span>
 <span class="go">======================================</span>
-<span class="go">Filename: ./sample_data/model/hgbp1/hGBP1_closed.pdb</span>
-<span class="go">Path: ./sample_data/model/hgbp1</span>
+<span class="go">Filename: ./test/data/model/hgbp1/hGBP1_closed.pdb</span>
+<span class="go">Path: ./test/data/model/hgbp1</span>
 <span class="go">Number of atoms: 9316</span>
 <span class="go">--------------------------</span>
 </pre></div>
@@ -1042,10 +1051,10 @@ list are selected (see example)</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_file</span> <span class="o">=</span> <span class="n">models</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pdb</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">PDB</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="go">Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb</span>
+<span class="go">Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb</span>
 <span class="go">======================================</span>
-<span class="go">Filename: ./sample_data/model/hgbp1/hGBP1_closed.pdb</span>
-<span class="go">Path: ./sample_data/model/hgbp1</span>
+<span class="go">Filename: ./test/data/model/hgbp1/hGBP1_closed.pdb</span>
+<span class="go">Path: ./test/data/model/hgbp1</span>
 <span class="go">Number of atoms: 9316</span>
 <span class="go">--------------------------</span>
 </pre></div>
@@ -1081,10 +1090,10 @@ numpy-array as returned by PDB.read</p></li>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pdb_file</span> <span class="o">=</span> <span class="n">models</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pdb</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">pdb_file</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">pdb_file</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="go">Opening PDB-file: ./sample_data/model/hgbp1/hGBP1_closed.pdb</span>
+<span class="go">Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb</span>
 <span class="go">======================================</span>
-<span class="go">Filename: ./sample_data/model/hgbp1/hGBP1_closed.pdb</span>
-<span class="go">Path: ./sample_data/model/hgbp1</span>
+<span class="go">Filename: ./test/data/model/hgbp1/hGBP1_closed.pdb</span>
+<span class="go">Path: ./test/data/model/hgbp1</span>
 <span class="go">Number of atoms: 9316</span>
 <span class="go">--------------------------------------</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mfm</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">dye_diffusion</span><span class="o">.</span><span class="n">dye_diffusion</span><span class="o">.</span><span class="n">get_quencher_coordinates</span><span class="p">(</span><span class="n">pdb</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;TRP&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;CA&#39;</span><span class="p">]})</span>
@@ -1149,7 +1158,7 @@ provided only the, respective atoms are used to calculate the RMSD.</p>
 </dl>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">times</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">times</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./test/data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">reading_routine</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">s1</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">s1</span>
 <span class="go">&lt;mfm.structure.structure.Structure at 0x135f3ad0&gt;</span>
@@ -1203,13 +1212,15 @@ provided only the, respective atoms are used to calculate the RMSD.</p>
 <dt id="mfm.structure.trajectory.TrajectoryFile">
 <em class="property">class </em><code class="sig-prename descclassname">mfm.structure.trajectory.</code><code class="sig-name descname">TrajectoryFile</code><span class="sig-paren">(</span><em class="sig-param">p_object</em>, <em class="sig-param">filename=None</em>, <em class="sig-param">make_coarse=False</em>, <em class="sig-param">rmsd_ref_state=0</em>, <em class="sig-param">stride=1</em>, <em class="sig-param">inverse_trajectory=False</em>, <em class="sig-param">center=False</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">atom_indices=None</em>, <em class="sig-param">mode='r'</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/trajectory.html#TrajectoryFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mfm.base.Base</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">mdtraj.core.trajectory.Trajectory</span></code></p>
-<p>Creates an Trajectory of mfm.structure.Structures given a HDF5-File using mdtraj.HDF5TrajectoryFile</p>
+<p>Creates an Trajectory of mfm.structure.Structures given a HDF5-File using
+mdtraj.HDF5TrajectoryFile</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>structure</strong><span class="classifier">string / mfm.structure.Structure</span></dt><dd><p>determines the topology
-is either a string containing the filename of a PDB-File or an instance of mfm.structure.Structure()
-Obligatory in write file_type, not needed in reading file_type</p>
+is either a string containing the filename of a PDB-File or an instance
+of mfm.structure.Structure() Obligatory in write reading_routine, not
+needed in reading reading_routine</p>
 </dd>
 <dt><strong>filename_hdf</strong><span class="classifier">string</span></dt><dd><p>the filename of the HDF5-file</p>
 </dd>
@@ -1220,8 +1231,8 @@ Obligatory in write file_type, not needed in reading file_type</p>
 <dt><strong>verbose</strong><span class="classifier">bool</span></dt><dd></dd>
 <dt><strong>stride</strong><span class="classifier">int, default=None</span></dt><dd><p>Only read every stride-th frame.</p>
 </dd>
-<dt><strong>frame</strong><span class="classifier">integer or None</span></dt><dd><p>If frame is an integer only the frame number provided by the integer is loaded otherwise the whole trajectory
-is loaded.</p>
+<dt><strong>frame</strong><span class="classifier">integer or None</span></dt><dd><p>If frame is an integer only the frame number provided by the integer is
+loaded otherwise the whole trajectory is loaded.</p>
 </dd>
 </dl>
 </dd>
@@ -1237,8 +1248,8 @@ is loaded.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm.structure</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mfm.structure.trajectory</span> <span class="k">import</span> <span class="n">TrajectoryFile</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/T4L_Topology.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span><span class="p">(</span><span class="s1">&#39;./test/data/modelling/trajectory/h5-file/T4L_Topology.pdb&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">reading_routine</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="go">&lt;mfm.structure.structure.mfm.structure.Structure at 0x11f34e10&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">traj</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -1253,7 +1264,7 @@ is loaded.</p>
 <p>Opening h5-Trajectory file</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mfm.structure.trajectory</span> <span class="k">import</span> <span class="n">TrajectoryFile</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">reading_routine</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">traj</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">])</span>
 <span class="go">[&lt;mfm.structure.structure.mfm.structure.Structure at 0x1345d5d0&gt;,</span>
 <span class="go">&lt;mfm.structure.structure.mfm.structure.Structure at 0x1345d610&gt;,</span>
@@ -1262,20 +1273,21 @@ is loaded.</p>
 </div>
 <p>Name of the trajectory</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">traj</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-<span class="go">&#39;/ sample_data/ structure/ sample_data/ structure/ T4L_Trajectory.h5&#39;</span>
+<span class="go">&#39;/ data/ structure/ data/ structure/ T4L_Trajectory.h5&#39;</span>
 </pre></div>
 </div>
 <p>initialize with mdtraj.Trajectory</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mfm.structure.trajectory</span> <span class="k">import</span> <span class="n">TrajectoryFile</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5&#39;</span><span class="p">,</span> <span class="n">reading_routine</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">t2</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="n">traj</span><span class="o">.</span><span class="n">mdtraj</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;test.h5&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="method">
 <dt id="mfm.structure.trajectory.TrajectoryFile.append">
 <code class="sig-name descname">append</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">xyz</em>, <em class="sig-param">update_rmsd: 'bool' = True</em>, <em class="sig-param">energy: 'float' = inf</em>, <em class="sig-param">energy_fret: 'float' = inf</em>, <em class="sig-param">verbose: 'bool' = True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mfm/structure/trajectory.html#TrajectoryFile.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile.append" title="Permalink to this definition">¶</a></dt>
-<dd><p>Append a structure of type :py::class`mfm.mfm.structure.Structure` to the trajectory</p>
+<dd><p>Append a structure of type :py::class`mfm.mfm.structure.Structure`
+to the trajectory</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1286,14 +1298,15 @@ Energy of the system</p></li>
 <li><p><strong>energy_fret</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – float
 Energy of the FRET-potential</p></li>
 <li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – bool
-By default True. If True energy, energy_fret, RMSD and dRMSD are printed to std-out.</p></li>
+By default True. If True energy, energy_fret, RMSD and dRMSD are
+printed to std-out.</p></li>
 </ul>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mfm.structure.trajectory</span> <span class="k">import</span> <span class="n">TrajectoryFile</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./test/data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">reading_routine</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span>
 <span class="go">&lt;mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x11762b70&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">traj</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -1305,7 +1318,8 @@ By default True. If True energy, energy_fret, RMSD and dRMSD are printed to std-
 <dl class="method">
 <dt id="mfm.structure.trajectory.TrajectoryFile.average">
 <em class="property">property </em><code class="sig-name descname">average</code><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile.average" title="Permalink to this definition">¶</a></dt>
-<dd><p>The average structure (<code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code>) of the trajectory</p>
+<dd><p>The average structure (<code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code>)
+of the trajectory</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></a></p>
@@ -1380,8 +1394,11 @@ By default True. If True energy, energy_fret, RMSD and dRMSD are printed to std-
 <dl class="method">
 <dt id="mfm.structure.trajectory.TrajectoryFile.reference">
 <em class="property">property </em><code class="sig-name descname">reference</code><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile.reference" title="Permalink to this definition">¶</a></dt>
-<dd><p>The reference structure used for RMSD-calculation. This cannot be set directly but has to be set via the number
-of the reference state :py:attribute`.rmsd_ref_state`</p>
+<dd><p>The reference structure used for RMSD-calculation. This cannot be
+set directly but has to be set via the number of the reference state</p>
+<blockquote>
+<div><p>:py:attribute`.rmsd_ref_state`</p>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><a class="reference internal" href="../user_documentation/api/structure.html#mfm.structure.structure.Structure" title="mfm.structure.structure.Structure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Structure</span></code></a></p>
@@ -1392,7 +1409,8 @@ of the reference state :py:attribute`.rmsd_ref_state`</p>
 <dl class="method">
 <dt id="mfm.structure.trajectory.TrajectoryFile.rmsd_ref_state">
 <em class="property">property </em><code class="sig-name descname">rmsd_ref_state</code><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile.rmsd_ref_state" title="Permalink to this definition">¶</a></dt>
-<dd><p>The index (frame number) of the reference state used for the RMSD calculation</p>
+<dd><p>The index (frame number) of the reference state used for the RMSD
+calculation</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
@@ -1434,11 +1452,12 @@ point to the same data.</p>
 <dl class="method">
 <dt id="mfm.structure.trajectory.TrajectoryFile.values">
 <em class="property">property </em><code class="sig-name descname">values</code><a class="headerlink" href="#mfm.structure.trajectory.TrajectoryFile.values" title="Permalink to this definition">¶</a></dt>
-<dd><p>A 2D-numpy array containing the RMSD, dRMSD, energy and the chi2 values of the trajectory</p>
+<dd><p>A 2D-numpy array containing the RMSD, dRMSD, energy and the chi2
+values of the trajectory</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">mfm</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mfm.structure.trajectory</span> <span class="k">import</span> <span class="n">TrajectoryFile</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./sample_data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="s1">&#39;./test/data/structure/2807_8_9_b.h5&#39;</span><span class="p">,</span> <span class="n">reading_routine</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span>
 <span class="go">&lt;mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x117f3b70&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">traj</span><span class="o">.</span><span class="n">values</span>

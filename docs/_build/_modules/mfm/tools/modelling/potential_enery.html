@@ -150,14 +150,15 @@
   <h1>Source code for mfm.tools.modelling.potential_enery</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 
-<span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtWidgets</span><span class="p">,</span> <span class="n">uic</span>
+<span class="kn">from</span> <span class="nn">qtpy</span> <span class="k">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtWidgets</span>
 <span class="kn">import</span> <span class="nn">qdarkstyle</span>
 
 <span class="kn">import</span> <span class="nn">mdtraj</span>
+
 <span class="kn">import</span> <span class="nn">mfm</span>
+<span class="kn">import</span> <span class="nn">mfm.decorators</span>
 <span class="kn">from</span> <span class="nn">mfm.structure.potential</span> <span class="k">import</span> <span class="n">potentialDict</span>
 <span class="kn">from</span> <span class="nn">mfm.structure.trajectory</span> <span class="k">import</span> <span class="n">TrajectoryFile</span><span class="p">,</span> <span class="n">Universe</span>
 
@@ -166,20 +167,14 @@
 
     <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Potential-Energy calculator&quot;</span>
 
+    <span class="nd">@mfm</span><span class="o">.</span><span class="n">decorators</span><span class="o">.</span><span class="n">init_with_ui</span><span class="p">(</span><span class="n">ui_filename</span><span class="o">=</span><span class="s2">&quot;calculate_potential.ui&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
             <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
             <span class="n">structure</span><span class="p">:</span> <span class="n">mfm</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">Structure</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">args</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span>
     <span class="p">):</span>
-        <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">uic</span><span class="o">.</span><span class="n">loadUi</span><span class="p">(</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span>
-                <span class="s2">&quot;calculate_potential.ui&quot;</span>
-            <span class="p">),</span>
-            <span class="bp">self</span>
-        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_trajectory_file</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">potential_weight</span> <span class="o">=</span> <span class="mf">1.0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">energies</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
@@ -215,9 +210,17 @@
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">universe</span><span class="o">.</span><span class="n">potentials</span><span class="p">:</span>
             <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span>
         <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
-        <span class="nb">open</span><span class="p">(</span><span class="n">energy_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">mfm</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">zipped</span><span class="o">.</span><span class="n">open_maybe_zipped</span><span class="p">(</span>
+            <span class="n">filename</span><span class="o">=</span><span class="n">energy_file</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span><span class="n">mdtraj</span><span class="o">.</span><span class="n">load_frame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trajectory_file</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">make_coarse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">TrajectoryFile</span><span class="p">(</span>
+            <span class="n">mdtraj</span><span class="o">.</span><span class="n">load_frame</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">trajectory_file</span><span class="p">,</span> <span class="mi">0</span>
+            <span class="p">),</span>
+            <span class="n">make_coarse</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">mdtraj</span><span class="o">.</span><span class="n">iterload</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trajectory_file</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">:</span>

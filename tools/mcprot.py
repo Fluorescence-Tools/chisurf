@@ -116,7 +116,7 @@ class ProteinMCWorker(object):
          Example
          -------
 
-        >>> structure = mfm.structure.protein.ProteinCentroid('./test/data/modelling/pdb_files/eGFP-mCherry.pqr')
+        >>> structure = mfm.structure.protein.ProteinCentroid('./test/data/atomic_coordinates/pdb_files/eGFP-mCherry.pqr')
         >>> mcw = ProteinMCWorker(structure)
         >>> mcw.run(n_out=100, n_iter=10000)
         """
