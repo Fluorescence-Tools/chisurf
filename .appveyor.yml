@@ -7,16 +7,18 @@ environment:
 
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  - conda config --set always_yes yes --set changeps1 no
-  - conda env create -f environment.yaml
-  - activate chisurf
-  - python.exe setup.py build_ext --inplace
-  - python setup.py install
+#  - conda config --set always_yes yes --set changeps1 no
+#  - conda env create -f environment.yaml
+#  - activate chisurf
+#  - python.exe setup.py build_ext --inplace
+#  - python setup.py install
 
 build: off
 
 test_script:
   - conda install nose coverage
+  - echo %CD%
   - ps: cd .\test\
-  - nosetests --with-coverage test_*.py
-
+  - echo %CD%
+#  - nosetests --with-coverage test_*.py
+#
