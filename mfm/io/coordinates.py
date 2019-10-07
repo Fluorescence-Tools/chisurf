@@ -31,7 +31,7 @@ from __future__ import annotations
 import os
 import urllib.request
 import numpy as np
-import mmcif.io.PdbxReader
+#import mmcif.io.PdbxReader
 
 import mfm
 import mfm.common as common
