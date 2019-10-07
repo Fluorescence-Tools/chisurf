@@ -3,9 +3,9 @@ environment:
     - PYTHON: "C:\\Miniconda3-x64"
 
 install:
-  - echo ". C:\Miniconda3-x64/etc/profile.d/conda.sh" >> ~/.bashrc
+  - sudo ln -s C:\Miniconda3-x64/etc/profile.d/conda.sh /etc/profile.d/conda.sh
   - conda env create -f environment.yaml
-  - conda activate chisurf
+  - activate chisurf
   - conda install nose coverage
   - python.exe setup.py build_ext --inplace
   - python setup.py install
