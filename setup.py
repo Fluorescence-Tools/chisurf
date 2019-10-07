@@ -127,7 +127,7 @@ setup(
     setup_requires=[
         "cython",
         'numpy',
-        'yaml',
+        'PyYAML',
         'setuptools'
     ],
     ext_modules=extensions,
