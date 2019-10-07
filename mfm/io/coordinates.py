@@ -31,6 +31,8 @@ from __future__ import annotations
 import os
 import urllib.request
 import numpy as np
+
+# Removed for now because mmcif does not exist for Windows
 #import mmcif.io.PdbxReader
 
 import mfm
