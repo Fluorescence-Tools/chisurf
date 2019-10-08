@@ -21,16 +21,20 @@ class Tests(unittest.TestCase):
             num=100
         )
         y = np.sin(x)
-        file = tempfile.NamedTemporaryFile(suffix='.txt')
+        #file = tempfile.NamedTemporaryFile(suffix='.txt')
+        #filename = file.name
+        filename = tempfile.mkstemp(
+            suffix='.txt'
+        )[1]
         mfm.io.ascii.save_xy(
-            filename=file.name,
+            filename=filename,
             x=x,
             y=y,
             fmt="%f\t%f\n",
             header_string="x\ty\n"
         )
         x2, y2 = mfm.io.ascii.load_xy(
-            filename=file.name,
+            filename=filename,
             usecols=(0, 1),
             delimiter="\t",
             skiprows=1
@@ -60,13 +64,16 @@ class Tests(unittest.TestCase):
         reference_ey = np.ones_like(reference_y)
         reference_data = np.vstack([reference_x, reference_y, reference_ex, reference_ey]).T
 
-        file = tempfile.NamedTemporaryFile(
+        #file = tempfile.NamedTemporaryFile(
+        #    suffix='.txt'
+        #)
+        filename = tempfile.mkstemp(
             suffix='.txt'
-        )
+        )[1]
 
         # save with basic/simple CSV functions
         mfm.io.ascii.save_xy(
-            filename=file.name,
+            filename=filename,
             x=reference_x,
             y=reference_y,
             fmt="%f\t%f\n",
@@ -75,7 +82,7 @@ class Tests(unittest.TestCase):
 
         # CSV class
         csv = mfm.io.ascii.Csv(
-            filename=file.name,
+            filename=filename,
             skiprows=0,
             use_header=True
         )
@@ -99,16 +106,16 @@ class Tests(unittest.TestCase):
         )
         self.assertEqual(
             csv.filename,
-            file.name
+            filename
         )
 
         csv.save(
             data=reference_data.T,
-            filename=file.name,
+            filename=filename,
             delimiter='\t'
         )
         csv.load(
-            filename=file.name,
+            filename=filename,
             delimiter='\t',
             skiprows=0,
             use_header=False
@@ -122,27 +129,32 @@ class Tests(unittest.TestCase):
         )
 
         reference_y = np.cos(reference_x)
-        file2 = tempfile.NamedTemporaryFile(
+        #file2 = tempfile.NamedTemporaryFile(
+        #    suffix='.txt'
+        #)
+        #filename2 = file2.name
+        filename2 = tempfile.mkstemp(
             suffix='.txt'
-        )
+        )[1]
+
         mfm.io.ascii.save_xy(
-            filename=file2.name,
+            filename=filename2,
             x=reference_x,
             y=reference_y,
             fmt="%f\t%f\n",
             header_string="x\ty\n"
         )
         csv.load(
-            filename=file2.name
+            filename=filename2
         )
         self.assertEqual(
             csv.filename,
-            file2.name
+            filename2
         )
 
         # test delimiter sniffer
         csv.load(
-            filename=file.name,
+            filename=filename,
             skiprows=0,
             use_header=False
         )
@@ -196,11 +208,15 @@ class Tests(unittest.TestCase):
 
     def test_read_pdb(self):
         pdb_id = "148L"
-        file = tempfile.NamedTemporaryFile(
+        #file = tempfile.NamedTemporaryFile(
+        #    suffix='.pdb'
+        #)
+        #filename = file.name
+        filename = tempfile.mkstemp(
             suffix='.pdb'
-        )
+        )[1]
         with mfm.io.zipped.open_maybe_zipped(
-                filename=file.name,
+                filename=filename,
                 mode='w'
         ) as fp:
             fp.write(
@@ -208,7 +224,7 @@ class Tests(unittest.TestCase):
             )
 
         atoms = mfm.io.coordinates.read(
-            filename=file.name
+            filename=filename
         )
         atoms_reference = np.array(
             [(0, 'E', 1, 'MET', 1, 'N', '', [7.71, 28.561, 39.546], 0., 0., 41., 0.),
@@ -235,10 +251,13 @@ class Tests(unittest.TestCase):
         import tempfile
 
         filetype = "bh132"
-        file = tempfile.NamedTemporaryFile(
+        #file = tempfile.NamedTemporaryFile(
+        #   suffix='.photon.h5'
+        #)
+        filename = tempfile.mkstemp(
             suffix='.photon.h5'
-        )
-        output = file.name
+        )[1]
+        output = filename
         spc_files = glob.glob("./test/data/tttr/BH/BH_SPC132.spc")
         h5 = mfm.io.tttr.spc2hdf(
             spc_files,
@@ -307,20 +326,22 @@ class Tests(unittest.TestCase):
                 d["dt"]
             )
 
-    def test_mmcif_read(self):
-        import mmcif.io.PdbxReader
-        import mfm.io.zipped
-        filename = "./data/atomic_coordinates/mmcif/1ffk.cif.gz"
-
-        data = []
-        with mfm.io.zipped.open_maybe_zipped(
-                filename=filename,
-                mode='r'
-        ) as fp:
-            reader = mmcif.io.PdbxReader.PdbxReader(fp)
-            reader.read(data)
-        #mfm.io.coordinates.keys
-        #atoms = data[0]['atom_site']
+    # Removed for now because mmcif does not exist for Windows
+    # def test_mmcif_read(self):
+    #     import mmcif.io.PdbxReader
+    #     import mfm.io.zipped
+    #     filename = "./data/atomic_coordinates/mmcif/1ffk.cif.gz"
+    #
+    #     data = []
+    #     with mfm.io.zipped.open_maybe_zipped(
+    #             filename=filename,
+    #             mode='r'
+    #     ) as fp:
+    #         reader = mmcif.io.PdbxReader.PdbxReader(fp)
+    #         reader.read(data)
+    #     #mfm.io.coordinates.keys
+    #     #atoms = data[0]['atom_site']
+    #
 
 
 if __name__ == '__main__':

@@ -138,8 +138,11 @@ class Tests(unittest.TestCase):
         )
 
     def test_reading(self):
-        file = tempfile.NamedTemporaryFile(suffix='.yaml')
-        filename = file.name
+        #file = tempfile.NamedTemporaryFile(suffix='.yaml')
+        #filename = file.name
+        filename = tempfile.mkstemp(
+            suffix='.yaml'
+        )[1]
 
         x = np.linspace(0, 2. * np.pi, 100)
         y = np.sin(x)

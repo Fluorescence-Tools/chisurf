@@ -144,10 +144,14 @@ class Tests(unittest.TestCase):
         }
 
         # JSON File
-        file = tempfile.NamedTemporaryFile(
+        #file = tempfile.NamedTemporaryFile(
+        #    suffix='.json'
+        #)
+        #filename = file.name
+        filename = tempfile.mkstemp(
             suffix='.json'
-        )
-        filename = file.name
+        )[1]
+
         b1 = mfm.base.Base(**d)
         b1.save(
             filename=filename,
@@ -165,10 +169,14 @@ class Tests(unittest.TestCase):
         )
 
         # YAML File
-        file = tempfile.NamedTemporaryFile(
+        #file = tempfile.NamedTemporaryFile(
+        #    suffix='.yaml'
+        #)
+        #filename = file.name
+        filename = tempfile.mkstemp(
             suffix='.yaml'
-        )
-        filename = file.name
+        )[1]
+
         b1 = mfm.base.Base(**d)
         b1.save(
             filename=filename,
@@ -199,15 +207,20 @@ class Tests(unittest.TestCase):
     def test_data(self):
         # write some random data
         a = np.random.random(1000)
-        file = tempfile.NamedTemporaryFile(
+        #file = tempfile.NamedTemporaryFile(
+        #    suffix='.npy'
+        #)
+        #filename = file.name
+        filename = tempfile.mkstemp(
             suffix='.npy'
-        )
+        )[1]
+
         np.save(
-            file=file.name,
+            file=filename,
             arr=a
         )
         d = mfm.base.Data(
-            filename=file.name,
+            filename=filename,
             embed_data=True
         )
         self.assertEqual(
@@ -220,7 +233,7 @@ class Tests(unittest.TestCase):
         )
 
         d = mfm.base.Data(
-            filename=file.name,
+            filename=filename,
             embed_data=False
         )
         self.assertEqual(

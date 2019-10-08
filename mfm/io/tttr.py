@@ -439,10 +439,12 @@ def make_hdf(
     if title is None:
         title = str(mfm.settings.cs_settings['photons']['title'])
     if filename is None:
-        file = tempfile.NamedTemporaryFile(
+        #filename = tempfile.NamedTemporaryFile(
+        #    suffix=".photons.h5"
+        #)
+        filename = tempfile.mkstemp(
             suffix=".photons.h5"
-        )
-        filename = file.name
+        )[1]
     complevel = kwargs.get('', int(mfm.settings.cs_settings['photons']['complevel']))
     if verbose:
         print("-------------------------------------------")

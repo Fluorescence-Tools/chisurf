@@ -100,17 +100,21 @@ class Tests(unittest.TestCase):
             experiment.reader_names,
             [data_reader.name]
         )
-        file = tempfile.NamedTemporaryFile(
+        #file = tempfile.NamedTemporaryFile(
+        #    suffix='.npy'
+        #)
+        #filename = file.name
+        filename = tempfile.mkstemp(
             suffix='.npy'
-        )
+        )[1]
         np.save(
-            file=file.name,
+            file=filename,
             arr=a
         )
-        experimental_data.filename = file.name
+        experimental_data.filename = filename
         self.assertEqual(
             experimental_data.filename,
-            file.name
+            filename
         )
         # TODO: test to_dict and to_json
 
@@ -184,26 +188,37 @@ class Tests(unittest.TestCase):
         csv_io = mfm.io.ascii.Csv(
             use_header=False
         )
-        file = tempfile.NamedTemporaryFile(
+        #file = tempfile.NamedTemporaryFile(
+        #    suffix='.txt'
+        #)
+        #filename = file.name
+        filename = tempfile.mkstemp(
             suffix='.txt'
-        )
+        )[1]
+
         csv_io.save(
             data=data,
-            filename=file.name
+            filename=filename
         )
         d = mfm.experiments.data.DataCurve(
             *data
         )
-        file = tempfile.NamedTemporaryFile(
+
+        #file = tempfile.NamedTemporaryFile(
+        #    suffix='.txt'
+        #)
+        #filename = file.name
+        filename = tempfile.mkstemp(
             suffix='.txt'
-        )
+        )[1]
+
         d.save(
-            filename=file.name,
+            filename=filename,
             file_type='txt'
         )
         self.assertEqual(
             d.filename,
-            file.name
+            filename
         )
 
         reference_string = """
@@ -220,7 +235,7 @@ x	y	error-x	error-y
 
         d2 = mfm.experiments.data.DataCurve()
         d2.load(
-            filename=file.name,
+            filename=filename,
             skiprows=0
         )
         self.assertEqual(
