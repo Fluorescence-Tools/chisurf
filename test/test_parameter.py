@@ -153,10 +153,15 @@ class Tests(unittest.TestCase):
 
         import tempfile
 
-        file = tempfile.NamedTemporaryFile(
+        #file = tempfile.NamedTemporaryFile(
+        #    suffix='.json'
+        #)
+        #filename = file.name
+
+        filename = tempfile.mkstemp(
             suffix='.json'
-        )
-        filename = file.name
+        )[1]
+
         p1 = mfm.parameter.Parameter(
             value=2.0,
             bounds_on=True,
