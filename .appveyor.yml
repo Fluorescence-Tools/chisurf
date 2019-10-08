@@ -20,5 +20,12 @@ test_script:
   - cmd: echo %CD%
   - cmd: cd C:\projects\chisurf\test\
   - cmd: echo %CD%
-  - nosetests --with-coverage test_*.py
+  - nosetests
 
+notifications:
+- provider: Email
+  to:
+  - thomas.otavio.peulen@gmail.com
+  on_build_success: false
+  on_build_failure: true
+  on_build_status_changed: false

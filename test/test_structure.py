@@ -25,18 +25,22 @@ class Tests(unittest.TestCase):
             ),
             True
         )
-        file = tempfile.NamedTemporaryFile(suffix='.pdb')
+        #file = tempfile.NamedTemporaryFile(suffix='.pdb')
+        #filename 0 file.name
+        filename = tempfile.mkstemp(
+            suffix=".pdb"
+        )[1]
         s2.write(
-            filename=file.name
+            filename=filename
         )
         s2.write(
-            filename=file.name + '.gz'
+            filename=filename + '.gz'
         )
         s3 = mfm.structure.structure.Structure(
-            filename=file.name
+            filename=filename
         )
         s4 = mfm.structure.structure.Structure(
-            filename=file.name + '.gz'
+            filename=filename + '.gz'
         )
         self.assertEqual(
             np.allclose(
@@ -47,10 +51,10 @@ class Tests(unittest.TestCase):
         )
         self.assertEqual(
             os.path.getsize(
-                file.name
+                filename
                 ) >
             os.path.getsize(
-                file.name + '.gz'
+                filename + '.gz'
             ),
             True
         )
