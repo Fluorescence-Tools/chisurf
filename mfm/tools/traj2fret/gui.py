@@ -131,7 +131,9 @@ class Structure2Transfer(
 
         frame0 = md.load_frame(self.trajectory_file, 0)
 
-        tmp = tempfile.mkstemp(".pdb")
+        _, tmp = tempfile.mkstemp(
+            suffix=".pdb"
+        )
         frame0.save(tmp)
 
         self.topology_file = tmp

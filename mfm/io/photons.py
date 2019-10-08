@@ -184,9 +184,9 @@ class Photons(object):
                 #    delete=False
                 #)
                 #filename = file.name
-                filename = tempfile.mkstemp(
+                _, filename = tempfile.mkstemp(
                     suffix=".photons.h5",
-                )[1]
+                )
 
                 self._tempfile = filename
                 if reading_routine == 'bh132':

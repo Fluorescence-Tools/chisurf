@@ -158,9 +158,9 @@ class Tests(unittest.TestCase):
         #)
         #filename = file.name
 
-        filename = tempfile.mkstemp(
+        _, filename = tempfile.mkstemp(
             suffix='.json'
-        )[1]
+        )
 
         p1 = mfm.parameter.Parameter(
             value=2.0,

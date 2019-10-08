@@ -23,9 +23,9 @@ class Tests(unittest.TestCase):
         y = np.sin(x)
         #file = tempfile.NamedTemporaryFile(suffix='.txt')
         #filename = file.name
-        filename = tempfile.mkstemp(
+        _, filename = tempfile.mkstemp(
             suffix='.txt'
-        )[1]
+        )
         mfm.io.ascii.save_xy(
             filename=filename,
             x=x,
@@ -67,9 +67,9 @@ class Tests(unittest.TestCase):
         #file = tempfile.NamedTemporaryFile(
         #    suffix='.txt'
         #)
-        filename = tempfile.mkstemp(
+        _, filename = tempfile.mkstemp(
             suffix='.txt'
-        )[1]
+        )
 
         # save with basic/simple CSV functions
         mfm.io.ascii.save_xy(
@@ -133,9 +133,9 @@ class Tests(unittest.TestCase):
         #    suffix='.txt'
         #)
         #filename2 = file2.name
-        filename2 = tempfile.mkstemp(
+        _, filename2 = tempfile.mkstemp(
             suffix='.txt'
-        )[1]
+        )
 
         mfm.io.ascii.save_xy(
             filename=filename2,
@@ -212,9 +212,9 @@ class Tests(unittest.TestCase):
         #    suffix='.pdb'
         #)
         #filename = file.name
-        filename = tempfile.mkstemp(
+        _, filename = tempfile.mkstemp(
             suffix='.pdb'
-        )[1]
+        )
         with mfm.io.zipped.open_maybe_zipped(
                 filename=filename,
                 mode='w'
@@ -254,9 +254,9 @@ class Tests(unittest.TestCase):
         #file = tempfile.NamedTemporaryFile(
         #   suffix='.photon.h5'
         #)
-        filename = tempfile.mkstemp(
+        _, filename = tempfile.mkstemp(
             suffix='.photon.h5'
-        )[1]
+        )
         output = filename
         spc_files = glob.glob("./test/data/tttr/BH/BH_SPC132.spc")
         h5 = mfm.io.tttr.spc2hdf(

@@ -187,9 +187,13 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
         self._structure = None
 
         if filename is None:
-            filename = tempfile.mkstemp(".h5")
+            _, filename = tempfile.mkstemp(
+                suffix=".h5"
+            )
         self._filename = filename
-        pdb_tmp = tempfile.mkstemp(".pdb")
+        _, pdb_tmp = tempfile.mkstemp(
+            suffix=".pdb"
+        )
 
         if isinstance(
                 p_object,
@@ -226,7 +230,9 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
             self._mdtraj = p_object
             mdtraj.Trajectory.__init__(self, xyz=p_object.xyz, topology=p_object.topology)
             if filename is None:
-                filename = tempfile.mkstemp(".h5")
+                _, filename = tempfile.mkstemp(
+                    suffix=".h5"
+                )
             self._filename = filename
 
         elif isinstance(
@@ -234,7 +240,9 @@ class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
                 mfm.structure.structure.Structure
         ):
             if filename is None:
-                filename = tempfile.mkstemp(".h5")
+                _, filename = tempfile.mkstemp(
+                    suffix=".h5"
+                )
             self._filename = filename
 
             p_object.write(pdb_tmp)

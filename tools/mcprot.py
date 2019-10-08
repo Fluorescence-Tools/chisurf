@@ -36,7 +36,9 @@ class ProteinMCWorker(object):
 
         self.output_traj_file = output_traj_file
         if self.output_traj_file is None:
-            new_file = tempfile.mkstemp(".h5")
+            _, new_file = tempfile.mkstemp(
+                suffix=".h5"
+            )
             if self.verbose:
                 print("input_pdb: %s" % structure.labeling_file)
                 print("output_file: %s" % new_file)

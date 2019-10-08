@@ -442,9 +442,9 @@ def make_hdf(
         #filename = tempfile.NamedTemporaryFile(
         #    suffix=".photons.h5"
         #)
-        filename = tempfile.mkstemp(
+        _, filename = tempfile.mkstemp(
             suffix=".photons.h5"
-        )[1]
+        )
     complevel = kwargs.get('', int(mfm.settings.cs_settings['photons']['complevel']))
     if verbose:
         print("-------------------------------------------")

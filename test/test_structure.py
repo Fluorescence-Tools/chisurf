@@ -27,9 +27,9 @@ class Tests(unittest.TestCase):
         )
         #file = tempfile.NamedTemporaryFile(suffix='.pdb')
         #filename 0 file.name
-        filename = tempfile.mkstemp(
+        _, filename = tempfile.mkstemp(
             suffix=".pdb"
-        )[1]
+        )
         s2.write(
             filename=filename
         )
