@@ -104,9 +104,9 @@ class Tests(unittest.TestCase):
         #    suffix='.npy'
         #)
         #filename = file.name
-        filename = tempfile.mkstemp(
+        _, filename = tempfile.mkstemp(
             suffix='.npy'
-        )[1]
+        )
         np.save(
             file=filename,
             arr=a
@@ -192,9 +192,9 @@ class Tests(unittest.TestCase):
         #    suffix='.txt'
         #)
         #filename = file.name
-        filename = tempfile.mkstemp(
+        _, filename = tempfile.mkstemp(
             suffix='.txt'
-        )[1]
+        )
 
         csv_io.save(
             data=data,
@@ -208,9 +208,9 @@ class Tests(unittest.TestCase):
         #    suffix='.txt'
         #)
         #filename = file.name
-        filename = tempfile.mkstemp(
+        _, filename = tempfile.mkstemp(
             suffix='.txt'
-        )[1]
+        )
 
         d.save(
             filename=filename,

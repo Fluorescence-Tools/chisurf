@@ -148,9 +148,9 @@ class Tests(unittest.TestCase):
         #    suffix='.json'
         #)
         #filename = file.name
-        filename = tempfile.mkstemp(
+        _, filename = tempfile.mkstemp(
             suffix='.json'
-        )[1]
+        )
 
         b1 = mfm.base.Base(**d)
         b1.save(
@@ -173,9 +173,9 @@ class Tests(unittest.TestCase):
         #    suffix='.yaml'
         #)
         #filename = file.name
-        filename = tempfile.mkstemp(
+        _, filename = tempfile.mkstemp(
             suffix='.yaml'
-        )[1]
+        )
 
         b1 = mfm.base.Base(**d)
         b1.save(
@@ -211,9 +211,9 @@ class Tests(unittest.TestCase):
         #    suffix='.npy'
         #)
         #filename = file.name
-        filename = tempfile.mkstemp(
+        _, filename = tempfile.mkstemp(
             suffix='.npy'
-        )[1]
+        )
 
         np.save(
             file=filename,
