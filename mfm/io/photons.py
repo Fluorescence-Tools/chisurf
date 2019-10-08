@@ -179,10 +179,16 @@ class Photons(object):
                 except IOError:
                     tttr.make_hdf(**kwargs)
             else:
-                file = tempfile.NamedTemporaryFile(
-                    suffix=".photons.h5"
-                )
-                self._tempfile = file.name
+                #file = tempfile.NamedTemporaryFile(
+                #    suffix=".photons.h5",
+                #    delete=False
+                #)
+                #filename = file.name
+                filename = tempfile.mkstemp(
+                    suffix=".photons.h5",
+                )[1]
+
+                self._tempfile = filename
                 if reading_routine == 'bh132':
                     self._h5 = tttr.spc2hdf(
                         self._filenames,
