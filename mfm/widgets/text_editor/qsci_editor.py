@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import sys
 
-from PyQt5.Qsci import QsciScintilla, QsciLexerPython
+from PyQt5.Qsci import QsciScintilla
+from PyQt5.Qsci import QsciLexerPython, QsciLexerJSON, QsciLexerYAML
 from qtpy.QtGui import *
 from qtpy.QtWidgets import *
 import qdarkstyle
@@ -13,7 +14,7 @@ import qdarkstyle
 import mfm
 
 
-class SimplePythonEditor(QsciScintilla):
+class SimpleCodeEditor(QsciScintilla):
 
     ARROW_MARKER_NUM = 8
 
@@ -26,6 +27,7 @@ class SimplePythonEditor(QsciScintilla):
             marker_background_color: str = None,
             caret_line_background_color: str = None,
             caret_line_visible: bool = True,
+            language: str = None,
             **kwargs
     ):
         """
@@ -37,19 +39,27 @@ class SimplePythonEditor(QsciScintilla):
         :param marker_background_color:
         :param caret_line_background_color:
         :param caret_line_visible:
+        :param language: a string that is set to select the lexer of the
+        editor (either Python or JSON) the default lexer is a YAML lexer
         :param kwargs:
         """
-        super(SimplePythonEditor, self).__init__(parent)
+        super().__init__(parent)
         if font_point_size is None:
             font_point_size = mfm.settings.gui['editor']['font_size']
         if font_family is None:
             font_family = mfm.settings.gui['editor']['font_family']
         if margins_background_color is None:
-            margins_background_color = mfm.settings.gui['editor']['margins_background_color']
+            margins_background_color = mfm.settings.gui[
+                'editor'
+            ]['margins_background_color']
         if marker_background_color is None:
-            marker_background_color = mfm.settings.gui['editor']['marker_background_color']
+            marker_background_color = mfm.settings.gui[
+                'editor'
+            ]['marker_background_color']
         if caret_line_background_color is None:
-            caret_line_background_color = mfm.settings.gui['editor']['caret_line_background_color']
+            caret_line_background_color = mfm.settings.gui[
+                'editor'
+            ]['caret_line_background_color']
 
         # Set the default font
         font = QFont()
@@ -95,8 +105,12 @@ class SimplePythonEditor(QsciScintilla):
         # Set Python lexer
         # Set style for Python comments (style number 1) to a fixed-width
         # courier.
-        #
-        lexer = QsciLexerPython()
+        if language.lower() == "python":
+            lexer = QsciLexerPython()
+        elif language.lower() == "json":
+            lexer = QsciLexerJSON()
+        else:
+            lexer = QsciLexerYAML()
         lexer.setDefaultFont(font)
         self.setLexer(lexer)
 
@@ -171,7 +185,10 @@ class CodeEditor(QWidget):
         self.filename = None
         self.setLayout(layout)
         self.line_edit = QLineEdit()
-        self.editor = SimplePythonEditor(parent=self, language=language)
+        self.editor = SimpleCodeEditor(
+            parent=self,
+            language=language
+        )
         layout.addWidget(self.editor)
         h_layout = QHBoxLayout()
 

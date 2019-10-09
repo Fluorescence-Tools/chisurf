@@ -6,8 +6,9 @@ from __future__ import annotations
 import sys
 import json
 from collections import OrderedDict
+import traceback
 
-from qtpy import QtWidgets
+from qtpy import QtWidgets, QtCore
 import qdarkstyle
 
 import mfm
@@ -34,8 +35,13 @@ class LabelStructure(
     ):
         self.atom_select = mfm.widgets.pdb.PDBSelector()
         self.verticalLayout_3.addWidget(self.atom_select)
-        self.av_properties = mfm.widgets.accessible_volume.accessible_volume.AVProperties()
+        self.av_properties = mfm.widgets.accessible_volume.AVProperties()
         self.verticalLayout_4.addWidget(self.av_properties)
+
+        self.textEdit_2 = mfm.widgets.text_editor.SimpleCodeEditor(
+            language='JSON'
+        )
+        self.tab_2.layout().addWidget(self.textEdit_2)
 
         self.toolButton_4.clicked.connect(self.onLoadReferencePDB)
         self.pushButton_2.clicked.connect(self.onAddLabel)
@@ -44,7 +50,15 @@ class LabelStructure(
         self.actionClear.triggered.connect(self.onClear)
         self.actionLoad.triggered.connect(self.onLoadJSON)
         self.actionReadTextEdit.triggered.connect(self.onReadTextEdit)
-        self.comboBox.currentIndexChanged[int].connect(self.onSimulationTypeChanged)
+        self.actionRemoveLabelingPosition.triggered.connect(
+            self.onLabelingListDoubleClicked
+        )
+        self.actionRemove_distance.triggered.connect(
+            self.onDistanceListDoubleClicked
+        )
+        self.comboBox.currentIndexChanged[int].connect(
+            self.onSimulationTypeChanged
+        )
 
         self.structure = None
         self.json_file = None
@@ -52,31 +66,47 @@ class LabelStructure(
         self.distances = OrderedDict()
 
     def onReadTextEdit(self):
-        s = str(self.textEdit_2.toPlainText())
-        p = json.loads(s)
-        self.distances = p["Distances"]
-        self.positions = p["Positions"]
-        self.onUpdateJSON()
-        self.onUpdateInterface()
+        s = str(self.textEdit_2.text())
+        try:
+            p = json.loads(s)
+            self.distances = p["Distances"]
+            self.positions = p["Positions"]
+            self.onUpdateJSON()
+            self.onUpdateInterface()
+        except json.decoder.JSONDecodeError:
+            mfm.widgets.widgets.MyMessageBox(
+                info="There is a problem parsing the JSON file.\n",
+                details=traceback.format_exc()
+            )
 
     def onLoadJSON(self):
         filename = mfm.widgets.get_filename(
             'Open JSON Labeling-File',
             'JSON-Files (*.fps.json)'
         )
-        self.json_file = filename
-        p = json.load(
-            mfm.io.zipped.open_maybe_zipped(
-                filename=self.json_file,
-                mode='r'
+        try:
+            self.json_file = filename
+            p = json.load(
+                mfm.io.zipped.open_maybe_zipped(
+                    filename=self.json_file,
+                    mode='r'
+                )
             )
-        )
-        self.distances = p["Distances"]
-        self.positions = p["Positions"]
-        self.onUpdateJSON()
-        self.onUpdateInterface()
+            self.distances = p["Distances"]
+            self.positions = p["Positions"]
+            self.onUpdateJSON()
+            self.onUpdateInterface()
+        except (FileExistsError, FileNotFoundError):
+            mfm.widgets.widgets.MyMessageBox(
+                info="There is a problem opening the JSON file.\n",
+                details=traceback.format_exc()
+            )
 
-    def onLabelingListDoubleClicked(self, item):
+    def onLabelingListDoubleClicked(
+            self,
+            event: QtCore.QEvent,
+    ):
+        item = self.listWidget.currentItem()
         label_name = str(item.text())
         del self.positions[label_name]
         for dist in list(self.distances.values()):
@@ -85,7 +115,11 @@ class LabelStructure(
         self.onUpdateInterface()
         self.onUpdateJSON()
 
-    def onDistanceListDoubleClicked(self, item):
+    def onDistanceListDoubleClicked(
+            self,
+            event: QtCore.QEvent,
+    ):
+        item = self.listWidget_2.currentItem()
         distance_name = str(item.text())
         del self.distances[distance_name]
         self.onUpdateInterface()
@@ -171,24 +205,30 @@ class LabelStructure(
         self.atom_select.atoms = self.structure.atoms
 
     def onAddLabel(self):
-        label = {
-            "atom_name": str(self.atom_select.atom_name),
-            "chain_identifier": str(self.atom_select.chain_id),
-            "residue_seq_number": int(self.atom_select.residue_id),
-            "residue_name": str(self.atom_select.residue_name),
-            "attachment_atom_index": int(self.atom_select.atom_number),
-            "simulation_type": str(self.simulation_type),
-            "linker_length": float(self.av_properties.linker_length),
-            "linker_width": float(self.av_properties.linker_width),
-            "radius1": float(self.av_properties.radius_1),
-            "radius2": float(self.av_properties.radius_2),
-            "radius3": float(self.av_properties.radius_3),
-            "simulation_grid_resolution": float(self.av_properties.resolution)
-        }
-        if self.position_name != '' and self.position_name not in list(self.positions.keys()):
-            self.positions[self.position_name] = label
-            self.onUpdateInterface()
-            self.onUpdateJSON()
+        try:
+            label = {
+                "atom_name": str(self.atom_select.atom_name),
+                "chain_identifier": str(self.atom_select.chain_id),
+                "residue_seq_number": int(self.atom_select.residue_id),
+                "residue_name": str(self.atom_select.residue_name),
+                "attachment_atom_index": int(self.atom_select.atom_number),
+                "simulation_type": str(self.simulation_type),
+                "linker_length": float(self.av_properties.linker_length),
+                "linker_width": float(self.av_properties.linker_width),
+                "radius1": float(self.av_properties.radius_1),
+                "radius2": float(self.av_properties.radius_2),
+                "radius3": float(self.av_properties.radius_3),
+                "simulation_grid_resolution": float(self.av_properties.resolution)
+            }
+            if self.position_name != '' and self.position_name not in list(self.positions.keys()):
+                self.positions[self.position_name] = label
+                self.onUpdateInterface()
+                self.onUpdateJSON()
+        except (ValueError, TypeError):
+            mfm.widgets.widgets.MyMessageBox(
+                info="Could not add labeling position.\n",
+                details=traceback.format_exc()
+            )
 
     def onAddDistance(self):
         distance = {
@@ -202,7 +242,10 @@ class LabelStructure(
             fn = mfm.widgets.get_filename(
                 "DA-Distance distribution (1st column RDA, 2nd pRDA)"
             )
-            csv = mfm.io.ascii.Csv(filename=fn, skiprows=1)
+            csv = mfm.io.ascii.Csv(
+                filename=fn,
+                skiprows=1
+            )
             distance['rda'] = list(csv.data[0])
             distance['prda'] = list(csv.data[1])
         else:
@@ -217,41 +260,52 @@ class LabelStructure(
 
     def onSaveLabelingFile(
             self,
-            json_file: str = None
+            event: QtCore.QEvent = None
     ):
-        self.json_file = json_file if json_file is not None else self.json_file
-        if self.json_file is None:
-            filename = mfm.widgets.get_filename(
-                'Open FPS-JSON File',
-                'JSON-Files (*.fps.json)'
-            )
+        filename = mfm.widgets.save_file(
+            'Open FPS-JSON File',
+            'JSON-Files (*.fps.json)'
+        )
+        try:
+            with open(
+                    file=filename,
+                    mode='w'
+            ) as fp:
+                fp.write(
+                    self.textEdit_2.text()
+                )
             self.json_file = filename
-
-        with mfm.io.zipped.open_maybe_zipped(self.json_file, 'r') as fp:
-            p = json.load(
-                fp,
-                sort_keys=True,
-                indent=4,
-                separators=(',', ': ')
+        except (FileNotFoundError, FileExistsError):
+            mfm.widgets.widgets.MyMessageBox(
+                info="There is a problem saving the JSON file.\n",
+                details=traceback.format_exc()
             )
-        self.distances = p["Distances"]
-        self.positions = p["Positions"]
-        self.onUpdateJSON()
-        self.onUpdateInterface()
 
     def onUpdateJSON(self):
         p = OrderedDict()
         p["Distances"] = self.distances
         p["Positions"] = self.positions
-        s = json.dumps(p, sort_keys=True, indent=4, separators=(',', ': '))
+        s = json.dumps(
+            p,
+            sort_keys=True,
+            indent=4, separators=(',', ': ')
+        )
         self.textEdit_2.clear()
         self.textEdit_2.setText(s)
 
     def onClear(self):
-        self.positions = OrderedDict()
-        self.distances = OrderedDict()
-        self.onUpdateInterface()
-        self.onUpdateJSON()
+        reply = mfm.widgets.widgets.MyMessageBox.question(
+            self,
+            'Message',
+            "Are you sure you want to clear all fields?",
+            QtWidgets.QMessageBox.Yes,
+            QtWidgets.QMessageBox.No
+        )
+        if reply == QtWidgets.QMessageBox.Yes:
+            self.positions = OrderedDict()
+            self.distances = OrderedDict()
+            self.onUpdateInterface()
+            self.onUpdateJSON()
 
 
 if __name__ == "__main__":

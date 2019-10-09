@@ -1,4 +1,4 @@
 """
 
 """
-from .qsci_editor import CodeEditor
+from .qsci_editor import CodeEditor, SimpleCodeEditor
