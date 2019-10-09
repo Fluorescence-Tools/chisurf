@@ -214,19 +214,37 @@ class MyMessageBox(
     def __init__(
             self,
             label: str = None,
-            info: str = None
+            info: str = None,
+            details: str = None,
+            show_fortune: bool = mfm.settings.cs_settings['fortune']
     ):
+        """This Widget can be used to provide an output for warnings
+        and exceptions. It can also display fortune cookies.
+
+        :param label:
+        :param info:
+        :param show_fortune: if True than a fortune cookie is displayed.
+        """
         super().__init__()
         self.Icon = 1
         self.setSizeGripEnabled(True)
-        self.setIcon(QtWidgets.QMessageBox.Information)
+        self.setIcon(
+            QtWidgets.QMessageBox.Information
+        )
         if label is not None:
             self.setWindowTitle(label)
-        if info is not None:
-            self.setDetailedText(info)
-        if mfm.settings.cs_settings['fortune']:
+        if details is not None:
+            self.setDetailedText(details)
+        if show_fortune:
             fortune = mfm.widgets.fortune.get_fortune()
-            self.setInformativeText(fortune)
+            self.setInformativeText(
+                "\n".join(
+                    [
+                        info,
+                        fortune
+                    ]
+                )
+            )
             self.exec_()
             self.setMinimumWidth(450)
             self.setSizePolicy(
@@ -246,7 +264,6 @@ class MyMessageBox(
             QtWidgets.QSizePolicy.Expanding,
             QtWidgets.QSizePolicy.Expanding
         )
-
         text_edit = self.findChild(QtWidgets.QTextEdit)
         if text_edit is not None:
             text_edit.setMinimumHeight(0)

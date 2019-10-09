@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Form</class>
+ <class>QWidget</class>
  <widget class="QWidget" name="Form">
   <property name="geometry">
    <rect>
@@ -36,7 +36,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -235,7 +235,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>List of labeling positions</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;List of labeling positions:&lt;/p&gt;&lt;p&gt;A double click on a position deletes the position from the list.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
            </widget>
           </item>
@@ -601,16 +601,6 @@
          </property>
         </widget>
        </item>
-       <item>
-        <widget class="QTextEdit" name="textEdit_2">
-         <property name="verticalScrollBarPolicy">
-          <enum>Qt::ScrollBarAlwaysOn</enum>
-         </property>
-         <property name="readOnly">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
       </layout>
      </widget>
     </widget>
@@ -646,6 +636,16 @@
   <action name="actionReadTextEdit">
    <property name="text">
     <string>ReadTextEdit</string>
+   </property>
+  </action>
+  <action name="actionRemoveLabelingPosition">
+   <property name="text">
+    <string>RemoveLabelingPosition</string>
+   </property>
+  </action>
+  <action name="actionRemove_distance">
+   <property name="text">
+    <string>Remove distance</string>
    </property>
   </action>
  </widget>
@@ -710,6 +710,38 @@
     <hint type="sourcelabel">
      <x>200</x>
      <y>92</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>listWidget</sender>
+   <signal>doubleClicked(QModelIndex)</signal>
+   <receiver>actionRemoveLabelingPosition</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>158</x>
+     <y>350</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>205</x>
+     <y>157</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>listWidget_2</sender>
+   <signal>doubleClicked(QModelIndex)</signal>
+   <receiver>actionRemove_distance</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>474</x>
+     <y>363</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
