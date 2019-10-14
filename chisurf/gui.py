@@ -6,8 +6,12 @@ import webbrowser
 
 from qtpy import QtCore, QtGui, QtWidgets, uic
 import qdarkstyle
-
 import numpy as np
+
+import utils
+utils.set_search_paths(
+    os.path.dirname(__file__)
+)
 
 import mfm
 import mfm.decorators
