@@ -111,7 +111,9 @@ setup(
             '*.ui',
             '*.png',
             '*.svg',
-            '*.css'
+            '*.css',
+            '*.csv',
+            '*.npy'
         ],
     },
     install_requires=[
@@ -148,7 +150,7 @@ setup(
         'build_ext': build_ext
     },
     entry_points={
-        "gui_scripts": ["chisurf=chisurf.gui"]
+        "gui_scripts": ["chisurf=chisurf.gui:gui"]
     }
 )
 

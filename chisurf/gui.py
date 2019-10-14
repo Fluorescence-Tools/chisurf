@@ -659,7 +659,7 @@ class Main(QtWidgets.QMainWindow):
         self.verticalLayout_8.addWidget(self.dataset_selector)
 
 
-if __name__ == "__main__":
+def gui():
     app = QtWidgets.QApplication(sys.argv)
     mfm.console = mfm.widgets.QIPythonWidget()
     win = Main()
@@ -674,3 +674,7 @@ if __name__ == "__main__":
 
     win.show()
     sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    gui()
