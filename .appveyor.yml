@@ -1,31 +1,51 @@
 platform:
-- amd64
+  - amd64
+image: Visual Studio 2017
 
 environment:
   matrix:
     - PYTHON: "C:\\Miniconda3-x64"
 
+## For debugging uncomment the lines below
+#init:
+#  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - conda config --set always_yes yes --set changeps1 no
-  - conda env create -f environment.yaml
-  - activate chisurf
-  - python.exe setup.py build_ext --inplace
-  - python setup.py install
+  - conda update -q conda
+  - conda config --set channel_priority strict
+  - conda config --add channels conda-forge
+  - conda create -n build python=3.7 git conda-build anaconda-client
+  - activate build
+  - git clone https://github.com/Fluorescence-Tools/conda-recipes.git
+  - conda build conda-recipes/chisurf
 
-build: off
-
+# to run your custom scripts instead of automatic tests
 test_script:
+  - conda install --use-local chisurf
   - conda install nose coverage
   - cmd: echo %CD%
   - cmd: cd C:\projects\chisurf\test\
   - cmd: echo %CD%
   - nosetests
+  - cd ..
+
+### scripts to run after tests
+deploy_script:
+  - if not "%APPVEYOR_REPO_BRANCH%" == "master" exit 0
+  - anaconda upload C:\Miniconda3-x64\envs\build\conda-bld\win-64\chisurf-*.tar.bz2
+
+build: off
+
+## For debugging uncomment the lines below
+#on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 notifications:
-- provider: Email
-  to:
-  - thomas.otavio.peulen@gmail.com
-  on_build_success: false
-  on_build_failure: true
-  on_build_status_changed: false
+  - provider: Email
+    to:
+      - thomas.otavio.peulen@gmail.com
+    on_build_success: false
+    on_build_failure: true
+    on_build_status_changed: false
