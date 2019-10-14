@@ -402,11 +402,6 @@ class Main(QtWidgets.QMainWindow):
         self.f_test = mfm.tools.f_test.f_calculator.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
 
-        ##########################################################
-        #      Help                                              #
-        ##########################################################
-        self.actionHelp_2.triggered.connect(self.onOpenHelp)
-
     def init_console(self):
         self.verticalLayout_4.addWidget(mfm.console)
         mfm.console.pushVariables({'cs': self})
@@ -595,8 +590,8 @@ class Main(QtWidgets.QMainWindow):
         )
         self.about.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.about.hide()
-        self.actionHelp_2.triggered.connect(self.about.show)
         self.actionAbout.triggered.connect(self.about.show)
+        self.actionHelp_2.triggered.connect(self.onOpenHelp)
 
         ##########################################################
         #      IPython console                                   #
