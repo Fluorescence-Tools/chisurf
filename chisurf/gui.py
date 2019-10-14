@@ -8,7 +8,7 @@ from qtpy import QtCore, QtGui, QtWidgets, uic
 import qdarkstyle
 import numpy as np
 
-import utils
+import chisurf.utils as utils
 utils.set_search_paths(
     os.path.dirname(__file__)
 )
