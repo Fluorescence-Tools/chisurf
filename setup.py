@@ -22,7 +22,7 @@ with open(settings_file) as fp:
 
 
 args = sys.argv[1:]
-# We want to always use build_ext --inplace
+# Always use build_ext --inplace
 if args.count("build_ext") > 0 and args.count("--inplace") == 0:
     sys.argv.insert(sys.argv.index("build_ext")+1, "--inplace")
 
