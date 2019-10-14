@@ -104,7 +104,15 @@ setup(
     },
     package_data={
         # If any package contains the listed file types and include them:
-        '': ['py', '*.json', '*.yaml', '*.ui', '*.png', '*.svg', '*.css'],
+        '': [
+            'py',
+            '*.json',
+            '*.yaml',
+            '*.ui',
+            '*.png',
+            '*.svg',
+            '*.css'
+        ],
     },
     install_requires=[
         'numpy',
