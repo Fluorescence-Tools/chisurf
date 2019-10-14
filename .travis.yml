@@ -26,12 +26,12 @@ before_install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
   - conda config --set channel_priority strict
   - conda config --add channels conda-forge
   - conda config --add channels tpeulen
+  - conda update -q conda
   - conda info -a
-  - conda install git conda-build anaconda-client
+  - conda install git conda-build anaconda-client jinja2
   - conda build conda-recipe --output-folder bld-dir
   - conda config --add channels "file://`pwd`/bld-dir"
 
