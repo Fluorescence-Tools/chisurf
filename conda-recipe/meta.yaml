@@ -1,9 +1,12 @@
+{% set name = "chisurf" %}
+{% set version = "19.9.22" %}
+
 package:
-  name: chisurf
+  name: "{{ name|lower }}"
   version: {{ GIT_DESCRIBE_TAG }}
 
 source:
-  git_url: ../
+  git_url: ..
 
 build:
   number: 0
