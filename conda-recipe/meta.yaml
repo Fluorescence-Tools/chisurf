@@ -1,5 +1,5 @@
 package:
-  name: "{{ name|lower }}"
+  name: chisurf
   version: {{ GIT_DESCRIBE_TAG }}
 
 source:
