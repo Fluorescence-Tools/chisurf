@@ -8,11 +8,6 @@ from qtpy import QtCore, QtGui, QtWidgets, uic
 import qdarkstyle
 import numpy as np
 
-import chisurf.utils as utils
-utils.set_search_paths(
-    os.path.dirname(__file__)
-)
-
 import mfm
 import mfm.decorators
 import mfm.base
