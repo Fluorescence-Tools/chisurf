@@ -6,10 +6,10 @@ import os
 import platform
 
 from Cython.Distutils import build_ext
-from setuptools import setup, find_packages
-from setuptools.extension import Extension
+from setuptools import setup, find_packages, Extension
 
 
+name = 'chisurf'
 settings = {
     'version': 'NA'
 }
@@ -76,12 +76,12 @@ extensions = [make_extension(extension) for extension in eList]
 
 
 setup(
+    name=name,
     version=settings['version'],
     description="Fluorescence-Fitting",
     author="Thomas-Otavio Peulen",
     author_email='thomas.otavio.peulen@gmail.com',
     url='https://fluorescence-tools.github.io/chisurf/',
-    name="ChiSurf",
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Win64 (MS Windows)',
@@ -96,10 +96,15 @@ setup(
         'Topic :: Scientific/Engineering',
     ],
     keywords='fluorescence single-molecule spectroscopy',
-    packages=find_packages(),
+    packages=find_packages(
+        include=(name + "*",)
+    ),
+    package_dir={
+        name: name
+    },
     package_data={
         # If any package contains the listed file types and include them:
-        '': ['*.json', '*.yaml', '*.ui', '*.png', '*.svg', '*.css'],
+        '': ['py', '*.json', '*.yaml', '*.ui', '*.png', '*.svg', '*.css'],
     },
     install_requires=[
         'numpy',
@@ -135,7 +140,7 @@ setup(
         'build_ext': build_ext
     },
     entry_points={
-        "gui_scripts": ["chisurf=gui"]
+        "gui_scripts": ["chisurf=chisurf.gui"]
     }
 )
 
