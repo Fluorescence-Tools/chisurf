@@ -1,0 +1,64 @@
+package:
+  name: "{{ name|lower }}"
+  version: {{ GIT_DESCRIBE_TAG }}
+
+source:
+  git_url: ../
+
+build:
+  number: 0
+  string: np{{ CONDA_NPY }}py{{ CONDA_PY }}_{{ GIT_BUILD_STR }}
+  entry_points:
+    - chisurf=chisurf.gui:gui
+
+requirements:
+  build:
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
+    - git
+  host:
+    - python {{ python }}
+    - setuptools
+    - cython
+    - numpy
+    - pyyaml
+  run:
+    - python {{ python }}
+    - python-slugify
+    - pyyaml
+    - numpy
+    - numba
+    - scipy
+    - sympy
+    - emcee
+    - numexpr
+    - pytables
+    - hdf5
+    - mdtraj
+    - ipython
+    - matplotlib
+    - pyqt>=5.6.0
+    - pyqtgraph
+    - qscintilla2
+    - pyopengl
+    - qtconsole
+    - python-docx
+    - labellib
+    - deprecation
+    - pyopencl
+    - guiqwt
+    - progressbar2
+    - qtpy
+    - qdarkstyle
+    - mrcfile
+
+about:
+  home: https://github.com/Fluorescence-Tools/ChiSurf
+  license: GPL2.1
+  license_file: LICENSE
+  summary: ChiSurf is an interactive global analysis software for time-resolved fluorescence data
+  description: ChiSurf is an interactive analysis software for time-resolved fluorescence data.
+
+extra:
+  recipe-maintainers:
+    - tpeulen
