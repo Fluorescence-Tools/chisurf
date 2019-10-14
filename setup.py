@@ -14,7 +14,7 @@ settings = {
     'version': 'NA'
 }
 settings_file = os.path.join(
-    './mfm/settings/',
+    './chisurf/mfm/settings/',
     'chisurf.yaml'
 )
 with open(settings_file) as fp:
@@ -57,18 +57,18 @@ def make_extension(ext):
 # and build up the set of Extension objects
 eList = [
     [
-        './mfm/fluorescence/simulation/_simulation.pyx',
-        './mfm/math/rand/mt19937cok.cpp'
+        './chisurf/mfm/fluorescence/simulation/_simulation.pyx',
+        './chisurf/mfm/math/rand/mt19937cok.cpp'
     ],
     [
-        './mfm/fluorescence/fps/_fps.pyx',
-        './mfm/fluorescence/fps/mt19937cok.cpp'
+        './chisurf/mfm/fluorescence/fps/_fps.pyx',
+        './chisurf/mfm/fluorescence/fps/mt19937cok.cpp'
     ],
     [
-        './mfm/structure/potential/cPotentials.pyx'
+        './chisurf/mfm/structure/potential/cPotentials.pyx'
     ],
     [
-        './mfm/math/reaction/_reaction.pyx'
+        './chisurf/mfm/math/reaction/_reaction.pyx'
     ]
 ]
 
