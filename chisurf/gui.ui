@@ -128,12 +128,6 @@
      <height>524287</height>
     </size>
    </property>
-   <property name="font">
-    <font>
-     <family>.SF NS Text</family>
-     <pointsize>13</pointsize>
-    </font>
-   </property>
    <property name="focusPolicy">
     <enum>Qt::NoFocus</enum>
    </property>
