@@ -114,8 +114,8 @@ setup(
             '*.css',
             '*.csv',
             '*.npy',
-            '.so',
-            '.dll'
+            '*.so',
+            '*.dll'
         ],
     },
     install_requires=[
