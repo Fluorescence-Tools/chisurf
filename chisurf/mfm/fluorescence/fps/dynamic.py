@@ -13,9 +13,9 @@ import mfm.io
 import mfm.io.coordinates
 import mfm.models
 import mfm.parameter
-from mfm.structure.structure import count_atoms
-from . import _fps
+import mfm.structure.structure
 from mfm.parameter import ParameterGroup
+from mfm.fluorescence.fps import _fps
 
 
 ne.set_num_threads(
@@ -410,7 +410,7 @@ class Dye(ParameterGroup):
     @property
     def n_atoms(self):
         json_topology = self.dye_definition
-        n_atoms = count_atoms(json_topology)
+        n_atoms = mfm.structure.structure.count_atoms(json_topology)
         return n_atoms
 
     def get_av(self, **kwargs):
