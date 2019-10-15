@@ -1,12 +1,12 @@
 import numpy as np
-from qtpy import  QtWidgets
+from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 import pyqtgraph.opengl as gl
 from matplotlib import cm
 
 import mfm
 import mfm.math
-import mfm.fluorescence
+import mfm.fluorescence.fps
 from mfm.plots import plotbase
 
 
@@ -24,10 +24,12 @@ class AvPlotControl(
 
 class AvPlot(plotbase.Plot):
     """
-    Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
-    and the autocorrelation of the residuals. Now it is also used also for fcs-data.
+    Started off as a plotting class to display TCSPC-data displaying the IRF,
+    the experimental data, the residuals and the autocorrelation of the
+    residuals. Now it is also used also for fcs-data.
 
-    In case the models is a :py:class:`~experiment.models.tcspc.LifetimeModel` it takes the irf and displays it:
+    In case the models is a :py:class:`~experiment.models.tcspc.LifetimeModel`
+    it takes the irf and displays it:
 
         irf = fit.models.convolve.irf
         irf_y = irf.y
@@ -82,13 +84,14 @@ class AvPlot(plotbase.Plot):
         free_diffusion = 8.0
         atomic_slow_factor = 0.9
         contact_distance = 4.5
-        av = mfm.fluorescence.fps.ACV(pdb_filename,
-                                      radius1=5.0,
-                                      linker_length=21.5,
-                                      residue_seq_number=residue_number,
-                                      atom_name=atom_name,
-                                      diffusion_coefficients=(free_diffusion, atomic_slow_factor)
-                                      )
+        av = mfm.fluorescence.fps.ACV(
+            pdb_filename,
+            radius1=5.0,
+            linker_length=21.5,
+            residue_seq_number=residue_number,
+            atom_name=atom_name,
+            diffusion_coefficients=(free_diffusion, atomic_slow_factor)
+        )
 
 
         alpha = 0.1
