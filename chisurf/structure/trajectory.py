@@ -8,7 +8,7 @@ import tempfile
 import mdtraj
 import numpy as np
 
-import mfm.base
+import chisurf.base
 import chisurf.structure
 
 
@@ -66,7 +66,7 @@ class Universe(object):
         return scales * Es
 
 
-class TrajectoryFile(mfm.base.Base, mdtraj.Trajectory):
+class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
 
     """
     Creates an Trajectory of mfm.structure.Structures given a HDF5-File using

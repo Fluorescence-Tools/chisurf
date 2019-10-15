@@ -10,7 +10,7 @@ import numpy as np
 import tables
 
 import mfm
-import mfm.decorators
+import chisurf.decorators
 import chisurf.widgets
 from chisurf.tools.modelling.trajectory import below_min_distance
 
@@ -74,7 +74,7 @@ class RemoveClashedFrames(QtWidgets.QWidget):
             filename = chisurf.widgets.get_filename('Open H5-Model file', 'H5-files (*.h5)')
             self.trajectory_filename = filename
 
-    @mfm.decorators.init_with_ui(ui_filename="remove_clashes.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="remove_clashes.ui")
     def __init__(
             self,
             *args,

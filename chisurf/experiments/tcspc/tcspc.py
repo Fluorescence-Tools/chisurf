@@ -3,10 +3,10 @@ from typing import Tuple
 
 import mfm
 import experiments
-import mfm.base
+import chisurf.base
 import mfm.fluorescence
 import experiments.data
-import mfm.fio.fluorescence
+import chisurf.fio.fluorescence
 
 from .. import reader
 
@@ -106,7 +106,7 @@ class TCSPCReader(
             *args,
             **kwargs
     ) -> experiments.data.DataCurveGroup:
-        return mfm.fio.fluorescence.read_tcspc_csv(
+        return chisurf.fio.fluorescence.read_tcspc_csv(
             filename=filename,
             skiprows=self.skiprows,
             rebin=self.rebin,

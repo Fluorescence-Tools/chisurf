@@ -5,13 +5,14 @@ from typing import List, Callable
 
 from qtpy import QtWidgets, QtCore, QtGui
 
+import mfm
 import experiments.data
 import fitting
 import chisurf.widgets
-import mfm.decorators
+import chisurf.decorators
 
 
-@mfm.decorators.register
+@chisurf.decorators.register
 class ExperimentalDataSelector(
     QtWidgets.QTreeWidget
 ):

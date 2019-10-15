@@ -10,21 +10,21 @@ import scipy.linalg
 import scipy.stats
 
 import mfm
-import mfm.base
-import mfm.fio
-import mfm.curve
+import chisurf.base
+import chisurf.fio
+import chisurf.curve
 import experiments
 import experiments.data
 import fitting.parameter
 import fitting.sample
 import fitting.support_plane
-import mfm.models
+import chisurf.models
 
-from mfm.math.optimization.leastsqbound import leastsqbound
+from chisurf.math.optimization.leastsqbound import leastsqbound
 
 
 class Fit(
-    mfm.base.Base
+    chisurf.base.Base
 ):
     """
 
@@ -32,7 +32,7 @@ class Fit(
 
     def __init__(
             self,
-            model_class: Type[mfm.models.model.Model] = type,
+            model_class: Type[chisurf.models.model.Model] = type,
             data: experiments.data.DataCurve = None,
             xmin: int = 0,
             xmax: int = 0,
@@ -118,17 +118,17 @@ class Fit(
     @property
     def model(
             self
-    ) -> mfm.models.model.ModelCurve:
+    ) -> chisurf.models.model.ModelCurve:
         return self._model
 
     @model.setter
     def model(
             self,
             model_class: Type[
-                mfm.models.model.ModelCurve
+                chisurf.models.model.ModelCurve
             ]
     ):
-        if issubclass(model_class, mfm.models.model.Model):
+        if issubclass(model_class, chisurf.models.model.Model):
             self._model = model_class(
                 self,
                 **self._model_kw
@@ -221,9 +221,9 @@ class Fit(
 
     def get_curves(
             self
-    ) -> Dict[str, mfm.curve.Curve]:
+    ) -> Dict[str, chisurf.curve.Curve]:
         """Returns a dictionary containing the current data and the
-        model as mfm.curve.Curve objects.
+        model as chisurf.curve.Curve objects.
 
         :return:
         """
@@ -235,7 +235,7 @@ class Fit(
     def get_chi2(
             self,
             parameter=None,
-            model: mfm.models.model.Model = None,
+            model: chisurf.models.model.Model = None,
             reduced: bool = True
     ) -> float:
         if model is None:
@@ -271,7 +271,7 @@ class Fit(
     ) -> None:
         self.model.save(filename + '.json')
         if file_type == 'txt':
-            csv = mfm.fio.ascii.Csv()
+            csv = chisurf.fio.ascii.Csv()
             wr = self.weighted_residuals
             xmin, xmax = self.xmin, self.xmax
             x, m = self.model[xmin:xmax]
@@ -285,7 +285,7 @@ class Fit(
             )
             if isinstance(
                     self.data,
-                    mfm.curve.Curve
+                    chisurf.curve.Curve
             ):
                 self.data.save(
                     filename=filename + '_data.txt',
@@ -295,7 +295,7 @@ class Fit(
                     filename=filename + '_data.json',
                     file_type='json'
                 )
-                with mfm.fio.zipped.open_maybe_zipped(
+                with chisurf.fio.zipped.open_maybe_zipped(
                         filename=filename+'_info.txt',
                         mode='w'
                 ) as fp:
@@ -397,20 +397,20 @@ class FitGroup(
     @data.setter
     def data(
             self,
-            v: mfm.base.Data
+            v: chisurf.base.Data
     ):
         self.selected_fit.data = v
 
     @property
     def model(
             self
-    ) -> mfm.models.model.Model:
+    ) -> chisurf.models.model.Model:
         return self.selected_fit.model
 
     @model.setter
     def model(
             self,
-            v: Type[mfm.models.model.Model]
+            v: Type[chisurf.models.model.Model]
     ):
         self.selected_fit.model = v
 
@@ -523,7 +523,7 @@ class FitGroup(
     def __init__(
             self,
             data: experiments.data.DataGroup,
-            model_class: Type[mfm.models.model.Model] = type,
+            model_class: Type[chisurf.models.model.Model] = type,
             model_kw: Dict = None,
             **kwargs
     ):
@@ -553,7 +553,7 @@ class FitGroup(
             **kwargs
         )
 
-        self.global_model = mfm.models.global_model.GlobalFitModel(
+        self.global_model = chisurf.models.global_model.GlobalFitModel(
             self
         )
         self.global_model.fits = self._fits
@@ -609,7 +609,7 @@ def sample_fit(
         scan = np.vstack([chi2[mask], para[mask].T])
         header = "chi2\t"
         header += "\t".join(fit.model.parameter_names)
-        mfm.fio.ascii.Csv().save(
+        chisurf.fio.ascii.Csv().save(
             scan,
             fn,
             delimiter='\t',
@@ -707,7 +707,7 @@ def covariance_matrix(
 
 def get_wres(
         parameter: List[float],
-        model: mfm.models.model.Model
+        model: chisurf.models.model.Model
 ) -> np.array:
     """Returns the weighted residuals for a list of parameters of a models
 
@@ -725,7 +725,7 @@ def get_wres(
 
 def get_chi2(
         parameter: List[float],
-        model: mfm.models.model.ModelCurve,
+        model: chisurf.models.model.ModelCurve,
         reduced: bool = True
 ) -> float:
     """Returns either the reduced chi2 or the sum of squares (chi2)

@@ -12,10 +12,10 @@ from guiqwt.plot import CurveDialog
 import qdarkstyle
 
 import mfm
-import mfm.fio.coordinates
+import chisurf.fio.coordinates
 import mfm.fluorescence.fps.widgets
 from mfm.fluorescence.simulation.dye_diffusion import DyeDecay
-from mfm.plots.molview.MolView import MolQtWidget
+from chisurf.plots.molview.MolView import MolQtWidget
 from chisurf.structure.structure import Structure
 from chisurf.widgets.pdb import PDBSelector
 
@@ -208,7 +208,7 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
         dye_diffusion_settings_file = kwargs.get('dye_diffusion_settings_file', fn)
         self.verbose = kwargs.get('verbose', mfm.verbose)
         settings = json.load(
-            mfm.fio.zipped.open_maybe_zipped(
+            chisurf.fio.zipped.open_maybe_zipped(
                 filename=dye_diffusion_settings_file,
                 mode='r'
             )
@@ -328,7 +328,7 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
         y = self.diffusion.distance_to_mean
         x = np.linspace(0, self.t_max, y.shape[0])
         self.diffusion_curve.set_data(x, y)
-        self.diffusion_autocorrelation.set_data(x, mfm.math.signal.autocorr(y))
+        self.diffusion_autocorrelation.set_data(x, chisurf.math.signal.autocorr(y))
         self.plot_autocorr.do_autoscale()
         self.plot_diffusion.do_autoscale()
 
@@ -381,13 +381,13 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
         if verbose:
             print("\nSaving slow AV...")
             print("Trajectory filename: %s" % av_slow_file)
-        mfm.fio.coordinates.write_xyz(av_slow_file, self.av.points_slow)
+        chisurf.fio.coordinates.write_xyz(av_slow_file, self.av.points_slow)
 
         av_fast_file = os.path.join(directory, self.filename_prefix + '_av_fast.xyz')
         if verbose:
             print("\nSaving slow AV...")
             print("Trajectory filename: %s" % av_fast_file)
-        mfm.fio.coordinates.write_xyz(av_fast_file, self.av.points_fast)
+        chisurf.fio.coordinates.write_xyz(av_fast_file, self.av.points_fast)
         return diff_file, av_slow_file, av_fast_file
 
     def onSimulationDtChanged(self):

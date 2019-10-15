@@ -556,7 +556,7 @@ def calc_weights_from_traj(traj, res_id, atom_name, chain_id,
      >>> dg = 1.0
      >>> hist_3d, r0 = calc_weights_from_traj(traj, res_id, atom_name, chain_id, ng, dg, r0_res, r0_atom_name, r0_chain)
      >>> offset = (ng - 1) / 2 * dg
-     >>> mfm.fio.pdb.write_open_dx("c:/temp/test.dx", hist_3d, r0 - offset, ng, ng, ng, dg, dg, dg)
+     >>> chisurf.fio.pdb.write_open_dx("c:/temp/test.dx", hist_3d, r0 - offset, ng, ng, ng, dg, dg, dg)
 
     >>> pdb_filename = 'e:/simulations_free_dye/peptide.pdb'
     >>> structure = mfm.structure.Structure(pdb_filename)
@@ -615,7 +615,7 @@ def calc_distance_from_traj(traj, res_id, atom_name, chain_id, ng, dg, r0_res, r
      >>> dg = 1.0
      >>> hist_3d, r0 = calc_weights_from_traj(traj, res_id, atom_name, chain_id, ng, dg, r0_res, r0_atom_name, r0_chain)
      >>> offset = (ng - 1) / 2 * dg
-     >>> mfm.fio.pdb.write_open_dx("c:/temp/test.dx", hist_3d, r0 - offset, ng, ng, ng, dg, dg, dg)
+     >>> chisurf.fio.pdb.write_open_dx("c:/temp/test.dx", hist_3d, r0 - offset, ng, ng, ng, dg, dg, dg)
 
     >>> pdb_filename = 'e:/simulations_free_dye/peptide.pdb'
     >>> structure = mfm.structure.Structure(pdb_filename)

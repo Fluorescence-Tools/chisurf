@@ -11,14 +11,14 @@ import qdarkstyle
 import numpy as np
 
 import mfm
-import mfm.decorators
+import chisurf.decorators
 import experiments
 import experiments.data
-import mfm.models.tcspc
-import mfm.models.tcspc as fret_models
-import mfm.models.tcspc.lifetime
-import mfm.models.tcspc.widgets
-#from mfm.models import WormLikeChainModelWidget
+import chisurf.models.tcspc
+import chisurf.models.tcspc as fret_models
+import chisurf.models.tcspc.lifetime
+import chisurf.models.tcspc.widgets
+#from chisurf.models import WormLikeChainModelWidget
 
 
 class FRETLineGenerator(object):
@@ -134,7 +134,7 @@ class FRETLineGenerator(object):
 
         self._model = kwargs.get(
             'model',
-            mfm.models.tcspc.lifetime.LifetimeModel(
+            chisurf.models.tcspc.lifetime.LifetimeModel(
                 fit=self.fit,
                 dt=self._dt,
                 do_convolution=False
@@ -681,7 +681,7 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
 
     name = "FRET-Line Generator"
 
-    models = [(mfm.models.tcspc.widgets.GaussianModelWidget, {'hide_corrections': True,
+    models = [(chisurf.models.tcspc.widgets.GaussianModelWidget, {'hide_corrections': True,
                                                           'hide_fit': True,
                                                           'hide_generic': True,
                                                           'hide_convolve': True,
@@ -689,7 +689,7 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
                                                           'hide_error': True,
                                                            'hide_donor': True
                                                               }),
-              # (mfm.models.tcspc.mix_model.LifetimeMixModelWidget, {'hide_corrections': True,
+              # (chisurf.models.tcspc.mix_model.LifetimeMixModelWidget, {'hide_corrections': True,
               #                                             'hide_fit': True,
               #                                             'hide_generic': True,
               #                                             'hide_convolve': True,
@@ -698,7 +698,7 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
               #                                             'hide_donor': True,
               #                                                              'enable_mix_model_donor': True
               #                                                      }),
-              (mfm.models.tcspc.widgets.FRETrateModelWidget, {'hide_corrections': True,
+              (chisurf.models.tcspc.widgets.FRETrateModelWidget, {'hide_corrections': True,
                                                           'hide_fit': True,
                                                           'hide_generic': True,
                                                           'hide_convolve': True,
@@ -731,7 +731,7 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
     def parameter_range(self):
         return float(self.doubleSpinBox.value()), float(self.doubleSpinBox_2.value())
 
-    @mfm.decorators.init_with_ui(ui_filename="fret_line.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="fret_line.ui")
     def __init__(
             self,
             *args,

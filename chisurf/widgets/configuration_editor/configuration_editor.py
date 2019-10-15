@@ -180,7 +180,7 @@ class ParameterEditor(QtWidgets.QWidget):
             self,
             v: str
     ):
-        with mfm.fio.zipped.open_maybe_zipped(
+        with chisurf.fio.zipped.open_maybe_zipped(
                 filename=v,
                 mode='r'
         ) as fp:

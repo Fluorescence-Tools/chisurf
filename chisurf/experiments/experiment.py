@@ -4,13 +4,13 @@
 from __future__ import annotations
 from typing import List, Type, Tuple
 
-import mfm.base
-import mfm.models
+import chisurf.base
+import chisurf.models
 import experiments
 
 
 class Experiment(
-    mfm.base.Base
+    chisurf.base.Base
 ):
     """
     All information contained within `ChiSurf` is associated to an experiment.
@@ -34,7 +34,7 @@ class Experiment(
     @property
     def model_classes(
             self
-    ) -> List[Type[mfm.models.model.Model]]:
+    ) -> List[Type[chisurf.models.model.Model]]:
         return list(self._model_classes)
 
     @property
@@ -45,14 +45,14 @@ class Experiment(
 
     def add_model_class(
             self,
-            model: Type[mfm.models.model.Model]
+            model: Type[chisurf.models.model.Model]
     ):
         if model not in self.model_classes:
             self._model_classes.append(model)
 
     def add_model_classes(
             self,
-            models: List[Type[mfm.models.model.Model]]
+            models: List[Type[chisurf.models.model.Model]]
     ):
         for model in models:
             self.add_model_class(model)

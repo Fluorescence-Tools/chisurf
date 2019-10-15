@@ -3,12 +3,12 @@ from __future__ import annotations
 from qtpy import QtWidgets
 
 import mfm
-import mfm.fio.ascii
-import mfm.fio.widgets
+import chisurf.fio.ascii
+import chisurf.fio.widgets
 import chisurf.widgets
 import mfm.fluorescence
 import experiments.data
-import mfm.fio.fluorescence
+import chisurf.fio.fluorescence
 from . import reader
 
 
@@ -41,12 +41,12 @@ class FCS(
             **kwargs
     ):
         if self.experiment_reader == 'Kristine':
-            return mfm.fio.fluorescence.read_fcs_kristine(
+            return chisurf.fio.fluorescence.read_fcs_kristine(
                 filename=filename,
                 verbose=verbose
             )
         else:
-            return mfm.fio.fluorescence.read_fcs(
+            return chisurf.fio.fluorescence.read_fcs(
                 filename=filename,
                 setup=self,
                 skiprows=self.skiprows,
@@ -78,7 +78,7 @@ class FCSController(
         layout.setSpacing(0)
         self.layout = layout
         self.layout.addWidget(
-            mfm.fio.widgets.CsvWidget()
+            chisurf.fio.widgets.CsvWidget()
         )
 
     def get_filename(

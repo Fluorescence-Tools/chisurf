@@ -8,10 +8,10 @@ import qdarkstyle
 from scipy.stats import f as fdist
 
 import mfm
-import mfm.decorators
-import mfm.models
+import chisurf.decorators
+import chisurf.models
 import fitting.fit
-import mfm.math.statistics
+import chisurf.math.statistics
 
 
 class FTestWidget(QtWidgets.QWidget):
@@ -68,7 +68,7 @@ class FTestWidget(QtWidgets.QWidget):
                 )
         self.toolButton_2.setMenu(menu)
 
-    @mfm.decorators.init_with_ui(ui_filename="F-Calculator.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="F-Calculator.ui")
     def __init__(
             self,
             *args,
@@ -101,7 +101,7 @@ class FTestWidget(QtWidgets.QWidget):
             self.chi2_min = self._selected_fit.chi2r
         dof = max(1, self.dof)
         number_of_parameters = max(1, self.npars)
-        self.chi2_max = mfm.math.statistics.chi2_max(
+        self.chi2_max = chisurf.math.statistics.chi2_max(
             conf_level=self.conf_level_2,
             number_of_parameters=number_of_parameters,
             nu=dof,

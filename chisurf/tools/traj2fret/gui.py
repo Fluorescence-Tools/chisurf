@@ -5,8 +5,8 @@ import tempfile
 import mdtraj as md
 from qtpy import QtWidgets
 
-import mfm.decorators
-from mfm.fio import coordinates
+import chisurf.decorators
+from chisurf.fio import coordinates
 import chisurf.widgets
 from chisurf.widgets.pdb import PDBSelector
 from chisurf.tools.traj2fret import CalculateTransfer
@@ -19,7 +19,7 @@ class Structure2Transfer(
 
     name = "Structure2Transfer"
 
-    @mfm.decorators.init_with_ui(ui_filename="structure2transfer.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="structure2transfer.ui")
     def __init__(
             self,
             verbose=True,

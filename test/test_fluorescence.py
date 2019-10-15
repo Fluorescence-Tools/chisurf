@@ -9,8 +9,8 @@ utils.set_search_paths(TOPDIR)
 
 import glob
 import numpy as np
+import chisurf.fio
 import mfm
-import mfm.fio
 import mfm.fluorescence
 import mfm.fluorescence.fret
 
@@ -147,11 +147,11 @@ class Tests(unittest.TestCase):
         import numpy as np
         import glob
         import mfm.fluorescence
-        import mfm.fio
+        import chisurf.fio
         import pylab as p
         directory = './data/tttr/BH/132/'
         spc_files = glob.glob(directory + '/BH_SPC132.spc')
-        photons = mfm.fio.photons.Photons(spc_files, reading_routine="bh132")
+        photons = chisurf.fio.photons.Photons(spc_files, reading_routine="bh132")
         cr_filter = np.ones_like(photons.mt, dtype=np.float)
         w1 = np.ones_like(photons.mt, dtype=np.float)
         w2 = np.ones_like(photons.mt, dtype=np.float)

@@ -6,8 +6,8 @@ import os
 import numpy as np
 
 import mfm
-import mfm.base
-import mfm.fio.density
+import chisurf.base
+import chisurf.fio.density
 
 from . import dynamic
 from . import static
@@ -84,7 +84,7 @@ class BasicAV(object):
 
         attachment_atom_index = kwargs.get(
             'attachment_atom_index',
-            mfm.fio.coordinates.get_atom_index(
+            chisurf.fio.coordinates.get_atom_index(
                 self.atoms,
                 chain_identifier,
                 self.attachment_residue,
@@ -183,7 +183,7 @@ class BasicAV(object):
             ng = self.ng
             dg = self.dg
             offset = (ng - 1) / 2 * dg
-            mfm.fio.density.write_open_dx(filename,
+            chisurf.fio.density.write_open_dx(filename,
                                          d,
                                          self.x0 - offset,
                                          ng, ng, ng,
@@ -194,7 +194,7 @@ class BasicAV(object):
             d = p[:, [3]].flatten()
             d /= max(d) * 50.0
             xyz = p[:, [0, 1, 2]]
-            mfm.fio.coordinates.write_points(
+            chisurf.fio.coordinates.write_points(
                 filename=filename + '.' + mode,
                 points=xyz,
                 mode=mode,
@@ -701,7 +701,7 @@ class DynamicAV(BasicAV):
         -------
         >>> import mfm.structure
         >>> import mfm.fluorescence
-        >>> import mfm.curve
+        >>> import chisurf.curve
         >>> structure = mfm.structure.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
         >>> av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> p.imshow(av.density[:,:,20])
@@ -709,7 +709,7 @@ class DynamicAV(BasicAV):
         >>> t_step = 0.0141
         >>> times, density, counts = av.get_donor_only_decay(n_it=4095, t_step=0.0141, n_out=1)
         >>> av.save(filename='c:/temp/0t2', density=density, reading_routine='dx')
-        >>> irf = mfm.curve.DataCurve(filename='./test/data/tcspc/ibh_sample/Prompt.txt', skiprows=9)
+        >>> irf = chisurf.curve.DataCurve(filename='./test/data/tcspc/ibh_sample/Prompt.txt', skiprows=9)
         >>> data = experiments.c.DataCurve(filename='./test/data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)
         >>> irf.x *= t_step; data.x *= t_step
         >>> convolve = chisurf.mfm.fluorescence.tcspc.convolve.Convolve(fit=None, dt=t_step, rep_rate=10, irf=irf, data=data)
@@ -770,7 +770,7 @@ class DynamicAV(BasicAV):
 
         self.quencher = kwargs.get(
             'quencher',
-            mfm.common.quencher
+            chisurf.common.quencher
         )
         # self.diffusion_mode = kwargs.get('diffusion_mode', 'two_state')
         self.t_step_fl = kwargs.get(

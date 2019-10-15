@@ -9,11 +9,11 @@ from PyQt5 import QtWidgets
 import qdarkstyle
 
 import mfm
-import mfm.decorators
+import chisurf.decorators
 import experiments.data
 import experiments.widgets
 import mfm.fluorescence.tcspc
-import mfm.fio.widgets
+import chisurf.fio.widgets
 
 plot_settings = mfm.settings.gui['plot']
 lw = plot_settings['line_width']
@@ -23,7 +23,7 @@ class HistogramTTTR(
     QtWidgets.QWidget
 ):
 
-    @mfm.decorators.init_with_ui(ui_filename="tttr_histogram.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="tttr_histogram.ui")
     def __init__(self):
         self.setContentsMargins(0, 0, 0, 0)
         self._curves = list()
@@ -104,13 +104,13 @@ class TcspcTTTRWidget(
     QtWidgets.QWidget
 ):
 
-    @mfm.decorators.init_with_ui(ui_filename="tcspcTTTRWidget.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="tcspcTTTRWidget.ui")
     def __init__(
             self,
             *args,
             **kwargs,
     ):
-        self.spcFileWidget = mfm.fio.widgets.SpcFileWidget(self)
+        self.spcFileWidget = chisurf.fio.widgets.SpcFileWidget(self)
         self.layout().insertWidget(0, self.spcFileWidget)
 
         # Actions

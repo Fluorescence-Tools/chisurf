@@ -6,7 +6,7 @@ import numpy as np
 from qtpy import QtWidgets, uic
 
 #import chisurf.widgets
-import mfm.decorators
+import chisurf.decorators
 import chisurf.structure
 from chisurf.structure.potential.potentials import HPotential, GoPotential, \
     MJPotential, CEPotential, ClashPotential, \
@@ -115,7 +115,7 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
 
 class GoPotentialWidget(GoPotential, QtWidgets.QWidget):
 
-    @mfm.decorators.init_with_ui(ui_filename="Potential-CaLJ.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="Potential-CaLJ.ui")
     def __init__(
             self,
             structure

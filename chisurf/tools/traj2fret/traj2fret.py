@@ -264,7 +264,7 @@ class CalculateTransfer(object):
             print("-------------------------")
 
         # Write header
-        mfm.fio.zipped.open_maybe_zipped(
+        chisurf.fio.zipped.open_maybe_zipped(
             filename=output_file,
             mode='w'
         ).write(b'Frame\ttime[ns]\tRDA[Ang]\tkappa\tkappa2\tFRETrate[1/ns]\n')

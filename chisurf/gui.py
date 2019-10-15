@@ -9,12 +9,12 @@ import qdarkstyle
 import numpy as np
 
 import mfm
-import mfm.decorators
-import mfm.base
+import chisurf.decorators
+import chisurf.base
 import experiments.widgets
 import experiments.tcspc.controller
 import chisurf.widgets
-import mfm.models
+import chisurf.models
 import fitting
 import experiments
 import mfm.cmd
@@ -27,7 +27,7 @@ class Main(QtWidgets.QMainWindow):
     @property
     def current_dataset(
             self
-    ) -> mfm.base.Data:
+    ) -> chisurf.base.Data:
         return self.dataset_selector.selected_dataset
 
     @current_dataset.setter
@@ -433,7 +433,7 @@ class Main(QtWidgets.QMainWindow):
         )
         structure.add_model_classes(
             [
-                mfm.models.tcspc.widgets.LifetimeModelWidget
+                chisurf.models.tcspc.widgets.LifetimeModelWidget
             ]
         )
         mfm.experiment.append(structure)
@@ -469,11 +469,11 @@ class Main(QtWidgets.QMainWindow):
         )
         tcspc.add_model_classes(
             models=[
-                mfm.models.tcspc.widgets.LifetimeModelWidget,
-                mfm.models.tcspc.widgets.FRETrateModelWidget,
-                mfm.models.tcspc.widgets.GaussianModelWidget,
-                mfm.models.tcspc.widgets.PDDEMModelWidget,
-                mfm.models.tcspc.widgets.WormLikeChainModelWidget
+                chisurf.models.tcspc.widgets.LifetimeModelWidget,
+                chisurf.models.tcspc.widgets.FRETrateModelWidget,
+                chisurf.models.tcspc.widgets.GaussianModelWidget,
+                chisurf.models.tcspc.widgets.PDDEMModelWidget,
+                chisurf.models.tcspc.widgets.WormLikeChainModelWidget
             ]
         )
         mfm.experiment.append(tcspc)
@@ -506,7 +506,7 @@ class Main(QtWidgets.QMainWindow):
         )
         fcs.add_model_classes(
             models=[
-                mfm.models.fcs.fcs.ParseFCSWidget
+                chisurf.models.fcs.fcs.ParseFCSWidget
             ]
         )
         mfm.experiment.append(fcs)
@@ -521,7 +521,7 @@ class Main(QtWidgets.QMainWindow):
         )
         global_fit.add_model_classes(
             models=[
-                mfm.models.global_model.GlobalFitModelWidget
+                chisurf.models.global_model.GlobalFitModelWidget
             ]
         )
         global_fit.add_reader(global_setup)

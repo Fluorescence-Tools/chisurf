@@ -320,7 +320,7 @@ class DiffusionIterator:
             # define NG %s
             # define NG2 %s
             ''' % (idg2, ng, ng ** 2)
-        with mfm.fio.zipped.open_maybe_zipped(
+        with chisurf.fio.zipped.open_maybe_zipped(
             filename, 'r'
         ) as f:
             kernel = defines + "".join(f.readlines())
@@ -532,7 +532,7 @@ def get_kQ_rC(atoms, **kwargs):
     :param atoms: an array of atoms
     :return: array of quenching rate constants and array of critical distances
     """
-    quencher_dict = kwargs.get('quencher', mfm.common.quencher)
+    quencher_dict = kwargs.get('quencher', chisurf.common.quencher)
     kQ = np.zeros(atoms.shape[0], dtype=np.float64)
     rC = np.zeros(atoms.shape[0], dtype=np.float64)
     for i, a in enumerate(atoms):

@@ -6,8 +6,8 @@ import numba as nb
 import numpy as np
 
 import mfm
-import mfm.math
-import mfm.math.datatools
+import chisurf.math
+import chisurf.math.datatools
 
 
 @nb.jit(nopython=True, nogil=True)
@@ -60,22 +60,22 @@ def bin_lifetime_spectrum(
     :param discriminator:
     :return: lifetime_spectrum
     """
-    amplitudes, lifetimes = mfm.math.datatools.interleaved_to_two_columns(
+    amplitudes, lifetimes = chisurf.math.datatools.interleaved_to_two_columns(
         lifetime_spectrum,
         sort=False
     )
-    lt, am = mfm.math.datatools.histogram1D(
+    lt, am = chisurf.math.datatools.histogram1D(
         lifetimes,
         amplitudes,
         n_lifetimes
     )
     if discriminate and discriminator is not None:
-        lt, am = mfm.math.datatools.discriminate(
+        lt, am = chisurf.math.datatools.discriminate(
             lt,
             am,
             discriminator
         )
-    binned_lifetime_spectrum = mfm.math.datatools.two_column_to_interleaved(
+    binned_lifetime_spectrum = chisurf.math.datatools.two_column_to_interleaved(
         am,
         lt
     )

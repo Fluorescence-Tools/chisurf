@@ -10,8 +10,8 @@ utils.set_search_paths(TOPDIR)
 import numpy as np
 import tempfile
 import experiments
-import mfm.models
-import mfm.fio
+import chisurf.models
+import chisurf.fio
 
 
 class Tests(unittest.TestCase):
@@ -25,21 +25,21 @@ class Tests(unittest.TestCase):
             "AAA"
         )
         experiment.add_model_class(
-            mfm.models.model.Model
+            chisurf.models.model.Model
         )
         self.assertEqual(
-            mfm.models.model.Model in experiment.model_classes,
+            chisurf.models.model.Model in experiment.model_classes,
             True
         )
         experiment.add_model_classes(
             [
-                mfm.models.model.Model
+                chisurf.models.model.Model
             ]
         )
 
         # Models are unique
         experiment.add_model_class(
-            mfm.models.model.Model
+            chisurf.models.model.Model
         )
         self.assertEqual(
             len(experiment.model_classes),
@@ -133,7 +133,7 @@ class Tests(unittest.TestCase):
         )
         ec.add_call(
             'read',
-            experiment_reader.read,  # this calls mfm.Base.load
+            experiment_reader.read,  # this calls chisurf.base.load
             {
                 'filename': None
             }
@@ -187,7 +187,7 @@ class Tests(unittest.TestCase):
         ex = np.zeros_like(x)
         ey = np.ones_like(y)
         data = np.vstack([x, y, ex, ey])
-        csv_io = mfm.fio.ascii.Csv(
+        csv_io = chisurf.fio.ascii.Csv(
             use_header=False
         )
         #file = tempfile.NamedTemporaryFile(

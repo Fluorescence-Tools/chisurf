@@ -12,11 +12,11 @@ from qtpy import QtWidgets, QtCore
 import qdarkstyle
 
 import mfm
-import mfm.fio
+import chisurf.fio
 import chisurf.widgets
 import chisurf.widgets.pdb
 import chisurf.widgets.accessible_volume
-import mfm.decorators
+import chisurf.decorators
 import chisurf.structure
 import chisurf.structure.structure
 
@@ -27,7 +27,7 @@ class LabelStructure(
 
     name = "LabelStructure"
 
-    @mfm.decorators.init_with_ui(ui_filename="fps_json_edit.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="fps_json_edit.ui")
     def __init__(
             self,
             *args,
@@ -87,7 +87,7 @@ class LabelStructure(
         try:
             self.json_file = filename
             p = json.load(
-                mfm.fio.zipped.open_maybe_zipped(
+                chisurf.fio.zipped.open_maybe_zipped(
                     filename=self.json_file,
                     mode='r'
                 )
@@ -242,7 +242,7 @@ class LabelStructure(
             fn = chisurf.widgets.get_filename(
                 "DA-Distance distribution (1st column RDA, 2nd pRDA)"
             )
-            csv = mfm.fio.ascii.Csv(
+            csv = chisurf.fio.ascii.Csv(
                 filename=fn,
                 skiprows=1
             )

@@ -4,7 +4,7 @@ import numpy as np
 from qtpy import  QtWidgets, uic, QtCore
 
 import mfm
-import mfm.fio
+import chisurf.fio
 from chisurf.structure.structure import Structure
 from chisurf.structure.trajectory import TrajectoryFile
 
@@ -118,7 +118,7 @@ class PDBSelector(
         atom_name = self.atom_name
         chain = self.chain_id
 
-        w = mfm.fio.coordinates.get_atom_index(
+        w = chisurf.fio.coordinates.get_atom_index(
             self.atoms,
             chain,
             residue_key,

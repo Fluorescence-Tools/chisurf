@@ -12,7 +12,7 @@ import copy
 import numpy as np
 
 import mfm
-import mfm.base
+import chisurf.base
 import experiments
 
 
@@ -29,13 +29,13 @@ def get_data_values(
 class Tests(unittest.TestCase):
 
     def test_base_init(self):
-        b1 = mfm.base.Base()
+        b1 = chisurf.base.Base()
         self.assertEqual(b1.name, 'Base')
 
-        b2 = mfm.base.Base(name='B')
+        b2 = chisurf.base.Base(name='B')
         self.assertEqual(b2.name, 'B')
 
-        b3 = mfm.base.Base(
+        b3 = chisurf.base.Base(
             name='B',
             test_parameter='aa'
         )
@@ -51,7 +51,7 @@ class Tests(unittest.TestCase):
         )
 
     def test_base_copy(self):
-        b1 = mfm.base.Base(name='B')
+        b1 = chisurf.base.Base(name='B')
         b2 = copy.copy(b1)
         self.assertNotEqual(
             b1.unique_identifier,
@@ -70,15 +70,15 @@ class Tests(unittest.TestCase):
             'verbose': False,
             'unique_identifier': 'e7f0eb02-cbab-4aa3-abf2-799aebe96a09'
         }
-        b1 = mfm.base.Base(**d)
+        b1 = chisurf.base.Base(**d)
         self.assertEqual(b1.to_dict(), d)
-        b2 = mfm.base.Base()
+        b2 = chisurf.base.Base()
         b2.from_dict(d)
         self.assertEqual(b1.to_dict(), b2.to_dict())
 
     def test_base_uuid(self):
-        b1 = mfm.base.Base(value=2.0)
-        b2 = mfm.base.Base(value=2.0)
+        b1 = chisurf.base.Base(value=2.0)
+        b2 = chisurf.base.Base(value=2.0)
         self.assertIsNot(
             b1.unique_identifier,
             b2.unique_identifier
@@ -92,18 +92,18 @@ class Tests(unittest.TestCase):
 
     def test_base_yaml(self):
         yaml_string = 'name: B\ntest_parameter: aa\nunique_identifier: e7f0eb02-cbab-4aa3-abf2-799aebe96a09\nverbose: false\n'
-        b1 = mfm.base.Base()
+        b1 = chisurf.base.Base()
         b1.from_yaml(yaml_string, verbose=False)
 
-        b2 = mfm.base.Base()
+        b2 = chisurf.base.Base()
         b2.from_yaml(yaml_string)
         self.assertEqual(b1.to_dict(), b2.to_dict())
 
-        b3 = mfm.base.Base()
+        b3 = chisurf.base.Base()
         b3.from_yaml(b2.to_yaml())
         self.assertEqual(b2.to_dict(), b3.to_dict())
         # test from_yaml
-        b4 = mfm.base.Base()
+        b4 = chisurf.base.Base()
         b4.from_yaml(
             yaml_string=b2.to_yaml(),
             verbose=True
@@ -115,18 +115,18 @@ class Tests(unittest.TestCase):
 
     def test_json(self):
         json_string = '{\n    "name": "B",\n    "test_parameter": "aa",\n    "unique_identifier": "e7f0eb02-cbab-4aa3-abf2-799aebe96a09",\n    "verbose": false\n}'
-        b1 = mfm.base.Base()
+        b1 = chisurf.base.Base()
         b1.from_json(json_string, verbose=False)
 
-        b2 = mfm.base.Base()
+        b2 = chisurf.base.Base()
         b2.from_json(json_string)
         self.assertEqual(b1.to_dict(), b2.to_dict())
 
-        b3 = mfm.base.Base()
+        b3 = chisurf.base.Base()
         b3.from_json(b2.to_json())
         self.assertEqual(b2.to_dict(), b3.to_dict())
         # test from_json
-        b4 = mfm.base.Base()
+        b4 = chisurf.base.Base()
         b4.from_json(
             json_string=b2.to_json(),
             verbose=True
@@ -154,13 +154,13 @@ class Tests(unittest.TestCase):
             suffix='.json'
         )
 
-        b1 = mfm.base.Base(**d)
+        b1 = chisurf.base.Base(**d)
         b1.save(
             filename=filename,
             file_type='json',
             verbose=True
         )
-        b2 = mfm.base.Base()
+        b2 = chisurf.base.Base()
         b2.load(
             filename=filename,
             file_type='json'
@@ -179,12 +179,12 @@ class Tests(unittest.TestCase):
             suffix='.yaml'
         )
 
-        b1 = mfm.base.Base(**d)
+        b1 = chisurf.base.Base(**d)
         b1.save(
             filename=filename,
             file_type='yaml'
         )
-        b2 = mfm.base.Base()
+        b2 = chisurf.base.Base()
         b2.load(
             filename=filename,
             file_type='yaml'
@@ -202,7 +202,7 @@ class Tests(unittest.TestCase):
         s1 = "ldldöö_ddd   dd**"
         s2 = "ldldoo_ddd_dd"
         self.assertEqual(
-            mfm.base.clean_string(s1),
+            chisurf.base.clean_string(s1),
             s2
         )
 
@@ -221,7 +221,7 @@ class Tests(unittest.TestCase):
             file=filename,
             arr=a
         )
-        d = mfm.base.Data(
+        d = chisurf.base.Data(
             filename=filename,
             embed_data=True
         )
@@ -234,7 +234,7 @@ class Tests(unittest.TestCase):
             True
         )
 
-        d = mfm.base.Data(
+        d = chisurf.base.Data(
             filename=filename,
             embed_data=False
         )

@@ -4,7 +4,7 @@ import numba as nb
 import numpy as np
 
 import mfm
-import mfm.math
+import chisurf.math
 
 
 def compute_linearization_table(
@@ -34,7 +34,7 @@ def compute_linearization_table(
     mnx.fill_value = 1.0
     mnx /= mnx.mean()
     yn = mnx.filled()
-    return mfm.math.signal.window(
+    return chisurf.math.signal.window(
         yn,
         window_length,
         window_function_type

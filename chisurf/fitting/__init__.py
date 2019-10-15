@@ -7,8 +7,8 @@ from typing import List
 
 import numpy as np
 
-import mfm.curve
-import mfm.models
+import chisurf.curve
+import chisurf.models
 import fitting.parameter
 import experiments
 import fitting.fit
@@ -17,7 +17,7 @@ import fitting.widgets
 
 
 def find_fit_idx_of_model(
-        model: mfm.models.model.Model,
+        model: chisurf.models.model.Model,
         fits: List[fitting.fit.Fit]
 ) -> int:
     """Returns index of the fit of a model in mfm.fits array
@@ -33,7 +33,7 @@ def find_fit_idx_of_model(
 
 def calculate_weighted_residuals(
         data: experiments.data.DataCurve,
-        model: mfm.curve.Curve,
+        model: chisurf.curve.Curve,
         xmin: int,
         xmax: int,
 ) -> np.array:
