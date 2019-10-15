@@ -1,3 +1,0 @@
-include README.md
-include chisurf/mfm/fluorescence/fps/dll/*.so
-include chisurf/mfm/fluorescence/fps/dll/*.dll
