@@ -151,7 +151,6 @@ setup(
     },
     entry_points={
         "gui_scripts": ["chisurf=chisurf.gui:gui"]
-    },
-    include_package_data=True
+    }
 )
 
