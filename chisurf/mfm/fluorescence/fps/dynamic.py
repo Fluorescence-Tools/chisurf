@@ -14,7 +14,7 @@ import mfm.io.coordinates
 import mfm.models
 import mfm.parameter
 from mfm.structure.structure import count_atoms
-from mfm.fluorescence.fps import _fps
+from . import _fps
 from mfm.parameter import ParameterGroup
 
 
