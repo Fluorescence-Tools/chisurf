@@ -7,8 +7,13 @@ import numba as nb
 
 b, o = platform.architecture()
 
-package_directory = os.path.dirname(os.path.abspath(__file__))
-path = os.path.join(package_directory, './dll')
+path = os.path.join(
+    os.path.dirname(
+        os.path.abspath(__file__)
+    )
+    ,
+    './dll'
+)
 
 if 'Windows' in o:
     if '32' in b:
@@ -33,8 +38,10 @@ else:
             'libav.dylib'
         )
 
-
-_fps = np.ctypeslib.load_library(fpslibrary, ".")
+_fps = np.ctypeslib.load_library(
+    fpslibrary,
+    "."
+)
 _fps.calculate1R.restype = C.c_int
 _fps.calculate1R.argtypes = [
     C.c_double, C.c_double, C.c_double,
@@ -87,8 +94,8 @@ def calculate_1_radius(
     :param verbose: bool
         If true informative output is printed on std-out
     :param n_mul: bool
-        number by which the number of grid points in each dimension has to be dividable if this
-        is not the case the av is zero padded
+        number by which the number of grid points in each dimension has to be
+        dividable if this is not the case the av is zero padded
 
     Examples
     --------

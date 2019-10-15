@@ -1,9 +1,0 @@
-LIBRARY fpsnative.win64.dll
-
-EXPORTS
-
-calculate1R
-calculate3R
-rdamean
-rdameanE
-testnative
