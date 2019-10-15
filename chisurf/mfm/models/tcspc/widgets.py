@@ -12,8 +12,8 @@ import mfm.decorators
 import mfm.math
 import mfm.models
 from mfm import plots
-from mfm.fitting.parameter import FittingParameter
-from mfm.fitting.widgets import FittingControllerWidget
+from fitting.parameter import FittingParameter
+from fitting.widgets import FittingControllerWidget
 from mfm.models import parse
 from mfm.models.model import ModelWidget
 from mfm.models.tcspc.anisotropy import Anisotropy
@@ -25,8 +25,8 @@ from mfm.models.tcspc.mix_model import LifetimeMixModel
 from mfm.models.tcspc.nusiance import Convolve, Corrections, Generic
 from mfm.models.parse.tcspc.tcspc_parse import ParseDecayModel
 from mfm.models.tcspc.pddem import PDDEM, PDDEMModel
-from mfm.widgets import clear_layout
-from mfm.experiments.widgets import ExperimentalDataSelector
+from chisurf.widgets import clear_layout
+from experiments.widgets import ExperimentalDataSelector
 
 
 class ConvolveWidget(Convolve, QtWidgets.QWidget):
@@ -37,7 +37,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
     @mfm.decorators.init_with_ui(ui_filename="convolveWidget.ui")
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: fitting.fit.Fit,
             hide_curve_convolution: bool = True,
             *args,
             **kwargs
@@ -52,13 +52,13 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             self.radioButton_3.setVisible(not hide_curve_convolution)
 
         layout = QtWidgets.QHBoxLayout()
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._dt,
             layout=layout,
             fixed=True,
             hide_bounds=True
         )
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._n0,
             layout=layout,
             fixed=True,
@@ -67,28 +67,28 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         self.verticalLayout_2.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._start,
             layout=layout
         )
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._stop,
             layout=layout
         )
         self.verticalLayout_2.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._lb,
             layout=layout
         )
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._ts,
             layout=layout
         )
         self.verticalLayout_2.addLayout(layout)
 
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             fitting_parameter=self._rep,
             layout=self.horizontalLayout_3,
             text='r[MHz]'
@@ -98,7 +98,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             parent=None,
             change_event=self.change_irf,
             fit=self.fit,
-            setup=mfm.experiments.tcspc.TCSPCReader
+            setup=experiments.tcspc.TCSPCReader
         )
 
         self.actionSelect_IRF.triggered.connect(self.irf_select.show)
@@ -161,7 +161,7 @@ class CorrectionsWidget(
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: fitting.fit.Fit,
             hide_corrections: bool = False,
             **kwargs
     ):
@@ -192,12 +192,12 @@ class CorrectionsWidget(
         if hide_corrections:
             self.hide()
 
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._dead_time,
             layout=self.horizontalLayout_2,
             text='t<sub>dead</sub>[ns]'
         )
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._window_length,
             layout=self.horizontalLayout_2,
             text='t<sub>dead</sub>[ns]'
@@ -207,7 +207,7 @@ class CorrectionsWidget(
             parent=None,
             change_event=self.onChangeLin,
             fit=self.fit,
-            setup=mfm.experiments.tcspc.tcspc.TCSPCReader
+            setup=experiments.tcspc.tcspc.TCSPCReader
         )
 
         self.actionSelect_lintable.triggered.connect(self.lin_select.show)
@@ -302,19 +302,19 @@ class GenericWidget(
         l = QtWidgets.QGridLayout()
         gbl.addLayout(l)
 
-        sc_w = mfm.fitting.widgets.make_fitting_parameter_widget(
+        sc_w = fitting.widgets.make_fitting_parameter_widget(
             self._sc,
             text='Sc'
         )
-        bg_w = mfm.fitting.widgets.make_fitting_parameter_widget(
+        bg_w = fitting.widgets.make_fitting_parameter_widget(
             self._bg,
             text='Bg'
         )
-        tmeas_bg_w = mfm.fitting.widgets.make_fitting_parameter_widget(
+        tmeas_bg_w = fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_bg,
             text='t<sub>Bg</sub>'
         )
-        tmeas_exp_w = mfm.fitting.widgets.make_fitting_parameter_widget(
+        tmeas_exp_w = fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_exp,
             text='t<sub>Meas</sub>'
         )
@@ -443,13 +443,13 @@ class AnisotropyWidget(
         self.gb.setLayout(self.lh)
 
         layout = QtWidgets.QHBoxLayout()
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._r0,
             text='r0',
             layout=layout,
             fixed=True
         )
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._g,
             text='g',
             layout=layout,
@@ -458,14 +458,14 @@ class AnisotropyWidget(
         self.lh.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._l1,
             text='l1',
             layout=layout,
             fixed=True,
             decimals=4
         )
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._l2,
             text='l2',
             layout=layout,
@@ -512,14 +512,14 @@ class AnisotropyWidget(
         layout = QtWidgets.QHBoxLayout()
         self.lh.addLayout(layout)
         self._rho_widgets.append(
-            mfm.fitting.widgets.make_fitting_parameter_widget(
+            fitting.widgets.make_fitting_parameter_widget(
                 fitting_parameter=self._rhos[-1],
                 decimals=2,
                 layout=layout
             )
         )
         self._b_widgets.append(
-            mfm.fitting.widgets.make_fitting_parameter_widget(
+            fitting.widgets.make_fitting_parameter_widget(
                 fitting_parameter=self._bs[-1],
                 decimals=2,
                 layout=layout
@@ -778,7 +778,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         #self._amp_widgets.append(amplitude)
 
         self._amp_widgets.append(
-            mfm.fitting.widgets.make_fitting_parameter_widget(
+            fitting.widgets.make_fitting_parameter_widget(
                 self._amplitudes[-1],
                 layout=layout
             )
@@ -788,7 +788,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         #self._lifetime_widgets.append(lifetime)
 
         self._lifetime_widgets.append(
-            mfm.fitting.widgets.make_fitting_parameter_widget(
+            fitting.widgets.make_fitting_parameter_widget(
                 self._lifetimes[-1],
                 layout=layout
             )
@@ -807,7 +807,7 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: fitting.fit.Fit,
             icon: QtGui.QIcon = None,
             hide_nuisances: bool = False,
             **kwargs
@@ -872,7 +872,7 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             **kwargs
     ):
         super().__init__(
@@ -959,19 +959,19 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
         gb.setTitle('G%i' % n_gauss)
         layout = QtWidgets.QVBoxLayout()
 
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._gaussianMeans[-1],
             layout=layout
         )
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._gaussianSigma[-1],
             layout=layout
         )
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._gaussianShape[-1],
             layout=layout
         )
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._gaussianAmplitudes[-1],
             layout=layout
         )
@@ -1088,11 +1088,11 @@ for f in cs.current_fit:
             text='x',
             update_function=self.update
         )
-        m = mfm.fitting.widgets.make_fitting_parameter_widget(
+        m = fitting.widgets.make_fitting_parameter_widget(
             pm,
             layout=layout
         )
-        x = mfm.fitting.widgets.make_fitting_parameter_widget(
+        x = fitting.widgets.make_fitting_parameter_widget(
             px,
             layout=layout
         )
@@ -1120,7 +1120,7 @@ class GaussianModelWidget(
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: fitting.fit.Fit,
             **kwargs
     ):
         donors = LifetimeWidget(
@@ -1152,7 +1152,7 @@ class GaussianModelWidget(
         self.layout_parameter.addWidget(donors)
 
         self.layout_parameter.addWidget(
-            mfm.fitting.widgets.make_fitting_parameter_group_widget(
+            fitting.widgets.make_fitting_parameter_group_widget(
                 self.fret_parameters
             )
         )
@@ -1167,7 +1167,7 @@ class FRETrateModelWidget(
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: fitting.fit.Fit,
             **kwargs
     ):
         donors = LifetimeWidget(
@@ -1198,7 +1198,7 @@ class FRETrateModelWidget(
         self.layout_parameter.addWidget(donors)
         # self.layout_parameter.addWidget(self.fret_parameters.to_widget())
         self.layout_parameter.addWidget(
-            mfm.fitting.widgets.make_fitting_parameter_group_widget(
+            fitting.widgets.make_fitting_parameter_group_widget(
                 self.fret_parameters
             )
         )
@@ -1225,7 +1225,7 @@ class WormLikeChainModelWidget(
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: fitting.fit.Fit,
             **kwargs
     ):
         donors = LifetimeWidget(
@@ -1254,7 +1254,7 @@ class WormLikeChainModelWidget(
         layout.addWidget(self._use_dye_linker)
 
         #self._sigma_linker = self._sigma_linker.make_widget(layout=layout)
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._sigma_linker,
             layout=layout
         )
@@ -1264,12 +1264,12 @@ class WormLikeChainModelWidget(
         self.layout_parameter.addLayout(layout)
 
         #self._chain_length = self._chain_length.make_widget(layout=self.layout_parameter)
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._chain_length,
             layout=layout
         )
         #self._persistence_length = self._persistence_length.make_widget(layout=self.layout_parameter)
-        mfm.fitting.widgets.make_fitting_parameter_widget(
+        fitting.widgets.make_fitting_parameter_widget(
             self._persistence_length,
             layout=layout
         )
@@ -1328,9 +1328,9 @@ class WormLikeChainModelWidget(
         #print "load_distance_distribution"
         verbose = kwargs.get('verbose', self.verbose)
         #filename = kwargs.get('filename', str(QtGui.QFileDialog.getOpenFileName(self, 'Open File')))
-        filename = mfm.widgets.get_filename('Open distance distribution', 'CSV-files (*.csv)')
+        filename = chisurf.widgets.get_filename('Open distance distribution', 'CSV-files (*.csv)')
         self.lineEdit.setText(filename)
-        csv = mfm.io.ascii.Csv(filename)
+        csv = mfm.fio.ascii.Csv(filename)
         ar = csv.data.T
         if verbose:
             print("Opening distribution")
@@ -1345,7 +1345,7 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             **kwargs
     ):
         ModelWidget.__init__(self, icon=QtGui.QIcon(":/icons/icons/TCSPC.ico"))
@@ -1419,7 +1419,7 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
             item = layout.itemAt(i)
             if isinstance(
                     item,
-                    mfm.fitting.widgets.FittingParameterWidget
+                    fitting.widgets.FittingParameterWidget
             ):
                 re.append(item)
         return re
@@ -1463,7 +1463,7 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
 
     def add_model(
             self,
-            fit: mfm.fitting.fit.FitGroup = None
+            fit: fitting.fit.FitGroup = None
     ):
         layout = QtWidgets.QHBoxLayout()
 
@@ -1473,7 +1473,7 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
             model = fit.model
 
         fraction_name = "x(%s)" % (len(self) + 1)
-        fraction = mfm.fitting.widgets.FittingParameterWidget(
+        fraction = fitting.widgets.FittingParameterWidget(
             name=fraction_name,
             value=1.0,
             model=self,

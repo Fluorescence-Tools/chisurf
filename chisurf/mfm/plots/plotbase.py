@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from qtpy import QtWidgets
 
-import mfm.fitting
+import fitting
 from mfm.base import Base
 
 
@@ -10,7 +10,7 @@ class Plot(QtWidgets.QWidget, Base):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit,
+            fit: fitting.fit,
             parent=None,
             **kwargs
     ):

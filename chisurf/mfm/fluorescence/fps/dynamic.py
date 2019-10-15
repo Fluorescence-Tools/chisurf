@@ -9,11 +9,11 @@ import tables
 import numexpr as ne
 
 import mfm
-import mfm.io
-import mfm.io.coordinates
+import mfm.fio
+import mfm.fio.coordinates
 import mfm.models
 import mfm.parameter
-import mfm.structure.structure
+import chisurf.structure.structure
 from mfm.parameter import ParameterGroup
 from mfm.fluorescence.fps import _fps
 
@@ -238,7 +238,7 @@ class DiffusionSimulation(object):
             coordinates = self.xyz[::skip]
             n_frames = coordinates.shape[0]
             coordinates = coordinates.reshape(n_frames, 3)
-            mfm.io.coordinates.write_xyz(filename, coordinates)
+            mfm.fio.coordinates.write_xyz(filename, coordinates)
         elif mode == 'npy':
             np.save(filename, self.xyz)
 
@@ -552,7 +552,7 @@ class Sticking(ParameterGroup):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: fitting.fit.Fit,
             structure: mfm.structure.structure.Structure,
             quenching_parameter=None,
             **kwargs

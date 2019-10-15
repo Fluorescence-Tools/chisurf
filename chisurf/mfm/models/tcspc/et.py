@@ -264,7 +264,7 @@ class EtModelFree(
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             verbose: bool = mfm.verbose,
             **kwargs
     ):
@@ -574,7 +574,7 @@ class EtModelFreeWidget(
     @mfm.decorators.init_with_ui(ui_filename="et_model_free.ui")
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             icon: QtGui.QIcon = None,
             *args,
             **kwargs

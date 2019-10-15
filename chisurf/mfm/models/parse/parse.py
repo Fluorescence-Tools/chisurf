@@ -15,9 +15,9 @@ from qtpy.QtCore import QFile, QFileInfo, QTextStream, QUrl
 
 import mfm
 import mfm.decorators
-import mfm.widgets
+import chisurf.widgets
 from mfm.models.model import ModelWidget, ModelCurve
-from mfm.fitting.parameter import FittingParameter, FittingParameterGroup
+from fitting.parameter import FittingParameter, FittingParameterGroup
 
 
 class GenerateSymbols(defaultdict):
@@ -30,10 +30,10 @@ class ParseFormula(FittingParameterGroup):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit = None,
+            fit: fitting.fit.Fit = None,
             model: mfm.models.model.Model = None,
             short: str = '',
-            parameters: List[mfm.fitting.parameter.FittingParameter] = None,
+            parameters: List[fitting.parameter.FittingParameter] = None,
             model_file: str = None,
             model_name: str = None,
             **kwargs
@@ -148,7 +148,7 @@ class ParseFormula(FittingParameterGroup):
             self._parameters.append(p)
 
     def load_model_file(self, filename):
-        with mfm.io.zipped.open_maybe_zipped(
+        with mfm.fio.zipped.open_maybe_zipped(
                 filename=filename,
                 mode='r'
         ) as fp:
@@ -169,7 +169,7 @@ class ParseModel(ModelCurve):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             *args,
             parse: object = None,
             **kwargs
@@ -201,10 +201,10 @@ class ParseFormulaWidget(
     @mfm.decorators.init_with_ui(ui_filename="parseWidget.ui")
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             model: mfm.models.model.Model,
             short: str = '',
-            parameters: List[mfm.fitting.parameter.FittingParameter] = None,
+            parameters: List[fitting.parameter.FittingParameter] = None,
             n_columns: int = None,
             **kwargs
     ):
@@ -234,7 +234,7 @@ class ParseFormulaWidget(
 
         self.widget.plainTextEdit.setPlainText(v)
         layout = self.widget.gridLayout_2
-        mfm.widgets.clear_layout(layout)
+        chisurf.widgets.clear_layout(layout)
         n_columns = self.n_columns
 
         pn = list()
@@ -335,7 +335,7 @@ class ParseFormulaWidget(
             filename: str = None
     ):
         if filename is None:
-            filename = mfm.widgets.get_filename(
+            filename = chisurf.widgets.get_filename(
                 'Open models-file',
                 'link file (*.yaml)'
             )
@@ -348,7 +348,7 @@ class ParseModelWidget(ParseModel, ModelWidget):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             **kwargs
     ):
         ModelWidget.__init__(self, fit, **kwargs)

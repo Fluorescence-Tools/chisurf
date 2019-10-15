@@ -320,7 +320,7 @@ class DiffusionIterator:
             # define NG %s
             # define NG2 %s
             ''' % (idg2, ng, ng ** 2)
-        with mfm.io.zipped.open_maybe_zipped(
+        with mfm.fio.zipped.open_maybe_zipped(
             filename, 'r'
         ) as f:
             kernel = defines + "".join(f.readlines())

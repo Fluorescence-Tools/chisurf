@@ -7,10 +7,10 @@ from docx.shared import Inches
 
 import mfm
 import mfm.base
-import mfm.experiments
+import experiments
 import mfm.models
-import mfm.fitting
-import mfm.widgets
+import fitting
+import chisurf.widgets
 from . import tcspc
 
 
@@ -42,29 +42,29 @@ def add_fit(
             # Make sure the data set is a DataGroup
             if not isinstance(
                     data_set,
-                    mfm.experiments.data.DataGroup
+                    experiments.data.DataGroup
             ):
-                data_group = mfm.experiments.data.ExperimentDataCurveGroup(
+                data_group = experiments.data.ExperimentDataCurveGroup(
                     [data_set]
                 )
             else:
                 data_group = data_set
 
             # Create the fit
-            fit_group = mfm.fitting.fit.FitGroup(
+            fit_group = fitting.fit.FitGroup(
                 data=data_group,
                 model_class=model_class
             )
             mfm.fits.append(fit_group)
 
-            fit_control_widget = mfm.fitting.widgets.FittingControllerWidget(
+            fit_control_widget = fitting.widgets.FittingControllerWidget(
                 fit_group
             )
             cs.modelLayout.addWidget(fit_control_widget)
             for fit in fit_group:
                 cs.modelLayout.addWidget(fit.model)
 
-            fit_window = mfm.fitting.widgets.FitSubWindow(
+            fit_window = fitting.widgets.FitSubWindow(
                 fit_group,
                 control_layout=cs.plotOptionsLayout,
                 fit_widget=fit_control_widget
@@ -187,15 +187,15 @@ def group_datasets(
     ]
     if isinstance(
             selected_data[0],
-            mfm.experiments.data.DataCurve
+            experiments.data.DataCurve
     ):
         # TODO: check for double names!!!
-        dg = mfm.experiments.data.ExperimentDataCurveGroup(
+        dg = experiments.data.ExperimentDataCurveGroup(
             selected_data,
             name="Data-Group"
         )
     else:
-        dg = mfm.experiments.data.ExperimentDataGroup(
+        dg = experiments.data.ExperimentDataGroup(
             selected_data,
             name="Data-Group"
         )
@@ -237,7 +237,7 @@ def remove_datasets(
 
 
 def add_dataset(
-        setup: mfm.experiments.reader.ExperimentReader = None,
+        setup: experiments.reader.ExperimentReader = None,
         dataset: mfm.base.Data = None,
         **kwargs
 ) -> None:
@@ -250,8 +250,8 @@ def add_dataset(
         )
     dataset_group = dataset if isinstance(
         dataset,
-        mfm.experiments.data.ExperimentDataGroup
-    ) else mfm.experiments.data.ExperimentDataCurveGroup(
+        experiments.data.ExperimentDataGroup
+    ) else experiments.data.ExperimentDataCurveGroup(
         dataset
     )
     if len(dataset_group) == 1:
@@ -290,8 +290,8 @@ def close_fit(
     mfm.fits.pop(idx)
     sub_window = mfm.fit_windows.pop(idx)
     sub_window.close_confirm = False
-    mfm.widgets.hide_items_in_layout(cs.modelLayout)
-    mfm.widgets.hide_items_in_layout(cs.plotOptionsLayout)
+    chisurf.widgets.hide_items_in_layout(cs.modelLayout)
+    chisurf.widgets.hide_items_in_layout(cs.plotOptionsLayout)
     sub_window.close()
 
 

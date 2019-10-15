@@ -11,14 +11,14 @@ import numpy as np
 import mfm
 import mfm.decorators
 import mfm.base
-import mfm.experiments.widgets
-import mfm.experiments.tcspc.controller
-import mfm.widgets
+import experiments.widgets
+import experiments.tcspc.controller
+import chisurf.widgets
 import mfm.models
-import mfm.fitting
-import mfm.experiments
+import fitting
+import experiments
 import mfm.cmd
-import mfm.tools
+import chisurf.tools
 import mfm.ui.resource
 
 
@@ -69,7 +69,7 @@ class Main(QtWidgets.QMainWindow):
     @property
     def current_experiment(
             self
-    ) -> mfm.experiments.experiment.Experiment:
+    ) -> experiments.experiment.Experiment:
         return mfm.experiment[
             self.current_experiment_idx
         ]
@@ -109,7 +109,7 @@ class Main(QtWidgets.QMainWindow):
     @property
     def current_setup(
             self
-    ) -> mfm.experiments.reader.ExperimentReader:
+    ) -> experiments.reader.ExperimentReader:
         current_setup = self.current_experiment.readers[
             self.current_setup_idx
         ]
@@ -141,13 +141,13 @@ class Main(QtWidgets.QMainWindow):
     @property
     def current_fit(
             self
-    ) -> mfm.fitting.fit.FitGroup:
+    ) -> fitting.fit.FitGroup:
         return self._current_fit
 
     @current_fit.setter
     def current_fit(
             self,
-            v: mfm.fitting.fit.FitGroup
+            v: fitting.fit.FitGroup
     ) -> None:
         self._current_fit = v
 
@@ -156,7 +156,7 @@ class Main(QtWidgets.QMainWindow):
             event: QtGui.QCloseEvent
     ):
         if mfm.settings.gui['confirm_close_program']:
-            reply = mfm.widgets.widgets.MyMessageBox.question(
+            reply = chisurf.widgets.widgets.MyMessageBox.question(
                 self,
                 'Message',
                 "Are you sure to quit?",
@@ -186,15 +186,15 @@ class Main(QtWidgets.QMainWindow):
 
             self.setWindowTitle(window_title)
 
-            mfm.widgets.hide_items_in_layout(self.modelLayout)
-            mfm.widgets.hide_items_in_layout(self.plotOptionsLayout)
+            chisurf.widgets.hide_items_in_layout(self.modelLayout)
+            chisurf.widgets.hide_items_in_layout(self.plotOptionsLayout)
             self.current_fit.model.update()
             self.current_fit.model.show()
             self.current_fit_widget.show()
             sub_window.current_plt_ctrl.show()
 
     def onRunMacro(self):
-        filename = mfm.widgets.get_filename(
+        filename = chisurf.widgets.get_filename(
             "Python macros",
             file_type="Python file (*.py)"
         )
@@ -244,7 +244,7 @@ class Main(QtWidgets.QMainWindow):
             self,
             **kwargs
     ):
-        filename = mfm.widgets.get_filename(
+        filename = chisurf.widgets.get_filename(
             file_type="*.json",
             description="Load results into fit-models",
             **kwargs
@@ -257,7 +257,7 @@ class Main(QtWidgets.QMainWindow):
         )
 
     def onSetupChanged(self):
-        mfm.widgets.hide_items_in_layout(
+        chisurf.widgets.hide_items_in_layout(
             self.layout_experiment_reader
         )
         mfm.run(
@@ -290,7 +290,7 @@ class Main(QtWidgets.QMainWindow):
 
         if isinstance(
             self.current_setup,
-            mfm.experiments.reader.ExperimentReader
+            experiments.reader.ExperimentReader
         ):
             mfm.cmd.add_dataset(
                 self.current_setup,
@@ -298,7 +298,7 @@ class Main(QtWidgets.QMainWindow):
             )
         if isinstance(
                 self.current_setup,
-                mfm.experiments.reader.ExperimentReaderController
+                experiments.reader.ExperimentReaderController
         ):
             mfm.cmd.add_dataset(
                 self.current_setup.experiment_reader,
@@ -311,7 +311,7 @@ class Main(QtWidgets.QMainWindow):
             **kwargs
     ):
         if path is None:
-            path = mfm.widgets.get_directory(**kwargs)
+            path = chisurf.widgets.get_directory(**kwargs)
         mfm.cmd.save_fits(path)
 
     def onSaveFit(
@@ -320,7 +320,7 @@ class Main(QtWidgets.QMainWindow):
             **kwargs
     ):
         if directory is None:
-            mfm.working_path = mfm.widgets.get_directory(**kwargs)
+            mfm.working_path = chisurf.widgets.get_directory(**kwargs)
         mfm.working_path = directory
         mfm.console.run('mfm.cmd.save_fit()')
 
@@ -331,10 +331,10 @@ class Main(QtWidgets.QMainWindow):
         webbrowser.open_new(url)
 
     def init_widgets(self):
-        #self.decay_generator = mfm.tools.dye_diffusion.TransientDecayGenerator()
+        #self.decay_generator = chisurf.tools.dye_diffusion.TransientDecayGenerator()
         #self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
 
-        #self.fret_lines = mfm.tools.fret_lines.FRETLineGeneratorWidget()
+        #self.fret_lines = chisurf.tools.fret_lines.FRETLineGeneratorWidget()
         #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.fret_lines.show)
 
         #self.decay_fret_generator = mfm.fluorescence.dye_diffusion.TransientFRETDecayGenerator()
@@ -343,58 +343,58 @@ class Main(QtWidgets.QMainWindow):
         #      Fluorescence widgets                              #
         #      (Commented widgets don't work at the moment       #
         ##########################################################
-        self.lifetime_calc = mfm.tools.fret_calculator.tau2r.FRETCalculator()
+        self.lifetime_calc = chisurf.tools.fret_calculator.tau2r.FRETCalculator()
         self.actionCalculator.triggered.connect(self.lifetime_calc.show)
 
-        self.kappa2_dist = mfm.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
+        self.kappa2_dist = chisurf.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
         self.actionKappa2_Distribution.triggered.connect(self.kappa2_dist.show)
 
         ##########################################################
         #      TTTR-widgets                                      #
         ##########################################################
-        self.tttr_convert = mfm.tools.tttr.convert.TTTRConvert()
+        self.tttr_convert = chisurf.tools.tttr.convert.TTTRConvert()
         self.actionConvert.triggered.connect(self.tttr_convert.show)
 
-        self.tttr_correlate = mfm.tools.tttr.correlate.CorrelateTTTR()
+        self.tttr_correlate = chisurf.tools.tttr.correlate.CorrelateTTTR()
         self.actionCorrelate.triggered.connect(self.tttr_correlate.show)
 
-        self.tttr_histogram = mfm.tools.tttr.decay_histogram.HistogramTTTR()
+        self.tttr_histogram = chisurf.tools.tttr.decay_histogram.HistogramTTTR()
         self.actionGenerate_decay.triggered.connect(self.tttr_histogram.show)
 
         ##########################################################
         #      TTTR-widgets                                      #
         ##########################################################
-        self.hdf2pdb = mfm.tools.modelling.trajectory.MDConverter()
+        self.hdf2pdb = chisurf.tools.modelling.trajectory.MDConverter()
         self.actionTrajectory_converter.triggered.connect(self.hdf2pdb.show)
 
-        self.trajectory_rot_trans = mfm.tools.modelling.trajectory.RotateTranslateTrajectoryWidget()
+        self.trajectory_rot_trans = chisurf.tools.modelling.trajectory.RotateTranslateTrajectoryWidget()
         self.actionRotate_Translate_trajectory.triggered.connect(self.trajectory_rot_trans.show)
 
-        self.calculate_potential = mfm.tools.modelling.potential_enery.PotentialEnergyWidget()
+        self.calculate_potential = chisurf.tools.modelling.potential_enery.PotentialEnergyWidget()
         self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
 
-        self.pdb2label = mfm.tools.fps_json.label_structure.LabelStructure()
+        self.pdb2label = chisurf.tools.fps_json.label_structure.LabelStructure()
         self.actionPDB2Label.triggered.connect(self.pdb2label.show)
 
-        self.structure2transfer = mfm.tools.traj2fret.gui.Structure2Transfer()
+        self.structure2transfer = chisurf.tools.traj2fret.gui.Structure2Transfer()
         self.actionStructure2Transfer.triggered.connect(self.structure2transfer.show)
 
-        self.join_trajectories = mfm.tools.modelling.trajectory.JoinTrajectoriesWidget()
+        self.join_trajectories = chisurf.tools.modelling.trajectory.JoinTrajectoriesWidget()
         self.actionJoin_trajectories.triggered.connect(self.join_trajectories.show)
 
-        self.traj_save_topol = mfm.tools.modelling.trajectory.SaveTopology()
+        self.traj_save_topol = chisurf.tools.modelling.trajectory.SaveTopology()
         self.actionSave_topology.triggered.connect(self.traj_save_topol.show)
 
-        self.remove_clashes = mfm.tools.modelling.remove_clashed_frames.RemoveClashedFrames()
+        self.remove_clashes = chisurf.tools.modelling.remove_clashed_frames.RemoveClashedFrames()
         self.actionRemove_clashes.triggered.connect(self.remove_clashes.show)
 
-        self.align_trajectory = mfm.tools.modelling.trajectory.AlignTrajectoryWidget()
+        self.align_trajectory = chisurf.tools.modelling.trajectory.AlignTrajectoryWidget()
         self.actionAlign_trajectory.triggered.connect(self.align_trajectory.show)
 
-        #self.update_widget = mfm.widgets.downloader.UpdateDialog()
+        #self.update_widget = chisurf.widgets.downloader.UpdateDialog()
         #self.connect(self.actionUpdate, QtCore.SIGNAL('triggered()'), self.update_widget.show)
 
-        self.f_test = mfm.tools.f_test.f_calculator.FTestWidget()
+        self.f_test = chisurf.tools.f_test.f_calculator.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
 
     def init_console(self):
@@ -420,11 +420,11 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #       Structure                                        #
         ##########################################################
-        structure = mfm.experiments.experiment.Experiment('Modelling')
+        structure = experiments.experiment.Experiment('Modelling')
         structure.add_readers(
             [
                 (
-                    mfm.experiments.modelling.LoadStructure(
+                    experiments.modelling.LoadStructure(
                         experiment=structure
                     ),
                     None
@@ -441,29 +441,29 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #       TCSPC                                            #
         ##########################################################
-        tcspc = mfm.experiments.experiment.Experiment('TCSPC')
+        tcspc = experiments.experiment.Experiment('TCSPC')
         tcspc.add_readers(
             [
                 (
-                    mfm.experiments.tcspc.TCSPCReader(
+                    experiments.tcspc.TCSPCReader(
                         experiment=tcspc
                     ),
-                    mfm.experiments.tcspc.controller.TCSPCReaderControlWidget(
+                    experiments.tcspc.controller.TCSPCReaderControlWidget(
                         name='CSV/PQ/IBH',
                         **mfm.settings.cs_settings['tcspc_csv'],
                     )
                 ),
                 (
-                    mfm.experiments.tcspc.bh_sdt.TCSPCSetupSDTWidget(
+                    experiments.tcspc.bh_sdt.TCSPCSetupSDTWidget(
                         experiment=tcspc
                     ),
                     None
                 ),
                 (
-                    mfm.experiments.tcspc.dummy.TCSPCSetupDummy(
+                    experiments.tcspc.dummy.TCSPCSetupDummy(
                         experiment=tcspc
                     ),
-                    mfm.experiments.tcspc.controller.TCSPCSetupDummyWidget()
+                    experiments.tcspc.controller.TCSPCSetupDummyWidget()
                 )
             ]
         )
@@ -481,24 +481,24 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #       FCS                                              #
         ##########################################################
-        fcs = mfm.experiments.experiment.Experiment('FCS')
+        fcs = experiments.experiment.Experiment('FCS')
         fcs.add_readers(
             [
                 (
-                    mfm.experiments.fcs.FCS(
+                    experiments.fcs.FCS(
                         name='FCS-CSV',
                         experiment=fcs
                     ),
-                    mfm.experiments.fcs.FCSController(
+                    experiments.fcs.FCSController(
                         file_type='All files (*.*)'
                     )
                 ),
                 (
-                    mfm.experiments.fcs.FCS(
+                    experiments.fcs.FCS(
                         name='Kristine',
                         experiment=fcs
                     ),
-                    mfm.experiments.fcs.FCSController(
+                    experiments.fcs.FCSController(
                         file_type='Kristine files (*.cor)'
                     )
                 )
@@ -514,8 +514,8 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #       Global datasets                                  #
         ##########################################################
-        global_fit = mfm.experiments.experiment.Experiment('Global')
-        global_setup = mfm.experiments.globalfit.GlobalFitSetup(
+        global_fit = experiments.experiment.Experiment('Global')
+        global_setup = experiments.globalfit.GlobalFitSetup(
             name='Global-Fit',
             experiment=global_fit
         )
@@ -567,7 +567,7 @@ class Main(QtWidgets.QMainWindow):
 
         self.setCentralWidget(self.mdiarea)
         self.init_widgets()
-        self.configuration = mfm.widgets.text_editor.CodeEditor(
+        self.configuration = chisurf.widgets.text_editor.CodeEditor(
             filename=mfm.settings.settings_file,
             language='YAML',
             can_load=False
@@ -613,7 +613,7 @@ class Main(QtWidgets.QMainWindow):
         self.tabifyDockWidget(self.dockWidgetAnalysis, self.dockWidgetPlot)
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
-        self.editor = mfm.widgets.text_editor.CodeEditor()
+        self.editor = chisurf.widgets.text_editor.CodeEditor()
         self.verticalLayout_10.addWidget(self.editor)
 
         self.modelLayout.setAlignment(QtCore.Qt.AlignTop)
@@ -640,7 +640,7 @@ class Main(QtWidgets.QMainWindow):
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
-        self.dataset_selector = mfm.experiments.widgets.ExperimentalDataSelector(
+        self.dataset_selector = experiments.widgets.ExperimentalDataSelector(
             click_close=False,
             curve_types='all',
             change_event=self.onCurrentDatasetChanged,
@@ -651,7 +651,7 @@ class Main(QtWidgets.QMainWindow):
 
 def gui():
     app = QtWidgets.QApplication(sys.argv)
-    mfm.console = mfm.widgets.QIPythonWidget()
+    mfm.console = chisurf.widgets.QIPythonWidget()
     win = Main()
     mfm.console.history_widget = win.plainTextEditHistory
     mfm.cs = win

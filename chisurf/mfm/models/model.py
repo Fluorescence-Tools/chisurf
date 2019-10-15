@@ -6,19 +6,19 @@ from qtpy import QtWidgets, QtGui
 
 import mfm.parameter
 import mfm.curve
-import mfm.fitting.parameter
-import mfm.fitting.widgets
+import fitting.parameter
+import fitting.widgets
 import mfm.plots
 
 
 class Model(
-    mfm.fitting.parameter.FittingParameterGroup
+    fitting.parameter.FittingParameterGroup
 ):
     name = "Model name not available"
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: fitting.fit.Fit,
             model_number: int = 0,
             **kwargs
     ):
@@ -33,7 +33,7 @@ class Model(
     @property
     def parameters(
             self
-    ) -> List[mfm.fitting.parameter.FittingParameter]:
+    ) -> List[fitting.parameter.FittingParameter]:
         return [p for p in self.parameters_all if not (p.fixed or p.is_linked)]
 
     @property
@@ -55,7 +55,7 @@ class Model(
         for a in self.aggregated_parameters:
             if a is not self:
                 a.finalize()
-        #for pa in mfm.fitting.parameter.FittingParameter.get_instances():
+        #for pa in fitting.parameter.FittingParameter.get_instances():
         #    pa.finalize()
 
     @property
@@ -70,7 +70,7 @@ class Model(
 
     def get_wres(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: fitting.fit.Fit,
             xmin: int = None,
             xmax: int = None,
             **kwargs
@@ -79,7 +79,7 @@ class Model(
             xmin = fit.xmin
         if xmax is None:
             xmax = fit.xmax
-        return mfm.fitting.calculate_weighted_residuals(
+        return fitting.calculate_weighted_residuals(
             fit.data,
             fit.model,
             xmin=xmin,
@@ -149,7 +149,7 @@ class ModelCurve(
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: fitting.fit.Fit,
             *args, **kwargs
     ):
         super().__init__(
@@ -215,7 +215,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
         for parameter in self.parameters:
             if isinstance(
                     parameter,
-                    mfm.fitting.widgets.FittingParameterWidget
+                    fitting.widgets.FittingParameterWidget
             ):
                 parameter.update()
 
@@ -231,7 +231,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             icon: QtGui.QIcon = None,
             *args,
             **kwargs

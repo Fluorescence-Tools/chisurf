@@ -7,7 +7,7 @@ from mfm.fluorescence.fps.dynamic import DiffusionSimulation
 
 import mfm
 from mfm.curve import Curve
-from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
+from fitting.parameter import FittingParameterGroup, FittingParameter
 
 
 def simulate_decays(
@@ -323,15 +323,15 @@ class DyeDecay(Curve):
             h5 = tables.open_file(filename, mode="w", title=filename, filters=filters)
             h5.create_group("/", group_title)
             headertable = h5.createTable('/' + group_title, 'header',
-                                         description=mfm.io.photons.Header,
+                                         description=mfm.fio.photons.Header,
                                          filters=filters)
             headertable = h5.createTable('/' + group_title, 'header',
-                                         description=mfm.io.photons.Header,
+                                         description=mfm.fio.photons.Header,
                                          filters=filters)
             h5.close()
         elif mode == 'histogram':
             x, y, = self.get_histogram(hist_bins, hist_range)
-            mfm.io.ascii.save_xy(
+            mfm.fio.ascii.save_xy(
                 filename,
                 x,
                 y,

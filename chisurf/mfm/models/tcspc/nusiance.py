@@ -7,12 +7,12 @@ import numpy as np
 
 import mfm
 import mfm.cmd
-import mfm.fluorescence.tcspc.convolve
+import chisurf.mfm.fluorescence.tcspc.convolve
 import mfm.fluorescence.tcspc.corrections
 import mfm.math
 import mfm.fluorescence
 from mfm.curve import Curve
-from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
+from fitting.parameter import FittingParameterGroup, FittingParameter
 
 
 class Generic(FittingParameterGroup):
@@ -128,7 +128,7 @@ class Generic(FittingParameterGroup):
 
     def __init__(
             self,
-            background_curve: mfm.experiments.data.DataCurve = None,
+            background_curve: experiments.data.DataCurve = None,
             name: str = 'Nuisance',
             **kwargs
     ):
@@ -318,7 +318,7 @@ class Corrections(FittingParameterGroup):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: fitting.fit.Fit,
             name: str = 'Corrections',
             reverse: bool = False,
             correct_dnl: bool = False,
@@ -503,7 +503,7 @@ class Convolve(FittingParameterGroup):
     @property
     def data(
             self
-    ) -> mfm.experiments.data.DataCurve:
+    ) -> experiments.data.DataCurve:
         if self._data is None:
             try:
                 return self.fit.data
@@ -515,13 +515,13 @@ class Convolve(FittingParameterGroup):
     @data.setter
     def data(
             self,
-            v: mfm.experiments.data.DataCurve
+            v: experiments.data.DataCurve
     ):
         self._data = v
 
     def scale(
             self,
-            decay: mfm.experiments.data.DataCurve,
+            decay: experiments.data.DataCurve,
             start: int = None,
             stop: int = None,
             bg: float = 0.0,
@@ -547,7 +547,7 @@ class Convolve(FittingParameterGroup):
 
     def convolve(
             self,
-            data: mfm.experiments.data.DataCurve,
+            data: experiments.data.DataCurve,
             verbose: bool = None,
             mode: str = None,
             dt: float = None,
@@ -577,7 +577,7 @@ class Convolve(FittingParameterGroup):
 
         if mode == "per":
             period = 1000. / rep_rate
-            mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_periodic(
+            chisurf.mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_periodic(
                 decay,
                 data,
                 irf_y,
@@ -593,7 +593,7 @@ class Convolve(FittingParameterGroup):
             # mfm.fluorescence.tcspc.fconv_per_dt(decay, lifetime_spectrum, irf_y, start, stop, n_points, period, time)
         elif mode == "exp":
             t = self.data.x
-            mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(
+            chisurf.mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(
                 decay,
                 data,
                 irf_y,
@@ -622,7 +622,7 @@ class Convolve(FittingParameterGroup):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: fitting.fit.Fit,
             name: str = 'Convolution',
             irf: mfm.curve.Curve = None,
             **kwargs

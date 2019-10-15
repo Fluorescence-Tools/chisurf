@@ -91,7 +91,7 @@ class GlobalAnisotropy(Plot):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             d_scalex: str = 'lin',
             d_scaley: str = 'lin',
             r_scalex: str = 'lin',
@@ -263,7 +263,7 @@ class GlobalEt(Plot):
     @mfm.decorators.init_with_ui(ui_filename="et_plot_layout.ui")
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             f_scalex: str = 'log',
             f_scaley: str = 'lin',
             e_scalex: str = 'log',

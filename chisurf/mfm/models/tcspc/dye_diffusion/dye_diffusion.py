@@ -9,29 +9,29 @@ import tempfile
 import numpy as np
 from qtpy import QtWidgets, uic
 
-import mfm.io.coordinates
+import mfm.fio.coordinates
 from mfm.fluorescence.fps.dynamic import DiffusionSimulation, Dye, Sticking, \
     ProteinQuenching
 from mfm.fluorescence.fps.widgets import ProteinQuenchingWidget, DyeWidget, StickingWidget
 
 import mfm
-import mfm.fitting.fit
+import fitting.fit
 import mfm.models.tcspc.nusiance
-import mfm.fitting.widgets
+import fitting.widgets
 import mfm.fluorescence.fps as fps
-import mfm.fluorescence.tcspc.convolve
-import mfm.io
+import chisurf.mfm.fluorescence.tcspc.convolve
+import mfm.fio
 import mfm.math
 import mfm.models.tcspc.widgets
 import mfm.structure
-import mfm.structure.structure
+import chisurf.mfm.structure.structure
 from mfm import plots
 from mfm.curve import Curve
 from mfm.models.model import Model
 from mfm.fluorescence.fps import ACV
 from mfm.fluorescence.simulation import photon
 from mfm.structure.structure import Structure, get_coordinates_of_residues
-from mfm.widgets.pdb import PDBSelector
+from chisurf.widgets.pdb import PDBSelector
 
 
 class DyeDecay(Model, Curve):
@@ -438,7 +438,7 @@ class DyeDecay(Model, Curve):
         """
         verbose = verbose or self.verbose
         x, y = self.get_histogram(nbins, tac_range)
-        mfm.io.ascii.save_xy(filename, x, y, verbose, header_string="time\tcount")
+        mfm.fio.ascii.save_xy(filename, x, y, verbose, header_string="time\tcount")
 
     def update_decay_curve(self):
         self._curve_y = np.zeros(self.nTAC, dtype=np.float64)
@@ -718,7 +718,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             **kwargs
     ):
         self.verbose = kwargs.get('verbose', mfm.verbose)
@@ -732,7 +732,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         DyeDecay.__init__(self, fit=fit, convolve=convolve, generic=generic, corrections=corrections, **settings)
 
         if not kwargs.get('disable_fit', False):
-            fitting_widget = mfm.fitting.widgets.FittingControllerWidget(fit, **kwargs)
+            fitting_widget = fitting.widgets.FittingControllerWidget(fit, **kwargs)
         else:
             fitting_widget = QtWidgets.QLabel()
 
@@ -784,7 +784,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.diff_file = None
         self.av_slow_file = None
         self.av_fast_file = None
-        self.fitting_widget = mfm.fitting.widgets.FittingWidget(fit=self.fit)
+        self.fitting_widget = fitting.widgets.FittingWidget(fit=self.fit)
 
         self.hide()
 
@@ -855,13 +855,13 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         if verbose:
             print("\nSaving slow AV...")
             print("Trajectory filename: %s" % av_slow_file)
-        mfm.io.coordinates.write_xyz(av_slow_file, self.av.points_acv)
+        mfm.fio.coordinates.write_xyz(av_slow_file, self.av.points_acv)
 
         av_fast_file = os.path.join(directory, self.filename_prefix + '_av_fast.xyz')
         if verbose:
             print("\nSaving slow AV...")
             print("Trajectory filename: %s" % av_fast_file)
-        mfm.io.coordinates.write_xyz(av_fast_file, self.av.points_fast)
+        mfm.fio.coordinates.write_xyz(av_fast_file, self.av.points_fast)
         return diff_file, av_slow_file, av_fast_file
 
     def onSimulationDtChanged(self):
@@ -874,7 +874,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
 
     def onLoadPDB(self):
         #pdb_filename = str(QtGui.QFileDialog.getOpenFileName(None, 'Open PDB-File', '', 'PDB-files (*.pdb)'))
-        filename = mfm.widgets.get_filename('Open PDB-File', 'PDB-files (*.pdb)')
+        filename = chisurf.widgets.get_filename('Open PDB-File', 'PDB-files (*.pdb)')
         self.lineEdit.setText(filename)
         self.structure = filename
         self.pdb_selector.atoms = self.structure.atoms

@@ -4,13 +4,13 @@ import numpy as np
 
 import mfm
 import mfm.fluorescence
-import mfm.fitting
-import mfm.fitting.parameter
+import fitting
+import fitting.parameter
 import mfm.math.datatools
 
 
 class Anisotropy(
-    mfm.fitting.parameter.FittingParameterGroup
+    fitting.parameter.FittingParameterGroup
 ):
     """
 
@@ -23,7 +23,7 @@ class Anisotropy(
     @r0.setter
     def r0(
             self,
-            v: mfm.fitting.parameter.FittingParameter
+            v: fitting.parameter.FittingParameter
     ):
         self._r0.value = v
 
@@ -34,7 +34,7 @@ class Anisotropy(
     @l1.setter
     def l1(
             self,
-            v: mfm.fitting.parameter.FittingParameter
+            v: fitting.parameter.FittingParameter
     ):
         self._r0.value = v
 
@@ -45,7 +45,7 @@ class Anisotropy(
     @l2.setter
     def l2(
             self,
-            v: mfm.fitting.parameter.FittingParameter
+            v: fitting.parameter.FittingParameter
     ):
         self._l2.value = v
 
@@ -56,7 +56,7 @@ class Anisotropy(
     @g.setter
     def g(
             self,
-            v: mfm.fitting.parameter.FittingParameter
+            v: fitting.parameter.FittingParameter
     ):
         self._g.value = v
 
@@ -139,14 +139,14 @@ class Anisotropy(
         b_value = b
         rho_value = rho
 
-        b = mfm.fitting.parameter.FittingParameter(
+        b = fitting.parameter.FittingParameter(
             lb=lb, ub=ub,
             value=b_value,
             name='b(%i)' % (len(self) + 1),
             fixed=fixed,
             bounds_on=bound_on
         )
-        rho = mfm.fitting.parameter.FittingParameter(
+        rho = fitting.parameter.FittingParameter(
             lb=lb, ub=ub,
             value=rho_value,
             name='rho(%i)' % (len(self) + 1),
@@ -179,9 +179,9 @@ class Anisotropy(
             polarization = mfm.settings.cs_settings['tcspc']['polarization']
         self._polarization_type = polarization
 
-        self._r0 = mfm.fitting.parameter.FittingParameter(name='r0', value=0.38, fixed=True)
-        self._g = mfm.fitting.parameter.FittingParameter(name='g', value=1.00, fixed=True)
-        self._l1 = mfm.fitting.parameter.FittingParameter(name='l1', value=0.0308, fixed=True)
-        self._l2 = mfm.fitting.parameter.FittingParameter(name='l2', value=0.0368, fixed=True)
+        self._r0 = fitting.parameter.FittingParameter(name='r0', value=0.38, fixed=True)
+        self._g = fitting.parameter.FittingParameter(name='g', value=1.00, fixed=True)
+        self._l1 = fitting.parameter.FittingParameter(name='l1', value=0.0308, fixed=True)
+        self._l2 = fitting.parameter.FittingParameter(name='l2', value=0.0368, fixed=True)
 
 

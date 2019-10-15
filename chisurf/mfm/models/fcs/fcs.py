@@ -30,7 +30,7 @@ class ParseFCSWidget(ParseModelWidget):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             icon: QtGui.QIcon = None,
             **kwargs
     ):

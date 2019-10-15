@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from qtpy import QtCore, QtWidgets
 
-import mfm.fitting
+import fitting
 from mfm.plots.plotbase import Plot
 
 
@@ -11,7 +11,7 @@ class GlobalFitPlot(Plot):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             logy: bool = False,
             logx: bool = False
     ):

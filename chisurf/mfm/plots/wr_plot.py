@@ -5,7 +5,7 @@ import pyqtgraph as pg
 from qtpy import QtWidgets
 
 import mfm
-import mfm.fitting
+import fitting
 from mfm.plots import plotbase
 
 pyqtgraph_settings = mfm.settings.gui['plot']["pyqtgraph"]
@@ -34,7 +34,7 @@ class ResidualPlot(plotbase.Plot):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             *args,
             **kwargs
     ):

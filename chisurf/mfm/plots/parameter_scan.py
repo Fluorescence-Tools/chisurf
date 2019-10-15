@@ -106,7 +106,7 @@ class ParameterScanPlot(plotbase.Plot):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             **kwargs
     ):
         super(ParameterScanPlot, self).__init__(fit)
