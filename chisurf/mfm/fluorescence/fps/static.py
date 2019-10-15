@@ -6,37 +6,52 @@ import mfm
 import numba as nb
 
 b, o = platform.architecture()
+
 package_directory = os.path.dirname(os.path.abspath(__file__))
 path = os.path.join(package_directory, './dll')
 
 if 'Windows' in o:
     if '32' in b:
-        fpslibrary = 'fpsnative.win32.dll' # os.path.join(package_directory, './dll/fpsnative.win32.dll')
+        fpslibrary = os.path.join(
+            path,
+            'fpsnative.win32.dll'
+        )
     elif '64' in b:
-        fpslibrary = 'fpsnative.win64.dll' # os.path.join(package_directory, './dll/fpsnative.win64.dll')
-        #fpslibrary = 'libfps.dll'  # os.path.join(package_directory, './dll/fpsnative.win64.dll')
+        fpslibrary = os.path.join(
+            path,
+            'fpsnative.win64.dll'
+        )
 else:
     if platform.system() == 'Linux':
-        fpslibrary = 'liblinux_fps.so' # os.path.join(package_directory, './dll/liblinux_fps.so')
+        fpslibrary = os.path.join(
+            path,
+            'liblinux_fps.so'
+        )
     else:
-        fpslibrary = 'libav.dylib' # os.path.join(package_directory, './dll/libav.dylib')
-path = os.path.dirname(os.path.abspath(__file__))
-path = os.path.join(path, 'dll')
-path = os.path.join(path, fpslibrary)
-_fps = np.ctypeslib.load_library(path, ".")
+        fpslibrary = os.path.join(
+            path,
+            'libav.dylib'
+        )
+
+
+_fps = np.ctypeslib.load_library(fpslibrary, ".")
 _fps.calculate1R.restype = C.c_int
-_fps.calculate1R.argtypes = [C.c_double, C.c_double, C.c_double,
-                             C.c_int, C.c_double,
-                             C.POINTER(C.c_double), C.POINTER(C.c_double), C.POINTER(C.c_double),
-                             C.POINTER(C.c_double), C.c_int, C.c_double,
-                             C.c_double, C.c_int,
-                             C.POINTER(C.c_char)]
-_fps.calculate3R.argtypes = [C.c_double, C.c_double, C.c_double, C.c_double, C.c_double,
-                             C.c_int, C.c_double,
-                             C.POINTER(C.c_double), C.POINTER(C.c_double), C.POINTER(C.c_double),
-                             C.POINTER(C.c_double), C.c_int, C.c_double,
-                             C.c_double, C.c_int,
-                             C.POINTER(C.c_char)]
+_fps.calculate1R.argtypes = [
+    C.c_double, C.c_double, C.c_double,
+    C.c_int, C.c_double,
+    C.POINTER(C.c_double), C.POINTER(C.c_double), C.POINTER(C.c_double),
+    C.POINTER(C.c_double), C.c_int, C.c_double,
+    C.c_double, C.c_int,
+    C.POINTER(C.c_char)
+]
+_fps.calculate3R.argtypes = [
+    C.c_double, C.c_double, C.c_double, C.c_double, C.c_double,
+    C.c_int, C.c_double,
+    C.POINTER(C.c_double), C.POINTER(C.c_double), C.POINTER(C.c_double),
+    C.POINTER(C.c_double), C.c_int, C.c_double,
+    C.c_double, C.c_int,
+    C.POINTER(C.c_char)
+]
 
 
 def calculate_1_radius(
