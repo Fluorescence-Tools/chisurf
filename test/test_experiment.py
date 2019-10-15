@@ -9,15 +9,15 @@ utils.set_search_paths(TOPDIR)
 
 import numpy as np
 import tempfile
-import mfm.experiments
+import experiments
 import mfm.models
-import mfm.io
+import mfm.fio
 
 
 class Tests(unittest.TestCase):
 
     def test_experiment(self):
-        experiment = mfm.experiments.experiment.Experiment(
+        experiment = experiments.experiment.Experiment(
             name="AAA"
         )
         self.assertEqual(
@@ -50,7 +50,7 @@ class Tests(unittest.TestCase):
             ['Model name not available']
         )
 
-        experiment_reader = mfm.experiments.reader.ExperimentReader(
+        experiment_reader = experiments.reader.ExperimentReader(
             name="ExperimentReaderName_A",
             experiment=experiment
         )
@@ -70,17 +70,17 @@ class Tests(unittest.TestCase):
         )
 
     def test_experimental_data(self):
-        experiment = mfm.experiments.experiment.Experiment(
+        experiment = experiments.experiment.Experiment(
             name="Experiment Type"
         )
-        data_reader = mfm.experiments.reader.ExperimentReader(
+        data_reader = experiments.reader.ExperimentReader(
             experiment=experiment
         )
         experiment.add_reader(
             data_reader
         )
         a = np.arange(100)
-        experimental_data = mfm.experiments.data.ExperimentalData(
+        experimental_data = experiments.data.ExperimentalData(
             experiment=experiment,
             data_reader=data_reader,
             embed_data=True,
@@ -121,14 +121,14 @@ class Tests(unittest.TestCase):
         # TODO: test to_dict and to_json
 
     def test_ExperimentReaderController(self):
-        import mfm.experiments
-        experiment = mfm.experiments.experiment.Experiment(
+        import experiments
+        experiment = experiments.experiment.Experiment(
             name="TestExperiment"
         )
-        experiment_reader = mfm.experiments.reader.ExperimentReader(
+        experiment_reader = experiments.reader.ExperimentReader(
             experiment=experiment
         )
-        ec = mfm.experiments.reader.ExperimentReaderController(
+        ec = experiments.reader.ExperimentReaderController(
             experiment_reader=experiment_reader
         )
         ec.add_call(
@@ -142,17 +142,17 @@ class Tests(unittest.TestCase):
 
     def test_TCSPCReader(self):
         filename = "./data/tcspc/ibh_sample/Decay_577D.txt"
-        ex = mfm.experiments.experiment.Experiment(
+        ex = experiments.experiment.Experiment(
             'TCSPC'
         )
         dt = 0.0141
-        g1 = mfm.experiments.tcspc.TCSPCReader(
+        g1 = experiments.tcspc.TCSPCReader(
             experiment=ex,
             skiprows=8,
             rebin=(1, 8),
             dt=dt
         )
-        g2 = mfm.experiments.tcspc.TCSPCReader(
+        g2 = experiments.tcspc.TCSPCReader(
             experiment=ex
         )
         g2.from_dict(
@@ -187,7 +187,7 @@ class Tests(unittest.TestCase):
         ex = np.zeros_like(x)
         ey = np.ones_like(y)
         data = np.vstack([x, y, ex, ey])
-        csv_io = mfm.io.ascii.Csv(
+        csv_io = mfm.fio.ascii.Csv(
             use_header=False
         )
         #file = tempfile.NamedTemporaryFile(
@@ -202,7 +202,7 @@ class Tests(unittest.TestCase):
             data=data,
             filename=filename
         )
-        d = mfm.experiments.data.DataCurve(
+        d = experiments.data.DataCurve(
             *data
         )
 
@@ -235,7 +235,7 @@ x	y	error-x	error-y
             True
         )
 
-        d2 = mfm.experiments.data.DataCurve()
+        d2 = experiments.data.DataCurve()
         d2.load(
             filename=filename,
             skiprows=0
@@ -248,7 +248,7 @@ x	y	error-x	error-y
             True
         )
 
-        d3 = mfm.experiments.data.DataCurve()
+        d3 = experiments.data.DataCurve()
         d3.set_data(*d2.data)
         self.assertEqual(
             np.allclose(
@@ -258,7 +258,7 @@ x	y	error-x	error-y
             True
         )
 
-        d4 = mfm.experiments.data.DataCurve()
+        d4 = experiments.data.DataCurve()
         d4.data = d3.data
         self.assertEqual(
             np.allclose(
@@ -268,7 +268,7 @@ x	y	error-x	error-y
             True
         )
 
-        # d5 = mfm.experiments.data.DataCurve(
+        # d5 = experiments.data.DataCurve(
         #     filename=file.name
         # )
         # self.assertEqual(

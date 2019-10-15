@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 from collections import OrderedDict
 from qtpy import QtWidgets
 
 import mfm
+import fitting
 from mfm.fluorescence.fps.dynamic import ProteinQuenching, Dye, Sticking
-from mfm.fitting.widgets import FittingParameterWidget
+from fitting.widgets import FittingParameterWidget
+import chisurf.structure
 
 
 class ProteinQuenchingWidget(ProteinQuenching, QtWidgets.QGroupBox):
@@ -44,10 +48,19 @@ class ProteinQuenchingWidget(ProteinQuenching, QtWidgets.QGroupBox):
         self.lineEdit_3 = QtWidgets.QLineEdit()
         lab = QtWidgets.QLabel('Quenching AA')
         ProteinQuenching.__init__(self, **kwargs)
-        self.quencher = kwargs.get('quenching_amino_acids',
-                                   {'TRP': ['CB'], 'TYR': ['CB'], 'HIS': ['CB'], 'PRO': ['CB']})
-        self._k_quench_scale = FittingParameterWidget(value=kwargs.get('k_quench_protein', 5.0),
-                                                      name='kQ', model=self.model)
+        self.quencher = kwargs.get(
+            'quenching_amino_acids',
+            {
+                'TRP': ['CB'],
+                'TYR': ['CB'],
+                'HIS': ['CB'],
+                'PRO': ['CB']
+            }
+        )
+        self._k_quench_scale = FittingParameterWidget(
+            value=kwargs.get('k_quench_protein', 5.0),
+            name='kQ', model=self.model
+        )
 
         self.groupBox = QtWidgets.QGroupBox()
         self.groupBox.setCheckable(True)
@@ -106,28 +119,28 @@ class DyeWidget(Dye, QtWidgets.QGroupBox):
         gl.addWidget(self.dye_select, 0, 0, 1, 2)
 
         gl.addWidget(
-            mfm.fitting.widgets.make_fitting_parameter_widget(self._critical_distance),
+            fitting.widgets.make_fitting_parameter_widget(self._critical_distance),
             1, 0
         )
         gl.addWidget(
-            mfm.fitting.widgets.make_fitting_parameter_widget(self._diffusion_coefficient),
+            fitting.widgets.make_fitting_parameter_widget(self._diffusion_coefficient),
             2, 0
         )
         gl.addWidget(
-            mfm.fitting.widgets.make_fitting_parameter_widget(self._tau0),
+            fitting.widgets.make_fitting_parameter_widget(self._tau0),
             3, 0
         )
 
         gl.addWidget(
-            mfm.fitting.widgets.make_fitting_parameter_widget(self._av_length),
+            fitting.widgets.make_fitting_parameter_widget(self._av_length),
             1, 1
         )
         gl.addWidget(
-            mfm.fitting.widgets.make_fitting_parameter_widget(self._av_width),
+            fitting.widgets.make_fitting_parameter_widget(self._av_width),
             2, 1
         )
         gl.addWidget(
-            mfm.fitting.widgets.make_fitting_parameter_widget(self._av_radius),
+            fitting.widgets.make_fitting_parameter_widget(self._av_radius),
             3, 1
         )
         self.dye_select.currentIndexChanged[int].connect(self.update_parameter)
@@ -154,8 +167,8 @@ class StickingWidget(Sticking, QtWidgets.QGroupBox):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
-            structure: mfm.structure.structure.Structure,
+            fit: fitting.fit.Fit,
+            structure: chisurf.structure.structure.Structure,
             **kwargs
     ):
         super(StickingWidget, self).__init__(fit, structure, **kwargs)
@@ -167,12 +180,12 @@ class StickingWidget(Sticking, QtWidgets.QGroupBox):
         self.radioButton_2 = QtWidgets.QRadioButton('Quencher')
 
         layout.addWidget(
-            mfm.fitting.widgets.make_fitting_parameter_widget(self._slow_radius),
+            fitting.widgets.make_fitting_parameter_widget(self._slow_radius),
             0,
             1
         )
         layout.addWidget(
-            mfm.fitting.widgets.make_fitting_parameter_widget(self._slow_fact),
+            fitting.widgets.make_fitting_parameter_widget(self._slow_fact),
             1,
             1
         )

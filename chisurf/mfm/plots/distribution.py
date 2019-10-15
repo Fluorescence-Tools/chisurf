@@ -5,7 +5,7 @@ from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
 import mfm
-import mfm.fitting
+import fitting
 import mfm.fluorescence
 import mfm.math.datatools
 from mfm.plots import plotbase
@@ -54,7 +54,7 @@ class DistributionPlot(plotbase.Plot):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             parent: QtWidgets.QWidget,
             **kwargs
     ):

@@ -9,17 +9,17 @@ utils.set_search_paths(TOPDIR)
 
 import tempfile
 import numpy as np
-import mfm.structure.structure
-import mfm.io.zipped
+import chisurf.structure.structure
+import mfm.fio.zipped
 
 
 class Tests(unittest.TestCase):
 
     def test_structure_Structure(self):
-        s1 = mfm.structure.structure.Structure(
+        s1 = chisurf.structure.structure.Structure(
             pdb_id='148L'
         )
-        s2 = mfm.structure.structure.Structure('148L')
+        s2 = chisurf.structure.structure.Structure('148L')
         self.assertEqual(
             np.allclose(
                 s1.atoms['xyz'],
@@ -38,10 +38,10 @@ class Tests(unittest.TestCase):
         s2.write(
             filename=filename + '.gz'
         )
-        s3 = mfm.structure.structure.Structure(
+        s3 = chisurf.structure.structure.Structure(
             filename=filename
         )
-        s4 = mfm.structure.structure.Structure(
+        s4 = chisurf.structure.structure.Structure(
             filename=filename + '.gz'
         )
         self.assertEqual(

@@ -49,7 +49,7 @@ class Base(object):
             txt = self.to_json()
         if verbose:
             print(txt)
-        with mfm.io.zipped.open_maybe_zipped(
+        with mfm.fio.zipped.open_maybe_zipped(
                 filename=filename,
                 mode='w'
         ) as fp:
@@ -113,7 +113,7 @@ class Base(object):
         j = dict()
         if isinstance(filename, str):
             if os.path.isfile(filename):
-                with mfm.io.zipped.open_maybe_zipped(filename, 'r') as fp:
+                with mfm.fio.zipped.open_maybe_zipped(filename, 'r') as fp:
                     j = yaml.safe_load(fp)
         if isinstance(yaml_string, str):
             j = yaml.safe_load(
@@ -134,8 +134,8 @@ class Base(object):
         Example
         -------
 
-        >>> import mfm.experiments
-        >>> dc = mfm.experiments.data.DataCurve()
+        >>> import experiments
+        >>> dc = experiments.data.DataCurve()
         >>> dc.from_json(filename='./test/data/internal_types/datacurve.json')
 
 
@@ -152,7 +152,7 @@ class Base(object):
         j = dict()
         if isinstance(filename, str):
             if os.path.isfile(filename):
-                with mfm.io.zipped.open_maybe_zipped(filename, 'r') as fp:
+                with mfm.fio.zipped.open_maybe_zipped(filename, 'r') as fp:
                     j = json.load(fp)
         if isinstance(json_string, str):
             j = json.loads(json_string)

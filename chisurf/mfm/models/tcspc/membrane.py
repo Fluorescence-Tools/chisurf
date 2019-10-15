@@ -11,8 +11,8 @@ from mfm import plots
 from mfm.models.tcspc.lifetime import _membrane, Lifetime
 from mfm.models.tcspc.fret import FRETModel
 from mfm.models.tcspc.widgets import GenericWidget, CorrectionsWidget, ConvolveWidget, LifetimeWidget
-from mfm.fitting.widgets import FittingControllerWidget, FittingParameterWidget
-from mfm.fitting.parameter import FittingParameter
+from fitting.widgets import FittingControllerWidget, FittingParameterWidget
+from fitting.parameter import FittingParameter
 
 
 class GridModel(FRETModel):

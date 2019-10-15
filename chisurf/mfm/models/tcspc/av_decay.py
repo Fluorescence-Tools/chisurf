@@ -3,14 +3,14 @@ from __future__ import annotations
 import mfm
 from mfm.models.tcspc.lifetime import LifetimeModel
 from mfm.fluorescence.fps import DynamicAV
-from mfm.fitting.parameter import FittingParameter
+from fitting.parameter import FittingParameter
 
 
 class AVDecayModel(LifetimeModel):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             structure: mfm.structure.structure.Structure = None,
             **kwargs
     ):
@@ -26,9 +26,9 @@ class AVDecayModel(LifetimeModel):
         >>> irf.x *= 0.0141
         >>> data_set = mfm.curve.ExperimentDataCurveGroup(data_set)
         >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> from mfm.fitting.model.tcspc.av_decay import AVDecayModel
+        >>> from fitting.model.tcspc.av_decay import AVDecayModel
         >>> model_kw={'structure': structure, 'residue_seq_number': 577, 'atom_name': 'CB'}
-        >>> fit = mfm.fitting.FitGroup(data=data_set, model_class=AVDecayModel, model_kw=model_kw)
+        >>> fit = fitting.FitGroup(data=data_set, model_class=AVDecayModel, model_kw=model_kw)
         >>> fit.model.convolve._irf = irf
         >>> fit.model.corrections.correct_dnl = True
         >>> fit.model.corrections.lintable = lin

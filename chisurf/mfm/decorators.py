@@ -8,7 +8,7 @@ import os
 import inspect
 from qtpy import QtWidgets
 
-import mfm.widgets
+import chisurf.widgets
 
 
 class init_with_ui(object):
@@ -58,7 +58,7 @@ class init_with_ui(object):
                 **kwargs
             )
             target = cls
-            mfm.widgets.load_ui(
+            chisurf.widgets.load_ui(
                 target=target,
                 path=path,
                 ui_filename=self.ui_filename

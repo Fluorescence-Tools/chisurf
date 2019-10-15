@@ -10,8 +10,8 @@ TOPDIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '../chisurf/')
 )
 utils.set_search_paths(TOPDIR)
-import mfm.io
-import mfm.tools
+import mfm.fio
+import chisurf.tools
 
 
 app = QApplication(sys.argv)
@@ -26,7 +26,7 @@ class Tests(unittest.TestCase):
         """
         Create the GUI
         """
-        self.form = mfm.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
+        self.form = chisurf.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
 
     def test_defaults(self):
         self.assertEqual(self.form.doubleSpinBox_2.value(), 0.380)

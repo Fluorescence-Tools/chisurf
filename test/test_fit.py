@@ -11,9 +11,9 @@ import numpy as np
 import copy
 
 import mfm
-import mfm.experiments
+import experiments
 import mfm.models
-import mfm.fitting
+import fitting
 
 
 def get_data_values(
@@ -35,7 +35,7 @@ class FitTests(unittest.TestCase):
             a_value=a_value,
             c_value=c_value
         )
-        data = mfm.experiments.data.DataCurve(
+        data = experiments.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
@@ -64,8 +64,8 @@ class FitTests(unittest.TestCase):
         data_group = self.test_data_group()
         data = data_group[0]
         x_data = data.x
-        fit = mfm.fitting.fit.FitGroup(
-            data=mfm.experiments.data.DataGroup(
+        fit = fitting.fit.FitGroup(
+            data=experiments.data.DataGroup(
                 [data]
             ),
             model_class=mfm.models.parse.ParseModel
@@ -177,13 +177,13 @@ class FitTests(unittest.TestCase):
             c_value=c_value
         )
 
-        data = mfm.experiments.data.DataCurve(
+        data = experiments.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
         )
-        fit = mfm.fitting.fit.FitGroup(
-            data=mfm.experiments.data.DataGroup(
+        fit = fitting.fit.FitGroup(
+            data=experiments.data.DataGroup(
                 [data]
             ),
             model_class=mfm.models.parse.ParseModel
@@ -194,7 +194,7 @@ class FitTests(unittest.TestCase):
             data
         )
 
-        data_2 = mfm.experiments.data.DataCurve(
+        data_2 = experiments.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)

@@ -10,7 +10,7 @@ utils.set_search_paths(TOPDIR)
 import mfm
 import mfm.parameter
 import mfm.models
-import mfm.fitting
+import fitting
 
 
 class Tests(unittest.TestCase):
@@ -210,7 +210,7 @@ class Tests(unittest.TestCase):
         )
 
     def test_fitting_parameter(self):
-        p1 = mfm.fitting.parameter.FittingParameter(value=22)
+        p1 = fitting.parameter.FittingParameter(value=22)
 
         value = 11
         link = p1
@@ -222,7 +222,7 @@ class Tests(unittest.TestCase):
         unique_identifier = None
         model = None
         fixed = True
-        p2 = mfm.fitting.parameter.FittingParameter(
+        p2 = fitting.parameter.FittingParameter(
             model,
             fixed,
             value,
@@ -240,7 +240,7 @@ class Tests(unittest.TestCase):
             p2.value
         )
 
-        p3 = mfm.fitting.parameter.FittingParameter()
+        p3 = fitting.parameter.FittingParameter()
         p3.from_dict(
             p2.to_dict()
         )
@@ -255,24 +255,24 @@ class Tests(unittest.TestCase):
         )
 
     def test_fitting_parameter_group(self):
-        p1 = mfm.fitting.parameter.FittingParameter(value=22)
-        p2 = mfm.fitting.parameter.FittingParameter(value=33)
-        pg = mfm.fitting.parameter.FittingParameterGroup(name="jjk")
+        p1 = fitting.parameter.FittingParameter(value=22)
+        p2 = fitting.parameter.FittingParameter(value=33)
+        pg = fitting.parameter.FittingParameterGroup(name="jjk")
         pg.append(p1)
         pg.append(p2)
         pg.find_parameters(
-            mfm.fitting.parameter.FittingParameter
+            fitting.parameter.FittingParameter
         )
 
     def test_numpy(self):
         import numpy as np
         value = 22
-        p1 = mfm.fitting.parameter.FittingParameter(value=value)
+        p1 = fitting.parameter.FittingParameter(value=value)
         x = np.linspace(0, 2, 100)
         p2 = p1 + x
         self.assertEqual(
             type(p2),
-            mfm.fitting.parameter.FittingParameter
+            fitting.parameter.FittingParameter
         )
         self.assertEqual(
             np.allclose(
@@ -284,7 +284,7 @@ class Tests(unittest.TestCase):
 
     def test_abs(self):
         value = -11
-        p1 = mfm.fitting.parameter.FittingParameter(value=value)
+        p1 = fitting.parameter.FittingParameter(value=value)
         p2 = abs(p1)
         self.assertEqual(
             abs(p1.value),

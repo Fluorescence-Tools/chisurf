@@ -13,7 +13,7 @@ import numpy as np
 
 import mfm
 import mfm.base
-import mfm.experiments
+import experiments
 
 
 def get_data_values(
@@ -260,7 +260,7 @@ class Tests(unittest.TestCase):
             a_value=a_value,
             c_value=c_value
         )
-        data = mfm.experiments.data.DataCurve(
+        data = experiments.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
@@ -280,7 +280,7 @@ class Tests(unittest.TestCase):
             ),
             True
         )
-        data_group = mfm.experiments.data.DataGroup(
+        data_group = experiments.data.DataGroup(
             [data, data2]
         )
         data_group.current_dataset = 0

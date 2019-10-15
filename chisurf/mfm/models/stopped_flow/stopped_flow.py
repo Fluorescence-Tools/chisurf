@@ -8,11 +8,11 @@ from qtpy import  QtWidgets, uic
 from mfm.models.parse import ParseModelWidget
 
 import mfm
-import mfm.fitting.widgets
+import fitting.widgets
 from mfm import plots
 from mfm.models.model import Model
 from mfm.math.reaction.continuous import ReactionSystem
-from mfm.fitting.widgets import FittingParameterWidget
+from fitting.widgets import FittingParameterWidget
 
 
 class ParseStoppedFlowWidget(ParseModelWidget):
@@ -95,8 +95,8 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
 
     def clear(self):
         ReactionSystem.clear(self)
-        mfm.widgets.clear_layout(self.verticalLayout_10)
-        mfm.widgets.clear_layout(self.verticalLayout_7)
+        chisurf.widgets.clear_layout(self.verticalLayout_10)
+        chisurf.widgets.clear_layout(self.verticalLayout_7)
 
     def __init__(self, **kwargs):
         self.scaleing = FittingParameterWidget(name='scaling', value=1.0)
@@ -120,7 +120,7 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
         self.actionSave_reaction.triggered.connect(self.onSaveLabelingFile)
         Model.__init__(self, **kwargs)
         self.setParameter(parameter)
-        self.fitting_widget = mfm.fitting.widgets.FittingControllerWidget(fit=self.fit)
+        self.fitting_widget = fitting.widgets.FittingControllerWidget(fit=self.fit)
         self.verticalLayout_4.addWidget(self.fitting_widget)
         self.verticalLayout_4.addWidget(self.scaleing)
         self.verticalLayout_4.addWidget(self.background)
@@ -143,7 +143,7 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
     def onLoadReaction(self):
         self.clear()
         #filename = str(QtGui.QFileDialog.getOpenFileName(self, 'Open Reaction-File', '.rc.json', 'Reaction-Files (*.rc.json)'))
-        filename = mfm.widgets.get_filename('Open Reaction-File', 'Reaction-Files (*.rc.json)')
+        filename = chisurf.widgets.get_filename('Open Reaction-File', 'Reaction-Files (*.rc.json)')
         j = json.load(open(filename))
         self.setParameter(j)
         self.lineEdit_6.setText(filename)

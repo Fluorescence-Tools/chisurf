@@ -8,7 +8,7 @@ import mfm.math
 import mfm.math.datatools
 from mfm.models.tcspc.lifetime import Lifetime, LifetimeModel
 from mfm.fluorescence.general import distribution2rates, rates2lifetimes
-from mfm.fitting.parameter import FittingParameter, FittingParameterGroup
+from fitting.parameter import FittingParameter, FittingParameterGroup
 
 rda_axis = np.linspace(
     mfm.settings.fret['rda_min'],
@@ -598,7 +598,7 @@ class FRETModel(LifetimeModel):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             lifetimes: Lifetime = None,
             **kwargs
     ):
@@ -672,7 +672,7 @@ class GaussianModel(FRETModel):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             **kwargs
     ):
         super().__init__(
@@ -730,7 +730,7 @@ class FRETrateModel(FRETModel):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             fret_rates: DiscreteDistance = None,
             **kwargs
     ):
@@ -789,7 +789,7 @@ class WormLikeChainModel(FRETModel):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             use_dye_linker: bool = False,
             **kwargs
     ):
@@ -880,7 +880,7 @@ class SingleDistanceModel(FRETModel):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             **kwargs
     ):
         super().__init__(

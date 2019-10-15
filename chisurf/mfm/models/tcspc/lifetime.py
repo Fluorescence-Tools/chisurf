@@ -7,7 +7,7 @@ import numpy as np
 
 import mfm
 import mfm.math.datatools
-from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
+from fitting.parameter import FittingParameterGroup, FittingParameter
 from mfm.models.model import ModelCurve
 from mfm.models.tcspc.nusiance import Generic, Corrections, Convolve
 from mfm.models.tcspc.anisotropy import Anisotropy
@@ -122,13 +122,13 @@ class Lifetime(FittingParameterGroup):
         return len(self._amplitudes)
 
     @property
-    def link(self) -> mfm.fitting.parameter.FittingParameter:
+    def link(self) -> fitting.parameter.FittingParameter:
         return self._link
 
     @link.setter
     def link(
             self,
-            v: mfm.fitting.parameter.FittingParameter
+            v: fitting.parameter.FittingParameter
     ):
         if isinstance(v, Lifetime) or v is None:
             self._link = v
@@ -174,8 +174,8 @@ class Lifetime(FittingParameterGroup):
         self._lifetimes.append(lifetime)
 
     def pop(self) -> Tuple[
-        mfm.fitting.parameter.FittingParameter,
-        mfm.fitting.parameter.FittingParameter
+        fitting.parameter.FittingParameter,
+        fitting.parameter.FittingParameter
     ]:
         amplitude = self._amplitudes.pop()
         lifetime = self._lifetimes.pop()
@@ -186,8 +186,8 @@ class Lifetime(FittingParameterGroup):
             short: str = 'L',
             absolute_amplitudes: bool = True,
             normalize_amplitudes: bool = True,
-            amplitudes: List[mfm.fitting.parameter.FittingParameter] = None,
-            lifetimes: List[mfm.fitting.parameter.FittingParameter] = None,
+            amplitudes: List[fitting.parameter.FittingParameter] = None,
+            lifetimes: List[fitting.parameter.FittingParameter] = None,
             name: str = 'lifetimes',
             link: FittingParameter = None,
             **kwargs
@@ -235,7 +235,7 @@ class LifetimeModel(ModelCurve):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: fitting.fit.Fit,
             generic: Generic = None,
             corrections: Corrections = None,
             anisotropy: Anisotropy = None,

@@ -3,7 +3,7 @@ from __future__ import annotations
 from qtpy import  QtWidgets
 
 import mfm
-import mfm.fitting
+import fitting
 from mfm.plots import plotbase
 
 
@@ -13,7 +13,7 @@ class FitInfo(plotbase.Plot):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             parent: QtWidgets.QWidget = None,
             **kwargs
     ):

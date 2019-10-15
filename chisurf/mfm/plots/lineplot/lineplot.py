@@ -8,7 +8,7 @@ import matplotlib.colors as mpl_colors
 import mfm
 import mfm.decorators
 import mfm.math
-import mfm.fitting
+import fitting
 import mfm.math.statistics
 from mfm.plots import plotbase
 from pyqtgraph.dockarea import *
@@ -264,7 +264,7 @@ class LinePlot(plotbase.Plot):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.FitGroup,
+            fit: fitting.fit.FitGroup,
             scale_x: str = 'lin',
             d_scaley: str = 'lin',
             r_scaley: str = 'lin',

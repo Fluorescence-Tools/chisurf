@@ -12,9 +12,9 @@ import mfm
 import mfm.decorators
 from mfm import plots
 from mfm.curve import Curve
-import mfm.fitting.fit
+import fitting.fit
 from mfm.models import model
-from mfm.fitting.parameter import GlobalFittingParameter
+from fitting.parameter import GlobalFittingParameter
 
 
 class GlobalFitModel(model.Model, Curve):
@@ -26,7 +26,7 @@ class GlobalFitModel(model.Model, Curve):
 
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: fitting.fit.Fit,
             **kwargs
     ):
         self.fits = []
@@ -57,13 +57,13 @@ class GlobalFitModel(model.Model, Curve):
     @property
     def links(
             self
-    ) -> List[mfm.fitting.parameter.FittingParameter]:
+    ) -> List[fitting.parameter.FittingParameter]:
         return self._links
 
     @links.setter
     def links(
             self,
-            v: List[mfm.fitting.parameter.FittingParameter]
+            v: List[fitting.parameter.FittingParameter]
     ):
         self._links = v if isinstance(v, list) else list()
 
@@ -77,7 +77,7 @@ class GlobalFitModel(model.Model, Curve):
     @property
     def global_parameters_all(
             self
-    ) -> List[mfm.fitting.parameter.FittingParameter]:
+    ) -> List[fitting.parameter.FittingParameter]:
         return list(self._global_parameters.values())
 
     @property
@@ -89,7 +89,7 @@ class GlobalFitModel(model.Model, Curve):
     @property
     def global_parameters(
             self
-    ) -> List[mfm.fitting.parameter.FittingParameter]:
+    ) -> List[fitting.parameter.FittingParameter]:
         return [p for p in self.global_parameters_all if not p.fixed]
 
     @property
@@ -115,7 +115,7 @@ class GlobalFitModel(model.Model, Curve):
     @property
     def parameters(
             self
-    ) -> List[mfm.fitting.parameter.FittingParameter]:
+    ) -> List[fitting.parameter.FittingParameter]:
         p = list()
         for f in self.fits:
             p += f.model.parameters
@@ -139,7 +139,7 @@ class GlobalFitModel(model.Model, Curve):
     @property
     def parameters_all(
             self
-    ) -> List[mfm.fitting.parameter.FittingParameter]:
+    ) -> List[fitting.parameter.FittingParameter]:
         try:
             re = list()
             for f in self.fits:
@@ -209,7 +209,7 @@ class GlobalFitModel(model.Model, Curve):
 
     def get_wres(
             self,
-            fit: mfm.fitting.fit.Fit,
+            fit: fitting.fit.Fit,
             xmin: int = None,
             xmax: int = None,
             **kwargs
@@ -230,7 +230,7 @@ class GlobalFitModel(model.Model, Curve):
 
     def append_fit(
             self,
-            fit: mfm.fitting.fit.Fit
+            fit: fitting.fit.Fit
     ) -> None:
         if fit not in self.fits:
             self.fits.append(fit)
@@ -264,7 +264,7 @@ class GlobalFitModel(model.Model, Curve):
 
     def autofitrange(
             self,
-            fit: mfm.fitting.fit.FitGroup
+            fit: fitting.fit.FitGroup
     ):
         self.xmin, self.xmax = None, None
         return self.xmin, self.xmax
@@ -383,7 +383,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
     @mfm.decorators.init_with_ui(ui_filename="globalfit_2.ui")
     def __init__(
             self,
-            fit: mfm.fitting.fit.Fit
+            fit: fitting.fit.Fit
     ):
         self.actionOnAddToLocalFitList.triggered.connect(self.onAddToLocalFitList)
         self.actionOn_clear_local_fits.triggered.connect(self.onClearLocalFits)
@@ -441,17 +441,17 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         self.checkBox_3.setChecked(v)
 
     @property
-    def local_fits(self) -> List[mfm.fitting.fit.Fit]:
+    def local_fits(self) -> List[fitting.fit.Fit]:
         return [
             s for s in mfm.fits
-            if isinstance(s, mfm.fitting.fit.Fit) and s.model is not self
+            if isinstance(s, fitting.fit.Fit) and s.model is not self
         ]
 
     @property
     def local_fit_idx(self) -> List[int]:
         return [
             i for i, s in enumerate(mfm.fits)
-            if isinstance(s, mfm.fitting.fit.Fit) and s.model is not self
+            if isinstance(s, fitting.fit.Fit) and s.model is not self
         ]
 
     @property
@@ -501,7 +501,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     def append_fit(
             self,
-            fit: mfm.fitting.Fit
+            fit: fitting.Fit
     ):
         if fit not in self.fits:
 
@@ -669,7 +669,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         pickle.dump(self.links, open(filename, "wb"))
 
     def onLoadTable(self):
-        filename = mfm.widgets.get_filename('Open link-table', 'link file (*.p)')
+        filename = chisurf.widgets.get_filename('Open link-table', 'link file (*.p)')
         with open(filename, "rb") as fp:
             links = pickle.load(fp)
         self.onAddLink(links)

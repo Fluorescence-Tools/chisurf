@@ -1,4 +1,4 @@
-import mfm.experiments
+import experiments
 
 
 def set_linearization(
@@ -8,7 +8,7 @@ def set_linearization(
     cs = mfm.cs
     lin_table = cs.current_fit.model.corrections.lin_select.datasets[idx]
     for f in cs.current_fit[cs.current_fit.selected_fit_index:]:
-        f.model.corrections.lintable = mfm.experiments.data.DataCurve(
+        f.model.corrections.lintable = experiments.data.DataCurve(
             x=lin_table.x,
             y=lin_table.y
         )
@@ -45,7 +45,7 @@ def change_irf(
     cs = mfm.cs
     irf = cs.current_fit.model.convolve.irf_select.datasets[dataset_idx]
     for f in cs.current_fit[cs.current_fit.selected_fit_index:]:
-        f.model.convolve._irf = mfm.experiments.data.DataCurve(
+        f.model.convolve._irf = experiments.data.DataCurve(
             x=irf.x,
             y=irf.y
         )

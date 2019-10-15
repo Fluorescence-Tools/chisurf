@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import numpy as np
-import mfm.fluorescence.tcspc.convolve
+import chisurf.mfm.fluorescence.tcspc.convolve
 
 
 def da_a0_to_ad(
@@ -44,7 +44,7 @@ def da_a0_to_ad(
         a0 += a * np.exp(-times / tau)
 
     dt = times[1] - times[0]
-    decay_ad = mfm.fluorescence.tcspc.convolve.convolve_decay(
+    decay_ad = chisurf.mfm.fluorescence.tcspc.convolve.convolve_decay(
         decay=a0,
         irf=decay_da,
         start=0,

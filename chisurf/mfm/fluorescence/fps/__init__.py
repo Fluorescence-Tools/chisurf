@@ -7,7 +7,7 @@ import numpy as np
 
 import mfm
 import mfm.base
-import mfm.io.density
+import mfm.fio.density
 
 from . import dynamic
 from . import static
@@ -84,7 +84,7 @@ class BasicAV(object):
 
         attachment_atom_index = kwargs.get(
             'attachment_atom_index',
-            mfm.io.coordinates.get_atom_index(
+            mfm.fio.coordinates.get_atom_index(
                 self.atoms,
                 chain_identifier,
                 self.attachment_residue,
@@ -183,7 +183,7 @@ class BasicAV(object):
             ng = self.ng
             dg = self.dg
             offset = (ng - 1) / 2 * dg
-            mfm.io.density.write_open_dx(filename,
+            mfm.fio.density.write_open_dx(filename,
                                          d,
                                          self.x0 - offset,
                                          ng, ng, ng,
@@ -194,7 +194,7 @@ class BasicAV(object):
             d = p[:, [3]].flatten()
             d /= max(d) * 50.0
             xyz = p[:, [0, 1, 2]]
-            mfm.io.coordinates.write_points(
+            mfm.fio.coordinates.write_points(
                 filename=filename + '.' + mode,
                 points=xyz,
                 mode=mode,
@@ -710,9 +710,9 @@ class DynamicAV(BasicAV):
         >>> times, density, counts = av.get_donor_only_decay(n_it=4095, t_step=0.0141, n_out=1)
         >>> av.save(filename='c:/temp/0t2', density=density, reading_routine='dx')
         >>> irf = mfm.curve.DataCurve(filename='./test/data/tcspc/ibh_sample/Prompt.txt', skiprows=9)
-        >>> data = mfm.experiments.c.DataCurve(filename='./test/data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)
+        >>> data = experiments.c.DataCurve(filename='./test/data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)
         >>> irf.x *= t_step; data.x *= t_step
-        >>> convolve = mfm.fluorescence.tcspc.convolve.Convolve(fit=None, dt=t_step, rep_rate=10, irf=irf, data=data)
+        >>> convolve = chisurf.mfm.fluorescence.tcspc.convolve.Convolve(fit=None, dt=t_step, rep_rate=10, irf=irf, data=data)
         >>> decay = convolve.convolve(counts, reading_routine='full')
         >>> p.semilogy(times, decay)
         

@@ -9,7 +9,7 @@ import mfm
 from mfm.models.tcspc.fret import Gaussians
 from mfm.fluorescence import tcspc
 from mfm.fluorescence.general import distribution2rates
-from mfm.fitting.parameter import FittingParameterGroup, FittingParameter
+from fitting.parameter import FittingParameterGroup, FittingParameter
 from mfm.models.tcspc.lifetime import Lifetime, LifetimeModel
 
 

@@ -379,7 +379,7 @@ class ReactionSystem(object):
     @initial_concentrations.setter
     def initial_concentrations(self, v):
         self._initial_concentrations = [
-            mfm.fitting.parameter.FittingParameter(value=vi) for vi in v
+            fitting.parameter.FittingParameter(value=vi) for vi in v
         ]
 
     @property
