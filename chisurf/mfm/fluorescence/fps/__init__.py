@@ -18,7 +18,9 @@ from mfm.structure.structure import Structure
 from .static import calculate_1_radius, calculate_3_radius
 
 package_directory = os.path.dirname(__file__)
-dye_file = os.path.join(mfm.package_directory, 'settings/dye_definition.json')
+dye_file = os.path.join(
+    mfm.package_directory, 'settings/dye_definition.json'
+)
 try:
     dye_definition = json.load(open(dye_file))
 except IOError:
