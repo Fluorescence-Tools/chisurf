@@ -12,7 +12,6 @@ import mfm.io.density
 from . import dynamic
 from . import static
 from . import functions
-from . import _fps
 
 #from .functions import assign_diffusion_to_grid_1, assign_diffusion_to_grid_2, \
 #    get_kQ_rC, create_quenching_map, assign_diffusion_to_grid_3
