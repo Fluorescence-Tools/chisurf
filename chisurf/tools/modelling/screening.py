@@ -7,7 +7,7 @@ from qtpy import QtCore, QtWidgets
 import numpy as np
 from scipy.stats import f
 
-import mfm.decorators
+import chisurf.decorators
 import chisurf.structure.cluster
 from chisurf.structure.potential import potentials
 import chisurf.structure as slib
@@ -20,7 +20,7 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
     name = "Screening"
     modelID = 0
 
-    @mfm.decorators.init_with_ui(ui_filename="filterStructures.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="filterStructures.ui")
     def __init__(
             self,
             fit,
@@ -207,7 +207,7 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
     def onSaveStructureTable(self):
         print("onSaveStructureTable")
         filename = str(QtWidgets.QFileDialog.getSaveFileName(self, 'Save structure table', '.txt'))[0]
-        with mfm.fio.zipped.open_maybe_zipped(
+        with chisurf.fio.zipped.open_maybe_zipped(
                 filename=filename,
                 mode='w'
         ) as fp:
@@ -384,7 +384,7 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
     def onSaveClusterTable(self):
         print("onSaveClusterTable")
         filename = str(QtWidgets.QFileDialog.getSaveFileName(self, 'Save cluster table', '.txt'))[0]
-        with mfm.fio.zipped.open_maybe_zipped(filename, 'w') as fp:
+        with chisurf.fio.zipped.open_maybe_zipped(filename, 'w') as fp:
             s = "Cl\tsize\tSN\tchi2Rep\trmsd\tchi2M\tchi2SD\tfilename\n"
             fp.write(s)
             clKeys = list(self.clClusters.keys())
@@ -417,7 +417,7 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
 
         if os.path.isfile(filename):
             self.onClearStructures()
-            with mfm.fio.zipped.open_maybe_zipped(filename, 'r') as fp:
+            with chisurf.fio.zipped.open_maybe_zipped(filename, 'r') as fp:
                 filenames = []
                 lines = fp.readlines()
                 for r, l in enumerate(lines[1:]):

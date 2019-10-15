@@ -163,7 +163,7 @@ class CodeEditor(QWidget):
         print("saving macros")
         if self.filename is None or self.filename == '':
             self.filename = chisurf.widgets.save_file(file_type='Python script (*.py)')
-        with mfm.fio.zipped.open_maybe_zipped(
+        with chisurf.fio.zipped.open_maybe_zipped(
                 filename=self.filename,
                 mode='w'
         ) as fp:

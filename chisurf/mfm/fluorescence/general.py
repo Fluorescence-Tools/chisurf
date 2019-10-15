@@ -6,7 +6,7 @@ import numpy as np
 
 import scipy.optimize
 
-import mfm.math.datatools
+import chisurf.math.datatools
 
 
 @nb.jit(nopython=True)
@@ -58,7 +58,7 @@ def species_averaged_lifetime(
     :return:
     """
     if is_lifetime_spectrum:
-        x, t = mfm.math.datatools.interleaved_to_two_columns(fluorescence)
+        x, t = chisurf.math.datatools.interleaved_to_two_columns(fluorescence)
         if normalize:
             x /= x.sum()
         tau_x = np.dot(x, t)
@@ -88,7 +88,7 @@ def fluorescence_averaged_lifetime(
     """
     if is_lifetime_spectrum:
         taux = species_averaged_lifetime(fluorescence) if taux is None else taux
-        x, t = mfm.math.datatools.interleaved_to_two_columns(fluorescence)
+        x, t = chisurf.math.datatools.interleaved_to_two_columns(fluorescence)
         if normalize:
             x /= x.sum()
         tau_f = np.dot(x, t**2) / taux
@@ -566,15 +566,15 @@ def rates2lifetimes_new(
     :param x_donly: float
 
     """
-    rate_spectrum = mfm.math.datatools.ere2(
+    rate_spectrum = chisurf.math.datatools.ere2(
         fret_rate_spectrum,
         donor_rate_spectrum
     )
-    scaled_fret = mfm.math.datatools.e1tn(
+    scaled_fret = chisurf.math.datatools.e1tn(
         rate_spectrum,
         1. - x_donly
     )
-    scaled_donor = mfm.math.datatools.e1tn(
+    scaled_donor = chisurf.math.datatools.e1tn(
         donor_rate_spectrum,
         x_donly
     )
@@ -582,7 +582,7 @@ def rates2lifetimes_new(
         scaled_fret,
         scaled_donor
     )
-    return mfm.math.datatools.invert_interleaved(rs)
+    return chisurf.math.datatools.invert_interleaved(rs)
 
 
 rates2lifetimes = rates2lifetimes_new

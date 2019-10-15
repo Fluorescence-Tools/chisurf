@@ -9,12 +9,12 @@ import tables
 import numexpr as ne
 
 import mfm
-import mfm.fio
-import mfm.fio.coordinates
-import mfm.models
-import mfm.parameter
+import chisurf.fio
+import chisurf.fio.coordinates
+import chisurf.models
+import chisurf.parameter
 import chisurf.structure.structure
-from mfm.parameter import ParameterGroup
+from chisurf.parameter import ParameterGroup
 from mfm.fluorescence.fps import _fps
 
 
@@ -86,11 +86,11 @@ class DiffusionSimulationParameter(ParameterGroup):
             n_simulations: int = 4
     ):
         super(DiffusionSimulationParameter, self).__init__()
-        self._t_max = mfm.parameter.Parameter(
+        self._t_max = chisurf.parameter.Parameter(
             value=t_max,
             name='t-max'
         )
-        self._t_step = mfm.parameter.Parameter(
+        self._t_step = chisurf.parameter.Parameter(
             value=t_step,
             name='t-step'
         )
@@ -238,7 +238,7 @@ class DiffusionSimulation(object):
             coordinates = self.xyz[::skip]
             n_frames = coordinates.shape[0]
             coordinates = coordinates.reshape(n_frames, 3)
-            mfm.fio.coordinates.write_xyz(filename, coordinates)
+            chisurf.fio.coordinates.write_xyz(filename, coordinates)
         elif mode == 'npy':
             np.save(filename, self.xyz)
 
@@ -449,32 +449,32 @@ class Dye(ParameterGroup):
         self.structure = sticking.structure
         self.model = kwargs.get('model', None)
 
-        self._critical_distance = mfm.parameter.Parameter(
+        self._critical_distance = chisurf.parameter.Parameter(
             value=7.0,
             name='RQ'
         )
-        self._diffusion_coefficient = mfm.parameter.Parameter(
+        self._diffusion_coefficient = chisurf.parameter.Parameter(
             value=5.0,
             name='D[A2/ns]'
         )
-        self._tau0 = mfm.parameter.Parameter(
+        self._tau0 = chisurf.parameter.Parameter(
             value=4.0,
             name='tau0[ns]'
         )
-        self._simulation_grid_resolution = mfm.parameter.Parameter(
+        self._simulation_grid_resolution = chisurf.parameter.Parameter(
             value=0.5,
             name='grid spacing'
         )
 
-        self._av_length = mfm.parameter.Parameter(
+        self._av_length = chisurf.parameter.Parameter(
             name='L',
             value=20.0
         )
-        self._av_width = mfm.parameter.Parameter(
+        self._av_width = chisurf.parameter.Parameter(
             name='W',
             value=0.5
         )
-        self._av_radius = mfm.parameter.Parameter(
+        self._av_radius = chisurf.parameter.Parameter(
             name='R',
             value=3.0
         )
@@ -568,11 +568,11 @@ class Sticking(ParameterGroup):
         self.quenching_parameter = quenching_parameter
         self.structure = structure
         self.model = kwargs.get('model', None)
-        self._slow_radius = mfm.parameter.Parameter(
+        self._slow_radius = chisurf.parameter.Parameter(
             name='Rs',
             value=kwargs.get('slow_radius', 8.5)
         )
-        self._slow_fact = mfm.parameter.Parameter(
+        self._slow_fact = chisurf.parameter.Parameter(
             name='slow fact',
             value=kwargs.get('slow_fact', 0.1)
         )
@@ -690,7 +690,7 @@ class ProteinQuenching(ParameterGroup):
 
         self._quencher = None
         self._all_atoms_quench = kwargs.get('all_atoms_quench', False)
-        self._k_quench_scale = mfm.parameter.Parameter(
+        self._k_quench_scale = chisurf.parameter.Parameter(
             value=kwargs.get('quench_scale', 0.01),
             name='kQ scale'
         )

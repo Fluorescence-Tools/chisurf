@@ -6,13 +6,13 @@ from typing import Tuple, Callable, Dict
 
 from abc import abstractmethod, abstractproperty
 
-import mfm.base
-import mfm.curve
+import chisurf.base
+import chisurf.curve
 import experiments.data
 
 
 class ExperimentReader(
-    mfm.base.Base
+    chisurf.base.Base
 ):
     """
 
@@ -53,7 +53,7 @@ class ExperimentReader(
     @abstractmethod
     def autofitrange(
             self,
-            data: mfm.base.Data,
+            data: chisurf.base.Data,
             **kwargs
     ) -> Tuple[int, int]:
         return 0, len(data.y) - 1
@@ -64,7 +64,7 @@ class ExperimentReader(
             name: str = None,
             *args,
             **kwargs
-    ) -> mfm.base.Data:
+    ) -> chisurf.base.Data:
         """
 
         :param name: A name that will be associated to the data set that is read.
@@ -96,7 +96,7 @@ class ExperimentReader(
 
 
 class ExperimentReaderController(
-    mfm.base.Base
+    chisurf.base.Base
 ):
 
     @property

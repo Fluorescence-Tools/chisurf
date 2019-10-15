@@ -3,18 +3,18 @@ import os
 from qtpy import QtWidgets
 
 import mfm
-import mfm.decorators
+import chisurf.decorators
 import chisurf.widgets
 from experiments import reader
 import experiments.widgets
-import mfm.fio.widgets
+import chisurf.fio.widgets
 
 
 class CsvTCSPCWidget(
     QtWidgets.QWidget,
 ):
 
-    @mfm.decorators.init_with_ui(ui_filename="csvTCSPCWidget.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="csvTCSPCWidget.ui")
     def __init__(
             self,
             *args,
@@ -109,7 +109,7 @@ class TCSPCReaderControlWidget(
         layout.setSpacing(0)
         self.layout = layout
         self.layout.addWidget(
-            mfm.fio.widgets.CsvWidget()
+            chisurf.fio.widgets.CsvWidget()
         )
         self.layout.addWidget(
             CsvTCSPCWidget()
@@ -120,7 +120,7 @@ class TCSPCSetupDummyWidget(
     QtWidgets.QWidget
 ):
 
-    @mfm.decorators.init_with_ui(ui_filename="tcspcDummy.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="tcspcDummy.ui")
     def __init__(
             self,
             *args,

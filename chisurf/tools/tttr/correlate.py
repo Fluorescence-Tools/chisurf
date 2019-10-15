@@ -17,7 +17,7 @@ import mfm.fluorescence
 import experiments.data
 import mfm.settings
 import chisurf.widgets
-from mfm.fio.widgets import SpcFileWidget
+from chisurf.fio.widgets import SpcFileWidget
 
 settings = mfm.settings.cs_settings['correlator']
 plot_settings = mfm.settings.gui['plot']
@@ -84,7 +84,7 @@ class CorrelateTTTR(QtWidgets.QWidget):
         self.cs.update()
         self.plot_curves()
 
-    @mfm.decorators.init_with_ui(ui_filename="tttr_correlate.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="tttr_correlate.ui")
     def __init__(self, *args, **kwargs):
         self._curves = list()
         w = chisurf.tools.tttr.correlate.FCStttr()

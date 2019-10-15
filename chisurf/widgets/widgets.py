@@ -17,7 +17,7 @@ from qtconsole.inprocess import QtInProcessKernelManager
 from IPython.lib import guisupport
 
 import mfm
-import mfm.curve
+import chisurf.curve
 
 
 class QIPythonWidget(
@@ -40,7 +40,7 @@ class QIPythonWidget(
                 "Python macros",
                 file_type="Python file (*.py)"
             )
-        with mfm.fio.zipped.open_maybe_zipped(
+        with chisurf.fio.zipped.open_maybe_zipped(
                 filename=filename,
                 mode='r'
         ) as fp:
@@ -57,7 +57,7 @@ class QIPythonWidget(
                 "Python macros",
                 file_type="Python file (*.py)"
             )
-        with mfm.fio.zipped.open_maybe_zipped(
+        with chisurf.fio.zipped.open_maybe_zipped(
                 filename=filename,
                 mode='w'
         ) as fp:

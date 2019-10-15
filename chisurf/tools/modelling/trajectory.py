@@ -11,7 +11,7 @@ import mdtraj as md
 import tables
 import mdtraj.scripts.mdconvert as mdconvert
 
-import mfm.decorators
+import chisurf.decorators
 import chisurf.widgets.widgets
 
 
@@ -145,7 +145,7 @@ class AlignTrajectoryWidget(QtWidgets.QWidget):
     def trajectory_filename(self, v):
         self.lineEdit.setText(str(v))
 
-    @mfm.decorators.init_with_ui(ui_filename="align_trajectory.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="align_trajectory.ui")
     def __init__(self, **kwargs):
         self.trajectory = None
         self.actionOpen_trajectory.triggered.connect(self.onOpenTrajectory)
@@ -219,7 +219,7 @@ class JoinTrajectoriesWidget(QtWidgets.QWidget):
         else:
             return 'atoms'
 
-    @mfm.decorators.init_with_ui(ui_filename="join_traj.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="join_traj.ui")
     def __init__(
             self,
             *args,
@@ -287,7 +287,7 @@ class SaveTopology(QtWidgets.QWidget):
     def trajectory_filename(self, v):
         self.lineEdit.setText(str(v))
 
-    @mfm.decorators.init_with_ui(ui_filename="save_topology.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="save_topology.ui")
     def __init__(
             self,
             *args,
@@ -368,7 +368,7 @@ class RotateTranslateTrajectoryWidget(QtWidgets.QWidget):
     ):
         self.lineEdit.setText(str(v))
 
-    @mfm.decorators.init_with_ui(ui_filename="rotate_translate_traj.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="rotate_translate_traj.ui")
     def __init__(self, **kwargs):
         self.trajectory = None
         self.verbose = kwargs.get('verbose', mfm.verbose)
@@ -421,7 +421,7 @@ class MDConverter(QtWidgets.QWidget):
 
     name = "MC-Converter"
 
-    @mfm.decorators.init_with_ui(ui_filename="convert_structures.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="convert_structures.ui")
     def __init__(
             self,
             parent=None,

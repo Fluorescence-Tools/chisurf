@@ -10,7 +10,7 @@ TOPDIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '../chisurf/')
 )
 utils.set_search_paths(TOPDIR)
-import mfm.fio
+import chisurf.fio
 import chisurf.tools
 
 

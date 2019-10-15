@@ -11,14 +11,14 @@ from typing import List
 import mdtraj as md
 import numpy as np
 
-import mfm.fio
-import mfm.fio.coordinates
-import mfm.base
+import chisurf.fio
+import chisurf.fio.coordinates
+import chisurf.base
 
 clusterCriteria = ['maxclust', 'inconsistent', 'distance']
 
 
-class Structure(mfm.base.Base):
+class Structure(chisurf.base.Base):
     """
 
     Attributes
@@ -107,7 +107,7 @@ class Structure(mfm.base.Base):
         self._potentials = list()
         self._sequence = None
         self.verbose = verbose
-        self.io = mfm.fio.coordinates
+        self.io = chisurf.fio.coordinates
         self.pdbid = None
 
         if isinstance(pdb_id, str):
@@ -171,8 +171,8 @@ class Structure(mfm.base.Base):
             return np.zeros(
                 1,
                 dtype={
-                    'names': mfm.fio.coordinates.keys,
-                    'formats': mfm.fio.coordinates.formats
+                    'names': chisurf.fio.coordinates.keys,
+                    'formats': chisurf.fio.coordinates.formats
                 }
             )
 
@@ -533,7 +533,7 @@ def get_coordinates_of_residues(atoms, quencher, verbose=False):
 
     >>> import mfm
     >>> pdb_file = models
-    >>> pdb = mfm.fio.pdb_file.read(pdb_file, verbose=True)
+    >>> pdb = chisurf.fio.pdb_file.read(pdb_file, verbose=True)
     Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb
     ======================================
     Filename: ./test/data/model/hgbp1/hGBP1_closed.pdb
@@ -579,7 +579,7 @@ def get_atom_index_of_residue_types(
 
     >>> import mfm
     >>> pdb_file = models
-    >>> pdb = mfm.fio.PDB.read(pdb_file, verbose=True)
+    >>> pdb = chisurf.fio.PDB.read(pdb_file, verbose=True)
     Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb
     ======================================
     Filename: ./test/data/model/hgbp1/hGBP1_closed.pdb
@@ -625,7 +625,7 @@ def get_atom_index_by_name(
 
     >>> import mfm
     >>> pdb_file = './test/data/model/hgbp1/hGBP1_closed.pdb'
-    >>> pdb = mfm.fio.PDB.read(pdb_file, verbose=True)
+    >>> pdb = chisurf.fio.PDB.read(pdb_file, verbose=True)
     Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb
     ======================================
     Filename: ./test/data/model/hgbp1/hGBP1_closed.pdb

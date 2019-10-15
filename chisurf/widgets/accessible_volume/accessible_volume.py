@@ -3,12 +3,12 @@ from __future__ import annotations
 import os
 
 from qtpy import QtWidgets, uic
-import mfm.decorators
+import chisurf.decorators
 
 
 class AVProperties(QtWidgets.QWidget):
 
-    @mfm.decorators.init_with_ui(ui_filename="av_property.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="av_property.ui")
     def __init__(
             self,
             av_type: str = "AV1"

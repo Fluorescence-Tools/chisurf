@@ -7,7 +7,7 @@ import pyqtgraph as pg
 import pyqtgraph.dockarea
 import qdarkstyle
 
-import mfm.decorators
+import chisurf.decorators
 import mfm.fluorescence.anisotropy.kappa2
 from mfm.fluorescence.anisotropy.kappa2 import s2delta
 from mfm.fluorescence.anisotropy.kappa2 import kappasqAllDelta, kappasq_all
@@ -17,7 +17,7 @@ class Kappa2Dist(QtWidgets.QWidget):
 
     name = "Kappa2Dist"
 
-    @mfm.decorators.init_with_ui(ui_filename="kappa2_dist.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="kappa2_dist.ui")
     def __init__(
             self,
             kappa2=0.667,

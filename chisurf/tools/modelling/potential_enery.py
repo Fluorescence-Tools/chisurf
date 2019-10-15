@@ -9,7 +9,7 @@ import mdtraj
 
 import chisurf.widgets
 import mfm
-import mfm.decorators
+import chisurf.decorators
 from chisurf.structure.potential import potentialDict
 from chisurf.structure.trajectory import TrajectoryFile, Universe
 
@@ -18,7 +18,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
 
     name = "Potential-Energy calculator"
 
-    @mfm.decorators.init_with_ui(ui_filename="calculate_potential.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="calculate_potential.ui")
     def __init__(
             self,
             verbose: bool = False,
@@ -61,7 +61,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         for p in self.universe.potentials:
             s += '%s\t' % p.name
         s += '\n'
-        mfm.fio.zipped.open_maybe_zipped(
+        chisurf.fio.zipped.open_maybe_zipped(
             filename=energy_file,
             mode='w'
         ).write(s)

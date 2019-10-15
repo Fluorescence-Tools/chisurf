@@ -6,7 +6,7 @@ from copy import copy, deepcopy
 import numpy as np
 import numba as nb
 
-import mfm.math.linalg as la
+import chisurf.math.linalg as la
 from chisurf.structure.structure import Structure
 
 
@@ -455,7 +455,7 @@ class ProteinCentroid(Structure):
         ####################################################
         all_atoms = np.copy(self.atoms)
         tmp = [atom for atom in all_atoms if atom['atom_name'] in residue_atoms_internal[atom['res_name']]]
-        atoms = np.empty(len(tmp), dtype={'names': mfm.fio.pdb.keys, 'formats': mfm.fio.pdb.formats})
+        atoms = np.empty(len(tmp), dtype={'names': chisurf.fio.pdb.keys, 'formats': chisurf.fio.pdb.formats})
         atoms[:] = tmp
         atoms['i'] = np.arange(atoms.shape[0])
         atoms['atom_id'] = np.arange(atoms.shape[0])
@@ -583,7 +583,7 @@ class ProteinBead(Structure):
         #            TAKE ONLY INTERNAL ATOMS              #
         ####################################################
         tmp = [atom for atom in self.atoms if atom['atom_name'] in ['CA']]
-        atoms = np.empty(len(tmp), dtype={'names': mfm.fio.pdb.keys, 'formats': mfm.fio.pdb.formats})
+        atoms = np.empty(len(tmp), dtype={'names': chisurf.fio.pdb.keys, 'formats': chisurf.fio.pdb.formats})
         atoms[:] = tmp
         atoms['i'] = np.arange(atoms.shape[0])
         atoms['atom_id'] = np.arange(atoms.shape[0])

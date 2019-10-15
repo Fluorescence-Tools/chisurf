@@ -11,21 +11,21 @@ import numpy as np
 
 import mfm
 import fitting
-import mfm.base
-import mfm.parameter
-import mfm.decorators
-import mfm.models.model
+import chisurf.base
+import chisurf.parameter
+import chisurf.decorators
+import chisurf.models.model
 
 parameter_settings = mfm.settings.parameter
 
 
 class FittingParameter(
-    mfm.parameter.Parameter
+    chisurf.parameter.Parameter
 ):
 
     def __init__(
             self,
-            model: mfm.models.model.Model = None,
+            model: chisurf.models.model.Model = None,
             fixed: bool = False,
             *args,
             **kwargs
@@ -198,7 +198,7 @@ class GlobalFittingParameter(
 
 
 class FittingParameterGroup(
-    mfm.parameter.ParameterGroup
+    chisurf.parameter.ParameterGroup
 ):
     """
 
@@ -215,7 +215,7 @@ class FittingParameterGroup(
         return dict([(p.name, p) for p in self.parameters_all])
 
     @property
-    def parameters(self) -> List[mfm.parameter.Parameter]:
+    def parameters(self) -> List[chisurf.parameter.Parameter]:
         return self.parameters_all
 
     @property
@@ -282,7 +282,7 @@ class FittingParameterGroup(
 
     def find_parameters(
             self,
-            parameter_type=mfm.parameter.Parameter
+            parameter_type=chisurf.parameter.Parameter
     ) -> None:
         """
 
@@ -292,7 +292,7 @@ class FittingParameterGroup(
         self._aggregated_parameters = None
         self._parameters = None
         d = [v for v in self.__dict__.values() if v is not self]
-        ag = mfm.base.find_objects(
+        ag = chisurf.base.find_objects(
             d,
             fitting.parameter.FittingParameterGroup
         )
@@ -300,19 +300,19 @@ class FittingParameterGroup(
 
         ap = list()
         for o in set(ag):
-            if not isinstance(o, mfm.models.model.Model):
+            if not isinstance(o, chisurf.models.model.Model):
                 o.find_parameters()
                 self.__dict__[o.name] = o
                 ap += o._parameters
 
-        mp = mfm.base.find_objects(
+        mp = chisurf.base.find_objects(
             d, parameter_type
         )
         self._parameters = list(set(mp + ap))
 
     def append_parameter(
             self,
-            p: mfm.parameter.Parameter
+            p: chisurf.parameter.Parameter
     ):
         self._parameters.append(p)
 
@@ -323,13 +323,13 @@ class FittingParameterGroup(
     #         self,
     #         item_key
     # ):
-    #     item = mfm.base.Base.__getattribute__(
+    #     item = chisurf.base.Base.__getattribute__(
     #         self,
     #         item_key
     #     )
     #     if isinstance(
     #             item,
-    #             mfm.parameter.Parameter
+    #             chisurf.parameter.Parameter
     #     ):
     #         return item.value
     #     else:
@@ -341,7 +341,7 @@ class FittingParameterGroup(
     def __init__(
             self,
             fit: fitting.fit.Fit = None,
-            model: mfm.models.model.Model = None,
+            model: chisurf.models.model.Model = None,
             short: str = '',
             parameters: List[fitting.parameter.FittingParameter] = None,
             *args, **kwargs):
@@ -364,7 +364,7 @@ class FittingParameterGroup(
             print("Class: %s" % self.__class__.name)
             print(kwargs)
             print("---------------")
-        # super(mfm.Base, self).__init__(*args, **kwargs)
+        # super(chisurf.base, self).__init__(*args, **kwargs)
         self.short = short
         self.model = model
         self.fit = fit

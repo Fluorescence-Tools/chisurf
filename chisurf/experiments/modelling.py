@@ -6,9 +6,9 @@ from __future__ import annotations
 from qtpy import QtWidgets
 
 import mfm
-import mfm.base
-import mfm.fio
-import mfm.fio.widgets
+import chisurf.base
+import chisurf.fio
+import chisurf.fio.widgets
 import chisurf.widgets.pdb
 from . reader import ExperimentReader
 
@@ -35,7 +35,7 @@ class LoadStructure(
 
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
-        self.pdbWidget = mfm.fio.widgets.PDBLoad(self)
+        self.pdbWidget = chisurf.fio.widgets.PDBLoad(self)
         self.layout.addWidget(self.pdbWidget)
 
     def read(
@@ -50,7 +50,7 @@ class LoadStructure(
 
     @staticmethod
     def autofitrange(
-            data: mfm.base.Data,
+            data: chisurf.base.Data,
             **kwargs
     ):
         return None
@@ -93,7 +93,7 @@ class LoadStructureFolder(
 
     @staticmethod
     def autofitrange(
-            data: mfm.base.Data,
+            data: chisurf.base.Data,
             **kwargs
     ):
         return None, None

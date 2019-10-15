@@ -8,7 +8,7 @@ TOPDIR = os.path.abspath(
 )
 utils.set_search_paths(TOPDIR)
 
-import mfm.fio
+import chisurf.fio
 import tempfile
 import glob
 import numpy as np
@@ -28,14 +28,14 @@ class Tests(unittest.TestCase):
         _, filename = tempfile.mkstemp(
             suffix='.txt'
         )
-        mfm.fio.ascii.save_xy(
+        chisurf.fio.ascii.save_xy(
             filename=filename,
             x=x,
             y=y,
             fmt="%f\t%f\n",
             header_string="x\ty\n"
         )
-        x2, y2 = mfm.fio.ascii.load_xy(
+        x2, y2 = chisurf.fio.ascii.load_xy(
             filename=filename,
             usecols=(0, 1),
             delimiter="\t",
@@ -74,7 +74,7 @@ class Tests(unittest.TestCase):
         )
 
         # save with basic/simple CSV functions
-        mfm.fio.ascii.save_xy(
+        chisurf.fio.ascii.save_xy(
             filename=filename,
             x=reference_x,
             y=reference_y,
@@ -83,7 +83,7 @@ class Tests(unittest.TestCase):
         )
 
         # CSV class
-        csv = mfm.fio.ascii.Csv(
+        csv = chisurf.fio.ascii.Csv(
             filename=filename,
             skiprows=0,
             use_header=True
@@ -139,7 +139,7 @@ class Tests(unittest.TestCase):
             suffix='.txt'
         )
 
-        mfm.fio.ascii.save_xy(
+        chisurf.fio.ascii.save_xy(
             filename=filename2,
             x=reference_x,
             y=reference_y,
@@ -178,7 +178,7 @@ class Tests(unittest.TestCase):
 
     def test_fetch_pdb(self):
         pdb_id = "148L"
-        s = mfm.fio.coordinates.fetch_pdb_string(pdb_id)
+        s = chisurf.fio.coordinates.fetch_pdb_string(pdb_id)
         self.assertEqual(
             'HEADER    HYDROLASE/HYDROLASE SUBSTRATE           27-OCT-93   148L              \nTITLE     A COVALEN',
             s[:100]
@@ -186,8 +186,8 @@ class Tests(unittest.TestCase):
 
     def test_parse_string_pdb(self):
         pdb_id = "148L"
-        s = mfm.fio.coordinates.fetch_pdb_string(pdb_id)
-        atoms = mfm.fio.coordinates.parse_string_pdb(s)
+        s = chisurf.fio.coordinates.fetch_pdb_string(pdb_id)
+        atoms = chisurf.fio.coordinates.parse_string_pdb(s)
         atoms_reference = np.array(
             [[7.71, 28.561, 39.546],
              [8.253, 29.664, 38.758],
@@ -217,15 +217,15 @@ class Tests(unittest.TestCase):
         _, filename = tempfile.mkstemp(
             suffix='.pdb'
         )
-        with mfm.fio.zipped.open_maybe_zipped(
+        with chisurf.fio.zipped.open_maybe_zipped(
                 filename=filename,
                 mode='w'
         ) as fp:
             fp.write(
-                mfm.fio.coordinates.fetch_pdb_string(pdb_id)
+                chisurf.fio.coordinates.fetch_pdb_string(pdb_id)
             )
 
-        atoms = mfm.fio.coordinates.read(
+        atoms = chisurf.fio.coordinates.read(
             filename=filename
         )
         atoms_reference = np.array(
@@ -248,7 +248,7 @@ class Tests(unittest.TestCase):
         )
 
     def test_spc2hdf(self):
-        import mfm.fio.tttr
+        import chisurf.fio.tttr
         import glob
         import tempfile
 
@@ -261,7 +261,7 @@ class Tests(unittest.TestCase):
         )
         output = filename
         spc_files = glob.glob("./test/data/tttr/BH/BH_SPC132.spc")
-        h5 = mfm.fio.tttr.spc2hdf(
+        h5 = chisurf.fio.tttr.spc2hdf(
             spc_files,
             routine_name=filetype,
             filename=output
@@ -269,7 +269,7 @@ class Tests(unittest.TestCase):
         h5.close()
 
     def test_photons(self):
-        import mfm.fio
+        import chisurf.fio
         directory = './data/tttr/'
         test_data = [
             {
@@ -294,7 +294,7 @@ class Tests(unittest.TestCase):
             # },
         ]
         for d in test_data:
-            photons = mfm.fio.photons.Photons(
+            photons = chisurf.fio.photons.Photons(
                 d["files"],
                 reading_routine=d["routine"]
             )
@@ -331,17 +331,17 @@ class Tests(unittest.TestCase):
     # Removed for now because mmcif does not exist for Windows
     # def test_mmcif_read(self):
     #     import mmcif.fio.PdbxReader
-    #     import mfm.fio.zipped
+    #     import chisurf.fio.zipped
     #     filename = "./data/atomic_coordinates/mmcif/1ffk.cif.gz"
     #
     #     data = []
-    #     with mfm.fio.zipped.open_maybe_zipped(
+    #     with chisurf.fio.zipped.open_maybe_zipped(
     #             filename=filename,
     #             mode='r'
     #     ) as fp:
     #         reader = mmcif.fio.PdbxReader.PdbxReader(fp)
     #         reader.read(data)
-    #     #mfm.fio.coordinates.keys
+    #     #chisurf.fio.coordinates.keys
     #     #atoms = data[0]['atom_site']
     #
 

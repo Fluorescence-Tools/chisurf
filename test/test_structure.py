@@ -10,7 +10,7 @@ utils.set_search_paths(TOPDIR)
 import tempfile
 import numpy as np
 import chisurf.structure.structure
-import mfm.fio.zipped
+import chisurf.fio.zipped
 
 
 class Tests(unittest.TestCase):

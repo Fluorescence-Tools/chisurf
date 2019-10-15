@@ -7,10 +7,10 @@ from qtpy import QtWidgets, uic
 
 import mfm
 import mfm.fluorescence
-import mfm.decorators
+import chisurf.decorators
 import experiments.data
 from experiments.tcspc import TCSPCReader
-from mfm.fio import sdtfile
+from chisurf.fio import sdtfile
 
 
 class TcspcSDTWidget(
@@ -134,7 +134,7 @@ class TcspcSDTWidget(
         self.curve_number = curve_nbr
         self.textBrowser.setPlainText(str(self.sdt.info))
 
-    @mfm.decorators.init_with_ui(ui_filename="sdtfile.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="sdtfile.ui")
     def __init__(
             self,
             *args,

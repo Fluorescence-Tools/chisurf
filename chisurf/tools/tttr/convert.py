@@ -7,11 +7,11 @@ from qtpy import QtWidgets
 import qdarkstyle
 
 import mfm
-import mfm.decorators
-import mfm.fio.tttr
+import chisurf.decorators
+import chisurf.fio.tttr
 import chisurf.widgets
 
-filetypes = copy.copy(mfm.fio.tttr.filetypes)
+filetypes = copy.copy(chisurf.fio.tttr.filetypes)
 filetypes.pop('hdf')
 
 
@@ -35,7 +35,7 @@ class TTTRConvert(QtWidgets.QWidget):
     def filenames(self):
         return self.file_list.filenames
 
-    @mfm.decorators.init_with_ui(ui_filename="tttr_convert.ui")
+    @chisurf.decorators.init_with_ui(ui_filename="tttr_convert.ui")
     def __init__(
             self,
             *args,
@@ -64,7 +64,7 @@ class TTTRConvert(QtWidgets.QWidget):
         )
         self.lineEdit.setText(filename)
         spc_files = self.filenames
-        h5 = mfm.fio.tttr.spc2hdf(
+        h5 = chisurf.fio.tttr.spc2hdf(
             spc_files,
             routine_name=self.filetype,
             filename=filename

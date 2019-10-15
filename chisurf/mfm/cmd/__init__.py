@@ -6,9 +6,9 @@ from docx import Document
 from docx.shared import Inches
 
 import mfm
-import mfm.base
+import chisurf.base
 import experiments
-import mfm.models
+import chisurf.models
 import fitting
 import chisurf.widgets
 from . import tcspc
@@ -94,7 +94,7 @@ def save_fit():
     for i, f in enumerate(fs):
 
         fit_control_widget.selected_fit_index = i
-        filename = mfm.base.clean_string(os.path.basename(f.data.name)[0])
+        filename = chisurf.base.clean_string(os.path.basename(f.data.name)[0])
         document.add_paragraph(
             filename, style='ListNumber'
         )
@@ -155,7 +155,7 @@ def save_fit():
         paragraph = row_cells[i + 1].paragraphs[0]
         run = paragraph.add_run('{:.4f}'.format(f.chi2r))
     try:
-        tr = mfm.base.clean_string(fs.name)
+        tr = chisurf.base.clean_string(fs.name)
         document.save(
             os.path.join(target_path, tr + '.docx')
         )
@@ -238,7 +238,7 @@ def remove_datasets(
 
 def add_dataset(
         setup: experiments.reader.ExperimentReader = None,
-        dataset: mfm.base.Data = None,
+        dataset: chisurf.base.Data = None,
         **kwargs
 ) -> None:
     cs = mfm.cs
@@ -270,7 +270,7 @@ def save_fits(
         cf = cs.fit_idx
         for fit in mfm.fits:
             fit_name = fit.name
-            path_name = mfm.base.clean_string(fit_name)
+            path_name = chisurf.base.clean_string(fit_name)
             p2 = path + '//' + path_name
             os.mkdir(p2)
             cs.current_fit = fit

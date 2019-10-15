@@ -22,7 +22,7 @@ def get_data(
         curve_type: str = 'experiment',
         data_set: List[data.ExperimentalData] = None
 ) -> List[data.ExperimentalData]:
-    """Returns all curves `mfm.curve.DataCurve` except if the
+    """Returns all curves `chisurf.curve.DataCurve` except if the
     curve is names "Global-fit"
 
     :param curve_type: if this value is set to `experiment` only curves

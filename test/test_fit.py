@@ -12,7 +12,7 @@ import copy
 
 import mfm
 import experiments
-import mfm.models
+import chisurf.models
 import fitting
 
 
@@ -68,7 +68,7 @@ class FitTests(unittest.TestCase):
             data=experiments.data.DataGroup(
                 [data]
             ),
-            model_class=mfm.models.parse.ParseModel
+            model_class=chisurf.models.parse.ParseModel
         )
         model = fit.model
         model.parse.func = 'c+a*x**2'
@@ -186,7 +186,7 @@ class FitTests(unittest.TestCase):
             data=experiments.data.DataGroup(
                 [data]
             ),
-            model_class=mfm.models.parse.ParseModel
+            model_class=chisurf.models.parse.ParseModel
         )
 
         self.assertIs(

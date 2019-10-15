@@ -9,14 +9,14 @@ from typing import Sequence, List
 import numpy as np
 
 import mfm
-import mfm.base
-import mfm.curve
-import mfm.fio
+import chisurf.base
+import chisurf.curve
+import chisurf.fio
 import experiments.experiment
 
 
 class ExperimentalData(
-    mfm.base.Data
+    chisurf.base.Data
 ):
     """
 
@@ -94,7 +94,7 @@ class ExperimentalData(
 
 
 class DataCurve(
-    mfm.curve.Curve,
+    chisurf.curve.Curve,
     ExperimentalData
 ):
 
@@ -214,13 +214,13 @@ class DataCurve(
             )
         self.filename = filename
         if file_type == 'txt':
-            mfm.fio.ascii.Csv().save(
+            chisurf.fio.ascii.Csv().save(
                 np.array(self[:]),
                 filename=filename,
                 **kwargs
             )
         else:
-            with mfm.fio.zipped.open_maybe_zipped(filename, 'w') as fp:
+            with chisurf.fio.zipped.open_maybe_zipped(filename, 'w') as fp:
                 fp.write(self.to_json())
 
     def load(
@@ -231,7 +231,7 @@ class DataCurve(
             **kwargs
     ) -> None:
         if file_type == 'csv':
-            csv = mfm.fio.ascii.Csv()
+            csv = chisurf.fio.ascii.Csv()
             csv.load(
                 filename=filename,
                 skiprows=skiprows,
@@ -289,7 +289,7 @@ class DataCurve(
 
 class DataGroup(
     list,
-    mfm.base.Base
+    chisurf.base.Base
 ):
 
     @property
@@ -301,7 +301,7 @@ class DataGroup(
     @property
     def current_dataset(
             self
-    ) -> mfm.base.Data:
+    ) -> chisurf.base.Data:
         return self[self._current_dataset]
 
     @current_dataset.setter
@@ -329,7 +329,7 @@ class DataGroup(
 
     def append(
             self,
-            dataset: mfm.base.Data
+            dataset: chisurf.base.Data
     ):
         if isinstance(dataset, ExperimentalData):
             list.append(self, dataset)

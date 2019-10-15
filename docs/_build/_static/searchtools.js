@@ -62,7 +62,7 @@ var Search = {
       var htmlElement = document.createElement('span');
       htmlElement.innerHTML = htmlString;
       $(htmlElement).find('.headerlink').remove();
-      docContent = $(htmlElement).find('[role=main]')[0];
+      docContent = $(htmlElement).find('[role=gui_main]')[0];
       return docContent.textContent || docContent.innerText;
   },
 

@@ -9,7 +9,7 @@ import numpy as np
 from progressbar import Bar, ETA, ProgressBar, RotatingMarker, Percentage
 
 import mfm
-from mfm.math.rand import weighted_choice, mc
+from chisurf.math.rand import weighted_choice, mc
 from mfm.structure.protein import ProteinCentroid
 from mfm.structure.trajectory import TrajectoryFile, Universe
 
