@@ -149,8 +149,15 @@ setup(
     cmdclass={
         'build_ext': build_ext
     },
+    data_files=[
+        os.path.join(
+            os.path.dirname(
+                __file__
+            ),
+            './chisurf/mfm/fluorescence/fps/dll/*.*'
+        ),
+    ],
     entry_points={
         "gui_scripts": ["chisurf=chisurf.gui:gui"]
     }
 )
-
