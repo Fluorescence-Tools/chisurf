@@ -5,7 +5,6 @@ import numpy as np
 import mfm
 import numba as nb
 
-"""
 b, o = platform.architecture()
 package_directory = os.path.dirname(os.path.abspath(__file__))
 path = os.path.join(package_directory, './dll')
@@ -38,8 +37,6 @@ _fps.calculate3R.argtypes = [C.c_double, C.c_double, C.c_double, C.c_double, C.c
                              C.POINTER(C.c_double), C.c_int, C.c_double,
                              C.c_double, C.c_int,
                              C.POINTER(C.c_char)]
-"""
-import LabelLib as ll
 
 
 def calculate_1_radius(
@@ -147,7 +144,6 @@ def calculate_1_radius(
     -------------------
 
     """
-    '''
     verbose = kwargs.get('verbose', mfm.settings['verbose'])
     linkersphere = kwargs.get('linkersphere', mfm.settings['fps']['allowed_sphere_radius'])
     linknodes = kwargs.get('linknodes', mfm.settings['fps']['linknodes'])
@@ -196,8 +192,6 @@ def calculate_1_radius(
     off = (ng_n - ng) / 2
     d2[off:off+ng, off:off+ng, off:off+ng] = density
     return d2, ng_n, r0
-    '''
-    pass
 
 
 def calculate_3_radius(l, w, r1, r2, r3, atom_i, x, y, z, vdw, **kwargs):
