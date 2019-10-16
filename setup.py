@@ -58,17 +58,17 @@ def make_extension(ext):
 eList = [
     [
         './chisurf/mfm/fluorescence/simulation/_simulation.pyx',
-        './chisurf/mfm/math/rand/mt19937cok.cpp'
+        './chisurf/math/rand/mt19937cok.cpp'
     ],
     [
         './chisurf/mfm/fluorescence/fps/_fps.pyx',
         './chisurf/mfm/fluorescence/fps/mt19937cok.cpp'
     ],
     [
-        './chisurf/mfm/structure/potential/cPotentials.pyx'
+        './chisurf/structure/potential/cPotentials.pyx'
     ],
     [
-        './chisurf/mfm/math/reaction/_reaction.pyx'
+        './chisurf/math/reaction/_reaction.pyx'
     ]
 ]
 
