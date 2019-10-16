@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 
 import mfm
-import mfm.fluorescence
+import chisurf.fluorescence
 from experiments.tcspc import TCSPCReader
 
 

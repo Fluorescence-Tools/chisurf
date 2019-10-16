@@ -6,7 +6,7 @@ from qtpy import QtWidgets
 import qdarkstyle
 
 import chisurf.decorators
-from mfm.fluorescence.general import \
+from chisurf.fluorescence.general import \
     distance_to_fret_rate_constant, distance_to_fret_efficiency, fret_efficiency_to_lifetime, \
     lifetime_to_fret_efficiency, fretrate_to_distance, fret_efficiency_to_distance
 

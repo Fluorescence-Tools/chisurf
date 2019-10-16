@@ -7,12 +7,12 @@ import numpy as np
 
 import mfm
 import mfm.cmd
-import chisurf.mfm.fluorescence.tcspc.convolve
-import mfm.fluorescence.tcspc.corrections
+import chisurf.fluorescence.tcspc.convolve
+import chisurf.fluorescence.tcspc.corrections
 import chisurf.math
-import mfm.fluorescence
+import chisurf.fluorescence
 from chisurf.curve import Curve
-from fitting.parameter import FittingParameterGroup, FittingParameter
+from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 
 
 class Generic(FittingParameterGroup):
@@ -577,7 +577,7 @@ class Convolve(FittingParameterGroup):
 
         if mode == "per":
             period = 1000. / rep_rate
-            chisurf.mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_periodic(
+            chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_periodic(
                 decay,
                 data,
                 irf_y,
@@ -593,7 +593,7 @@ class Convolve(FittingParameterGroup):
             # mfm.fluorescence.tcspc.fconv_per_dt(decay, lifetime_spectrum, irf_y, start, stop, n_points, period, time)
         elif mode == "exp":
             t = self.data.x
-            chisurf.mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(
+            chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(
                 decay,
                 data,
                 irf_y,

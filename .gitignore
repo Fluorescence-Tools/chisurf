@@ -4,6 +4,7 @@ build
 CMakeLists.txt.user
 CMakeLists.txt.user.*
 cmake-build-*
+_*-darwin.so
 
 # JetBrains
 # User-specific stuff

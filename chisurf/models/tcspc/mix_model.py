@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from mfm.fluorescence.general import stack_lifetime_spectra
+from chisurf.fluorescence.general import stack_lifetime_spectra
 from chisurf.models.tcspc.lifetime import LifetimeModel
 
 

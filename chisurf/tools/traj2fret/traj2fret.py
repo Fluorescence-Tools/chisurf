@@ -6,7 +6,7 @@ import mdtraj as md
 import numba as nb
 import numpy as np
 
-import mfm.fluorescence
+import chisurf.fluorescence
 
 
 def convert_chain_id_to_numbers(chain_id):

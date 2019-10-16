@@ -4,7 +4,7 @@ from typing import Tuple
 import mfm
 import experiments
 import chisurf.base
-import mfm.fluorescence
+import chisurf.fluorescence
 import experiments.data
 import chisurf.fio.fluorescence
 

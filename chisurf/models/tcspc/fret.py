@@ -3,11 +3,11 @@ from __future__ import annotations
 import numpy as np
 
 import mfm
-import mfm.fluorescence.anisotropy.kappa2
+import chisurf.fluorescence.anisotropy.kappa2
 import chisurf.math
 import chisurf.math.datatools
 from chisurf.models.tcspc.lifetime import Lifetime, LifetimeModel
-from mfm.fluorescence.general import distribution2rates, rates2lifetimes
+from chisurf.fluorescence.general import distribution2rates, rates2lifetimes
 from fitting.parameter import FittingParameter, FittingParameterGroup
 
 rda_axis = np.linspace(

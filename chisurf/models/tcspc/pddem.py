@@ -7,8 +7,8 @@ import numpy as np
 
 import mfm
 from chisurf.models.tcspc.fret import Gaussians
-from mfm.fluorescence import tcspc
-from mfm.fluorescence.general import distribution2rates
+from chisurf.fluorescence import tcspc
+from chisurf.fluorescence.general import distribution2rates
 from fitting.parameter import FittingParameterGroup, FittingParameter
 from chisurf.models.tcspc.lifetime import Lifetime, LifetimeModel
 

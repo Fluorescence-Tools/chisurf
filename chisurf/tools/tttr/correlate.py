@@ -13,7 +13,7 @@ import qdarkstyle
 import mfm
 import experiments.widgets
 import chisurf.tools
-import mfm.fluorescence
+import chisurf.fluorescence
 import experiments.data
 import mfm.settings
 import chisurf.widgets
@@ -299,8 +299,8 @@ class CorrelatorWidget(QtWidgets.QWidget):
         self.correlator_thread = Correlator(self)
 
         # fill widgets
-        self.comboBox_3.addItems(mfm.fluorescence.fcs.weightCalculations)
-        self.comboBox_2.addItems(mfm.fluorescence.fcs.correlationMethods)
+        self.comboBox_3.addItems(chisurf.fluorescence.fcs.weightCalculations)
+        self.comboBox_2.addItems(chisurf.fluorescence.fcs.correlationMethods)
         self.checkBox.setChecked(True)
         self.checkBox.setChecked(False)
         self.progressBar.setValue(0.0)

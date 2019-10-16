@@ -11,7 +11,7 @@ from fitting.parameter import FittingParameterGroup, FittingParameter
 from chisurf.models.model import ModelCurve
 from chisurf.models.tcspc.nusiance import Generic, Corrections, Convolve
 from chisurf.models.tcspc.anisotropy import Anisotropy
-from mfm.fluorescence.general import species_averaged_lifetime, fluorescence_averaged_lifetime
+from chisurf.fluorescence.general import species_averaged_lifetime, fluorescence_averaged_lifetime
 
 
 class Lifetime(FittingParameterGroup):

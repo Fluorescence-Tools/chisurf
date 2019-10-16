@@ -57,12 +57,12 @@ def make_extension(ext):
 # and build up the set of Extension objects
 eList = [
     [
-        './chisurf/mfm/fluorescence/simulation/_simulation.pyx',
+        './chisurf/fluorescence/simulation/_simulation.pyx',
         './chisurf/math/rand/mt19937cok.cpp'
     ],
     [
-        './chisurf/mfm/fluorescence/fps/_fps.pyx',
-        './chisurf/mfm/fluorescence/fps/mt19937cok.cpp'
+        './chisurf/fluorescence/fps/_fps.pyx',
+        './chisurf/fluorescence/fps/mt19937cok.cpp'
     ],
     [
         './chisurf/structure/potential/cPotentials.pyx'
