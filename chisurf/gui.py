@@ -663,8 +663,9 @@ def gui():
     #    app.setStyleSheet(style_sheet)
 
     win.show()
-    sys.exit(app.exec_())
+    return app
 
 
 if __name__ == "__main__":
-    gui()
+    app = gui()
+    sys.exit(app.exec_())

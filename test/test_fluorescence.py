@@ -11,8 +11,8 @@ import glob
 import numpy as np
 import chisurf.fio
 import mfm
-import mfm.fluorescence
-import mfm.fluorescence.fret
+import chisurf.fluorescence
+import chisurf.fluorescence.fret
 
 
 class Tests(unittest.TestCase):
@@ -22,7 +22,7 @@ class Tests(unittest.TestCase):
         s2donor = 0.3
         s2acceptor = 0.3
         r_inf_AD = 0.05
-        v = mfm.fluorescence.anisotropy.kappa2.s2delta(
+        v = chisurf.fluorescence.anisotropy.kappa2.s2delta(
             r_0=r0,
             s2donor=s2donor,
             s2acceptor=s2acceptor,
@@ -34,7 +34,7 @@ class Tests(unittest.TestCase):
 
     def test_p_isotropic_orientation_factor(self):
         k2 = np.linspace(0.1, 4, 32)
-        p_k2 = mfm.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(
+        p_k2 = chisurf.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(
             k2=k2
         )
         p_k2_ref = np.array(
@@ -68,7 +68,7 @@ class Tests(unittest.TestCase):
                 [0.0, 0.5, 1.0]
             ], dtype=np.float64
         )
-        distance, kappa = mfm.fluorescence.anisotropy.kappa2.kappa(
+        distance, kappa = chisurf.fluorescence.anisotropy.kappa2.kappa(
             donor_dipole,
             acceptor_dipole
         )
@@ -80,7 +80,7 @@ class Tests(unittest.TestCase):
             kappa,
             kappa_reference,
         )
-        distance, kappa = mfm.fluorescence.anisotropy.kappa2.kappa_distance(
+        distance, kappa = chisurf.fluorescence.anisotropy.kappa2.kappa_distance(
             donor_dipole[0],
             donor_dipole[1],
             acceptor_dipole[0],
@@ -98,12 +98,12 @@ class Tests(unittest.TestCase):
     def test_vm_vv_vh(self):
         times = np.linspace(0, 50, 32)
         lifetime_spectrum = np.array([1., 4], dtype=np.float)
-        times, vm = mfm.fluorescence.general.calculate_fluorescence_decay(
+        times, vm = chisurf.fluorescence.general.calculate_fluorescence_decay(
             lifetime_spectrum=lifetime_spectrum,
             time_axis=times
         )
         anisotropy_spectrum = np.array([0.1, 0.6, 0.38 - 0.1, 10.0])
-        vv, vh = mfm.fluorescence.anisotropy.decay.vm_rt_to_vv_vh(
+        vv, vh = chisurf.fluorescence.anisotropy.decay.vm_rt_to_vv_vh(
             times,
             vm,
             anisotropy_spectrum
@@ -146,7 +146,7 @@ class Tests(unittest.TestCase):
     def test_fcs(self):
         import numpy as np
         import glob
-        import mfm.fluorescence
+        import chisurf.fluorescence
         import chisurf.fio
         import pylab as p
         directory = './data/tttr/BH/132/'
@@ -157,7 +157,7 @@ class Tests(unittest.TestCase):
         w2 = np.ones_like(photons.mt, dtype=np.float)
         points_per_decade = 5
         number_of_decades = 10
-        results = mfm.fluorescence.fcs.correlate.log_corr(
+        results = chisurf.fluorescence.fcs.correlate.log_corr(
             macro_times=photons.mt,
             tac_channels=photons.tac,
             rout=photons.rout,
@@ -175,7 +175,7 @@ class Tests(unittest.TestCase):
         dt_2 = results['measurement_time_ch2']
         tau = results['correlation_time_axis']
         corr = results['correlation_amplitude']
-        cr = mfm.fluorescence.fcs.correlate.normalize(
+        cr = chisurf.fluorescence.fcs.correlate.normalize(
             np_1, np_2, dt_1, dt_2, tau, corr, points_per_decade
         )
         cr /= photons.dt
@@ -192,7 +192,7 @@ class Tests(unittest.TestCase):
         )
 
         transfer_efficiency = 0.3
-        decay_ad = mfm.fluorescence.fret.acceptor.da_a0_to_ad(
+        decay_ad = chisurf.fluorescence.fret.acceptor.da_a0_to_ad(
             times=times,
             decay_da=decay_da,
             acceptor_lifetime_spectrum=acceptor_lifetime_spectrum,
@@ -206,7 +206,7 @@ class Tests(unittest.TestCase):
         )
 
         for target_value in np.linspace(0.1, 0.9):
-            scaled_acceptor = mfm.fluorescence.fret.acceptor.scale_acceptor(
+            scaled_acceptor = chisurf.fluorescence.fret.acceptor.scale_acceptor(
                 donor=decay_da,
                 acceptor=decay_ad,
                 transfer_efficiency=target_value

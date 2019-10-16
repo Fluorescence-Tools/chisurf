@@ -10,8 +10,8 @@ import numpy as np
 import numba as nb
 import scipy.stats
 
-import mfm.fluorescence
-import mfm.fluorescence.fps
+import chisurf.fluorescence
+import chisurf.fluorescence.fps
 import chisurf.structure.structure
 import chisurf.structure.potential.cPotentials
 #import chisurf.widgets

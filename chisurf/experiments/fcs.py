@@ -6,7 +6,7 @@ import mfm
 import chisurf.fio.ascii
 import chisurf.fio.widgets
 import chisurf.widgets
-import mfm.fluorescence
+import chisurf.fluorescence
 import experiments.data
 import chisurf.fio.fluorescence
 from . import reader

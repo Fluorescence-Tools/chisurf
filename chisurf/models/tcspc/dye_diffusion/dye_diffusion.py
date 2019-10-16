@@ -19,7 +19,7 @@ import fitting.fit
 import chisurf.models.tcspc.nusiance
 import fitting.widgets
 import mfm.fluorescence.fps as fps
-import chisurf.mfm.fluorescence.tcspc.convolve
+import chisurf.fluorescence.tcspc.convolve
 import chisurf.fio
 import chisurf.math
 import chisurf.models.tcspc.widgets

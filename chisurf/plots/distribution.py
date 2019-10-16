@@ -6,7 +6,7 @@ from pyqtgraph.dockarea import DockArea, Dock
 
 import mfm
 import fitting
-import mfm.fluorescence
+import chisurf.fluorescence
 import chisurf.math.datatools
 from chisurf.plots import plotbase
 

@@ -12,7 +12,7 @@ import mfm
 import chisurf.decorators
 import experiments.data
 import experiments.widgets
-import mfm.fluorescence.tcspc
+import chisurf.fluorescence.tcspc
 import chisurf.fio.widgets
 
 plot_settings = mfm.settings.gui['plot']
@@ -231,7 +231,7 @@ class TcspcTTTRWidget(
         self.make_histogram()
         x = self.x
         y = self.y
-        w = mfm.fluorescence.tcspc.weights(y)
+        w = chisurf.fluorescence.tcspc.weights(y)
         name = self.spcFileWidget.sample_name + "_" + str(self.chs)
         d = experiments.data.DataCurve(
             x=x,

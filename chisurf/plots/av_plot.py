@@ -6,7 +6,7 @@ from matplotlib import cm
 
 import mfm
 import chisurf.math
-import mfm.fluorescence.fps
+import fluorescence.fps
 from chisurf.plots import plotbase
 
 
@@ -84,7 +84,7 @@ class AvPlot(plotbase.Plot):
         free_diffusion = 8.0
         atomic_slow_factor = 0.9
         contact_distance = 4.5
-        av = mfm.fluorescence.fps.ACV(
+        av = fluorescence.fps.ACV(
             pdb_filename,
             radius1=5.0,
             linker_length=21.5,

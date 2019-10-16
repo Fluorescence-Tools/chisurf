@@ -6,7 +6,7 @@ import numpy as np
 from qtpy import QtWidgets, uic
 
 import mfm
-import mfm.fluorescence
+import chisurf.fluorescence
 import chisurf.decorators
 import experiments.data
 from experiments.tcspc import TCSPCReader

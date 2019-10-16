@@ -5,9 +5,9 @@ from typing import Tuple
 import numpy as np
 
 import mfm
-import mfm.fluorescence
-import experiments
-from experiments import reader
+import chisurf.fluorescence
+import chisurf.experiments as experiments
+from chisurf.experiments import reader
 from chisurf.fio.ascii import Csv
 
 
@@ -98,7 +98,7 @@ def read_tcspc_csv(
             y = y.reshape(
                 [n_datasets, n_data_points, rebin_y]
             ).sum(axis=2)
-            ey = mfm.fluorescence.tcspc.weights(y)
+            ey = chisurf.fluorescence.tcspc.weights(y)
             x = np.average(
                 x.reshape([n_data_points, rebin_y]), axis=1
             ) / rebin_y

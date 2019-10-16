@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 import mfm
-import mfm.fluorescence
+import chisurf.fluorescence
 import fitting
 import fitting.parameter
 import chisurf.math.datatools

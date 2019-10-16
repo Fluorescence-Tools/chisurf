@@ -8,9 +8,9 @@ import pyqtgraph.dockarea
 import qdarkstyle
 
 import chisurf.decorators
-import mfm.fluorescence.anisotropy.kappa2
-from mfm.fluorescence.anisotropy.kappa2 import s2delta
-from mfm.fluorescence.anisotropy.kappa2 import kappasqAllDelta, kappasq_all
+import chisurf.fluorescence.anisotropy.kappa2
+from chisurf.fluorescence.anisotropy.kappa2 import s2delta
+from chisurf.fluorescence.anisotropy.kappa2 import kappasqAllDelta, kappasq_all
 
 
 class Kappa2Dist(QtWidgets.QWidget):
@@ -115,7 +115,7 @@ class Kappa2Dist(QtWidgets.QWidget):
 
     @property
     def k2_est(self):
-        return mfm.fluorescence.anisotropy.kappa2.kappasq(self.delta, self.SA2, self.SD2)
+        return chisurf.fluorescence.anisotropy.kappa2.kappasq(self.delta, self.SA2, self.SD2)
 
     @property
     def n_bins(self):
