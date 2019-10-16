@@ -604,8 +604,8 @@ static CYTHON_INLINE float __PYX_NAN() {
   #endif
 #endif
 
-#define __PYX_HAVE__chisurf__mfm__math__reaction___reaction
-#define __PYX_HAVE_API__chisurf__mfm__math__reaction___reaction
+#define __PYX_HAVE__chisurf__math__reaction___reaction
+#define __PYX_HAVE_API__chisurf__math__reaction___reaction
 /* Early includes */
 #include <string.h>
 #include <stdio.h>
@@ -841,7 +841,7 @@ static const char *__pyx_filename;
 
 
 static const char *__pyx_f[] = {
-  "chisurf/mfm/math/reaction/_reaction.pyx",
+  "chisurf/math/reaction/_reaction.pyx",
   "stringsource",
   "__init__.pxd",
   "type.pxd",
@@ -1072,23 +1072,23 @@ typedef npy_double __pyx_t_5numpy_double_t;
  */
 typedef npy_longdouble __pyx_t_5numpy_longdouble_t;
 
-/* "chisurf/mfm/math/reaction/_reaction.pyx":11
+/* "chisurf/math/reaction/_reaction.pyx":11
  * 
  * DTYPE = np.double
  * ctypedef np.double_t DTYPE_t             # <<<<<<<<<<<<<<
  * ctypedef np.int_t INT_t
  * 
  */
-typedef __pyx_t_5numpy_double_t __pyx_t_7chisurf_3mfm_4math_8reaction_9_reaction_DTYPE_t;
+typedef __pyx_t_5numpy_double_t __pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t;
 
-/* "chisurf/mfm/math/reaction/_reaction.pyx":12
+/* "chisurf/math/reaction/_reaction.pyx":12
  * DTYPE = np.double
  * ctypedef np.double_t DTYPE_t
  * ctypedef np.int_t INT_t             # <<<<<<<<<<<<<<
  * 
  * cdef class Model:
  */
-typedef __pyx_t_5numpy_int_t __pyx_t_7chisurf_3mfm_4math_8reaction_9_reaction_INT_t;
+typedef __pyx_t_5numpy_int_t __pyx_t_7chisurf_4math_8reaction_9_reaction_INT_t;
 /* Declarations.proto */
 #if CYTHON_CCOMPLEX
   #ifdef __cplusplus
@@ -1115,7 +1115,7 @@ static CYTHON_INLINE __pyx_t_double_complex __pyx_t_double_complex_from_parts(do
 
 
 /*--- Type declarations ---*/
-struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model;
+struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model;
 
 /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":815
  * ctypedef npy_longdouble longdouble_t
@@ -1152,31 +1152,31 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
  * cdef inline object PyArray_MultiIterNew1(a):
  */
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
-struct __pyx_opt_args_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA;
+struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA;
 
-/* "chisurf/mfm/math/reaction/_reaction.pyx":70
+/* "chisurf/math/reaction/_reaction.pyx":70
  *         return self.time,self.series,self.steps
  * 
  *     cpdef int GSSA(             # <<<<<<<<<<<<<<
  *             self,
  *             int tmax = 50,
  */
-struct __pyx_opt_args_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA {
+struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA {
   int __pyx_n;
   int tmax;
   int round;
 };
 
-/* "chisurf/mfm/math/reaction/_reaction.pyx":14
+/* "chisurf/math/reaction/_reaction.pyx":14
  * ctypedef np.int_t INT_t
  * 
  * cdef class Model:             # <<<<<<<<<<<<<<
  * 
  *     cdef object vn,rates,inits,pv
  */
-struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model {
+struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model {
   PyObject_HEAD
-  struct __pyx_vtabstruct_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_vtab;
+  struct __pyx_vtabstruct_7chisurf_4math_8reaction_9_reaction_Model *__pyx_vtab;
   PyObject *vn;
   PyObject *rates;
   PyObject *inits;
@@ -1193,10 +1193,10 @@ struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model {
 
 
 
-struct __pyx_vtabstruct_7chisurf_3mfm_4math_8reaction_9_reaction_Model {
-  int (*GSSA)(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *, int __pyx_skip_dispatch, struct __pyx_opt_args_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args);
+struct __pyx_vtabstruct_7chisurf_4math_8reaction_9_reaction_Model {
+  int (*GSSA)(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *, int __pyx_skip_dispatch, struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args);
 };
-static struct __pyx_vtabstruct_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_vtabptr_7chisurf_3mfm_4math_8reaction_9_reaction_Model;
+static struct __pyx_vtabstruct_7chisurf_4math_8reaction_9_reaction_Model *__pyx_vtabptr_7chisurf_4math_8reaction_9_reaction_Model;
 
 /* --- Runtime support code (head) --- */
 /* Refnanny.proto */
@@ -1801,7 +1801,7 @@ static int __Pyx_check_binary_version(void);
 /* InitStrings.proto */
 static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 
-static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_skip_dispatch, struct __pyx_opt_args_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args); /* proto*/
+static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_skip_dispatch, struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args); /* proto*/
 
 /* Module declarations from 'cpython.buffer' */
 
@@ -1832,15 +1832,15 @@ static PyTypeObject *__pyx_ptype_5numpy_ndarray = 0;
 static PyTypeObject *__pyx_ptype_5numpy_ufunc = 0;
 static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *, char *, char *, int *); /*proto*/
 
-/* Module declarations from 'chisurf.mfm.math.reaction._reaction' */
-static PyTypeObject *__pyx_ptype_7chisurf_3mfm_4math_8reaction_9_reaction_Model = 0;
-static PyObject *__pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *, PyObject *); /*proto*/
-static __Pyx_TypeInfo __Pyx_TypeInfo_nn___pyx_t_7chisurf_3mfm_4math_8reaction_9_reaction_DTYPE_t = { "DTYPE_t", NULL, sizeof(__pyx_t_7chisurf_3mfm_4math_8reaction_9_reaction_DTYPE_t), { 0 }, 0, 'R', 0, 0 };
-#define __Pyx_MODULE_NAME "chisurf.mfm.math.reaction._reaction"
-extern int __pyx_module_is_main_chisurf__mfm__math__reaction___reaction;
-int __pyx_module_is_main_chisurf__mfm__math__reaction___reaction = 0;
+/* Module declarations from 'chisurf.math.reaction._reaction' */
+static PyTypeObject *__pyx_ptype_7chisurf_4math_8reaction_9_reaction_Model = 0;
+static PyObject *__pyx_f_7chisurf_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *, PyObject *); /*proto*/
+static __Pyx_TypeInfo __Pyx_TypeInfo_nn___pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t = { "DTYPE_t", NULL, sizeof(__pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t), { 0 }, 0, 'R', 0, 0 };
+#define __Pyx_MODULE_NAME "chisurf.math.reaction._reaction"
+extern int __pyx_module_is_main_chisurf__math__reaction___reaction;
+int __pyx_module_is_main_chisurf__math__reaction___reaction = 0;
 
-/* Implementation of 'chisurf.mfm.math.reaction._reaction' */
+/* Implementation of 'chisurf.math.reaction._reaction' */
 static PyObject *__pyx_builtin_range;
 static PyObject *__pyx_builtin_ValueError;
 static PyObject *__pyx_builtin_RuntimeError;
@@ -1908,16 +1908,16 @@ static const char __pyx_k_setstate_cython[] = "__setstate_cython__";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
 static const char __pyx_k_pyx_unpickle_Model[] = "__pyx_unpickle_Model";
 static const char __pyx_k_ndarray_is_not_C_contiguous[] = "ndarray is not C contiguous";
+static const char __pyx_k_chisurf_math_reaction__reaction[] = "chisurf/math/reaction/_reaction.pyx";
 static const char __pyx_k_numpy_core_multiarray_failed_to[] = "numpy.core.multiarray failed to import";
 static const char __pyx_k_unknown_dtype_code_in_numpy_pxd[] = "unknown dtype code in numpy.pxd (%d)";
 static const char __pyx_k_Format_string_allocated_too_shor[] = "Format string allocated too short, see comment in numpy.pxd";
 static const char __pyx_k_Incompatible_checksums_s_vs_0xd6[] = "Incompatible checksums (%s vs 0xd69cdfe = (inits, nvars, pv, pvl, rates, res, series, steps, time, tm, ts, vn))";
 static const char __pyx_k_Non_native_byte_order_not_suppor[] = "Non-native byte order not supported";
-static const char __pyx_k_chisurf_mfm_math_reaction__react[] = "chisurf/mfm/math/reaction/_reaction.pyx";
 static const char __pyx_k_ndarray_is_not_Fortran_contiguou[] = "ndarray is not Fortran contiguous";
 static const char __pyx_k_numpy_core_umath_failed_to_impor[] = "numpy.core.umath failed to import";
+static const char __pyx_k_chisurf_math_reaction__reaction_2[] = "chisurf.math.reaction._reaction";
 static const char __pyx_k_Format_string_allocated_too_shor_2[] = "Format string allocated too short.";
-static const char __pyx_k_chisurf_mfm_math_reaction__react_2[] = "chisurf.mfm.math.reaction._reaction";
 static PyObject *__pyx_n_s_DTYPE;
 static PyObject *__pyx_kp_u_Format_string_allocated_too_shor;
 static PyObject *__pyx_kp_u_Format_string_allocated_too_shor_2;
@@ -1932,8 +1932,8 @@ static PyObject *__pyx_n_s_SSA;
 static PyObject *__pyx_n_s_SSAct;
 static PyObject *__pyx_n_s_ValueError;
 static PyObject *__pyx_n_s_arange;
-static PyObject *__pyx_kp_s_chisurf_mfm_math_reaction__react;
-static PyObject *__pyx_n_s_chisurf_mfm_math_reaction__react_2;
+static PyObject *__pyx_kp_s_chisurf_math_reaction__reaction;
+static PyObject *__pyx_n_s_chisurf_math_reaction__reaction_2;
 static PyObject *__pyx_n_s_cline_in_traceback;
 static PyObject *__pyx_n_s_dict;
 static PyObject *__pyx_n_s_double;
@@ -1991,19 +1991,19 @@ static PyObject *__pyx_kp_u_unknown_dtype_code_in_numpy_pxd;
 static PyObject *__pyx_n_s_update;
 static PyObject *__pyx_n_s_vnames;
 static PyObject *__pyx_n_s_zeros;
-static int __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_vnames, PyObject *__pyx_v_rates, PyObject *__pyx_v_inits, PyObject *__pyx_v_tmat, PyObject *__pyx_v_propensity); /* proto */
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_method, int __pyx_v_tmax, int __pyx_v_reps); /* proto */
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_4getStats(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_6GSSA(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_v_tmax, int __pyx_v_round); /* proto */
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_8CR(CYTHON_UNUSED struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_pv); /* proto */
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_10__reduce_cython__(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_12__setstate_cython__(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_l1(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini); /* proto */
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_2l2(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini); /* proto */
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_4__pyx_unpickle_Model(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
+static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_vnames, PyObject *__pyx_v_rates, PyObject *__pyx_v_inits, PyObject *__pyx_v_tmat, PyObject *__pyx_v_propensity); /* proto */
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_method, int __pyx_v_tmax, int __pyx_v_reps); /* proto */
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_4getStats(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_6GSSA(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_v_tmax, int __pyx_v_round); /* proto */
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_8CR(CYTHON_UNUSED struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_pv); /* proto */
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_10__reduce_cython__(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_12__setstate_cython__(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_l1(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini); /* proto */
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_2l2(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini); /* proto */
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_4__pyx_unpickle_Model(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /* proto */
 static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info); /* proto */
-static PyObject *__pyx_tp_new_7chisurf_3mfm_4math_8reaction_9_reaction_Model(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
+static PyObject *__pyx_tp_new_7chisurf_4math_8reaction_9_reaction_Model(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_int_0;
 static PyObject *__pyx_int_1;
 static PyObject *__pyx_int_225037822;
@@ -2023,7 +2023,7 @@ static PyObject *__pyx_codeobj__12;
 static PyObject *__pyx_codeobj__14;
 /* Late includes */
 
-/* "chisurf/mfm/math/reaction/_reaction.pyx":21
+/* "chisurf/math/reaction/_reaction.pyx":21
  *     cdef object ts
  * 
  *     def __init__(             # <<<<<<<<<<<<<<
@@ -2032,12 +2032,12 @@ static PyObject *__pyx_codeobj__14;
  */
 
 /* Python wrapper */
-static int __pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__[] = "\n         * variable_names: list of strings\n         * rates: list of fixed rate parameters\n         * inits: list of initial values of variables\n         * propensity: list of lambda functions of the form:\n            lambda r,ini: some function of rates ans inits.\n        ";
+static int __pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static char __pyx_doc_7chisurf_4math_8reaction_9_reaction_5Model___init__[] = "\n         * variable_names: list of strings\n         * rates: list of fixed rate parameters\n         * inits: list of initial values of variables\n         * propensity: list of lambda functions of the form:\n            lambda r,ini: some function of rates ans inits.\n        ";
 #if CYTHON_COMPILING_IN_CPYTHON
-struct wrapperbase __pyx_wrapperbase_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__;
+struct wrapperbase __pyx_wrapperbase_7chisurf_4math_8reaction_9_reaction_5Model___init__;
 #endif
-static int __pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static int __pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_vnames = 0;
   PyObject *__pyx_v_rates = 0;
   PyObject *__pyx_v_inits = 0;
@@ -2118,18 +2118,18 @@ static int __pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_1__init__(Py
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("__init__", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 21, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.Model.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(((struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *)__pyx_v_self), __pyx_v_vnames, __pyx_v_rates, __pyx_v_inits, __pyx_v_tmat, __pyx_v_propensity);
+  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self), __pyx_v_vnames, __pyx_v_rates, __pyx_v_inits, __pyx_v_tmat, __pyx_v_propensity);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static int __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_vnames, PyObject *__pyx_v_rates, PyObject *__pyx_v_inits, PyObject *__pyx_v_tmat, PyObject *__pyx_v_propensity) {
+static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_vnames, PyObject *__pyx_v_rates, PyObject *__pyx_v_inits, PyObject *__pyx_v_tmat, PyObject *__pyx_v_propensity) {
   int __pyx_r;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -2138,7 +2138,7 @@ static int __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(str
   PyObject *__pyx_t_4 = NULL;
   __Pyx_RefNannySetupContext("__init__", 0);
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":36
+  /* "chisurf/math/reaction/_reaction.pyx":36
  *             lambda r,ini: some function of rates ans inits.
  *         '''
  *         self.vn = vnames             # <<<<<<<<<<<<<<
@@ -2151,7 +2151,7 @@ static int __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(str
   __Pyx_DECREF(__pyx_v_self->vn);
   __pyx_v_self->vn = __pyx_v_vnames;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":37
+  /* "chisurf/math/reaction/_reaction.pyx":37
  *         '''
  *         self.vn = vnames
  *         self.rates = rates             # <<<<<<<<<<<<<<
@@ -2164,7 +2164,7 @@ static int __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(str
   __Pyx_DECREF(__pyx_v_self->rates);
   __pyx_v_self->rates = __pyx_v_rates;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":38
+  /* "chisurf/math/reaction/_reaction.pyx":38
  *         self.vn = vnames
  *         self.rates = rates
  *         self.inits = inits             # <<<<<<<<<<<<<<
@@ -2177,7 +2177,7 @@ static int __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(str
   __Pyx_DECREF(__pyx_v_self->inits);
   __pyx_v_self->inits = __pyx_v_inits;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":39
+  /* "chisurf/math/reaction/_reaction.pyx":39
  *         self.rates = rates
  *         self.inits = inits
  *         self.tm = tmat             # <<<<<<<<<<<<<<
@@ -2193,7 +2193,7 @@ static int __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(str
   __pyx_v_self->tm = ((PyArrayObject *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":40
+  /* "chisurf/math/reaction/_reaction.pyx":40
  *         self.inits = inits
  *         self.tm = tmat
  *         self.pv = propensity#[compile(eq,'errmsg','eval') for eq in propensity]             # <<<<<<<<<<<<<<
@@ -2206,7 +2206,7 @@ static int __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(str
   __Pyx_DECREF(__pyx_v_self->pv);
   __pyx_v_self->pv = __pyx_v_propensity;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":41
+  /* "chisurf/math/reaction/_reaction.pyx":41
  *         self.tm = tmat
  *         self.pv = propensity#[compile(eq,'errmsg','eval') for eq in propensity]
  *         self.pvl = len(self.pv) #length of propensity vector             # <<<<<<<<<<<<<<
@@ -2219,7 +2219,7 @@ static int __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(str
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_self->pvl = __pyx_t_2;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":42
+  /* "chisurf/math/reaction/_reaction.pyx":42
  *         self.pv = propensity#[compile(eq,'errmsg','eval') for eq in propensity]
  *         self.pvl = len(self.pv) #length of propensity vector
  *         self.nvars = len(self.inits) #number of variables             # <<<<<<<<<<<<<<
@@ -2232,7 +2232,7 @@ static int __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(str
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_self->nvars = __pyx_t_2;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":43
+  /* "chisurf/math/reaction/_reaction.pyx":43
  *         self.pvl = len(self.pv) #length of propensity vector
  *         self.nvars = len(self.inits) #number of variables
  *         self.time = np.zeros(1)             # <<<<<<<<<<<<<<
@@ -2266,7 +2266,7 @@ static int __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(str
   __pyx_v_self->time = ((PyArrayObject *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":44
+  /* "chisurf/math/reaction/_reaction.pyx":44
  *         self.nvars = len(self.inits) #number of variables
  *         self.time = np.zeros(1)
  *         self.series = np.zeros(1)             # <<<<<<<<<<<<<<
@@ -2300,7 +2300,7 @@ static int __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(str
   __pyx_v_self->series = ((PyArrayObject *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":45
+  /* "chisurf/math/reaction/_reaction.pyx":45
  *         self.time = np.zeros(1)
  *         self.series = np.zeros(1)
  *         self.steps = 0             # <<<<<<<<<<<<<<
@@ -2309,7 +2309,7 @@ static int __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(str
  */
   __pyx_v_self->steps = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":21
+  /* "chisurf/math/reaction/_reaction.pyx":21
  *     cdef object ts
  * 
  *     def __init__(             # <<<<<<<<<<<<<<
@@ -2324,14 +2324,14 @@ static int __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(str
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.Model.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = -1;
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "chisurf/mfm/math/reaction/_reaction.pyx":47
+/* "chisurf/math/reaction/_reaction.pyx":47
  *         self.steps = 0
  * 
  *     def run(             # <<<<<<<<<<<<<<
@@ -2340,8 +2340,8 @@ static int __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__(str
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_3run(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_3run(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_3run(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_3run(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_method = 0;
   int __pyx_v_tmax;
   int __pyx_v_reps;
@@ -2416,18 +2416,18 @@ static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_3run(P
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("run", 0, 0, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 47, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.Model.run", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.run", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(((struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *)__pyx_v_self), __pyx_v_method, __pyx_v_tmax, __pyx_v_reps);
+  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self), __pyx_v_method, __pyx_v_tmax, __pyx_v_reps);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_method, int __pyx_v_tmax, int __pyx_v_reps) {
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_method, int __pyx_v_tmax, int __pyx_v_reps) {
   PyArrayObject *__pyx_v_res = 0;
   PyObject *__pyx_v_tvec = NULL;
   int __pyx_v_i;
@@ -2447,14 +2447,14 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
   int __pyx_t_9;
   int __pyx_t_10;
   int __pyx_t_11;
-  struct __pyx_opt_args_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA __pyx_t_12;
+  struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA __pyx_t_12;
   __Pyx_RefNannySetupContext("run", 0);
   __pyx_pybuffer_res.pybuffer.buf = NULL;
   __pyx_pybuffer_res.refcount = 0;
   __pyx_pybuffernd_res.data = NULL;
   __pyx_pybuffernd_res.rcbuffer = &__pyx_pybuffer_res;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":53
+  /* "chisurf/math/reaction/_reaction.pyx":53
  *             int reps=1
  *     ):
  *         cdef np.ndarray[DTYPE_t,ndim=3] res = np.zeros((tmax,self.nvars,reps),dtype=float)             # <<<<<<<<<<<<<<
@@ -2500,7 +2500,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
   __pyx_t_6 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_res.rcbuffer->pybuffer, (PyObject*)__pyx_t_6, &__Pyx_TypeInfo_nn___pyx_t_7chisurf_3mfm_4math_8reaction_9_reaction_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) {
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_res.rcbuffer->pybuffer, (PyObject*)__pyx_t_6, &__Pyx_TypeInfo_nn___pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_res = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_res.rcbuffer->pybuffer.buf = NULL;
       __PYX_ERR(0, 53, __pyx_L1_error)
     } else {__pyx_pybuffernd_res.diminfo[0].strides = __pyx_pybuffernd_res.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_res.diminfo[0].shape = __pyx_pybuffernd_res.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_res.diminfo[1].strides = __pyx_pybuffernd_res.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_res.diminfo[1].shape = __pyx_pybuffernd_res.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_res.diminfo[2].strides = __pyx_pybuffernd_res.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_res.diminfo[2].shape = __pyx_pybuffernd_res.rcbuffer->pybuffer.shape[2];
@@ -2510,7 +2510,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
   __pyx_v_res = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":54
+  /* "chisurf/math/reaction/_reaction.pyx":54
  *     ):
  *         cdef np.ndarray[DTYPE_t,ndim=3] res = np.zeros((tmax,self.nvars,reps),dtype=float)
  *         tvec = np.arange(tmax)             # <<<<<<<<<<<<<<
@@ -2543,7 +2543,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
   __pyx_v_tvec = __pyx_t_3;
   __pyx_t_3 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":55
+  /* "chisurf/math/reaction/_reaction.pyx":55
  *         cdef np.ndarray[DTYPE_t,ndim=3] res = np.zeros((tmax,self.nvars,reps),dtype=float)
  *         tvec = np.arange(tmax)
  *         self.res = res             # <<<<<<<<<<<<<<
@@ -2556,7 +2556,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
   __Pyx_DECREF(((PyObject *)__pyx_v_self->res));
   __pyx_v_self->res = ((PyArrayObject *)__pyx_v_res);
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":57
+  /* "chisurf/math/reaction/_reaction.pyx":57
  *         self.res = res
  *         cdef int i, steps
  *         if method =='SSA':             # <<<<<<<<<<<<<<
@@ -2566,7 +2566,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
   __pyx_t_7 = (__Pyx_PyString_Equals(__pyx_v_method, __pyx_n_s_SSA, Py_EQ)); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 57, __pyx_L1_error)
   if (__pyx_t_7) {
 
-    /* "chisurf/mfm/math/reaction/_reaction.pyx":58
+    /* "chisurf/math/reaction/_reaction.pyx":58
  *         cdef int i, steps
  *         if method =='SSA':
  *             for i in range(0, reps):             # <<<<<<<<<<<<<<
@@ -2578,7 +2578,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
     for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
       __pyx_v_i = __pyx_t_10;
 
-      /* "chisurf/mfm/math/reaction/_reaction.pyx":59
+      /* "chisurf/math/reaction/_reaction.pyx":59
  *         if method =='SSA':
  *             for i in range(0, reps):
  *                 steps = self.GSSA(tmax,i)             # <<<<<<<<<<<<<<
@@ -2588,11 +2588,11 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
       __pyx_t_12.__pyx_n = 2;
       __pyx_t_12.tmax = __pyx_v_tmax;
       __pyx_t_12.round = __pyx_v_i;
-      __pyx_t_11 = ((struct __pyx_vtabstruct_7chisurf_3mfm_4math_8reaction_9_reaction_Model *)__pyx_v_self->__pyx_vtab)->GSSA(__pyx_v_self, 0, &__pyx_t_12); 
+      __pyx_t_11 = ((struct __pyx_vtabstruct_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self->__pyx_vtab)->GSSA(__pyx_v_self, 0, &__pyx_t_12); 
       __pyx_v_steps = __pyx_t_11;
     }
 
-    /* "chisurf/mfm/math/reaction/_reaction.pyx":60
+    /* "chisurf/math/reaction/_reaction.pyx":60
  *             for i in range(0, reps):
  *                 steps = self.GSSA(tmax,i)
  *             print(steps,' steps')             # <<<<<<<<<<<<<<
@@ -2612,7 +2612,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
     if (__Pyx_PrintOne(0, __pyx_t_4) < 0) __PYX_ERR(0, 60, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "chisurf/mfm/math/reaction/_reaction.pyx":57
+    /* "chisurf/math/reaction/_reaction.pyx":57
  *         self.res = res
  *         cdef int i, steps
  *         if method =='SSA':             # <<<<<<<<<<<<<<
@@ -2622,7 +2622,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
     goto __pyx_L3;
   }
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":61
+  /* "chisurf/math/reaction/_reaction.pyx":61
  *                 steps = self.GSSA(tmax,i)
  *             print(steps,' steps')
  *         elif method == 'SSAct':             # <<<<<<<<<<<<<<
@@ -2634,7 +2634,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
   }
   __pyx_L3:;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":63
+  /* "chisurf/math/reaction/_reaction.pyx":63
  *         elif method == 'SSAct':
  *             pass
  *         self.time=tvec             # <<<<<<<<<<<<<<
@@ -2650,7 +2650,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
   __pyx_v_self->time = ((PyArrayObject *)__pyx_t_4);
   __pyx_t_4 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":64
+  /* "chisurf/math/reaction/_reaction.pyx":64
  *             pass
  *         self.time=tvec
  *         self.series=self.res             # <<<<<<<<<<<<<<
@@ -2665,7 +2665,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
   __pyx_v_self->series = ((PyArrayObject *)__pyx_t_4);
   __pyx_t_4 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":65
+  /* "chisurf/math/reaction/_reaction.pyx":65
  *         self.time=tvec
  *         self.series=self.res
  *         self.steps=steps             # <<<<<<<<<<<<<<
@@ -2674,7 +2674,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
  */
   __pyx_v_self->steps = __pyx_v_steps;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":47
+  /* "chisurf/math/reaction/_reaction.pyx":47
  *         self.steps = 0
  * 
  *     def run(             # <<<<<<<<<<<<<<
@@ -2697,7 +2697,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
     __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_res.rcbuffer->pybuffer);
   __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.Model.run", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.run", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   goto __pyx_L2;
   __pyx_L0:;
@@ -2710,7 +2710,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
   return __pyx_r;
 }
 
-/* "chisurf/mfm/math/reaction/_reaction.pyx":67
+/* "chisurf/math/reaction/_reaction.pyx":67
  *         self.steps=steps
  * 
  *     def getStats(self):             # <<<<<<<<<<<<<<
@@ -2719,26 +2719,26 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_2run(s
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_5getStats(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_5getStats(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_5getStats(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_5getStats(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("getStats (wrapper)", 0);
-  __pyx_r = __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_4getStats(((struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *)__pyx_v_self));
+  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_4getStats(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_4getStats(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self) {
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_4getStats(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
   __Pyx_RefNannySetupContext("getStats", 0);
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":68
+  /* "chisurf/math/reaction/_reaction.pyx":68
  * 
  *     def getStats(self):
  *         return self.time,self.series,self.steps             # <<<<<<<<<<<<<<
@@ -2763,7 +2763,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_4getSt
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":67
+  /* "chisurf/math/reaction/_reaction.pyx":67
  *         self.steps=steps
  * 
  *     def getStats(self):             # <<<<<<<<<<<<<<
@@ -2775,7 +2775,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_4getSt
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.Model.getStats", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.getStats", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -2783,7 +2783,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_4getSt
   return __pyx_r;
 }
 
-/* "chisurf/mfm/math/reaction/_reaction.pyx":70
+/* "chisurf/math/reaction/_reaction.pyx":70
  *         return self.time,self.series,self.steps
  * 
  *     cpdef int GSSA(             # <<<<<<<<<<<<<<
@@ -2791,8 +2791,8 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_4getSt
  *             int tmax = 50,
  */
 
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_7GSSA(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_skip_dispatch, struct __pyx_opt_args_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args) {
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_7GSSA(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_skip_dispatch, struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args) {
   int __pyx_v_tmax = ((int)50);
   int __pyx_v_round = ((int)0);
   PyObject *__pyx_v_ini = NULL;
@@ -2831,7 +2831,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
   int __pyx_t_17;
   int __pyx_t_18;
   int __pyx_t_19;
-  __pyx_t_7chisurf_3mfm_4math_8reaction_9_reaction_DTYPE_t __pyx_t_20;
+  __pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t __pyx_t_20;
   Py_ssize_t __pyx_t_21;
   double __pyx_t_22;
   __Pyx_RefNannySetupContext("GSSA", 0);
@@ -2858,7 +2858,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
       #endif
       __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_GSSA); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 70, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)(void*)__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_7GSSA)) {
+      if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)(void*)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_7GSSA)) {
         __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_tmax); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 70, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_round); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 70, __pyx_L1_error)
@@ -2932,7 +2932,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
     #endif
   }
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":78
+  /* "chisurf/math/reaction/_reaction.pyx":78
  *         Gillespie Direct algorithm
  *         '''
  *         ini = self.inits             # <<<<<<<<<<<<<<
@@ -2944,7 +2944,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
   __pyx_v_ini = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":79
+  /* "chisurf/math/reaction/_reaction.pyx":79
  *         '''
  *         ini = self.inits
  *         r = self.rates             # <<<<<<<<<<<<<<
@@ -2956,7 +2956,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
   __pyx_v_r = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":80
+  /* "chisurf/math/reaction/_reaction.pyx":80
  *         ini = self.inits
  *         r = self.rates
  *         pvi = self.pv             # <<<<<<<<<<<<<<
@@ -2968,7 +2968,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
   __pyx_v_pvi = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":85
+  /* "chisurf/math/reaction/_reaction.pyx":85
  *         #cdef np.ndarray[INT_t] tvec
  *         cdef np.ndarray[DTYPE_t] pv
  *         l=self.pvl             # <<<<<<<<<<<<<<
@@ -2978,7 +2978,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
   __pyx_t_7 = __pyx_v_self->pvl;
   __pyx_v_l = __pyx_t_7;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":86
+  /* "chisurf/math/reaction/_reaction.pyx":86
  *         cdef np.ndarray[DTYPE_t] pv
  *         l=self.pvl
  *         pv = np.zeros(l, dtype=float)             # <<<<<<<<<<<<<<
@@ -3010,10 +3010,10 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_pv.rcbuffer->pybuffer);
-    __pyx_t_7 = __Pyx_GetBufferAndValidate(&__pyx_pybuffernd_pv.rcbuffer->pybuffer, (PyObject*)__pyx_t_9, &__Pyx_TypeInfo_nn___pyx_t_7chisurf_3mfm_4math_8reaction_9_reaction_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack);
+    __pyx_t_7 = __Pyx_GetBufferAndValidate(&__pyx_pybuffernd_pv.rcbuffer->pybuffer, (PyObject*)__pyx_t_9, &__Pyx_TypeInfo_nn___pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack);
     if (unlikely(__pyx_t_7 < 0)) {
       PyErr_Fetch(&__pyx_t_10, &__pyx_t_11, &__pyx_t_12);
-      if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_pv.rcbuffer->pybuffer, (PyObject*)__pyx_v_pv, &__Pyx_TypeInfo_nn___pyx_t_7chisurf_3mfm_4math_8reaction_9_reaction_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
+      if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_pv.rcbuffer->pybuffer, (PyObject*)__pyx_v_pv, &__Pyx_TypeInfo_nn___pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
         Py_XDECREF(__pyx_t_10); Py_XDECREF(__pyx_t_11); Py_XDECREF(__pyx_t_12);
         __Pyx_RaiseBufferFallbackError();
       } else {
@@ -3028,7 +3028,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
   __pyx_v_pv = ((PyArrayObject *)__pyx_t_8);
   __pyx_t_8 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":87
+  /* "chisurf/math/reaction/_reaction.pyx":87
  *         l=self.pvl
  *         pv = np.zeros(l, dtype=float)
  *         tm = self.tm             # <<<<<<<<<<<<<<
@@ -3040,7 +3040,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
   __pyx_v_tm = ((PyArrayObject *)__pyx_t_8);
   __pyx_t_8 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":89
+  /* "chisurf/math/reaction/_reaction.pyx":89
  *         tm = self.tm
  *         #tvec = np.arange(tmax,dtype=int)
  *         tc = 0             # <<<<<<<<<<<<<<
@@ -3049,7 +3049,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
  */
   __pyx_v_tc = 0.0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":90
+  /* "chisurf/math/reaction/_reaction.pyx":90
  *         #tvec = np.arange(tmax,dtype=int)
  *         tc = 0
  *         steps = 0             # <<<<<<<<<<<<<<
@@ -3058,7 +3058,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
  */
   __pyx_v_steps = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":91
+  /* "chisurf/math/reaction/_reaction.pyx":91
  *         tc = 0
  *         steps = 0
  *         self.res[0,:,round]= ini             # <<<<<<<<<<<<<<
@@ -3081,7 +3081,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
   if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v_self->res), __pyx_t_1, __pyx_v_ini) < 0)) __PYX_ERR(0, 91, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":92
+  /* "chisurf/math/reaction/_reaction.pyx":92
  *         steps = 0
  *         self.res[0,:,round]= ini
  *         a0=1.             # <<<<<<<<<<<<<<
@@ -3090,7 +3090,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
  */
   __pyx_v_a0 = 1.;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":93
+  /* "chisurf/math/reaction/_reaction.pyx":93
  *         self.res[0,:,round]= ini
  *         a0=1.
  *         for tim in range(1, tmax):             # <<<<<<<<<<<<<<
@@ -3102,7 +3102,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
   for (__pyx_t_14 = 1; __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
     __pyx_v_tim = __pyx_t_14;
 
-    /* "chisurf/mfm/math/reaction/_reaction.pyx":94
+    /* "chisurf/math/reaction/_reaction.pyx":94
  *         a0=1.
  *         for tim in range(1, tmax):
  *             while tc < tim:             # <<<<<<<<<<<<<<
@@ -3113,7 +3113,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
       __pyx_t_15 = ((__pyx_v_tc < __pyx_v_tim) != 0);
       if (!__pyx_t_15) break;
 
-      /* "chisurf/mfm/math/reaction/_reaction.pyx":95
+      /* "chisurf/math/reaction/_reaction.pyx":95
  *         for tim in range(1, tmax):
  *             while tc < tim:
  *                 for i in range(l):             # <<<<<<<<<<<<<<
@@ -3125,7 +3125,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
       for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
         __pyx_v_i = __pyx_t_18;
 
-        /* "chisurf/mfm/math/reaction/_reaction.pyx":96
+        /* "chisurf/math/reaction/_reaction.pyx":96
  *             while tc < tim:
  *                 for i in range(l):
  *                     pv[i] = pvi[i](r,ini)             # <<<<<<<<<<<<<<
@@ -3191,10 +3191,10 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
           __Pyx_RaiseBufferIndexError(__pyx_t_19);
           __PYX_ERR(0, 96, __pyx_L1_error)
         }
-        *__Pyx_BufPtrStrided1d(__pyx_t_7chisurf_3mfm_4math_8reaction_9_reaction_DTYPE_t *, __pyx_pybuffernd_pv.rcbuffer->pybuffer.buf, __pyx_t_21, __pyx_pybuffernd_pv.diminfo[0].strides) = __pyx_t_20;
+        *__Pyx_BufPtrStrided1d(__pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t *, __pyx_pybuffernd_pv.rcbuffer->pybuffer.buf, __pyx_t_21, __pyx_pybuffernd_pv.diminfo[0].strides) = __pyx_t_20;
       }
 
-      /* "chisurf/mfm/math/reaction/_reaction.pyx":98
+      /* "chisurf/math/reaction/_reaction.pyx":98
  *                     pv[i] = pvi[i](r,ini)
  *                 #pv = abs(array([eq() for eq in pvi]))# #propensity vector
  *                 a0 = np.sum(pv) #a_sum(pv,l) #sum of all transition probabilities             # <<<<<<<<<<<<<<
@@ -3225,7 +3225,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       __pyx_v_a0 = __pyx_t_22;
 
-      /* "chisurf/mfm/math/reaction/_reaction.pyx":100
+      /* "chisurf/math/reaction/_reaction.pyx":100
  *                 a0 = np.sum(pv) #a_sum(pv,l) #sum of all transition probabilities
  *                 #print ini#,tim, pv, a0
  *                 tau = (-1/a0)*np.log(np.random.random())             # <<<<<<<<<<<<<<
@@ -3290,7 +3290,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __pyx_v_tau = __pyx_t_22;
 
-      /* "chisurf/mfm/math/reaction/_reaction.pyx":101
+      /* "chisurf/math/reaction/_reaction.pyx":101
  *                 #print ini#,tim, pv, a0
  *                 tau = (-1/a0)*np.log(np.random.random())
  *                 event = multinomial(1,(pv/a0)) # event which will happen on this iteration             # <<<<<<<<<<<<<<
@@ -3354,7 +3354,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
       __Pyx_XDECREF_SET(__pyx_v_event, __pyx_t_5);
       __pyx_t_5 = 0;
 
-      /* "chisurf/mfm/math/reaction/_reaction.pyx":102
+      /* "chisurf/math/reaction/_reaction.pyx":102
  *                 tau = (-1/a0)*np.log(np.random.random())
  *                 event = multinomial(1,(pv/a0)) # event which will happen on this iteration
  *                 ini += tm[:,event.nonzero()[0][0]]             # <<<<<<<<<<<<<<
@@ -3401,7 +3401,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
       __Pyx_DECREF_SET(__pyx_v_ini, __pyx_t_2);
       __pyx_t_2 = 0;
 
-      /* "chisurf/mfm/math/reaction/_reaction.pyx":104
+      /* "chisurf/math/reaction/_reaction.pyx":104
  *                 ini += tm[:,event.nonzero()[0][0]]
  *                 #print tc, ini
  *                 tc += tau             # <<<<<<<<<<<<<<
@@ -3410,7 +3410,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
  */
       __pyx_v_tc = (__pyx_v_tc + __pyx_v_tau);
 
-      /* "chisurf/mfm/math/reaction/_reaction.pyx":105
+      /* "chisurf/math/reaction/_reaction.pyx":105
  *                 #print tc, ini
  *                 tc += tau
  *                 steps +=1             # <<<<<<<<<<<<<<
@@ -3419,7 +3419,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
  */
       __pyx_v_steps = (__pyx_v_steps + 1);
 
-      /* "chisurf/mfm/math/reaction/_reaction.pyx":106
+      /* "chisurf/math/reaction/_reaction.pyx":106
  *                 tc += tau
  *                 steps +=1
  *                 if a0 == 0: break             # <<<<<<<<<<<<<<
@@ -3433,7 +3433,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
     }
     __pyx_L6_break:;
 
-    /* "chisurf/mfm/math/reaction/_reaction.pyx":107
+    /* "chisurf/math/reaction/_reaction.pyx":107
  *                 steps +=1
  *                 if a0 == 0: break
  *             self.res[tim,:,round] = ini             # <<<<<<<<<<<<<<
@@ -3458,7 +3458,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
     if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v_self->res), __pyx_t_4, __pyx_v_ini) < 0)) __PYX_ERR(0, 107, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "chisurf/mfm/math/reaction/_reaction.pyx":108
+    /* "chisurf/math/reaction/_reaction.pyx":108
  *                 if a0 == 0: break
  *             self.res[tim,:,round] = ini
  *             if a0 == 0: break             # <<<<<<<<<<<<<<
@@ -3472,7 +3472,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
   }
   __pyx_L4_break:;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":111
+  /* "chisurf/math/reaction/_reaction.pyx":111
  * #        tvec = tvec[:tim]
  * #        self.res = res[:tim,:,round]
  *         return steps             # <<<<<<<<<<<<<<
@@ -3482,7 +3482,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
   __pyx_r = __pyx_v_steps;
   goto __pyx_L0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":70
+  /* "chisurf/math/reaction/_reaction.pyx":70
  *         return self.time,self.series,self.steps
  * 
  *     cpdef int GSSA(             # <<<<<<<<<<<<<<
@@ -3505,7 +3505,7 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
     __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_pv.rcbuffer->pybuffer);
   __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
-  __Pyx_WriteUnraisable("chisurf.mfm.math.reaction._reaction.Model.GSSA", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
+  __Pyx_WriteUnraisable("chisurf.math.reaction._reaction.Model.GSSA", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
   __pyx_r = 0;
   goto __pyx_L2;
   __pyx_L0:;
@@ -3522,9 +3522,9 @@ static int __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA(struct _
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_7GSSA(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_6GSSA[] = "\n        Gillespie Direct algorithm\n        ";
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_7GSSA(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_7GSSA(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static char __pyx_doc_7chisurf_4math_8reaction_9_reaction_5Model_6GSSA[] = "\n        Gillespie Direct algorithm\n        ";
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_7GSSA(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   int __pyx_v_tmax;
   int __pyx_v_round;
   PyObject *__pyx_r = 0;
@@ -3586,29 +3586,29 @@ static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_7GSSA(
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("GSSA", 0, 0, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 70, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.Model.GSSA", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.GSSA", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_6GSSA(((struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *)__pyx_v_self), __pyx_v_tmax, __pyx_v_round);
+  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_6GSSA(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self), __pyx_v_tmax, __pyx_v_round);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_6GSSA(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_v_tmax, int __pyx_v_round) {
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_6GSSA(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_v_tmax, int __pyx_v_round) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
-  struct __pyx_opt_args_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA __pyx_t_2;
+  struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA __pyx_t_2;
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("GSSA", 0);
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_2.__pyx_n = 2;
   __pyx_t_2.tmax = __pyx_v_tmax;
   __pyx_t_2.round = __pyx_v_round;
-  __pyx_t_1 = __pyx_vtabptr_7chisurf_3mfm_4math_8reaction_9_reaction_Model->GSSA(__pyx_v_self, 1, &__pyx_t_2); 
+  __pyx_t_1 = __pyx_vtabptr_7chisurf_4math_8reaction_9_reaction_Model->GSSA(__pyx_v_self, 1, &__pyx_t_2); 
   __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 70, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_r = __pyx_t_3;
@@ -3618,7 +3618,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_6GSSA(
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.Model.GSSA", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.GSSA", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -3626,7 +3626,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_6GSSA(
   return __pyx_r;
 }
 
-/* "chisurf/mfm/math/reaction/_reaction.pyx":113
+/* "chisurf/math/reaction/_reaction.pyx":113
  *         return steps
  * 
  *     def CR(self,pv):             # <<<<<<<<<<<<<<
@@ -3635,20 +3635,20 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_6GSSA(
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_9CR(PyObject *__pyx_v_self, PyObject *__pyx_v_pv); /*proto*/
-static char __pyx_doc_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_8CR[] = "\n        Composition reaction algorithm\n        ";
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_9CR(PyObject *__pyx_v_self, PyObject *__pyx_v_pv) {
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_9CR(PyObject *__pyx_v_self, PyObject *__pyx_v_pv); /*proto*/
+static char __pyx_doc_7chisurf_4math_8reaction_9_reaction_5Model_8CR[] = "\n        Composition reaction algorithm\n        ";
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_9CR(PyObject *__pyx_v_self, PyObject *__pyx_v_pv) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("CR (wrapper)", 0);
-  __pyx_r = __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_8CR(((struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *)__pyx_v_self), ((PyObject *)__pyx_v_pv));
+  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_8CR(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self), ((PyObject *)__pyx_v_pv));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_8CR(CYTHON_UNUSED struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_pv) {
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_8CR(CYTHON_UNUSED struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_pv) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("CR", 0);
@@ -3667,19 +3667,19 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_8CR(CY
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_11__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_11__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_11__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_11__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__reduce_cython__ (wrapper)", 0);
-  __pyx_r = __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_10__reduce_cython__(((struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *)__pyx_v_self));
+  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_10__reduce_cython__(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_10__reduce_cython__(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self) {
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_10__reduce_cython__(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self) {
   PyObject *__pyx_v_state = 0;
   PyObject *__pyx_v__dict = 0;
   int __pyx_v_use_setstate;
@@ -3982,7 +3982,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_10__re
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.Model.__reduce_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.__reduce_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_state);
@@ -4000,19 +4000,19 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_10__re
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_13__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state); /*proto*/
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_13__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_13__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state); /*proto*/
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_13__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__setstate_cython__ (wrapper)", 0);
-  __pyx_r = __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_12__setstate_cython__(((struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *)__pyx_v_self), ((PyObject *)__pyx_v___pyx_state));
+  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_12__setstate_cython__(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self), ((PyObject *)__pyx_v___pyx_state));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_12__setstate_cython__(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_12__setstate_cython__(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -4024,7 +4024,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_12__se
  *     __pyx_unpickle_Model__set_state(self, __pyx_state)             # <<<<<<<<<<<<<<
  */
   if (!(likely(PyTuple_CheckExact(__pyx_v___pyx_state))||((__pyx_v___pyx_state) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_v___pyx_state)->tp_name), 0))) __PYX_ERR(1, 17, __pyx_L1_error)
-  __pyx_t_1 = __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(__pyx_v_self, ((PyObject*)__pyx_v___pyx_state)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 17, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_7chisurf_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(__pyx_v_self, ((PyObject*)__pyx_v___pyx_state)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 17, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
@@ -4040,7 +4040,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_12__se
   goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.Model.__setstate_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.__setstate_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -4048,7 +4048,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_12__se
   return __pyx_r;
 }
 
-/* "chisurf/mfm/math/reaction/_reaction.pyx":130
+/* "chisurf/math/reaction/_reaction.pyx":130
  * #     return s
  * 
  * def l1(             # <<<<<<<<<<<<<<
@@ -4057,9 +4057,9 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_12__se
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_1l1(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_7chisurf_3mfm_4math_8reaction_9_reaction_1l1 = {"l1", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_1l1, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_1l1(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_1l1(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_7chisurf_4math_8reaction_9_reaction_1l1 = {"l1", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7chisurf_4math_8reaction_9_reaction_1l1, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_1l1(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyArrayObject *__pyx_v_r = 0;
   PyArrayObject *__pyx_v_ini = 0;
   PyObject *__pyx_r = 0;
@@ -4107,13 +4107,13 @@ static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_1l1(PyObject 
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("l1", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 130, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.l1", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.l1", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_r), __pyx_ptype_5numpy_ndarray, 1, "r", 0))) __PYX_ERR(0, 131, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_ini), __pyx_ptype_5numpy_ndarray, 1, "ini", 0))) __PYX_ERR(0, 132, __pyx_L1_error)
-  __pyx_r = __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_l1(__pyx_self, __pyx_v_r, __pyx_v_ini);
+  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_l1(__pyx_self, __pyx_v_r, __pyx_v_ini);
 
   /* function exit code */
   goto __pyx_L0;
@@ -4124,7 +4124,7 @@ static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_1l1(PyObject 
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_l1(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini) {
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_l1(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -4132,7 +4132,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_l1(CYTHON_UNU
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("l1", 0);
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":134
+  /* "chisurf/math/reaction/_reaction.pyx":134
  *         np.ndarray ini
  * ):
  *     return r[0]*ini[0]*ini[1]             # <<<<<<<<<<<<<<
@@ -4158,7 +4158,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_l1(CYTHON_UNU
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":130
+  /* "chisurf/math/reaction/_reaction.pyx":130
  * #     return s
  * 
  * def l1(             # <<<<<<<<<<<<<<
@@ -4171,7 +4171,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_l1(CYTHON_UNU
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.l1", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.l1", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -4179,7 +4179,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_l1(CYTHON_UNU
   return __pyx_r;
 }
 
-/* "chisurf/mfm/math/reaction/_reaction.pyx":136
+/* "chisurf/math/reaction/_reaction.pyx":136
  *     return r[0]*ini[0]*ini[1]
  * 
  * def l2(             # <<<<<<<<<<<<<<
@@ -4188,9 +4188,9 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_l1(CYTHON_UNU
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_3l2(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_7chisurf_3mfm_4math_8reaction_9_reaction_3l2 = {"l2", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_3l2, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_3l2(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_3l2(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_7chisurf_4math_8reaction_9_reaction_3l2 = {"l2", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7chisurf_4math_8reaction_9_reaction_3l2, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_3l2(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyArrayObject *__pyx_v_r = 0;
   PyArrayObject *__pyx_v_ini = 0;
   PyObject *__pyx_r = 0;
@@ -4238,13 +4238,13 @@ static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_3l2(PyObject 
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("l2", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 136, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.l2", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.l2", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_r), __pyx_ptype_5numpy_ndarray, 1, "r", 0))) __PYX_ERR(0, 137, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_ini), __pyx_ptype_5numpy_ndarray, 1, "ini", 0))) __PYX_ERR(0, 138, __pyx_L1_error)
-  __pyx_r = __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_2l2(__pyx_self, __pyx_v_r, __pyx_v_ini);
+  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_2l2(__pyx_self, __pyx_v_r, __pyx_v_ini);
 
   /* function exit code */
   goto __pyx_L0;
@@ -4255,7 +4255,7 @@ static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_3l2(PyObject 
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_2l2(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini) {
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_2l2(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -4263,7 +4263,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_2l2(CYTHON_UN
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("l2", 0);
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":140
+  /* "chisurf/math/reaction/_reaction.pyx":140
  *         r,np.ndarray ini
  * ):
  *     return r[1]*ini[1]             # <<<<<<<<<<<<<<
@@ -4282,7 +4282,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_2l2(CYTHON_UN
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":136
+  /* "chisurf/math/reaction/_reaction.pyx":136
  *     return r[0]*ini[0]*ini[1]
  * 
  * def l2(             # <<<<<<<<<<<<<<
@@ -4295,7 +4295,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_2l2(CYTHON_UN
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.l2", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.l2", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -4310,9 +4310,9 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_2l2(CYTHON_UN
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5__pyx_unpickle_Model(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_7chisurf_3mfm_4math_8reaction_9_reaction_5__pyx_unpickle_Model = {"__pyx_unpickle_Model", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5__pyx_unpickle_Model, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5__pyx_unpickle_Model(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5__pyx_unpickle_Model(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_7chisurf_4math_8reaction_9_reaction_5__pyx_unpickle_Model = {"__pyx_unpickle_Model", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5__pyx_unpickle_Model, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5__pyx_unpickle_Model(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v___pyx_type = 0;
   long __pyx_v___pyx_checksum;
   PyObject *__pyx_v___pyx_state = 0;
@@ -4371,18 +4371,18 @@ static PyObject *__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5__pyx_unpick
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("__pyx_unpickle_Model", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(1, 1, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.__pyx_unpickle_Model", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.__pyx_unpickle_Model", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_4__pyx_unpickle_Model(__pyx_self, __pyx_v___pyx_type, __pyx_v___pyx_checksum, __pyx_v___pyx_state);
+  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_4__pyx_unpickle_Model(__pyx_self, __pyx_v___pyx_type, __pyx_v___pyx_checksum, __pyx_v___pyx_state);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_4__pyx_unpickle_Model(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_4__pyx_unpickle_Model(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_v___pyx_PickleError = 0;
   PyObject *__pyx_v___pyx_result = 0;
   PyObject *__pyx_r = NULL;
@@ -4476,7 +4476,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_4__pyx_unpick
  *     if __pyx_state is not None:
  *         __pyx_unpickle_Model__set_state(<Model> __pyx_result, __pyx_state)
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_7chisurf_3mfm_4math_8reaction_9_reaction_Model), __pyx_n_s_new); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 7, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_7chisurf_4math_8reaction_9_reaction_Model), __pyx_n_s_new); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 7, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -4515,7 +4515,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_4__pyx_unpick
  * cdef __pyx_unpickle_Model__set_state(Model __pyx_result, tuple __pyx_state):
  */
     if (!(likely(PyTuple_CheckExact(__pyx_v___pyx_state))||((__pyx_v___pyx_state) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_v___pyx_state)->tp_name), 0))) __PYX_ERR(1, 9, __pyx_L1_error)
-    __pyx_t_3 = __pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(((struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *)__pyx_v___pyx_result), ((PyObject*)__pyx_v___pyx_state)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 9, __pyx_L1_error)
+    __pyx_t_3 = __pyx_f_7chisurf_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v___pyx_result), ((PyObject*)__pyx_v___pyx_state)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 9, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
@@ -4552,7 +4552,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_4__pyx_unpick
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.__pyx_unpickle_Model", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.__pyx_unpickle_Model", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v___pyx_PickleError);
@@ -4570,7 +4570,7 @@ static PyObject *__pyx_pf_7chisurf_3mfm_4math_8reaction_9_reaction_4__pyx_unpick
  *     if len(__pyx_state) > 12 and hasattr(__pyx_result, '__dict__'):
  */
 
-static PyObject *__pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *__pyx_v___pyx_result, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_f_7chisurf_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v___pyx_result, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -4803,7 +4803,7 @@ static PyObject *__pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction___pyx_unpickle
   __Pyx_XDECREF(__pyx_t_7);
   __Pyx_XDECREF(__pyx_t_8);
   __Pyx_XDECREF(__pyx_t_9);
-  __Pyx_AddTraceback("chisurf.mfm.math.reaction._reaction.__pyx_unpickle_Model__set_state", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("chisurf.math.reaction._reaction.__pyx_unpickle_Model__set_state", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -7228,10 +7228,10 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
-static struct __pyx_vtabstruct_7chisurf_3mfm_4math_8reaction_9_reaction_Model __pyx_vtable_7chisurf_3mfm_4math_8reaction_9_reaction_Model;
+static struct __pyx_vtabstruct_7chisurf_4math_8reaction_9_reaction_Model __pyx_vtable_7chisurf_4math_8reaction_9_reaction_Model;
 
-static PyObject *__pyx_tp_new_7chisurf_3mfm_4math_8reaction_9_reaction_Model(PyTypeObject *t, CYTHON_UNUSED PyObject *a, CYTHON_UNUSED PyObject *k) {
-  struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *p;
+static PyObject *__pyx_tp_new_7chisurf_4math_8reaction_9_reaction_Model(PyTypeObject *t, CYTHON_UNUSED PyObject *a, CYTHON_UNUSED PyObject *k) {
+  struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *p;
   PyObject *o;
   if (likely((t->tp_flags & Py_TPFLAGS_IS_ABSTRACT) == 0)) {
     o = (*t->tp_alloc)(t, 0);
@@ -7239,8 +7239,8 @@ static PyObject *__pyx_tp_new_7chisurf_3mfm_4math_8reaction_9_reaction_Model(PyT
     o = (PyObject *) PyBaseObject_Type.tp_new(t, __pyx_empty_tuple, 0);
   }
   if (unlikely(!o)) return 0;
-  p = ((struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *)o);
-  p->__pyx_vtab = __pyx_vtabptr_7chisurf_3mfm_4math_8reaction_9_reaction_Model;
+  p = ((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)o);
+  p->__pyx_vtab = __pyx_vtabptr_7chisurf_4math_8reaction_9_reaction_Model;
   p->vn = Py_None; Py_INCREF(Py_None);
   p->rates = Py_None; Py_INCREF(Py_None);
   p->inits = Py_None; Py_INCREF(Py_None);
@@ -7253,8 +7253,8 @@ static PyObject *__pyx_tp_new_7chisurf_3mfm_4math_8reaction_9_reaction_Model(PyT
   return o;
 }
 
-static void __pyx_tp_dealloc_7chisurf_3mfm_4math_8reaction_9_reaction_Model(PyObject *o) {
-  struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *p = (struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *)o;
+static void __pyx_tp_dealloc_7chisurf_4math_8reaction_9_reaction_Model(PyObject *o) {
+  struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *p = (struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)o;
   #if CYTHON_USE_TP_FINALIZE
   if (unlikely(PyType_HasFeature(Py_TYPE(o), Py_TPFLAGS_HAVE_FINALIZE) && Py_TYPE(o)->tp_finalize) && !_PyGC_FINALIZED(o)) {
     if (PyObject_CallFinalizerFromDealloc(o)) return;
@@ -7273,9 +7273,9 @@ static void __pyx_tp_dealloc_7chisurf_3mfm_4math_8reaction_9_reaction_Model(PyOb
   (*Py_TYPE(o)->tp_free)(o);
 }
 
-static int __pyx_tp_traverse_7chisurf_3mfm_4math_8reaction_9_reaction_Model(PyObject *o, visitproc v, void *a) {
+static int __pyx_tp_traverse_7chisurf_4math_8reaction_9_reaction_Model(PyObject *o, visitproc v, void *a) {
   int e;
-  struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *p = (struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *)o;
+  struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *p = (struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)o;
   if (p->vn) {
     e = (*v)(p->vn, a); if (e) return e;
   }
@@ -7306,9 +7306,9 @@ static int __pyx_tp_traverse_7chisurf_3mfm_4math_8reaction_9_reaction_Model(PyOb
   return 0;
 }
 
-static int __pyx_tp_clear_7chisurf_3mfm_4math_8reaction_9_reaction_Model(PyObject *o) {
+static int __pyx_tp_clear_7chisurf_4math_8reaction_9_reaction_Model(PyObject *o) {
   PyObject* tmp;
-  struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *p = (struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *)o;
+  struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *p = (struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)o;
   tmp = ((PyObject*)p->vn);
   p->vn = Py_None; Py_INCREF(Py_None);
   Py_XDECREF(tmp);
@@ -7339,22 +7339,22 @@ static int __pyx_tp_clear_7chisurf_3mfm_4math_8reaction_9_reaction_Model(PyObjec
   return 0;
 }
 
-static PyMethodDef __pyx_methods_7chisurf_3mfm_4math_8reaction_9_reaction_Model[] = {
-  {"run", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_3run, METH_VARARGS|METH_KEYWORDS, 0},
-  {"getStats", (PyCFunction)__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_5getStats, METH_NOARGS, 0},
-  {"GSSA", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_7GSSA, METH_VARARGS|METH_KEYWORDS, __pyx_doc_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_6GSSA},
-  {"CR", (PyCFunction)__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_9CR, METH_O, __pyx_doc_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_8CR},
-  {"__reduce_cython__", (PyCFunction)__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_11__reduce_cython__, METH_NOARGS, 0},
-  {"__setstate_cython__", (PyCFunction)__pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_13__setstate_cython__, METH_O, 0},
+static PyMethodDef __pyx_methods_7chisurf_4math_8reaction_9_reaction_Model[] = {
+  {"run", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_3run, METH_VARARGS|METH_KEYWORDS, 0},
+  {"getStats", (PyCFunction)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_5getStats, METH_NOARGS, 0},
+  {"GSSA", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_7GSSA, METH_VARARGS|METH_KEYWORDS, __pyx_doc_7chisurf_4math_8reaction_9_reaction_5Model_6GSSA},
+  {"CR", (PyCFunction)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_9CR, METH_O, __pyx_doc_7chisurf_4math_8reaction_9_reaction_5Model_8CR},
+  {"__reduce_cython__", (PyCFunction)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_11__reduce_cython__, METH_NOARGS, 0},
+  {"__setstate_cython__", (PyCFunction)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_13__setstate_cython__, METH_O, 0},
   {0, 0, 0, 0}
 };
 
-static PyTypeObject __pyx_type_7chisurf_3mfm_4math_8reaction_9_reaction_Model = {
+static PyTypeObject __pyx_type_7chisurf_4math_8reaction_9_reaction_Model = {
   PyVarObject_HEAD_INIT(0, 0)
-  "chisurf.mfm.math.reaction._reaction.Model", /*tp_name*/
-  sizeof(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model), /*tp_basicsize*/
+  "chisurf.math.reaction._reaction.Model", /*tp_name*/
+  sizeof(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model), /*tp_basicsize*/
   0, /*tp_itemsize*/
-  __pyx_tp_dealloc_7chisurf_3mfm_4math_8reaction_9_reaction_Model, /*tp_dealloc*/
+  __pyx_tp_dealloc_7chisurf_4math_8reaction_9_reaction_Model, /*tp_dealloc*/
   0, /*tp_print*/
   0, /*tp_getattr*/
   0, /*tp_setattr*/
@@ -7376,13 +7376,13 @@ static PyTypeObject __pyx_type_7chisurf_3mfm_4math_8reaction_9_reaction_Model = 
   0, /*tp_as_buffer*/
   Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
   0, /*tp_doc*/
-  __pyx_tp_traverse_7chisurf_3mfm_4math_8reaction_9_reaction_Model, /*tp_traverse*/
-  __pyx_tp_clear_7chisurf_3mfm_4math_8reaction_9_reaction_Model, /*tp_clear*/
+  __pyx_tp_traverse_7chisurf_4math_8reaction_9_reaction_Model, /*tp_traverse*/
+  __pyx_tp_clear_7chisurf_4math_8reaction_9_reaction_Model, /*tp_clear*/
   0, /*tp_richcompare*/
   0, /*tp_weaklistoffset*/
   0, /*tp_iter*/
   0, /*tp_iternext*/
-  __pyx_methods_7chisurf_3mfm_4math_8reaction_9_reaction_Model, /*tp_methods*/
+  __pyx_methods_7chisurf_4math_8reaction_9_reaction_Model, /*tp_methods*/
   0, /*tp_members*/
   0, /*tp_getset*/
   0, /*tp_base*/
@@ -7390,9 +7390,9 @@ static PyTypeObject __pyx_type_7chisurf_3mfm_4math_8reaction_9_reaction_Model = 
   0, /*tp_descr_get*/
   0, /*tp_descr_set*/
   0, /*tp_dictoffset*/
-  __pyx_pw_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_1__init__, /*tp_init*/
+  __pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_1__init__, /*tp_init*/
   0, /*tp_alloc*/
-  __pyx_tp_new_7chisurf_3mfm_4math_8reaction_9_reaction_Model, /*tp_new*/
+  __pyx_tp_new_7chisurf_4math_8reaction_9_reaction_Model, /*tp_new*/
   0, /*tp_free*/
   0, /*tp_is_gc*/
   0, /*tp_bases*/
@@ -7470,8 +7470,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_SSAct, __pyx_k_SSAct, sizeof(__pyx_k_SSAct), 0, 0, 1, 1},
   {&__pyx_n_s_ValueError, __pyx_k_ValueError, sizeof(__pyx_k_ValueError), 0, 0, 1, 1},
   {&__pyx_n_s_arange, __pyx_k_arange, sizeof(__pyx_k_arange), 0, 0, 1, 1},
-  {&__pyx_kp_s_chisurf_mfm_math_reaction__react, __pyx_k_chisurf_mfm_math_reaction__react, sizeof(__pyx_k_chisurf_mfm_math_reaction__react), 0, 0, 1, 0},
-  {&__pyx_n_s_chisurf_mfm_math_reaction__react_2, __pyx_k_chisurf_mfm_math_reaction__react_2, sizeof(__pyx_k_chisurf_mfm_math_reaction__react_2), 0, 0, 1, 1},
+  {&__pyx_kp_s_chisurf_math_reaction__reaction, __pyx_k_chisurf_math_reaction__reaction, sizeof(__pyx_k_chisurf_math_reaction__reaction), 0, 0, 1, 0},
+  {&__pyx_n_s_chisurf_math_reaction__reaction_2, __pyx_k_chisurf_math_reaction__reaction_2, sizeof(__pyx_k_chisurf_math_reaction__reaction_2), 0, 0, 1, 1},
   {&__pyx_n_s_cline_in_traceback, __pyx_k_cline_in_traceback, sizeof(__pyx_k_cline_in_traceback), 0, 0, 1, 1},
   {&__pyx_n_s_dict, __pyx_k_dict, sizeof(__pyx_k_dict), 0, 0, 1, 1},
   {&__pyx_n_s_double, __pyx_k_double, sizeof(__pyx_k_double), 0, 0, 1, 1},
@@ -7545,7 +7545,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":91
+  /* "chisurf/math/reaction/_reaction.pyx":91
  *         tc = 0
  *         steps = 0
  *         self.res[0,:,round]= ini             # <<<<<<<<<<<<<<
@@ -7633,7 +7633,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__8);
   __Pyx_GIVEREF(__pyx_tuple__8);
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":130
+  /* "chisurf/math/reaction/_reaction.pyx":130
  * #     return s
  * 
  * def l1(             # <<<<<<<<<<<<<<
@@ -7643,9 +7643,9 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__9 = PyTuple_Pack(2, __pyx_n_s_r, __pyx_n_s_ini); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 130, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__9);
   __Pyx_GIVEREF(__pyx_tuple__9);
-  __pyx_codeobj__10 = (PyObject*)__Pyx_PyCode_New(2, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__9, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_chisurf_mfm_math_reaction__react, __pyx_n_s_l1, 130, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__10)) __PYX_ERR(0, 130, __pyx_L1_error)
+  __pyx_codeobj__10 = (PyObject*)__Pyx_PyCode_New(2, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__9, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_chisurf_math_reaction__reaction, __pyx_n_s_l1, 130, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__10)) __PYX_ERR(0, 130, __pyx_L1_error)
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":136
+  /* "chisurf/math/reaction/_reaction.pyx":136
  *     return r[0]*ini[0]*ini[1]
  * 
  * def l2(             # <<<<<<<<<<<<<<
@@ -7655,7 +7655,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__11 = PyTuple_Pack(2, __pyx_n_s_r, __pyx_n_s_ini); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(0, 136, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__11);
   __Pyx_GIVEREF(__pyx_tuple__11);
-  __pyx_codeobj__12 = (PyObject*)__Pyx_PyCode_New(2, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__11, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_chisurf_mfm_math_reaction__react, __pyx_n_s_l2, 136, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__12)) __PYX_ERR(0, 136, __pyx_L1_error)
+  __pyx_codeobj__12 = (PyObject*)__Pyx_PyCode_New(2, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__11, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_chisurf_math_reaction__reaction, __pyx_n_s_l2, 136, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__12)) __PYX_ERR(0, 136, __pyx_L1_error)
 
   /* "(tree fragment)":1
  * def __pyx_unpickle_Model(__pyx_type, long __pyx_checksum, __pyx_state):             # <<<<<<<<<<<<<<
@@ -7719,29 +7719,29 @@ static int __Pyx_modinit_type_init_code(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_modinit_type_init_code", 0);
   /*--- Type init code ---*/
-  __pyx_vtabptr_7chisurf_3mfm_4math_8reaction_9_reaction_Model = &__pyx_vtable_7chisurf_3mfm_4math_8reaction_9_reaction_Model;
-  __pyx_vtable_7chisurf_3mfm_4math_8reaction_9_reaction_Model.GSSA = (int (*)(struct __pyx_obj_7chisurf_3mfm_4math_8reaction_9_reaction_Model *, int __pyx_skip_dispatch, struct __pyx_opt_args_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args))__pyx_f_7chisurf_3mfm_4math_8reaction_9_reaction_5Model_GSSA;
-  if (PyType_Ready(&__pyx_type_7chisurf_3mfm_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_vtabptr_7chisurf_4math_8reaction_9_reaction_Model = &__pyx_vtable_7chisurf_4math_8reaction_9_reaction_Model;
+  __pyx_vtable_7chisurf_4math_8reaction_9_reaction_Model.GSSA = (int (*)(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *, int __pyx_skip_dispatch, struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args))__pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA;
+  if (PyType_Ready(&__pyx_type_7chisurf_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
   #if PY_VERSION_HEX < 0x030800B1
-  __pyx_type_7chisurf_3mfm_4math_8reaction_9_reaction_Model.tp_print = 0;
+  __pyx_type_7chisurf_4math_8reaction_9_reaction_Model.tp_print = 0;
   #endif
-  if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_type_7chisurf_3mfm_4math_8reaction_9_reaction_Model.tp_dictoffset && __pyx_type_7chisurf_3mfm_4math_8reaction_9_reaction_Model.tp_getattro == PyObject_GenericGetAttr)) {
-    __pyx_type_7chisurf_3mfm_4math_8reaction_9_reaction_Model.tp_getattro = __Pyx_PyObject_GenericGetAttr;
+  if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_type_7chisurf_4math_8reaction_9_reaction_Model.tp_dictoffset && __pyx_type_7chisurf_4math_8reaction_9_reaction_Model.tp_getattro == PyObject_GenericGetAttr)) {
+    __pyx_type_7chisurf_4math_8reaction_9_reaction_Model.tp_getattro = __Pyx_PyObject_GenericGetAttr;
   }
   #if CYTHON_COMPILING_IN_CPYTHON
   {
-    PyObject *wrapper = PyObject_GetAttrString((PyObject *)&__pyx_type_7chisurf_3mfm_4math_8reaction_9_reaction_Model, "__init__"); if (unlikely(!wrapper)) __PYX_ERR(0, 14, __pyx_L1_error)
+    PyObject *wrapper = PyObject_GetAttrString((PyObject *)&__pyx_type_7chisurf_4math_8reaction_9_reaction_Model, "__init__"); if (unlikely(!wrapper)) __PYX_ERR(0, 14, __pyx_L1_error)
     if (Py_TYPE(wrapper) == &PyWrapperDescr_Type) {
-      __pyx_wrapperbase_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__ = *((PyWrapperDescrObject *)wrapper)->d_base;
-      __pyx_wrapperbase_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__.doc = __pyx_doc_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__;
-      ((PyWrapperDescrObject *)wrapper)->d_base = &__pyx_wrapperbase_7chisurf_3mfm_4math_8reaction_9_reaction_5Model___init__;
+      __pyx_wrapperbase_7chisurf_4math_8reaction_9_reaction_5Model___init__ = *((PyWrapperDescrObject *)wrapper)->d_base;
+      __pyx_wrapperbase_7chisurf_4math_8reaction_9_reaction_5Model___init__.doc = __pyx_doc_7chisurf_4math_8reaction_9_reaction_5Model___init__;
+      ((PyWrapperDescrObject *)wrapper)->d_base = &__pyx_wrapperbase_7chisurf_4math_8reaction_9_reaction_5Model___init__;
     }
   }
   #endif
-  if (__Pyx_SetVtable(__pyx_type_7chisurf_3mfm_4math_8reaction_9_reaction_Model.tp_dict, __pyx_vtabptr_7chisurf_3mfm_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_Model, (PyObject *)&__pyx_type_7chisurf_3mfm_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_7chisurf_3mfm_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
-  __pyx_ptype_7chisurf_3mfm_4math_8reaction_9_reaction_Model = &__pyx_type_7chisurf_3mfm_4math_8reaction_9_reaction_Model;
+  if (__Pyx_SetVtable(__pyx_type_7chisurf_4math_8reaction_9_reaction_Model.tp_dict, __pyx_vtabptr_7chisurf_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_Model, (PyObject *)&__pyx_type_7chisurf_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_7chisurf_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_ptype_7chisurf_4math_8reaction_9_reaction_Model = &__pyx_type_7chisurf_4math_8reaction_9_reaction_Model;
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -7972,14 +7972,14 @@ if (!__Pyx_RefNanny) {
   #if PY_MAJOR_VERSION < 3 && (__PYX_DEFAULT_STRING_ENCODING_IS_ASCII || __PYX_DEFAULT_STRING_ENCODING_IS_DEFAULT)
   if (__Pyx_init_sys_getdefaultencoding_params() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
-  if (__pyx_module_is_main_chisurf__mfm__math__reaction___reaction) {
+  if (__pyx_module_is_main_chisurf__math__reaction___reaction) {
     if (PyObject_SetAttr(__pyx_m, __pyx_n_s_name, __pyx_n_s_main) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   }
   #if PY_MAJOR_VERSION >= 3
   {
     PyObject *modules = PyImport_GetModuleDict(); if (unlikely(!modules)) __PYX_ERR(0, 1, __pyx_L1_error)
-    if (!PyDict_GetItemString(modules, "chisurf.mfm.math.reaction._reaction")) {
-      if (unlikely(PyDict_SetItemString(modules, "chisurf.mfm.math.reaction._reaction", __pyx_m) < 0)) __PYX_ERR(0, 1, __pyx_L1_error)
+    if (!PyDict_GetItemString(modules, "chisurf.math.reaction._reaction")) {
+      if (unlikely(PyDict_SetItemString(modules, "chisurf.math.reaction._reaction", __pyx_m) < 0)) __PYX_ERR(0, 1, __pyx_L1_error)
     }
   }
   #endif
@@ -8000,7 +8000,7 @@ if (!__Pyx_RefNanny) {
   if (__Pyx_patch_abc() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":4
+  /* "chisurf/math/reaction/_reaction.pyx":4
  * 
  * cimport numpy as np
  * import numpy as np             # <<<<<<<<<<<<<<
@@ -8012,7 +8012,7 @@ if (!__Pyx_RefNanny) {
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_1) < 0) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":5
+  /* "chisurf/math/reaction/_reaction.pyx":5
  * cimport numpy as np
  * import numpy as np
  * from numpy.random import multinomial             # <<<<<<<<<<<<<<
@@ -8033,7 +8033,7 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":10
+  /* "chisurf/math/reaction/_reaction.pyx":10
  * # http://pyinsci.blogspot.de/2008/10/fast-gillespies-direct-algorithm-in.html
  * 
  * DTYPE = np.double             # <<<<<<<<<<<<<<
@@ -8048,26 +8048,26 @@ if (!__Pyx_RefNanny) {
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_DTYPE, __pyx_t_1) < 0) __PYX_ERR(0, 10, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":130
+  /* "chisurf/math/reaction/_reaction.pyx":130
  * #     return s
  * 
  * def l1(             # <<<<<<<<<<<<<<
  *         np.ndarray r,
  *         np.ndarray ini
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7chisurf_3mfm_4math_8reaction_9_reaction_1l1, NULL, __pyx_n_s_chisurf_mfm_math_reaction__react_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 130, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7chisurf_4math_8reaction_9_reaction_1l1, NULL, __pyx_n_s_chisurf_math_reaction__reaction_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 130, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_l1, __pyx_t_1) < 0) __PYX_ERR(0, 130, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":136
+  /* "chisurf/math/reaction/_reaction.pyx":136
  *     return r[0]*ini[0]*ini[1]
  * 
  * def l2(             # <<<<<<<<<<<<<<
  *         np.ndarray
  *         r,np.ndarray ini
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7chisurf_3mfm_4math_8reaction_9_reaction_3l2, NULL, __pyx_n_s_chisurf_mfm_math_reaction__react_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 136, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7chisurf_4math_8reaction_9_reaction_3l2, NULL, __pyx_n_s_chisurf_math_reaction__reaction_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 136, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_l2, __pyx_t_1) < 0) __PYX_ERR(0, 136, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -8077,12 +8077,12 @@ if (!__Pyx_RefNanny) {
  *     cdef object __pyx_PickleError
  *     cdef object __pyx_result
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7chisurf_3mfm_4math_8reaction_9_reaction_5__pyx_unpickle_Model, NULL, __pyx_n_s_chisurf_mfm_math_reaction__react_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7chisurf_4math_8reaction_9_reaction_5__pyx_unpickle_Model, NULL, __pyx_n_s_chisurf_math_reaction__reaction_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_Model, __pyx_t_1) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "chisurf/mfm/math/reaction/_reaction.pyx":1
+  /* "chisurf/math/reaction/_reaction.pyx":1
  * #from numpy import arange, array, empty,zeros             # <<<<<<<<<<<<<<
  * 
  * cimport numpy as np
@@ -8108,11 +8108,11 @@ if (!__Pyx_RefNanny) {
   __Pyx_XDECREF(__pyx_t_2);
   if (__pyx_m) {
     if (__pyx_d) {
-      __Pyx_AddTraceback("init chisurf.mfm.math.reaction._reaction", __pyx_clineno, __pyx_lineno, __pyx_filename);
+      __Pyx_AddTraceback("init chisurf.math.reaction._reaction", __pyx_clineno, __pyx_lineno, __pyx_filename);
     }
     Py_CLEAR(__pyx_m);
   } else if (!PyErr_Occurred()) {
-    PyErr_SetString(PyExc_ImportError, "init chisurf.mfm.math.reaction._reaction");
+    PyErr_SetString(PyExc_ImportError, "init chisurf.math.reaction._reaction");
   }
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
