@@ -124,7 +124,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         idx = self.irf_select.selected_curve_index
         name = self.irf_select.curve_name
         mfm.run(
-            "mfm.cmd.tcspc.change_irf(%s, '%s')" % (idx, name)
+            "chisurf.macros.tcspc.change_irf(%s, '%s')" % (idx, name)
         )
         self.fwhm = self._irf.fwhm
 
@@ -244,7 +244,7 @@ class CorrectionsWidget(
         idx = self.lin_select.selected_curve_index
         lin_name = self.lin_select.curve_name
         mfm.run(
-            "mfm.cmd.tcspc.set_linearization(%s, '%s')" %
+            "chisurf.macros.tcspc.set_linearization(%s, '%s')" %
             (idx, lin_name)
         )
 
@@ -755,21 +755,21 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
     def onNormalizeAmplitudes(self):
         mfm.run(
-            "mfm.cmd.tcspc.normalize_lifetime_amplitudes(%s)",
+            "chisurf.macros.tcspc.normalize_lifetime_amplitudes(%s)",
             self.normalize_amplitude.isChecked()
         )
 
     def onAbsoluteAmplitudes(self):
         mfm.run(
-            "mfm.cmd.tcspc.absolute_amplitudes(%s)",
+            "chisurf.macros.tcspc.absolute_amplitudes(%s)",
             self.absolute_amplitude.isChecked()
         )
 
     def onAddLifetime(self):
-        mfm.run("mfm.cmd.tcspc.add_lifetime('%s')" % self.name)
+        mfm.run("chisurf.macros.tcspc.add_lifetime('%s')" % self.name)
 
     def onRemoveLifetime(self):
-        mfm.run("mfm.cmd.tcspc.remove_lifetime('%s')" % self.name)
+        mfm.run("chisurf.macros.tcspc.remove_lifetime('%s')" % self.name)
 
     def append(self, *args, **kwargs):
         Lifetime.append(self, *args, **kwargs)

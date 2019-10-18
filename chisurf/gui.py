@@ -17,7 +17,7 @@ import chisurf.widgets
 import chisurf.models
 import fitting
 import experiments
-import mfm.cmd
+import chisurf.macros
 import chisurf.tools
 import mfm.ui.resource
 
@@ -221,7 +221,7 @@ class Main(QtWidgets.QMainWindow):
 
     def onAddFit(self):
         mfm.run(
-            "mfm.cmd.add_fit(model_name='%s', dataset_indices=%s)" %
+            "chisurf.macros.add_fit(model_name='%s', dataset_indices=%s)" %
             (
                 self.current_model_name,
                 [r.row() for r in self.dataset_selector.selectedIndexes()]
@@ -250,7 +250,7 @@ class Main(QtWidgets.QMainWindow):
             **kwargs
         )
         mfm.run(
-            "mfm.cmd.load_fit_result(%s, %s)" % (
+            "chisurf.macros.load_fit_result(%s, %s)" % (
                 self.fit_idx,
                 filename
             )
@@ -292,7 +292,7 @@ class Main(QtWidgets.QMainWindow):
             self.current_setup,
             experiments.reader.ExperimentReader
         ):
-            mfm.cmd.add_dataset(
+            chisurf.macros.add_dataset(
                 self.current_setup,
                 filename=filename
             )
@@ -300,7 +300,7 @@ class Main(QtWidgets.QMainWindow):
                 self.current_setup,
                 experiments.reader.ExperimentReaderController
         ):
-            mfm.cmd.add_dataset(
+            chisurf.macros.add_dataset(
                 self.current_setup.experiment_reader,
                 filename=filename
             )
@@ -312,7 +312,7 @@ class Main(QtWidgets.QMainWindow):
     ):
         if path is None:
             path = chisurf.widgets.get_directory(**kwargs)
-        mfm.cmd.save_fits(path)
+        chisurf.macros.save_fits(path)
 
     def onSaveFit(
             self,
@@ -322,7 +322,7 @@ class Main(QtWidgets.QMainWindow):
         if directory is None:
             mfm.working_path = chisurf.widgets.get_directory(**kwargs)
         mfm.working_path = directory
-        mfm.console.run('mfm.cmd.save_fit()')
+        mfm.console.run('chisurf.macros.save_fit()')
 
     def onOpenHelp(
             self
@@ -527,7 +527,7 @@ class Main(QtWidgets.QMainWindow):
         global_fit.add_reader(global_setup)
         mfm.experiment.append(global_fit)
 
-        mfm.cmd.add_dataset(
+        chisurf.macros.add_dataset(
             setup=global_setup,
             experiment=global_fit
         )
@@ -635,7 +635,7 @@ class Main(QtWidgets.QMainWindow):
         self.actionAdd_fit.triggered.connect(self.onAddFit)
         self.actionSaveAllFits.triggered.connect(self.onSaveFits)
         self.actionSaveCurrentFit.triggered.connect(self.onSaveFit)
-        self.actionClose_Fit.triggered.connect(mfm.cmd.close_fit)
+        self.actionClose_Fit.triggered.connect(chisurf.macros.close_fit)
         self.actionClose_all_fits.triggered.connect(self.onCloseAllFits)
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)

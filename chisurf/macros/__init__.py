@@ -11,7 +11,6 @@ import experiments
 import chisurf.models
 import fitting
 import chisurf.widgets
-from . import tcspc
 
 
 def add_fit(

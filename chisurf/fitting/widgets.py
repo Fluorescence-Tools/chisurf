@@ -132,7 +132,7 @@ class FittingControllerWidget(
         self.onAutoFitRange()
 
     def onDatasetChanged(self):
-        mfm.run("mfm.cmd.change_selected_fit_of_group(%s)" % self.selected_fit)
+        mfm.run("chisurf.macros.change_selected_fit_of_group(%s)" % self.selected_fit)
 
     def onErrorEstimate(self):
         filename = chisurf.widgets.save_file('Error estimate', '*.er4')
@@ -226,7 +226,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
                 QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No
             )
             if reply == QtWidgets.QMessageBox.Yes:
-                mfm.console.execute('mfm.cmd.close_fit()')
+                mfm.console.execute('chisurf.macros.close_fit()')
             else:
                 event.ignore()
         else:
@@ -440,7 +440,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
         self.widget_link.setCheckState(QtCore.Qt.Checked)
         self.widget_value.setEnabled(False)
         mfm.run(
-            "mfm.cmd.fitting_parameter_name(%s, %s)" % (
+            "chisurf.macros.fitting_parameter_name(%s, %s)" % (
                 self.fitting_parameter.name,
                 cs
             )
