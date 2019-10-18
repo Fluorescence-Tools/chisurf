@@ -6,7 +6,7 @@ from __future__ import annotations
 import numpy as np
 
 import mfm
-import mfm.cmd
+import chisurf.macros
 import chisurf.fluorescence.tcspc.convolve
 import chisurf.fluorescence.tcspc.corrections
 import chisurf.math

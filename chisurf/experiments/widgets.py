@@ -89,7 +89,7 @@ class ExperimentalDataSelector(
 
     def onRemoveDataset(self):
         dataset_idx = [selected_index.row() for selected_index in self.selectedIndexes()]
-        mfm.run('mfm.cmd.remove_datasets(%s)' % dataset_idx)
+        mfm.run('chisurf.macros.remove_datasets(%s)' % dataset_idx)
         self.update()
 
     def onSaveDataset(self):
@@ -98,7 +98,7 @@ class ExperimentalDataSelector(
 
     def onGroupDatasets(self):
         dg = self.selected_dataset_idx
-        mfm.run("mfm.cmd.group_datasets(%s)" % dg)
+        mfm.run("chisurf.macros.group_datasets(%s)" % dg)
         self.update()
 
     def onUnGroupDatasets(self):
@@ -185,7 +185,7 @@ class ExperimentalDataSelector(
             mfm.run(
                 "\n".join(
                     [
-                        "mfm.cmd.add_dataset(filename='%s')" % p for p in paths
+                        "chisurf.macros.add_dataset(filename='%s')" % p for p in paths
                     ]
                 )
             )
