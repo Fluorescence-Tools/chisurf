@@ -30,7 +30,7 @@ else:
     if platform.system() == 'Linux':
         fpslibrary = os.path.join(
             path,
-            'liblinux_fps.so'
+            'libfpsnative.linux64.so'
         )
     else:
         fpslibrary = os.path.join(
@@ -135,16 +135,16 @@ def calculate_1_radius(
     >>> import mfm
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = mfm.Structure(pdb_filename)
-    >>> av = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=11, atom_name='CB', verbose=True)
+    >>> av = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=11, atom_name='CB', verbose=True)
 
     If save_av is True the calculated accessible volume is save to disk. The filename of the calculated
     accessible volume is determined by output_file
 
-    >>> import mfm.fluorescence
+    >>> import chisurf.fluorescence
     >>> import mfm.structure
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = mfm.structure.Structure(pdb_filename)
-    >>> av = mfm.fluorescence.fps.AV(structure, residue_seq_number=11, atom_name='CB', verbose=True, save_av=True, output_file='test')
+    >>> av = chisurf.fluorescence.fps.AV(structure, residue_seq_number=11, atom_name='CB', verbose=True, save_av=True, output_file='test')
     Calculating accessible volume
     -----------------------------
     Loading PDB
@@ -541,7 +541,7 @@ def calc_weights_from_traj(traj, res_id, atom_name, chain_id,
      >>> import mdtraj as md
      >>> import pylab as p
      >>> import mfm
-     >>> from mfm.fluorescence.fps.static import calc_av1_py, calc_weights_from_traj
+     >>> from chisurf.fluorescence.fps.static import calc_av1_py, calc_weights_from_traj
      >>> traj = md.load('e:/simulations_free_dye/t_join.h5')
 
      >>> res_id = 3  # the chromophore
@@ -600,7 +600,7 @@ def calc_distance_from_traj(traj, res_id, atom_name, chain_id, ng, dg, r0_res, r
      >>> import mdtraj as md
      >>> import pylab as p
      >>> import mfm
-     >>> from mfm.fluorescence.fps.static import calc_av1_py, calc_weights_from_traj
+     >>> from chisurf.fluorescence.fps.static import calc_av1_py, calc_weights_from_traj
      >>> traj = md.load('e:/simulations_free_dye/t_join.h5')
 
      >>> res_id = 3  # the chromophore
