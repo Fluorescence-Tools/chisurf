@@ -4,7 +4,7 @@ import numpy as np
 from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster
 
-from chisurf.structure.structure import rmsd, average, find_best
+from chisurf.structure import rmsd, average, find_best
 
 
 def findSmallestCluster(clusters):

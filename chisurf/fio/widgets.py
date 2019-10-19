@@ -246,7 +246,7 @@ class PDBLoad(QtWidgets.QWidget):
 
     @structure.setter
     def structure(self, v):
-        self._data = chisurf.structure.structure.Structure(
+        self._data = chisurf.structure.Structure(
             v,
             make_coarse=self.calcLookUp
         )

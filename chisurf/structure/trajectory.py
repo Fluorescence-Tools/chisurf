@@ -16,7 +16,7 @@ class Universe(object):
 
     def __init__(
             self,
-            structure: mfm.structure.structure.Structure = None
+            structure: chisurf.structure.Structure = None
     ):
         self.structures = [] if structure is None else [structure]
         self.potentials = list()
@@ -47,7 +47,7 @@ class Universe(object):
 
     def getEnergy(
             self,
-            structure: mfm.structure.structure.Structure = None
+            structure: chisurf.structure.Structure = None
     ) -> float:
         for p in self.potentials:
             p.structure = structure
@@ -57,7 +57,7 @@ class Universe(object):
 
     def getEnergies(
             self,
-            structure: mfm.structure.structure.Structure = None
+            structure: chisurf.structure.Structure = None
     ):
         for p in self.potentials:
             p.structure = structure
@@ -105,11 +105,10 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
 
     Making new h5-Trajectory file
 
-    >>> import chisurf.settings as mfm
-    >>> import chisurf.settings as mfm.structure
-    >>> from mfm.structure.trajectory import TrajectoryFile
-    >>> s = mfm.structure.structure.Structure('./test/data/modelling/trajectory/h5-file/T4L_Topology.pdb', verbose=True, make_coarse=False)
-    >>> traj = mfm.structure.TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', s, reading_routine='w')
+    >>> import chisurf.structure
+    >>> from chisurf.structure import TrajectoryFile
+    >>> s = chisurf.structure.Structure('./test/data/modelling/trajectory/h5-file/T4L_Topology.pdb', verbose=True, make_coarse=False)
+    >>> traj = chisurf.structure.TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', s, reading_routine='w')
     >>> traj[0]
     <mfm.structure.structure.mfm.structure.Structure at 0x11f34e10>
     >>> print(traj[0])
@@ -122,8 +121,8 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
 
     Opening h5-Trajectory file
 
-    >>> import chisurf.settings as mfm
-    >>> from mfm.structure.trajectory import TrajectoryFile
+    >>> import chisurf.structure
+    >>> from chisurf.structure import TrajectoryFile
     >>> traj = TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', reading_routine='r', stride=1)
     >>> print(traj[0:3])
     [<mfm.structure.structure.mfm.structure.Structure at 0x1345d5d0>,
@@ -137,8 +136,8 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
 
     initialize with mdtraj.Trajectory
 
-    >>> import chisurf.settings as mfm
-    >>> from mfm.structure.trajectory import TrajectoryFile
+    >>> import chisurf.structure
+    >>> from chisurf.structure import TrajectoryFile
     >>> traj = TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', reading_routine='r', stride=1)
     >>> t2 = TrajectoryFile(traj.mdtraj, filename='test.h5')
 
@@ -149,7 +148,12 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
 
     """
 
-    parameterNames = ['rmsd', 'drmsd', 'energy', 'chi2']
+    parameterNames = [
+        'rmsd',
+        'drmsd',
+        'energy',
+        'chi2'
+    ]
 
     def __init__(
             self,
@@ -208,6 +212,12 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
                         p_object,
                         stride=self.stride
                     )
+                    self._mdtraj[0].save(
+                        pdb_tmp
+                    )
+                    structure = chisurf.structure.Structure(
+                        pdb_tmp
+                    )
                     mdtraj.Trajectory.__init__(
                         self,
                         self._mdtraj.xyz,
@@ -228,7 +238,11 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
                 mdtraj.Trajectory
         ):
             self._mdtraj = p_object
-            mdtraj.Trajectory.__init__(self, xyz=p_object.xyz, topology=p_object.topology)
+            mdtraj.Trajectory.__init__(
+                self,
+                xyz=p_object.xyz,
+                topology=p_object.topology
+            )
             if filename is None:
                 _, filename = tempfile.mkstemp(
                     suffix=".h5"
@@ -237,7 +251,7 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
 
         elif isinstance(
                 p_object,
-                mfm.structure.structure.Structure
+                chisurf.structure.Structure
         ):
             if filename is None:
                 _, filename = tempfile.mkstemp(
@@ -256,7 +270,7 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
             structure = p_object
         else:
             self._mdtraj[0].save_pdb(pdb_tmp)
-            structure = mfm.structure.structure.Structure(
+            structure = chisurf.structure.Structure(
                 pdb_tmp,
                 verbose=self.verbose
             )
@@ -303,13 +317,13 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
     @property
     def structure(
             self
-    ) -> mfm.structure.structure.Structure:
+    ) -> chisurf.structure.Structure:
         return self._structure
 
     @structure.setter
     def structure(
             self,
-            v: mfm.structure.structure.Structure
+            v: chisurf.structure.Structure
     ):
         self._structure = copy.copy(v)
 
@@ -391,7 +405,7 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
     @property
     def reference(
             self
-    ) -> mfm.structure.structure.Structure:
+    ) -> chisurf.structure.Structure:
         """The reference structure used for RMSD-calculation. This cannot be
         set directly but has to be set via the number of the reference state
          :py:attribute`.rmsd_ref_state`
@@ -404,12 +418,14 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
     @property
     def average(
             self
-    ) -> mfm.structure.structure.Structure:
+    ) -> chisurf.structure.Structure:
         """
         The average structure (:py:class:`~mfm.structure.mfm.structure.Structure`)
         of the trajectory
         """
-        return mfm.structure.structure.average(self[:len(self)])
+        return chisurf.structure.average(
+            self[:len(self)]
+        )
 
     @property
     def values(
@@ -422,7 +438,7 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
         --------
 
         >>> import chisurf.settings as mfm
-        >>> from mfm.structure.trajectory import TrajectoryFile
+        >>> from chisurf.structure import TrajectoryFile
         >>> traj = TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
         >>> traj
         <mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x117f3b70>
@@ -469,7 +485,7 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
         --------
 
         >>> import chisurf.settings as mfm
-        >>> from mfm.structure.trajectory import TrajectoryFile
+        >>> from chisurf.structure import TrajectoryFile
         >>> traj = TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
         >>> traj
         <mdtraj.Trajectory with 92 frames, 2495 atoms, 164 residues, without unitcells at 0x11762b70>
@@ -477,7 +493,7 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
         <mdtraj.Trajectory with 93 frames, 2495 atoms, 164 residues, without unitcells at 0x11762b70>
         """
         verbose = verbose or self.verbose
-        if isinstance(xyz, mfm.structure.structure.Structure):
+        if isinstance(xyz, chisurf.structure.Structure):
             xyz = xyz.xyz
 
         xyz = xyz.reshape((1, xyz.shape[0], 3)) / 10.0
@@ -510,8 +526,8 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
     def __iter__(self):
         """
         Implements iterator
-        >>> import chisurf.settings as mfm
-        >>> from mfm.structure.trajectory import TrajectoryFile
+        >>> import chisurf.structure
+        >>> from chisurf.structure import TrajectoryFile
         >>> traj = TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
         >>> for s in traj:
         >>>     print(s)
@@ -535,8 +551,8 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
         Example
         -------
 
-        >>> import chisurf.settings as mfm
-        >>> traj = mfm.structure.trajectory.TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', reading_routine='r', stride=1)
+        >>> import chisurf.structure
+        >>> traj = chisurf.structure.TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', reading_routine='r', stride=1)
         >>> s = str(traj.next())
         >>> print(s[:500])
         ATOM      1    N MET A   1       7.332 -10.706 -15.034  0.00  0.00             N

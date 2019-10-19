@@ -178,7 +178,7 @@ def read(
     --------
 
     >>> import chisurf.fio
-    >>> pdb_file = models
+    >>> pdb_file = './test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb'
     >>> pdb = chisurf.fio.coordinates.read(pdb_file, verbose=True)
     >>> pdb[:5]
     array([ (0, ' ', 7, 'MET', 1, 'N', 'N', [72.739, -17.501, 8.879], 0.0, 1.65, 0.0, 14.0067),
@@ -375,6 +375,11 @@ def parse_string_pqr(
             atoms['radius'][ni] = float(line[63:70].strip())
             atoms['element'][ni] = assign_element_to_atom_name(atom_name)
             atoms['charge'][ni] = float(line[55:62].strip())
+            atoms['element'][ni] = assign_element_to_atom_name(atom_name)
+            try:
+                atoms['mass'][ni] = chisurf.common.atom_weights[atoms['element'][ni]]
+            except KeyError:
+                print("Cloud not assign parameters to: %s" % line)
             ni += 1
     atoms = atoms[:ni]
     if verbose:

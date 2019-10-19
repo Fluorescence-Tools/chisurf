@@ -6,13 +6,13 @@ from qtpy import QtWidgets, QtGui
 
 import chisurf.parameter
 import chisurf.curve
-import chisurf.fitting.parameter
+from chisurf.fitting.parameter import FittingParameterGroup
 import chisurf.fitting.widgets
 import chisurf.plots
 
 
 class Model(
-    chisurf.fitting.parameter.FittingParameterGroup
+    FittingParameterGroup
 ):
     name = "Model name not available"
 
@@ -181,7 +181,10 @@ class ModelCurve(
         return x, y
 
 
-class ModelWidget(Model, QtWidgets.QWidget):
+class ModelWidget(
+    Model,
+    QtWidgets.QWidget
+):
 
     plot_classes = [
         (

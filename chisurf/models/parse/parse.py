@@ -13,9 +13,9 @@ from re import Scanner
 from qtpy import QtCore, QtWidgets, QtWebEngineWidgets
 from qtpy.QtCore import QFile, QFileInfo, QTextStream, QUrl
 
-import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.widgets
+import chisurf.fio
 from chisurf.models.model import ModelWidget, ModelCurve
 from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
 
@@ -30,10 +30,12 @@ class ParseFormula(FittingParameterGroup):
 
     def __init__(
             self,
-            fit: fitting.fit.Fit = None,
+            fit: chisurf.fitting.fit.Fit = None,
             model: chisurf.models.model.Model = None,
             short: str = '',
-            parameters: List[fitting.parameter.FittingParameter] = None,
+            parameters: List[
+                chisurf.fitting.parameter.FittingParameter
+            ] = None,
             model_file: str = None,
             model_name: str = None,
             **kwargs
@@ -169,7 +171,7 @@ class ParseModel(ModelCurve):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             *args,
             parse: object = None,
             **kwargs
@@ -201,10 +203,12 @@ class ParseFormulaWidget(
     @chisurf.decorators.init_with_ui(ui_filename="parseWidget.ui")
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             model: chisurf.models.model.Model,
             short: str = '',
-            parameters: List[fitting.parameter.FittingParameter] = None,
+            parameters: List[
+                chisurf.fitting.parameter.FittingParameter
+            ] = None,
             n_columns: int = None,
             **kwargs
     ):
@@ -348,7 +352,7 @@ class ParseModelWidget(ParseModel, ModelWidget):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             **kwargs
     ):
         ModelWidget.__init__(self, fit, **kwargs)

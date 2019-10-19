@@ -13,7 +13,7 @@ import chisurf.fio
 import chisurf.fio.coordinates
 import chisurf.models
 import chisurf.parameter
-import chisurf.structure.structure
+import chisurf.structure
 from chisurf.parameter import ParameterGroup
 from . import _fps
 

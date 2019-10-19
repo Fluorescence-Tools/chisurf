@@ -168,7 +168,7 @@ class StickingWidget(Sticking, QtWidgets.QGroupBox):
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit,
-            structure: chisurf.structure.structure.Structure,
+            structure: chisurf.structure.Structure,
             **kwargs
     ):
         super().__init__(fit, structure, **kwargs)

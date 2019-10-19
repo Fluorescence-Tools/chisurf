@@ -12,7 +12,7 @@ import scipy.stats
 
 import chisurf.fluorescence
 import chisurf.fluorescence.fps
-import chisurf.structure.structure
+import chisurf.structure
 import chisurf.structure.potential.cPotentials
 #import chisurf.widgets
 import chisurf.settings as mfm
@@ -662,7 +662,7 @@ class AvPotential(object):
     >>> positions = labeling['Positions']
     >>> import chisurf
     >>> av_potential = chisurf.structure.potential.potentials.AvPotential(distances=distances, positions=positions)
-    >>> structure = chisurf.structure.structure.Structure('./test/data/model/HM_1FN5_Naming.pdb')
+    >>> structure = chisurf.structure.Structure('./test/data/model/HM_1FN5_Naming.pdb')
     >>> av_potential.getChi2(structure)
 
     """

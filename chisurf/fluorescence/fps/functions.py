@@ -61,7 +61,7 @@ def RDAMean(
 
     >>> import chisurf
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
-    >>> structure = chisurf.structure.Structure(pdb_filename)
+    >>> structure = chisurf.structure(pdb_filename)
     >>> av1 = chisurf.fluorescence.fps.AV(structure, residue_seq_number=72, atom_name='CB')
     >>> av2 = chisurf.fluorescence.fps.AV(structure, residue_seq_number=134, atom_name='CB')
     >>> chisurf.fluorescence.fps.functions.RDAMean(av1, av2)

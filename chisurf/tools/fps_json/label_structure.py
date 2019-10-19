@@ -18,7 +18,7 @@ import chisurf.widgets.pdb
 import chisurf.widgets.accessible_volume
 import chisurf.decorators
 import chisurf.structure
-import chisurf.structure.structure
+import chisurf.structure
 
 
 class LabelStructure(

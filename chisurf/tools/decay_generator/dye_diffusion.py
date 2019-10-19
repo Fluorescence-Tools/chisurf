@@ -16,7 +16,7 @@ import chisurf.fio.coordinates
 import chisurf.fluorescence.fps.widgets
 from chisurf.fluorescence.simulation.dye_diffusion import DyeDecay
 from chisurf.plots.molview.MolView import MolQtWidget
-from chisurf.structure.structure import Structure
+from chisurf.structure import Structure
 from chisurf.widgets.pdb import PDBSelector
 
 

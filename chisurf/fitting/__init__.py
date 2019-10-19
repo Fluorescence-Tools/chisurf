@@ -7,9 +7,9 @@ from typing import List
 
 import numpy as np
 
-import chisurf.curve
-import chisurf.models
 import chisurf.fitting.parameter
+import chisurf.models
+import chisurf.curve
 import chisurf.experiments
 import chisurf.fitting.fit
 import chisurf.fitting.sample

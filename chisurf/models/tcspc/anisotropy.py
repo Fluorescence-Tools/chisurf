@@ -2,15 +2,14 @@ from __future__ import annotations
 
 import numpy as np
 
-import chisurf.settings as mfm
 import chisurf.fluorescence
 import chisurf.fitting
-import chisurf.fitting.parameter
+from chisurf.fitting.parameter import FittingParameterGroup
 import chisurf.math.datatools
 
 
 class Anisotropy(
-    chisurf.fitting.parameter.FittingParameterGroup
+    FittingParameterGroup
 ):
     """
 
