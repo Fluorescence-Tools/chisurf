@@ -1,6 +1,8 @@
 import utils
 import os
 import unittest
+import numpy as np
+import scipy.stats
 
 
 TOPDIR = os.path.abspath(
@@ -9,8 +11,6 @@ TOPDIR = os.path.abspath(
 utils.set_search_paths(TOPDIR)
 
 import chisurf.fluorescence.tcspc.convolve
-import numpy as np
-import scipy.stats
 
 
 class Tests(unittest.TestCase):

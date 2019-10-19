@@ -1,6 +1,9 @@
 import utils
 import os
 import unittest
+import tempfile
+import glob
+import numpy as np
 
 
 TOPDIR = os.path.abspath(
@@ -9,9 +12,6 @@ TOPDIR = os.path.abspath(
 utils.set_search_paths(TOPDIR)
 
 import chisurf.fio
-import tempfile
-import glob
-import numpy as np
 
 
 class Tests(unittest.TestCase):

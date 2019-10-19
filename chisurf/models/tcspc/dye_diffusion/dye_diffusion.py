@@ -15,22 +15,22 @@ from chisurf.fluorescence.fps.dynamic import DiffusionSimulation, Dye, Sticking,
 from chisurf.fluorescence.fps.widgets import ProteinQuenchingWidget, DyeWidget, StickingWidget
 
 import chisurf.settings as mfm
-import fitting.fit
+import chisurf.fitting.fit
 import chisurf.models.tcspc.nusiance
-import fitting.widgets
+import chisurf.fitting.widgets
 import chisurf.fluorescence.fps as fps
 import chisurf.fluorescence.tcspc.convolve
 import chisurf.fio
 import chisurf.math
 import chisurf.models.tcspc.widgets
-import chisurf.settings as mfm.structure
-import chisurf.mfm.structure.structure
-from mfm import plots
+import chisurf.structure
+import chisurf.structure.structure
+import chisurf.plots
 from chisurf.curve import Curve
 from chisurf.models.model import Model
 from chisurf.fluorescence.fps import ACV
 from chisurf.fluorescence.simulation import photon
-from mfm.structure.structure import Structure, get_coordinates_of_residues
+from chisurf.structure import Structure, get_coordinates_of_residues
 from chisurf.widgets.pdb import PDBSelector
 
 
@@ -250,8 +250,18 @@ class DyeDecay(Model, Curve):
     def __init__(self, tau0=4.2, k_quench_protein=5.0, n_photons=10e6,
                  attachment_residue=None, attachment_atom=None, attachment_chain=None, dg=0.5, sticky_mode='quencher',
                  save_av=True, diffusion_coefficient=7.1, slow_fact=0.1, critical_distance=7.0, output_file='out',
-                 av_parameter={'linker_length': 20.0, 'linker_width': 0.5, 'radius1': 3.5},
-                 quencher={'TRP': ['CB'], 'TYR': ['CB'], 'HIS': ['CB'], 'PRO': ['CB']}, t_max=500.0, t_step=0.05,
+                 av_parameter={
+                     'linker_length': 20.0,
+                     'linker_width': 0.5,
+                     'radius1': 3.5
+                 },
+                 quencher={
+                     'TRP': ['CB'],
+                     'TYR': ['CB'],
+                     'HIS': ['CB'],
+                     'PRO': ['CB']
+                 },
+                 t_max=500.0, t_step=0.05,
                  slow_radius=10.0, decay_mode='curve', n_curves=10000,
                  **kwargs):
 
@@ -259,14 +269,15 @@ class DyeDecay(Model, Curve):
         Curve.__init__(self)
         Model.__init__(self, fit=self.fit)
 
-        self.dye_parameter = Dye(tau0=tau0, diffusion_coefficient=diffusion_coefficient,
-                                          critical_distance=critical_distance,
-                                          av_length=av_parameter['linker_length'],
-                                          av_width=av_parameter['linker_width'],
-                                          av_radius=av_parameter['radius1'],
-                                          attachment_residue=attachment_residue,
-                                          attachment_atom=attachment_atom,
-                                          attachment_chain=attachment_chain
+        self.dye_parameter = Dye(
+            tau0=tau0, diffusion_coefficient=diffusion_coefficient,
+            critical_distance=critical_distance,
+            av_length=av_parameter['linker_length'],
+            av_width=av_parameter['linker_width'],
+            av_radius=av_parameter['radius1'],
+            attachment_residue=attachment_residue,
+            attachment_atom=attachment_atom,
+            attachment_chain=attachment_chain
         )
 
         self.sticking_parameter = Sticking(
@@ -290,7 +301,7 @@ class DyeDecay(Model, Curve):
         self._decay_mode = decay_mode
         self._diffusion = None
         self._av = None
-        self._structure = mfm.structure.structure.Structure()
+        self._structure = chisurf.structure.Structure()
         self.tau0 = tau0
         self._n_photons = n_photons
         self._photon_trace = None
@@ -330,9 +341,17 @@ class DyeDecay(Model, Curve):
         dg = kwargs.get('dg', self.dg)
         structure = kwargs.get('structure', self.structure)
         av_parameter = kwargs.get('av_parameter', self.av_parameter)
-        av = ACV(structure, residue_seq_number=attachment_residue, atom_name=attachment_atom, chain_identifier=chain,
-                 simulation_grid_resolution=dg, save_av=save_av, verbose=verbose, output_file=self.output_file,
-                 **av_parameter)
+        av = ACV(
+            structure,
+            residue_seq_number=attachment_residue,
+            atom_name=attachment_atom,
+            chain_identifier=chain,
+            simulation_grid_resolution=dg,
+            save_av=save_av,
+            verbose=verbose,
+            output_file=self.output_file,
+            **av_parameter
+        )
         return av
 
     def simulate_diffusion_trajectory(self, **kwargs):
@@ -343,10 +362,19 @@ class DyeDecay(Model, Curve):
         """
         verbose = kwargs.get('verbose', self.verbose)
         av = kwargs.get('av', self.av)
-        diffusion = DiffusionSimulation(av, dye=self.dye_parameter,
-                                      verbose=verbose, quencher_definition=self.protein_quenching,
-                                      sticking_parameter=self.sticking_parameter)
-        diffusion.run(D=self.diffusion_coefficient, slow_fact=self.slow_fact, t_max=self.t_max, t_step=self.t_step)
+        diffusion = DiffusionSimulation(
+            av,
+            dye=self.dye_parameter,
+            verbose=verbose,
+            quencher_definition=self.protein_quenching,
+            sticking_parameter=self.sticking_parameter
+        )
+        diffusion.run(
+            D=self.diffusion_coefficient,
+            slow_fact=self.slow_fact,
+            t_max=self.t_max,
+            t_step=self.t_step
+        )
         return diffusion
 
     def calc_photons(self, verbose=False, donor_traj=None, kQ=None):
@@ -375,7 +403,12 @@ class DyeDecay(Model, Curve):
         # dts, phs = photon.simulate_photon_trace_kQ(n_ph=n_photons, collided=is_collided, kQ=kQ, t_step=t_step, tau0=tau0)
         #dts, phs = photon.simulate_photon_trace(n_ph=n_photons, collided=is_collided, kQ=kQ, t_step=t_step, tau0=tau0)
         kq_array = is_collided * kQ
-        dts, phs = photon.simulate_photon_trace_rate(n_ph=n_photons, quench=kq_array, t_step=t_step, tau0=tau0)
+        dts, phs = photon.simulate_photon_trace_rate(
+            n_ph=n_photons,
+            quench=kq_array,
+            t_step=t_step,
+            tau0=tau0
+        )
 
         n_photons = phs.shape[0]
         n_f = phs.sum()
@@ -398,10 +431,11 @@ class DyeDecay(Model, Curve):
         """
         Returns two arrays one is the time axis and one is the photon-counts
 
-        :param kwargs: Takes *nbins* the number of histogram bins, *tac_range* the histogram tac_range, *decay_mode* the
-        way the histogram gets generated: either *photon* or *curve*. If this parameter is *photon* the histogram
-        will be the result of the simulation of a Poisson process. If it is *curve* the sum of smooth curves will be
-        returned based on several integrated quenched rates.
+        :param kwargs: Takes *nbins* the number of histogram bins, *tac_range* the histogram
+        tac_range, *decay_mode* the way the histogram gets generated: either *photon* or *curve*.
+        If this parameter is  *photon* the histogram will be the result of the simulation of a
+        Poisson process. If it is *curve* the sum of smooth curves will be returned based on
+        several integrated quenched rates.
         """
         nbins = kwargs.get('nbins', self.nTAC)
         r = kwargs.get('tac_range', (0, 50, 0.0141))
@@ -491,14 +525,14 @@ class DyeDecay(Model, Curve):
 
 class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
 
-    plot_classes = [(plots.LinePlot, {'d_scalex': 'lin',
+    plot_classes = [(chisurf.plots.LinePlot, {'d_scalex': 'lin',
                                                   'd_scaley': 'log',
                                                   'r_scalex': 'lin',
                                                   'r_scaley': 'lin',
                                                   }
                     ),
-                    (plots.SurfacePlot, {}),
-                    (plots.MolView, {
+                    (chisurf.plots.SurfacePlot, {}),
+                    (chisurf.plots.MolView, {
                         'quencher': chisurf.common.quencher_names
                     })
     ]
@@ -718,21 +752,42 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             **kwargs
     ):
         self.verbose = kwargs.get('verbose', mfm.verbose)
-        generic = chisurf.models.tcspc.widgets.GenericWidget(fit=fit, parent=self, model=self, **kwargs)
-        convolve = chisurf.models.tcspc.widgets.ConvolveWidget(fit=fit, model=self, dt=fit.data.dt, **kwargs)
-        corrections = chisurf.models.tcspc.widgets.CorrectionsWidget(fit, model=self, **kwargs)
+        generic = chisurf.models.tcspc.widgets.GenericWidget(
+            fit=fit,
+            parent=self,
+            model=self,
+            **kwargs
+        )
+        convolve = chisurf.models.tcspc.widgets.ConvolveWidget(
+            fit=fit,
+            model=self,
+            dt=fit.data.dt,
+            **kwargs
+        )
+        corrections = chisurf.models.tcspc.widgets.CorrectionsWidget(
+            fit,
+            model=self,
+            **kwargs
+        )
 
         fn = os.path.join(mfm.package_directory, 'settings/sample.json')
         settings_file = kwargs.get('dye_diffusion_settings_file', fn)
         settings = json.load(open(settings_file))
-        DyeDecay.__init__(self, fit=fit, convolve=convolve, generic=generic, corrections=corrections, **settings)
+        DyeDecay.__init__(
+            self,
+            fit=fit,
+            convolve=convolve,
+            generic=generic,
+            corrections=corrections,
+            **settings
+        )
 
         if not kwargs.get('disable_fit', False):
-            fitting_widget = fitting.widgets.FittingControllerWidget(fit, **kwargs)
+            fitting_widget = chisurf.fitting.widgets.FittingControllerWidget(fit, **kwargs)
         else:
             fitting_widget = QtWidgets.QLabel()
 
@@ -777,14 +832,14 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.actionSave_histogram.triggered.connect(self.onSaveHist)
         self.actionSave_trajectory.triggered.connect(self.onSaveTrajectory)
 
-        self.doubleSpinBox_6.valueChanged[double].connect(self.onSimulationTimeChanged)
-        self.doubleSpinBox_7.valueChanged[double].connect(self.onSimulationDtChanged)
+        self.doubleSpinBox_6.valueChanged.connect(self.onSimulationTimeChanged)
+        self.doubleSpinBox_7.valueChanged.connect(self.onSimulationDtChanged)
 
         self.tmp_dir = tempfile.gettempdir()
         self.diff_file = None
         self.av_slow_file = None
         self.av_fast_file = None
-        self.fitting_widget = fitting.widgets.FittingWidget(fit=self.fit)
+        self.fitting_widget = chisurf.fitting.widgets.FittingWidget(fit=self.fit)
 
         self.hide()
 
