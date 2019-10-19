@@ -10,7 +10,7 @@ import qdarkstyle
 
 import numpy as np
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.decorators
 import experiments
 import experiments.data
@@ -278,7 +278,7 @@ class FRETLineGenerator(object):
     @property
     def parameter_values(self):
         """
-        The values the parameter as defined by :py:attr:`~mfm.fluorescence.fret_lines.FRETLineGenerator.parameter_name`
+        The values the parameter as defined by :py:attr:`~chisurf.fluorescence.fret_lines.FRETLineGenerator.parameter_name`
         """
         start, stop = self.parameter_range
         n_points = self.n_points

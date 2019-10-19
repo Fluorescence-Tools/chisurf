@@ -6,7 +6,7 @@ import pyqtgraph as pg
 from qtpy import  QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
-import mfm
+import chisurf.mfm as mfm
 from chisurf.plots.plotbase import Plot
 
 pyqtgraph_settings = mfm.settings.gui['plot']["pyqtgraph"]

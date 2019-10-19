@@ -5,9 +5,9 @@ import math
 
 import numpy as np
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.math.datatools
-from fitting.parameter import FittingParameterGroup, FittingParameter
+from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 from chisurf.models.model import ModelCurve
 from chisurf.models.tcspc.nusiance import Generic, Corrections, Convolve
 from chisurf.models.tcspc.anisotropy import Anisotropy
@@ -122,13 +122,13 @@ class Lifetime(FittingParameterGroup):
         return len(self._amplitudes)
 
     @property
-    def link(self) -> fitting.parameter.FittingParameter:
+    def link(self) -> chisurf.fitting.parameter.FittingParameter:
         return self._link
 
     @link.setter
     def link(
             self,
-            v: fitting.parameter.FittingParameter
+            v: chisurf.fitting.parameter.FittingParameter
     ):
         if isinstance(v, Lifetime) or v is None:
             self._link = v
@@ -174,8 +174,8 @@ class Lifetime(FittingParameterGroup):
         self._lifetimes.append(lifetime)
 
     def pop(self) -> Tuple[
-        fitting.parameter.FittingParameter,
-        fitting.parameter.FittingParameter
+        chisurf.fitting.parameter.FittingParameter,
+        chisurf.fitting.parameter.FittingParameter
     ]:
         amplitude = self._amplitudes.pop()
         lifetime = self._lifetimes.pop()
@@ -186,8 +186,8 @@ class Lifetime(FittingParameterGroup):
             short: str = 'L',
             absolute_amplitudes: bool = True,
             normalize_amplitudes: bool = True,
-            amplitudes: List[fitting.parameter.FittingParameter] = None,
-            lifetimes: List[fitting.parameter.FittingParameter] = None,
+            amplitudes: List[chisurf.fitting.parameter.FittingParameter] = None,
+            lifetimes: List[chisurf.fitting.parameter.FittingParameter] = None,
             name: str = 'lifetimes',
             link: FittingParameter = None,
             **kwargs
@@ -235,7 +235,7 @@ class LifetimeModel(ModelCurve):
 
     def __init__(
             self,
-            fit: fitting.fit.Fit,
+            fit: chisurf.fitting.fit.Fit,
             generic: Generic = None,
             corrections: Corrections = None,
             anisotropy: Anisotropy = None,
@@ -243,10 +243,7 @@ class LifetimeModel(ModelCurve):
             convolve: Convolve = None,
             **kwargs
     ):
-        super().__init__(
-            fit,
-            **kwargs
-        )
+        super().__init__(fit, **kwargs)
         if generic is None:
             generic = Generic(name='generic', fit=fit, **kwargs)
         self.generic = generic

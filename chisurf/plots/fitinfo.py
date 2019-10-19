@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from qtpy import  QtWidgets
 
-import mfm
-import fitting
+import chisurf.mfm as mfm
+import chisurf.fitting
 from chisurf.plots import plotbase
 
 
@@ -13,7 +13,7 @@ class FitInfo(plotbase.Plot):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             parent: QtWidgets.QWidget = None,
             **kwargs
     ):

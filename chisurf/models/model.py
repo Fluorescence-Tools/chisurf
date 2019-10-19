@@ -6,19 +6,19 @@ from qtpy import QtWidgets, QtGui
 
 import chisurf.parameter
 import chisurf.curve
-import fitting.parameter
-import fitting.widgets
+import chisurf.fitting.parameter
+import chisurf.fitting.widgets
 import chisurf.plots
 
 
 class Model(
-    fitting.parameter.FittingParameterGroup
+    chisurf.fitting.parameter.FittingParameterGroup
 ):
     name = "Model name not available"
 
     def __init__(
             self,
-            fit: fitting.fit.Fit,
+            fit: chisurf.fitting.fit.Fit,
             model_number: int = 0,
             **kwargs
     ):
@@ -33,7 +33,9 @@ class Model(
     @property
     def parameters(
             self
-    ) -> List[fitting.parameter.FittingParameter]:
+    ) -> List[
+        chisurf.fitting.parameter.FittingParameter
+    ]:
         return [p for p in self.parameters_all if not (p.fixed or p.is_linked)]
 
     @property
@@ -70,7 +72,7 @@ class Model(
 
     def get_wres(
             self,
-            fit: fitting.fit.Fit,
+            fit: chisurf.fitting.fit.Fit,
             xmin: int = None,
             xmax: int = None,
             **kwargs
@@ -79,7 +81,7 @@ class Model(
             xmin = fit.xmin
         if xmax is None:
             xmax = fit.xmax
-        return fitting.calculate_weighted_residuals(
+        return chisurf.fitting.calculate_weighted_residuals(
             fit.data,
             fit.model,
             xmin=xmin,
@@ -149,7 +151,7 @@ class ModelCurve(
 
     def __init__(
             self,
-            fit: fitting.fit.Fit,
+            fit: chisurf.fitting.fit.Fit,
             *args, **kwargs
     ):
         super().__init__(
@@ -215,7 +217,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
         for parameter in self.parameters:
             if isinstance(
                     parameter,
-                    fitting.widgets.FittingParameterWidget
+                    chisurf.fitting.widgets.FittingParameterWidget
             ):
                 parameter.update()
 
@@ -231,7 +233,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             icon: QtGui.QIcon = None,
             *args,
             **kwargs

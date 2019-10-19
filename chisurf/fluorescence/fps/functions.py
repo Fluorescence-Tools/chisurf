@@ -3,7 +3,8 @@ from typing import Tuple, Type
 
 import chisurf.fluorescence
 from . import _fps
-import mfm
+import chisurf.mfm.settings
+import chisurf.mfm as mfm
 import numpy as np
 import numba as nb
 from math import exp, sqrt
@@ -72,8 +73,8 @@ def RDAMean(
 
 
 def widthRDA(
-        av1: mfm.fluorescence.fps.BasicAV,
-        av2: mfm.fluorescence.fps.BasicAV,
+        av1: chisurf.fluorescence.fps.BasicAV,
+        av2: chisurf.fluorescence.fps.BasicAV,
         **kwargs
 ):
     """Calculate the width of the distance distribution between two accessible volumes
@@ -83,7 +84,7 @@ def widthRDA(
     >>> structure = mfm.structure.Structure(pdb_filename)
     >>> av1 = chisurf.fluorescence.fps.AV(structure, residue_seq_number=72, atom_name='CB')
     >>> av2 = chisurf.fluorescence.fps.AV(structure, residue_seq_number=134, atom_name='CB')
-    >>> mfm.fluorescence.fps.functions.widthRDA(av1, av2)
+    >>> chisurf.fluorescence.fps.functions.widthRDA(av1, av2)
     52.93390285282142
     """
     n_samples = kwargs.get('distance_samples', fps_settings['distance_samples'])
@@ -431,8 +432,17 @@ class DiffusionIterator:
 
 
 @nb.jit(nopython=True, nogil=True)
-def create_fret_rate_map(density_donor, density_acceptor, r0_donor, r0_acceptor, dg_donor, dg_acceptor,
-                         foerster_radius, kf, acceptor_step=2):
+def create_fret_rate_map(
+        density_donor,
+        density_acceptor,
+        r0_donor,
+        r0_acceptor,
+        dg_donor,
+        dg_acceptor,
+        foerster_radius,
+        kf,
+        acceptor_step=2
+):
     """ On every grid point (possible position of the donor) a distribution of FRET-rate constants
     is possible. Hence, the FRET-induced donor decay (fid) for a single donor position (i) is given by
     fid = sum_i (xi exp(-kret(i)*t)) where (i) are the (i) are the possible acceptor positions.
@@ -501,7 +511,16 @@ def create_fret_rate_map(density_donor, density_acceptor, r0_donor, r0_acceptor,
 
 
 @nb.jit(nopython=True, nogil=True)
-def create_quenching_map(density, r0, dg, atoms_coord, tau0, kQ, rC, dye_radius):
+def create_quenching_map(
+        density,
+        r0,
+        dg,
+        atoms_coord,
+        tau0,
+        kQ,
+        rC,
+        dye_radius
+):
     """Creates a grid of diffusion coefficients based on distance to the atoms in a structure. The more atoms
     are in proximity to the grid-point the slower the diffusion.
 

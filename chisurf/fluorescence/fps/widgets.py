@@ -3,10 +3,10 @@ from __future__ import annotations
 from collections import OrderedDict
 from qtpy import QtWidgets
 
-import mfm
-import fitting
+import chisurf.mfm.settings
+import chisurf.fitting
 from chisurf.fluorescence.fps.dynamic import ProteinQuenching, Dye, Sticking
-from fitting.widgets import FittingParameterWidget
+from chisurf.fitting.widgets import FittingParameterWidget
 import chisurf.structure
 
 
@@ -99,7 +99,7 @@ class DyeWidget(Dye, QtWidgets.QGroupBox):
     ):
         QtWidgets.QGroupBox.__init__(self)
         self.dye_select = QtWidgets.QComboBox()
-        self.dye_select.addItems(mfm.fluorescence.fps.dye_names)
+        self.dye_select.addItems(chisurf.fluorescence.fps.dye_names)
         Dye.__init__(self, **kwargs)
 
         layout = QtWidgets.QVBoxLayout()
@@ -119,28 +119,28 @@ class DyeWidget(Dye, QtWidgets.QGroupBox):
         gl.addWidget(self.dye_select, 0, 0, 1, 2)
 
         gl.addWidget(
-            fitting.widgets.make_fitting_parameter_widget(self._critical_distance),
+            chisurf.fitting.widgets.make_fitting_parameter_widget(self._critical_distance),
             1, 0
         )
         gl.addWidget(
-            fitting.widgets.make_fitting_parameter_widget(self._diffusion_coefficient),
+            chisurf.fitting.widgets.make_fitting_parameter_widget(self._diffusion_coefficient),
             2, 0
         )
         gl.addWidget(
-            fitting.widgets.make_fitting_parameter_widget(self._tau0),
+            chisurf.fitting.widgets.make_fitting_parameter_widget(self._tau0),
             3, 0
         )
 
         gl.addWidget(
-            fitting.widgets.make_fitting_parameter_widget(self._av_length),
+            chisurf.fitting.widgets.make_fitting_parameter_widget(self._av_length),
             1, 1
         )
         gl.addWidget(
-            fitting.widgets.make_fitting_parameter_widget(self._av_width),
+            chisurf.fitting.widgets.make_fitting_parameter_widget(self._av_width),
             2, 1
         )
         gl.addWidget(
-            fitting.widgets.make_fitting_parameter_widget(self._av_radius),
+            chisurf.fitting.widgets.make_fitting_parameter_widget(self._av_radius),
             3, 1
         )
         self.dye_select.currentIndexChanged[int].connect(self.update_parameter)
@@ -167,11 +167,11 @@ class StickingWidget(Sticking, QtWidgets.QGroupBox):
 
     def __init__(
             self,
-            fit: fitting.fit.Fit,
+            fit: chisurf.fitting.fit.Fit,
             structure: chisurf.structure.structure.Structure,
             **kwargs
     ):
-        super(StickingWidget, self).__init__(fit, structure, **kwargs)
+        super().__init__(fit, structure, **kwargs)
 
         self.setTitle('Sticking')
         layout = QtWidgets.QGridLayout()
@@ -180,12 +180,16 @@ class StickingWidget(Sticking, QtWidgets.QGroupBox):
         self.radioButton_2 = QtWidgets.QRadioButton('Quencher')
 
         layout.addWidget(
-            fitting.widgets.make_fitting_parameter_widget(self._slow_radius),
+            chisurf.fitting.widgets.make_fitting_parameter_widget(
+                self._slow_radius
+            ),
             0,
             1
         )
         layout.addWidget(
-            fitting.widgets.make_fitting_parameter_widget(self._slow_fact),
+            chisurf.fitting.widgets.make_fitting_parameter_widget(
+                self._slow_fact
+            ),
             1,
             1
         )

@@ -19,7 +19,7 @@ import json
 import re
 from collections import OrderedDict
 
-import mfm
+import chisurf.mfm as mfm
 
 
 def dict_to_parameter_tree(

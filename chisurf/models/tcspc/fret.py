@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import numpy as np
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.fluorescence.anisotropy.kappa2
 import chisurf.math
 import chisurf.math.datatools
 from chisurf.models.tcspc.lifetime import Lifetime, LifetimeModel
 from chisurf.fluorescence.general import distribution2rates, rates2lifetimes
-from fitting.parameter import FittingParameter, FittingParameterGroup
+from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
 
 rda_axis = np.linspace(
     mfm.settings.fret['rda_min'],
@@ -167,7 +167,7 @@ class OrientationParameter(FittingParameterGroup):
 
         # slow isotropic
         k2s = np.linspace(0.01, 4, 50)
-        p = mfm.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(
+        p = chisurf.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(
             k2s
         )
         self._k2_slow_iso = chisurf.math.datatools.two_column_to_interleaved(
@@ -487,7 +487,7 @@ class FRETModel(LifetimeModel):
             discriminate = mfm.settings.cs_settings['fret']['discriminate']
             discriminate_amplitude = mfm.settings.cs_settings['fret'][
                 'discriminate_amplitude']
-            return mfm.fluorescence.tcspc.bin_lifetime_spectrum(
+            return chisurf.fluorescence.tcspc.bin_lifetime_spectrum(
                 lt, n_lifetimes=n_lifetimes,
                 discriminate=discriminate,
                 discriminator=discriminate_amplitude
@@ -693,7 +693,7 @@ class FRETrateModel(FRETModel):
     def fret_rate_spectrum(
             self
     ) -> np.array:
-        fret_rates = mfm.fluorescence.general.distance_to_fret_rate_constant(
+        fret_rates = chisurf.fluorescence.general.distance_to_fret_rate_constant(
             self.fret_rates.distance,
             self.fret_parameters.forster_radius,
             self.fret_parameters.tauD0,

@@ -105,8 +105,8 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
 
     Making new h5-Trajectory file
 
-    >>> import mfm
-    >>> import mfm.structure
+    >>> import chisurf.mfm as mfm
+    >>> import chisurf.mfm as mfm.structure
     >>> from mfm.structure.trajectory import TrajectoryFile
     >>> s = mfm.structure.structure.Structure('./test/data/modelling/trajectory/h5-file/T4L_Topology.pdb', verbose=True, make_coarse=False)
     >>> traj = mfm.structure.TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', s, reading_routine='w')
@@ -122,7 +122,7 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
 
     Opening h5-Trajectory file
 
-    >>> import mfm
+    >>> import chisurf.mfm as mfm
     >>> from mfm.structure.trajectory import TrajectoryFile
     >>> traj = TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', reading_routine='r', stride=1)
     >>> print(traj[0:3])
@@ -137,7 +137,7 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
 
     initialize with mdtraj.Trajectory
 
-    >>> import mfm
+    >>> import chisurf.mfm as mfm
     >>> from mfm.structure.trajectory import TrajectoryFile
     >>> traj = TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', reading_routine='r', stride=1)
     >>> t2 = TrajectoryFile(traj.mdtraj, filename='test.h5')
@@ -421,7 +421,7 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
         Examples
         --------
 
-        >>> import mfm
+        >>> import chisurf.mfm as mfm
         >>> from mfm.structure.trajectory import TrajectoryFile
         >>> traj = TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
         >>> traj
@@ -468,7 +468,7 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
         Examples
         --------
 
-        >>> import mfm
+        >>> import chisurf.mfm as mfm
         >>> from mfm.structure.trajectory import TrajectoryFile
         >>> traj = TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
         >>> traj
@@ -510,7 +510,7 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
     def __iter__(self):
         """
         Implements iterator
-        >>> import mfm
+        >>> import chisurf.mfm as mfm
         >>> from mfm.structure.trajectory import TrajectoryFile
         >>> traj = TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
         >>> for s in traj:
@@ -535,7 +535,7 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
         Example
         -------
 
-        >>> import mfm
+        >>> import chisurf.mfm as mfm
         >>> traj = mfm.structure.trajectory.TrajectoryFile('./test/data/modelling/trajectory/h5-file/hgbp1_transition.h5', reading_routine='r', stride=1)
         >>> s = str(traj.next())
         >>> print(s[:500])

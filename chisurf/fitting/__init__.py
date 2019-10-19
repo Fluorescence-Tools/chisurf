@@ -9,16 +9,16 @@ import numpy as np
 
 import chisurf.curve
 import chisurf.models
-import fitting.parameter
-import experiments
-import fitting.fit
-import fitting.sample
-import fitting.widgets
+import chisurf.fitting.parameter
+import chisurf.experiments
+import chisurf.fitting.fit
+import chisurf.fitting.sample
+import chisurf.fitting.widgets
 
 
 def find_fit_idx_of_model(
         model: chisurf.models.model.Model,
-        fits: List[fitting.fit.Fit]
+        fits: List[chisurf.fitting.fit.Fit]
 ) -> int:
     """Returns index of the fit of a model in mfm.fits array
 
@@ -32,7 +32,7 @@ def find_fit_idx_of_model(
 
 
 def calculate_weighted_residuals(
-        data: experiments.data.DataCurve,
+        data: chisurf.experiments.data.DataCurve,
         model: chisurf.curve.Curve,
         xmin: int,
         xmax: int,

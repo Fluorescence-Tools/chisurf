@@ -8,13 +8,13 @@ from qtpy import QtCore, QtWidgets
 
 import numpy as np
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.decorators
 from chisurf import plots
 from chisurf.curve import Curve
-import fitting.fit
+import chisurf.fitting.fit
 from chisurf.models import model
-from fitting.parameter import GlobalFittingParameter
+from chisurf.fitting.parameter import GlobalFittingParameter
 
 
 class GlobalFitModel(model.Model, Curve):
@@ -26,7 +26,7 @@ class GlobalFitModel(model.Model, Curve):
 
     def __init__(
             self,
-            fit: fitting.fit.Fit,
+            fit: chisurf.fitting.fit.Fit,
             **kwargs
     ):
         self.fits = []
@@ -209,7 +209,7 @@ class GlobalFitModel(model.Model, Curve):
 
     def get_wres(
             self,
-            fit: fitting.fit.Fit,
+            fit: chisurf.fitting.fit.Fit,
             xmin: int = None,
             xmax: int = None,
             **kwargs
@@ -230,7 +230,7 @@ class GlobalFitModel(model.Model, Curve):
 
     def append_fit(
             self,
-            fit: fitting.fit.Fit
+            fit: chisurf.fitting.fit.Fit
     ) -> None:
         if fit not in self.fits:
             self.fits.append(fit)
@@ -264,7 +264,7 @@ class GlobalFitModel(model.Model, Curve):
 
     def autofitrange(
             self,
-            fit: fitting.fit.FitGroup
+            fit: chisurf.fitting.fit.FitGroup
     ):
         self.xmin, self.xmax = None, None
         return self.xmin, self.xmax
@@ -383,7 +383,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
     @chisurf.decorators.init_with_ui(ui_filename="globalfit_2.ui")
     def __init__(
             self,
-            fit: fitting.fit.Fit
+            fit: chisurf.fitting.fit.Fit
     ):
         self.actionOnAddToLocalFitList.triggered.connect(self.onAddToLocalFitList)
         self.actionOn_clear_local_fits.triggered.connect(self.onClearLocalFits)
@@ -441,17 +441,17 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         self.checkBox_3.setChecked(v)
 
     @property
-    def local_fits(self) -> List[fitting.fit.Fit]:
+    def local_fits(self) -> List[chisurf.fitting.fit.Fit]:
         return [
             s for s in mfm.fits
-            if isinstance(s, fitting.fit.Fit) and s.model is not self
+            if isinstance(s, chisurf.fitting.fit.Fit) and s.model is not self
         ]
 
     @property
     def local_fit_idx(self) -> List[int]:
         return [
             i for i, s in enumerate(mfm.fits)
-            if isinstance(s, fitting.fit.Fit) and s.model is not self
+            if isinstance(s, chisurf.fitting.fit.Fit) and s.model is not self
         ]
 
     @property
@@ -501,7 +501,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     def append_fit(
             self,
-            fit: fitting.Fit
+            fit: chisurf.fitting.fit
     ):
         if fit not in self.fits:
 

@@ -8,7 +8,7 @@ import pyqtgraph as pg
 from PyQt5 import QtWidgets
 import qdarkstyle
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.decorators
 import experiments.data
 import experiments.widgets

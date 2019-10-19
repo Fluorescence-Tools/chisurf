@@ -8,17 +8,17 @@ from qtpy import QtCore, QtGui, QtWidgets, uic
 import qdarkstyle
 import numpy as np
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.decorators
 import chisurf.base
-import experiments.widgets
-import experiments.tcspc.controller
-import chisurf.widgets
-import chisurf.models
-import fitting
-import experiments
 import chisurf.macros
 import chisurf.tools
+from chisurf import fitting
+from chisurf import experiments
+import chisurf.experiments.widgets
+import chisurf.experiments.tcspc.controller
+import chisurf.widgets
+import chisurf.models
 import mfm.ui.resource
 
 
@@ -198,7 +198,7 @@ class Main(QtWidgets.QMainWindow):
             "Python macros",
             file_type="Python file (*.py)"
         )
-        mfm.run("mfm.console.run_macro(filename='%s')" % filename)
+        mfm.run("chisurf.mfm.console.run_macro(filename='%s')" % filename)
 
     def onTileWindows(self):
         self.mdiarea.setViewMode(QtWidgets.QMdiArea.SubWindowView)
@@ -320,9 +320,9 @@ class Main(QtWidgets.QMainWindow):
             **kwargs
     ):
         if directory is None:
-            mfm.working_path = chisurf.widgets.get_directory(**kwargs)
-        mfm.working_path = directory
-        mfm.console.run('chisurf.macros.save_fit()')
+            chisurf.mfm.working_path = chisurf.widgets.get_directory(**kwargs)
+        chisurf.mfm.working_path = directory
+        chisurf.mfm.console.run('chisurf.macros.save_fit()')
 
     def onOpenHelp(
             self
@@ -337,7 +337,7 @@ class Main(QtWidgets.QMainWindow):
         #self.fret_lines = chisurf.tools.fret_lines.FRETLineGeneratorWidget()
         #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.fret_lines.show)
 
-        #self.decay_fret_generator = mfm.fluorescence.dye_diffusion.TransientFRETDecayGenerator()
+        #self.decay_fret_generator = chisurf.fluorescence.dye_diffusion.TransientFRETDecayGenerator()
 
         ##########################################################
         #      Fluorescence widgets                              #
@@ -398,25 +398,18 @@ class Main(QtWidgets.QMainWindow):
         self.actionF_Test.triggered.connect(self.f_test.show)
 
     def init_console(self):
-        self.verticalLayout_4.addWidget(mfm.console)
-        mfm.console.pushVariables({'cs': self})
-        mfm.console.pushVariables({'mfm': mfm})
-        mfm.console.pushVariables({'np': np})
-        mfm.console.pushVariables({'os': os})
-        mfm.console.pushVariables({'QtCore': QtCore})
-        mfm.console.pushVariables({'QtGui': QtGui})
-        mfm.run = mfm.console.execute
-        mfm.run(str(mfm.settings.gui['console']['init']))
+        self.verticalLayout_4.addWidget(chisurf.mfm.console)
+        chisurf.mfm.console.pushVariables({'cs': self})
+        chisurf.mfm.console.pushVariables({'chisurf': chisurf})
+        chisurf.mfm.console.pushVariables({'mfm': mfm})
+        chisurf.mfm.console.pushVariables({'np': np})
+        chisurf.mfm.console.pushVariables({'os': os})
+        chisurf.mfm.console.pushVariables({'QtCore': QtCore})
+        chisurf.mfm.console.pushVariables({'QtGui': QtGui})
+        chisurf.mfm.run = chisurf.mfm.console.execute
+        chisurf.mfm.run(str(mfm.settings.gui['console']['init']))
 
     def init_setups(self):
-        ##########################################################
-        #      Initialize Experiments and Setups                 #
-        #      (Commented widgets don't work at the moment       #
-        ##########################################################
-        # This needs to move to the QtApplication or it needs to be
-        # independent as new Widgets can only be created once a QApplication
-        # has been created
-
         ##########################################################
         #       Structure                                        #
         ##########################################################
@@ -600,8 +593,8 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #      Record and run recorded macros                    #
         ##########################################################
-        self.actionRecord.triggered.connect(mfm.console.start_recording)
-        self.actionStop.triggered.connect(mfm.console.save_macro)
+        self.actionRecord.triggered.connect(chisurf.mfm.console.start_recording)
+        self.actionStop.triggered.connect(chisurf.mfm.console.save_macro)
         self.actionRun.triggered.connect(self.onRunMacro)
 
         ##########################################################
@@ -651,16 +644,12 @@ class Main(QtWidgets.QMainWindow):
 
 def gui():
     app = QtWidgets.QApplication(sys.argv)
-    mfm.console = chisurf.widgets.QIPythonWidget()
+    chisurf.mfm.console = chisurf.widgets.QIPythonWidget()
     win = Main()
-    mfm.console.history_widget = win.plainTextEditHistory
-    mfm.cs = win
+    chisurf.mfm.console.history_widget = win.plainTextEditHistory
+    chisurf.mfm.cs = win
     win.init_setups()
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-
-    #with open(mfm.settings.style_sheet_file, 'r') as fp:
-    #    style_sheet = fp.read()
-    #    app.setStyleSheet(style_sheet)
 
     win.show()
     return app

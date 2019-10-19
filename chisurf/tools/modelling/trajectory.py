@@ -4,7 +4,7 @@ from typing import Tuple
 import os
 import glob
 import numba as nb
-import mfm
+import chisurf.mfm as mfm
 import numpy as np
 from qtpy import QtWidgets, uic
 import mdtraj as md

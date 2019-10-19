@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 import chisurf
-import mfm
+import chisurf.mfm as mfm
 
 
 def save_xy(
@@ -260,7 +260,7 @@ class Csv(object):
                 )
             self._data = d
         else:
-            raise IOError
+            print("File not found")
 
     def save(
             self,

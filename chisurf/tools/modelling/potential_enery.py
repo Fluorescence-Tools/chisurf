@@ -8,7 +8,7 @@ import qdarkstyle
 import mdtraj
 
 import chisurf.widgets
-import mfm
+import chisurf.mfm as mfm
 import chisurf.decorators
 from chisurf.structure.potential import potentialDict
 from chisurf.structure.trajectory import TrajectoryFile, Universe

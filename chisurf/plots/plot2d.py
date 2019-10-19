@@ -3,7 +3,7 @@ from qtpy import QtCore, QtWidgets, uic
 from guiqwt.builder import make
 from guiqwt.plot import CurveDialog, ImageDialog
 
-from fitting.widgets import FittingParameterWidget
+from chisurf.fitting.widgets import FittingParameterWidget
 from chisurf.plots.plotbase import Plot
 
 

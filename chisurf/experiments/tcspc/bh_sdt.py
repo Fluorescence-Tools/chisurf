@@ -5,11 +5,11 @@ import os
 import numpy as np
 from qtpy import QtWidgets, uic
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.fluorescence
 import chisurf.decorators
-import experiments.data
-from experiments.tcspc import TCSPCReader
+import chisurf.experiments.data
+from chisurf.experiments.tcspc import TCSPCReader
 from chisurf.fio import sdtfile
 
 
@@ -105,10 +105,10 @@ class TcspcSDTWidget(
     @property
     def curve(
             self
-    ) -> experiments.data.DataCurve:
+    ) -> chisurf.experiments.data.DataCurve:
         y = self.ph_counts
-        w = mfm.fluorescence.tcspc.weights(y)
-        d = experiments.data.DataCurve(
+        w = chisurf.fluorescence.tcspc.weights(y)
+        d = chisurf.experiments.data.DataCurve(
             setup=self,
             x=self.times,
             y=y,

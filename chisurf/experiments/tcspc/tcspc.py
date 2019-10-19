@@ -1,14 +1,15 @@
 from __future__ import annotations
 from typing import Tuple
 
-import mfm
-import experiments
+import chisurf.mfm.settings
+import chisurf.mfm as mfm
+import chisurf.experiments
 import chisurf.base
 import chisurf.fluorescence
-import experiments.data
+import chisurf.experiments.data
 import chisurf.fio.fluorescence
 
-from .. import reader
+from chisurf.experiments import reader
 
 
 class TCSPCReader(
@@ -52,11 +53,11 @@ class TCSPCReader(
         Example
         -------
 
-        >>> import experiments
+        >>> import chisurf.experiments
         >>> filename = "./test/data/tcspc/ibh_sample/Decay_577D.txt"
-        >>> ex = experiments.experiment.Experiment('TCSPC')
+        >>> ex = chisurf.experiments.experiment.Experiment('TCSPC')
         >>> dt = 0.0141
-        >>> g1 = experiments.tcspc.TCSPCReader(experiment=ex, skiprows=8, rebin=(1, 8), dt=dt)
+        >>> g1 = chisurf.experiments.tcspc.TCSPCReader(experiment=ex, skiprows=8, rebin=(1, 8), dt=dt)
 
         """
         super().__init__(
@@ -94,7 +95,7 @@ class TCSPCReader(
             data,
             **kwargs
     ) -> Tuple[int, int]:
-        return mfm.fluorescence.tcspc.fitrange(
+        return chisurf.fluorescence.tcspc.fitrange(
             data.y,
             self.fit_count_threshold,
             self.fit_area

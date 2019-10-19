@@ -5,9 +5,9 @@ from typing import List, Callable
 
 from qtpy import QtWidgets, QtCore, QtGui
 
-import mfm
-import experiments.data
-import fitting
+import chisurf.mfm as mfm
+import chisurf.experiments.data
+import chisurf.fitting
 import chisurf.widgets
 import chisurf.decorators
 
@@ -32,13 +32,18 @@ class ExperimentalDataSelector(
     @property
     def datasets(
             self
-    ) -> List[experiments.data.ExperimentalData]:
+    ) -> List[
+        chisurf.experiments.data.ExperimentalData
+    ]:
         data_curves = self.get_data_sets(
             curve_type=self.curve_type
         )
         if self.setup is not None:
             return [
-                d for d in data_curves if isinstance(d.setup, self.setup)
+                d for d in data_curves if isinstance(
+                    d.setup,
+                    self.setup
+                )
             ]
         else:
             return data_curves
@@ -62,13 +67,15 @@ class ExperimentalDataSelector(
     @property
     def selected_dataset(
             self
-    ) -> experiments.data.ExperimentalData:
+    ) -> chisurf.experiments.data.ExperimentalData:
         return self.datasets[self.selected_curve_index]
 
     @property
     def selected_datasets(
             self
-    ) -> List[experiments.data.ExperimentalData]:
+    ) -> List[
+        chisurf.experiments.data.ExperimentalData
+    ]:
         data_sets_idx = self.selected_dataset_idx
         return [self.datasets[i] for i in data_sets_idx]
 
@@ -88,7 +95,9 @@ class ExperimentalDataSelector(
         pass
 
     def onRemoveDataset(self):
-        dataset_idx = [selected_index.row() for selected_index in self.selectedIndexes()]
+        dataset_idx = [
+            selected_index.row() for selected_index in self.selectedIndexes()
+        ]
         mfm.run('chisurf.macros.remove_datasets(%s)' % dataset_idx)
         self.update()
 
@@ -102,7 +111,9 @@ class ExperimentalDataSelector(
         self.update()
 
     def onUnGroupDatasets(self):
-        dg = experiments.data.ExperimentDataGroup(self.selected_datasets)[0]
+        dg = chisurf.experiments.data.ExperimentDataGroup(
+            self.selected_datasets
+        )[0]
         dn = list()
         for d in mfm.imported_datasets:
             if d is not dg:
@@ -144,7 +155,10 @@ class ExperimentalDataSelector(
             item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 
             # If group of curves
-            if isinstance(d, experiments.data.ExperimentDataGroup):
+            if isinstance(
+                    d,
+                    chisurf.experiments.data.ExperimentDataGroup
+            ):
                 for di in d:
                     fn = di.name
                     widget_name = os.path.basename(fn)
@@ -156,7 +170,7 @@ class ExperimentalDataSelector(
             self,
             event
     ):
-        super(ExperimentalDataSelector, self).dragMoveEvent(event)
+        super().dragMoveEvent(event)
 
     def dragEnterEvent(
             self,
@@ -165,7 +179,7 @@ class ExperimentalDataSelector(
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
         else:
-            super(ExperimentalDataSelector, self).dragEnterEvent(event)
+            super().dragEnterEvent(event)
 
     def startDrag(
             self,
@@ -173,7 +187,7 @@ class ExperimentalDataSelector(
     ):
         #self.drag_item = self.currentItem()
         #self.drag_row = self.row(self.drag_item)
-        super(ExperimentalDataSelector, self).startDrag(supportedActions)
+        super().startDrag(supportedActions)
 
     def dropEvent(
             self,
@@ -191,7 +205,7 @@ class ExperimentalDataSelector(
             )
             event.acceptProposedAction()
         else:
-            super(ExperimentalDataSelector, self).dropEvent(event)
+            super().dropEvent(event)
         self.update()
 
     def onItemChanged(self):
@@ -208,7 +222,7 @@ class ExperimentalDataSelector(
 
     def __init__(
             self,
-            fit: fitting.fit.Fit = None,
+            fit: chisurf.fitting.fit.Fit = None,
             setup=None,
             drag_enabled: bool = False,
             click_close: bool = True,
@@ -235,7 +249,7 @@ class ExperimentalDataSelector(
         if get_data_sets is None:
 
             def get_data_sets(**kwargs):
-                return experiments.get_data(
+                return chisurf.experiments.get_data(
                     data_set=mfm.imported_datasets,
                     **kwargs
                 )

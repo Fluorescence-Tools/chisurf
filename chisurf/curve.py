@@ -3,7 +3,7 @@ from typing import TypeVar, Tuple, Type
 
 import numpy as np
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.base
 import chisurf.decorators
 import chisurf.math

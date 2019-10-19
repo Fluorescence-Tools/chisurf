@@ -1,7 +1,7 @@
 """
 
 """
-from fluorescence.intensity import nusiance
+from chisurf.fluorescence.intensity import nusiance
 from . import kappa2
 from . import decay
 

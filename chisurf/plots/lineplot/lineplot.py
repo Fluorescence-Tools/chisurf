@@ -5,10 +5,11 @@ import pyqtgraph as pg
 from qtpy import QtWidgets
 import matplotlib.colors as mpl_colors
 
-import mfm
 import chisurf.decorators
 import chisurf.math
-import fitting
+import chisurf.fitting
+import chisurf.mfm.settings
+import chisurf.mfm as mfm
 import chisurf.math.statistics
 from chisurf.plots import plotbase
 from pyqtgraph.dockarea import *
@@ -21,7 +22,9 @@ class LinePlotControl(
     QtWidgets.QWidget
 ):
 
-    @chisurf.decorators.init_with_ui(ui_filename="linePlotWidget.ui")
+    @chisurf.decorators.init_with_ui(
+        ui_filename="linePlotWidget.ui"
+    )
     def __init__(
             self,
             parent=None,
@@ -264,7 +267,7 @@ class LinePlot(plotbase.Plot):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             scale_x: str = 'lin',
             d_scaley: str = 'lin',
             r_scaley: str = 'lin',
@@ -280,11 +283,11 @@ class LinePlot(plotbase.Plot):
 
         # plot control dialog
         self.pltControl = LinePlotControl(
-            self,
-            scale_x,
-            d_scaley,
-            r_scaley,
-            reference_curve,
+            parent=self,
+            scale_x=scale_x,
+            d_scaley=d_scaley,
+            r_scaley=r_scaley,
+            reference_curve=reference_curve,
             **kwargs
         )
 
@@ -321,7 +324,12 @@ class LinePlot(plotbase.Plot):
         self.auto_corr_plot = auto_corr_plot
 
         # Labels
-        self.text = pg.TextItem(text='', border='w', fill=(0, 0, 255, 100), anchor=(0, 0))
+        self.text = pg.TextItem(
+            text='',
+            border='w',
+            fill=(0, 0, 255, 100),
+            anchor=(0, 0)
+        )
         self.data_plot.addItem(self.text)
         colors = mfm.settings.gui['plot']['colors']
 

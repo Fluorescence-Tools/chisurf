@@ -9,12 +9,12 @@ from collections.abc import Iterable
 #######################################################
 #        SETTINGS  & CONSTANTS                        #
 #######################################################
-import mfm.settings
+from . import settings
 #import chisurf.parameter
 package_directory = os.path.dirname(os.path.abspath(__file__))
-verbose = mfm.settings.cs_settings['verbose']
-__version__ = mfm.settings.cs_settings['version']
-__name__ = mfm.settings.cs_settings['name']
+verbose = settings.cs_settings['verbose']
+__version__ = settings.cs_settings['version']
+__name__ = settings.cs_settings['name']
 working_path = ''
 eps = np.sqrt(np.finfo(float).eps)
 
@@ -33,7 +33,7 @@ console = object
 def c(
         t,
         st: str,
-        parameters: List[chisurf.parameter.Parameter]
+        parameters: List
 ):
     """This function facilitates the connection of qt-events to the mfm-command
     line. Whenever the qt-event is called the string passed as argument is

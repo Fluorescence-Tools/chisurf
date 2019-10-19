@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from qtpy import QtWidgets
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.base
 import chisurf.fio
 import chisurf.fio.widgets

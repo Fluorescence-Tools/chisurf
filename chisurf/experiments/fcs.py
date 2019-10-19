@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from qtpy import QtWidgets
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.fio.ascii
 import chisurf.fio.widgets
 import chisurf.widgets
 import chisurf.fluorescence
-import experiments.data
+import chisurf.experiments.data
 import chisurf.fio.fluorescence
 from . import reader
 

@@ -4,7 +4,7 @@ from typing import Tuple
 
 import numpy as np
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.fluorescence
 import chisurf.experiments as experiments
 from chisurf.experiments import reader
@@ -72,22 +72,25 @@ def read_tcspc_csv(
 
         if polarization == 'vv':
             y = c1
-            ey = mfm.fluorescence.tcspc.weights(c1)
+            ey = chisurf.fluorescence.tcspc.weights(c1)
         elif polarization == 'vh':
             y = c2
-            ey = mfm.fluorescence.tcspc.weights(c2)
+            ey = chisurf.fluorescence.tcspc.weights(c2)
         elif polarization == 'vv/vh':
-            e1 = mfm.fluorescence.tcspc.weights(c1)
-            e2 = mfm.fluorescence.tcspc.weights(c2)
+            e1 = chisurf.fluorescence.tcspc.weights(c1)
+            e2 = chisurf.fluorescence.tcspc.weights(c2)
             y = np.vstack([c1, c2])
             ey = np.vstack([e1, e2])
         else:
             f2 = 2.0 * g_factor
             y = c1 + f2 * c2
-            ey = mfm.fluorescence.tcspc.weights_ps(
+            ey = chisurf.fluorescence.tcspc.weights_ps(
                 c1, c2, f2
             )
-        x = np.arange(n_data_points, dtype=np.float64) * dt
+        x = np.arange(
+            n_data_points,
+            dtype=np.float64
+        ) * dt
     else:
         x = data[0] * dt
         y = data[1:]
@@ -177,6 +180,61 @@ def read_fcs(
     return d
 
 
+def save_fcs_kristine(
+        filename: str,
+        correlation_amplitude: np.ndarray,
+        correlation_time: np.ndarray,
+        mean_countrate: float,
+        acquisition_time: float,
+        correlation_amplitude_uncertainty: np.ndarray = None,
+        verbose: bool = True
+) -> None:
+    """
+
+    :param filename: the filename
+    :param correlation_amplitude: an array containing the amplitude of the
+    correlation function
+    :param correlation_amplitude_uncertainty: an estimate for the
+    uncertainty of the correlation amplitude
+    :param correlation_time: an array containing the correlation times
+    :param mean_countrate: the mean countrate of the experiment in kHz
+    :param acquisition_time: the acquisition of the FCS experiment in
+    seconds
+    :return:
+    """
+    if verbose:
+        print("Saving correlation: %s" % filename)
+    col_1 = np.array(correlation_time)
+    col_2 = np.array(correlation_amplitude)
+    col_3 = np.zeros_like(correlation_amplitude)
+    col_3[0] = mean_countrate
+    col_3[1] = acquisition_time
+    if isinstance(
+            correlation_amplitude_uncertainty,
+            np.ndarray
+    ):
+        data = np.vstack(
+            [
+                col_1,
+                col_2,
+                col_3,
+                correlation_amplitude_uncertainty
+            ]
+        ).T
+    else:
+        data = np.vstack(
+            [
+                col_1,
+                col_2,
+                col_3
+            ]
+        ).T
+    np.savetxt(
+        filename,
+        data,
+    )
+
+
 def read_fcs_kristine(
         filename: str,
         experiment_reader: experiments.reader.ExperimentReader = None,
@@ -216,7 +274,7 @@ def read_fcs_kristine(
         # use calculated errors using count-rate and duration
         try:
             dur, cr = data[2, 0], data[2, 1]
-            w = mfm.fluorescence.fcs.weights(x, y, dur, cr)
+            w = chisurf.fluorescence.fcs.weights(x, y, dur, cr)
         except IndexError:
             # In case everything fails
             # Use no errors at all but uniform weighting

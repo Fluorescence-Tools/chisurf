@@ -36,8 +36,8 @@ def calc_lifetime_filter(
 
     Using a structure to generate lifetime filters
 
-    >>> import mfm
-    >>> from mfm.fluorescence.general import calculate_fluorescence_decay
+    >>> import chisurf
+    >>> from chisurf.fluorescence.general import calculate_fluorescence_decay
     >>> import numpy as np
 
     >>> time_axis = np.linspace(0, 10, num=100)

@@ -66,7 +66,7 @@ class Structure(chisurf.base.Base):
     Examples
     --------
 
-    >>> import mfm.structure
+    >>> import chisurf.mfm as mfm.structure
     >>> structure = mfm.structure.structure.Structure('1dg3', verbose=True)
     ======================================
     Filename: ../test/data/structure/HM_1FN5_Naming.pdb
@@ -303,7 +303,7 @@ class Structure(chisurf.base.Base):
         Examples
         --------
 
-        >>> import mfm.structure
+        >>> import chisurf.mfm as mfm.structure
         >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb', verbose=True)
         >>> structure.append_potential(mfm.structure.potential.lennard_jones_calpha)
         >>> structure.energy
@@ -423,7 +423,7 @@ def rmsd(
     Examples
     --------
 
-    >>> import mfm
+    >>> import chisurf.mfm as mfm
     >>> times = mfm.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
     >>> s1 = times[10]
     >>> s1
@@ -493,7 +493,7 @@ def find_best(target, reference, atom_indices=None):
     Examples
     --------
 
-    >>> import mfm
+    >>> import chisurf.mfm as mfm
     >>> times = times = mfm.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
     >>> find_best(times.mdtraj, times.mdtraj[2])
     (2, <mdtraj.Trajectory with 1 frames, 2495 atoms, 164 residues, without unitcells at 0x13570b30>)
@@ -531,7 +531,7 @@ def get_coordinates_of_residues(atoms, quencher, verbose=False):
     Examples
     --------
 
-    >>> import mfm
+    >>> import chisurf.mfm as mfm
     >>> pdb_file = models
     >>> pdb = chisurf.fio.pdb_file.read(pdb_file, verbose=True)
     Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb
@@ -577,7 +577,7 @@ def get_atom_index_of_residue_types(
     Examples
     --------
 
-    >>> import mfm
+    >>> import chisurf.mfm as mfm
     >>> pdb_file = models
     >>> pdb = chisurf.fio.PDB.read(pdb_file, verbose=True)
     Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb
@@ -623,7 +623,7 @@ def get_atom_index_by_name(
     Examples
     --------
 
-    >>> import mfm
+    >>> import chisurf.mfm as mfm
     >>> pdb_file = './test/data/model/hgbp1/hGBP1_closed.pdb'
     >>> pdb = chisurf.fio.PDB.read(pdb_file, verbose=True)
     Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb
@@ -693,7 +693,7 @@ def average(
     Examples
     --------
 
-    >>> import mfm
+    >>> import chisurf.mfm as mfm
     >>> times = mfm.structure.trajectory.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
     >>> avg = times.average
     >>> avg

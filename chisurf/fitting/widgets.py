@@ -7,8 +7,9 @@ import os
 import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 
-import mfm
-import experiments.widgets
+import chisurf.mfm.settings
+import chisurf.mfm as mfm
+import chisurf.experiments.widgets
 import chisurf.widgets
 
 parameter_settings = mfm.settings.parameter
@@ -54,7 +55,7 @@ class FittingControllerWidget(
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup = None,
+            fit: chisurf.fitting.fit.FitGroup = None,
             hide_fit_button: bool = False,
             hide_range: bool = False,
             hide_fitting: bool = False,
@@ -67,7 +68,7 @@ class FittingControllerWidget(
         )
 
         self.fit = fit
-        self.curve_select = experiments.widgets.ExperimentalDataSelector(
+        self.curve_select = chisurf.experiments.widgets.ExperimentalDataSelector(
             parent=None,
             fit=fit,
             change_event=self.change_dataset,
@@ -137,7 +138,11 @@ class FittingControllerWidget(
     def onErrorEstimate(self):
         filename = chisurf.widgets.save_file('Error estimate', '*.er4')
         kw = mfm.settings.cs_settings['fitting']['sampling']
-        fitting.fit.sample_fit(self.fit, filename, **kw)
+        chisurf.fitting.fit.sample_fit(
+            self.fit,
+            filename,
+            **kw
+        )
 
     def onRunFit(self):
         mfm.run("cs.current_fit.run()")
@@ -161,10 +166,10 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             control_layout: QtWidgets.QLayout,
             close_confirm: bool = None,
-            fit_widget: fitting.widgets.FittingControllerWidget = None,
+            fit_widget: chisurf.fitting.widgets.FittingControllerWidget = None,
             *args,
             **kwargs
     ):
@@ -189,8 +194,14 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         self.current_plt_ctrl.hide()
 
         plots = list()
+        print(fit.model.plot_classes)
+        print(fit)
+        print(kwargs)
         for plot_class, kwargs in fit.model.plot_classes:
-            plot = plot_class(fit, **kwargs)
+            plot = plot_class(
+                fit,
+                **kwargs
+            )
             plot.pltControl.hide()
             plots.append(plot)
             self.tw.addTab(plot, plot.name)
@@ -298,7 +309,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
 
     def __init__(
             self,
-            fitting_parameter: fitting.parameter.FittingParameter = None,
+            fitting_parameter: chisurf.fitting.parameter.FittingParameter = None,
             layout: QtWidgets.QLayout = None,
             decimals: int = None,
             hide_label: bool = None,
@@ -339,7 +350,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
         )
 
         if fitting_parameter is None:
-            fitting_parameter = fitting.parameter.FittingParameter(
+            fitting_parameter = chisurf.fitting.parameter.FittingParameter(
                 name=name,
                 value=1.0
             )
@@ -490,7 +501,7 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
 
     def __init__(
             self,
-            parameter_group: fitting.parameter.FittingParameterGroup,
+            parameter_group: chisurf.fitting.parameter.FittingParameterGroup,
             n_col: int = None,
             *args,
             **kwargs
@@ -539,7 +550,7 @@ def make_fitting_parameter_widget(
 
 
 def make_fitting_parameter_group_widget(
-        fitting_parameter_group: fitting.parameter.FittingParameterGroup,
+        fitting_parameter_group: chisurf.fitting.parameter.FittingParameterGroup,
         *args,
         **kwargs
 ):

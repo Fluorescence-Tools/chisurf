@@ -7,39 +7,46 @@ import numpy as np
 from qtpy import  QtWidgets, uic
 from chisurf.models.parse import ParseModelWidget
 
-import mfm
-import fitting.widgets
+import chisurf.mfm.settings
+import chisurf.mfm as mfm
+import chisurf.fitting.widgets
 from chisurf import plots
 from chisurf.models.model import Model
 from chisurf.math.reaction.continuous import ReactionSystem
-from fitting.widgets import FittingParameterWidget
+from chisurf.fitting.widgets import FittingParameterWidget
 
 
 class ParseStoppedFlowWidget(ParseModelWidget):
-
-    plot_classes = [(plots.LinePlot, {'d_scalex': 'lin',
-                                                   'd_scaley': 'lin',
-                                                   'r_scalex': 'lin',
-                                                   'r_scaley': 'lin',
-                                                   })
-                    #,(plots.SurfacePlot, {})
+    plot_classes = [
+        (
+            plots.LinePlot, {
+                'd_scalex': 'lin',
+                'd_scaley': 'lin',
+                'r_scalex': 'lin',
+                'r_scaley': 'lin',
+            }
+        )
+        # ,(plots.SurfacePlot, {})
     ]
 
     def __init__(self, fit):
-        fn = os.path.join(mfm.package_directory, 'settings/stopped_flow.models.json')
+        fn = os.path.join(mfm.package_directory,
+                          'settings/stopped_flow.models.json')
         ParseModelWidget.__init__(self, fit, model_file=fn)
 
 
 class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
-
     name = "Reaction-System"
 
-
-    plot_classes = [(plots.LinePlot, {'d_scalex': 'lin',
-                                                   'd_scaley': 'lin',
-                                                   'r_scalex': 'lin',
-                                                   'r_scaley': 'lin',
-                                                   })
+    plot_classes = [
+        (
+            plots.LinePlot, {
+                'd_scalex': 'lin',
+                'd_scaley': 'lin',
+                'r_scalex': 'lin',
+                'r_scaley': 'lin',
+            }
+        )
     ]
 
     @property
@@ -120,7 +127,9 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
         self.actionSave_reaction.triggered.connect(self.onSaveLabelingFile)
         Model.__init__(self, **kwargs)
         self.setParameter(parameter)
-        self.fitting_widget = fitting.widgets.FittingControllerWidget(fit=self.fit)
+        self.fitting_widget = chisurf.fitting.widgets.FittingControllerWidget(
+            fit=self.fit
+        )
         self.verticalLayout_4.addWidget(self.fitting_widget)
         self.verticalLayout_4.addWidget(self.scaleing)
         self.verticalLayout_4.addWidget(self.background)
@@ -169,10 +178,24 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
         species_name = kwargs.get('species', '-')
 
         species = self.n_species + 1
-        b = FittingParameterWidget(name="Q(%s)" % species_name, value=brightness, lb=0.0, ub=1000, model=self,
-                                   fixed=brightness_fixed, bounds_on=True, hide_bounds=True)
-        c = FittingParameterWidget(name="c(%s)" % species_name, value=concentration, lb=0.0, ub=1000, model=self,
-                                   fixed=concentration_fixed, bounds_on=True, hide_bounds=True)
+        b = FittingParameterWidget(
+            name="Q(%s)" % species_name,
+            value=brightness,
+            lb=0.0, ub=1000,
+            model=self,
+            fixed=brightness_fixed,
+            bounds_on=True,
+            hide_bounds=True
+        )
+        c = FittingParameterWidget(
+            name="c(%s)" % species_name,
+            value=concentration,
+            lb=0.0, ub=1000,
+            model=self,
+            fixed=concentration_fixed,
+            bounds_on=True,
+            hide_bounds=True
+        )
         self._initial_concentrations.append(c)
         self._species_brightness.append(b)
         l = QtWidgets.QHBoxLayout()
@@ -183,19 +206,22 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
     def add_reaction(self, **kwargs):
         educts = kwargs.get('educts', 0)
         products = kwargs.get('products', 0)
-        educt_stoichiometry = np.array(kwargs.get('educt_stoichiometry', 1), dtype=np.float64)
-        product_stoichometry = np.array(kwargs.get('product_stoichometry', 1), dtype=np.float64)
+        educt_stoichiometry = np.array(
+            kwargs.get('educt_stoichiometry', 1), dtype=np.float64
+        )
+        product_stoichometry = np.array(
+            kwargs.get('product_stoichometry', 1), dtype=np.float64
+        )
         rate = kwargs.get('rate', 0.1)
 
         self.educts.append(educts)
         self.products.append(products)
         self.educts_stoichometry.append(educt_stoichiometry)
         self.products_stoichometry.append(product_stoichometry)
-        v = FittingParameterWidget(name="k(%i)" % self.n_reactions, value=rate, model=self, hide_bounds=True,
-                                   bounds_on=True, **kwargs)
+        v = FittingParameterWidget(
+            name="k(%i)" % self.n_reactions, value=rate, model=self,
+            hide_bounds=True,
+            bounds_on=True, **kwargs
+        )
         self.rates.append(v)
         self.verticalLayout_7.addWidget(v)
-
-
-
-

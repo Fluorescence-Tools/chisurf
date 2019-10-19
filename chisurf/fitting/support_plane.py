@@ -6,11 +6,11 @@ from typing import Tuple
 
 import numpy as np
 
-import fitting.fit
+import chisurf.fitting.fit
 
 
 def scan_parameter(
-        fit: fitting.fit.Fit,
+        fit: chisurf.fitting.fit.Fit,
         parameter_name: str,
         scan_range=(None, None),
         rel_range: float = 0.2,

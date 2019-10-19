@@ -9,8 +9,9 @@ from qtpy import QtWidgets
 
 import numpy as np
 
-import mfm
-import fitting
+import chisurf.mfm.settings
+import chisurf.mfm as mfm
+import chisurf.fitting
 import chisurf.base
 import chisurf.parameter
 import chisurf.decorators
@@ -97,7 +98,7 @@ class FittingParameter(
 
     def scan(
             self,
-            fit: fitting.fit.Fit,
+            fit: chisurf.fitting.fit.Fit,
             **kwargs
     ) -> None:
         fit.chi2_scan(
@@ -128,7 +129,7 @@ class FittingParameter(
             layout: QtWidgets.QLayout = None,
             decimals: int = 4,
             **kwargs
-    ) -> fitting.widgets.FittingParameterWidget:
+    ) -> chisurf.fitting.widgets.FittingParameterWidget:
         if text is None:
             text = self.name
         update_widget = kwargs.get('update_widget', lambda x: x)
@@ -137,7 +138,7 @@ class FittingParameter(
             'decimals': decimals,
             'layout': layout
         }
-        widget = fitting.widgets.FittingParameterWidget(
+        widget = chisurf.fitting.widgets.FittingParameterWidget(
             self,
             **kw
         )
@@ -207,7 +208,9 @@ class FittingParameterGroup(
     @property
     def parameters_all(
             self
-    ) -> List[fitting.parameter.FittingParameter]:
+    ) -> List[
+        chisurf.fitting.parameter.FittingParameter
+    ]:
         return self._parameters
 
     @property
@@ -294,7 +297,7 @@ class FittingParameterGroup(
         d = [v for v in self.__dict__.values() if v is not self]
         ag = chisurf.base.find_objects(
             d,
-            fitting.parameter.FittingParameterGroup
+            chisurf.fitting.parameter.FittingParameterGroup
         )
         self._aggregated_parameters = ag
 
@@ -340,10 +343,12 @@ class FittingParameterGroup(
 
     def __init__(
             self,
-            fit: fitting.fit.Fit = None,
+            fit: chisurf.fitting.fit.Fit = None,
             model: chisurf.models.model.Model = None,
             short: str = '',
-            parameters: List[fitting.parameter.FittingParameter] = None,
+            parameters: List[
+                chisurf.fitting.parameter.FittingParameter
+            ] = None,
             *args, **kwargs):
         """
 
@@ -390,8 +395,8 @@ class FittingParameterGroup(
             self,
             *args,
             **kwargs
-    ) -> fitting.widgets.FittingParameterGroupWidget:
-        return fitting.widgets.FittingParameterGroupWidget(
+    ) -> chisurf.fitting.widgets.FittingParameterGroupWidget:
+        return chisurf.fitting.widgets.FittingParameterGroupWidget(
             self, *args,
             **kwargs
         )

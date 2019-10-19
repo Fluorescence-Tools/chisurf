@@ -35,9 +35,9 @@ import numpy as np
 # Removed for now because mmcif does not exist for Windows
 #import mmcif.fio.PdbxReader
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf
-import chisurf.common as common
+from chisurf import common
 
 keys_formats = [
     ('i', 'i4'),

@@ -4,8 +4,8 @@ import numpy as np
 import pyqtgraph as pg
 from qtpy import QtWidgets
 
-import mfm
-import fitting
+import chisurf.mfm as mfm
+import chisurf.fitting
 from chisurf.plots import plotbase
 
 pyqtgraph_settings = mfm.settings.gui['plot']["pyqtgraph"]
@@ -34,7 +34,7 @@ class ResidualPlot(plotbase.Plot):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             *args,
             **kwargs
     ):

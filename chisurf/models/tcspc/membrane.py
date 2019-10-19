@@ -6,7 +6,7 @@ from __future__ import annotations
 import numpy as np
 from qtpy import QtWidgets
 
-import mfm
+import chisurf.mfm as mfm
 from mfm import plots
 from chisurf.models.tcspc.lifetime import _membrane, Lifetime
 from chisurf.models.tcspc.fret import FRETModel

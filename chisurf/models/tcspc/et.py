@@ -3,14 +3,14 @@ from __future__ import annotations
 import numpy as np
 from qtpy import QtCore, QtGui, QtWidgets
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.decorators
-import mfm.fluorescence
-import mfm.fluorescence.general
+import chisurf.fluorescence
+import chisurf.fluorescence.general
 import chisurf.math
 from mfm import plots
-from mfm.fluorescence.tcspc.phasor import Phasor
-from mfm.fluorescence.tcspc.widgets import PhasorWidget
+from chisurf.fluorescence.tcspc.phasor import Phasor
+from chisurf.fluorescence.tcspc.widgets import PhasorWidget
 from chisurf.models.model import Model
 from chisurf.math.optimization import solve_richardson_lucy, maxent
 from chisurf.math.optimization.nnls import solve_nnls
@@ -503,7 +503,7 @@ class EtModelFree(
         ).T
 
         ekFRET = np.exp(
-            mfm.fluorescence.general.distance_to_fret_rate_constant(
+            chisurf.fluorescence.general.distance_to_fret_rate_constant(
                 rDA,
                 self.R0,
                 self.tau0,
@@ -532,7 +532,7 @@ class EtModelFree(
             self.update_plots()
 
     def update_matrix(self):
-        self.t_matrix, x = mfm.fluorescence.general.calc_transfer_matrix(
+        self.t_matrix, x = chisurf.fluorescence.general.calc_transfer_matrix(
             self.times,
             r_DA=self.r_DA,
             kappa2=self.kappa2,

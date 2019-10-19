@@ -6,7 +6,7 @@ from typing import List, Type, Tuple
 
 import chisurf.base
 import chisurf.models
-import experiments
+from . import reader
 
 
 class Experiment(
@@ -22,7 +22,9 @@ class Experiment(
     @property
     def readers(
             self
-    ) -> List[experiments.reader.ExperimentReader]:
+    ) -> List[
+        chisurf.experiments.reader.ExperimentReader
+    ]:
         return self.get_readers()
 
     @property
@@ -59,8 +61,8 @@ class Experiment(
 
     def add_reader(
             self,
-            reader: experiments.reader.ExperimentReader,
-            controller: experiments.reader.ExperimentReaderController = None
+            reader: chisurf.experiments.reader.ExperimentReader,
+            controller: chisurf.experiments.reader.ExperimentReaderController = None
     ):
         if reader not in self.readers:
             reader.experiment = self
@@ -71,8 +73,8 @@ class Experiment(
             self,
             setups: List[
                 Tuple[
-                    experiments.reader.ExperimentReader,
-                    experiments.reader.ExperimentReaderController
+                    chisurf.experiments.reader.ExperimentReader,
+                    chisurf.experiments.reader.ExperimentReaderController
                 ]
             ]
     ):
@@ -84,17 +86,19 @@ class Experiment(
 
     def get_readers(
             self
-    ) -> List[experiments.reader.ExperimentReader]:
+    ) -> List[
+        chisurf.experiments.reader.ExperimentReader
+    ]:
         readers = list()
         for v in self._readers:
             if isinstance(
                     v,
-                    experiments.reader.ExperimentReader
+                    reader.ExperimentReader
             ):
                 readers.append(v)
             elif isinstance(
                     v,
-                    experiments.reader.ExperimentReaderController
+                    reader.ExperimentReaderController
             ):
                 readers.append(v.experiment_reader)
         return readers

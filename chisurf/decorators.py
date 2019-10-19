@@ -53,10 +53,14 @@ class init_with_ui(object):
                 )
             else:
                 path = self.path
-            super(cls.__class__, cls).__init__(
-                *args,
-                **kwargs
-            )
+            try:
+                super(cls.__class__, cls).__init__(
+                    *args,
+                    **kwargs
+                )
+            except TypeError:
+                super(cls.__class__, cls).__init__()
+
             target = cls
             chisurf.widgets.load_ui(
                 target=target,

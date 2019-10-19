@@ -11,7 +11,7 @@ from qtpy.QtGui import *
 from qtpy.QtWidgets import *
 import qdarkstyle
 
-import mfm
+import chisurf.mfm as mfm
 
 
 class SimpleCodeEditor(QsciScintilla):

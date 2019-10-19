@@ -5,11 +5,11 @@ import os
 from docx import Document
 from docx.shared import Inches
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.base
-import experiments
+import chisurf.experiments
 import chisurf.models
-import fitting
+import chisurf.fitting
 import chisurf.widgets
 
 
@@ -18,7 +18,6 @@ def add_fit(
         model_name: str = None
 ):
     cs = mfm.cs
-
     if dataset_indices is None:
         dataset_indices = [cs.dataset_selector.selected_curve_index]
     if model_name is None:
@@ -41,34 +40,33 @@ def add_fit(
             # Make sure the data set is a DataGroup
             if not isinstance(
                     data_set,
-                    experiments.data.DataGroup
+                    chisurf.experiments.data.DataGroup
             ):
-                data_group = experiments.data.ExperimentDataCurveGroup(
+                data_group = chisurf.experiments.data.ExperimentDataCurveGroup(
                     [data_set]
                 )
             else:
                 data_group = data_set
 
             # Create the fit
-            fit_group = fitting.fit.FitGroup(
+            fit_group = chisurf.fitting.fit.FitGroup(
                 data=data_group,
                 model_class=model_class
             )
             mfm.fits.append(fit_group)
 
-            fit_control_widget = fitting.widgets.FittingControllerWidget(
+            fit_control_widget = chisurf.fitting.widgets.FittingControllerWidget(
                 fit_group
             )
             cs.modelLayout.addWidget(fit_control_widget)
             for fit in fit_group:
                 cs.modelLayout.addWidget(fit.model)
 
-            fit_window = fitting.widgets.FitSubWindow(
-                fit_group,
+            fit_window = chisurf.fitting.widgets.FitSubWindow(
+                fit=fit_group,
                 control_layout=cs.plotOptionsLayout,
                 fit_widget=fit_control_widget
             )
-
             fit_window = cs.mdiarea.addSubWindow(fit_window)
             mfm.fit_windows.append(fit_window)
             fit_window.show()
@@ -186,15 +184,15 @@ def group_datasets(
     ]
     if isinstance(
             selected_data[0],
-            experiments.data.DataCurve
+            chisurf.experiments.data.DataCurve
     ):
         # TODO: check for double names!!!
-        dg = experiments.data.ExperimentDataCurveGroup(
+        dg = chisurf.experiments.data.ExperimentDataCurveGroup(
             selected_data,
             name="Data-Group"
         )
     else:
-        dg = experiments.data.ExperimentDataGroup(
+        dg = chisurf.experiments.data.ExperimentDataGroup(
             selected_data,
             name="Data-Group"
         )
@@ -236,7 +234,7 @@ def remove_datasets(
 
 
 def add_dataset(
-        setup: experiments.reader.ExperimentReader = None,
+        setup: chisurf.experiments.reader.ExperimentReader = None,
         dataset: chisurf.base.Data = None,
         **kwargs
 ) -> None:
@@ -249,8 +247,8 @@ def add_dataset(
         )
     dataset_group = dataset if isinstance(
         dataset,
-        experiments.data.ExperimentDataGroup
-    ) else experiments.data.ExperimentDataCurveGroup(
+        chisurf.experiments.data.ExperimentDataGroup
+    ) else chisurf.experiments.data.ExperimentDataCurveGroup(
         dataset
     )
     if len(dataset_group) == 1:

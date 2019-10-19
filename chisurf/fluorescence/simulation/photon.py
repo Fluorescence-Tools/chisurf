@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.random as random
 
-import mfm
+import chisurf.mfm as mfm
 from chisurf.fluorescence.simulation import _simulation
 
 

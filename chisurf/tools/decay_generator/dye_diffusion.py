@@ -11,7 +11,7 @@ from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
 import qdarkstyle
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.fio.coordinates
 import chisurf.fluorescence.fps.widgets
 from chisurf.fluorescence.simulation.dye_diffusion import DyeDecay
@@ -230,14 +230,14 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
         self._settings_file = None
         self.settings_file = dye_diffusion_settings_file
 
-        self.protein_quenching = mfm.fluorescence.fps.widgets.ProteinQuenchingWidget(
+        self.protein_quenching = chisurf.fluorescence.fps.widgets.ProteinQuenchingWidget(
             k_quench_protein=kwargs.get('k_quench_protein', 5.0),
         )
         self.verticalLayout_11.addWidget(self.protein_quenching)
-        self.dye_parameter = mfm.fluorescence.fps.dynamic.DyeParameterWidget(**kwargs)
+        self.dye_parameter = chisurf.fluorescence.fps.dynamic.DyeParameterWidget(**kwargs)
         self.verticalLayout_14.addWidget(self.dye_parameter)
 
-        self.sticking = mfm.fluorescence.fps.dynamic.StickingParameterWidget()
+        self.sticking = chisurf.fluorescence.fps.dynamic.StickingParameterWidget()
         self.verticalLayout_13.addWidget(self.sticking)
 
         # # User-interface

@@ -7,11 +7,11 @@ from typing import Tuple
 import emcee
 import numpy as np
 
-import fitting.fit
+from chisurf.fitting import fit
 
 
 def walk_mcmc(
-        fit: fitting.fit.Fit,
+        fit: fit.Fit,
         steps: int,
         step_size: float,
         chi2max: float,
@@ -54,7 +54,7 @@ def walk_mcmc(
 
 
 def sample_emcee(
-        fit: fitting.fit.Fit,
+        fit: fit.Fit,
         steps: int,
         nwalkers: int,
         thin: int = 10,
@@ -83,7 +83,7 @@ def sample_emcee(
     }
     sampler = emcee.EnsembleSampler(
         nwalkers, ndim,
-        fitting.fit.lnprob,
+        fit.lnprob,
         args=[fit], kwargs=kw
     )
     std = np.array(fit.model.parameter_values) * std
