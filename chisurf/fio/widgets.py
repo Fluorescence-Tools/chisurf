@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from qtpy import QtWidgets
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.base
 import chisurf.structure
@@ -280,7 +280,7 @@ class CsvWidget(
         use_header = bool(self.checkBox_2.isChecked())
         n_skip = int(self.spinBox.value())
         mode = 'csv' if self.radioButton_2.isChecked() else 'fwf'
-        mfm.run(
+        chisurf.run(
             "\n".join(
                 [
                     "cs.current_setup.error_y_on = %s" % set_erry_on,
@@ -334,13 +334,13 @@ class CsvWidget(
 #     def load_data(
 #             self,
 #             filename: str = None
-#     ) -> mfm.experiment.data.DataCurve:
+#     ) -> chisurf.experiment.data.DataCurve:
 #         """
 #         Loads csv-data into a Curve-object
 #         :param filename:
 #         :return: Curve-object
 #         """
-#         d = mfm.experiment.data.DataCurve(setup=None)
+#         d = chisurf.experiment.data.DataCurve(setup=None)
 #         if filename is not None:
 #             self.csvWidget.load(filename)
 #             d.filename = filename

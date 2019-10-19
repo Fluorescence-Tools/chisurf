@@ -6,18 +6,18 @@ import pyqtgraph as pg
 from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
-import chisurf.mfm.settings
-import chisurf.mfm as mfm
+import chisurf.settings
+import chisurf.settings as mfm
 import chisurf.fitting
 import chisurf.parameter
 import chisurf.decorators
 import chisurf.models
 from chisurf.plots import plotbase
 
-plot_settings = mfm.settings.gui['plot']
-pyqtgraph_settings = mfm.settings.pyqtgraph_settings
+plot_settings = chisurf.settings.gui['plot']
+pyqtgraph_settings = chisurf.settings.pyqtgraph_settings
 colors = plot_settings['colors']
-color_scheme = mfm.settings.colors
+color_scheme = chisurf.settings.colors
 lw = plot_settings['line_width']
 
 
@@ -67,7 +67,7 @@ class ParameterScanWidget(
         p_min = float(self.doubleSpinBox.value())
         p_max = float(self.doubleSpinBox_2.value())
         n_steps = int(self.spinBox.value())
-        chisurf.mfm.run(
+        chisurf.chisurf.run(
             "cs.current_fit.model.parameters_all_dict['%s'].scan(cs.current_fit, rel_range=(%s, %s), n_steps=%s)" % (
                 self.parameter.name,
                 p_min,

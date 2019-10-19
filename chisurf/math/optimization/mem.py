@@ -2,9 +2,9 @@ import numpy as np
 from numpy import dot, log, sqrt
 from scipy.optimize import minimize
 
-import chisurf.mfm as mfm
+import chisurf.settings
 
-settings = mfm.settings.cs_settings['fitting']['mem']
+settings = chisurf.settings.cs_settings['fitting']['mem']
 
 lower_bound = settings['lower_bound']
 upper_bound = settings['upper_bound']

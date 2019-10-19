@@ -6,7 +6,7 @@ import os
 import numpy as np
 
 import chisurf
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 
 
 def save_xy(

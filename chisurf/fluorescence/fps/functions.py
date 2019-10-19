@@ -3,14 +3,14 @@ from typing import Tuple, Type
 
 import chisurf.fluorescence
 from . import _fps
-import chisurf.mfm.settings
-import chisurf.mfm as mfm
+import chisurf.settings
+import chisurf.settings as mfm
 import numpy as np
 import numba as nb
 from math import exp, sqrt
 import pyopencl as cl
 from pyopencl import array as cl_array
-fps_settings = mfm.settings.cs_settings['fps']
+fps_settings = chisurf.settings.cs_settings['fps']
 
 
 def histogram_rda(

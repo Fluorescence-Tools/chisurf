@@ -5,7 +5,7 @@ import math
 
 import numpy as np
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.math.datatools
 from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 from chisurf.models.model import ModelCurve
@@ -323,7 +323,7 @@ class LifetimeModel(ModelCurve):
         if background is None:
             background = self.generic.background
         if shift_bg_with_irf is None:
-            shift_bg_with_irf = mfm.settings.cs_settings['tcspc']['shift_bg_with_irf']
+            shift_bg_with_irf = chisurf.settings.cs_settings['tcspc']['shift_bg_with_irf']
         if background_curve is None:
             background_curve = self.generic.background_curve
 

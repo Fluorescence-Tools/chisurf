@@ -3,7 +3,7 @@ from typing import List
 
 import numpy as np
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.fluorescence
 from chisurf.experiments.tcspc import TCSPCReader
 

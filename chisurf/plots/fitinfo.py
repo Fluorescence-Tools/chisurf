@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from qtpy import  QtWidgets
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.fitting
 from chisurf.plots import plotbase
 

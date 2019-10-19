@@ -16,7 +16,7 @@ from qtconsole.qtconsoleapp import RichJupyterWidget
 from qtconsole.inprocess import QtInProcessKernelManager
 from IPython.lib import guisupport
 
-import chisurf.mfm as mfm
+import chisurf.settings
 import chisurf.curve
 
 
@@ -141,7 +141,7 @@ class QIPythonWidget(
         self.exit_requested.connect(stop)
         self.width = kwargs.get(
             'width',
-            mfm.settings.gui['console']['width']
+            chisurf.settings.gui['console']['width']
         )
         self._macro = ""
         self.recording = False
@@ -154,7 +154,7 @@ class QIPythonWidget(
             os.makedirs(path)
         self.session_file = os.path.join(path, filename)
         self.set_default_style(
-            mfm.settings.gui['console']['style']
+            chisurf.settings.gui['console']['style']
         )
 
     def pushVariables(self, variableDict):
@@ -172,7 +172,7 @@ class QIPythonWidget(
 
     def executeCommand(self, command):
         """ Execute a command in the frame of the console widget """
-        self._execute(command, mfm.settings.cs_settings['show_commands'])
+        self._execute(command, chisurf.settings.cs_settings['show_commands'])
 
 
 def get_widgets_in_layout(
@@ -216,7 +216,7 @@ class MyMessageBox(
             label: str = None,
             info: str = None,
             details: str = None,
-            show_fortune: bool = mfm.settings.cs_settings['fortune']
+            show_fortune: bool = chisurf.settings.cs_settings['fortune']
     ):
         """This Widget can be used to provide an output for warnings
         and exceptions. It can also display fortune cookies.
@@ -354,7 +354,7 @@ def get_filename(
     :return:
     """
     if working_path is None:
-        working_path = mfm.working_path
+        working_path = chisurf.working_path
     filename = str(
         QtWidgets.QFileDialog.getOpenFileName(
             None,
@@ -362,7 +362,7 @@ def get_filename(
             working_path,
             file_type
         )[0])
-    mfm.working_path = os.path.dirname(filename)
+    chisurf.working_path = os.path.dirname(filename)
     return filename
 
 
@@ -382,14 +382,14 @@ def open_files(
     :return:
     """
     if working_path is None:
-        working_path = mfm.working_path
+        working_path = chisurf.working_path
     filenames = QtWidgets.QFileDialog.getOpenFileNames(
         None,
         description,
         working_path,
         file_type
     )[0]
-    mfm.working_path = os.path.dirname(filenames[0])
+    chisurf.working_path = os.path.dirname(filenames[0])
     return filenames
 
 
@@ -410,7 +410,7 @@ def save_file(
     :return:
     """
     if working_path is None:
-        working_path = mfm.working_path
+        working_path = chisurf.working_path
     filename = str(
         QtWidgets.QFileDialog.getSaveFileName(
             None,
@@ -419,7 +419,7 @@ def save_file(
             file_type
         )[0]
     )
-    mfm.working_path = os.path.dirname(filename)
+    chisurf.working_path = os.path.dirname(filename)
     return filename
 
 
@@ -439,7 +439,7 @@ def get_directory(
     """
     fn_ending = filename_ending
     if directory is None:
-        directory = mfm.working_path
+        directory = chisurf.working_path
     if isinstance(directory, str):
         directory = str(
             QtWidgets.QFileDialog.getExistingDirectory(
@@ -454,7 +454,7 @@ def get_directory(
                 "Select Directory"
             )
         )
-    mfm.working_path = directory
+    chisurf.working_path = directory
     if not get_files:
         return directory
     else:

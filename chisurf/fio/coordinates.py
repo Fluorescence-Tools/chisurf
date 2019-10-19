@@ -35,9 +35,9 @@ import numpy as np
 # Removed for now because mmcif does not exist for Windows
 #import mmcif.fio.PdbxReader
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf
-from chisurf import common
+import chisurf.common
 
 keys_formats = [
     ('i', 'i4'),
@@ -93,7 +93,7 @@ def assign_element_to_atom_name(
     C
     """
     element = atom_name
-    if atom_name.upper() not in common.atom_weights:
+    if atom_name.upper() not in chisurf.common.atom_weights:
         # Inorganic elements have their name shifted left by one position
         #  (is a convention in PDB, but not part of the standard).
         # isdigit() check on last two characters to avoid mis-assignment of
@@ -101,7 +101,7 @@ def assign_element_to_atom_name(
         # Hs may have digit in [0]
         putative_element = atom_name[1] if atom_name[0].isdigit() else \
             atom_name[0]
-        if putative_element.capitalize() in common.atom_weights.keys():
+        if putative_element.capitalize() in chisurf.common.atom_weights.keys():
             element = putative_element
     return element
 
@@ -145,13 +145,13 @@ def parse_string_pdb(
             atoms['element'][ni] = assign_element_to_atom_name(atom_name)
             try:
                 if assign_charge:
-                    if atoms['res_name'][ni] in common.CHARGE_DICT:
-                        if atoms['atom_name'][ni] == common.TITR_ATOM_COARSE[atoms['res_name'][ni]]:
-                            atoms['charge'][ni] = common.CHARGE_DICT[
+                    if atoms['res_name'][ni] in chisurf.common.CHARGE_DICT:
+                        if atoms['atom_name'][ni] == chisurf.common.TITR_ATOM_COARSE[atoms['res_name'][ni]]:
+                            atoms['charge'][ni] = chisurf.common.CHARGE_DICT[
                                 atoms['res_name'][ni]
                             ]
-                atoms['mass'][ni] = common.atom_weights[atoms['element'][ni]]
-                atoms['radius'][ni] = common.VDW_DICT[atoms['element'][ni]]
+                atoms['mass'][ni] = chisurf.common.atom_weights[atoms['element'][ni]]
+                atoms['radius'][ni] = chisurf.common.VDW_DICT[atoms['element'][ni]]
             except KeyError:
                 print("Cloud not assign parameters to: %s" % line)
             ni += 1

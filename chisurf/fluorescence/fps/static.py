@@ -2,7 +2,7 @@ import ctypes as C
 import platform
 import os
 import numpy as np
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import numba as nb
 
 b, o = platform.architecture()
@@ -101,7 +101,7 @@ def calculate_1_radius(
     --------
     Calculating accessible volume using provided pdb-file
 
-    >>> import chisurf.mfm as mfm
+    >>> import chisurf.settings as mfm
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> residue_number = 18
     >>> atom_name = 'CB'
@@ -110,7 +110,7 @@ def calculate_1_radius(
 
     Calculating accessible volume using provided Structure object
 
-    >>> import chisurf.mfm as mfm
+    >>> import chisurf.settings as mfm
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = mfm.Structure(pdb_filename)
     >>> av = mfm.fps.AV(structure, attachment_atom=1, verbose=True)
@@ -132,7 +132,7 @@ def calculate_1_radius(
     Using residue_seq_number and atom_name to calculate accessible volume, this also works without
     chain_identifier. However, only if a single-chain is present.
 
-    >>> import chisurf.mfm as mfm
+    >>> import chisurf.settings as mfm
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = mfm.Structure(pdb_filename)
     >>> av = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=11, atom_name='CB', verbose=True)
@@ -141,7 +141,7 @@ def calculate_1_radius(
     accessible volume is determined by output_file
 
     >>> import chisurf.fluorescence
-    >>> import chisurf.mfm as mfm.structure
+    >>> import chisurf.settings as mfm.structure
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = mfm.structure.Structure(pdb_filename)
     >>> av = chisurf.fluorescence.fps.AV(structure, residue_seq_number=11, atom_name='CB', verbose=True, save_av=True, output_file='test')
@@ -166,11 +166,11 @@ def calculate_1_radius(
     -------------------
 
     """
-    verbose = kwargs.get('verbose', mfm.settings['verbose'])
-    linkersphere = kwargs.get('linkersphere', mfm.settings['fps']['allowed_sphere_radius'])
-    linknodes = kwargs.get('linknodes', mfm.settings['fps']['linknodes'])
-    vdw_max = kwargs.get('vdw_max', mfm.settings['fps']['vdw_max'])
-    dg = kwargs.get('dg', mfm.settings['fps']['simulation_grid_resolution'])
+    verbose = kwargs.get('verbose', chisurf.settings['verbose'])
+    linkersphere = kwargs.get('linkersphere', chisurf.settings['fps']['allowed_sphere_radius'])
+    linknodes = kwargs.get('linknodes', chisurf.settings['fps']['linknodes'])
+    vdw_max = kwargs.get('vdw_max', chisurf.settings['fps']['vdw_max'])
+    dg = kwargs.get('dg', chisurf.settings['fps']['simulation_grid_resolution'])
     n_mul = kwargs.get('n_mul', 32)
 
     n_atoms = len(vdw)
@@ -251,11 +251,11 @@ def calculate_3_radius(l, w, r1, r2, r3, atom_i, x, y, z, vdw, **kwargs):
     :return:
 
     """
-    verbose = kwargs.get('verbose', mfm.settings['verbose'])
-    linkersphere = kwargs.get('linkersphere', mfm.settings['fps']['allowed_sphere_radius'])
-    linknodes = kwargs.get('linknodes', mfm.settings['fps']['linknodes'])
-    vdw_max = kwargs.get('vdw_max', mfm.settings['fps']['vdw_max'])
-    dg = kwargs.get('dg', mfm.settings['fps']['simulation_grid_resolution'])
+    verbose = kwargs.get('verbose', chisurf.settings['verbose'])
+    linkersphere = kwargs.get('linkersphere', chisurf.settings['fps']['allowed_sphere_radius'])
+    linknodes = kwargs.get('linknodes', chisurf.settings['fps']['linknodes'])
+    vdw_max = kwargs.get('vdw_max', chisurf.settings['fps']['vdw_max'])
+    dg = kwargs.get('dg', chisurf.settings['fps']['simulation_grid_resolution'])
 
     if verbose:
         print("AV: calculate3R")
@@ -489,7 +489,7 @@ def calc_av1_py(l, w, r, atom_i, ng, xyz, vdw, vdw_max=3.5, linker_sphere=2.0, l
     Example
     -------
 
-    >>> import chisurf.mfm as mfm
+    >>> import chisurf.settings as mfm
     >>> import pylab as p
     >>> pdb_filename = './test/data/modelling/pdb_files/hGBP1_open.pdb'
     >>> structure = mfm.structure.Structure(pdb_filename)
@@ -540,7 +540,7 @@ def calc_weights_from_traj(traj, res_id, atom_name, chain_id,
 
      >>> import mdtraj as md
      >>> import pylab as p
-     >>> import chisurf.mfm as mfm
+     >>> import chisurf.settings as mfm
      >>> from chisurf.fluorescence.fps.static import calc_av1_py, calc_weights_from_traj
      >>> traj = md.load('e:/simulations_free_dye/t_join.h5')
 
@@ -599,7 +599,7 @@ def calc_distance_from_traj(traj, res_id, atom_name, chain_id, ng, dg, r0_res, r
 
      >>> import mdtraj as md
      >>> import pylab as p
-     >>> import chisurf.mfm as mfm
+     >>> import chisurf.settings as mfm
      >>> from chisurf.fluorescence.fps.static import calc_av1_py, calc_weights_from_traj
      >>> traj = md.load('e:/simulations_free_dye/t_join.h5')
 

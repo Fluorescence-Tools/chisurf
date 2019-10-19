@@ -20,7 +20,7 @@ def find_fit_idx_of_model(
         model: chisurf.models.model.Model,
         fits: List[chisurf.fitting.fit.Fit]
 ) -> int:
-    """Returns index of the fit of a model in mfm.fits array
+    """Returns index of the fit of a model in chisurf.fits array
 
     :param model:
     :param fits:

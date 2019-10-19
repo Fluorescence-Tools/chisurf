@@ -8,14 +8,14 @@ import matplotlib.colors as mpl_colors
 import chisurf.decorators
 import chisurf.math
 import chisurf.fitting
-import chisurf.mfm.settings
-import chisurf.mfm as mfm
+import chisurf.settings
+import chisurf.settings as mfm
 import chisurf.math.statistics
 from chisurf.plots import plotbase
 from pyqtgraph.dockarea import *
 
-pyqtgraph_settings = mfm.settings.pyqtgraph_settings
-color_scheme = mfm.settings.colors
+pyqtgraph_settings = chisurf.settings.pyqtgraph_settings
+color_scheme = chisurf.settings.colors
 
 
 class LinePlotControl(
@@ -298,7 +298,7 @@ class LinePlot(plotbase.Plot):
 
         area = DockArea()
         self.layout.addWidget(area)
-        hide_title = mfm.settings.gui['plot']['hideTitle']
+        hide_title = chisurf.settings.gui['plot']['hideTitle']
         d1 = Dock("residuals", size=(300, 80), hideTitle=hide_title)
         d2 = Dock("a.corr.", size=(300, 80), hideTitle=hide_title)
         d3 = Dock("Fit", size=(300, 300), hideTitle=hide_title)
@@ -331,10 +331,10 @@ class LinePlot(plotbase.Plot):
             anchor=(0, 0)
         )
         self.data_plot.addItem(self.text)
-        colors = mfm.settings.gui['plot']['colors']
+        colors = chisurf.settings.gui['plot']['colors']
 
         # Fitting-region selector
-        if mfm.settings.gui['plot']['enable_region_selector']:
+        if chisurf.settings.gui['plot']['enable_region_selector']:
             ca = list(mpl_colors.hex2color(colors["region_selector"]))
             co = [ca[0] * 255, ca[1] * 255, ca[2] * 255, colors["region_selector_alpha"]]
             region = pg.LinearRegionItem(brush=co)
@@ -351,32 +351,32 @@ class LinePlot(plotbase.Plot):
 
                 lb_i = np.searchsorted(data_x, lb, side='right')
                 ub_i = np.searchsorted(data_x, ub, side='left')
-                mfm.run("cs.current_fit.fit_range = (%s, %s)" % (lb_i - 1, ub_i))
+                chisurf.run("cs.current_fit.fit_range = (%s, %s)" % (lb_i - 1, ub_i))
                 self.update_all(only_fit_range=True)
 
             region.sigRegionChangeFinished.connect(update_region)
 
         # Grid
-        if mfm.settings.gui['plot']['enable_grid']:
-            if mfm.settings.gui['plot']['show_data_grid']:
+        if chisurf.settings.gui['plot']['enable_grid']:
+            if chisurf.settings.gui['plot']['show_data_grid']:
                 data_plot.showGrid(True, True, 0.5)
-            if mfm.settings.gui['plot']['show_residual_grid']:
+            if chisurf.settings.gui['plot']['show_residual_grid']:
                 residuals_plot.showGrid(True, True, 1.0)
-            if mfm.settings.gui['plot']['show_acorr_grid']:
+            if chisurf.settings.gui['plot']['show_acorr_grid']:
                 auto_corr_plot.showGrid(True, True, 1.0)
 
         # Labels
         self.residuals_plot = residuals_plot
         self.auto_corr_plot = auto_corr_plot
 
-        if mfm.settings.gui['plot']['label_axis']:
+        if chisurf.settings.gui['plot']['label_axis']:
             residuals_plot.setLabel('left', "w.res.")
             auto_corr_plot.setLabel('left', "a.corr.")
             data_plot.setLabel('left', y_label)
             data_plot.setLabel('bottom', x_label)
 
         # Plotted lines
-        lw = mfm.settings.gui['plot']['line_width']
+        lw = chisurf.settings.gui['plot']['line_width']
         if self.plot_irf:
             self.irf_curve = data_plot.plot(
                 x=[0.0],
@@ -565,8 +565,8 @@ class LinePlot(plotbase.Plot):
         self.residuals_plot.clear()
         self.auto_corr_plot.clear()
 
-        colors = mfm.settings.gui['plot']['colors']
-        lw = mfm.settings.gui['plot']['line_width']
+        colors = chisurf.settings.gui['plot']['colors']
+        lw = chisurf.settings.gui['plot']['line_width']
 
         self.residuals_plot.plot(
             x=model_x,

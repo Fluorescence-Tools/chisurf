@@ -7,7 +7,7 @@ from typing import Tuple
 from collections import OrderedDict
 from qtpy import QtWidgets
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.experiments
 import chisurf.experiments.data
 from . reader import ExperimentReader

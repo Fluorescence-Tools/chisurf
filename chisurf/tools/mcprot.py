@@ -8,7 +8,7 @@ import tempfile
 import numpy as np
 from progressbar import Bar, ETA, ProgressBar, RotatingMarker, Percentage
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 from chisurf.math.rand import weighted_choice, mc
 from mfm.structure.protein import ProteinCentroid
 from mfm.structure.trajectory import TrajectoryFile, Universe
@@ -31,7 +31,7 @@ class ProteinMCWorker(object):
         self._config_filename = None
         self.verbose = verbose
         if settings is None:
-            settings = mfm.settings.cs_settings['mc_settings']
+            settings = chisurf.settings.cs_settings['mc_settings']
         self.settings = settings
 
         self.output_traj_file = output_traj_file

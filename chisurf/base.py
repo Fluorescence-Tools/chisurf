@@ -13,7 +13,7 @@ import yaml
 from slugify import slugify
 
 import chisurf
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 
 
 class Base(object):
@@ -278,9 +278,9 @@ class Data(Base):
         self._data = data
 
         if embed_data is None:
-            embed_data = mfm.settings.cs_settings['database']['embed_data']
+            embed_data = chisurf.settings.cs_settings['database']['embed_data']
         if read_file_size_limit is None:
-            read_file_size_limit = mfm.settings.cs_settings['database']['read_file_size_limit']
+            read_file_size_limit = chisurf.settings.cs_settings['database']['read_file_size_limit']
 
         self._embed_data = embed_data
         self._max_file_size = read_file_size_limit
@@ -341,9 +341,9 @@ class Data(Base):
             if file_size < self._max_file_size and self._embed_data:
                 with open(self._filename, "rb") as fp:
                     data = fp.read()
-                    if len(data) > mfm.settings.cs_settings['database']['compression_data_limit']:
+                    if len(data) > chisurf.settings.cs_settings['database']['compression_data_limit']:
                         data = zlib.compress(data)
-                    if len(data) < mfm.settings.cs_settings['database']['embed_data_limit']:
+                    if len(data) < chisurf.settings.cs_settings['database']['embed_data_limit']:
                         self._data = data
             if self.verbose:
                 print("Filename: %s" % self._filename)

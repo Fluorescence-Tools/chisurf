@@ -5,7 +5,7 @@ from typing import List, Callable
 
 from qtpy import QtWidgets, QtCore, QtGui
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.experiments.data
 import chisurf.fitting
 import chisurf.widgets
@@ -98,7 +98,7 @@ class ExperimentalDataSelector(
         dataset_idx = [
             selected_index.row() for selected_index in self.selectedIndexes()
         ]
-        mfm.run('chisurf.macros.remove_datasets(%s)' % dataset_idx)
+        chisurf.run('chisurf.macros.remove_datasets(%s)' % dataset_idx)
         self.update()
 
     def onSaveDataset(self):
@@ -107,7 +107,7 @@ class ExperimentalDataSelector(
 
     def onGroupDatasets(self):
         dg = self.selected_dataset_idx
-        mfm.run("chisurf.macros.group_datasets(%s)" % dg)
+        chisurf.run("chisurf.macros.group_datasets(%s)" % dg)
         self.update()
 
     def onUnGroupDatasets(self):
@@ -115,12 +115,12 @@ class ExperimentalDataSelector(
             self.selected_datasets
         )[0]
         dn = list()
-        for d in mfm.imported_datasets:
+        for d in chisurf.imported_datasets:
             if d is not dg:
                 dn.append(d)
             else:
                 dn += dg
-        mfm.imported_datasets = dn
+        chisurf.imported_datasets = dn
         self.update()
 
     def contextMenuEvent(self, event):
@@ -196,7 +196,7 @@ class ExperimentalDataSelector(
         if event.mimeData().hasUrls():
             paths = [str(url.toLocalFile()) for url in event.mimeData().urls()]
             paths.sort()
-            mfm.run(
+            chisurf.run(
                 "\n".join(
                     [
                         "chisurf.macros.add_dataset(filename='%s')" % p for p in paths
@@ -250,7 +250,7 @@ class ExperimentalDataSelector(
 
             def get_data_sets(**kwargs):
                 return chisurf.experiments.get_data(
-                    data_set=mfm.imported_datasets,
+                    data_set=chisurf.imported_datasets,
                     **kwargs
                 )
 

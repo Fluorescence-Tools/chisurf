@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 from chisurf.models.tcspc.lifetime import LifetimeModel
 from chisurf.fluorescence.fps import DynamicAV
 from fitting.parameter import FittingParameter
@@ -17,7 +17,7 @@ class AVDecayModel(LifetimeModel):
         """
         Example
         -------
-        >>> import chisurf.mfm as mfm
+        >>> import chisurf.settings as mfm
         >>> data_set = chisurf.curve.DataCurve(filename='./test/data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)
         >>> lin = chisurf.curve.DataCurve(filename='./test/data/tcspc/ibh_sample/whitelight.txt', skiprows=9)
         >>> data_set.weights = chisurf.fluorescence.tcspc.weights(data_set.y)

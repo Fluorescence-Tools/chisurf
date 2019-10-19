@@ -11,7 +11,7 @@ import tempfile
 import copy
 import numpy as np
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.base
 import experiments
 

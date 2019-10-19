@@ -6,7 +6,7 @@ library all kinds of constants are defined. For instance colors
 in plots but also constants as the Avogadros number.
 """
 
-from chisurf.mfm.settings import structure_data
+from chisurf.settings import structure_data
 
 quencher = structure_data['Quencher']
 quencher_names = quencher.keys()

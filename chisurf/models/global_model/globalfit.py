@@ -8,7 +8,7 @@ from qtpy import QtCore, QtWidgets
 
 import numpy as np
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.decorators
 from chisurf import plots
 from chisurf.curve import Curve
@@ -354,7 +354,7 @@ class GlobalFitModel(model.Model, Curve):
             self,
             **kwargs
     ) -> None:
-        if mfm.settings.cs_settings['fitting']['parallel_fit']:
+        if chisurf.settings.cs_settings['fitting']['parallel_fit']:
             threads = [threading.Thread(target=f.model.update_model) for f in self.fits]
             for thread in threads:
                 thread.start()
@@ -443,14 +443,14 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
     @property
     def local_fits(self) -> List[chisurf.fitting.fit.Fit]:
         return [
-            s for s in mfm.fits
+            s for s in chisurf.fits
             if isinstance(s, chisurf.fitting.fit.Fit) and s.model is not self
         ]
 
     @property
     def local_fit_idx(self) -> List[int]:
         return [
-            i for i, s in enumerate(mfm.fits)
+            i for i, s in enumerate(chisurf.fits)
             if isinstance(s, chisurf.fitting.fit.Fit) and s.model is not self
         ]
 
@@ -461,10 +461,10 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
     def onRemoveLocalFit(self):
         row = self.tableWidget.currentRow()
         self.tableWidget.removeRow(row)
-        mfm.run("cs.current_fit.model.remove_local_fit(%s)" % row)
+        chisurf.run("cs.current_fit.model.remove_local_fit(%s)" % row)
 
     def onClearLocalFits(self):
-        mfm.run("cs.current_fit.model.clear_local_fits()")
+        chisurf.run("cs.current_fit.model.clear_local_fits()")
         self.tableWidget.setRowCount(0)
 
     def onTableGlobalLinksDoubleClicked(self):
@@ -474,7 +474,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
     def onAddGlobalVariable(self):
         variable_name = self.current_global_variable_name
         if len(variable_name) > 0 and variable_name not in list(self._global_parameters.keys()):
-            mfm.run(
+            chisurf.run(
                 "cs.current_fit.model.append_global_parameter(chisurf.parameter.FittingParameterWidget(name='%s'))" %
                 self.current_global_variable_name
             )
@@ -495,8 +495,8 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         local_fits_idx = self.local_fit_idx
         fit_indeces = range(len(local_fits)) if self.add_all_fits else [self.current_fit_index]
         for fitIndex in fit_indeces:
-            mfm.run(
-                "cs.current_fit.model.append_fit(mfm.fits[%s])" % local_fits_idx[fitIndex]
+            chisurf.run(
+                "cs.current_fit.model.append_fit(chisurf.fits[%s])" % local_fits_idx[fitIndex]
             )
 
     def append_fit(

@@ -6,7 +6,7 @@ import urllib
 
 from PyQt5 import QtCore, QtWidgets, uic
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 
 
 class UpdateDialog(QtWidgets.QWidget):
@@ -29,7 +29,7 @@ class UpdateDialog(QtWidgets.QWidget):
         self.filedownloadthread = None
         self.download_file = None
 
-        request = urllib.Request(mfm.settings.cs_settings['updates']['check_version_url'])
+        request = urllib.Request(chisurf.settings.cs_settings['updates']['check_version_url'])
         request.add_header('Pragma', 'no-cache')
         try:
             content = urllib.build_opener().open(request)
@@ -43,15 +43,15 @@ class UpdateDialog(QtWidgets.QWidget):
         #online = urllib.urlopen().readlines()
 
         if installed_version is None:
-            installed_version = mfm.settings.cs_settings['version']
+            installed_version = chisurf.settings.cs_settings['version']
 
         self.lineEdit.setText(installed_version)
-        changes = urllib.urlopen(mfm.settings.cs_settings['updates']['changes']).read()
+        changes = urllib.urlopen(chisurf.settings.cs_settings['updates']['changes']).read()
         self.textEdit.setText(changes)
         self.actionDownloadUpdate.triggered.connect(self.start_download)
 
         if online_version is not None:
-            if mfm.settings.cs_settings['updates']['check_for_updates'] and installed_version < online_version:
+            if chisurf.settings.cs_settings['updates']['check_for_updates'] and installed_version < online_version:
                 self.show()
 
     def start_download(self):

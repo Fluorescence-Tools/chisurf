@@ -4,12 +4,12 @@ import numpy as np
 import pyqtgraph as pg
 from qtpy import QtWidgets
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.fitting
 from chisurf.plots import plotbase
 
-pyqtgraph_settings = mfm.settings.gui['plot']["pyqtgraph"]
-color_scheme = mfm.settings.colors
+pyqtgraph_settings = chisurf.settings.gui['plot']["pyqtgraph"]
+color_scheme = chisurf.settings.colors
 
 
 class ResidualPlot(plotbase.Plot):
@@ -47,7 +47,7 @@ class ResidualPlot(plotbase.Plot):
         self.data_x, self.data_y = None, None
 
         curves = list()
-        lw = mfm.settings.gui['plot']['line_width']
+        lw = chisurf.settings.gui['plot']['line_width']
         self.curves = curves
 
         p = pg.PlotWidget(
@@ -56,7 +56,7 @@ class ResidualPlot(plotbase.Plot):
         self.layout.addWidget(p)
 
         for i, f in enumerate(fit):
-            color = mfm.settings.colors[i % len(mfm.settings.colors)]['hex']
+            color = chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex']
             c = pg.PlotCurveItem(pen=pg.mkPen(color, width=lw), name=f.data.name)
             p.addItem(c)
             c.setPos(0, i*6)

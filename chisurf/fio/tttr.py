@@ -11,7 +11,7 @@ import numpy as np
 import tables
 
 import chisurf
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 
 
 class Photon(tables.IsDescription):
@@ -427,7 +427,7 @@ def make_hdf(
         title: str = None,
         filename: str = None,
         verbose: bool = mfm.verbose,
-        complib: str = mfm.settings.cs_settings['photons']['complib'],
+        complib: str = chisurf.settings.cs_settings['photons']['complib'],
         **kwargs
 ):
     """
@@ -438,7 +438,7 @@ def make_hdf(
     :return: hdf-file handle (pytables)
     """
     if title is None:
-        title = str(mfm.settings.cs_settings['photons']['title'])
+        title = str(chisurf.settings.cs_settings['photons']['title'])
     if filename is None:
         #filename = tempfile.NamedTemporaryFile(
         #    suffix=".photons.h5"
@@ -446,7 +446,7 @@ def make_hdf(
         _, filename = tempfile.mkstemp(
             suffix=".photons.h5"
         )
-    complevel = kwargs.get('', int(mfm.settings.cs_settings['photons']['complevel']))
+    complevel = kwargs.get('', int(chisurf.settings.cs_settings['photons']['complevel']))
     if verbose:
         print("-------------------------------------------")
         print("Make Photon HDF-File")

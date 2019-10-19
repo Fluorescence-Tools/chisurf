@@ -6,7 +6,7 @@ from __future__ import annotations
 import numpy as np
 from qtpy import QtWidgets
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 from mfm import plots
 from chisurf.models.tcspc.lifetime import _membrane, Lifetime
 from chisurf.models.tcspc.fret import FRETModel
@@ -163,10 +163,10 @@ class GridModel(FRETModel):
 
         # FRET-rate parameter
         self._forster_radius = FittingParameter(kwargs.get('forster_radius',
-                                                           mfm.settings.cs_settings['fret']['forster_radius']),
+                                                           chisurf.settings.cs_settings['fret']['forster_radius']),
                                                 name='R0', fixed=True)
         self._tau0 = FittingParameter(kwargs.get('tau0',
-                                                 mfm.settings.cs_settings['fret']['tau0']),
+                                                 chisurf.settings.cs_settings['fret']['tau0']),
                                       name='tau0', fixed=True)
         self._donors = kwargs.get('donors', Lifetime('D'))
 
@@ -262,10 +262,10 @@ class GridModelWidget(GridModel, QtWidgets.QWidget):
         self._pu = FittingParameterWidget(value=kwargs.get('pu', 0.0), name='pu', fixed=True)
         # FRET-rate parameter
         self._forster_radius = FittingParameterWidget(value=kwargs.get('forster_radius',
-                                                                       mfm.settings.cs_settings['fret']['forster_radius']),
+                                                                       chisurf.settings.cs_settings['fret']['forster_radius']),
                                                       name='R0', fixed=True)
         self._tau0 = FittingParameterWidget(value=kwargs.get('tau0',
-                                                             mfm.settings.cs_settings['fret']['tau0']),
+                                                             chisurf.settings.cs_settings['fret']['tau0']),
                                             name='tau0', fixed=True)
 
         # Setup the layout

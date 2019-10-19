@@ -270,7 +270,7 @@ class ProteinCentroid(Structure):
     Examples
     --------
 
-    >>> import chisurf.mfm as mfm
+    >>> import chisurf.settings as mfm
     >>> sp = mfm.structure.protein.ProteinCentroid('../test/data/structure/HM_1FN5_Naming.pdb', verbose=True, make_coarse=True)
     ======================================
     Filename: /data/structure/HM_1FN5_Naming.pdb

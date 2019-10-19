@@ -4,7 +4,7 @@ from pyqtgraph.dockarea import DockArea, Dock
 import pyqtgraph.opengl as gl
 from matplotlib import cm
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.math
 import chisurf.fluorescence.fps
 from chisurf.plots import plotbase
@@ -61,7 +61,7 @@ class AvPlot(plotbase.Plot):
         area = DockArea()
         self.layout.addWidget(area)
 
-        hide_title = mfm.settings.gui['plot']['hideTitle']
+        hide_title = chisurf.settings.gui['plot']['hideTitle']
         d1 = Dock("quenching", size=(300, 300), hideTitle=hide_title)
         d2 = Dock("diffusion", size=(300, 300), hideTitle=hide_title)
         d3 = Dock("equilibrium", size=(300, 300), hideTitle=hide_title)

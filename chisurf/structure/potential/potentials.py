@@ -15,7 +15,7 @@ import chisurf.fluorescence.fps
 import chisurf.structure.structure
 import chisurf.structure.potential.cPotentials
 #import chisurf.widgets
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 
 
 @nb.njit
@@ -690,7 +690,7 @@ class AvPotential(object):
         self.positions = kwargs.get("Positions", None)
 
         if av_samples is None:
-            av_samples = mfm.settings["fps"]["distance_samples"]
+            av_samples = chisurf.settings["fps"]["distance_samples"]
         self.n_av_samples = av_samples
         self.min_av = min_av
 

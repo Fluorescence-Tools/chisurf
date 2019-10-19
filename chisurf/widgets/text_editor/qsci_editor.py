@@ -11,7 +11,8 @@ from qtpy.QtGui import *
 from qtpy.QtWidgets import *
 import qdarkstyle
 
-import chisurf.mfm as mfm
+import chisurf
+import chisurf.settings as mfm
 
 
 class SimpleCodeEditor(QsciScintilla):
@@ -45,19 +46,19 @@ class SimpleCodeEditor(QsciScintilla):
         """
         super().__init__(parent)
         if font_point_size is None:
-            font_point_size = mfm.settings.gui['editor']['font_size']
+            font_point_size = chisurf.settings.gui['editor']['font_size']
         if font_family is None:
-            font_family = mfm.settings.gui['editor']['font_family']
+            font_family = chisurf.settings.gui['editor']['font_family']
         if margins_background_color is None:
-            margins_background_color = mfm.settings.gui[
+            margins_background_color = chisurf.settings.gui[
                 'editor'
             ]['margins_background_color']
         if marker_background_color is None:
-            marker_background_color = mfm.settings.gui[
+            marker_background_color = chisurf.settings.gui[
                 'editor'
             ]['marker_background_color']
         if caret_line_background_color is None:
-            caret_line_background_color = mfm.settings.gui[
+            caret_line_background_color = chisurf.settings.gui[
                 'editor'
             ]['caret_line_background_color']
 

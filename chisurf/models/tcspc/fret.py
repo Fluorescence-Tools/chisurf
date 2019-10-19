@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.fluorescence.anisotropy.kappa2
 import chisurf.math
 import chisurf.math.datatools
@@ -11,9 +11,9 @@ from chisurf.fluorescence.general import distribution2rates, rates2lifetimes
 from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
 
 rda_axis = np.linspace(
-    mfm.settings.fret['rda_min'],
-    mfm.settings.fret['rda_max'],
-    mfm.settings.fret['rda_resolution'], dtype=np.float64
+    chisurf.settings.fret['rda_min'],
+    chisurf.settings.fret['rda_max'],
+    chisurf.settings.fret['rda_resolution'], dtype=np.float64
 )
 
 
@@ -71,11 +71,11 @@ class FRETParameters(FittingParameterGroup):
 
     def __init__(
             self,
-            forster_radius: float = mfm.settings.fret['forster_radius'],
-            tau0: float = mfm.settings.fret['tau0'],
+            forster_radius: float = chisurf.settings.fret['forster_radius'],
+            tau0: float = chisurf.settings.fret['tau0'],
             **kwargs
     ):
-        #kappa2 = kwargs.pop('kappa2', mfm.settings.cs_settings['fret']['kappa2'])
+        #kappa2 = kwargs.pop('kappa2', chisurf.settings.cs_settings['fret']['kappa2'])
         t0 = tau0
         xDOnly = kwargs.pop('x(D0)', 0.0)
         model = kwargs.get('models', None)
@@ -482,10 +482,10 @@ class FRETModel(LifetimeModel):
             self.donors.rate_spectrum,
             xDOnly
         )
-        if mfm.settings.cs_settings['fret']['bin_lifetime']:
-            n_lifetimes = mfm.settings.cs_settings['fret']['lifetime_bins']
-            discriminate = mfm.settings.cs_settings['fret']['discriminate']
-            discriminate_amplitude = mfm.settings.cs_settings['fret'][
+        if chisurf.settings.cs_settings['fret']['bin_lifetime']:
+            n_lifetimes = chisurf.settings.cs_settings['fret']['lifetime_bins']
+            discriminate = chisurf.settings.cs_settings['fret']['discriminate']
+            discriminate_amplitude = chisurf.settings.cs_settings['fret'][
                 'discriminate_amplitude']
             return chisurf.fluorescence.tcspc.bin_lifetime_spectrum(
                 lt, n_lifetimes=n_lifetimes,
@@ -607,7 +607,7 @@ class FRETModel(LifetimeModel):
             **kwargs
         )
         self.orientation_parameter = OrientationParameter(
-            orientation_mode=mfm.settings.cs_settings['fret']['orientation_mode']
+            orientation_mode=chisurf.settings.cs_settings['fret']['orientation_mode']
         )
         self.fret_parameters = kwargs.get(
             'fret_parameters',
@@ -775,7 +775,7 @@ class WormLikeChainModel(FRETModel):
                 sigma_linker
             )
         dist = np.array([prob, rda_axis]).reshape(
-            [1, 2, mfm.settings.fret['rda_resolution']]
+            [1, 2, chisurf.settings.fret['rda_resolution']]
         )
         return dist
 

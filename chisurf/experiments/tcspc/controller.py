@@ -2,7 +2,7 @@ import os
 
 from qtpy import QtWidgets
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.widgets
 from chisurf.experiments import reader
@@ -61,7 +61,7 @@ class CsvTCSPCWidget(
         dt = float(
             self.doubleSpinBox_2.value()
         ) * rebin if self.checkBox_2.isChecked() else 1.0 * rebin
-        mfm.run(
+        chisurf.run(
             "\n".join(
                 [
                     "cs.current_setup.is_jordi = %s" % is_jordi,
@@ -144,7 +144,7 @@ class TCSPCSetupDummyWidget(
         lifetime = self.doubleSpinBox_2.value()
         p0 = self.spinBox_2.value()
         sample_name = str(self.lineEdit.text())
-        mfm.run(
+        chisurf.run(
             "\n".join(
                 [
                     "cs.current_setup.sample_name = '%s'" % sample_name,

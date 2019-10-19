@@ -10,7 +10,7 @@ utils.set_search_paths(TOPDIR)
 import glob
 import numpy as np
 import chisurf.fio
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.fluorescence
 import chisurf.fluorescence.fret
 

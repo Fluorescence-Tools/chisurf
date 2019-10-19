@@ -6,7 +6,7 @@ import copy
 from qtpy import QtWidgets
 import qdarkstyle
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.fio.tttr
 import chisurf.widgets

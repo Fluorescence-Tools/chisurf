@@ -4,16 +4,16 @@ import pyqtgraph as pg
 from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.fitting
 import chisurf.fluorescence
 import chisurf.math.datatools
 from chisurf.plots import plotbase
 
-plot_settings = mfm.settings.gui['plot']
-pyqtgraph_settings = mfm.settings.pyqtgraph_settings
+plot_settings = chisurf.settings.gui['plot']
+pyqtgraph_settings = chisurf.settings.pyqtgraph_settings
 colors = plot_settings['colors']
-color_scheme = mfm.settings.colors
+color_scheme = chisurf.settings.colors
 lw = plot_settings['line_width']
 
 

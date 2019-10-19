@@ -5,8 +5,8 @@ import json
 import os
 import numpy as np
 
-import chisurf.mfm.settings
-import chisurf.mfm as mfm
+import chisurf.settings
+import chisurf.settings as mfm
 import chisurf.base
 import chisurf.fio.density
 
@@ -64,10 +64,10 @@ class BasicAV(object):
     ):
         super(BasicAV, self).__init__(*args, **kwargs)
         if simulation_grid_resolution is None:
-            simulation_grid_resolution = mfm.settings['fps']['simulation_grid_resolution']
+            simulation_grid_resolution = chisurf.settings['fps']['simulation_grid_resolution']
         self.dg = simulation_grid_resolution
         if allowed_sphere_radius is None:
-            allowed_sphere_radius = mfm.settings['fps']['allowed_sphere_radius']
+            allowed_sphere_radius = chisurf.settings['fps']['allowed_sphere_radius']
         self.allowed_sphere_radius = allowed_sphere_radius
 
         self.position_name = position_name

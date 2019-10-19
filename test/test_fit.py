@@ -10,7 +10,7 @@ utils.set_search_paths(TOPDIR)
 import numpy as np
 import copy
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.experiments
 import chisurf.models
 import chisurf.fitting

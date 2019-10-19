@@ -4,9 +4,9 @@ from typing import Tuple
 
 import numpy as np
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.fluorescence
-import chisurf.experiments as experiments
+import chisurf.experiments
 from chisurf.experiments import reader
 from chisurf.fio.ascii import Csv
 
@@ -24,7 +24,7 @@ def read_tcspc_csv(
         setup: reader.ExperimentReader = None,
         *args,
         **kwargs
-) -> experiments.data.DataCurveGroup:
+) -> chisurf.experiments.data.DataCurveGroup:
     """
 
     :param filename:
@@ -137,7 +137,7 @@ def read_tcspc_csv(
             name = '{} {:d}_{:d}'.format(fn, i, n_data_sets)
         else:
             name = filename
-        data = experiments.data.DataCurve(
+        data = chisurf.experiments.data.DataCurve(
             x=x,
             y=yi,
             ex=ex,
@@ -148,7 +148,7 @@ def read_tcspc_csv(
         )
         data.filename = filename
         data_curves.append(data)
-    data_group = experiments.data.DataCurveGroup(
+    data_group = chisurf.experiments.data.DataCurveGroup(
         data_curves,
         filename,
     )
@@ -160,7 +160,7 @@ def read_fcs(
         setup: reader.ExperimentReader = None,
         *args,
         **kwargs
-) -> experiments.data.DataCurve:
+) -> chisurf.experiments.data.DataCurve:
     csv = chisurf.fio.ascii.Csv()
     csv.load(
         filename=filename,
@@ -170,7 +170,7 @@ def read_fcs(
     )
     x, y = csv.data[0], csv.data[1]
     w = csv.data[2]
-    d = experiments.data.DataCurve(
+    d = chisurf.experiments.data.DataCurve(
         setup=setup,
         x=x,
         y=y,
@@ -237,9 +237,9 @@ def save_fcs_kristine(
 
 def read_fcs_kristine(
         filename: str,
-        experiment_reader: experiments.reader.ExperimentReader = None,
+        experiment_reader: chisurf.experiments.reader.ExperimentReader = None,
         verbose=mfm.verbose
-) -> experiments.data.DataCurve:
+) -> chisurf.experiments.data.DataCurve:
     """Uses either the error provided by the correlator (4. column)
     or calculates the error based on the correlation curve,
     the aquisition time and the count-rate.
@@ -257,7 +257,7 @@ def read_fcs_kristine(
         verbose=verbose
     )
     data = csv.data
-    d = experiments.data.DataCurve(
+    d = chisurf.experiments.data.DataCurve(
         setup=experiment_reader
     )
 

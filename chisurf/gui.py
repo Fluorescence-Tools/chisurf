@@ -8,7 +8,7 @@ from qtpy import QtCore, QtGui, QtWidgets, uic
 import qdarkstyle
 import numpy as np
 
-import chisurf.mfm as mfm
+import chisurf
 import chisurf.decorators
 import chisurf.base
 import chisurf.macros
@@ -19,7 +19,7 @@ import chisurf.experiments.widgets
 import chisurf.experiments.tcspc.controller
 import chisurf.widgets
 import chisurf.models
-import mfm.ui.resource
+import chisurf.settings.ui.resource
 
 
 class Main(QtWidgets.QMainWindow):
@@ -49,7 +49,7 @@ class Main(QtWidgets.QMainWindow):
     ) -> int:
         subwindow = self.mdiarea.currentSubWindow()
         if subwindow is not None:
-            for fit_idx, f in enumerate(mfm.fits):
+            for fit_idx, f in enumerate(chisurf.fits):
                 if f == subwindow.fit:
                     return fit_idx
 
@@ -70,7 +70,7 @@ class Main(QtWidgets.QMainWindow):
     def current_experiment(
             self
     ) -> experiments.experiment.Experiment:
-        return mfm.experiment[
+        return chisurf.experiment[
             self.current_experiment_idx
         ]
 
@@ -81,7 +81,7 @@ class Main(QtWidgets.QMainWindow):
     ) -> None:
         p = self.comboBox_experimentSelect.currentIndex()
         n = p
-        for n, e in enumerate(mfm.experiment):
+        for n, e in enumerate(chisurf.experiment):
             if e.name == name:
                 break
         if p != n:
@@ -155,7 +155,7 @@ class Main(QtWidgets.QMainWindow):
             self,
             event: QtGui.QCloseEvent
     ):
-        if mfm.settings.gui['confirm_close_program']:
+        if chisurf.settings.gui['confirm_close_program']:
             reply = chisurf.widgets.widgets.MyMessageBox.question(
                 self,
                 'Message',
@@ -173,16 +173,14 @@ class Main(QtWidgets.QMainWindow):
     def subWindowActivated(self):
         sub_window = self.mdiarea.currentSubWindow()
         if sub_window is not None:
-            for f in mfm.fits:
+            for f in chisurf.fits:
                 if f == sub_window.fit:
-                    if self.current_fit is not mfm.fits[self.fit_idx]:
-                        mfm.run("cs.current_fit = mfm.fits[%s]" % self.fit_idx)
+                    if self.current_fit is not chisurf.fits[self.fit_idx]:
+                        chisurf.run("cs.current_fit = chisurf.fits[%s]" % self.fit_idx)
                         break
 
             self.current_fit_widget = sub_window.fit_widget
-            window_title = mfm.__name__ + \
-                           "(" + mfm.__version__ + "): " + \
-                           self.current_fit.name
+            window_title = chisurf.__name__ + "(" + chisurf.__version__ + "): " + self.current_fit.name
 
             self.setWindowTitle(window_title)
 
@@ -198,7 +196,7 @@ class Main(QtWidgets.QMainWindow):
             "Python macros",
             file_type="Python file (*.py)"
         )
-        mfm.run("chisurf.mfm.console.run_macro(filename='%s')" % filename)
+        chisurf.run("chisurf.console.run_macro(filename='%s')" % filename)
 
     def onTileWindows(self):
         self.mdiarea.setViewMode(QtWidgets.QMdiArea.SubWindowView)
@@ -212,15 +210,15 @@ class Main(QtWidgets.QMainWindow):
         self.mdiarea.cascadeSubWindows()
 
     def onCurrentDatasetChanged(self):
-        #mfm.run("cs.current_dataset = %s" % self.curve_selector.selected_curve_index)
+        #chisurf.run("cs.current_dataset = %s" % self.curve_selector.selected_curve_index)
         self.comboBox_Model.clear()
         ds = self.current_dataset
-        if mfm.imported_datasets:
+        if chisurf.imported_datasets:
             model_names = ds.experiment.get_model_names()
             self.comboBox_Model.addItems(model_names)
 
     def onAddFit(self):
-        mfm.run(
+        chisurf.run(
             "chisurf.macros.add_fit(model_name='%s', dataset_indices=%s)" %
             (
                 self.current_model_name,
@@ -230,7 +228,7 @@ class Main(QtWidgets.QMainWindow):
 
     def onExperimentChanged(self):
         experiment_name = self.comboBox_experimentSelect.currentText()
-        mfm.run("cs.current_experiment = '%s'" % experiment_name)
+        chisurf.run("cs.current_experiment = '%s'" % experiment_name)
         # Add setups for selected experiment
         self.comboBox_setupSelect.blockSignals(True)
         self.comboBox_setupSelect.clear()
@@ -249,7 +247,7 @@ class Main(QtWidgets.QMainWindow):
             description="Load results into fit-models",
             **kwargs
         )
-        mfm.run(
+        chisurf.run(
             "chisurf.macros.load_fit_result(%s, %s)" % (
                 self.fit_idx,
                 filename
@@ -260,7 +258,7 @@ class Main(QtWidgets.QMainWindow):
         chisurf.widgets.hide_items_in_layout(
             self.layout_experiment_reader
         )
-        mfm.run(
+        chisurf.run(
             "cs.current_setup = '%s'" % self.current_setup_name
         )
         try:
@@ -275,12 +273,12 @@ class Main(QtWidgets.QMainWindow):
             self.current_setup.controller.show()
 
     def onCloseAllFits(self):
-        for sub_window in mfm.fit_windows:
+        for sub_window in chisurf.fit_windows:
             sub_window.widget().close_confirm = False
             sub_window.close()
 
-        mfm.fits = list()
-        mfm.fit_windows = list()
+        chisurf.fits.clear()
+        chisurf.fit_windows.clear()
 
     def onAddDataset(self):
         try:
@@ -320,9 +318,9 @@ class Main(QtWidgets.QMainWindow):
             **kwargs
     ):
         if directory is None:
-            chisurf.mfm.working_path = chisurf.widgets.get_directory(**kwargs)
-        chisurf.mfm.working_path = directory
-        chisurf.mfm.console.run('chisurf.macros.save_fit()')
+            chisurf.chisurf.working_path = chisurf.widgets.get_directory(**kwargs)
+        chisurf.chisurf.working_path = directory
+        chisurf.console.run('chisurf.macros.save_fit()')
 
     def onOpenHelp(
             self
@@ -398,16 +396,15 @@ class Main(QtWidgets.QMainWindow):
         self.actionF_Test.triggered.connect(self.f_test.show)
 
     def init_console(self):
-        self.verticalLayout_4.addWidget(chisurf.mfm.console)
-        chisurf.mfm.console.pushVariables({'cs': self})
-        chisurf.mfm.console.pushVariables({'chisurf': chisurf})
-        chisurf.mfm.console.pushVariables({'mfm': mfm})
-        chisurf.mfm.console.pushVariables({'np': np})
-        chisurf.mfm.console.pushVariables({'os': os})
-        chisurf.mfm.console.pushVariables({'QtCore': QtCore})
-        chisurf.mfm.console.pushVariables({'QtGui': QtGui})
-        chisurf.mfm.run = chisurf.mfm.console.execute
-        chisurf.mfm.run(str(mfm.settings.gui['console']['init']))
+        self.verticalLayout_4.addWidget(chisurf.console)
+        chisurf.console.pushVariables({'cs': self})
+        chisurf.console.pushVariables({'chisurf': chisurf})
+        chisurf.console.pushVariables({'np': np})
+        chisurf.console.pushVariables({'os': os})
+        chisurf.console.pushVariables({'QtCore': QtCore})
+        chisurf.console.pushVariables({'QtGui': QtGui})
+        chisurf.run = chisurf.console.execute
+        chisurf.run(str(chisurf.settings.gui['console']['init']))
 
     def init_setups(self):
         ##########################################################
@@ -429,7 +426,7 @@ class Main(QtWidgets.QMainWindow):
                 chisurf.models.tcspc.widgets.LifetimeModelWidget
             ]
         )
-        mfm.experiment.append(structure)
+        chisurf.experiment.append(structure)
 
         ##########################################################
         #       TCSPC                                            #
@@ -443,7 +440,7 @@ class Main(QtWidgets.QMainWindow):
                     ),
                     experiments.tcspc.controller.TCSPCReaderControlWidget(
                         name='CSV/PQ/IBH',
-                        **mfm.settings.cs_settings['tcspc_csv'],
+                        **chisurf.settings.cs_settings['tcspc_csv'],
                     )
                 ),
                 (
@@ -469,7 +466,7 @@ class Main(QtWidgets.QMainWindow):
                 chisurf.models.tcspc.widgets.WormLikeChainModelWidget
             ]
         )
-        mfm.experiment.append(tcspc)
+        chisurf.experiment.append(tcspc)
 
         ##########################################################
         #       FCS                                              #
@@ -502,7 +499,7 @@ class Main(QtWidgets.QMainWindow):
                 chisurf.models.fcs.fcs.ParseFCSWidget
             ]
         )
-        mfm.experiment.append(fcs)
+        chisurf.experiment.append(fcs)
 
         ##########################################################
         #       Global datasets                                  #
@@ -518,7 +515,7 @@ class Main(QtWidgets.QMainWindow):
             ]
         )
         global_fit.add_reader(global_setup)
-        mfm.experiment.append(global_fit)
+        chisurf.experiment.append(global_fit)
 
         chisurf.macros.add_dataset(
             setup=global_setup,
@@ -529,7 +526,7 @@ class Main(QtWidgets.QMainWindow):
         #       Update UI                                        #
         ##########################################################
         self.experiment_names = [
-            b.name for b in mfm.experiment if b.name is not 'Global'
+            b.name for b in chisurf.experiment if b.name is not 'Global'
         ]
         self.comboBox_experimentSelect.addItems(
             self.experiment_names
@@ -561,7 +558,7 @@ class Main(QtWidgets.QMainWindow):
         self.setCentralWidget(self.mdiarea)
         self.init_widgets()
         self.configuration = chisurf.widgets.text_editor.CodeEditor(
-            filename=mfm.settings.settings_file,
+            filename=chisurf.settings.settings_file,
             language='YAML',
             can_load=False
         )
@@ -586,15 +583,15 @@ class Main(QtWidgets.QMainWindow):
         #      Push variables to console and add it to           #
         #      user interface                                    #
         ##########################################################
-        self.dockWidgetScriptEdit.setVisible(mfm.settings.gui['show_macro_edit'])
-        self.dockWidget_console.setVisible(mfm.settings.gui['show_console'])
+        self.dockWidgetScriptEdit.setVisible(chisurf.settings.gui['show_macro_edit'])
+        self.dockWidget_console.setVisible(chisurf.settings.gui['show_console'])
         self.init_console()
 
         ##########################################################
         #      Record and run recorded macros                    #
         ##########################################################
-        self.actionRecord.triggered.connect(chisurf.mfm.console.start_recording)
-        self.actionStop.triggered.connect(chisurf.mfm.console.save_macro)
+        self.actionRecord.triggered.connect(chisurf.console.start_recording)
+        self.actionStop.triggered.connect(chisurf.console.save_macro)
         self.actionRun.triggered.connect(self.onRunMacro)
 
         ##########################################################
@@ -644,10 +641,10 @@ class Main(QtWidgets.QMainWindow):
 
 def gui():
     app = QtWidgets.QApplication(sys.argv)
-    chisurf.mfm.console = chisurf.widgets.QIPythonWidget()
+    chisurf.console = chisurf.widgets.QIPythonWidget()
     win = Main()
-    chisurf.mfm.console.history_widget = win.plainTextEditHistory
-    chisurf.mfm.cs = win
+    chisurf.console.history_widget = win.plainTextEditHistory
+    chisurf.cs = win
     win.init_setups()
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 

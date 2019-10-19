@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 from qtpy import QtCore, QtGui, QtWidgets
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.fluorescence
 import chisurf.fluorescence.general
@@ -404,7 +404,7 @@ class EtModelFree(
 
     @property
     def fits(self):
-        fits = [f for f in mfm.fits if isinstance(f.model, LifetimeModel) and not isinstance(f.model, EtModelFree)]
+        fits = [f for f in chisurf.fits if isinstance(f.model, LifetimeModel) and not isinstance(f.model, EtModelFree)]
         return fits
 
     @fits.setter
