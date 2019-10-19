@@ -11,9 +11,8 @@ import tempfile
 import copy
 import numpy as np
 
-import chisurf.settings as mfm
 import chisurf.base
-import experiments
+import chisurf.experiments
 
 
 def get_data_values(
@@ -260,7 +259,7 @@ class Tests(unittest.TestCase):
             a_value=a_value,
             c_value=c_value
         )
-        data = experiments.data.DataCurve(
+        data = chisurf.experiments.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
@@ -280,7 +279,7 @@ class Tests(unittest.TestCase):
             ),
             True
         )
-        data_group = experiments.data.DataGroup(
+        data_group = chisurf.experiments.data.DataGroup(
             [data, data2]
         )
         data_group.current_dataset = 0

@@ -9,19 +9,23 @@ different experimental setups. Furthermore, it contains a set of plotting librar
 from __future__ import annotations
 from typing import List
 
-from . import experiment
-from . import data
-from . import reader
-from . import fcs
-from . import tcspc
-from . import globalfit
-from . import modelling
+import chisurf.experiments.experiment
+import chisurf.experiments.data
+import chisurf.experiments.reader
+import chisurf.experiments.fcs
+import chisurf.experiments.tcspc
+import chisurf.experiments.globalfit
+import chisurf.experiments.modelling
 
 
 def get_data(
         curve_type: str = 'experiment',
-        data_set: List[data.ExperimentalData] = None
-) -> List[data.ExperimentalData]:
+        data_set: List[
+            chisurf.experiments.data.ExperimentalData
+        ] = None
+) -> List[
+    chisurf.experiments.data.ExperimentalData
+]:
     """Returns all curves `chisurf.curve.DataCurve` except if the
     curve is names "Global-fit"
 
@@ -39,11 +43,11 @@ def get_data(
                     (
                             isinstance(
                                 d,
-                                data.ExperimentalData
+                                chisurf.experiments.data.ExperimentalData
                             ) or
                             isinstance(
                                 d,
-                                data.ExperimentDataGroup
+                                chisurf.experiments.data.ExperimentDataGroup
                             )
                     ) and
                     d.name != "Global-fit"
@@ -56,6 +60,7 @@ def get_data(
                 d,
                 data.ExperimentalData
             ) or isinstance(
-                d, data.ExperimentDataGroup
+                d,
+                chisurf.experiments.data.ExperimentDataGroup
             )
         ]

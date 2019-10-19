@@ -10,7 +10,6 @@ utils.set_search_paths(TOPDIR)
 import numpy as np
 import tempfile
 
-import chisurf.settings as mfm
 import chisurf.curve
 
 

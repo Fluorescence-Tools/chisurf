@@ -7,7 +7,6 @@ TOPDIR = os.path.abspath(
 )
 utils.set_search_paths(TOPDIR)
 
-import chisurf.settings as mfm
 import chisurf.parameter
 import chisurf.models
 import chisurf.fitting
