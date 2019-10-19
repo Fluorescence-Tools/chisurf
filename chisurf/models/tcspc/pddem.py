@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 from chisurf.models.tcspc.fret import Gaussians
 from chisurf.fluorescence import tcspc
 from chisurf.fluorescence.general import distribution2rates
@@ -175,9 +175,9 @@ class PDDEMModel(LifetimeModel):
             tmp[0::2] *= p[i]
             decays.append(tmp)
         lt = np.concatenate(decays)
-        if mfm.settings.cs_settings['fret']['bin_lifetime']:
-            n_lifetimes = mfm.settings.cs_settings['fret']['lifetime_bins']
-            discriminate_amplitude = mfm.settings.cs_settings['fret']['discriminate_amplitude']
+        if chisurf.settings.cs_settings['fret']['bin_lifetime']:
+            n_lifetimes = chisurf.settings.cs_settings['fret']['lifetime_bins']
+            discriminate_amplitude = chisurf.settings.cs_settings['fret']['discriminate_amplitude']
             return chisurf.fluorescence.tcspc.bin_lifetime_spectrum(
                 lt,
                 n_lifetimes=n_lifetimes,

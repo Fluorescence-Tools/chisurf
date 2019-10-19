@@ -13,7 +13,7 @@ from re import Scanner
 from qtpy import QtCore, QtWidgets, QtWebEngineWidgets
 from qtpy.QtCore import QFile, QFileInfo, QTextStream, QUrl
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.widgets
 from chisurf.models.model import ModelWidget, ModelCurve
@@ -209,7 +209,7 @@ class ParseFormulaWidget(
             **kwargs
     ):
         if n_columns is None:
-            n_columns = mfm.settings.gui['fit_models']['n_columns']
+            n_columns = chisurf.settings.gui['fit_models']['n_columns']
         self.n_columns = n_columns
 
         self.webview = QtWebEngineWidgets.QWebEngineView()
@@ -306,7 +306,7 @@ class ParseFormulaWidget(
 
     def onUpdateFunc(self):
         function_str = str(self.plainTextEdit.toPlainText())
-        mfm.run(
+        chisurf.run(
             "\n".join(
                 [
                     "cs.current_fit.model.parse.func = '%s'" % function_str,
@@ -317,7 +317,7 @@ class ParseFormulaWidget(
         self.onUpdateEquation()
 
     def onModelChanged(self):
-        mfm.run(
+        chisurf.run(
             "\n".join(
                 [
                     "cs.current_fit.model.parse.model_name = '%s'" %
@@ -339,7 +339,7 @@ class ParseFormulaWidget(
                 'Open models-file',
                 'link file (*.yaml)'
             )
-        mfm.run(
+        chisurf.run(
             "cs.current_fit.model.parse.load_model_file(%s)" % filename
         )
 

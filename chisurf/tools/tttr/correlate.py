@@ -10,17 +10,17 @@ import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets, uic
 import qdarkstyle
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.experiments.widgets
 import chisurf.tools
 import chisurf.fluorescence
 import chisurf.experiments.data
-import chisurf.mfm.settings as settings
+import chisurf.settings as settings
 import chisurf.widgets
 from chisurf.fio.widgets import SpcFileWidget
 
-settings = mfm.settings.cs_settings['correlator']
-plot_settings = mfm.settings.gui['plot']
+settings = chisurf.settings.cs_settings['correlator']
+plot_settings = chisurf.settings.gui['plot']
 pyqtgraph_settings = plot_settings["pyqtgraph"]
 lw = plot_settings['line_width']
 
@@ -69,8 +69,8 @@ class CorrelateTTTR(QtWidgets.QWidget):
         current_curve = self.cs.selected_curve_index
         for i, curve in enumerate(self._curves):
             l = lw * 0.5 if i != current_curve else 1.5 * lw
-            color = mfm.settings.colors[
-                i % len(mfm.settings.colors)
+            color = chisurf.settings.colors[
+                i % len(chisurf.settings.colors)
                 ]['hex']
             plot.plot(x=curve.x, y=curve.y,
                       pen=pg.mkPen(color, width=l),

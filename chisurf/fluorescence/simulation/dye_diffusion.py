@@ -5,8 +5,8 @@ import numpy as np
 import tables
 from chisurf.fluorescence.fps.dynamic import DiffusionSimulation
 
-import chisurf.mfm.settings
-import chisurf.mfm as mfm
+import chisurf.settings
+import chisurf.settings as mfm
 from chisurf.curve import Curve
 from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 

@@ -7,7 +7,7 @@ import numpy as np
 from . import correlate
 from . import filtered
 
-from chisurf.mfm.settings import cs_settings
+from chisurf.settings import cs_settings
 
 weightCalculations = ['Koppel', 'none']
 correlationMethods = ['tp']

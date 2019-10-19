@@ -3,15 +3,15 @@
 
 import numpy as np
 import pyqtgraph as pg
-from qtpy import  QtWidgets
+from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
-import chisurf.mfm as mfm
+import chisurf.settings
 from chisurf.plots.plotbase import Plot
 
-pyqtgraph_settings = mfm.settings.gui['plot']["pyqtgraph"]
-colors = mfm.settings.gui['plot']['colors']
-color_scheme = mfm.settings.colors
+pyqtgraph_settings = chisurf.settings.gui['plot']["pyqtgraph"]
+colors = chisurf.settings.gui['plot']['colors']
+color_scheme = chisurf.settings.colors
 
 
 class ProteinMCPlot(Plot):
@@ -19,7 +19,9 @@ class ProteinMCPlot(Plot):
     name = "Trajectory-Plot"
 
     def __init__(self, fit):
-        chisurf.plots.Plot.__init__(self, fit)
+        super().__init__(
+            fit=fit
+        )
 
         self.trajectory = fit.model
         self.source = fit.model
@@ -27,7 +29,7 @@ class ProteinMCPlot(Plot):
         self.layout = QtWidgets.QVBoxLayout(self)
         area = DockArea()
         self.layout.addWidget(area)
-        hide_title = mfm.settings.gui['plot']['hideTitle']
+        hide_title = chisurf.settings.gui['plot']['hideTitle']
         d1 = Dock("RMSD")
         d2 = Dock("dRMSD")
         d3 = Dock("Energy")
@@ -54,7 +56,7 @@ class ProteinMCPlot(Plot):
         self.energy_plot = p3.getPlotItem()
         self.fret_plot = p4.getPlotItem()
 
-        lw = mfm.settings.gui['plot']['line_width']
+        lw = chisurf.settings.gui['plot']['line_width']
         self.rmsd_curve = self.rmsd_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['irf'], width=lw), name='rmsd')
         self.drmsd_curve = self.drmsd_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['data'], width=lw), name='drmsd')
         self.energy_curve = self.energy_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['models'], width=lw), name='energy')

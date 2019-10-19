@@ -11,7 +11,7 @@ from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
 import qdarkstyle
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.fio.coordinates
 import chisurf.fluorescence.fps.widgets
 from chisurf.fluorescence.simulation.dye_diffusion import DyeDecay

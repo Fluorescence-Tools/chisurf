@@ -5,19 +5,19 @@ import os
 from docx import Document
 from docx.shared import Inches
 
-import chisurf.mfm as mfm
 import chisurf.base
 import chisurf.experiments
 import chisurf.models
 import chisurf.fitting
 import chisurf.widgets
+import chisurf.macros.tcspc
 
 
 def add_fit(
         dataset_indices: List[int] = None,
         model_name: str = None
 ):
-    cs = mfm.cs
+    cs = chisurf.cs
     if dataset_indices is None:
         dataset_indices = [cs.dataset_selector.selected_curve_index]
     if model_name is None:
@@ -53,7 +53,7 @@ def add_fit(
                 data=data_group,
                 model_class=model_class
             )
-            mfm.fits.append(fit_group)
+            chisurf.fits.append(fit_group)
 
             fit_control_widget = chisurf.fitting.widgets.FittingControllerWidget(
                 fit_group
@@ -68,12 +68,12 @@ def add_fit(
                 fit_widget=fit_control_widget
             )
             fit_window = cs.mdiarea.addSubWindow(fit_window)
-            mfm.fit_windows.append(fit_window)
+            chisurf.fit_windows.append(fit_window)
             fit_window.show()
 
 
 def save_fit():
-    cs = mfm.cs
+    cs = chisurf.cs
 
     fit_control_widget = cs.current_fit_widget
     fs = fit_control_widget.fit
@@ -85,7 +85,7 @@ def save_fit():
     pk = cs.current_fit.model.parameters_all_dict.keys()
     pk.sort()
 
-    target_path = mfm.working_path
+    target_path = chisurf.working_path
 
     document.add_heading('Fit-Results', level=1)
     for i, f in enumerate(fs):
@@ -168,8 +168,8 @@ def load_fit_result(
         filename: str
 ) -> bool:
     if os.path.isfile(filename):
-        mfm.fits[fit_index].model.load(filename)
-        mfm.fits[fit_index].update()
+        chisurf.fits[fit_index].model.load(filename)
+        chisurf.fits[fit_index].update()
         return True
     else:
         return False
@@ -180,7 +180,7 @@ def group_datasets(
 ) -> None:
     #selected_data = mfm.data_sets[dataset_numbers]
     selected_data = [
-        mfm.imported_datasets[i] for i in dataset_indices
+        chisurf.imported_datasets[i] for i in dataset_indices
     ]
     if isinstance(
             selected_data[0],
@@ -197,11 +197,11 @@ def group_datasets(
             name="Data-Group"
         )
     dn = list()
-    for d in mfm.imported_datasets:
+    for d in chisurf.imported_datasets:
         if d not in dg:
             dn.append(d)
     dn.append(dg)
-    mfm.imported_datasets = dn
+    chisurf.imported_datasets = dn
 
 
 def remove_datasets(
@@ -214,7 +214,7 @@ def remove_datasets(
         dataset_indices = [dataset_indices]
 
     imported_datasets = list()
-    for i, d in enumerate(mfm.imported_datasets):
+    for i, d in enumerate(chisurf.imported_datasets):
         if d.name == 'Global-fit':
             imported_datasets.append(d)
             continue
@@ -222,15 +222,15 @@ def remove_datasets(
             imported_datasets.append(d)
         else:
             fw = list()
-            for fit_window in mfm.fit_windows:
+            for fit_window in chisurf.fit_windows:
                 if fit_window.fit.data is d:
                     fit_window.close_confirm = False
                     fit_window.close()
                 else:
                     fw.append(fit_window)
-            mfm.fit_windows = fw
+            chisurf.fit_windows = fw
 
-    mfm.imported_datasets = imported_datasets
+    chisurf.imported_datasets = imported_datasets
 
 
 def add_dataset(
@@ -238,7 +238,7 @@ def add_dataset(
         dataset: chisurf.base.Data = None,
         **kwargs
 ) -> None:
-    cs = mfm.cs
+    cs = chisurf.cs
     if setup is None:
         setup = cs.current_setup
     if dataset is None:
@@ -252,9 +252,9 @@ def add_dataset(
         dataset
     )
     if len(dataset_group) == 1:
-        mfm.imported_datasets.append(dataset_group[0])
+        chisurf.imported_datasets.append(dataset_group[0])
     else:
-        mfm.imported_datasets.append(dataset_group)
+        chisurf.imported_datasets.append(dataset_group)
     cs.dataset_selector.update()
 
 
@@ -262,17 +262,17 @@ def save_fits(
         path: str,
         **kwargs
 ):
-    cs = mfm.cs
+    cs = chisurf.cs
     if os.path.isdir(path):
         cf = cs.fit_idx
-        for fit in mfm.fits:
+        for fit in chisurf.fits:
             fit_name = fit.name
             path_name = chisurf.base.clean_string(fit_name)
             p2 = path + '//' + path_name
             os.mkdir(p2)
             cs.current_fit = fit
             cs.onSaveFit(directory=p2)
-        cs.current_fit = mfm.fits[cf]
+        cs.current_fit = chisurf.fits[cf]
 
 
 def close_fit(
@@ -281,11 +281,11 @@ def close_fit(
     cs = mfm.cs
     if idx is None:
         sub_window = cs.mdiarea.currentSubWindow()
-        for i, w in enumerate(mfm.fit_windows):
+        for i, w in enumerate(chisurf.fit_windows):
             if w is sub_window:
                 idx = i
-    mfm.fits.pop(idx)
-    sub_window = mfm.fit_windows.pop(idx)
+    chisurf.fits.pop(idx)
+    sub_window = chisurf.fit_windows.pop(idx)
     sub_window.close_confirm = False
     chisurf.widgets.hide_items_in_layout(cs.modelLayout)
     chisurf.widgets.hide_items_in_layout(cs.plotOptionsLayout)
@@ -295,7 +295,7 @@ def close_fit(
 def change_selected_fit_of_group(
     selected_fit: int
 ) -> None:
-    cs = mfm.cs
+    cs = chisurf.cs
     cs.current_fit.model.hide()
     cs.current_fit.current_fit = selected_fit
     cs.current_fit.update()
@@ -306,7 +306,7 @@ def link_fit_group(
         fitting_parameter_name: str,
         csi: int = 0
 ) -> None:
-    cs = mfm.cs
+    cs = chisurf.cs
     if csi == 2:
         s = cs.current_fit.model.parameters_all_dict[fitting_parameter_name]
         for f in cs.current_fit:

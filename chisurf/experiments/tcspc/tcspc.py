@@ -1,8 +1,8 @@
 from __future__ import annotations
 from typing import Tuple
 
-import chisurf.mfm.settings
-import chisurf.mfm as mfm
+import chisurf.settings
+import chisurf.settings as mfm
 import chisurf.experiments
 import chisurf.base
 import chisurf.fluorescence
@@ -65,15 +65,15 @@ class TCSPCReader(
             **kwargs
         )
         if dt is None:
-            dt = mfm.settings.tcspc['dt']
+            dt = chisurf.settings.tcspc['dt']
         if g_factor is None:
-            g_factor = mfm.settings.tcspc['g_factor']
+            g_factor = chisurf.settings.tcspc['g_factor']
         if rep_rate is None:
-            rep_rate = mfm.settings.tcspc['rep_rate']
+            rep_rate = chisurf.settings.tcspc['rep_rate']
         if fit_area is None:
-            fit_area = mfm.settings.tcspc['fit_area']
+            fit_area = chisurf.settings.tcspc['fit_area']
         if fit_count_threshold is None:
-            fit_count_threshold = mfm.settings.tcspc['fit_count_threshold']
+            fit_count_threshold = chisurf.settings.tcspc['fit_count_threshold']
 
         self.dt = dt
         self.excitation_repetition_rate = rep_rate

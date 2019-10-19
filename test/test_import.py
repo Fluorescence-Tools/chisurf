@@ -11,4 +11,4 @@ utils.set_search_paths(TOPDIR)
 class Tests(unittest.TestCase):
 
     def test_mfm_import(self):
-        import chisurf.mfm as mfm
+        import chisurf.settings as mfm

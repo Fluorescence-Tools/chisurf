@@ -8,14 +8,14 @@ import pyqtgraph as pg
 from PyQt5 import QtWidgets
 import qdarkstyle
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.decorators
 import experiments.data
 import experiments.widgets
 import chisurf.fluorescence.tcspc
 import chisurf.fio.widgets
 
-plot_settings = mfm.settings.gui['plot']
+plot_settings = chisurf.settings.gui['plot']
 lw = plot_settings['line_width']
 
 
@@ -85,7 +85,7 @@ class HistogramTTTR(
         current_curve = self.curve_selector.selected_curve_index
         for i, curve in enumerate(self._curves):
             l = lw * 0.5 if i != current_curve else 1.5 * lw
-            color = mfm.settings.colors[i % len(mfm.settings.colors)]['hex']
+            color = chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex']
             plot.plot(x=curve.x, y=curve.y,
                       pen=pg.mkPen(color, width=l),
                       name=curve.name)

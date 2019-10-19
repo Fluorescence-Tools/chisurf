@@ -7,8 +7,8 @@ import numpy as np
 from qtpy import  QtWidgets, uic
 from chisurf.models.parse import ParseModelWidget
 
-import chisurf.mfm.settings
-import chisurf.mfm as mfm
+import chisurf.settings
+import chisurf.settings as mfm
 import chisurf.fitting.widgets
 from chisurf import plots
 from chisurf.models.model import Model

@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from qtpy import QtGui
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 from chisurf import plots
 from chisurf.models.parse import ParseModelWidget
 

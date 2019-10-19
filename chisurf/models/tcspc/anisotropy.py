@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.fluorescence
 import chisurf.fitting
 import chisurf.fitting.parameter
@@ -176,7 +176,7 @@ class Anisotropy(
         self._bs = list()
 
         if polarization is None:
-            polarization = mfm.settings.cs_settings['tcspc']['polarization']
+            polarization = chisurf.settings.cs_settings['tcspc']['polarization']
         self._polarization_type = polarization
 
         self._r0 = chisurf.fitting.parameter.FittingParameter(

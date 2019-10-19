@@ -14,7 +14,7 @@ from chisurf.fluorescence.fps.dynamic import DiffusionSimulation, Dye, Sticking,
     ProteinQuenching
 from chisurf.fluorescence.fps.widgets import ProteinQuenchingWidget, DyeWidget, StickingWidget
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import fitting.fit
 import chisurf.models.tcspc.nusiance
 import fitting.widgets
@@ -23,7 +23,7 @@ import chisurf.fluorescence.tcspc.convolve
 import chisurf.fio
 import chisurf.math
 import chisurf.models.tcspc.widgets
-import chisurf.mfm as mfm.structure
+import chisurf.settings as mfm.structure
 import chisurf.mfm.structure.structure
 from mfm import plots
 from chisurf.curve import Curve

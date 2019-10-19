@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.macros
 import chisurf.fluorescence.tcspc.convolve
 import chisurf.fluorescence.tcspc.corrections
@@ -648,9 +648,9 @@ class Convolve(FittingParameterGroup):
         self.data = data
 
         self._n0 = FittingParameter(
-            value=mfm.settings.cs_settings['tcspc']['n0'],
+            value=chisurf.settings.cs_settings['tcspc']['n0'],
             name='n0',
-            fixed=mfm.settings.cs_settings['tcspc']['autoscale'],
+            fixed=chisurf.settings.cs_settings['tcspc']['autoscale'],
             decimals=2
         )
         self._dt = FittingParameter(
@@ -682,8 +682,8 @@ class Convolve(FittingParameterGroup):
             value=0.0,
             name='ts'
         )
-        self._do_convolution = mfm.settings.cs_settings['tcspc']['convolution_on_by_default']
-        self.mode = mfm.settings.cs_settings['tcspc']['default_convolution_mode']
+        self._do_convolution = chisurf.settings.cs_settings['tcspc']['convolution_on_by_default']
+        self.mode = chisurf.settings.cs_settings['tcspc']['default_convolution_mode']
         self.n_photons_irf = 1.0
 
         self.__irf = irf

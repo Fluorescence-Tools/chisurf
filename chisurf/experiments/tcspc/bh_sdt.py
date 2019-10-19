@@ -5,7 +5,7 @@ import os
 import numpy as np
 from qtpy import QtWidgets, uic
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.fluorescence
 import chisurf.decorators
 import chisurf.experiments.data

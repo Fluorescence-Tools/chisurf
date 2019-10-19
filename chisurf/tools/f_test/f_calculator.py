@@ -7,7 +7,7 @@ import qdarkstyle
 
 from scipy.stats import f as fdist
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.models
 import fitting.fit
@@ -38,7 +38,7 @@ class FTestWidget(QtWidgets.QWidget):
 
     def read_n(self):
         menu = QtWidgets.QMenu()
-        for f in mfm.fits:
+        for f in chisurf.fits:
             for fs in f:
                 Action = menu.addAction(fs.name)
                 Action.triggered.connect(
@@ -50,7 +50,7 @@ class FTestWidget(QtWidgets.QWidget):
 
     def read_n1(self):
         menu = QtWidgets.QMenu()
-        for f in mfm.fits:
+        for f in chisurf.fits:
             for fs in f:
                 Action = menu.addAction(fs.name)
                 Action.triggered.connect(
@@ -60,7 +60,7 @@ class FTestWidget(QtWidgets.QWidget):
 
     def read_n2(self):
         menu = QtWidgets.QMenu()
-        for f in mfm.fits:
+        for f in chisurf.fits:
             for fs in f:
                 Action = menu.addAction(fs.name)
                 Action.triggered.connect(

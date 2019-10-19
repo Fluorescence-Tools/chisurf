@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import OrderedDict
 from qtpy import QtWidgets
 
-import chisurf.mfm.settings
+import chisurf.settings
 import chisurf.fitting
 from chisurf.fluorescence.fps.dynamic import ProteinQuenching, Dye, Sticking
 from chisurf.fitting.widgets import FittingParameterWidget

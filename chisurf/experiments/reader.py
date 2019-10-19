@@ -8,7 +8,7 @@ from abc import abstractmethod, abstractproperty
 
 import chisurf.base
 import chisurf.curve
-from chisurf import experiments
+import chisurf.experiments
 
 
 class ExperimentReader(
@@ -20,7 +20,7 @@ class ExperimentReader(
 
     def __init__(
             self,
-            experiment: experiments.experiment.Experiment,
+            experiment: chisurf.experiments.experiment.Experiment,
             *args,
             controller: ExperimentReaderController = None,
             **kwargs
@@ -76,18 +76,18 @@ class ExperimentReader(
     def get_data(
             self,
             **kwargs
-    ) -> experiments.data.ExperimentDataGroup:
+    ) -> chisurf.experiments.data.ExperimentDataGroup:
         data = self.read(
             **kwargs
         )
         if isinstance(
                 data,
-                experiments.data.ExperimentalData
+                chisurf.experiments.data.ExperimentalData
         ):
-            data = experiments.data.ExperimentDataGroup([data])
+            data = chisurf.experiments.data.ExperimentDataGroup([data])
         if isinstance(
                 data,
-                experiments.data.ExperimentDataGroup
+                chisurf.experiments.data.ExperimentDataGroup
         ):
             for d in data:
                 d.experiment = self.experiment

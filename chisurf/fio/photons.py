@@ -57,7 +57,7 @@ def read_burst_ids(
     Examples
     --------
 
-    >>> import chisurf.mfm as mfm, glob
+    >>> import chisurf.settings as mfm, glob
     >>> directory = "./test/data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\BID"
     >>> files = glob.glob(directory+'/*.bst')
     >>> bids = chisurf.fio.photons.read_burst_ids(files)

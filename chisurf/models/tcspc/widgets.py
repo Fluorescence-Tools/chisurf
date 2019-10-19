@@ -7,7 +7,7 @@ from qtpy import QtWidgets, uic, QtCore, QtGui
 
 import os
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.math
 import chisurf.models
@@ -108,7 +108,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         self.groupBox.toggled.connect(self.onConvolutionModeChanged)
 
     def onConvolutionModeChanged(self):
-        mfm.run(
+        chisurf.run(
             "\n".join(
                 [
                     "for f in cs.current_fit:\n"
@@ -123,7 +123,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
     def change_irf(self):
         idx = self.irf_select.selected_curve_index
         name = self.irf_select.curve_name
-        mfm.run(
+        chisurf.run(
             "chisurf.macros.tcspc.change_irf(%s, '%s')" % (idx, name)
         )
         self.fwhm = self._irf.fwhm
@@ -213,28 +213,28 @@ class CorrectionsWidget(
         self.actionSelect_lintable.triggered.connect(self.lin_select.show)
 
         self.checkBox_3.toggled.connect(
-            lambda: mfm.run(
+            lambda: chisurf.run(
                 "cs.current_fit.model.corrections.correct_pile_up = %s\n" %
                 self.checkBox_3.isChecked()
             )
         )
 
         self.checkBox_2.toggled.connect(
-            lambda: mfm.run(
+            lambda: chisurf.run(
                 "cs.current_fit.model.corrections.reverse = %s" %
                 self.checkBox_2.isChecked()
             )
         )
 
         self.checkBox.toggled.connect(
-            lambda: mfm.run(
+            lambda: chisurf.run(
                 "cs.current_fit.model.corrections.correct_dnl = %s" %
                 self.checkBox.isChecked()
             )
         )
 
         self.comboBox.currentIndexChanged.connect(
-            lambda: mfm.run(
+            lambda: chisurf.run(
                 "cs.current_fit.model.corrections.window_function = '%s'" %
                 self.comboBox.currentText()
             )
@@ -243,7 +243,7 @@ class CorrectionsWidget(
     def onChangeLin(self):
         idx = self.lin_select.selected_curve_index
         lin_name = self.lin_select.curve_name
-        mfm.run(
+        chisurf.run(
             "chisurf.macros.tcspc.set_linearization(%s, '%s')" %
             (idx, lin_name)
         )
@@ -388,7 +388,7 @@ class AnisotropyWidget(
         )
         self.radioButtonVM.setChecked(True)
         self.radioButtonVM.clicked.connect(
-            lambda: mfm.run(
+            lambda: chisurf.run(
                 "cs.current_fit.model.anisotropy.polarization_type = 'vm'"
             )
         )
@@ -399,7 +399,7 @@ class AnisotropyWidget(
             "Excitation: Vertical\nDetection: Vertical"
         )
         self.radioButtonVV.clicked.connect(
-            lambda: mfm.run(
+            lambda: chisurf.run(
                 "cs.current_fit.model.anisotropy.polarization_type = 'vv'"
             )
         )
@@ -409,7 +409,7 @@ class AnisotropyWidget(
             "Excitation: Vertical\nDetection: Horizontal"
         )
         self.radioButtonVH.clicked.connect(
-            lambda: mfm.run(
+            lambda: chisurf.run(
                 "cs.current_fit.model.anisotropy.polarization_type = 'vh'"
             )
         )
@@ -486,7 +486,7 @@ class AnisotropyWidget(
             self.gb.hide()
 
     def onAddRotation(self):
-        mfm.run(
+        chisurf.run(
             "\n".join(
                 [
                     "for f in cs.current_fit:",
@@ -497,7 +497,7 @@ class AnisotropyWidget(
         )
 
     def onRemoveRotation(self):
-        mfm.run(
+        chisurf.run(
             "\n".join(
                 [
                     "for f in cs.current_fit:",
@@ -650,16 +650,16 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         def linkcall():
             for key in self.parameter_dict:
                 v = target.parameters_all_dict[key].value
-                mfm.run(
+                chisurf.run(
                     "cs.current_fit.model.parameters_all_dict['%s'].value = %s" %
                     (key, v)
                 )
-            mfm.run("cs.current_fit.update()")
+            chisurf.run("cs.current_fit.update()")
         return linkcall
 
     def read_menu(self):
         menu = QtWidgets.QMenu()
-        for f in mfm.fits:
+        for f in chisurf.fits:
             for fs in f:
                 submenu = QtWidgets.QMenu(menu)
                 submenu.setTitle(fs.name)
@@ -678,7 +678,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
     def link_menu(self):
         menu = QtWidgets.QMenu()
-        for f in mfm.fits:
+        for f in chisurf.fits:
             for fs in f:
                 submenu = QtWidgets.QMenu(menu)
                 submenu.setTitle(fs.name)
@@ -754,22 +754,22 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         self.append()
 
     def onNormalizeAmplitudes(self):
-        mfm.run(
+        chisurf.run(
             "chisurf.macros.tcspc.normalize_lifetime_amplitudes(%s)",
             self.normalize_amplitude.isChecked()
         )
 
     def onAbsoluteAmplitudes(self):
-        mfm.run(
+        chisurf.run(
             "chisurf.macros.tcspc.absolute_amplitudes(%s)",
             self.absolute_amplitude.isChecked()
         )
 
     def onAddLifetime(self):
-        mfm.run("chisurf.macros.tcspc.add_lifetime('%s')" % self.name)
+        chisurf.run("chisurf.macros.tcspc.add_lifetime('%s')" % self.name)
 
     def onRemoveLifetime(self):
-        mfm.run("chisurf.macros.tcspc.remove_lifetime('%s')" % self.name)
+        chisurf.run("chisurf.macros.tcspc.remove_lifetime('%s')" % self.name)
 
     def append(self, *args, **kwargs):
         Lifetime.append(self, *args, **kwargs)
@@ -935,14 +935,14 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
         self.append(1.0, 50.0, 6.0, 0.0)
 
     def onAddGaussian(self):
-        mfm.run(
+        chisurf.run(
             "for f in cs.current_fit:\n" \
             "   f.model.%s.append()\n" \
             "   f.model.update()" % self.name
         )
 
     def onRemoveGaussian(self):
-        mfm.run(
+        chisurf.run(
             "for f in cs.current_fit:\n" \
             "   f.model.%s.pop()\n" \
             "   f.model.update()" % self.name
@@ -1047,14 +1047,14 @@ class DiscreteDistanceWidget(
 for f in cs.current_fit:
     f.model.%s.append()
             """ % self.name
-        mfm.run(t)
+        chisurf.run(t)
 
     def onRemoveFRETrate(self):
         t = """
 for f in cs.current_fit:
     f.model.%s.pop()
             """ % self.name
-        mfm.run(t)
+        chisurf.run(t)
 
     def append(
             self,
@@ -1074,8 +1074,8 @@ for f in cs.current_fit:
             model=self.model,
             decimals=1,
             bounds_on=False,
-            lb=mfm.settings.fret['rda_min'],
-            ub=mfm.settings.fret['rda_max'],
+            lb=chisurf.settings.fret['rda_min'],
+            ub=chisurf.settings.fret['rda_max'],
             text='R',
             update_function=self.update
         )
@@ -1104,13 +1104,13 @@ for f in cs.current_fit:
         self._gb.append(gb)
         self._distances.append(m)
         self._amplitudes.append(x)
-        mfm.run("cs.current_fit.update()")
+        chisurf.run("cs.current_fit.update()")
 
     def pop(self):
         self._distances.pop().close()
         self._amplitudes.pop().close()
         self._gb.pop().close()
-        mfm.run("cs.current_fit.update()")
+        chisurf.run("cs.current_fit.update()")
 
 
 class GaussianModelWidget(

@@ -9,7 +9,7 @@ import numpy as np
 import scipy.linalg
 import scipy.stats
 
-import chisurf.mfm as mfm
+import chisurf.settings
 import chisurf.base
 import chisurf.fio
 import chisurf.curve
@@ -195,7 +195,7 @@ class Fit(
         _, grad = approx_grad(
             self.model.parameter_values,
             self,
-            mfm.eps
+            chisurf.settings.eps
         )
         return grad
 
@@ -306,7 +306,7 @@ class Fit(
             *args,
             **kwargs
     ) -> None:
-        fitting_options = mfm.settings.cs_settings['fitting']['leastsq']
+        fitting_options = chisurf.settings.cs_settings['fitting']['leastsq']
         self.model.find_parameters(
             parameter_type=chisurf.fitting.parameter.FittingParameter
         )
@@ -492,7 +492,7 @@ class FitGroup(
         """
         fit = self
         if local_first is None:
-            local_first = mfm.settings.fitting['global']['fit_local_first']
+            local_first = chisurf.settings.fitting['global']['fit_local_first']
 
         if local_first:
             for f in fit:
@@ -503,7 +503,7 @@ class FitGroup(
             f.model.find_parameters()
 
         fit.global_model.find_parameters()
-        fitting_options = mfm.settings.fitting['leastsq']
+        fitting_options = chisurf.settings.fitting['leastsq']
         bounds = [pi.bounds for pi in fit.global_model.parameters]
 
         results = leastsqbound(
@@ -661,7 +661,7 @@ def approx_grad(
 
 def covariance_matrix(
         fit: chisurf.fitting.fit.Fit,
-        epsilon: float = mfm.eps,
+        epsilon: float = chisurf.settings.eps,
         **kwargs
 ) -> Tuple[np.array, List[int]]:
     """Calculate the covariance matrix

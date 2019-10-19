@@ -15,7 +15,7 @@ def poisson_0toN(lam, N):
     Examples
     --------
 
-    >>> import chisurf.mfm as mfm
+    >>> import chisurf.settings as mfm
     >>> r = chisurf.math.functions.distributions.poisson_0toN(0.2, 5)
     >>> r
     array([  8.18730753e-01,   3.27492301e-02,   1.30996920e-03,
@@ -127,7 +127,7 @@ def sum_distribution(x_axis, dist_function, dist_args, weights=None, accumulate=
     
     Example
     -------
-    >>> import chisurf.mfm as mfm
+    >>> import chisurf.settings as mfm
     >>> import pylab as p
     >>> pdf = chisurf.math.functions.distributions.normal_distribution
     >>> x_axis = np.linspace(0, 10, 100)

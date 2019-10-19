@@ -1,6 +1,6 @@
 import matplotlib.pyplot as p
 
-import chisurf.mfm as mfm
+import chisurf.settings as mfm
 from mfm.fluorescence.simulation.dye_diffusion import DyeDecay, FRETDecay
 
 pdb_filename = 'y:/Documents/ChiSurf/data/models/hgbp1/hGBP1_closed.pdb'

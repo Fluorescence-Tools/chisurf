@@ -11,7 +11,7 @@ import numpy as np
 import chisurf.base
 import chisurf.curve
 import chisurf.fio
-from chisurf import experiments
+import chisurf.experiments
 
 
 class ExperimentalData(
@@ -24,11 +24,11 @@ class ExperimentalData(
     @property
     def experiment(
             self
-    ) -> experiments.experiment.Experiment:
+    ) -> chisurf.experiments.experiment.Experiment:
         if self._experiment is None:
             if isinstance(
                 self.setup,
-                experiments.reader.ExperimentReader
+                chisurf.experiments.reader.ExperimentReader
             ):
                 return self.setup.experiment
         else:
@@ -37,7 +37,7 @@ class ExperimentalData(
     @experiment.setter
     def experiment(
             self,
-            v: experiments.experiment.Experiment
+            v: chisurf.experiments.experiment.Experiment
     ) -> None:
         self._experiment = v
 
@@ -48,14 +48,14 @@ class ExperimentalData(
     @data_reader.setter
     def data_reader(
         self,
-        v: experiments.reader.ExperimentReader
+        v: chisurf.experiments.reader.ExperimentReader
     ):
         self._data_reader = v
 
     def __init__(
             self,
-            data_reader: experiments.reader.ExperimentReader = None,
-            experiment: experiments.experiment.Experiment = None,
+            data_reader: chisurf.experiments.reader.ExperimentReader = None,
+            experiment: chisurf.experiments.experiment.Experiment = None,
             *args,
             **kwargs
     ):
@@ -71,7 +71,7 @@ class ExperimentalData(
             **kwargs
         )
         if data_reader is None:
-            data_reader = experiments.reader.ExperimentReader(
+            data_reader = chisurf.experiments.reader.ExperimentReader(
                 *args,
                 experiment=experiment,
                 **kwargs

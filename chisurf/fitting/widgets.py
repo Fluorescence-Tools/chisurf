@@ -7,12 +7,12 @@ import os
 import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 
-import chisurf.mfm.settings
-import chisurf.mfm as mfm
+import chisurf.settings
+import chisurf.settings as mfm
 import chisurf.experiments.widgets
 import chisurf.widgets
 
-parameter_settings = mfm.settings.parameter
+parameter_settings = chisurf.settings.parameter
 
 
 class FittingControllerWidget(
@@ -133,11 +133,11 @@ class FittingControllerWidget(
         self.onAutoFitRange()
 
     def onDatasetChanged(self):
-        mfm.run("chisurf.macros.change_selected_fit_of_group(%s)" % self.selected_fit)
+        chisurf.run("chisurf.macros.change_selected_fit_of_group(%s)" % self.selected_fit)
 
     def onErrorEstimate(self):
         filename = chisurf.widgets.save_file('Error estimate', '*.er4')
-        kw = mfm.settings.cs_settings['fitting']['sampling']
+        kw = chisurf.settings.cs_settings['fitting']['sampling']
         chisurf.fitting.fit.sample_fit(
             self.fit,
             filename,
@@ -145,7 +145,7 @@ class FittingControllerWidget(
         )
 
     def onRunFit(self):
-        mfm.run("cs.current_fit.run()")
+        chisurf.run("cs.current_fit.run()")
 
     def onAutoFitRange(self):
         try:
@@ -180,7 +180,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         self.fit = fit
         self.fit_widget = fit_widget
         if close_confirm is None:
-            close_confirm = mfm.settings.gui['confirm_close_fit']
+            close_confirm = chisurf.settings.gui['confirm_close_fit']
         self.close_confirm = close_confirm
 
         layout = self.layout()
@@ -254,8 +254,8 @@ class FittingParameterWidget(QtWidgets.QWidget):
 
         def linkcall():
             tooltip = " linked to " + parameter_name
-            mfm.run(
-                "cs.current_fit.model.parameters_all_dict['%s'].link = mfm.fits[%s].model.parameters_all_dict['%s']" %
+            chisurf.run(
+                "cs.current_fit.model.parameters_all_dict['%s'].link = chisurf.fits[%s].model.parameters_all_dict['%s']" %
                 (self.name, fit_idx, parameter_name)
             )
             self.widget_link.setToolTip(tooltip)
@@ -273,7 +273,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
         menu = QtWidgets.QMenu(self)
         menu.setTitle("Link " + self.fitting_parameter.name + " to:")
 
-        for fit_idx, f in enumerate(mfm.fits):
+        for fit_idx, f in enumerate(chisurf.fits):
             for fs in f:
                 submenu = QtWidgets.QMenu(menu)
                 submenu.setTitle(fs.name)
@@ -401,25 +401,25 @@ class FittingParameterWidget(QtWidgets.QWidget):
         self.widget.hide()
 
         # The variable value
-        self.widget_value.editingFinished.connect(lambda: mfm.run(
+        self.widget_value.editingFinished.connect(lambda: chisurf.run(
             "cs.current_fit.model.parameters_all_dict['%s'].value = %s\n"
             "cs.current_fit.update()" %
             (self.fitting_parameter.name, self.widget_value.value()))
         )
 
-        self.widget_fix.toggled.connect(lambda: mfm.run(
+        self.widget_fix.toggled.connect(lambda: chisurf.run(
             "cs.current_fit.model.parameters_all_dict['%s'].fixed = %s" %
             (self.fitting_parameter.name, self.widget_fix.isChecked()))
         )
 
         # Variable is bounded
-        self.widget_bounds_on.toggled.connect(lambda: mfm.run(
+        self.widget_bounds_on.toggled.connect(lambda: chisurf.run(
             "cs.current_fit.model.parameters_all_dict['%s'].bounds_on = %s" %
             (self.fitting_parameter.name, self.widget_bounds_on.isChecked()))
         )
 
         self.widget_lower_bound.editingFinished.connect(
-            lambda: mfm.run(
+            lambda: chisurf.run(
                 "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
                 (
                     self.fitting_parameter.name,
@@ -430,7 +430,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
         )
 
         self.widget_upper_bound.editingFinished.connect(
-            lambda: mfm.run(
+            lambda: chisurf.run(
                 "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
                 (
                     self.fitting_parameter.name,
@@ -450,7 +450,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
         cs = self.widget_link.checkState()
         self.widget_link.setCheckState(QtCore.Qt.Checked)
         self.widget_value.setEnabled(False)
-        mfm.run(
+        chisurf.run(
             "chisurf.macros.fitting_parameter_name(%s, %s)" % (
                 self.fitting_parameter.name,
                 cs
@@ -509,7 +509,7 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
         super().__init__(*args, **kwargs)
 
         if n_col is None:
-            n_col = mfm.settings.gui['fit_models']['n_columns']
+            n_col = chisurf.settings.gui['fit_models']['n_columns']
 
         self.parameter_group = parameter_group
         self.n_col = n_col
