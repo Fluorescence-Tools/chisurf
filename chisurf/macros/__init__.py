@@ -19,11 +19,15 @@ def add_fit(
 ):
     cs = chisurf.cs
     if dataset_indices is None:
-        dataset_indices = [cs.dataset_selector.selected_curve_index]
+        dataset_indices = [
+            cs.dataset_selector.selected_curve_index
+        ]
     if model_name is None:
         model_name = cs.current_model_name
 
-    data_sets = [cs.dataset_selector.datasets[i] for i in dataset_indices]
+    data_sets = [
+        cs.dataset_selector.datasets[i] for i in dataset_indices
+    ]
     model_names = data_sets[0].experiment.model_names
 
     model_class = data_sets[0].experiment.model_classes[0]

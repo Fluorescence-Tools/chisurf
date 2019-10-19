@@ -9,6 +9,7 @@ from copy import deepcopy
 from typing import List
 
 import mdtraj as md
+import pdb2pqr.main
 import numpy as np
 
 import chisurf.fio
@@ -97,9 +98,14 @@ class Structure(chisurf.base.Base):
             filename: str = None,
             verbose: bool = False,
             pdb_id: str = None,
+            protonate: bool = False,
             **kwargs
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args,
+            **kwargs
+        )
+
         self.auto_update = auto_update
         self._filename = filename
         self._atoms = None
@@ -143,11 +149,13 @@ class Structure(chisurf.base.Base):
                 self.pdbid = p_object
             else:
                 return
+        if protonate:
+            self.protonate()
 
     @property
     def sequence(self) -> Dict:
         if self._sequence is None:
-            self._sequence = mfm.structure.structure.sequence(self)
+            self._sequence = chisurf.structure.sequence(self)
         return self._sequence
 
     @property
@@ -225,7 +233,9 @@ class Structure(chisurf.base.Base):
     @property
     def residue_dict(self):
         if self._residue_dict is None:
-            residue_dict = mfm.structure.structure.make_dictionary_of_atoms(self.atoms)
+            residue_dict = chisurf.structure.make_dictionary_of_atoms(
+                self.atoms
+            )
             self._residue_dict = residue_dict
         return self._residue_dict
 
@@ -261,7 +271,7 @@ class Structure(chisurf.base.Base):
         :param atom_names: list of string of the atom-names
         :return: list of integers the indices with a given atom name
         """
-        mfm.structure.structure.get_atom_index_by_name(self.atoms, atom_names)
+        chisurf.structure.get_atom_index_by_name(self.atoms, atom_names)
 
     @property
     def b_factors(
@@ -269,14 +279,14 @@ class Structure(chisurf.base.Base):
     ):
         """B-factors of the C-alpha atoms
         """
-        sel = mfm.structure.structure.get_atom_index_by_name(self.atoms, ['CA'])[0]
+        sel = chisurf.structure.get_atom_index_by_name(self.atoms, ['CA'])[0]
         bfac = self.atoms[sel]['bfactor']
         return bfac
 
     @b_factors.setter
     def b_factors(self, v):
         s = self
-        sel = mfm.structure.structure.get_atom_index_by_name(s.atoms, ['CA'])[0]
+        sel = chisurf.structure.get_atom_index_by_name(s.atoms, ['CA'])[0]
         for ai, bi in zip(sel, v):
             s._atoms[ai]['bfactor'] = bi
 
@@ -303,13 +313,13 @@ class Structure(chisurf.base.Base):
         Examples
         --------
 
-        >>> import chisurf.settings as mfm.structure
-        >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb', verbose=True)
+        >>> import chisurf.structure
+        >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb', verbose=True)
         >>> structure.append_potential(mfm.structure.potential.lennard_jones_calpha)
         >>> structure.energy
         -948.0396693387753
 
-        >>> structure.append_potential(mfm.structure.potential.internal_potential_calpha, kwargs={})
+        >>> structure.append_potential(chisurf.structure.potential.internal_potential_calpha, kwargs={})
         """
         if kwargs is None:
             kwargs = dict()
@@ -343,6 +353,41 @@ class Structure(chisurf.base.Base):
             aw,
             append_model=append_model,
             append_coordinates=append_coordinates
+        )
+
+    def protonate(
+            self
+    ) -> None:
+        """Saves the current structure as a PDB file, uses PDB2PQR
+        to protonate the structure.
+        """
+        _, filename_pdb = tempfile.mkstemp(suffix='.pdb')
+        self.write(
+            filename=filename_pdb
+        )
+        _, filename_pqr = tempfile.mkstemp(suffix='.pqr')
+        with open(filename_pdb, 'r') as pdb_file:
+            pdblist, _ = pdb2pqr.main.readPDB(
+                pdb_file
+            )
+            pqr = pdb2pqr.main.runPDB2PQR(
+                pdblist=pdblist,
+                outname=filename_pqr,
+                ff='PARSE',
+                drop_water=True
+            )
+            header, lines = pqr['header'], pqr['lines']
+
+        with open(filename_pqr, 'w') as outfile:
+            outfile.write(header)
+            # Adding whitespaces if --whitespace is in the options
+            for line in lines:
+                outfile.write(line)
+            outfile.close()
+
+        self._atoms = chisurf.fio.coordinates.read(
+            filename_pqr,
+            assign_charge=False,
         )
 
     def update(
@@ -407,8 +452,8 @@ def onRMSF(
 
 
 def rmsd(
-        structure_a: mfm.structure.structure.Structure,
-        structure_b: mfm.structure.structure.Structure,
+        structure_a: chisurf.structure.Structure,
+        structure_b: chisurf.structure.Structure,
         atom_indices=None
 ):
     """Calculates the root-mean-squared deviation between two structures. In case the indices of the atoms are
@@ -445,8 +490,8 @@ def rmsd(
 
 
 def super_impose(
-        structure_ref: mfm.structure.structure.Structure,
-        structure_align: mfm.structure.structure.Structure,
+        structure_ref: chisurf.structure.Structure,
+        structure_align: chisurf.structure.Structure,
         atom_indices=None
 ):
     """Superimpose two structures
@@ -679,11 +724,12 @@ def count_atoms(topology_dict):
 
 
 def average(
-        structures: List[mfm.structure.structure.Structure],
-        weights=None,
-        write=True,
-        filename=None
-) -> mfm.structure.structure.Structure:
+        structures: List[chisurf.structure.Structure],
+        weights: List[float] = None,
+        write: bool = True,
+        filename: str = None,
+        verbose: bool = True
+) -> chisurf.structure.Structure:
     """
     Calculates weighted average of a list of structures.
     saves to filename if write is True
@@ -693,26 +739,35 @@ def average(
     Examples
     --------
 
-    >>> import chisurf.settings as mfm
-    >>> times = mfm.structure.trajectory.TrajectoryFile('./test/data/structure/2807_8_9_b.h5', reading_routine='r', stride=1)
-    >>> avg = times.average
+    >>> import chisurf.structure
+    >>> traj = chisurf.structure.TrajectoryFile('./test/data/atomic_coordinates/trajectory/h5-file/hgbp1_transition.h5', reading_routine='r', stride=1)
+    >>> avg = traj.average
     >>> avg
     <mfm.structure.structure.Structure at 0x117ff770>
     >>> avg.labeling_file
     'c:\\users\\peulen\\appdata\\local\\temp\\average.pdb'
     """
     if weights is None:
-        weights = np.ones(len(structures), dtype=np.float64)
+        weights = np.ones(
+            len(structures), dtype=np.float64
+        )
         weights /= weights.sum()
     else:
         weights = np.array(weights)
-    avg = mfm.structure.structure.Structure()
+    avg = chisurf.structure.Structure()
     avg.atoms = np.copy(structures[0].atoms)
     avg.xyz *= 0.0
+
     for i, s in enumerate(structures):
         avg.xyz += weights[i] * s.xyz
-    filename = os.path.join(tempfile.tempdir, "average.pdb") if filename is None else filename
+    if filename is None:
+        filename = os.path.join(
+            tempfile.tempdir, "average.pdb"
+        )
     if write:
+        if verbose:
+            print("Writing average to file: %s" % filename)
         avg.filename = filename
         avg.write()
     return avg
+

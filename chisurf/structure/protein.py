@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import math
+import tempfile
 from collections import OrderedDict
 from copy import copy, deepcopy
 import numpy as np
 import numba as nb
 
+import chisurf
+import chisurf.fio
 import chisurf.math.linalg as la
-from chisurf.structure.structure import Structure
+from chisurf.structure import Structure
 
 
 internal_formats = ['i4', 'i4', 'i4', 'i4', 'f8', 'f8', 'f8']
@@ -103,6 +106,12 @@ def move_center_of_mass(
         structure: Structure,
         all_atoms
 ):
+    """
+
+    :param structure:
+    :param all_atoms:
+    :return:
+    """
     for i, res in enumerate(structure.residue_ids):
         at_nbr = np.where(all_atoms['res_id'] == res)[0]
         cb_nbr = structure.l_cb[i]
@@ -122,7 +131,14 @@ def move_center_of_mass(
 def make_residue_lookup_table(
         structure: Structure
 ):
-    l_residue = np.zeros((structure.n_residues, structure.max_atom_residue), dtype=np.int32) - 1
+    """
+
+    :param structure:
+    :return:
+    """
+    l_residue = np.zeros(
+        (structure.n_residues, structure.max_atom_residue),
+        dtype=np.int32) - 1
     n = 0
     res_dict = structure.residue_dict
     for residue in list(res_dict.values()):
@@ -152,7 +168,7 @@ def internal_to_cartesian(
         r,
         p,
         startPoint: int
-):
+) -> np.ndarray:
     """
 
     :param bond: bond-length
@@ -209,6 +225,7 @@ def internal_to_cartesian(
             r[ans[i], 0] = r[i_b[i], 0] + v1 * p[i * 3 + 0] + u1 * p[i * 3 + 1] - ab1 * p[i * 3 + 2]
             r[ans[i], 1] = r[i_b[i], 1] + v2 * p[i * 3 + 0] + u2 * p[i * 3 + 1] - ab2 * p[i * 3 + 2]
             r[ans[i], 2] = r[i_b[i], 2] + v3 * p[i * 3 + 0] + u3 * p[i * 3 + 1] - ab3 * p[i * 3 + 2]
+    return r
 
 
 def calc_internal_coordinates_bb(
@@ -217,11 +234,14 @@ def calc_internal_coordinates_bb(
         **kwargs
 ):
     if verbose is None:
-        verbose = mfm.verbose
+        verbose = chisurf.settings.verbose
 
     structure.coord_i = np.zeros(
         structure.atoms.shape[0],
-        dtype={'names': internal_keys, 'formats': internal_formats}
+        dtype={
+            'names': internal_keys,
+            'formats': internal_formats
+        }
     )
     rp, ai = None, 0
     res_nr = 0
@@ -266,12 +286,15 @@ def calc_internal_coordinates_bb(
 
 class ProteinCentroid(Structure):
     """
+    A coarse grained representation for proteins, where the backbone
+    is atomistic and the side-chains are represented by a single atom.
 
     Examples
     --------
 
-    >>> import chisurf.settings as mfm
-    >>> sp = mfm.structure.protein.ProteinCentroid('../test/data/structure/HM_1FN5_Naming.pdb', verbose=True, make_coarse=True)
+    >>> import chisurf.structure
+    >>> pdb_filename = './data/atomic_coordinates/pdb_files/hGBP1_closed.pdb'
+    >>> sp = chisurf.structure.ProteinCentroid(pdb_filename, verbose=True, make_coarse=True)
     ======================================
     Filename: /data/structure/HM_1FN5_Naming.pdb
     Path: /data/structure
@@ -288,7 +311,7 @@ class ProteinCentroid(Structure):
     ATOM   2273    C ALA   386      47.799  59.970  21.123  0.00  0.00             C
     ATOM   2274    O ALA   386      47.600  59.096  20.280  0.00  0.00             O
     >>> sp.write('test_out.pdb')
-    >>> s_aa = mfm.structure.protein.ProteinCentroid('./test/data/structure/HM_1FN5_Naming.pdb', verbose=True, make_coarse=False)
+    >>> s_aa = chisurf.structure.ProteinCentroid(pdb_filename, verbose=True, make_coarse=False)
     >>> print(s_aa)
     ATOM   9312    H MET   583      40.848  10.075  17.847  0.00  0.00             H
     ATOM   9313   HA MET   583      40.666   8.204  15.667  0.00  0.00             H
@@ -368,13 +391,17 @@ class ProteinCentroid(Structure):
 
     def __init__(
             self,
+            p_object=None,
             *args,
-            make_lookup: bool = True,
             **kwargs
     ):
-        super(ProteinCentroid).__init__(
+        super().__init__(
+            p_object,
             *args,
-            **kwargs)
+            protonate=True,
+            **kwargs
+        )
+
         self.coord_i = np.zeros(
             self.atoms.shape[0],
             dtype={'names': internal_keys, 'formats': internal_formats}
@@ -391,15 +418,22 @@ class ProteinCentroid(Structure):
             self.n_atoms * 3,
             dtype=np.float64
         )  # used to convert internal to cartesian coordinates
-
         self.to_coarse()
+
         ####################################################
         #              LOOKUP TABLES                       #
         ####################################################
-        if make_lookup:
-            self.l_res, self.l_ca, self.l_cb, self.l_c, self.l_n, self.l_h = make_residue_lookup_table(self)
-            self.residue_types = np.array([res2id[res] for res in list(self.atoms['res_name'])
-                                           if res in list(res2id.keys())], dtype=np.int32)
+        self.l_res, self.l_ca, self.l_cb, self.l_c, self.l_n, self.l_h = make_residue_lookup_table(self)
+        self.residue_types = np.array(
+            [
+                res2id[res] for res in list(
+                    self.atoms['res_name']
+                )
+                if res in list(
+                    res2id.keys()
+                )
+            ], dtype=np.int32
+        )
 
     def update_dist(self):
         atom_dist(self.dist_ca, self.l_res, self.xyz, a2id['CA'])
@@ -420,9 +454,18 @@ class ProteinCentroid(Structure):
         ia = ic['ia']
         id = ic['id']
 
-        r = self.xyz
         p = self._temp
-        internal_to_cartesian(bond, angle, dihedral, ans, ib, ia, id, n_atoms, r, p, start_point)
+        self.atoms['xyz'] = internal_to_cartesian(
+            bond,
+            angle,
+            dihedral,
+            ans,
+            ib, ia, id,
+            n_atoms,
+            self.atoms['xyz'],
+            p,
+            start_point
+        )
         self.update_dist()
 
     def to_coarse(self):
@@ -432,7 +475,8 @@ class ProteinCentroid(Structure):
         Examples
         --------
 
-        >>> s_aa = mfm.structure.ProteinCentroid('./test/data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True, make_coarse=False)
+        >>> import chisurf.structure
+        >>> s_aa = chisurf.structure.ProteinCentroid('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb', verbose=True, make_coarse=False)
         >>> print(s_aa)
         ATOM   9312    H MET   583      40.848  10.075  17.847  0.00  0.00             H
         ATOM   9313   HA MET   583      40.666   8.204  15.667  0.00  0.00             H
@@ -449,13 +493,26 @@ class ProteinCentroid(Structure):
         array([ 0.        ,  3.09665806, -3.08322105,  3.13562203,  3.09102453,...])
         """
         self.is_coarse = True
-
         ####################################################
         ######       TAKE ONLY INTERNAL ATOMS         ######
         ####################################################
+
         all_atoms = np.copy(self.atoms)
-        tmp = [atom for atom in all_atoms if atom['atom_name'] in residue_atoms_internal[atom['res_name']]]
-        atoms = np.empty(len(tmp), dtype={'names': chisurf.fio.pdb.keys, 'formats': chisurf.fio.pdb.formats})
+        tmp = list()
+        n_atoms = 0
+        for atom in all_atoms:
+            if atom['atom_name'] in residue_atoms_internal[atom['res_name']]:
+                tmp.append(atom)
+                n_atoms += 1
+
+        atoms = np.empty(
+            n_atoms,
+            dtype={
+                'names': chisurf.fio.coordinates.keys,
+                'formats': chisurf.fio.coordinates.formats
+            }
+        )
+
         atoms[:] = tmp
         atoms['i'] = np.arange(atoms.shape[0])
         atoms['atom_id'] = np.arange(atoms.shape[0])
@@ -465,9 +522,13 @@ class ProteinCentroid(Structure):
         ######         LOOKUP TABLES                  ######
         ####################################################
         self.l_res, self.l_ca, self.l_cb, self.l_c, self.l_n, self.l_h = make_residue_lookup_table(self)
-        tmp = [res2id[res] for res in list(self.atoms['res_name']) if res in list(res2id.keys())]
+        tmp = [
+            res2id[res] for res in list(self.atoms['res_name']) if res in list(res2id.keys())
+        ]
         self.residue_types = np.array(tmp, dtype=np.int32)
-        self.dist_ca = np.zeros((self.n_residues, self.n_residues), dtype=np.float64)
+        self.dist_ca = np.zeros(
+            (self.n_residues, self.n_residues), dtype=np.float64
+        )
 
         ####################################################
         ######         REASSIGN COORDINATES           ######
@@ -479,127 +540,5 @@ class ProteinCentroid(Structure):
         ####################################################
         #coord_i = np.zeros(self.atoms.shape[0], dtype={'names': internal_keys, 'formats': internal_formats})
         calc_internal_coordinates_bb(self)
-        self.update_coordinates()
-
-
-class ProteinBead(Structure):
-
-    """
-    >>> s_aa = mfm.structure.protein.ProteinBead(atomic_coordinates, verbose=True)
-    """
-
-    max_atom_residue = 2
-
-    @property
-    def internal_coordinates(self):
-        return self.coord_i
-
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
-        super(ProteinBead, self).__init__(*args, **kwargs)
-        self.coord_i = np.zeros(
-            self.atoms.shape[0],
-            dtype={
-                'names': internal_keys,
-                'formats': internal_formats
-            }
-        )
-
-        self.dist_ca = np.zeros(
-            (self.n_residues, self.n_residues),
-            dtype=np.float64
-        )
-        self._temp = np.empty(
-            self.n_atoms * 3,
-            dtype=np.float64
-        )  # used to convert internal to cartesian coordinates
-        self.to_coarse()
-        self.coord_i_initial = np.copy(self.coord_i)
-
-    def update(
-            self,
-            start_point: int = 0
-    ):
-        internal_coordinates = self.internal_coordinates
-        n_atoms = internal_coordinates.shape[0]
-
-        bond = internal_coordinates['b']
-        angle = internal_coordinates['a']
-        dihedral = internal_coordinates['d']
-        ans = internal_coordinates['i']
-
-        i_bonds = internal_coordinates['ib']
-        i_angles = internal_coordinates['ia']
-        i_dihedrals = internal_coordinates['id']
-
-        r = self.xyz
-        p = self._temp
-        internal_to_cartesian(
-            bond,
-            angle,
-            dihedral,
-            ans,
-            i_bonds,
-            i_angles,
-            i_dihedrals,
-            n_atoms,
-            r,
-            p,
-            start_point
-        )
-
-    def calc_internal_coordinates(self):
-
-        def internal_coordinates_bead(structure):
-            s = structure
-            coord_i = np.zeros(
-                s.atoms.shape[0],
-                dtype={'names': internal_keys, 'formats': internal_formats}
-            )
-            r_1, r_2, r_3, r_4, ai = None, None, None, None, 0
-            rd = s.residue_dict.values()
-
-            coord_i[0] = rd[0]['CA']['i'], 0, 0, 0, 0.0, 0.0, 0.0
-            coord_i[1] = rd[0]['CA']['i'], rd[1]['CA']['i'], 0, 0, la.norm3(
-                rd[0]['CA']['xyz'] - rd[1]['CA']['xyz']), 0.0, 0.0
-            coord_i[2] = rd[0]['CA']['i'], rd[1]['CA']['i'], rd[2]['CA']['i'], 0, la.norm3(
-                rd[2]['CA']['xyz'] - rd[1]['CA']['xyz']), \
-                         la.angle(rd[0]['CA']['xyz'], rd[1]['CA']['xyz'], rd[2]['CA']['xyz']), \
-                         0.0
-            for i in range(3, len(rd)):
-                ai = r2i(coord_i, rd[i - 3]['CA'], rd[i - 2]['CA'], rd[i - 1]['CA'], rd[i]['CA'], i)
-
-            return coord_i[:ai]
-
-        self.coord_i = internal_coordinates_bead(self)
-
-    def to_coarse(self):
-        self.is_coarse = True
-
-        ####################################################
-        #            TAKE ONLY INTERNAL ATOMS              #
-        ####################################################
-        tmp = [atom for atom in self.atoms if atom['atom_name'] in ['CA']]
-        atoms = np.empty(len(tmp), dtype={'names': chisurf.fio.pdb.keys, 'formats': chisurf.fio.pdb.formats})
-        atoms[:] = tmp
-        atoms['i'] = np.arange(atoms.shape[0])
-        atoms['atom_id'] = np.arange(atoms.shape[0])
-        self.atoms = atoms
-
-        ####################################################
-        #              LOOKUP TABLES                       #
-        ####################################################
-        tmp = [res2id[res] for res in list(self.atoms['res_name']) if res in list(res2id.keys())]
-        self.residue_types = np.array(tmp, dtype=np.int32)
-        self.dist_ca = np.zeros((self.n_residues, self.n_residues), dtype=np.float64)
-
-        ####################################################
-        #         INTERNAL  COORDINATES                    #
-        ####################################################
-        self.coord_i = np.zeros(self.atoms.shape[0], dtype={'names': internal_keys, 'formats': internal_formats})
-        self.calc_internal_coordinates()
         self.update_coordinates()
 

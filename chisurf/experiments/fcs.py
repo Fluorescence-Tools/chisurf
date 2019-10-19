@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from qtpy import QtWidgets
 
-import chisurf.settings as mfm
 import chisurf.fio.ascii
 import chisurf.fio.widgets
 import chisurf.widgets
-import chisurf.fluorescence
+import chisurf.fluorescence.fcs
 import chisurf.experiments.data
 import chisurf.fio.fluorescence
 from . import reader

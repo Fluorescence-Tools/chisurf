@@ -19,8 +19,6 @@ settings_file = os.path.join(
 with open(settings_file) as fp:
     cs_settings = yaml.safe_load(fp)
 
-gui = cs_settings['gui']
-
 with open(
         os.path.join(
             package_directory,
@@ -29,26 +27,28 @@ with open(
 ) as fp:
     colors = yaml.safe_load(fp)
 
+gui = cs_settings['gui']
+parameter = cs_settings['parameter']
+fitting = cs_settings['fitting']
+fret = cs_settings['fret']
+tcspc = cs_settings['tcspc']
+pyqtgraph_settings = gui['plot']["pyqtgraph"]
+verbose = cs_settings['verbose']
+package_directory = os.path.dirname(os.path.abspath(__file__))
+eps = np.sqrt(np.finfo(float).eps)
+working_path = ''
+
 style_sheet_file = os.path.join(
     package_directory,
     './gui/styles/',
     gui['style_sheet']
 )
 
-parameter = cs_settings['parameter']
-fitting = cs_settings['fitting']
-fret = cs_settings['fret']
-tcspc = cs_settings['tcspc']
-
-pyqtgraph_settings = gui['plot']["pyqtgraph"]
 for setting in pyqtgraph_settings:
-    pg.setConfigOption(setting, gui['plot']['pyqtgraph'][setting])
-
-verbose = cs_settings['verbose']
-working_path = ''
-
-package_directory = os.path.dirname(os.path.abspath(__file__))
-eps = np.sqrt(np.finfo(float).eps)
+    pg.setConfigOption(
+        setting,
+        gui['plot']['pyqtgraph'][setting]
+    )
 
 with open(os.path.join(
         package_directory,

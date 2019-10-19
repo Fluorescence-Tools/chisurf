@@ -5,7 +5,7 @@ from qtpy import  QtWidgets, uic, QtCore
 
 import chisurf.settings as mfm
 import chisurf.fio
-from chisurf.structure.structure import Structure
+from chisurf.structure import Structure
 from chisurf.structure.trajectory import TrajectoryFile
 
 

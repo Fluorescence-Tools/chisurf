@@ -157,7 +157,7 @@ class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
 
     def __init__(
             self,
-            structure: chisurf.structure.structure.Structure,
+            structure: chisurf.structure.Structure,
             filename: str = './mfm/structure/potential/database/mj.csv',
             ca_cutoff: float =6.5
     ):
@@ -210,7 +210,7 @@ class CEPotentialWidget(CEPotential, QtWidgets.QWidget):
 
     def __init__(
             self,
-            structure: chisurf.structure.structure.Structure,
+            structure: chisurf.structure.Structure,
             potential: str = './mfm/structure/potential/database/unres.npy',
             ca_cutoff: float = 25.0
     ):
@@ -255,7 +255,7 @@ class ClashPotentialWidget(ClashPotential, QtWidgets.QWidget):
 
     def __init__(
             self,
-            structure: chisurf.structure.structure.Structure = None,
+            structure: chisurf.structure.Structure = None,
             **kwargs
     ):
         super(QtWidgets.QWidget, self).__init__(**kwargs)
@@ -292,7 +292,7 @@ class AvPotentialWidget(AvPotential, QtWidgets.QWidget):
 
     def __init__(
             self,
-            structure: chisurf.structure.structure.Structure = None,
+            structure: chisurf.structure.Structure = None,
             parent=None
     ):
         super(AvPotentialWidget, self).__init__()
@@ -343,7 +343,7 @@ class AsaWidget(ASA, QtWidgets.QWidget):
 
     def __init__(
             self,
-            structure: chisurf.structure.structure.Structure,
+            structure: chisurf.structure.Structure,
             parent: QtWidgets.QWidget = None,
             **kwargs
     ):
@@ -381,7 +381,7 @@ class RadiusGyrationWidget(QtWidgets.QWidget):
 
     def __init__(
             self,
-            structure: chisurf.structure.structure.Structure,
+            structure: chisurf.structure.Structure,
             parent=None
     ):
         super(RadiusGyrationWidget, self).__init__(parent)
