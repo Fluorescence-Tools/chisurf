@@ -14,7 +14,7 @@ settings = {
     'version': 'NA'
 }
 settings_file = os.path.join(
-    './chisurf/mfm/settings/',
+    './chisurf/settings/',
     'chisurf.yaml'
 )
 with open(settings_file) as fp:
@@ -120,7 +120,7 @@ setup(
                 os.path.dirname(
                     __file__
                 ),
-                './chisurf/mfm/fluorescence/fps/dll/*.*'
+                './chisurf/fluorescence/fps/dll/*.*'
             )
         ]
     },
@@ -158,6 +158,8 @@ setup(
         'build_ext': build_ext
     },
     entry_points={
-        "gui_scripts": ["chisurf=chisurf.gui:gui"]
+        "gui_scripts": [
+            "chisurf=chisurf.gui:gui"
+        ]
     }
 )

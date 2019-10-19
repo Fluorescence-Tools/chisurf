@@ -54,6 +54,7 @@ requirements:
     - qtpy
     - qdarkstyle
     - mrcfile
+    - htmd-pdb2pqr
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
