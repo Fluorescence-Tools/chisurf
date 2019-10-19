@@ -16,7 +16,7 @@ from qtconsole.qtconsoleapp import RichJupyterWidget
 from qtconsole.inprocess import QtInProcessKernelManager
 from IPython.lib import guisupport
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.curve
 
 

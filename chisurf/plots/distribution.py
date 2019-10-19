@@ -4,8 +4,8 @@ import pyqtgraph as pg
 from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
-import mfm
-import fitting
+import chisurf.mfm as mfm
+import chisurf.fitting
 import chisurf.fluorescence
 import chisurf.math.datatools
 from chisurf.plots import plotbase
@@ -54,7 +54,7 @@ class DistributionPlot(plotbase.Plot):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             parent: QtWidgets.QWidget,
             **kwargs
     ):

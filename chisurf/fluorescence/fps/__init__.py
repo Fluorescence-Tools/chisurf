@@ -5,7 +5,8 @@ import json
 import os
 import numpy as np
 
-import mfm
+import chisurf.mfm.settings
+import chisurf.mfm as mfm
 import chisurf.base
 import chisurf.fio.density
 
@@ -35,16 +36,16 @@ class BasicAV(object):
     Examples
     --------
 
-    >>> import mfm.structure
-    >>> import mfm.fluorescence
-    >>> structure = mfm.structure.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-    >>> av = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
+    >>> import chisurf.structure
+    >>> import chisurf.fluorescence
+    >>> structure = chisurf.structure.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+    >>> av = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
 
     """
 
     def __init__(
             self,
-            structure: mfm.structure.structure.Structure,
+            structure: chisurf.structure.structure.Structure,
             simulation_grid_resolution: float = None,
             allowed_sphere_radius: float = None,
             radius1: float = 1.5,
@@ -170,9 +171,9 @@ class BasicAV(object):
         Examples
         --------
 
-        >>> import mfm
-        >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> import chisurf
+        >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+        >>> av = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
         >>> av.save('c:/temp/test', reading_routine='xyz')
         >>> av.save('c:/temp/test', reading_routine='dx')
 
@@ -215,10 +216,10 @@ class BasicAV(object):
         Examples
         --------
 
-        >>> import mfm
-        >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
-        >>> av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
+        >>> import chisurf
+        >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+        >>> av1 = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> av2 = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av1.dRmp(av2)
         """
         return functions.dRmp(self, av)
@@ -236,10 +237,10 @@ class BasicAV(object):
         Examples
         --------
 
-        >>> import mfm
-        >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
-        >>> av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
+        >>> import chisurf
+        >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+        >>> av1 = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> av2 = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av1.dRDA(av2)
         """
         return functions.RDAMean(self, av, **kwargs)
@@ -256,10 +257,10 @@ class BasicAV(object):
         Examples
         --------
 
-        >>> import mfm
-        >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
-        >>> av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
+        >>> import chisurf
+        >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+        >>> av1 = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> av2 = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av1.widthRDA(av2)
 
         """
@@ -278,10 +279,10 @@ class BasicAV(object):
         Examples
         --------
 
-        >>> import mfm
-        >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
-        >>> av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
+        >>> import chisurf
+        >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+        >>> av1 = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> av2 = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av1.dRDAE(av2)
         """
         return functions.RDAMeanE(self, av, forster_radius)
@@ -305,10 +306,10 @@ class BasicAV(object):
         Examples
         --------
 
-        >>> import mfm
-        >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av1 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
-        >>> av2 = mfm.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
+        >>> import chisurf
+        >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+        >>> av1 = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> av2 = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> y, x = av1.pRDA(av2)
 
         """
@@ -336,19 +337,19 @@ class ACV(BasicAV):
     Example
     -------
 
-    >>> import mfm
-    >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+    >>> import chisurf
+    >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
     >>> trapped_fraction = 0.5
-    >>> av1 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=18, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
-    >>> av2 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=577, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
+    >>> av1 = chisurf.fluorescence.fps.ACV(structure, residue_seq_number=18, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
+    >>> av2 = chisurf.fluorescence.fps.ACV(structure, residue_seq_number=577, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
     >>> av1.save('c:/temp/test_05', reading_routine='dx')
     >>> y1, x1 = av1.pRDA(av2)
 
-    >>> import mfm
-    >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+    >>> import chisurf
+    >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
     >>> trapped_fraction = 0.9
-    >>> av1 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=18, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
-    >>> av2 = mfm.fluorescence.fps.ACV(structure, residue_seq_number=577, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
+    >>> av1 = chisurf.fluorescence.fps.ACV(structure, residue_seq_number=18, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
+    >>> av2 = chisurf.fluorescence.fps.ACV(structure, residue_seq_number=577, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
     >>> av1.save('c:/temp/test_09', reading_routine='dx')
     >>> y2, x2 = av1.pRDA(av2)
 
@@ -512,11 +513,11 @@ class DynamicAV(BasicAV):
 
         Example
         -------
-        >>> import mfm
-        >>> import mfm.fluorescence
-        >>> structure = mfm.structure.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+        >>> import chisurf
+        >>> import chisurf.fluorescence
+        >>> structure = chisurf.structure.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
         >>> free_diffusion = 8.0
-        >>> av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=18, atom_name='CB', slow_factor=0.9, contact_distance=1.5, diffusion_coefficients=free_diffusion)
+        >>> av = chisurf.fluorescence.fps.DynamicAV(structure, residue_seq_number=18, atom_name='CB', slow_factor=0.9, contact_distance=1.5, diffusion_coefficients=free_diffusion)
         >>> p.imshow(av.bounds[:,:,20])
         >>> p.show()
         >>> p.imshow(av.diffusion_map[:,:,20])
@@ -567,11 +568,11 @@ class DynamicAV(BasicAV):
         """ Updates the equilibrium probabilities of the dye
         Example
         -------
-        >>> import mfm.structure
-        >>> import mfm.fluorescence
-        >>> structure = mfm.structure.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+        >>> import chisurf.structure
+        >>> import chisurf.fluorescence
+        >>> structure = chisurf.structure.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
         >>> free_diffusion = 8.0
-        >>> av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name='CB', slow_factor=0.985, contact_distance=3.5, diffusion_coefficients=free_diffusion, simulation_grid_resolution=2.0)
+        >>> av = chisurf.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name='CB', slow_factor=0.985, contact_distance=3.5, diffusion_coefficients=free_diffusion, simulation_grid_resolution=2.0)
         >>> p.imshow(av.diffusion_map[:,:,20])
         >>> p.show()
         >>> p.imshow(av.density[:,:,20])
@@ -606,10 +607,10 @@ class DynamicAV(BasicAV):
         Example
         -------
 
-        >>> import mfm.structure
-        >>> import mfm.fluorescence
+        >>> import chisurf.structure
+        >>> import chisurf.fluorescence
         >>> structure = mfm.structure.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> av = chisurf.fluorescence.fps.DynamicAV(structure, residue_seq_number=18, atom_name='CB')
         >>> p.imshow(av.quenching_rate_map[:,:,20])
         >>> p.show()
         >>> p.hist(av.quenching_rate_map.flatten(), bins=np.arange(0.01, av.fluorescence_lifetime, 0.5))
@@ -646,11 +647,11 @@ class DynamicAV(BasicAV):
         Example
         -------
 
-        >>> import mfm.structure
-        >>> import mfm.fluorescence
-        >>> structure = mfm.structure.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av_d = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=18, atom_name='CB')
-        >>> av_a = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name='CB')
+        >>> import chisurf.structure
+        >>> import chisurf.fluorescence
+        >>> structure = chisurf.structure.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+        >>> av_d = chisurf.fluorescence.fps.DynamicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> av_a = chisurf.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av_d.update_fret_map(av_a)
         #
         >>> rda = (av_d._fret_rate_map.flatten() * av_d.fluorescence_lifetime) ** (-1./6.) * 52.
@@ -699,11 +700,11 @@ class DynamicAV(BasicAV):
 
         Example
         -------
-        >>> import mfm.structure
-        >>> import mfm.fluorescence
+        >>> import chisurf.structure
+        >>> import chisurf.fluorescence
         >>> import chisurf.curve
-        >>> structure = mfm.structure.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av = mfm.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name='CB')
+        >>> structure = chisurf.structure.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+        >>> av = chisurf.fluorescence.fps.DynamicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> p.imshow(av.density[:,:,20])
         >>> p.show()
         >>> t_step = 0.0141
@@ -712,7 +713,7 @@ class DynamicAV(BasicAV):
         >>> irf = chisurf.curve.DataCurve(filename='./test/data/tcspc/ibh_sample/Prompt.txt', skiprows=9)
         >>> data = experiments.c.DataCurve(filename='./test/data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)
         >>> irf.x *= t_step; data.x *= t_step
-        >>> convolve = chisurf.mfm.fluorescence.tcspc.convolve.Convolve(fit=None, dt=t_step, rep_rate=10, irf=irf, data=data)
+        >>> convolve = chisurf.chisurf.fluorescence.tcspc.convolve.Convolve(fit=None, dt=t_step, rep_rate=10, irf=irf, data=data)
         >>> decay = convolve.convolve(counts, reading_routine='full')
         >>> p.semilogy(times, decay)
         

@@ -4,9 +4,9 @@ from pyqtgraph.dockarea import DockArea, Dock
 import pyqtgraph.opengl as gl
 from matplotlib import cm
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.math
-import fluorescence.fps
+import chisurf.fluorescence.fps
 from chisurf.plots import plotbase
 
 
@@ -84,7 +84,7 @@ class AvPlot(plotbase.Plot):
         free_diffusion = 8.0
         atomic_slow_factor = 0.9
         contact_distance = 4.5
-        av = fluorescence.fps.ACV(
+        av = chisurf.fluorescence.fps.ACV(
             pdb_filename,
             radius1=5.0,
             linker_length=21.5,

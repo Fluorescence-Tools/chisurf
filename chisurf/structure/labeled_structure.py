@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-import mfm
-import mfm.fluorescence
+import chisurf.mfm as mfm
+import chisurf.fluorescence
 from mfm.structure.structure import Structure
 
 
@@ -25,14 +25,14 @@ def av_distance_distribution(
     Examples
     --------
 
-import mfm.structure    >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
+import chisurf.mfm as mfm.structure    >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
     >>> donor_description = {'residue_seq_number': 18, 'atom_name': 'CB'}
     >>> acceptor_description = {'residue_seq_number': 577, 'atom_name': 'CB'}
     >>> pRDA, rda = av_distance_distribution(structure, donor_av_parameter=donor_description, acceptor_av_parameter=acceptor_description)
 
     """
-    av_donor = mfm.fluorescence.fps.ACV(structure, **donor_av_parameter)
-    av_acceptor = mfm.fluorescence.fps.ACV(structure, **acceptor_av_parameter)
+    av_donor = chisurf.fluorescence.fps.ACV(structure, **donor_av_parameter)
+    av_acceptor = chisurf.fluorescence.fps.ACV(structure, **acceptor_av_parameter)
     amplitude, distance = av_donor.pRDA(av_acceptor, **kwargs)
     return amplitude, distance
 
@@ -53,7 +53,7 @@ def av_fret_rate_spectrum(
     Examples
     --------
 
-import mfm.structure    >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
+import chisurf.mfm as mfm.structure    >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
     >>> donor_description = {'residue_seq_number': 18, 'atom_name': 'CB'}
     >>> acceptor_description = {'residue_seq_number': 577, 'atom_name': 'CB'}
     >>> rs = av_fret_rate_spectrum(structure, donor_description, acceptor_description)
@@ -66,7 +66,7 @@ import mfm.structure    >>> structure = mfm.structure.Structure('./test/data/mod
 
     p_rda, rda = av_distance_distribution(structure, donor_av_parameter=donor_av_parameter, acceptor_av_parameter=acceptor_av_parameter, **kwargs)
     d = np.array([[p_rda, rda]])
-    rs = mfm.fluorescence.general.distribution2rates(
+    rs = chisurf.fluorescence.general.distribution2rates(
         d, tau0=tau0,
         kappa2=kappa2,
         forster_radius=forster_radius
@@ -95,7 +95,7 @@ def av_lifetime_spectrum(
     Examples
     --------
 
-import mfm.structure    >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
+import chisurf.mfm as mfm.structure    >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
     >>> d_av = {'residue_seq_number': 18, 'atom_name': 'CB'} # donor attachment and description of the linker
     >>> a_av = {'residue_seq_number': 577, 'atom_name': 'CB'} # acceptor description and linker
     >>> ds = np.array([0.8, 4., 0.2, 1.5]) # donor_lifetime_spectrum
@@ -103,7 +103,7 @@ import mfm.structure    >>> structure = mfm.structure.Structure('./test/data/mod
     """
     donly = kwargs.get('donly', 0.0)
     rs = av_fret_rate_spectrum(structure, **kwargs)
-    return mfm.fluorescence.general.rates2lifetimes(rs, donor_lifetime_spectrum, x_donly=donly)
+    return chisurf.fluorescence.general.rates2lifetimes(rs, donor_lifetime_spectrum, x_donly=donly)
 
 
 def av_filtered_fcs_weights(
@@ -125,8 +125,8 @@ def av_filtered_fcs_weights(
     for these structures. Using these structures fluorescence filters are constructed and the weight of an
     intermediate structure with respect to the two lifetime filters is calculated.
 
-    >>> from mfm.fluorescence.fcs.filtered import calc_lifetime_filter
-    >>> from mfm.fluorescence.general import calculate_fluorescence_decay
+    >>> from chisurf.fluorescence.fcs.filtered import calc_lifetime_filter
+    >>> from chisurf.fluorescence.general import calculate_fluorescence_decay
     >>> from mfm.structure.structure import Structure
     >>> from mfm.structure.trajectory import TrajectoryFile
 
@@ -174,7 +174,7 @@ def av_filtered_fcs_weights(
     hGBP1 two limiting states are known, with the fraction 0.66 (state-1) and 0.33 (state-2). Using corase-grained
     models of these limiting states fluorescence decays are calculated and the filters are determined.
 
-import mfm.structure    >>> structure_1 = mfm.structure.Structure('./test/data/modelling/trajectory/h5-file/steps/0_major.pdb')
+import chisurf.mfm as mfm.structure    >>> structure_1 = mfm.structure.Structure('./test/data/modelling/trajectory/h5-file/steps/0_major.pdb')
 
     >>> structure_1 = Structure('./test/data/modelling/trajectory/h5-file/steps/3_minor.pdb')
     >>> structure_2 = Structure('./test/data/modelling/trajectory/h5-file/steps/3_minor.pdb')
@@ -203,10 +203,10 @@ import mfm.structure    >>> structure_1 = mfm.structure.Structure('./test/data/m
     """
     lifetime_spectrum = av_lifetime_spectrum(structure, **kwargs)
     convolve = kwargs.get('convolve', None)
-    if isinstance(convolve, chisurf.mfm.fluorescence.tcspc.convolve.Convolve):
+    if isinstance(convolve, chisurf.chisurf.fluorescence.tcspc.convolve.Convolve):
         decay = convolve.convolve(data=lifetime_spectrum, **kwargs)
     else:
-        time_axis, decay = mfm.fluorescence.calculate_fluorescence_decay(lifetime_spectrum, time_axis=time_axis)
+        time_axis, decay = chisurf.fluorescence.calculate_fluorescence_decay(lifetime_spectrum, time_axis=time_axis)
     weights = np.dot(lifetime_filters, decay)
     return weights
 
@@ -221,10 +221,10 @@ class LabeledStructure(Structure):
         Interleaved array of amplitudes and lifetimes of the donor in absence of an acceptor
 
     donor_label : dict
-        A dictionary which describes the labeling position of the donor (see :py:class:`mfm.fluorescence.fps.AV`)
+        A dictionary which describes the labeling position of the donor (see :py:class:`chisurf.fluorescence.fps.AV`)
 
     acceptor_label : dict
-        A dictionary which describes the labeling position of the acceptor (see :py:class:`mfm.fluorescence.fps.AV`)
+        A dictionary which describes the labeling position of the acceptor (see :py:class:`chisurf.fluorescence.fps.AV`)
 
     distance_distribution: list of arrays
         A histogram of the donor-acceptor distance distribution for a given pair of lables
@@ -239,7 +239,7 @@ class LabeledStructure(Structure):
     Examples
     --------
 
-    >>> import mfm
+    >>> import chisurf.mfm as mfm
     >>> structure = mfm.structure.structure.LabeledStructure('./test/data/modelling/pdb_files/hGBP1_closed.pdb', verbose=True)
     >>> donor_description = {'residue_seq_number': 18, 'atom_name': 'CB'}
     >>> acceptor_description = {'residue_seq_number': 577, 'atom_name': 'CB'}
@@ -268,7 +268,7 @@ class LabeledStructure(Structure):
     @donor_label.setter
     def donor_label(self, v):
         self._donor_description = v
-        self._donor_av = mfm.fluorescence.fps.ACV(self, **self._donor_description)
+        self._donor_av = chisurf.fluorescence.fps.ACV(self, **self._donor_description)
 
     @property
     def acceptor_label(self):
@@ -277,7 +277,7 @@ class LabeledStructure(Structure):
     @acceptor_label.setter
     def acceptor_label(self, v):
         self._acceptor_description = v
-        self._acceptor_av = mfm.fluorescence.fps.ACV(self, **self._donor_description)
+        self._acceptor_av = chisurf.fluorescence.fps.ACV(self, **self._donor_description)
 
     @property
     def distance_distribution(self):
@@ -295,7 +295,7 @@ class LabeledStructure(Structure):
         tau0 = self.tau0
         p_rda, rda = self.distance_distribution
         d = np.array([[p_rda, rda]])
-        rs = mfm.fluorescence.general.distribution2rates(
+        rs = chisurf.fluorescence.general.distribution2rates(
             d,
             tau0=tau0,
             kappa2=kappa2,
@@ -309,12 +309,12 @@ class LabeledStructure(Structure):
     ) -> np.array:
         rs = self.fret_rate_spectrum
         ds = self.donor_lifetime_spectrum
-        return mfm.fluorescence.general.rates2lifetimes(rs, ds)
+        return chisurf.fluorescence.general.rates2lifetimes(rs, ds)
 
     @property
     def transfer_efficency(self) -> float:
-        tau_x_da = mfm.fluorescence.general.species_averaged_lifetime(self.lifetime_spectrum)
-        tau_x_d0 = mfm.fluorescence.general.species_averaged_lifetime(self.donor_lifetime_spectrum)
+        tau_x_da = chisurf.fluorescence.general.species_averaged_lifetime(self.lifetime_spectrum)
+        tau_x_d0 = chisurf.fluorescence.general.species_averaged_lifetime(self.donor_lifetime_spectrum)
         return 1. - tau_x_da / tau_x_d0
 
     @property
@@ -350,8 +350,8 @@ class LabeledStructure(Structure):
         return self._donor_av.dRmp(self._acceptor_av)
 
     def update(self):
-        self._acceptor_av = mfm.fluorescence.fps.ACV(self, **self._acceptor_description)
-        self._donor_av = mfm.fluorescence.fps.ACV(self, **self._donor_description)
+        self._acceptor_av = chisurf.fluorescence.fps.ACV(self, **self._acceptor_description)
+        self._donor_av = chisurf.fluorescence.fps.ACV(self, **self._donor_description)
 
     def __init__(
             self,

@@ -3,9 +3,9 @@ from typing import List
 
 import numpy as np
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.fluorescence
-from experiments.tcspc import TCSPCReader
+from chisurf.experiments.tcspc import TCSPCReader
 
 
 class TCSPCSetupDummy(
@@ -22,7 +22,7 @@ class TCSPCSetupDummy(
             p0: float = 10000.0,
             rep_rate: float = 10.0,
             lifetime_spectrum: List[float] = None,
-            instrument_response_function: experiments.data.DataCurve = None,
+            instrument_response_function: chisurf.experiments.data.DataCurve = None,
             sample_name: str = 'TCSPC-Dummy',
             **kwargs
     ):
@@ -47,19 +47,19 @@ class TCSPCSetupDummy(
             self,
             filename: str = None,
             **kwargs
-    ) -> experiments.data.DataCurveGroup:
+    ) -> chisurf.experiments.data.DataCurveGroup:
         if filename is None:
             filename = self.sample_name
 
         x = np.arange(self.n_tac) * self.dt
-        time_axis, y = mfm.fluorescence.general.calculate_fluorescence_decay(
+        time_axis, y = chisurf.fluorescence.general.calculate_fluorescence_decay(
             lifetime_spectrum=self.lifetime_spectrum,
             time_axis=x
         )
-        d = experiments.data.DataCurve(
+        d = chisurf.experiments.data.DataCurve(
             x=time_axis,
             y=y,
-            ey=1./mfm.fluorescence.tcspc.weights(y),
+            ey=1./chisurf.fluorescence.tcspc.weights(y),
             setup=self,
             name=filename
         )

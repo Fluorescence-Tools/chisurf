@@ -9,15 +9,15 @@ import numpy as np
 import scipy.linalg
 import scipy.stats
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.base
 import chisurf.fio
 import chisurf.curve
-import experiments
-import experiments.data
-import fitting.parameter
-import fitting.sample
-import fitting.support_plane
+import chisurf.experiments
+import chisurf.experiments.data
+import chisurf.fitting.parameter
+import chisurf.fitting.sample
+import chisurf.fitting.support_plane
 import chisurf.models
 
 from chisurf.math.optimization.leastsqbound import leastsqbound
@@ -33,7 +33,7 @@ class Fit(
     def __init__(
             self,
             model_class: Type[chisurf.models.model.Model] = type,
-            data: experiments.data.DataCurve = None,
+            data: chisurf.experiments.data.DataCurve = None,
             xmin: int = 0,
             xmax: int = 0,
             **kwargs
@@ -49,7 +49,7 @@ class Fit(
         self._model = None
         self.results = None
         if data is None:
-            data = experiments.data.DataCurve(
+            data = chisurf.experiments.data.DataCurve(
                 x=np.arange(10),
                 y=np.arange(10)
             )
@@ -105,13 +105,13 @@ class Fit(
     @property
     def data(
             self
-    ) -> experiments.data.DataCurve:
+    ) -> chisurf.experiments.data.DataCurve:
         return self._data
 
     @data.setter
     def data(
             self,
-            v: experiments.data.DataCurve
+            v: chisurf.experiments.data.DataCurve
     ):
         self._data = v
 
@@ -308,7 +308,7 @@ class Fit(
     ) -> None:
         fitting_options = mfm.settings.cs_settings['fitting']['leastsq']
         self.model.find_parameters(
-            parameter_type=fitting.parameter.FittingParameter
+            parameter_type=chisurf.fitting.parameter.FittingParameter
         )
         self.results = leastsqbound(
             get_wres,
@@ -356,7 +356,7 @@ class Fit(
                 0.25
             )
         kwargs['rel_range'] = (rel_range, rel_range)
-        parameter.parameter_scan = fitting.support_plane.scan_parameter(
+        parameter.parameter_scan = chisurf.fitting.support_plane.scan_parameter(
             self,
             parameter_name,
             **kwargs
@@ -391,7 +391,7 @@ class FitGroup(
     @property
     def data(
             self
-    ) -> experiments.data.DataCurve:
+    ) -> chisurf.experiments.data.DataCurve:
         return self.selected_fit.data
 
     @data.setter
@@ -522,7 +522,7 @@ class FitGroup(
 
     def __init__(
             self,
-            data: experiments.data.DataGroup,
+            data: chisurf.experiments.data.DataGroup,
             model_class: Type[chisurf.models.model.Model] = type,
             model_kw: Dict = None,
             **kwargs
@@ -593,7 +593,7 @@ def sample_fit(
         else:
             n_walkers = int(fit.n_free * 2)
             try:
-                chi2, para = fitting.sample.sample_emcee(
+                chi2, para = chisurf.fitting.sample.sample_emcee(
                     fit,
                     steps=steps,
                     nwalkers=n_walkers,
@@ -624,7 +624,7 @@ def sample_fit(
 #@nb.jit#(nopython=True)
 def approx_grad(
         xk: np.array,
-        fit: fitting.fit.Fit,
+        fit: chisurf.fitting.fit.Fit,
         epsilon: float,
         args=(),
         f0=None
@@ -660,7 +660,7 @@ def approx_grad(
 
 
 def covariance_matrix(
-        fit: fitting.fit.Fit,
+        fit: chisurf.fitting.fit.Fit,
         epsilon: float = mfm.eps,
         **kwargs
 ) -> Tuple[np.array, List[int]]:
@@ -749,7 +749,7 @@ def get_chi2(
 
 def lnprior(
         parameter_values: List[float],
-        fit: fitting.fit.Fit,
+        fit: chisurf.fitting.fit.Fit,
         bounds: List[Tuple[float, float]] = None
 ) -> float:
     """The probability determined by the prior which is given by the bounds

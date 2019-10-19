@@ -2,7 +2,7 @@ import numpy as np
 from numpy import dot, log, sqrt
 from scipy.optimize import minimize
 
-import mfm
+import chisurf.mfm as mfm
 
 settings = mfm.settings.cs_settings['fitting']['mem']
 

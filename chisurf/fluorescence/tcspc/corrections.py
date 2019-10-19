@@ -3,7 +3,7 @@ from __future__ import annotations
 import numba as nb
 import numpy as np
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.math
 
 

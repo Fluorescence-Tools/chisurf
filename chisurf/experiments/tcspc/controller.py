@@ -2,19 +2,22 @@ import os
 
 from qtpy import QtWidgets
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.decorators
 import chisurf.widgets
-from experiments import reader
-import experiments.widgets
+from chisurf.experiments import reader
+import chisurf.experiments.data
 import chisurf.fio.widgets
+import chisurf.experiments.widgets
 
 
 class CsvTCSPCWidget(
     QtWidgets.QWidget,
 ):
 
-    @chisurf.decorators.init_with_ui(ui_filename="csvTCSPCWidget.ui")
+    @chisurf.decorators.init_with_ui(
+        ui_filename="csvTCSPCWidget.ui"
+    )
     def __init__(
             self,
             *args,
@@ -58,7 +61,6 @@ class CsvTCSPCWidget(
         dt = float(
             self.doubleSpinBox_2.value()
         ) * rebin if self.checkBox_2.isChecked() else 1.0 * rebin
-
         mfm.run(
             "\n".join(
                 [
@@ -126,7 +128,7 @@ class TCSPCSetupDummyWidget(
             *args,
             **kwargs
     ):
-        self.selector = experiments.widgets.ExperimentalDataSelector(
+        self.selector = chisurf.experiments.widgets.ExperimentalDataSelector(
             click_close=False,
             parent=self,
             context_menu_enabled=False

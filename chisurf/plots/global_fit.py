@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from qtpy import QtCore, QtWidgets
 
-import fitting
+import chisurf.fitting
 from chisurf.plots.plotbase import Plot
 
 
@@ -11,7 +11,7 @@ class GlobalFitPlot(Plot):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             logy: bool = False,
             logx: bool = False
     ):

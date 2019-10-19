@@ -5,11 +5,11 @@ from __future__ import annotations
 
 import numpy as np
 
-import mfm
+import chisurf.mfm as mfm
 from chisurf.models.tcspc.fret import Gaussians
 from chisurf.fluorescence import tcspc
 from chisurf.fluorescence.general import distribution2rates
-from fitting.parameter import FittingParameterGroup, FittingParameter
+from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 from chisurf.models.tcspc.lifetime import Lifetime, LifetimeModel
 
 
@@ -178,7 +178,7 @@ class PDDEMModel(LifetimeModel):
         if mfm.settings.cs_settings['fret']['bin_lifetime']:
             n_lifetimes = mfm.settings.cs_settings['fret']['lifetime_bins']
             discriminate_amplitude = mfm.settings.cs_settings['fret']['discriminate_amplitude']
-            return mfm.fluorescence.tcspc.bin_lifetime_spectrum(
+            return chisurf.fluorescence.tcspc.bin_lifetime_spectrum(
                 lt,
                 n_lifetimes=n_lifetimes,
                 discriminate=False,

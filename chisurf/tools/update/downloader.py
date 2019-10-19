@@ -6,7 +6,7 @@ import urllib
 
 from PyQt5 import QtCore, QtWidgets, uic
 
-import mfm
+import chisurf.mfm as mfm
 
 
 class UpdateDialog(QtWidgets.QWidget):

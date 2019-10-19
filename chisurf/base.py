@@ -13,7 +13,7 @@ import yaml
 from slugify import slugify
 
 import chisurf
-import mfm
+import chisurf.mfm as mfm
 
 
 class Base(object):
@@ -135,8 +135,8 @@ class Base(object):
         Example
         -------
 
-        >>> import experiments
-        >>> dc = experiments.data.DataCurve()
+        >>> import chisurf.experiments
+        >>> dc = chisurf.experiments.data.DataCurve()
         >>> dc.from_json(filename='./test/data/internal_types/datacurve.json')
 
 

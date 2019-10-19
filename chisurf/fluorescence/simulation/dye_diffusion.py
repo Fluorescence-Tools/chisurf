@@ -5,9 +5,10 @@ import numpy as np
 import tables
 from chisurf.fluorescence.fps.dynamic import DiffusionSimulation
 
-import mfm
+import chisurf.mfm.settings
+import chisurf.mfm as mfm
 from chisurf.curve import Curve
-from fitting.parameter import FittingParameterGroup, FittingParameter
+from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 
 
 def simulate_decays(
@@ -320,14 +321,21 @@ class DyeDecay(Curve):
             photons = self.photon_trace
 
             filters = tables.Filters(complib='blosc', complevel=9)
-            h5 = tables.open_file(filename, mode="w", title=filename, filters=filters)
+            h5 = tables.open_file(
+                filename, mode="w", title=filename,
+                filters=filters
+            )
             h5.create_group("/", group_title)
-            headertable = h5.createTable('/' + group_title, 'header',
-                                         description=chisurf.fio.photons.Header,
-                                         filters=filters)
-            headertable = h5.createTable('/' + group_title, 'header',
-                                         description=chisurf.fio.photons.Header,
-                                         filters=filters)
+            headertable = h5.createTable(
+                '/' + group_title, 'header',
+                description=chisurf.fio.photons.Header,
+                filters=filters
+            )
+            headertable = h5.createTable(
+                '/' + group_title, 'header',
+                description=chisurf.fio.photons.Header,
+                filters=filters
+            )
             h5.close()
         elif mode == 'histogram':
             x, y, = self.get_histogram(hist_bins, hist_range)
@@ -355,7 +363,7 @@ class DyeDecay(Curve):
             print("----------------")
             print("Number of excitation photons: %s" % n_photons)
 
-        dts, phs = mfm.fluorescence.simulation.photon.simulate_photon_trace_rate(
+        dts, phs = chisurf.fluorescence.simulation.photon.simulate_photon_trace_rate(
             n_ph=n_photons,
             quench=kq_array,
             t_step=t_step,
@@ -380,20 +388,23 @@ class DyeDecay(Curve):
         n_tac = kwargs.get('n_tac', self.decay_parameter.n_tac)
         kq_array = kwargs.get('quenching', self.diffusion.quenching_trajectory)
         tau0 = kwargs.get('tau0', self.diffusion.dye.tauD0)
-        t_step = kwargs.get('t_step', self.diffusion.simulation_parameter.t_step)
+        t_step = kwargs.get('t_step',
+                            self.diffusion.simulation_parameter.t_step)
         dt_tac = kwargs.get('dt_tac', self.decay_parameter.dt_tac)
         decays = np.zeros(int(n_tac), dtype=np.float64)
         if verbose:
             print("Simulating decay:")
             print("----------------")
             print("Sum kq: %s" % kq_array)
-        mfm.fluorescence.simulation.photon.simulate_decay_quench(n_curves=n_curves,
-                                                                 decay=decays,
-                                                                 dt_tac=dt_tac,
-                                                                 k_quench=kq_array,
-                                                                 t_step=t_step,
-                                                                 tau0=tau0,
-                                                                 verbose=verbose)
+        chisurf.fluorescence.simulation.photon.simulate_decay_quench(
+            n_curves=n_curves,
+            decay=decays,
+            dt_tac=dt_tac,
+            k_quench=kq_array,
+            t_step=t_step,
+            tau0=tau0,
+            verbose=verbose
+        )
         return decays
 
     def get_histogram(
@@ -506,7 +517,7 @@ class FRETDecay(
         kappa2 = self.fret_parameter.kappa2
         tau0 = self.fret_parameter.tauD0
         forster_radius = self.fret_parameter.forster_radius
-        kfret = mfm.fluorescence.general.distance_to_fret_rate_constant(
+        kfret = chisurf.fluorescence.general.distance_to_fret_rate_constant(
             self.dRDA,
             forster_radius,
             tau0,

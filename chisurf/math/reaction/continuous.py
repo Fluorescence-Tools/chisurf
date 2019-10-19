@@ -5,7 +5,7 @@ import numpy as np
 import pylab as p
 from scipy.integrate import odeint
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.parameter
 
 

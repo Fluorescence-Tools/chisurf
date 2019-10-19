@@ -7,9 +7,9 @@ from typing import Tuple
 from collections import OrderedDict
 from qtpy import QtWidgets
 
-import mfm
-import experiments
-import experiments.data
+import chisurf.mfm as mfm
+import chisurf.experiments
+import chisurf.experiments.data
 from . reader import ExperimentReader
 
 
@@ -46,7 +46,7 @@ class GlobalFitSetup(
             *args,
             **kwargs
     ):
-        return experiments.data.DataCurve(
+        return chisurf.experiments.data.DataCurve(
             setup=self,
             name=name
         )

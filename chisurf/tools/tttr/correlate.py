@@ -10,12 +10,12 @@ import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets, uic
 import qdarkstyle
 
-import mfm
-import experiments.widgets
+import chisurf.mfm as mfm
+import chisurf.experiments.widgets
 import chisurf.tools
 import chisurf.fluorescence
-import experiments.data
-import mfm.settings
+import chisurf.experiments.data
+import chisurf.mfm.settings as settings
 import chisurf.widgets
 from chisurf.fio.widgets import SpcFileWidget
 
@@ -92,7 +92,7 @@ class CorrelateTTTR(QtWidgets.QWidget):
         self.verticalLayout.addWidget(w)
         w.show()
 
-        self.cs = experiments.widgets.ExperimentalDataSelector(
+        self.cs = chisurf.experiments.widgets.ExperimentalDataSelector(
             get_data_sets=self.get_data_curves,
             click_close=False
         )
@@ -120,11 +120,11 @@ class Correlator(QtCore.QThread):
     def data(self):
         if isinstance(
                 self._data,
-                experiments.data.DataCurve
+                chisurf.experiments.data.DataCurve
         ):
             return self._data
         else:
-            return experiments.data.DataCurve(
+            return chisurf.experiments.data.DataCurve(
                 setup=self
             )
 
@@ -168,7 +168,7 @@ class Correlator(QtCore.QThread):
         elif type(tacWeighting) is np.ndarray:
             print("TAC-weighted")
             wt = tacWeighting
-        w = mfm.fluorescence.fcs.correlate.get_weights(
+        w = chisurf.fluorescence.fcs.correlate.get_weights(
             photons.rout,
             photons.tac,
             wt,
@@ -177,7 +177,7 @@ class Correlator(QtCore.QThread):
         return w
 
     def run(self):
-        data = experiments.data.DataCurve()
+        data = chisurf.experiments.data.DataCurve()
 
         w1 = self.getWeightStream(self.p.ch1)
         w2 = self.getWeightStream(self.p.ch2)
@@ -197,7 +197,7 @@ class Correlator(QtCore.QThread):
             p = photons[i:i + nGroup]
             wi1, wi2 = w1[i:i + nGroup], w2[i:i + nGroup]
             if self.p.method == 'tp':
-                results = mfm.fluorescence.fcs.correlate.log_corr(
+                results = chisurf.fluorescence.fcs.correlate.log_corr(
                     p.mt, p.tac, p.rout, p.cr_filter,
                     wi1, wi2, self.p.B, self.p.nCasc,
                     self.p.fine, photons.n_tac
@@ -208,7 +208,7 @@ class Correlator(QtCore.QThread):
                 dt_2 = results['measurement_time_ch2']
                 tau = results['correlation_time_axis']
                 corr = results['correlation_amplitude']
-                cr = mfm.fluorescence.fcs.correlate.normalize(
+                cr = chisurf.fluorescence.fcs.correlate.normalize(
                     np_1, np_2, dt_1, dt_2, tau, corr, self.p.B
                 )
                 cr /= self.p.dt
@@ -249,11 +249,11 @@ class Correlator(QtCore.QThread):
         cr = count-rate in kHz
         """
         if self.p.weighting == 1:
-            return mfm.fluorescence.fcs.weights(
+            return chisurf.fluorescence.fcs.weights(
                 tau, cor, dur, cr, type='uniform'
             )
         elif self.p.weighting == 0:
-            return mfm.fluorescence.fcs.weights(
+            return chisurf.fluorescence.fcs.weights(
                 tau, cor, dur, cr, type='suren'
             )
 
@@ -448,7 +448,7 @@ class CrFilterWidget(QtWidgets.QWidget):
             mt = photons.mt
             n_ph = mt.shape[0]
             w = np.ones(n_ph, dtype=np.float32)
-            mfm.fluorescence.fcs.correlate.count_rate_filter(
+            chisurf.fluorescence.fcs.correlate.count_rate_filter(
                 mt,
                 tw,
                 n_ph_max,

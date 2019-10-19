@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.macros
 import chisurf.fluorescence.tcspc.convolve
 import chisurf.fluorescence.tcspc.corrections
@@ -236,7 +236,7 @@ class Corrections(FittingParameterGroup):
             window_function = self.window_function
         if window_length is None:
             window_length = self.window_length
-        return mfm.fluorescence.tcspc.corrections.compute_linearization_table(
+        return chisurf.fluorescence.tcspc.corrections.compute_linearization_table(
             y,
             window_length,
             window_function,
@@ -297,7 +297,7 @@ class Corrections(FittingParameterGroup):
         dead_time = kwargs.get('dead_time', self.dead_time)
         meas_time = kwargs.get('meas_time', self.measurement_time)
         if self.correct_pile_up:
-            mfm.fluorescence.tcspc.corrections.correct_model_for_pile_up(
+            chisurf.fluorescence.tcspc.corrections.correct_model_for_pile_up(
                 data,
                 decay,
                 rep_rate,
@@ -539,7 +539,7 @@ class Convolve(FittingParameterGroup):
 
         if autoscale:
             weights = 1.0 / data.ey
-            self.n0 = float(mfm.fluorescence.tcspc.rescale_w_bg(decay, data.y, weights, bg, start, stop))
+            self.n0 = float(chisurf.fluorescence.tcspc.rescale_w_bg(decay, data.y, weights, bg, start, stop))
         else:
             decay *= self.n0
 
@@ -590,7 +590,7 @@ class Convolve(FittingParameterGroup):
             )
             # TODO: in future non linear time-axis (better suited for exponentially decaying data)
             # time = fit.data._x
-            # mfm.fluorescence.tcspc.fconv_per_dt(decay, lifetime_spectrum, irf_y, start, stop, n_points, period, time)
+            # chisurf.fluorescence.tcspc.fconv_per_dt(decay, lifetime_spectrum, irf_y, start, stop, n_points, period, time)
         elif mode == "exp":
             t = self.data.x
             chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(

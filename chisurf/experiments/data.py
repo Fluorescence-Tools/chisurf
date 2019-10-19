@@ -8,11 +8,10 @@ import os.path
 from typing import Sequence, List
 import numpy as np
 
-import mfm
 import chisurf.base
 import chisurf.curve
 import chisurf.fio
-import experiments.experiment
+from chisurf import experiments
 
 
 class ExperimentalData(

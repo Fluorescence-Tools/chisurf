@@ -13,11 +13,11 @@ from re import Scanner
 from qtpy import QtCore, QtWidgets, QtWebEngineWidgets
 from qtpy.QtCore import QFile, QFileInfo, QTextStream, QUrl
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.decorators
 import chisurf.widgets
 from chisurf.models.model import ModelWidget, ModelCurve
-from fitting.parameter import FittingParameter, FittingParameterGroup
+from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
 
 
 class GenerateSymbols(defaultdict):

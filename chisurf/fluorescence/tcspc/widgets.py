@@ -4,7 +4,7 @@ import os
 import numpy as np
 from qtpy import QtWidgets, uic
 
-from mfm.fluorescence.tcspc.phasor import Phasor
+from chisurf.fluorescence.tcspc.phasor import Phasor
 
 
 class PhasorWidget(Phasor, QtWidgets.QWidget):

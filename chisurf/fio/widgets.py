@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from qtpy import QtWidgets
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.decorators
 import chisurf.base
 import chisurf.structure

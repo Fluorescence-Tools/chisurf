@@ -272,7 +272,7 @@ class CalculateTransfer(object):
         try:
             for chunk in md.iterload(trajectory_file, stride=self.stride, chunk=chunk):
                 if dipoles:
-                    ds, ks = mfm.fluorescence.anisotropy.kappa2.calculate_kappa_distance(
+                    ds, ks = chisurf.fluorescence.anisotropy.kappa2.calculate_kappa_distance(
                         chunk.xyz,
                         self.donor[0],
                         self.donor[1],
@@ -296,7 +296,7 @@ class CalculateTransfer(object):
                             ds * 10.0,  # RDA-distance in Angstrom
                             ks,  # kappa
                             ks ** 2,  # kappa2
-                            mfm.fluorescence.general.distance_to_fret_rate_constant(
+                            chisurf.fluorescence.general.distance_to_fret_rate_constant(
                                 ds * 10.0,
                                 self.forster_radius,
                                 self.tau0,

@@ -6,8 +6,12 @@ import pyqtgraph as pg
 from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
-import mfm
+import chisurf.mfm.settings
+import chisurf.mfm as mfm
+import chisurf.fitting
+import chisurf.parameter
 import chisurf.decorators
+import chisurf.models
 from chisurf.plots import plotbase
 
 plot_settings = mfm.settings.gui['plot']
@@ -17,12 +21,19 @@ color_scheme = mfm.settings.colors
 lw = plot_settings['line_width']
 
 
-@chisurf.decorators.init_with_ui(ui_filename="parameter_scan.ui")
-class ParameterScanWidget(QtWidgets.QWidget):
+class ParameterScanWidget(
+    QtWidgets.QWidget
+):
+
+    @chisurf.decorators.init_with_ui(
+        ui_filename="parameter_scan.ui"
+    )
     def __init__(
             self,
-            model: chisurf.models.model.Model,
-            parent
+            model: chisurf.models.model.Model = None,
+            parent: QtWidgets.QWidget = None,
+            *args,
+            **kwargs
     ):
 
         self.model = model
@@ -40,7 +51,7 @@ class ParameterScanWidget(QtWidgets.QWidget):
     def update(
             self
     ) -> None:
-        QtWidgets.QWidget.update(self)
+        super().update()
         self.comboBox.blockSignals(True)
 
         pn = self.model.parameter_names
@@ -56,7 +67,7 @@ class ParameterScanWidget(QtWidgets.QWidget):
         p_min = float(self.doubleSpinBox.value())
         p_max = float(self.doubleSpinBox_2.value())
         n_steps = int(self.spinBox.value())
-        mfm.run(
+        chisurf.mfm.run(
             "cs.current_fit.model.parameters_all_dict['%s'].scan(cs.current_fit, rel_range=(%s, %s), n_steps=%s)" % (
                 self.parameter.name,
                 p_min,
@@ -85,7 +96,9 @@ class ParameterScanWidget(QtWidgets.QWidget):
             return None
 
 
-class ParameterScanPlot(plotbase.Plot):
+class ParameterScanPlot(
+    plotbase.Plot
+):
     """
     Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
     and the autocorrelation of the residuals. Now it is also used also for fcs-data.
@@ -106,25 +119,27 @@ class ParameterScanPlot(plotbase.Plot):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
+            *args,
             **kwargs
     ):
         super(ParameterScanPlot, self).__init__(fit)
 
         self.layout = QtWidgets.QVBoxLayout(self)
         self.data_x, self.data_y = None, None
+
         self.pltControl = ParameterScanWidget(
-            fit.model,
-            self
+           model=fit.model,
+           parent=self
         )
 
         area = DockArea()
         self.layout.addWidget(area)
         hide_title = plot_settings['hideTitle']
-        d2 = Dock("Chi2-Surface", size=(500, 400), hideTitle=hide_title)
+        d2 = Dock("Chi2-Surface", hideTitle=hide_title)
 
         self.p1 = QtWidgets.QPlainTextEdit()
-        p2 = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])
+        p2 = pg.PlotWidget()
 
         d2.addWidget(p2)
 
@@ -133,7 +148,12 @@ class ParameterScanPlot(plotbase.Plot):
         distribution_plot = p2.getPlotItem()
 
         self.distribution_plot = distribution_plot
-        self.distribution_curve = distribution_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['data'], width=lw), name='Data')
+        self.distribution_curve = distribution_plot.plot(
+            x=[0.0],
+            y=[0.0],
+            pen=pg.mkPen(colors['data'], width=lw),
+            name='Data'
+        )
 
     def update_all(
             self,

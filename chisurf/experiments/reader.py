@@ -8,7 +8,7 @@ from abc import abstractmethod, abstractproperty
 
 import chisurf.base
 import chisurf.curve
-import experiments.data
+from chisurf import experiments
 
 
 class ExperimentReader(

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from qtpy import QtWidgets
 
-import fitting
+import chisurf.fitting
 from chisurf.base import Base
 
 
@@ -10,7 +10,7 @@ class Plot(QtWidgets.QWidget, Base):
 
     def __init__(
             self,
-            fit: fitting.fit,
+            fit: chisurf.fitting.fit,
             parent=None,
             **kwargs
     ):

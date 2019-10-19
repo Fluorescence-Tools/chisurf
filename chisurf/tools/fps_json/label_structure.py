@@ -11,7 +11,7 @@ import traceback
 from qtpy import QtWidgets, QtCore
 import qdarkstyle
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.fio
 import chisurf.widgets
 import chisurf.widgets.pdb

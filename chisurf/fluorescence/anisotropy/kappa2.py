@@ -316,9 +316,9 @@ def p_isotropic_orientation_factor(
     Example
     -------
 
-    >>> import mfm.fluorescence
+    >>> import chisurf.fluorescence
     >>> k2 = np.linspace(0.1, 4, 32)
-    >>> p_k2 = mfm.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(k2=k2)
+    >>> p_k2 = chisurf.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(k2=k2)
     >>> p_k2
     np.array(
             [0.17922824, 0.11927194, 0.09558154, 0.08202693, 0.07297372,

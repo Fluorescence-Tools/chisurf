@@ -7,7 +7,7 @@ import qdarkstyle
 
 from scipy.stats import f as fdist
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.decorators
 import chisurf.models
 import fitting.fit

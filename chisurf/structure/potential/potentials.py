@@ -15,7 +15,7 @@ import chisurf.fluorescence.fps
 import chisurf.structure.structure
 import chisurf.structure.potential.cPotentials
 #import chisurf.widgets
-import mfm
+import chisurf.mfm as mfm
 
 
 @nb.njit
@@ -683,7 +683,7 @@ class AvPotential(object):
         self.verbose = verbose
 
         if rda_axis is None:
-            rda_axis = mfm.fluorescence.rda_axis
+            rda_axis = chisurf.fluorescence.rda_axis
         self.rda_axis = rda_axis
 
         self.distances = kwargs.get("Distances", None)
@@ -745,7 +745,7 @@ class AvPotential(object):
             for position_key in self.positions
         ]
         avs = map(
-            lambda x: mfm.fluorescence.fps.BasicAV(**x),
+            lambda x: chisurf.fluorescence.fps.BasicAV(**x),
             arguments
         )
         for i, position_key in enumerate(self.positions):

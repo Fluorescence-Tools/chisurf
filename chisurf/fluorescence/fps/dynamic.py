@@ -8,7 +8,7 @@ import numpy as np
 import tables
 import numexpr as ne
 
-import mfm
+import chisurf.mfm as mfm
 import chisurf.fio
 import chisurf.fio.coordinates
 import chisurf.models
