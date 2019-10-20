@@ -3,7 +3,7 @@ import itertools
 import numexpr as ne
 import numpy as np
 import tables
-from chisurf.fluorescence.fps.dynamic import DiffusionSimulation
+from chisurf.fluorescence.av.dynamic import DiffusionSimulation
 
 import chisurf.settings
 import chisurf.settings as mfm

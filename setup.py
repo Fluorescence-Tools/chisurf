@@ -61,8 +61,8 @@ eList = [
         './chisurf/math/rand/mt19937cok.cpp'
     ],
     [
-        './chisurf/fluorescence/fps/_fps.pyx',
-        './chisurf/fluorescence/fps/mt19937cok.cpp'
+        './chisurf/fluorescence/av/fps.pyx',
+        './chisurf/fluorescence/av/mt19937cok.cpp'
     ],
     [
         './chisurf/structure/potential/cPotentials.pyx'

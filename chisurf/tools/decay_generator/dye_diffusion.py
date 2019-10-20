@@ -13,7 +13,7 @@ import qdarkstyle
 
 import chisurf.settings as mfm
 import chisurf.fio.coordinates
-import chisurf.fluorescence.fps.widgets
+import chisurf.fluorescence.av.widgets
 from chisurf.fluorescence.simulation.dye_diffusion import DyeDecay
 from chisurf.plots.molview.MolView import MolQtWidget
 from chisurf.structure import Structure
@@ -230,14 +230,14 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
         self._settings_file = None
         self.settings_file = dye_diffusion_settings_file
 
-        self.protein_quenching = chisurf.fluorescence.fps.widgets.ProteinQuenchingWidget(
+        self.protein_quenching = chisurf.fluorescence.av.widgets.ProteinQuenchingWidget(
             k_quench_protein=kwargs.get('k_quench_protein', 5.0),
         )
         self.verticalLayout_11.addWidget(self.protein_quenching)
-        self.dye_parameter = chisurf.fluorescence.fps.dynamic.DyeParameterWidget(**kwargs)
+        self.dye_parameter = chisurf.fluorescence.av.dynamic.DyeParameterWidget(**kwargs)
         self.verticalLayout_14.addWidget(self.dye_parameter)
 
-        self.sticking = chisurf.fluorescence.fps.dynamic.StickingParameterWidget()
+        self.sticking = chisurf.fluorescence.av.dynamic.StickingParameterWidget()
         self.verticalLayout_13.addWidget(self.sticking)
 
         # # User-interface

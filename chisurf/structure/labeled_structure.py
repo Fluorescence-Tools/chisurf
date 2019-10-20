@@ -31,8 +31,8 @@ import chisurf.settings as mfm.structure    >>> structure = mfm.structure.Struct
     >>> pRDA, rda = av_distance_distribution(structure, donor_av_parameter=donor_description, acceptor_av_parameter=acceptor_description)
 
     """
-    av_donor = chisurf.fluorescence.fps.ACV(structure, **donor_av_parameter)
-    av_acceptor = chisurf.fluorescence.fps.ACV(structure, **acceptor_av_parameter)
+    av_donor = chisurf.fluorescence.av.ACV(structure, **donor_av_parameter)
+    av_acceptor = chisurf.fluorescence.av.ACV(structure, **acceptor_av_parameter)
     amplitude, distance = av_donor.pRDA(av_acceptor, **kwargs)
     return amplitude, distance
 
@@ -221,10 +221,10 @@ class LabeledStructure(Structure):
         Interleaved array of amplitudes and lifetimes of the donor in absence of an acceptor
 
     donor_label : dict
-        A dictionary which describes the labeling position of the donor (see :py:class:`chisurf.fluorescence.fps.AV`)
+        A dictionary which describes the labeling position of the donor (see :py:class:`chisurf.fluorescence.av.AV`)
 
     acceptor_label : dict
-        A dictionary which describes the labeling position of the acceptor (see :py:class:`chisurf.fluorescence.fps.AV`)
+        A dictionary which describes the labeling position of the acceptor (see :py:class:`chisurf.fluorescence.av.AV`)
 
     distance_distribution: list of arrays
         A histogram of the donor-acceptor distance distribution for a given pair of lables
@@ -268,7 +268,7 @@ class LabeledStructure(Structure):
     @donor_label.setter
     def donor_label(self, v):
         self._donor_description = v
-        self._donor_av = chisurf.fluorescence.fps.ACV(self, **self._donor_description)
+        self._donor_av = chisurf.fluorescence.av.ACV(self, **self._donor_description)
 
     @property
     def acceptor_label(self):
@@ -277,7 +277,7 @@ class LabeledStructure(Structure):
     @acceptor_label.setter
     def acceptor_label(self, v):
         self._acceptor_description = v
-        self._acceptor_av = chisurf.fluorescence.fps.ACV(self, **self._donor_description)
+        self._acceptor_av = chisurf.fluorescence.av.ACV(self, **self._donor_description)
 
     @property
     def distance_distribution(self):
@@ -350,8 +350,8 @@ class LabeledStructure(Structure):
         return self._donor_av.dRmp(self._acceptor_av)
 
     def update(self):
-        self._acceptor_av = chisurf.fluorescence.fps.ACV(self, **self._acceptor_description)
-        self._donor_av = chisurf.fluorescence.fps.ACV(self, **self._donor_description)
+        self._acceptor_av = chisurf.fluorescence.av.ACV(self, **self._acceptor_description)
+        self._donor_av = chisurf.fluorescence.av.ACV(self, **self._donor_description)
 
     def __init__(
             self,

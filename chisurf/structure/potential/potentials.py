@@ -11,7 +11,7 @@ import numba as nb
 import scipy.stats
 
 import chisurf.fluorescence
-import chisurf.fluorescence.fps
+import chisurf.fluorescence.av
 import chisurf.structure
 import chisurf.structure.potential.cPotentials
 #import chisurf.widgets
@@ -745,7 +745,7 @@ class AvPotential(object):
             for position_key in self.positions
         ]
         avs = map(
-            lambda x: chisurf.fluorescence.fps.BasicAV(**x),
+            lambda x: chisurf.fluorescence.av.BasicAV(**x),
             arguments
         )
         for i, position_key in enumerate(self.positions):
