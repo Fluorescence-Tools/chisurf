@@ -1,16 +1,19 @@
 import utils
 import os
 import unittest
+import numpy as np
+import glob
 
 TOPDIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')
 )
 utils.set_search_paths(TOPDIR)
 
-import numpy as np
 import chisurf.fio
 import chisurf.fluorescence
 import chisurf.fluorescence.fret
+import chisurf.fluorescence.fcs
+import chisurf.fluorescence.general
 import chisurf.fluorescence.anisotropy
 
 
@@ -143,11 +146,6 @@ class Tests(unittest.TestCase):
         )
 
     def test_fcs(self):
-        import numpy as np
-        import glob
-        import chisurf.fluorescence
-        import chisurf.fio
-        import pylab as p
         directory = './test/data/tttr/BH/132/'
         spc_files = glob.glob(directory + '/BH_SPC132.spc')
         photons = chisurf.fio.photons.Photons(spc_files, reading_routine="bh132")
