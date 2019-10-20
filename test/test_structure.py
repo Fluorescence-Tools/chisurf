@@ -5,7 +5,7 @@ import tempfile
 import numpy as np
 
 TOPDIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '../chisurf/')
+    os.path.join(os.path.dirname(__file__), '..')
 )
 utils.set_search_paths(TOPDIR)
 
@@ -15,7 +15,7 @@ import chisurf.fio.zipped
 
 class Tests(unittest.TestCase):
 
-    pdb_filename = './data/atomic_coordinates/pdb_files/hGBP1_closed.pdb'
+    pdb_filename = './test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb'
     s1 = chisurf.structure.ProteinCentroid(
         pdb_filename,
         verbose=True
@@ -131,7 +131,7 @@ class Tests(unittest.TestCase):
 
     def test_traj_opening(self):
         traj = chisurf.structure.TrajectoryFile(
-            './data/atomic_coordinates/trajectory/h5-file/hgbp1_transition.h5',
+            './test/data/atomic_coordinates/trajectory/h5-file/hgbp1_transition.h5',
             reading_routine='r',
             stride=1
         )

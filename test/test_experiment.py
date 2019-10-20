@@ -5,7 +5,7 @@ import numpy as np
 import tempfile
 
 TOPDIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '../chisurf/')
+    os.path.join(os.path.dirname(__file__), '..')
 )
 utils.set_search_paths(TOPDIR)
 
@@ -140,7 +140,7 @@ class Tests(unittest.TestCase):
         ec.call('read')
 
     def test_TCSPCReader(self):
-        filename = "./data/tcspc/ibh_sample/Decay_577D.txt"
+        filename = "./test/data/tcspc/ibh_sample/Decay_577D.txt"
         ex = chisurf.experiments.experiment.Experiment(
             'TCSPC'
         )

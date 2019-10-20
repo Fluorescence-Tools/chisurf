@@ -3,7 +3,7 @@ import os
 import unittest
 
 TOPDIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '../chisurf/')
+    os.path.join(os.path.dirname(__file__), '..')
 )
 utils.set_search_paths(TOPDIR)
 

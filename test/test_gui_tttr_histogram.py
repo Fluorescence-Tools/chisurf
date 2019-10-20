@@ -7,7 +7,7 @@ from qtpy.QtTest import QTest
 from qtpy.QtCore import Qt
 
 TOPDIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '../chisurf/')
+    os.path.join(os.path.dirname(__file__), '..')
 )
 utils.set_search_paths(TOPDIR)
 import chisurf.fio
@@ -40,7 +40,7 @@ class Tests(unittest.TestCase):
         )
 
         spcFileWidget = self.form.tcspc_setup_widget.spcFileWidget
-        filenames = glob.glob("./data/tttr/BH/132/*.spc")
+        filenames = glob.glob("./test/data/tttr/BH/132/*.spc")
         file_type = "bh132"
         spcFileWidget.onLoadSample(
             event=None,

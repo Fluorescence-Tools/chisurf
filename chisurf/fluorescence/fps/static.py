@@ -2,8 +2,9 @@ import ctypes as C
 import platform
 import os
 import numpy as np
-import chisurf.settings as mfm
 import numba as nb
+
+import chisurf
 
 b, o = platform.architecture()
 
@@ -12,36 +13,26 @@ path = os.path.join(
         os.path.abspath(__file__)
     )
     ,
-    './dll'
+    'dll'
 )
+
 
 if 'Windows' in o:
     if '32' in b:
-        fpslibrary = os.path.join(
-            path,
-            'fpsnative.win32.dll'
-        )
+        fpslibrary = 'fpsnative.win32.dll'
     elif '64' in b:
-        fpslibrary = os.path.join(
-            path,
-            'fpsnative.win64.dll'
-        )
+        fpslibrary = 'fpsnative.win64.dll'
 else:
     if platform.system() == 'Linux':
-        fpslibrary = os.path.join(
-            path,
-            'libfpsnative.linux64.so'
-        )
+        fpslibrary = 'libfpsnative.linux64.so'
     else:
-        fpslibrary = os.path.join(
-            path,
-            'libav.dylib'
-        )
+        fpslibrary = 'libav.dylib'
 
 _fps = np.ctypeslib.load_library(
     fpslibrary,
-    "."
+    path
 )
+
 _fps.calculate1R.restype = C.c_int
 _fps.calculate1R.argtypes = [
     C.c_double, C.c_double, C.c_double,
@@ -132,18 +123,18 @@ def calculate_1_radius(
     Using residue_seq_number and atom_name to calculate accessible volume, this also works without
     chain_identifier. However, only if a single-chain is present.
 
-    >>> import chisurf.settings as mfm
+    >>> import chisurf.structure
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
-    >>> structure = mfm.Structure(pdb_filename)
+    >>> structure = chisurf.structure.Structure(pdb_filename)
     >>> av = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=11, atom_name='CB', verbose=True)
 
     If save_av is True the calculated accessible volume is save to disk. The filename of the calculated
     accessible volume is determined by output_file
 
     >>> import chisurf.fluorescence
-    >>> import chisurf.settings as mfm.structure
+    >>> import chisurf.structure
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
-    >>> structure = mfm.structure.Structure(pdb_filename)
+    >>> structure = chisurf.structure.Structure(pdb_filename)
     >>> av = chisurf.fluorescence.fps.AV(structure, residue_seq_number=11, atom_name='CB', verbose=True, save_av=True, output_file='test')
     Calculating accessible volume
     -----------------------------
@@ -304,7 +295,8 @@ def atoms_in_reach(xyz, vdw, dmaxsq, atom_i):
     Example
     -------
     >>> pdb_filename = './test/data/modelling/pdb_files/hGBP1_open.pdb'
-    >>> structure = mfm.structure.Structure(pdb_filename)
+    >>> import chisurf.structure
+    >>> structure = chisurf.structure.Structure(pdb_filename)
     >>> xs, vs = atoms_in_reach(structure.xyz, structure.vdw, 10.0, 1)
 
     """
@@ -489,10 +481,10 @@ def calc_av1_py(l, w, r, atom_i, ng, xyz, vdw, vdw_max=3.5, linker_sphere=2.0, l
     Example
     -------
 
-    >>> import chisurf.settings as mfm
+    >>> import chisurf.structure
     >>> import pylab as p
     >>> pdb_filename = './test/data/modelling/pdb_files/hGBP1_open.pdb'
-    >>> structure = mfm.structure.Structure(pdb_filename)
+    >>> structure = chisurf.structure.Structure(pdb_filename)
     >>> av = calc_av1_py(l=20.0, w=2.0, r=3.5, atom_i=1, ng=33, xyz=structure.xyz, vdw=structure.vdw)
     >>> l=20.0
     >>> w=2.0
@@ -524,8 +516,10 @@ def calc_av1_py(l, w, r, atom_i, ng, xyz, vdw, vdw_max=3.5, linker_sphere=2.0, l
     return density, linker_distance, r0
 
 
-def calc_weights_from_traj(traj, res_id, atom_name, chain_id,
-                           ng, dg, r0_res, r0_atom_name, r0_chain):
+def calc_weights_from_traj(
+        traj, res_id, atom_name, chain_id,
+        ng, dg, r0_res, r0_atom_name, r0_chain
+) :
     """
 
     :param density:
@@ -540,7 +534,7 @@ def calc_weights_from_traj(traj, res_id, atom_name, chain_id,
 
      >>> import mdtraj as md
      >>> import pylab as p
-     >>> import chisurf.settings as mfm
+     >>> import chisurf.fluorescence
      >>> from chisurf.fluorescence.fps.static import calc_av1_py, calc_weights_from_traj
      >>> traj = md.load('e:/simulations_free_dye/t_join.h5')
 
@@ -568,8 +562,12 @@ def calc_weights_from_traj(traj, res_id, atom_name, chain_id,
 
     topology = traj.top
     hist_3d = np.zeros((ng, ng, ng), np.float64)
-    atom_id = topology.select("resSeq %s and name %s and chainid %s" % (res_id, atom_name, chain_id))[0]
-    r0_id = topology.select("resSeq %s and name %s and chainid %s" % (r0_res, r0_atom_name, r0_chain))[0]
+    atom_id = topology.select(
+        "resSeq %s and name %s and chainid %s" % (res_id, atom_name, chain_id)
+    )[0]
+    r0_id = topology.select(
+        "resSeq %s and name %s and chainid %s" % (r0_res, r0_atom_name, r0_chain)
+    )[0]
     r0 = traj.xyz[:, r0_id, :] * 10.0
     coords = traj.xyz[:, atom_id, :] * 10.0 - r0
     coords_i = (coords / dg).astype(np.int32)

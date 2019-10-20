@@ -3,7 +3,7 @@ import os
 import unittest
 
 TOPDIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '../chisurf/')
+    os.path.join(os.path.dirname(__file__), '..')
 )
 utils.set_search_paths(TOPDIR)
 
@@ -147,7 +147,7 @@ class Tests(unittest.TestCase):
         import chisurf.fluorescence
         import chisurf.fio
         import pylab as p
-        directory = './data/tttr/BH/132/'
+        directory = './test/data/tttr/BH/132/'
         spc_files = glob.glob(directory + '/BH_SPC132.spc')
         photons = chisurf.fio.photons.Photons(spc_files, reading_routine="bh132")
         cr_filter = np.ones_like(photons.mt, dtype=np.float)

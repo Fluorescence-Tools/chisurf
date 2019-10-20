@@ -42,10 +42,7 @@ install:
 script:
   - conda install nose coverage
   - ln -sf $(which nosetests) $(pwd)/test/
-  - cd $(pwd)/test/
-  - echo $PWD
-  - xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test_*.py
-  - cd ..
+  - xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test/test_*.py
 
 after_success:
   - OS=$TRAVIS_OS_NAME-64
