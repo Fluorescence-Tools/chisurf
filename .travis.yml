@@ -3,6 +3,7 @@ language: python
 sudo: required
 python:
   - "3.7"
+
 addons:
   apt:
     packages:
@@ -17,31 +18,40 @@ addons:
 
 services:
   - xvfb
+
 before_install:
+  - git fetch --unshallow
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MINICONDA_OS=Linux; else MINICONDA_OS=MacOSX; fi
   - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$MINICONDA_OS-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
+  - conda config --set channel_priority strict
+  - conda config --add channels conda-forge
+  - conda config --add channels tpeulen
   - conda update -q conda
   - conda info -a
-  - conda env create -f environment.yaml
-  - source activate chisurf
-  - python setup.py build_ext --inplace --force
+  - conda install git conda-build anaconda-client jinja2
+  - conda build conda-recipe --output-folder bld-dir
+  - conda config --add channels "file://`pwd`/bld-dir"
+
 install:
-  - python setup.py install
+  - conda install chisurf
+
 script:
-  - source activate chisurf
   - conda install nose coverage
   - ln -sf $(which nosetests) $(pwd)/test/
-  - cd $(pwd)/test/
-  - xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test_*.py
+  - python setup.py build_ext --inplace --force
+  - xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test/test_*.py
+
 after_success:
-  - source activate chisurf
+  - OS=$TRAVIS_OS_NAME-64
   - pip install codacy-coverage
   - coverage xml
   - python-codacy-coverage -r coverage.xml
-#  - conda install conda-build anaconda-client git
-#  - git clone https://github.com/Fluorescence-Tools/conda-recipes.git
-#  -
+  - |
+    if [[ "$TRAVIS_BRANCH" == "master" ]];
+    then
+      anaconda upload bld-dir/**/chisurf*.tar.bz2
+    fi

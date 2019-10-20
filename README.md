@@ -1,9 +1,7 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/814238f7b1a14f87821beadabc758408)](https://www.codacy.com/manual/tpeulen/ChiSurf?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Fluorescence-Tools/ChiSurf&amp;utm_campaign=Badge_Grade)
 [![Codacy Badge](https://api.codacy.com/project/badge/Coverage/814238f7b1a14f87821beadabc758408)](https://www.codacy.com/manual/tpeulen/ChiSurf?utm_source=github.com&utm_medium=referral&utm_content=Fluorescence-Tools/ChiSurf&utm_campaign=Badge_Coverage)
-
 [![Linux Build Status](https://travis-ci.org/Fluorescence-Tools/ChiSurf.svg?branch=master)](https://travis-ci.org/Fluorescence-Tools/ChiSurf)
 [![Build status](https://ci.appveyor.com/api/projects/status/so2ndl1otr8ishjk?svg=true)](https://ci.appveyor.com/project/tpeulen/chisurf)
-
 [![Anaconda-Server Version](https://anaconda.org/tpeulen/chisurf/badges/version.svg)](https://anaconda.org/tpeulen/chisurf)
 [![DOI](https://zenodo.org/badge/149296509.svg)](https://zenodo.org/badge/latestdoi/149296509)
 

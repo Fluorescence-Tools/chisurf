@@ -2,24 +2,27 @@ import utils
 import os
 import unittest
 
-TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+TOPDIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')
+)
 utils.set_search_paths(TOPDIR)
 
-import mfm.decorators
+
+import chisurf.decorators
 
 
 class Tests(unittest.TestCase):
 
     def test_register(self):
-        @mfm.decorators.register
+        @chisurf.decorators.register
         class A1():
             pass
 
-        @mfm.decorators.register
+        @chisurf.decorators.register
         class B():
             pass
 
-        @mfm.decorators.register
+        @chisurf.decorators.register
         class A2(A1):
             pass
 
@@ -50,7 +53,7 @@ class Tests(unittest.TestCase):
 
     def test_set_module(self):
         name = 'test_module_name'
-        @mfm.decorators.set_module(name)
+        @chisurf.decorators.set_module(name)
         def example():
             pass
         self.assertEqual(

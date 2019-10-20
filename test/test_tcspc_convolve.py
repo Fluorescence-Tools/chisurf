@@ -1,14 +1,17 @@
 import utils
 import os
 import unittest
-
-
-TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-utils.set_search_paths(TOPDIR)
-
-import mfm.fluorescence.tcspc.convolve
 import numpy as np
 import scipy.stats
+
+
+TOPDIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')
+)
+utils.set_search_paths(TOPDIR)
+
+import chisurf.fluorescence
+import chisurf.fluorescence.tcspc.convolve
 
 
 class Tests(unittest.TestCase):
@@ -21,7 +24,7 @@ class Tests(unittest.TestCase):
         irf = scipy.stats.norm.pdf(time_axis, loc=irf_position, scale=irf_width)
         lifetime_spectrum = np.array([0.8, 1.1, 0.2, 4.0])
         decay = np.zeros_like(time_axis)
-        mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(
+        chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(
             decay,
             lifetime_spectrum=lifetime_spectrum,
             irf=irf,
@@ -61,7 +64,7 @@ class Tests(unittest.TestCase):
         lifetime_spectrum = np.array([0.8, 1.1, 0.2, 4.0])
         decay = np.zeros_like(time_axis)
         n_decay = decay.shape[0]
-        mfm.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_periodic(
+        chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_periodic(
             decay,
             lifetime_spectrum=lifetime_spectrum,
             irf=irf,
@@ -100,7 +103,7 @@ class Tests(unittest.TestCase):
         dt = time_axis[1] - time_axis[0]
         irf = scipy.stats.norm.pdf(time_axis, loc=irf_position, scale=irf_width)
         decay_u = np.exp(- time_axis / 4.1)
-        decay = mfm.fluorescence.tcspc.convolve.convolve_decay(
+        decay = chisurf.fluorescence.tcspc.convolve.convolve_decay(
             decay_u,
             irf=irf,
             start=0,

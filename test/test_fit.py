@@ -2,16 +2,17 @@ import utils
 import os
 import unittest
 
-TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+TOPDIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')
+)
 utils.set_search_paths(TOPDIR)
 
 import numpy as np
 import copy
 
-import mfm
-import mfm.experiments
-import mfm.models
-import mfm.fitting
+import chisurf.experiments
+import chisurf.models
+import chisurf.fitting
 
 
 def get_data_values(
@@ -33,7 +34,7 @@ class FitTests(unittest.TestCase):
             a_value=a_value,
             c_value=c_value
         )
-        data = mfm.experiments.data.DataCurve(
+        data = chisurf.experiments.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
@@ -62,11 +63,11 @@ class FitTests(unittest.TestCase):
         data_group = self.test_data_group()
         data = data_group[0]
         x_data = data.x
-        fit = mfm.fitting.fit.FitGroup(
-            data=mfm.experiments.data.DataGroup(
+        fit = chisurf.fitting.fit.FitGroup(
+            data=chisurf.experiments.data.DataGroup(
                 [data]
             ),
-            model_class=mfm.models.parse.ParseModel
+            model_class=chisurf.models.parse.ParseModel
         )
         model = fit.model
         model.parse.func = 'c+a*x**2'
@@ -175,16 +176,16 @@ class FitTests(unittest.TestCase):
             c_value=c_value
         )
 
-        data = mfm.experiments.data.DataCurve(
+        data = chisurf.experiments.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
         )
-        fit = mfm.fitting.fit.FitGroup(
-            data=mfm.experiments.data.DataGroup(
+        fit = chisurf.fitting.fit.FitGroup(
+            data=chisurf.experiments.data.DataGroup(
                 [data]
             ),
-            model_class=mfm.models.parse.ParseModel
+            model_class=chisurf.models.parse.ParseModel
         )
 
         self.assertIs(
@@ -192,7 +193,7 @@ class FitTests(unittest.TestCase):
             data
         )
 
-        data_2 = mfm.experiments.data.DataCurve(
+        data_2 = chisurf.experiments.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
