@@ -5,16 +5,22 @@ import json
 import os
 import numpy as np
 
+import chisurf.structure
 import chisurf.settings
 import chisurf.base
 import chisurf.fio.density
 
-import chisurf.fluorescence.av.dynamic
-import chisurf.fluorescence.av.static
-import chisurf.fluorescence.av.functions
-import chisurf.fluorescence.av.fps
+from . import dynamic
+from . import static
+from . import functions
+from . import fps
 
-from chisurf.fluorescence.av.static import calculate_1_radius, calculate_3_radius
+# import chisurf.fluorescence.av.dynamic
+# import chisurf.fluorescence.av.static
+# import chisurf.fluorescence.av.functions
+# import chisurf.fluorescence.av.fps
+
+from . static import calculate_1_radius, calculate_3_radius
 
 package_directory = os.path.dirname(__file__)
 dye_file = os.path.join(

@@ -15,7 +15,7 @@ import chisurf.fio.coordinates
 import chisurf.models
 import chisurf.parameter
 import chisurf.structure
-import chisurf.fluorescence.av.fps
+from . import fps
 from chisurf.parameter import ParameterGroup
 
 
@@ -49,7 +49,7 @@ def simulate_trajectory(
 
     http://labs.physics.berkeley.edu/mediawiki/index.php/Simulating_Brownian_Motion
     """
-    return chisurf.fluorescence.av.fps.simulate_traj_point(
+    return fps.simulate_traj_point(
         d, ds, dg, t_max, t_step, diffusion_coefficient, slow_fact
     )
 
@@ -397,7 +397,7 @@ class Dye(ParameterGroup):
 
     @property
     def dye_definition(self):
-        return chisurf.fluorescence.intensity.dye_definition[self.dye_name]
+        return chisurf.fluorescence.av.dye_definition[self.dye_name]
 
     @property
     def dye_name(self):
@@ -418,7 +418,7 @@ class Dye(ParameterGroup):
         structure = kwargs.get('structure', self.structure)
         sticking = kwargs.get('sticking', self.sticking)
 
-        av = chisurf.fluorescence.intensity.ACV(
+        av = chisurf.fluorescence.av.ACV(
             structure=structure,
             residue_seq_number=self.attachment_residue,
             atom_name=self.attachment_atom,
@@ -497,7 +497,7 @@ class Dye(ParameterGroup):
         )
 
         dye_name = str(kwargs.get('dye_name', None))
-        if dye_name in chisurf.fluorescence.intensity.dye_names[0]:
+        if dye_name in chisurf.fluorescence.av.dye_names[0]:
             self.dye_name = self._dye_name
 
 
@@ -564,7 +564,7 @@ class Sticking(ParameterGroup):
         :param quenching_parameter:
         :param kwargs:
         """
-        super(Sticking, self).__init__(fit, **kwargs)
+        super().__init__(fit, **kwargs)
         self.verbose = kwargs.get('verbose', mfm.verbose)
         self.quenching_parameter = quenching_parameter
         self.structure = structure

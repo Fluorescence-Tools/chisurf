@@ -5,6 +5,7 @@ import pyqtgraph.opengl as gl
 from matplotlib import cm
 
 import chisurf.math
+import chisurf.fitting.fit
 import chisurf.fluorescence
 import chisurf.fluorescence.av
 from chisurf.plots import plotbase
@@ -22,7 +23,9 @@ class AvPlotControl(
         super().__init__(*args, **kwargs)
 
 
-class AvPlot(plotbase.Plot):
+class AvPlot(
+    plotbase.Plot
+):
     """
     Started off as a plotting class to display TCSPC-data displaying the IRF,
     the experimental data, the residuals and the autocorrelation of the
@@ -45,7 +48,7 @@ class AvPlot(plotbase.Plot):
 
     def __init__(
             self,
-            fit,
+            fit: chisurf.fitting.fit.FitGroup,
             *args,
             **kwargs
     ):
@@ -75,7 +78,12 @@ class AvPlot(plotbase.Plot):
 
         d1.addWidget(self.quenching_widget)
 
-    def update_all(self, only_fit_range=False, *args, **kwargs):
+    def update_all(
+            self,
+            only_fit_range: bool = False,
+            *args,
+            **kwargs
+    ):
         fit = self.fit
 
         pdb_filename = './test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb'
@@ -92,7 +100,6 @@ class AvPlot(plotbase.Plot):
             atom_name=atom_name,
             diffusion_coefficients=(free_diffusion, atomic_slow_factor)
         )
-
 
         alpha = 0.1
         data = av.rate_map
