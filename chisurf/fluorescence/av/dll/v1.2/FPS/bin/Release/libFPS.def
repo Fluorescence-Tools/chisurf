@@ -1,4 +1,0 @@
-EXPORTS
-    DllMain @1
-    _Z11calculate1RdddidPdS_S_S_iddiS_ @2
-    _Z11calculate3RdddddidPdS_S_S_iddiS_ @3
