@@ -3,12 +3,15 @@ from __future__ import annotations
 import os
 from qtpy import QtGui
 
-import chisurf.settings as mfm
+import chisurf
+import chisurf.fitting
 from chisurf import plots
 from chisurf.models.parse import ParseModelWidget
 
 
-class ParseFCSWidget(ParseModelWidget):
+class ParseFCSWidget(
+    ParseModelWidget
+):
     """
     fcs
     """
@@ -30,7 +33,7 @@ class ParseFCSWidget(ParseModelWidget):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             icon: QtGui.QIcon = None,
             **kwargs
     ):

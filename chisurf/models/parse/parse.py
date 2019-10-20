@@ -217,16 +217,11 @@ class ParseFormulaWidget(
         self.n_columns = n_columns
 
         self.webview = QtWebEngineWidgets.QWebEngineView()
-        self.widget.verticalLayout_4.addWidget(self.webview)
+        self.verticalLayout_4.addWidget(self.webview)
 
-        self.widget.comboBox.currentIndexChanged[int].connect(self.onModelChanged)
-        self.widget.toolButton.clicked.connect(self.onUpdateFunc)
+        self.comboBox.currentIndexChanged[int].connect(self.onModelChanged)
+        self.toolButton.clicked.connect(self.onUpdateFunc)
         self._func = self.models[self.model_name]['equation']
-        layout = QtWidgets.QHBoxLayout()
-        self.setLayout(
-            layout
-        )
-        layout.addWidget(self.widget)
 
     @property
     def func(self):
@@ -236,8 +231,8 @@ class ParseFormulaWidget(
     def func(self, v):
         super(ParseFormulaWidget, self.__class__).func = v
 
-        self.widget.plainTextEdit.setPlainText(v)
-        layout = self.widget.gridLayout_2
+        self.plainTextEdit.setPlainText(v)
+        layout = self.gridLayout_2
         chisurf.widgets.clear_layout(layout)
         n_columns = self.n_columns
 
@@ -259,20 +254,20 @@ class ParseFormulaWidget(
     @models.setter
     def models(self, v):
         ParseFormula.models.fset(self, v)
-        self.widget.comboBox.clear()
-        self.widget.comboBox.addItems(list(v.keys()))
+        self.comboBox.clear()
+        self.comboBox.addItems(list(v.keys()))
 
     @property
     def model_name(self) -> List[str]:
-        return list(self.models.keys())[self.widget.comboBox.currentIndex()]
+        return list(self.models.keys())[self.comboBox.currentIndex()]
 
     @model_name.setter
     def model_name(
             self,
             v: str
     ):
-        idx = self.widget.comboBox.findText(v)
-        self.widget.comboBox.setCurrentIndex(idx)
+        idx = self.comboBox.findText(v)
+        self.comboBox.setCurrentIndex(idx)
 
     def onUpdateEquation(self):
         s = """<html><head>
