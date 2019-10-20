@@ -8,14 +8,15 @@ import numpy as np
 import tables
 import numexpr as ne
 
+import chisurf.fitting
 import chisurf.settings as mfm
 import chisurf.fio
 import chisurf.fio.coordinates
 import chisurf.models
 import chisurf.parameter
 import chisurf.structure
+from chisurf.fluorescence.fps import _fps
 from chisurf.parameter import ParameterGroup
-from . import _fps
 
 
 ne.set_num_threads(
@@ -396,7 +397,7 @@ class Dye(ParameterGroup):
 
     @property
     def dye_definition(self):
-        return fluorescence.intensity.dye_definition[self.dye_name]
+        return chisurf.fluorescence.intensity.dye_definition[self.dye_name]
 
     @property
     def dye_name(self):
@@ -410,14 +411,14 @@ class Dye(ParameterGroup):
     @property
     def n_atoms(self):
         json_topology = self.dye_definition
-        n_atoms = mfm.structure.structure.count_atoms(json_topology)
+        n_atoms = chisurf.structure.count_atoms(json_topology)
         return n_atoms
 
     def get_av(self, **kwargs):
         structure = kwargs.get('structure', self.structure)
         sticking = kwargs.get('sticking', self.sticking)
 
-        av = fluorescence.intensity.ACV(
+        av = chisurf.fluorescence.intensity.ACV(
             structure=structure,
             residue_seq_number=self.attachment_residue,
             atom_name=self.attachment_atom,
@@ -496,7 +497,7 @@ class Dye(ParameterGroup):
         )
 
         dye_name = str(kwargs.get('dye_name', None))
-        if dye_name in fluorescence.intensity.dye_names[0]:
+        if dye_name in chisurf.fluorescence.intensity.dye_names[0]:
             self.dye_name = self._dye_name
 
 
@@ -552,8 +553,8 @@ class Sticking(ParameterGroup):
 
     def __init__(
             self,
-            fit: fitting.fit.Fit,
-            structure: mfm.structure.structure.Structure,
+            fit: chisurf.fitting.fit.Fit,
+            structure: chisurf.structure.structure.Structure,
             quenching_parameter=None,
             **kwargs
     ):
