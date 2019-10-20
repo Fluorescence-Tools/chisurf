@@ -13,6 +13,7 @@ import numpy as np
 
 import chisurf.base
 import chisurf.experiments
+import chisurf.experiments.data
 
 
 def get_data_values(
