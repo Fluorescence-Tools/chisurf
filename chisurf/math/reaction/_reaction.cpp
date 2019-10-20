@@ -604,8 +604,8 @@ static CYTHON_INLINE float __PYX_NAN() {
   #endif
 #endif
 
-#define __PYX_HAVE__chisurf__math__reaction___reaction
-#define __PYX_HAVE_API__chisurf__math__reaction___reaction
+#define __PYX_HAVE__isurf__math__reaction___reaction
+#define __PYX_HAVE_API__isurf__math__reaction___reaction
 /* Early includes */
 #include <string.h>
 #include <stdio.h>
@@ -883,7 +883,7 @@ typedef struct {
 } __Pyx_BufFmt_Context;
 
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":776
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":776
  * # in Cython to enable them only on the right systems.
  * 
  * ctypedef npy_int8       int8_t             # <<<<<<<<<<<<<<
@@ -892,7 +892,7 @@ typedef struct {
  */
 typedef npy_int8 __pyx_t_5numpy_int8_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":777
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":777
  * 
  * ctypedef npy_int8       int8_t
  * ctypedef npy_int16      int16_t             # <<<<<<<<<<<<<<
@@ -901,7 +901,7 @@ typedef npy_int8 __pyx_t_5numpy_int8_t;
  */
 typedef npy_int16 __pyx_t_5numpy_int16_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":778
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":778
  * ctypedef npy_int8       int8_t
  * ctypedef npy_int16      int16_t
  * ctypedef npy_int32      int32_t             # <<<<<<<<<<<<<<
@@ -910,7 +910,7 @@ typedef npy_int16 __pyx_t_5numpy_int16_t;
  */
 typedef npy_int32 __pyx_t_5numpy_int32_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":779
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":779
  * ctypedef npy_int16      int16_t
  * ctypedef npy_int32      int32_t
  * ctypedef npy_int64      int64_t             # <<<<<<<<<<<<<<
@@ -919,7 +919,7 @@ typedef npy_int32 __pyx_t_5numpy_int32_t;
  */
 typedef npy_int64 __pyx_t_5numpy_int64_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":783
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":783
  * #ctypedef npy_int128     int128_t
  * 
  * ctypedef npy_uint8      uint8_t             # <<<<<<<<<<<<<<
@@ -928,7 +928,7 @@ typedef npy_int64 __pyx_t_5numpy_int64_t;
  */
 typedef npy_uint8 __pyx_t_5numpy_uint8_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":784
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":784
  * 
  * ctypedef npy_uint8      uint8_t
  * ctypedef npy_uint16     uint16_t             # <<<<<<<<<<<<<<
@@ -937,7 +937,7 @@ typedef npy_uint8 __pyx_t_5numpy_uint8_t;
  */
 typedef npy_uint16 __pyx_t_5numpy_uint16_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":785
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":785
  * ctypedef npy_uint8      uint8_t
  * ctypedef npy_uint16     uint16_t
  * ctypedef npy_uint32     uint32_t             # <<<<<<<<<<<<<<
@@ -946,7 +946,7 @@ typedef npy_uint16 __pyx_t_5numpy_uint16_t;
  */
 typedef npy_uint32 __pyx_t_5numpy_uint32_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":786
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":786
  * ctypedef npy_uint16     uint16_t
  * ctypedef npy_uint32     uint32_t
  * ctypedef npy_uint64     uint64_t             # <<<<<<<<<<<<<<
@@ -955,7 +955,7 @@ typedef npy_uint32 __pyx_t_5numpy_uint32_t;
  */
 typedef npy_uint64 __pyx_t_5numpy_uint64_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":790
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":790
  * #ctypedef npy_uint128    uint128_t
  * 
  * ctypedef npy_float32    float32_t             # <<<<<<<<<<<<<<
@@ -964,7 +964,7 @@ typedef npy_uint64 __pyx_t_5numpy_uint64_t;
  */
 typedef npy_float32 __pyx_t_5numpy_float32_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":791
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":791
  * 
  * ctypedef npy_float32    float32_t
  * ctypedef npy_float64    float64_t             # <<<<<<<<<<<<<<
@@ -973,7 +973,7 @@ typedef npy_float32 __pyx_t_5numpy_float32_t;
  */
 typedef npy_float64 __pyx_t_5numpy_float64_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":800
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":800
  * # The int types are mapped a bit surprising --
  * # numpy.int corresponds to 'l' and numpy.long to 'q'
  * ctypedef npy_long       int_t             # <<<<<<<<<<<<<<
@@ -982,7 +982,7 @@ typedef npy_float64 __pyx_t_5numpy_float64_t;
  */
 typedef npy_long __pyx_t_5numpy_int_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":801
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":801
  * # numpy.int corresponds to 'l' and numpy.long to 'q'
  * ctypedef npy_long       int_t
  * ctypedef npy_longlong   long_t             # <<<<<<<<<<<<<<
@@ -991,7 +991,7 @@ typedef npy_long __pyx_t_5numpy_int_t;
  */
 typedef npy_longlong __pyx_t_5numpy_long_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":802
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":802
  * ctypedef npy_long       int_t
  * ctypedef npy_longlong   long_t
  * ctypedef npy_longlong   longlong_t             # <<<<<<<<<<<<<<
@@ -1000,7 +1000,7 @@ typedef npy_longlong __pyx_t_5numpy_long_t;
  */
 typedef npy_longlong __pyx_t_5numpy_longlong_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":804
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":804
  * ctypedef npy_longlong   longlong_t
  * 
  * ctypedef npy_ulong      uint_t             # <<<<<<<<<<<<<<
@@ -1009,7 +1009,7 @@ typedef npy_longlong __pyx_t_5numpy_longlong_t;
  */
 typedef npy_ulong __pyx_t_5numpy_uint_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":805
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":805
  * 
  * ctypedef npy_ulong      uint_t
  * ctypedef npy_ulonglong  ulong_t             # <<<<<<<<<<<<<<
@@ -1018,7 +1018,7 @@ typedef npy_ulong __pyx_t_5numpy_uint_t;
  */
 typedef npy_ulonglong __pyx_t_5numpy_ulong_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":806
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":806
  * ctypedef npy_ulong      uint_t
  * ctypedef npy_ulonglong  ulong_t
  * ctypedef npy_ulonglong  ulonglong_t             # <<<<<<<<<<<<<<
@@ -1027,7 +1027,7 @@ typedef npy_ulonglong __pyx_t_5numpy_ulong_t;
  */
 typedef npy_ulonglong __pyx_t_5numpy_ulonglong_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":808
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":808
  * ctypedef npy_ulonglong  ulonglong_t
  * 
  * ctypedef npy_intp       intp_t             # <<<<<<<<<<<<<<
@@ -1036,7 +1036,7 @@ typedef npy_ulonglong __pyx_t_5numpy_ulonglong_t;
  */
 typedef npy_intp __pyx_t_5numpy_intp_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":809
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":809
  * 
  * ctypedef npy_intp       intp_t
  * ctypedef npy_uintp      uintp_t             # <<<<<<<<<<<<<<
@@ -1045,7 +1045,7 @@ typedef npy_intp __pyx_t_5numpy_intp_t;
  */
 typedef npy_uintp __pyx_t_5numpy_uintp_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":811
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":811
  * ctypedef npy_uintp      uintp_t
  * 
  * ctypedef npy_double     float_t             # <<<<<<<<<<<<<<
@@ -1054,7 +1054,7 @@ typedef npy_uintp __pyx_t_5numpy_uintp_t;
  */
 typedef npy_double __pyx_t_5numpy_float_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":812
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":812
  * 
  * ctypedef npy_double     float_t
  * ctypedef npy_double     double_t             # <<<<<<<<<<<<<<
@@ -1063,7 +1063,7 @@ typedef npy_double __pyx_t_5numpy_float_t;
  */
 typedef npy_double __pyx_t_5numpy_double_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":813
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":813
  * ctypedef npy_double     float_t
  * ctypedef npy_double     double_t
  * ctypedef npy_longdouble longdouble_t             # <<<<<<<<<<<<<<
@@ -1072,23 +1072,23 @@ typedef npy_double __pyx_t_5numpy_double_t;
  */
 typedef npy_longdouble __pyx_t_5numpy_longdouble_t;
 
-/* "chisurf/math/reaction/_reaction.pyx":11
+/* "isurf/math/reaction/_reaction.pyx":11
  * 
  * DTYPE = np.double
  * ctypedef np.double_t DTYPE_t             # <<<<<<<<<<<<<<
  * ctypedef np.int_t INT_t
  * 
  */
-typedef __pyx_t_5numpy_double_t __pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t;
+typedef __pyx_t_5numpy_double_t __pyx_t_5isurf_4math_8reaction_9_reaction_DTYPE_t;
 
-/* "chisurf/math/reaction/_reaction.pyx":12
+/* "isurf/math/reaction/_reaction.pyx":12
  * DTYPE = np.double
  * ctypedef np.double_t DTYPE_t
  * ctypedef np.int_t INT_t             # <<<<<<<<<<<<<<
  * 
  * cdef class Model:
  */
-typedef __pyx_t_5numpy_int_t __pyx_t_7chisurf_4math_8reaction_9_reaction_INT_t;
+typedef __pyx_t_5numpy_int_t __pyx_t_5isurf_4math_8reaction_9_reaction_INT_t;
 /* Declarations.proto */
 #if CYTHON_CCOMPLEX
   #ifdef __cplusplus
@@ -1115,9 +1115,9 @@ static CYTHON_INLINE __pyx_t_double_complex __pyx_t_double_complex_from_parts(do
 
 
 /*--- Type declarations ---*/
-struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model;
+struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":815
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":815
  * ctypedef npy_longdouble longdouble_t
  * 
  * ctypedef npy_cfloat      cfloat_t             # <<<<<<<<<<<<<<
@@ -1126,7 +1126,7 @@ struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model;
  */
 typedef npy_cfloat __pyx_t_5numpy_cfloat_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":816
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":816
  * 
  * ctypedef npy_cfloat      cfloat_t
  * ctypedef npy_cdouble     cdouble_t             # <<<<<<<<<<<<<<
@@ -1135,7 +1135,7 @@ typedef npy_cfloat __pyx_t_5numpy_cfloat_t;
  */
 typedef npy_cdouble __pyx_t_5numpy_cdouble_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":817
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":817
  * ctypedef npy_cfloat      cfloat_t
  * ctypedef npy_cdouble     cdouble_t
  * ctypedef npy_clongdouble clongdouble_t             # <<<<<<<<<<<<<<
@@ -1144,7 +1144,7 @@ typedef npy_cdouble __pyx_t_5numpy_cdouble_t;
  */
 typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":819
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":819
  * ctypedef npy_clongdouble clongdouble_t
  * 
  * ctypedef npy_cdouble     complex_t             # <<<<<<<<<<<<<<
@@ -1152,31 +1152,31 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
  * cdef inline object PyArray_MultiIterNew1(a):
  */
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
-struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA;
+struct __pyx_opt_args_5isurf_4math_8reaction_9_reaction_5Model_GSSA;
 
-/* "chisurf/math/reaction/_reaction.pyx":70
+/* "isurf/math/reaction/_reaction.pyx":70
  *         return self.time,self.series,self.steps
  * 
  *     cpdef int GSSA(             # <<<<<<<<<<<<<<
  *             self,
  *             int tmax = 50,
  */
-struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA {
+struct __pyx_opt_args_5isurf_4math_8reaction_9_reaction_5Model_GSSA {
   int __pyx_n;
   int tmax;
   int round;
 };
 
-/* "chisurf/math/reaction/_reaction.pyx":14
+/* "isurf/math/reaction/_reaction.pyx":14
  * ctypedef np.int_t INT_t
  * 
  * cdef class Model:             # <<<<<<<<<<<<<<
  * 
  *     cdef object vn,rates,inits,pv
  */
-struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model {
+struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model {
   PyObject_HEAD
-  struct __pyx_vtabstruct_7chisurf_4math_8reaction_9_reaction_Model *__pyx_vtab;
+  struct __pyx_vtabstruct_5isurf_4math_8reaction_9_reaction_Model *__pyx_vtab;
   PyObject *vn;
   PyObject *rates;
   PyObject *inits;
@@ -1193,10 +1193,10 @@ struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model {
 
 
 
-struct __pyx_vtabstruct_7chisurf_4math_8reaction_9_reaction_Model {
-  int (*GSSA)(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *, int __pyx_skip_dispatch, struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args);
+struct __pyx_vtabstruct_5isurf_4math_8reaction_9_reaction_Model {
+  int (*GSSA)(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *, int __pyx_skip_dispatch, struct __pyx_opt_args_5isurf_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args);
 };
-static struct __pyx_vtabstruct_7chisurf_4math_8reaction_9_reaction_Model *__pyx_vtabptr_7chisurf_4math_8reaction_9_reaction_Model;
+static struct __pyx_vtabstruct_5isurf_4math_8reaction_9_reaction_Model *__pyx_vtabptr_5isurf_4math_8reaction_9_reaction_Model;
 
 /* --- Runtime support code (head) --- */
 /* Refnanny.proto */
@@ -1801,7 +1801,7 @@ static int __Pyx_check_binary_version(void);
 /* InitStrings.proto */
 static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 
-static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_skip_dispatch, struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args); /* proto*/
+static int __pyx_f_5isurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_skip_dispatch, struct __pyx_opt_args_5isurf_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args); /* proto*/
 
 /* Module declarations from 'cpython.buffer' */
 
@@ -1832,15 +1832,15 @@ static PyTypeObject *__pyx_ptype_5numpy_ndarray = 0;
 static PyTypeObject *__pyx_ptype_5numpy_ufunc = 0;
 static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *, char *, char *, int *); /*proto*/
 
-/* Module declarations from 'chisurf.math.reaction._reaction' */
-static PyTypeObject *__pyx_ptype_7chisurf_4math_8reaction_9_reaction_Model = 0;
-static PyObject *__pyx_f_7chisurf_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *, PyObject *); /*proto*/
-static __Pyx_TypeInfo __Pyx_TypeInfo_nn___pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t = { "DTYPE_t", NULL, sizeof(__pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t), { 0 }, 0, 'R', 0, 0 };
-#define __Pyx_MODULE_NAME "chisurf.math.reaction._reaction"
-extern int __pyx_module_is_main_chisurf__math__reaction___reaction;
-int __pyx_module_is_main_chisurf__math__reaction___reaction = 0;
+/* Module declarations from 'isurf.math.reaction._reaction' */
+static PyTypeObject *__pyx_ptype_5isurf_4math_8reaction_9_reaction_Model = 0;
+static PyObject *__pyx_f_5isurf_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *, PyObject *); /*proto*/
+static __Pyx_TypeInfo __Pyx_TypeInfo_nn___pyx_t_5isurf_4math_8reaction_9_reaction_DTYPE_t = { "DTYPE_t", NULL, sizeof(__pyx_t_5isurf_4math_8reaction_9_reaction_DTYPE_t), { 0 }, 0, 'R', 0, 0 };
+#define __Pyx_MODULE_NAME "isurf.math.reaction._reaction"
+extern int __pyx_module_is_main_isurf__math__reaction___reaction;
+int __pyx_module_is_main_isurf__math__reaction___reaction = 0;
 
-/* Implementation of 'chisurf.math.reaction._reaction' */
+/* Implementation of 'isurf.math.reaction._reaction' */
 static PyObject *__pyx_builtin_range;
 static PyObject *__pyx_builtin_ValueError;
 static PyObject *__pyx_builtin_RuntimeError;
@@ -1908,6 +1908,7 @@ static const char __pyx_k_setstate_cython[] = "__setstate_cython__";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
 static const char __pyx_k_pyx_unpickle_Model[] = "__pyx_unpickle_Model";
 static const char __pyx_k_ndarray_is_not_C_contiguous[] = "ndarray is not C contiguous";
+static const char __pyx_k_isurf_math_reaction__reaction[] = "isurf.math.reaction._reaction";
 static const char __pyx_k_chisurf_math_reaction__reaction[] = "chisurf/math/reaction/_reaction.pyx";
 static const char __pyx_k_numpy_core_multiarray_failed_to[] = "numpy.core.multiarray failed to import";
 static const char __pyx_k_unknown_dtype_code_in_numpy_pxd[] = "unknown dtype code in numpy.pxd (%d)";
@@ -1916,7 +1917,6 @@ static const char __pyx_k_Incompatible_checksums_s_vs_0xd6[] = "Incompatible che
 static const char __pyx_k_Non_native_byte_order_not_suppor[] = "Non-native byte order not supported";
 static const char __pyx_k_ndarray_is_not_Fortran_contiguou[] = "ndarray is not Fortran contiguous";
 static const char __pyx_k_numpy_core_umath_failed_to_impor[] = "numpy.core.umath failed to import";
-static const char __pyx_k_chisurf_math_reaction__reaction_2[] = "chisurf.math.reaction._reaction";
 static const char __pyx_k_Format_string_allocated_too_shor_2[] = "Format string allocated too short.";
 static PyObject *__pyx_n_s_DTYPE;
 static PyObject *__pyx_kp_u_Format_string_allocated_too_shor;
@@ -1933,7 +1933,6 @@ static PyObject *__pyx_n_s_SSAct;
 static PyObject *__pyx_n_s_ValueError;
 static PyObject *__pyx_n_s_arange;
 static PyObject *__pyx_kp_s_chisurf_math_reaction__reaction;
-static PyObject *__pyx_n_s_chisurf_math_reaction__reaction_2;
 static PyObject *__pyx_n_s_cline_in_traceback;
 static PyObject *__pyx_n_s_dict;
 static PyObject *__pyx_n_s_double;
@@ -1944,6 +1943,7 @@ static PyObject *__pyx_n_s_getstate;
 static PyObject *__pyx_n_s_import;
 static PyObject *__pyx_n_s_ini;
 static PyObject *__pyx_n_s_inits;
+static PyObject *__pyx_n_s_isurf_math_reaction__reaction;
 static PyObject *__pyx_n_s_l1;
 static PyObject *__pyx_n_s_l2;
 static PyObject *__pyx_n_s_log;
@@ -1991,19 +1991,19 @@ static PyObject *__pyx_kp_u_unknown_dtype_code_in_numpy_pxd;
 static PyObject *__pyx_n_s_update;
 static PyObject *__pyx_n_s_vnames;
 static PyObject *__pyx_n_s_zeros;
-static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_vnames, PyObject *__pyx_v_rates, PyObject *__pyx_v_inits, PyObject *__pyx_v_tmat, PyObject *__pyx_v_propensity); /* proto */
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_method, int __pyx_v_tmax, int __pyx_v_reps); /* proto */
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_4getStats(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_6GSSA(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_v_tmax, int __pyx_v_round); /* proto */
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_8CR(CYTHON_UNUSED struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_pv); /* proto */
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_10__reduce_cython__(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_12__setstate_cython__(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_l1(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini); /* proto */
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_2l2(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini); /* proto */
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_4__pyx_unpickle_Model(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
+static int __pyx_pf_5isurf_4math_8reaction_9_reaction_5Model___init__(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_vnames, PyObject *__pyx_v_rates, PyObject *__pyx_v_inits, PyObject *__pyx_v_tmat, PyObject *__pyx_v_propensity); /* proto */
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_2run(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_method, int __pyx_v_tmax, int __pyx_v_reps); /* proto */
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_4getStats(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_6GSSA(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_v_tmax, int __pyx_v_round); /* proto */
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_8CR(CYTHON_UNUSED struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_pv); /* proto */
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_10__reduce_cython__(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_12__setstate_cython__(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_l1(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini); /* proto */
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_2l2(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini); /* proto */
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_4__pyx_unpickle_Model(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state); /* proto */
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /* proto */
 static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info); /* proto */
-static PyObject *__pyx_tp_new_7chisurf_4math_8reaction_9_reaction_Model(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
+static PyObject *__pyx_tp_new_5isurf_4math_8reaction_9_reaction_Model(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_int_0;
 static PyObject *__pyx_int_1;
 static PyObject *__pyx_int_225037822;
@@ -2023,7 +2023,7 @@ static PyObject *__pyx_codeobj__12;
 static PyObject *__pyx_codeobj__14;
 /* Late includes */
 
-/* "chisurf/math/reaction/_reaction.pyx":21
+/* "isurf/math/reaction/_reaction.pyx":21
  *     cdef object ts
  * 
  *     def __init__(             # <<<<<<<<<<<<<<
@@ -2032,12 +2032,12 @@ static PyObject *__pyx_codeobj__14;
  */
 
 /* Python wrapper */
-static int __pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_7chisurf_4math_8reaction_9_reaction_5Model___init__[] = "\n         * variable_names: list of strings\n         * rates: list of fixed rate parameters\n         * inits: list of initial values of variables\n         * propensity: list of lambda functions of the form:\n            lambda r,ini: some function of rates ans inits.\n        ";
+static int __pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static char __pyx_doc_5isurf_4math_8reaction_9_reaction_5Model___init__[] = "\n         * variable_names: list of strings\n         * rates: list of fixed rate parameters\n         * inits: list of initial values of variables\n         * propensity: list of lambda functions of the form:\n            lambda r,ini: some function of rates ans inits.\n        ";
 #if CYTHON_COMPILING_IN_CPYTHON
-struct wrapperbase __pyx_wrapperbase_7chisurf_4math_8reaction_9_reaction_5Model___init__;
+struct wrapperbase __pyx_wrapperbase_5isurf_4math_8reaction_9_reaction_5Model___init__;
 #endif
-static int __pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static int __pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_vnames = 0;
   PyObject *__pyx_v_rates = 0;
   PyObject *__pyx_v_inits = 0;
@@ -2118,18 +2118,18 @@ static int __pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_1__init__(PyObjec
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("__init__", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 21, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.Model.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self), __pyx_v_vnames, __pyx_v_rates, __pyx_v_inits, __pyx_v_tmat, __pyx_v_propensity);
+  __pyx_r = __pyx_pf_5isurf_4math_8reaction_9_reaction_5Model___init__(((struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *)__pyx_v_self), __pyx_v_vnames, __pyx_v_rates, __pyx_v_inits, __pyx_v_tmat, __pyx_v_propensity);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_vnames, PyObject *__pyx_v_rates, PyObject *__pyx_v_inits, PyObject *__pyx_v_tmat, PyObject *__pyx_v_propensity) {
+static int __pyx_pf_5isurf_4math_8reaction_9_reaction_5Model___init__(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_vnames, PyObject *__pyx_v_rates, PyObject *__pyx_v_inits, PyObject *__pyx_v_tmat, PyObject *__pyx_v_propensity) {
   int __pyx_r;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -2138,7 +2138,7 @@ static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct _
   PyObject *__pyx_t_4 = NULL;
   __Pyx_RefNannySetupContext("__init__", 0);
 
-  /* "chisurf/math/reaction/_reaction.pyx":36
+  /* "isurf/math/reaction/_reaction.pyx":36
  *             lambda r,ini: some function of rates ans inits.
  *         '''
  *         self.vn = vnames             # <<<<<<<<<<<<<<
@@ -2151,7 +2151,7 @@ static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct _
   __Pyx_DECREF(__pyx_v_self->vn);
   __pyx_v_self->vn = __pyx_v_vnames;
 
-  /* "chisurf/math/reaction/_reaction.pyx":37
+  /* "isurf/math/reaction/_reaction.pyx":37
  *         '''
  *         self.vn = vnames
  *         self.rates = rates             # <<<<<<<<<<<<<<
@@ -2164,7 +2164,7 @@ static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct _
   __Pyx_DECREF(__pyx_v_self->rates);
   __pyx_v_self->rates = __pyx_v_rates;
 
-  /* "chisurf/math/reaction/_reaction.pyx":38
+  /* "isurf/math/reaction/_reaction.pyx":38
  *         self.vn = vnames
  *         self.rates = rates
  *         self.inits = inits             # <<<<<<<<<<<<<<
@@ -2177,7 +2177,7 @@ static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct _
   __Pyx_DECREF(__pyx_v_self->inits);
   __pyx_v_self->inits = __pyx_v_inits;
 
-  /* "chisurf/math/reaction/_reaction.pyx":39
+  /* "isurf/math/reaction/_reaction.pyx":39
  *         self.rates = rates
  *         self.inits = inits
  *         self.tm = tmat             # <<<<<<<<<<<<<<
@@ -2193,7 +2193,7 @@ static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct _
   __pyx_v_self->tm = ((PyArrayObject *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":40
+  /* "isurf/math/reaction/_reaction.pyx":40
  *         self.inits = inits
  *         self.tm = tmat
  *         self.pv = propensity#[compile(eq,'errmsg','eval') for eq in propensity]             # <<<<<<<<<<<<<<
@@ -2206,7 +2206,7 @@ static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct _
   __Pyx_DECREF(__pyx_v_self->pv);
   __pyx_v_self->pv = __pyx_v_propensity;
 
-  /* "chisurf/math/reaction/_reaction.pyx":41
+  /* "isurf/math/reaction/_reaction.pyx":41
  *         self.tm = tmat
  *         self.pv = propensity#[compile(eq,'errmsg','eval') for eq in propensity]
  *         self.pvl = len(self.pv) #length of propensity vector             # <<<<<<<<<<<<<<
@@ -2219,7 +2219,7 @@ static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct _
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_self->pvl = __pyx_t_2;
 
-  /* "chisurf/math/reaction/_reaction.pyx":42
+  /* "isurf/math/reaction/_reaction.pyx":42
  *         self.pv = propensity#[compile(eq,'errmsg','eval') for eq in propensity]
  *         self.pvl = len(self.pv) #length of propensity vector
  *         self.nvars = len(self.inits) #number of variables             # <<<<<<<<<<<<<<
@@ -2232,7 +2232,7 @@ static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct _
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_self->nvars = __pyx_t_2;
 
-  /* "chisurf/math/reaction/_reaction.pyx":43
+  /* "isurf/math/reaction/_reaction.pyx":43
  *         self.pvl = len(self.pv) #length of propensity vector
  *         self.nvars = len(self.inits) #number of variables
  *         self.time = np.zeros(1)             # <<<<<<<<<<<<<<
@@ -2266,7 +2266,7 @@ static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct _
   __pyx_v_self->time = ((PyArrayObject *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":44
+  /* "isurf/math/reaction/_reaction.pyx":44
  *         self.nvars = len(self.inits) #number of variables
  *         self.time = np.zeros(1)
  *         self.series = np.zeros(1)             # <<<<<<<<<<<<<<
@@ -2300,7 +2300,7 @@ static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct _
   __pyx_v_self->series = ((PyArrayObject *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":45
+  /* "isurf/math/reaction/_reaction.pyx":45
  *         self.time = np.zeros(1)
  *         self.series = np.zeros(1)
  *         self.steps = 0             # <<<<<<<<<<<<<<
@@ -2309,7 +2309,7 @@ static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct _
  */
   __pyx_v_self->steps = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":21
+  /* "isurf/math/reaction/_reaction.pyx":21
  *     cdef object ts
  * 
  *     def __init__(             # <<<<<<<<<<<<<<
@@ -2324,14 +2324,14 @@ static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct _
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.Model.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = -1;
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "chisurf/math/reaction/_reaction.pyx":47
+/* "isurf/math/reaction/_reaction.pyx":47
  *         self.steps = 0
  * 
  *     def run(             # <<<<<<<<<<<<<<
@@ -2340,8 +2340,8 @@ static int __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model___init__(struct _
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_3run(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_3run(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_3run(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_3run(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_method = 0;
   int __pyx_v_tmax;
   int __pyx_v_reps;
@@ -2416,18 +2416,18 @@ static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_3run(PyObje
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("run", 0, 0, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 47, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.run", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.Model.run", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self), __pyx_v_method, __pyx_v_tmax, __pyx_v_reps);
+  __pyx_r = __pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_2run(((struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *)__pyx_v_self), __pyx_v_method, __pyx_v_tmax, __pyx_v_reps);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_method, int __pyx_v_tmax, int __pyx_v_reps) {
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_2run(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v_method, int __pyx_v_tmax, int __pyx_v_reps) {
   PyArrayObject *__pyx_v_res = 0;
   PyObject *__pyx_v_tvec = NULL;
   int __pyx_v_i;
@@ -2447,14 +2447,14 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
   int __pyx_t_9;
   int __pyx_t_10;
   int __pyx_t_11;
-  struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA __pyx_t_12;
+  struct __pyx_opt_args_5isurf_4math_8reaction_9_reaction_5Model_GSSA __pyx_t_12;
   __Pyx_RefNannySetupContext("run", 0);
   __pyx_pybuffer_res.pybuffer.buf = NULL;
   __pyx_pybuffer_res.refcount = 0;
   __pyx_pybuffernd_res.data = NULL;
   __pyx_pybuffernd_res.rcbuffer = &__pyx_pybuffer_res;
 
-  /* "chisurf/math/reaction/_reaction.pyx":53
+  /* "isurf/math/reaction/_reaction.pyx":53
  *             int reps=1
  *     ):
  *         cdef np.ndarray[DTYPE_t,ndim=3] res = np.zeros((tmax,self.nvars,reps),dtype=float)             # <<<<<<<<<<<<<<
@@ -2500,7 +2500,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
   __pyx_t_6 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_res.rcbuffer->pybuffer, (PyObject*)__pyx_t_6, &__Pyx_TypeInfo_nn___pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) {
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_res.rcbuffer->pybuffer, (PyObject*)__pyx_t_6, &__Pyx_TypeInfo_nn___pyx_t_5isurf_4math_8reaction_9_reaction_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_res = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_res.rcbuffer->pybuffer.buf = NULL;
       __PYX_ERR(0, 53, __pyx_L1_error)
     } else {__pyx_pybuffernd_res.diminfo[0].strides = __pyx_pybuffernd_res.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_res.diminfo[0].shape = __pyx_pybuffernd_res.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_res.diminfo[1].strides = __pyx_pybuffernd_res.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_res.diminfo[1].shape = __pyx_pybuffernd_res.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_res.diminfo[2].strides = __pyx_pybuffernd_res.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_res.diminfo[2].shape = __pyx_pybuffernd_res.rcbuffer->pybuffer.shape[2];
@@ -2510,7 +2510,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
   __pyx_v_res = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":54
+  /* "isurf/math/reaction/_reaction.pyx":54
  *     ):
  *         cdef np.ndarray[DTYPE_t,ndim=3] res = np.zeros((tmax,self.nvars,reps),dtype=float)
  *         tvec = np.arange(tmax)             # <<<<<<<<<<<<<<
@@ -2543,7 +2543,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
   __pyx_v_tvec = __pyx_t_3;
   __pyx_t_3 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":55
+  /* "isurf/math/reaction/_reaction.pyx":55
  *         cdef np.ndarray[DTYPE_t,ndim=3] res = np.zeros((tmax,self.nvars,reps),dtype=float)
  *         tvec = np.arange(tmax)
  *         self.res = res             # <<<<<<<<<<<<<<
@@ -2556,7 +2556,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
   __Pyx_DECREF(((PyObject *)__pyx_v_self->res));
   __pyx_v_self->res = ((PyArrayObject *)__pyx_v_res);
 
-  /* "chisurf/math/reaction/_reaction.pyx":57
+  /* "isurf/math/reaction/_reaction.pyx":57
  *         self.res = res
  *         cdef int i, steps
  *         if method =='SSA':             # <<<<<<<<<<<<<<
@@ -2566,7 +2566,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
   __pyx_t_7 = (__Pyx_PyString_Equals(__pyx_v_method, __pyx_n_s_SSA, Py_EQ)); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 57, __pyx_L1_error)
   if (__pyx_t_7) {
 
-    /* "chisurf/math/reaction/_reaction.pyx":58
+    /* "isurf/math/reaction/_reaction.pyx":58
  *         cdef int i, steps
  *         if method =='SSA':
  *             for i in range(0, reps):             # <<<<<<<<<<<<<<
@@ -2578,7 +2578,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
     for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
       __pyx_v_i = __pyx_t_10;
 
-      /* "chisurf/math/reaction/_reaction.pyx":59
+      /* "isurf/math/reaction/_reaction.pyx":59
  *         if method =='SSA':
  *             for i in range(0, reps):
  *                 steps = self.GSSA(tmax,i)             # <<<<<<<<<<<<<<
@@ -2588,11 +2588,11 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
       __pyx_t_12.__pyx_n = 2;
       __pyx_t_12.tmax = __pyx_v_tmax;
       __pyx_t_12.round = __pyx_v_i;
-      __pyx_t_11 = ((struct __pyx_vtabstruct_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self->__pyx_vtab)->GSSA(__pyx_v_self, 0, &__pyx_t_12); 
+      __pyx_t_11 = ((struct __pyx_vtabstruct_5isurf_4math_8reaction_9_reaction_Model *)__pyx_v_self->__pyx_vtab)->GSSA(__pyx_v_self, 0, &__pyx_t_12); 
       __pyx_v_steps = __pyx_t_11;
     }
 
-    /* "chisurf/math/reaction/_reaction.pyx":60
+    /* "isurf/math/reaction/_reaction.pyx":60
  *             for i in range(0, reps):
  *                 steps = self.GSSA(tmax,i)
  *             print(steps,' steps')             # <<<<<<<<<<<<<<
@@ -2612,7 +2612,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
     if (__Pyx_PrintOne(0, __pyx_t_4) < 0) __PYX_ERR(0, 60, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "chisurf/math/reaction/_reaction.pyx":57
+    /* "isurf/math/reaction/_reaction.pyx":57
  *         self.res = res
  *         cdef int i, steps
  *         if method =='SSA':             # <<<<<<<<<<<<<<
@@ -2622,7 +2622,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
     goto __pyx_L3;
   }
 
-  /* "chisurf/math/reaction/_reaction.pyx":61
+  /* "isurf/math/reaction/_reaction.pyx":61
  *                 steps = self.GSSA(tmax,i)
  *             print(steps,' steps')
  *         elif method == 'SSAct':             # <<<<<<<<<<<<<<
@@ -2634,7 +2634,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
   }
   __pyx_L3:;
 
-  /* "chisurf/math/reaction/_reaction.pyx":63
+  /* "isurf/math/reaction/_reaction.pyx":63
  *         elif method == 'SSAct':
  *             pass
  *         self.time=tvec             # <<<<<<<<<<<<<<
@@ -2650,7 +2650,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
   __pyx_v_self->time = ((PyArrayObject *)__pyx_t_4);
   __pyx_t_4 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":64
+  /* "isurf/math/reaction/_reaction.pyx":64
  *             pass
  *         self.time=tvec
  *         self.series=self.res             # <<<<<<<<<<<<<<
@@ -2665,7 +2665,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
   __pyx_v_self->series = ((PyArrayObject *)__pyx_t_4);
   __pyx_t_4 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":65
+  /* "isurf/math/reaction/_reaction.pyx":65
  *         self.time=tvec
  *         self.series=self.res
  *         self.steps=steps             # <<<<<<<<<<<<<<
@@ -2674,7 +2674,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
  */
   __pyx_v_self->steps = __pyx_v_steps;
 
-  /* "chisurf/math/reaction/_reaction.pyx":47
+  /* "isurf/math/reaction/_reaction.pyx":47
  *         self.steps = 0
  * 
  *     def run(             # <<<<<<<<<<<<<<
@@ -2697,7 +2697,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
     __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_res.rcbuffer->pybuffer);
   __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.run", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.Model.run", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   goto __pyx_L2;
   __pyx_L0:;
@@ -2710,7 +2710,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
   return __pyx_r;
 }
 
-/* "chisurf/math/reaction/_reaction.pyx":67
+/* "isurf/math/reaction/_reaction.pyx":67
  *         self.steps=steps
  * 
  *     def getStats(self):             # <<<<<<<<<<<<<<
@@ -2719,26 +2719,26 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_2run(struct
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_5getStats(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_5getStats(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_5getStats(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_5getStats(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("getStats (wrapper)", 0);
-  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_4getStats(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self));
+  __pyx_r = __pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_4getStats(((struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_4getStats(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self) {
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_4getStats(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
   __Pyx_RefNannySetupContext("getStats", 0);
 
-  /* "chisurf/math/reaction/_reaction.pyx":68
+  /* "isurf/math/reaction/_reaction.pyx":68
  * 
  *     def getStats(self):
  *         return self.time,self.series,self.steps             # <<<<<<<<<<<<<<
@@ -2763,7 +2763,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_4getStats(s
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":67
+  /* "isurf/math/reaction/_reaction.pyx":67
  *         self.steps=steps
  * 
  *     def getStats(self):             # <<<<<<<<<<<<<<
@@ -2775,7 +2775,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_4getStats(s
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.getStats", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.Model.getStats", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -2783,7 +2783,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_4getStats(s
   return __pyx_r;
 }
 
-/* "chisurf/math/reaction/_reaction.pyx":70
+/* "isurf/math/reaction/_reaction.pyx":70
  *         return self.time,self.series,self.steps
  * 
  *     cpdef int GSSA(             # <<<<<<<<<<<<<<
@@ -2791,8 +2791,8 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_4getStats(s
  *             int tmax = 50,
  */
 
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_7GSSA(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_skip_dispatch, struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args) {
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_7GSSA(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static int __pyx_f_5isurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_skip_dispatch, struct __pyx_opt_args_5isurf_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args) {
   int __pyx_v_tmax = ((int)50);
   int __pyx_v_round = ((int)0);
   PyObject *__pyx_v_ini = NULL;
@@ -2831,7 +2831,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
   int __pyx_t_17;
   int __pyx_t_18;
   int __pyx_t_19;
-  __pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t __pyx_t_20;
+  __pyx_t_5isurf_4math_8reaction_9_reaction_DTYPE_t __pyx_t_20;
   Py_ssize_t __pyx_t_21;
   double __pyx_t_22;
   __Pyx_RefNannySetupContext("GSSA", 0);
@@ -2858,7 +2858,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
       #endif
       __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_GSSA); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 70, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)(void*)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_7GSSA)) {
+      if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)(void*)__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_7GSSA)) {
         __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_tmax); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 70, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_round); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 70, __pyx_L1_error)
@@ -2932,7 +2932,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
     #endif
   }
 
-  /* "chisurf/math/reaction/_reaction.pyx":78
+  /* "isurf/math/reaction/_reaction.pyx":78
  *         Gillespie Direct algorithm
  *         '''
  *         ini = self.inits             # <<<<<<<<<<<<<<
@@ -2944,7 +2944,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
   __pyx_v_ini = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":79
+  /* "isurf/math/reaction/_reaction.pyx":79
  *         '''
  *         ini = self.inits
  *         r = self.rates             # <<<<<<<<<<<<<<
@@ -2956,7 +2956,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
   __pyx_v_r = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":80
+  /* "isurf/math/reaction/_reaction.pyx":80
  *         ini = self.inits
  *         r = self.rates
  *         pvi = self.pv             # <<<<<<<<<<<<<<
@@ -2968,7 +2968,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
   __pyx_v_pvi = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":85
+  /* "isurf/math/reaction/_reaction.pyx":85
  *         #cdef np.ndarray[INT_t] tvec
  *         cdef np.ndarray[DTYPE_t] pv
  *         l=self.pvl             # <<<<<<<<<<<<<<
@@ -2978,7 +2978,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
   __pyx_t_7 = __pyx_v_self->pvl;
   __pyx_v_l = __pyx_t_7;
 
-  /* "chisurf/math/reaction/_reaction.pyx":86
+  /* "isurf/math/reaction/_reaction.pyx":86
  *         cdef np.ndarray[DTYPE_t] pv
  *         l=self.pvl
  *         pv = np.zeros(l, dtype=float)             # <<<<<<<<<<<<<<
@@ -3010,10 +3010,10 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_pv.rcbuffer->pybuffer);
-    __pyx_t_7 = __Pyx_GetBufferAndValidate(&__pyx_pybuffernd_pv.rcbuffer->pybuffer, (PyObject*)__pyx_t_9, &__Pyx_TypeInfo_nn___pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack);
+    __pyx_t_7 = __Pyx_GetBufferAndValidate(&__pyx_pybuffernd_pv.rcbuffer->pybuffer, (PyObject*)__pyx_t_9, &__Pyx_TypeInfo_nn___pyx_t_5isurf_4math_8reaction_9_reaction_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack);
     if (unlikely(__pyx_t_7 < 0)) {
       PyErr_Fetch(&__pyx_t_10, &__pyx_t_11, &__pyx_t_12);
-      if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_pv.rcbuffer->pybuffer, (PyObject*)__pyx_v_pv, &__Pyx_TypeInfo_nn___pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
+      if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_pv.rcbuffer->pybuffer, (PyObject*)__pyx_v_pv, &__Pyx_TypeInfo_nn___pyx_t_5isurf_4math_8reaction_9_reaction_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
         Py_XDECREF(__pyx_t_10); Py_XDECREF(__pyx_t_11); Py_XDECREF(__pyx_t_12);
         __Pyx_RaiseBufferFallbackError();
       } else {
@@ -3028,7 +3028,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
   __pyx_v_pv = ((PyArrayObject *)__pyx_t_8);
   __pyx_t_8 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":87
+  /* "isurf/math/reaction/_reaction.pyx":87
  *         l=self.pvl
  *         pv = np.zeros(l, dtype=float)
  *         tm = self.tm             # <<<<<<<<<<<<<<
@@ -3040,7 +3040,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
   __pyx_v_tm = ((PyArrayObject *)__pyx_t_8);
   __pyx_t_8 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":89
+  /* "isurf/math/reaction/_reaction.pyx":89
  *         tm = self.tm
  *         #tvec = np.arange(tmax,dtype=int)
  *         tc = 0             # <<<<<<<<<<<<<<
@@ -3049,7 +3049,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
  */
   __pyx_v_tc = 0.0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":90
+  /* "isurf/math/reaction/_reaction.pyx":90
  *         #tvec = np.arange(tmax,dtype=int)
  *         tc = 0
  *         steps = 0             # <<<<<<<<<<<<<<
@@ -3058,7 +3058,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
  */
   __pyx_v_steps = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":91
+  /* "isurf/math/reaction/_reaction.pyx":91
  *         tc = 0
  *         steps = 0
  *         self.res[0,:,round]= ini             # <<<<<<<<<<<<<<
@@ -3081,7 +3081,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
   if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v_self->res), __pyx_t_1, __pyx_v_ini) < 0)) __PYX_ERR(0, 91, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":92
+  /* "isurf/math/reaction/_reaction.pyx":92
  *         steps = 0
  *         self.res[0,:,round]= ini
  *         a0=1.             # <<<<<<<<<<<<<<
@@ -3090,7 +3090,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
  */
   __pyx_v_a0 = 1.;
 
-  /* "chisurf/math/reaction/_reaction.pyx":93
+  /* "isurf/math/reaction/_reaction.pyx":93
  *         self.res[0,:,round]= ini
  *         a0=1.
  *         for tim in range(1, tmax):             # <<<<<<<<<<<<<<
@@ -3102,7 +3102,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
   for (__pyx_t_14 = 1; __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
     __pyx_v_tim = __pyx_t_14;
 
-    /* "chisurf/math/reaction/_reaction.pyx":94
+    /* "isurf/math/reaction/_reaction.pyx":94
  *         a0=1.
  *         for tim in range(1, tmax):
  *             while tc < tim:             # <<<<<<<<<<<<<<
@@ -3113,7 +3113,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
       __pyx_t_15 = ((__pyx_v_tc < __pyx_v_tim) != 0);
       if (!__pyx_t_15) break;
 
-      /* "chisurf/math/reaction/_reaction.pyx":95
+      /* "isurf/math/reaction/_reaction.pyx":95
  *         for tim in range(1, tmax):
  *             while tc < tim:
  *                 for i in range(l):             # <<<<<<<<<<<<<<
@@ -3125,7 +3125,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
       for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
         __pyx_v_i = __pyx_t_18;
 
-        /* "chisurf/math/reaction/_reaction.pyx":96
+        /* "isurf/math/reaction/_reaction.pyx":96
  *             while tc < tim:
  *                 for i in range(l):
  *                     pv[i] = pvi[i](r,ini)             # <<<<<<<<<<<<<<
@@ -3191,10 +3191,10 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
           __Pyx_RaiseBufferIndexError(__pyx_t_19);
           __PYX_ERR(0, 96, __pyx_L1_error)
         }
-        *__Pyx_BufPtrStrided1d(__pyx_t_7chisurf_4math_8reaction_9_reaction_DTYPE_t *, __pyx_pybuffernd_pv.rcbuffer->pybuffer.buf, __pyx_t_21, __pyx_pybuffernd_pv.diminfo[0].strides) = __pyx_t_20;
+        *__Pyx_BufPtrStrided1d(__pyx_t_5isurf_4math_8reaction_9_reaction_DTYPE_t *, __pyx_pybuffernd_pv.rcbuffer->pybuffer.buf, __pyx_t_21, __pyx_pybuffernd_pv.diminfo[0].strides) = __pyx_t_20;
       }
 
-      /* "chisurf/math/reaction/_reaction.pyx":98
+      /* "isurf/math/reaction/_reaction.pyx":98
  *                     pv[i] = pvi[i](r,ini)
  *                 #pv = abs(array([eq() for eq in pvi]))# #propensity vector
  *                 a0 = np.sum(pv) #a_sum(pv,l) #sum of all transition probabilities             # <<<<<<<<<<<<<<
@@ -3225,7 +3225,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       __pyx_v_a0 = __pyx_t_22;
 
-      /* "chisurf/math/reaction/_reaction.pyx":100
+      /* "isurf/math/reaction/_reaction.pyx":100
  *                 a0 = np.sum(pv) #a_sum(pv,l) #sum of all transition probabilities
  *                 #print ini#,tim, pv, a0
  *                 tau = (-1/a0)*np.log(np.random.random())             # <<<<<<<<<<<<<<
@@ -3290,7 +3290,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __pyx_v_tau = __pyx_t_22;
 
-      /* "chisurf/math/reaction/_reaction.pyx":101
+      /* "isurf/math/reaction/_reaction.pyx":101
  *                 #print ini#,tim, pv, a0
  *                 tau = (-1/a0)*np.log(np.random.random())
  *                 event = multinomial(1,(pv/a0)) # event which will happen on this iteration             # <<<<<<<<<<<<<<
@@ -3354,7 +3354,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
       __Pyx_XDECREF_SET(__pyx_v_event, __pyx_t_5);
       __pyx_t_5 = 0;
 
-      /* "chisurf/math/reaction/_reaction.pyx":102
+      /* "isurf/math/reaction/_reaction.pyx":102
  *                 tau = (-1/a0)*np.log(np.random.random())
  *                 event = multinomial(1,(pv/a0)) # event which will happen on this iteration
  *                 ini += tm[:,event.nonzero()[0][0]]             # <<<<<<<<<<<<<<
@@ -3401,7 +3401,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
       __Pyx_DECREF_SET(__pyx_v_ini, __pyx_t_2);
       __pyx_t_2 = 0;
 
-      /* "chisurf/math/reaction/_reaction.pyx":104
+      /* "isurf/math/reaction/_reaction.pyx":104
  *                 ini += tm[:,event.nonzero()[0][0]]
  *                 #print tc, ini
  *                 tc += tau             # <<<<<<<<<<<<<<
@@ -3410,7 +3410,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
  */
       __pyx_v_tc = (__pyx_v_tc + __pyx_v_tau);
 
-      /* "chisurf/math/reaction/_reaction.pyx":105
+      /* "isurf/math/reaction/_reaction.pyx":105
  *                 #print tc, ini
  *                 tc += tau
  *                 steps +=1             # <<<<<<<<<<<<<<
@@ -3419,7 +3419,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
  */
       __pyx_v_steps = (__pyx_v_steps + 1);
 
-      /* "chisurf/math/reaction/_reaction.pyx":106
+      /* "isurf/math/reaction/_reaction.pyx":106
  *                 tc += tau
  *                 steps +=1
  *                 if a0 == 0: break             # <<<<<<<<<<<<<<
@@ -3433,7 +3433,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
     }
     __pyx_L6_break:;
 
-    /* "chisurf/math/reaction/_reaction.pyx":107
+    /* "isurf/math/reaction/_reaction.pyx":107
  *                 steps +=1
  *                 if a0 == 0: break
  *             self.res[tim,:,round] = ini             # <<<<<<<<<<<<<<
@@ -3458,7 +3458,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
     if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v_self->res), __pyx_t_4, __pyx_v_ini) < 0)) __PYX_ERR(0, 107, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "chisurf/math/reaction/_reaction.pyx":108
+    /* "isurf/math/reaction/_reaction.pyx":108
  *                 if a0 == 0: break
  *             self.res[tim,:,round] = ini
  *             if a0 == 0: break             # <<<<<<<<<<<<<<
@@ -3472,7 +3472,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
   }
   __pyx_L4_break:;
 
-  /* "chisurf/math/reaction/_reaction.pyx":111
+  /* "isurf/math/reaction/_reaction.pyx":111
  * #        tvec = tvec[:tim]
  * #        self.res = res[:tim,:,round]
  *         return steps             # <<<<<<<<<<<<<<
@@ -3482,7 +3482,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
   __pyx_r = __pyx_v_steps;
   goto __pyx_L0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":70
+  /* "isurf/math/reaction/_reaction.pyx":70
  *         return self.time,self.series,self.steps
  * 
  *     cpdef int GSSA(             # <<<<<<<<<<<<<<
@@ -3505,7 +3505,7 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
     __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_pv.rcbuffer->pybuffer);
   __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
-  __Pyx_WriteUnraisable("chisurf.math.reaction._reaction.Model.GSSA", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
+  __Pyx_WriteUnraisable("isurf.math.reaction._reaction.Model.GSSA", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
   __pyx_r = 0;
   goto __pyx_L2;
   __pyx_L0:;
@@ -3522,9 +3522,9 @@ static int __pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA(struct __pyx_
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_7GSSA(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_7chisurf_4math_8reaction_9_reaction_5Model_6GSSA[] = "\n        Gillespie Direct algorithm\n        ";
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_7GSSA(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_7GSSA(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static char __pyx_doc_5isurf_4math_8reaction_9_reaction_5Model_6GSSA[] = "\n        Gillespie Direct algorithm\n        ";
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_7GSSA(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   int __pyx_v_tmax;
   int __pyx_v_round;
   PyObject *__pyx_r = 0;
@@ -3586,29 +3586,29 @@ static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_7GSSA(PyObj
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("GSSA", 0, 0, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 70, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.GSSA", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.Model.GSSA", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_6GSSA(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self), __pyx_v_tmax, __pyx_v_round);
+  __pyx_r = __pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_6GSSA(((struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *)__pyx_v_self), __pyx_v_tmax, __pyx_v_round);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_6GSSA(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_v_tmax, int __pyx_v_round) {
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_6GSSA(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self, int __pyx_v_tmax, int __pyx_v_round) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
-  struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA __pyx_t_2;
+  struct __pyx_opt_args_5isurf_4math_8reaction_9_reaction_5Model_GSSA __pyx_t_2;
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("GSSA", 0);
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_2.__pyx_n = 2;
   __pyx_t_2.tmax = __pyx_v_tmax;
   __pyx_t_2.round = __pyx_v_round;
-  __pyx_t_1 = __pyx_vtabptr_7chisurf_4math_8reaction_9_reaction_Model->GSSA(__pyx_v_self, 1, &__pyx_t_2); 
+  __pyx_t_1 = __pyx_vtabptr_5isurf_4math_8reaction_9_reaction_Model->GSSA(__pyx_v_self, 1, &__pyx_t_2); 
   __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 70, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_r = __pyx_t_3;
@@ -3618,7 +3618,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_6GSSA(struc
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.GSSA", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.Model.GSSA", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -3626,7 +3626,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_6GSSA(struc
   return __pyx_r;
 }
 
-/* "chisurf/math/reaction/_reaction.pyx":113
+/* "isurf/math/reaction/_reaction.pyx":113
  *         return steps
  * 
  *     def CR(self,pv):             # <<<<<<<<<<<<<<
@@ -3635,20 +3635,20 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_6GSSA(struc
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_9CR(PyObject *__pyx_v_self, PyObject *__pyx_v_pv); /*proto*/
-static char __pyx_doc_7chisurf_4math_8reaction_9_reaction_5Model_8CR[] = "\n        Composition reaction algorithm\n        ";
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_9CR(PyObject *__pyx_v_self, PyObject *__pyx_v_pv) {
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_9CR(PyObject *__pyx_v_self, PyObject *__pyx_v_pv); /*proto*/
+static char __pyx_doc_5isurf_4math_8reaction_9_reaction_5Model_8CR[] = "\n        Composition reaction algorithm\n        ";
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_9CR(PyObject *__pyx_v_self, PyObject *__pyx_v_pv) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("CR (wrapper)", 0);
-  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_8CR(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self), ((PyObject *)__pyx_v_pv));
+  __pyx_r = __pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_8CR(((struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *)__pyx_v_self), ((PyObject *)__pyx_v_pv));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_8CR(CYTHON_UNUSED struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_pv) {
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_8CR(CYTHON_UNUSED struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_pv) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("CR", 0);
@@ -3667,19 +3667,19 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_8CR(CYTHON_
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_11__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_11__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_11__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_11__reduce_cython__(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__reduce_cython__ (wrapper)", 0);
-  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_10__reduce_cython__(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self));
+  __pyx_r = __pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_10__reduce_cython__(((struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_10__reduce_cython__(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self) {
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_10__reduce_cython__(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self) {
   PyObject *__pyx_v_state = 0;
   PyObject *__pyx_v__dict = 0;
   int __pyx_v_use_setstate;
@@ -3982,7 +3982,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_10__reduce_
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.__reduce_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.Model.__reduce_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_state);
@@ -4000,19 +4000,19 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_10__reduce_
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_13__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state); /*proto*/
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_13__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_13__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state); /*proto*/
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_13__setstate_cython__(PyObject *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__setstate_cython__ (wrapper)", 0);
-  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_12__setstate_cython__(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v_self), ((PyObject *)__pyx_v___pyx_state));
+  __pyx_r = __pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_12__setstate_cython__(((struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *)__pyx_v_self), ((PyObject *)__pyx_v___pyx_state));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_12__setstate_cython__(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_5Model_12__setstate_cython__(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v_self, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -4024,7 +4024,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_12__setstat
  *     __pyx_unpickle_Model__set_state(self, __pyx_state)             # <<<<<<<<<<<<<<
  */
   if (!(likely(PyTuple_CheckExact(__pyx_v___pyx_state))||((__pyx_v___pyx_state) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_v___pyx_state)->tp_name), 0))) __PYX_ERR(1, 17, __pyx_L1_error)
-  __pyx_t_1 = __pyx_f_7chisurf_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(__pyx_v_self, ((PyObject*)__pyx_v___pyx_state)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 17, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_5isurf_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(__pyx_v_self, ((PyObject*)__pyx_v___pyx_state)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 17, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
@@ -4040,7 +4040,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_12__setstat
   goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.Model.__setstate_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.Model.__setstate_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -4048,7 +4048,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_12__setstat
   return __pyx_r;
 }
 
-/* "chisurf/math/reaction/_reaction.pyx":130
+/* "isurf/math/reaction/_reaction.pyx":130
  * #     return s
  * 
  * def l1(             # <<<<<<<<<<<<<<
@@ -4057,9 +4057,9 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_5Model_12__setstat
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_1l1(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_7chisurf_4math_8reaction_9_reaction_1l1 = {"l1", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7chisurf_4math_8reaction_9_reaction_1l1, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_1l1(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_1l1(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_5isurf_4math_8reaction_9_reaction_1l1 = {"l1", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_5isurf_4math_8reaction_9_reaction_1l1, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_1l1(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyArrayObject *__pyx_v_r = 0;
   PyArrayObject *__pyx_v_ini = 0;
   PyObject *__pyx_r = 0;
@@ -4107,13 +4107,13 @@ static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_1l1(PyObject *__py
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("l1", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 130, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.l1", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.l1", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_r), __pyx_ptype_5numpy_ndarray, 1, "r", 0))) __PYX_ERR(0, 131, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_ini), __pyx_ptype_5numpy_ndarray, 1, "ini", 0))) __PYX_ERR(0, 132, __pyx_L1_error)
-  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_l1(__pyx_self, __pyx_v_r, __pyx_v_ini);
+  __pyx_r = __pyx_pf_5isurf_4math_8reaction_9_reaction_l1(__pyx_self, __pyx_v_r, __pyx_v_ini);
 
   /* function exit code */
   goto __pyx_L0;
@@ -4124,7 +4124,7 @@ static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_1l1(PyObject *__py
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_l1(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini) {
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_l1(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -4132,7 +4132,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_l1(CYTHON_UNUSED P
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("l1", 0);
 
-  /* "chisurf/math/reaction/_reaction.pyx":134
+  /* "isurf/math/reaction/_reaction.pyx":134
  *         np.ndarray ini
  * ):
  *     return r[0]*ini[0]*ini[1]             # <<<<<<<<<<<<<<
@@ -4158,7 +4158,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_l1(CYTHON_UNUSED P
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":130
+  /* "isurf/math/reaction/_reaction.pyx":130
  * #     return s
  * 
  * def l1(             # <<<<<<<<<<<<<<
@@ -4171,7 +4171,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_l1(CYTHON_UNUSED P
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.l1", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.l1", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -4179,7 +4179,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_l1(CYTHON_UNUSED P
   return __pyx_r;
 }
 
-/* "chisurf/math/reaction/_reaction.pyx":136
+/* "isurf/math/reaction/_reaction.pyx":136
  *     return r[0]*ini[0]*ini[1]
  * 
  * def l2(             # <<<<<<<<<<<<<<
@@ -4188,9 +4188,9 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_l1(CYTHON_UNUSED P
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_3l2(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_7chisurf_4math_8reaction_9_reaction_3l2 = {"l2", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7chisurf_4math_8reaction_9_reaction_3l2, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_3l2(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_3l2(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_5isurf_4math_8reaction_9_reaction_3l2 = {"l2", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_5isurf_4math_8reaction_9_reaction_3l2, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_3l2(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyArrayObject *__pyx_v_r = 0;
   PyArrayObject *__pyx_v_ini = 0;
   PyObject *__pyx_r = 0;
@@ -4238,13 +4238,13 @@ static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_3l2(PyObject *__py
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("l2", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 136, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.l2", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.l2", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_r), __pyx_ptype_5numpy_ndarray, 1, "r", 0))) __PYX_ERR(0, 137, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_ini), __pyx_ptype_5numpy_ndarray, 1, "ini", 0))) __PYX_ERR(0, 138, __pyx_L1_error)
-  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_2l2(__pyx_self, __pyx_v_r, __pyx_v_ini);
+  __pyx_r = __pyx_pf_5isurf_4math_8reaction_9_reaction_2l2(__pyx_self, __pyx_v_r, __pyx_v_ini);
 
   /* function exit code */
   goto __pyx_L0;
@@ -4255,7 +4255,7 @@ static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_3l2(PyObject *__py
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_2l2(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini) {
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_2l2(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_r, PyArrayObject *__pyx_v_ini) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -4263,7 +4263,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_2l2(CYTHON_UNUSED 
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("l2", 0);
 
-  /* "chisurf/math/reaction/_reaction.pyx":140
+  /* "isurf/math/reaction/_reaction.pyx":140
  *         r,np.ndarray ini
  * ):
  *     return r[1]*ini[1]             # <<<<<<<<<<<<<<
@@ -4282,7 +4282,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_2l2(CYTHON_UNUSED 
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":136
+  /* "isurf/math/reaction/_reaction.pyx":136
  *     return r[0]*ini[0]*ini[1]
  * 
  * def l2(             # <<<<<<<<<<<<<<
@@ -4295,7 +4295,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_2l2(CYTHON_UNUSED 
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.l2", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.l2", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -4310,9 +4310,9 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_2l2(CYTHON_UNUSED 
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5__pyx_unpickle_Model(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_7chisurf_4math_8reaction_9_reaction_5__pyx_unpickle_Model = {"__pyx_unpickle_Model", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5__pyx_unpickle_Model, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5__pyx_unpickle_Model(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_5__pyx_unpickle_Model(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_5isurf_4math_8reaction_9_reaction_5__pyx_unpickle_Model = {"__pyx_unpickle_Model", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_5isurf_4math_8reaction_9_reaction_5__pyx_unpickle_Model, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_5isurf_4math_8reaction_9_reaction_5__pyx_unpickle_Model(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v___pyx_type = 0;
   long __pyx_v___pyx_checksum;
   PyObject *__pyx_v___pyx_state = 0;
@@ -4371,18 +4371,18 @@ static PyObject *__pyx_pw_7chisurf_4math_8reaction_9_reaction_5__pyx_unpickle_Mo
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("__pyx_unpickle_Model", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(1, 1, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.__pyx_unpickle_Model", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.__pyx_unpickle_Model", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_7chisurf_4math_8reaction_9_reaction_4__pyx_unpickle_Model(__pyx_self, __pyx_v___pyx_type, __pyx_v___pyx_checksum, __pyx_v___pyx_state);
+  __pyx_r = __pyx_pf_5isurf_4math_8reaction_9_reaction_4__pyx_unpickle_Model(__pyx_self, __pyx_v___pyx_type, __pyx_v___pyx_checksum, __pyx_v___pyx_state);
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_4__pyx_unpickle_Model(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_pf_5isurf_4math_8reaction_9_reaction_4__pyx_unpickle_Model(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v___pyx_type, long __pyx_v___pyx_checksum, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_v___pyx_PickleError = 0;
   PyObject *__pyx_v___pyx_result = 0;
   PyObject *__pyx_r = NULL;
@@ -4476,7 +4476,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_4__pyx_unpickle_Mo
  *     if __pyx_state is not None:
  *         __pyx_unpickle_Model__set_state(<Model> __pyx_result, __pyx_state)
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_7chisurf_4math_8reaction_9_reaction_Model), __pyx_n_s_new); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 7, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_ptype_5isurf_4math_8reaction_9_reaction_Model), __pyx_n_s_new); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 7, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -4515,7 +4515,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_4__pyx_unpickle_Mo
  * cdef __pyx_unpickle_Model__set_state(Model __pyx_result, tuple __pyx_state):
  */
     if (!(likely(PyTuple_CheckExact(__pyx_v___pyx_state))||((__pyx_v___pyx_state) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_v___pyx_state)->tp_name), 0))) __PYX_ERR(1, 9, __pyx_L1_error)
-    __pyx_t_3 = __pyx_f_7chisurf_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)__pyx_v___pyx_result), ((PyObject*)__pyx_v___pyx_state)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 9, __pyx_L1_error)
+    __pyx_t_3 = __pyx_f_5isurf_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(((struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *)__pyx_v___pyx_result), ((PyObject*)__pyx_v___pyx_state)); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 9, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
@@ -4552,7 +4552,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_4__pyx_unpickle_Mo
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.__pyx_unpickle_Model", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.__pyx_unpickle_Model", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v___pyx_PickleError);
@@ -4570,7 +4570,7 @@ static PyObject *__pyx_pf_7chisurf_4math_8reaction_9_reaction_4__pyx_unpickle_Mo
  *     if len(__pyx_state) > 12 and hasattr(__pyx_result, '__dict__'):
  */
 
-static PyObject *__pyx_f_7chisurf_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *__pyx_v___pyx_result, PyObject *__pyx_v___pyx_state) {
+static PyObject *__pyx_f_5isurf_4math_8reaction_9_reaction___pyx_unpickle_Model__set_state(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *__pyx_v___pyx_result, PyObject *__pyx_v___pyx_state) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -4803,7 +4803,7 @@ static PyObject *__pyx_f_7chisurf_4math_8reaction_9_reaction___pyx_unpickle_Mode
   __Pyx_XDECREF(__pyx_t_7);
   __Pyx_XDECREF(__pyx_t_8);
   __Pyx_XDECREF(__pyx_t_9);
-  __Pyx_AddTraceback("chisurf.math.reaction._reaction.__pyx_unpickle_Model__set_state", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("isurf.math.reaction._reaction.__pyx_unpickle_Model__set_state", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -4811,7 +4811,7 @@ static PyObject *__pyx_f_7chisurf_4math_8reaction_9_reaction___pyx_unpickle_Mode
   return __pyx_r;
 }
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":258
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":258
  *         # experimental exception made for __getbuffer__ and __releasebuffer__
  *         # -- the details of this may change.
  *         def __getbuffer__(ndarray self, Py_buffer* info, int flags):             # <<<<<<<<<<<<<<
@@ -4860,7 +4860,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   __pyx_v_info->obj = Py_None; __Pyx_INCREF(Py_None);
   __Pyx_GIVEREF(__pyx_v_info->obj);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":265
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":265
  * 
  *             cdef int i, ndim
  *             cdef int endian_detector = 1             # <<<<<<<<<<<<<<
@@ -4869,7 +4869,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_endian_detector = 1;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":266
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":266
  *             cdef int i, ndim
  *             cdef int endian_detector = 1
  *             cdef bint little_endian = ((<char*>&endian_detector)[0] != 0)             # <<<<<<<<<<<<<<
@@ -4878,7 +4878,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_little_endian = ((((char *)(&__pyx_v_endian_detector))[0]) != 0);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":268
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":268
  *             cdef bint little_endian = ((<char*>&endian_detector)[0] != 0)
  * 
  *             ndim = PyArray_NDIM(self)             # <<<<<<<<<<<<<<
@@ -4887,7 +4887,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_ndim = PyArray_NDIM(__pyx_v_self);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":270
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":270
  *             ndim = PyArray_NDIM(self)
  * 
  *             if ((flags & pybuf.PyBUF_C_CONTIGUOUS == pybuf.PyBUF_C_CONTIGUOUS)             # <<<<<<<<<<<<<<
@@ -4901,7 +4901,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     goto __pyx_L4_bool_binop_done;
   }
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":271
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":271
  * 
  *             if ((flags & pybuf.PyBUF_C_CONTIGUOUS == pybuf.PyBUF_C_CONTIGUOUS)
  *                 and not PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS)):             # <<<<<<<<<<<<<<
@@ -4912,7 +4912,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   __pyx_t_1 = __pyx_t_2;
   __pyx_L4_bool_binop_done:;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":270
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":270
  *             ndim = PyArray_NDIM(self)
  * 
  *             if ((flags & pybuf.PyBUF_C_CONTIGUOUS == pybuf.PyBUF_C_CONTIGUOUS)             # <<<<<<<<<<<<<<
@@ -4921,7 +4921,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   if (unlikely(__pyx_t_1)) {
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":272
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":272
  *             if ((flags & pybuf.PyBUF_C_CONTIGUOUS == pybuf.PyBUF_C_CONTIGUOUS)
  *                 and not PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS)):
  *                 raise ValueError(u"ndarray is not C contiguous")             # <<<<<<<<<<<<<<
@@ -4934,7 +4934,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __PYX_ERR(2, 272, __pyx_L1_error)
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":270
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":270
  *             ndim = PyArray_NDIM(self)
  * 
  *             if ((flags & pybuf.PyBUF_C_CONTIGUOUS == pybuf.PyBUF_C_CONTIGUOUS)             # <<<<<<<<<<<<<<
@@ -4943,7 +4943,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   }
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":274
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":274
  *                 raise ValueError(u"ndarray is not C contiguous")
  * 
  *             if ((flags & pybuf.PyBUF_F_CONTIGUOUS == pybuf.PyBUF_F_CONTIGUOUS)             # <<<<<<<<<<<<<<
@@ -4957,7 +4957,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     goto __pyx_L7_bool_binop_done;
   }
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":275
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":275
  * 
  *             if ((flags & pybuf.PyBUF_F_CONTIGUOUS == pybuf.PyBUF_F_CONTIGUOUS)
  *                 and not PyArray_CHKFLAGS(self, NPY_ARRAY_F_CONTIGUOUS)):             # <<<<<<<<<<<<<<
@@ -4968,7 +4968,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   __pyx_t_1 = __pyx_t_2;
   __pyx_L7_bool_binop_done:;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":274
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":274
  *                 raise ValueError(u"ndarray is not C contiguous")
  * 
  *             if ((flags & pybuf.PyBUF_F_CONTIGUOUS == pybuf.PyBUF_F_CONTIGUOUS)             # <<<<<<<<<<<<<<
@@ -4977,7 +4977,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   if (unlikely(__pyx_t_1)) {
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":276
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":276
  *             if ((flags & pybuf.PyBUF_F_CONTIGUOUS == pybuf.PyBUF_F_CONTIGUOUS)
  *                 and not PyArray_CHKFLAGS(self, NPY_ARRAY_F_CONTIGUOUS)):
  *                 raise ValueError(u"ndarray is not Fortran contiguous")             # <<<<<<<<<<<<<<
@@ -4990,7 +4990,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __PYX_ERR(2, 276, __pyx_L1_error)
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":274
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":274
  *                 raise ValueError(u"ndarray is not C contiguous")
  * 
  *             if ((flags & pybuf.PyBUF_F_CONTIGUOUS == pybuf.PyBUF_F_CONTIGUOUS)             # <<<<<<<<<<<<<<
@@ -4999,7 +4999,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   }
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":278
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":278
  *                 raise ValueError(u"ndarray is not Fortran contiguous")
  * 
  *             info.buf = PyArray_DATA(self)             # <<<<<<<<<<<<<<
@@ -5008,7 +5008,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_info->buf = PyArray_DATA(__pyx_v_self);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":279
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":279
  * 
  *             info.buf = PyArray_DATA(self)
  *             info.ndim = ndim             # <<<<<<<<<<<<<<
@@ -5017,7 +5017,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_info->ndim = __pyx_v_ndim;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":280
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":280
  *             info.buf = PyArray_DATA(self)
  *             info.ndim = ndim
  *             if sizeof(npy_intp) != sizeof(Py_ssize_t):             # <<<<<<<<<<<<<<
@@ -5027,7 +5027,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   __pyx_t_1 = (((sizeof(npy_intp)) != (sizeof(Py_ssize_t))) != 0);
   if (__pyx_t_1) {
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":283
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":283
  *                 # Allocate new buffer for strides and shape info.
  *                 # This is allocated as one block, strides first.
  *                 info.strides = <Py_ssize_t*>PyObject_Malloc(sizeof(Py_ssize_t) * 2 * <size_t>ndim)             # <<<<<<<<<<<<<<
@@ -5036,7 +5036,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
     __pyx_v_info->strides = ((Py_ssize_t *)PyObject_Malloc((((sizeof(Py_ssize_t)) * 2) * ((size_t)__pyx_v_ndim))));
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":284
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":284
  *                 # This is allocated as one block, strides first.
  *                 info.strides = <Py_ssize_t*>PyObject_Malloc(sizeof(Py_ssize_t) * 2 * <size_t>ndim)
  *                 info.shape = info.strides + ndim             # <<<<<<<<<<<<<<
@@ -5045,7 +5045,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
     __pyx_v_info->shape = (__pyx_v_info->strides + __pyx_v_ndim);
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":285
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":285
  *                 info.strides = <Py_ssize_t*>PyObject_Malloc(sizeof(Py_ssize_t) * 2 * <size_t>ndim)
  *                 info.shape = info.strides + ndim
  *                 for i in range(ndim):             # <<<<<<<<<<<<<<
@@ -5057,7 +5057,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
       __pyx_v_i = __pyx_t_6;
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":286
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":286
  *                 info.shape = info.strides + ndim
  *                 for i in range(ndim):
  *                     info.strides[i] = PyArray_STRIDES(self)[i]             # <<<<<<<<<<<<<<
@@ -5066,7 +5066,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
       (__pyx_v_info->strides[__pyx_v_i]) = (PyArray_STRIDES(__pyx_v_self)[__pyx_v_i]);
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":287
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":287
  *                 for i in range(ndim):
  *                     info.strides[i] = PyArray_STRIDES(self)[i]
  *                     info.shape[i] = PyArray_DIMS(self)[i]             # <<<<<<<<<<<<<<
@@ -5076,7 +5076,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       (__pyx_v_info->shape[__pyx_v_i]) = (PyArray_DIMS(__pyx_v_self)[__pyx_v_i]);
     }
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":280
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":280
  *             info.buf = PyArray_DATA(self)
  *             info.ndim = ndim
  *             if sizeof(npy_intp) != sizeof(Py_ssize_t):             # <<<<<<<<<<<<<<
@@ -5086,7 +5086,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     goto __pyx_L9;
   }
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":289
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":289
  *                     info.shape[i] = PyArray_DIMS(self)[i]
  *             else:
  *                 info.strides = <Py_ssize_t*>PyArray_STRIDES(self)             # <<<<<<<<<<<<<<
@@ -5096,7 +5096,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   /*else*/ {
     __pyx_v_info->strides = ((Py_ssize_t *)PyArray_STRIDES(__pyx_v_self));
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":290
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":290
  *             else:
  *                 info.strides = <Py_ssize_t*>PyArray_STRIDES(self)
  *                 info.shape = <Py_ssize_t*>PyArray_DIMS(self)             # <<<<<<<<<<<<<<
@@ -5107,7 +5107,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   }
   __pyx_L9:;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":291
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":291
  *                 info.strides = <Py_ssize_t*>PyArray_STRIDES(self)
  *                 info.shape = <Py_ssize_t*>PyArray_DIMS(self)
  *             info.suboffsets = NULL             # <<<<<<<<<<<<<<
@@ -5116,7 +5116,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_info->suboffsets = NULL;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":292
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":292
  *                 info.shape = <Py_ssize_t*>PyArray_DIMS(self)
  *             info.suboffsets = NULL
  *             info.itemsize = PyArray_ITEMSIZE(self)             # <<<<<<<<<<<<<<
@@ -5125,7 +5125,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_info->itemsize = PyArray_ITEMSIZE(__pyx_v_self);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":293
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":293
  *             info.suboffsets = NULL
  *             info.itemsize = PyArray_ITEMSIZE(self)
  *             info.readonly = not PyArray_ISWRITEABLE(self)             # <<<<<<<<<<<<<<
@@ -5134,7 +5134,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_info->readonly = (!(PyArray_ISWRITEABLE(__pyx_v_self) != 0));
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":296
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":296
  * 
  *             cdef int t
  *             cdef char* f = NULL             # <<<<<<<<<<<<<<
@@ -5143,7 +5143,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_f = NULL;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":297
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":297
  *             cdef int t
  *             cdef char* f = NULL
  *             cdef dtype descr = <dtype>PyArray_DESCR(self)             # <<<<<<<<<<<<<<
@@ -5156,7 +5156,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   __pyx_v_descr = ((PyArray_Descr *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":300
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":300
  *             cdef int offset
  * 
  *             info.obj = self             # <<<<<<<<<<<<<<
@@ -5169,7 +5169,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   __Pyx_DECREF(__pyx_v_info->obj);
   __pyx_v_info->obj = ((PyObject *)__pyx_v_self);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":302
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":302
  *             info.obj = self
  * 
  *             if not PyDataType_HASFIELDS(descr):             # <<<<<<<<<<<<<<
@@ -5179,7 +5179,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   __pyx_t_1 = ((!(PyDataType_HASFIELDS(__pyx_v_descr) != 0)) != 0);
   if (__pyx_t_1) {
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":303
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":303
  * 
  *             if not PyDataType_HASFIELDS(descr):
  *                 t = descr.type_num             # <<<<<<<<<<<<<<
@@ -5189,7 +5189,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     __pyx_t_4 = __pyx_v_descr->type_num;
     __pyx_v_t = __pyx_t_4;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":304
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":304
  *             if not PyDataType_HASFIELDS(descr):
  *                 t = descr.type_num
  *                 if ((descr.byteorder == c'>' and little_endian) or             # <<<<<<<<<<<<<<
@@ -5209,7 +5209,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     }
     __pyx_L15_next_or:;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":305
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":305
  *                 t = descr.type_num
  *                 if ((descr.byteorder == c'>' and little_endian) or
  *                     (descr.byteorder == c'<' and not little_endian)):             # <<<<<<<<<<<<<<
@@ -5226,7 +5226,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     __pyx_t_1 = __pyx_t_2;
     __pyx_L14_bool_binop_done:;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":304
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":304
  *             if not PyDataType_HASFIELDS(descr):
  *                 t = descr.type_num
  *                 if ((descr.byteorder == c'>' and little_endian) or             # <<<<<<<<<<<<<<
@@ -5235,7 +5235,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
     if (unlikely(__pyx_t_1)) {
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":306
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":306
  *                 if ((descr.byteorder == c'>' and little_endian) or
  *                     (descr.byteorder == c'<' and not little_endian)):
  *                     raise ValueError(u"Non-native byte order not supported")             # <<<<<<<<<<<<<<
@@ -5248,7 +5248,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __PYX_ERR(2, 306, __pyx_L1_error)
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":304
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":304
  *             if not PyDataType_HASFIELDS(descr):
  *                 t = descr.type_num
  *                 if ((descr.byteorder == c'>' and little_endian) or             # <<<<<<<<<<<<<<
@@ -5257,7 +5257,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
     }
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":307
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":307
  *                     (descr.byteorder == c'<' and not little_endian)):
  *                     raise ValueError(u"Non-native byte order not supported")
  *                 if   t == NPY_BYTE:        f = "b"             # <<<<<<<<<<<<<<
@@ -5270,7 +5270,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_UBYTE:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":308
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":308
  *                     raise ValueError(u"Non-native byte order not supported")
  *                 if   t == NPY_BYTE:        f = "b"
  *                 elif t == NPY_UBYTE:       f = "B"             # <<<<<<<<<<<<<<
@@ -5281,7 +5281,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_SHORT:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":309
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":309
  *                 if   t == NPY_BYTE:        f = "b"
  *                 elif t == NPY_UBYTE:       f = "B"
  *                 elif t == NPY_SHORT:       f = "h"             # <<<<<<<<<<<<<<
@@ -5292,7 +5292,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_USHORT:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":310
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":310
  *                 elif t == NPY_UBYTE:       f = "B"
  *                 elif t == NPY_SHORT:       f = "h"
  *                 elif t == NPY_USHORT:      f = "H"             # <<<<<<<<<<<<<<
@@ -5303,7 +5303,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_INT:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":311
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":311
  *                 elif t == NPY_SHORT:       f = "h"
  *                 elif t == NPY_USHORT:      f = "H"
  *                 elif t == NPY_INT:         f = "i"             # <<<<<<<<<<<<<<
@@ -5314,7 +5314,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_UINT:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":312
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":312
  *                 elif t == NPY_USHORT:      f = "H"
  *                 elif t == NPY_INT:         f = "i"
  *                 elif t == NPY_UINT:        f = "I"             # <<<<<<<<<<<<<<
@@ -5325,7 +5325,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_LONG:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":313
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":313
  *                 elif t == NPY_INT:         f = "i"
  *                 elif t == NPY_UINT:        f = "I"
  *                 elif t == NPY_LONG:        f = "l"             # <<<<<<<<<<<<<<
@@ -5336,7 +5336,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_ULONG:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":314
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":314
  *                 elif t == NPY_UINT:        f = "I"
  *                 elif t == NPY_LONG:        f = "l"
  *                 elif t == NPY_ULONG:       f = "L"             # <<<<<<<<<<<<<<
@@ -5347,7 +5347,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_LONGLONG:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":315
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":315
  *                 elif t == NPY_LONG:        f = "l"
  *                 elif t == NPY_ULONG:       f = "L"
  *                 elif t == NPY_LONGLONG:    f = "q"             # <<<<<<<<<<<<<<
@@ -5358,7 +5358,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_ULONGLONG:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":316
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":316
  *                 elif t == NPY_ULONG:       f = "L"
  *                 elif t == NPY_LONGLONG:    f = "q"
  *                 elif t == NPY_ULONGLONG:   f = "Q"             # <<<<<<<<<<<<<<
@@ -5369,7 +5369,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_FLOAT:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":317
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":317
  *                 elif t == NPY_LONGLONG:    f = "q"
  *                 elif t == NPY_ULONGLONG:   f = "Q"
  *                 elif t == NPY_FLOAT:       f = "f"             # <<<<<<<<<<<<<<
@@ -5380,7 +5380,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_DOUBLE:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":318
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":318
  *                 elif t == NPY_ULONGLONG:   f = "Q"
  *                 elif t == NPY_FLOAT:       f = "f"
  *                 elif t == NPY_DOUBLE:      f = "d"             # <<<<<<<<<<<<<<
@@ -5391,7 +5391,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_LONGDOUBLE:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":319
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":319
  *                 elif t == NPY_FLOAT:       f = "f"
  *                 elif t == NPY_DOUBLE:      f = "d"
  *                 elif t == NPY_LONGDOUBLE:  f = "g"             # <<<<<<<<<<<<<<
@@ -5402,7 +5402,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_CFLOAT:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":320
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":320
  *                 elif t == NPY_DOUBLE:      f = "d"
  *                 elif t == NPY_LONGDOUBLE:  f = "g"
  *                 elif t == NPY_CFLOAT:      f = "Zf"             # <<<<<<<<<<<<<<
@@ -5413,7 +5413,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_CDOUBLE:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":321
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":321
  *                 elif t == NPY_LONGDOUBLE:  f = "g"
  *                 elif t == NPY_CFLOAT:      f = "Zf"
  *                 elif t == NPY_CDOUBLE:     f = "Zd"             # <<<<<<<<<<<<<<
@@ -5424,7 +5424,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_CLONGDOUBLE:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":322
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":322
  *                 elif t == NPY_CFLOAT:      f = "Zf"
  *                 elif t == NPY_CDOUBLE:     f = "Zd"
  *                 elif t == NPY_CLONGDOUBLE: f = "Zg"             # <<<<<<<<<<<<<<
@@ -5435,7 +5435,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_OBJECT:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":323
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":323
  *                 elif t == NPY_CDOUBLE:     f = "Zd"
  *                 elif t == NPY_CLONGDOUBLE: f = "Zg"
  *                 elif t == NPY_OBJECT:      f = "O"             # <<<<<<<<<<<<<<
@@ -5446,7 +5446,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       default:
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":325
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":325
  *                 elif t == NPY_OBJECT:      f = "O"
  *                 else:
  *                     raise ValueError(u"unknown dtype code in numpy.pxd (%d)" % t)             # <<<<<<<<<<<<<<
@@ -5467,7 +5467,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
     }
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":326
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":326
  *                 else:
  *                     raise ValueError(u"unknown dtype code in numpy.pxd (%d)" % t)
  *                 info.format = f             # <<<<<<<<<<<<<<
@@ -5476,7 +5476,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
     __pyx_v_info->format = __pyx_v_f;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":327
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":327
  *                     raise ValueError(u"unknown dtype code in numpy.pxd (%d)" % t)
  *                 info.format = f
  *                 return             # <<<<<<<<<<<<<<
@@ -5486,7 +5486,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     __pyx_r = 0;
     goto __pyx_L0;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":302
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":302
  *             info.obj = self
  * 
  *             if not PyDataType_HASFIELDS(descr):             # <<<<<<<<<<<<<<
@@ -5495,7 +5495,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   }
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":329
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":329
  *                 return
  *             else:
  *                 info.format = <char*>PyObject_Malloc(_buffer_format_string_len)             # <<<<<<<<<<<<<<
@@ -5505,7 +5505,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   /*else*/ {
     __pyx_v_info->format = ((char *)PyObject_Malloc(0xFF));
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":330
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":330
  *             else:
  *                 info.format = <char*>PyObject_Malloc(_buffer_format_string_len)
  *                 info.format[0] = c'^' # Native data types, manual alignment             # <<<<<<<<<<<<<<
@@ -5514,7 +5514,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
     (__pyx_v_info->format[0]) = '^';
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":331
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":331
  *                 info.format = <char*>PyObject_Malloc(_buffer_format_string_len)
  *                 info.format[0] = c'^' # Native data types, manual alignment
  *                 offset = 0             # <<<<<<<<<<<<<<
@@ -5523,7 +5523,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
     __pyx_v_offset = 0;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":332
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":332
  *                 info.format[0] = c'^' # Native data types, manual alignment
  *                 offset = 0
  *                 f = _util_dtypestring(descr, info.format + 1,             # <<<<<<<<<<<<<<
@@ -5533,7 +5533,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     __pyx_t_9 = __pyx_f_5numpy__util_dtypestring(__pyx_v_descr, (__pyx_v_info->format + 1), (__pyx_v_info->format + 0xFF), (&__pyx_v_offset)); if (unlikely(__pyx_t_9 == ((char *)NULL))) __PYX_ERR(2, 332, __pyx_L1_error)
     __pyx_v_f = __pyx_t_9;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":335
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":335
  *                                       info.format + _buffer_format_string_len,
  *                                       &offset)
  *                 f[0] = c'\0' # Terminate format string             # <<<<<<<<<<<<<<
@@ -5543,7 +5543,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     (__pyx_v_f[0]) = '\x00';
   }
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":258
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":258
  *         # experimental exception made for __getbuffer__ and __releasebuffer__
  *         # -- the details of this may change.
  *         def __getbuffer__(ndarray self, Py_buffer* info, int flags):             # <<<<<<<<<<<<<<
@@ -5575,7 +5575,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   return __pyx_r;
 }
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":337
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":337
  *                 f[0] = c'\0' # Terminate format string
  * 
  *         def __releasebuffer__(ndarray self, Py_buffer* info):             # <<<<<<<<<<<<<<
@@ -5599,7 +5599,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
   int __pyx_t_1;
   __Pyx_RefNannySetupContext("__releasebuffer__", 0);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":338
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":338
  * 
  *         def __releasebuffer__(ndarray self, Py_buffer* info):
  *             if PyArray_HASFIELDS(self):             # <<<<<<<<<<<<<<
@@ -5609,7 +5609,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
   __pyx_t_1 = (PyArray_HASFIELDS(__pyx_v_self) != 0);
   if (__pyx_t_1) {
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":339
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":339
  *         def __releasebuffer__(ndarray self, Py_buffer* info):
  *             if PyArray_HASFIELDS(self):
  *                 PyObject_Free(info.format)             # <<<<<<<<<<<<<<
@@ -5618,7 +5618,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
  */
     PyObject_Free(__pyx_v_info->format);
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":338
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":338
  * 
  *         def __releasebuffer__(ndarray self, Py_buffer* info):
  *             if PyArray_HASFIELDS(self):             # <<<<<<<<<<<<<<
@@ -5627,7 +5627,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
  */
   }
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":340
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":340
  *             if PyArray_HASFIELDS(self):
  *                 PyObject_Free(info.format)
  *             if sizeof(npy_intp) != sizeof(Py_ssize_t):             # <<<<<<<<<<<<<<
@@ -5637,7 +5637,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
   __pyx_t_1 = (((sizeof(npy_intp)) != (sizeof(Py_ssize_t))) != 0);
   if (__pyx_t_1) {
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":341
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":341
  *                 PyObject_Free(info.format)
  *             if sizeof(npy_intp) != sizeof(Py_ssize_t):
  *                 PyObject_Free(info.strides)             # <<<<<<<<<<<<<<
@@ -5646,7 +5646,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
  */
     PyObject_Free(__pyx_v_info->strides);
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":340
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":340
  *             if PyArray_HASFIELDS(self):
  *                 PyObject_Free(info.format)
  *             if sizeof(npy_intp) != sizeof(Py_ssize_t):             # <<<<<<<<<<<<<<
@@ -5655,7 +5655,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
  */
   }
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":337
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":337
  *                 f[0] = c'\0' # Terminate format string
  * 
  *         def __releasebuffer__(ndarray self, Py_buffer* info):             # <<<<<<<<<<<<<<
@@ -5667,7 +5667,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
   __Pyx_RefNannyFinishContext();
 }
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":821
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":821
  * ctypedef npy_cdouble     complex_t
  * 
  * cdef inline object PyArray_MultiIterNew1(a):             # <<<<<<<<<<<<<<
@@ -5681,7 +5681,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew1(PyObject *__
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("PyArray_MultiIterNew1", 0);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":822
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":822
  * 
  * cdef inline object PyArray_MultiIterNew1(a):
  *     return PyArray_MultiIterNew(1, <void*>a)             # <<<<<<<<<<<<<<
@@ -5695,7 +5695,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew1(PyObject *__
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":821
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":821
  * ctypedef npy_cdouble     complex_t
  * 
  * cdef inline object PyArray_MultiIterNew1(a):             # <<<<<<<<<<<<<<
@@ -5714,7 +5714,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew1(PyObject *__
   return __pyx_r;
 }
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":824
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":824
  *     return PyArray_MultiIterNew(1, <void*>a)
  * 
  * cdef inline object PyArray_MultiIterNew2(a, b):             # <<<<<<<<<<<<<<
@@ -5728,7 +5728,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew2(PyObject *__
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("PyArray_MultiIterNew2", 0);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":825
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":825
  * 
  * cdef inline object PyArray_MultiIterNew2(a, b):
  *     return PyArray_MultiIterNew(2, <void*>a, <void*>b)             # <<<<<<<<<<<<<<
@@ -5742,7 +5742,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew2(PyObject *__
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":824
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":824
  *     return PyArray_MultiIterNew(1, <void*>a)
  * 
  * cdef inline object PyArray_MultiIterNew2(a, b):             # <<<<<<<<<<<<<<
@@ -5761,7 +5761,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew2(PyObject *__
   return __pyx_r;
 }
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":827
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":827
  *     return PyArray_MultiIterNew(2, <void*>a, <void*>b)
  * 
  * cdef inline object PyArray_MultiIterNew3(a, b, c):             # <<<<<<<<<<<<<<
@@ -5775,7 +5775,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew3(PyObject *__
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("PyArray_MultiIterNew3", 0);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":828
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":828
  * 
  * cdef inline object PyArray_MultiIterNew3(a, b, c):
  *     return PyArray_MultiIterNew(3, <void*>a, <void*>b, <void*> c)             # <<<<<<<<<<<<<<
@@ -5789,7 +5789,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew3(PyObject *__
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":827
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":827
  *     return PyArray_MultiIterNew(2, <void*>a, <void*>b)
  * 
  * cdef inline object PyArray_MultiIterNew3(a, b, c):             # <<<<<<<<<<<<<<
@@ -5808,7 +5808,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew3(PyObject *__
   return __pyx_r;
 }
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":830
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":830
  *     return PyArray_MultiIterNew(3, <void*>a, <void*>b, <void*> c)
  * 
  * cdef inline object PyArray_MultiIterNew4(a, b, c, d):             # <<<<<<<<<<<<<<
@@ -5822,7 +5822,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew4(PyObject *__
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("PyArray_MultiIterNew4", 0);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":831
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":831
  * 
  * cdef inline object PyArray_MultiIterNew4(a, b, c, d):
  *     return PyArray_MultiIterNew(4, <void*>a, <void*>b, <void*>c, <void*> d)             # <<<<<<<<<<<<<<
@@ -5836,7 +5836,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew4(PyObject *__
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":830
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":830
  *     return PyArray_MultiIterNew(3, <void*>a, <void*>b, <void*> c)
  * 
  * cdef inline object PyArray_MultiIterNew4(a, b, c, d):             # <<<<<<<<<<<<<<
@@ -5855,7 +5855,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew4(PyObject *__
   return __pyx_r;
 }
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":833
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":833
  *     return PyArray_MultiIterNew(4, <void*>a, <void*>b, <void*>c, <void*> d)
  * 
  * cdef inline object PyArray_MultiIterNew5(a, b, c, d, e):             # <<<<<<<<<<<<<<
@@ -5869,7 +5869,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew5(PyObject *__
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("PyArray_MultiIterNew5", 0);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":834
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":834
  * 
  * cdef inline object PyArray_MultiIterNew5(a, b, c, d, e):
  *     return PyArray_MultiIterNew(5, <void*>a, <void*>b, <void*>c, <void*> d, <void*> e)             # <<<<<<<<<<<<<<
@@ -5883,7 +5883,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew5(PyObject *__
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":833
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":833
  *     return PyArray_MultiIterNew(4, <void*>a, <void*>b, <void*>c, <void*> d)
  * 
  * cdef inline object PyArray_MultiIterNew5(a, b, c, d, e):             # <<<<<<<<<<<<<<
@@ -5902,7 +5902,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew5(PyObject *__
   return __pyx_r;
 }
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":836
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":836
  *     return PyArray_MultiIterNew(5, <void*>a, <void*>b, <void*>c, <void*> d, <void*> e)
  * 
  * cdef inline tuple PyDataType_SHAPE(dtype d):             # <<<<<<<<<<<<<<
@@ -5916,7 +5916,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
   int __pyx_t_1;
   __Pyx_RefNannySetupContext("PyDataType_SHAPE", 0);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":837
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":837
  * 
  * cdef inline tuple PyDataType_SHAPE(dtype d):
  *     if PyDataType_HASSUBARRAY(d):             # <<<<<<<<<<<<<<
@@ -5926,7 +5926,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
   __pyx_t_1 = (PyDataType_HASSUBARRAY(__pyx_v_d) != 0);
   if (__pyx_t_1) {
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":838
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":838
  * cdef inline tuple PyDataType_SHAPE(dtype d):
  *     if PyDataType_HASSUBARRAY(d):
  *         return <tuple>d.subarray.shape             # <<<<<<<<<<<<<<
@@ -5938,7 +5938,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
     __pyx_r = ((PyObject*)__pyx_v_d->subarray->shape);
     goto __pyx_L0;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":837
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":837
  * 
  * cdef inline tuple PyDataType_SHAPE(dtype d):
  *     if PyDataType_HASSUBARRAY(d):             # <<<<<<<<<<<<<<
@@ -5947,7 +5947,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
  */
   }
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":840
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":840
  *         return <tuple>d.subarray.shape
  *     else:
  *         return ()             # <<<<<<<<<<<<<<
@@ -5961,7 +5961,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
     goto __pyx_L0;
   }
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":836
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":836
  *     return PyArray_MultiIterNew(5, <void*>a, <void*>b, <void*>c, <void*> d, <void*> e)
  * 
  * cdef inline tuple PyDataType_SHAPE(dtype d):             # <<<<<<<<<<<<<<
@@ -5976,7 +5976,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
   return __pyx_r;
 }
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":842
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":842
  *         return ()
  * 
  * cdef inline char* _util_dtypestring(dtype descr, char* f, char* end, int* offset) except NULL:             # <<<<<<<<<<<<<<
@@ -6005,7 +6005,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
   char *__pyx_t_9;
   __Pyx_RefNannySetupContext("_util_dtypestring", 0);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":847
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":847
  * 
  *     cdef dtype child
  *     cdef int endian_detector = 1             # <<<<<<<<<<<<<<
@@ -6014,7 +6014,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
   __pyx_v_endian_detector = 1;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":848
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":848
  *     cdef dtype child
  *     cdef int endian_detector = 1
  *     cdef bint little_endian = ((<char*>&endian_detector)[0] != 0)             # <<<<<<<<<<<<<<
@@ -6023,7 +6023,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
   __pyx_v_little_endian = ((((char *)(&__pyx_v_endian_detector))[0]) != 0);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":851
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":851
  *     cdef tuple fields
  * 
  *     for childname in descr.names:             # <<<<<<<<<<<<<<
@@ -6046,7 +6046,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     __Pyx_XDECREF_SET(__pyx_v_childname, __pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":852
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":852
  * 
  *     for childname in descr.names:
  *         fields = descr.fields[childname]             # <<<<<<<<<<<<<<
@@ -6063,7 +6063,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     __Pyx_XDECREF_SET(__pyx_v_fields, ((PyObject*)__pyx_t_3));
     __pyx_t_3 = 0;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":853
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":853
  *     for childname in descr.names:
  *         fields = descr.fields[childname]
  *         child, new_offset = fields             # <<<<<<<<<<<<<<
@@ -6098,7 +6098,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     __Pyx_XDECREF_SET(__pyx_v_new_offset, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":855
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":855
  *         child, new_offset = fields
  * 
  *         if (end - f) - <int>(new_offset - offset[0]) < 15:             # <<<<<<<<<<<<<<
@@ -6115,7 +6115,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     __pyx_t_6 = ((((__pyx_v_end - __pyx_v_f) - ((int)__pyx_t_5)) < 15) != 0);
     if (unlikely(__pyx_t_6)) {
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":856
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":856
  * 
  *         if (end - f) - <int>(new_offset - offset[0]) < 15:
  *             raise RuntimeError(u"Format string allocated too short, see comment in numpy.pxd")             # <<<<<<<<<<<<<<
@@ -6128,7 +6128,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __PYX_ERR(2, 856, __pyx_L1_error)
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":855
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":855
  *         child, new_offset = fields
  * 
  *         if (end - f) - <int>(new_offset - offset[0]) < 15:             # <<<<<<<<<<<<<<
@@ -6137,7 +6137,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
     }
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":858
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":858
  *             raise RuntimeError(u"Format string allocated too short, see comment in numpy.pxd")
  * 
  *         if ((child.byteorder == c'>' and little_endian) or             # <<<<<<<<<<<<<<
@@ -6157,7 +6157,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     }
     __pyx_L8_next_or:;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":859
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":859
  * 
  *         if ((child.byteorder == c'>' and little_endian) or
  *             (child.byteorder == c'<' and not little_endian)):             # <<<<<<<<<<<<<<
@@ -6174,7 +6174,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     __pyx_t_6 = __pyx_t_7;
     __pyx_L7_bool_binop_done:;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":858
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":858
  *             raise RuntimeError(u"Format string allocated too short, see comment in numpy.pxd")
  * 
  *         if ((child.byteorder == c'>' and little_endian) or             # <<<<<<<<<<<<<<
@@ -6183,7 +6183,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
     if (unlikely(__pyx_t_6)) {
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":860
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":860
  *         if ((child.byteorder == c'>' and little_endian) or
  *             (child.byteorder == c'<' and not little_endian)):
  *             raise ValueError(u"Non-native byte order not supported")             # <<<<<<<<<<<<<<
@@ -6196,7 +6196,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __PYX_ERR(2, 860, __pyx_L1_error)
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":858
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":858
  *             raise RuntimeError(u"Format string allocated too short, see comment in numpy.pxd")
  * 
  *         if ((child.byteorder == c'>' and little_endian) or             # <<<<<<<<<<<<<<
@@ -6205,7 +6205,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
     }
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":870
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":870
  * 
  *         # Output padding bytes
  *         while offset[0] < new_offset:             # <<<<<<<<<<<<<<
@@ -6221,7 +6221,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       if (!__pyx_t_6) break;
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":871
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":871
  *         # Output padding bytes
  *         while offset[0] < new_offset:
  *             f[0] = 120 # "x"; pad byte             # <<<<<<<<<<<<<<
@@ -6230,7 +6230,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
       (__pyx_v_f[0]) = 0x78;
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":872
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":872
  *         while offset[0] < new_offset:
  *             f[0] = 120 # "x"; pad byte
  *             f += 1             # <<<<<<<<<<<<<<
@@ -6239,7 +6239,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
       __pyx_v_f = (__pyx_v_f + 1);
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":873
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":873
  *             f[0] = 120 # "x"; pad byte
  *             f += 1
  *             offset[0] += 1             # <<<<<<<<<<<<<<
@@ -6250,7 +6250,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       (__pyx_v_offset[__pyx_t_8]) = ((__pyx_v_offset[__pyx_t_8]) + 1);
     }
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":875
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":875
  *             offset[0] += 1
  * 
  *         offset[0] += child.itemsize             # <<<<<<<<<<<<<<
@@ -6260,7 +6260,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     __pyx_t_8 = 0;
     (__pyx_v_offset[__pyx_t_8]) = ((__pyx_v_offset[__pyx_t_8]) + __pyx_v_child->elsize);
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":877
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":877
  *         offset[0] += child.itemsize
  * 
  *         if not PyDataType_HASFIELDS(child):             # <<<<<<<<<<<<<<
@@ -6270,7 +6270,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     __pyx_t_6 = ((!(PyDataType_HASFIELDS(__pyx_v_child) != 0)) != 0);
     if (__pyx_t_6) {
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":878
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":878
  * 
  *         if not PyDataType_HASFIELDS(child):
  *             t = child.type_num             # <<<<<<<<<<<<<<
@@ -6282,7 +6282,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       __Pyx_XDECREF_SET(__pyx_v_t, __pyx_t_4);
       __pyx_t_4 = 0;
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":879
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":879
  *         if not PyDataType_HASFIELDS(child):
  *             t = child.type_num
  *             if end - f < 5:             # <<<<<<<<<<<<<<
@@ -6292,7 +6292,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       __pyx_t_6 = (((__pyx_v_end - __pyx_v_f) < 5) != 0);
       if (unlikely(__pyx_t_6)) {
 
-        /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":880
+        /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":880
  *             t = child.type_num
  *             if end - f < 5:
  *                 raise RuntimeError(u"Format string allocated too short.")             # <<<<<<<<<<<<<<
@@ -6305,7 +6305,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
         __PYX_ERR(2, 880, __pyx_L1_error)
 
-        /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":879
+        /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":879
  *         if not PyDataType_HASFIELDS(child):
  *             t = child.type_num
  *             if end - f < 5:             # <<<<<<<<<<<<<<
@@ -6314,7 +6314,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":883
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":883
  * 
  *             # Until ticket #99 is fixed, use integers to avoid warnings
  *             if   t == NPY_BYTE:        f[0] =  98 #"b"             # <<<<<<<<<<<<<<
@@ -6332,7 +6332,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":884
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":884
  *             # Until ticket #99 is fixed, use integers to avoid warnings
  *             if   t == NPY_BYTE:        f[0] =  98 #"b"
  *             elif t == NPY_UBYTE:       f[0] =  66 #"B"             # <<<<<<<<<<<<<<
@@ -6350,7 +6350,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":885
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":885
  *             if   t == NPY_BYTE:        f[0] =  98 #"b"
  *             elif t == NPY_UBYTE:       f[0] =  66 #"B"
  *             elif t == NPY_SHORT:       f[0] = 104 #"h"             # <<<<<<<<<<<<<<
@@ -6368,7 +6368,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":886
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":886
  *             elif t == NPY_UBYTE:       f[0] =  66 #"B"
  *             elif t == NPY_SHORT:       f[0] = 104 #"h"
  *             elif t == NPY_USHORT:      f[0] =  72 #"H"             # <<<<<<<<<<<<<<
@@ -6386,7 +6386,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":887
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":887
  *             elif t == NPY_SHORT:       f[0] = 104 #"h"
  *             elif t == NPY_USHORT:      f[0] =  72 #"H"
  *             elif t == NPY_INT:         f[0] = 105 #"i"             # <<<<<<<<<<<<<<
@@ -6404,7 +6404,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":888
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":888
  *             elif t == NPY_USHORT:      f[0] =  72 #"H"
  *             elif t == NPY_INT:         f[0] = 105 #"i"
  *             elif t == NPY_UINT:        f[0] =  73 #"I"             # <<<<<<<<<<<<<<
@@ -6422,7 +6422,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":889
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":889
  *             elif t == NPY_INT:         f[0] = 105 #"i"
  *             elif t == NPY_UINT:        f[0] =  73 #"I"
  *             elif t == NPY_LONG:        f[0] = 108 #"l"             # <<<<<<<<<<<<<<
@@ -6440,7 +6440,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":890
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":890
  *             elif t == NPY_UINT:        f[0] =  73 #"I"
  *             elif t == NPY_LONG:        f[0] = 108 #"l"
  *             elif t == NPY_ULONG:       f[0] = 76  #"L"             # <<<<<<<<<<<<<<
@@ -6458,7 +6458,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":891
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":891
  *             elif t == NPY_LONG:        f[0] = 108 #"l"
  *             elif t == NPY_ULONG:       f[0] = 76  #"L"
  *             elif t == NPY_LONGLONG:    f[0] = 113 #"q"             # <<<<<<<<<<<<<<
@@ -6476,7 +6476,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":892
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":892
  *             elif t == NPY_ULONG:       f[0] = 76  #"L"
  *             elif t == NPY_LONGLONG:    f[0] = 113 #"q"
  *             elif t == NPY_ULONGLONG:   f[0] = 81  #"Q"             # <<<<<<<<<<<<<<
@@ -6494,7 +6494,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":893
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":893
  *             elif t == NPY_LONGLONG:    f[0] = 113 #"q"
  *             elif t == NPY_ULONGLONG:   f[0] = 81  #"Q"
  *             elif t == NPY_FLOAT:       f[0] = 102 #"f"             # <<<<<<<<<<<<<<
@@ -6512,7 +6512,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":894
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":894
  *             elif t == NPY_ULONGLONG:   f[0] = 81  #"Q"
  *             elif t == NPY_FLOAT:       f[0] = 102 #"f"
  *             elif t == NPY_DOUBLE:      f[0] = 100 #"d"             # <<<<<<<<<<<<<<
@@ -6530,7 +6530,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":895
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":895
  *             elif t == NPY_FLOAT:       f[0] = 102 #"f"
  *             elif t == NPY_DOUBLE:      f[0] = 100 #"d"
  *             elif t == NPY_LONGDOUBLE:  f[0] = 103 #"g"             # <<<<<<<<<<<<<<
@@ -6548,7 +6548,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":896
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":896
  *             elif t == NPY_DOUBLE:      f[0] = 100 #"d"
  *             elif t == NPY_LONGDOUBLE:  f[0] = 103 #"g"
  *             elif t == NPY_CFLOAT:      f[0] = 90; f[1] = 102; f += 1 # Zf             # <<<<<<<<<<<<<<
@@ -6568,7 +6568,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":897
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":897
  *             elif t == NPY_LONGDOUBLE:  f[0] = 103 #"g"
  *             elif t == NPY_CFLOAT:      f[0] = 90; f[1] = 102; f += 1 # Zf
  *             elif t == NPY_CDOUBLE:     f[0] = 90; f[1] = 100; f += 1 # Zd             # <<<<<<<<<<<<<<
@@ -6588,7 +6588,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":898
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":898
  *             elif t == NPY_CFLOAT:      f[0] = 90; f[1] = 102; f += 1 # Zf
  *             elif t == NPY_CDOUBLE:     f[0] = 90; f[1] = 100; f += 1 # Zd
  *             elif t == NPY_CLONGDOUBLE: f[0] = 90; f[1] = 103; f += 1 # Zg             # <<<<<<<<<<<<<<
@@ -6608,7 +6608,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":899
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":899
  *             elif t == NPY_CDOUBLE:     f[0] = 90; f[1] = 100; f += 1 # Zd
  *             elif t == NPY_CLONGDOUBLE: f[0] = 90; f[1] = 103; f += 1 # Zg
  *             elif t == NPY_OBJECT:      f[0] = 79 #"O"             # <<<<<<<<<<<<<<
@@ -6626,7 +6626,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":901
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":901
  *             elif t == NPY_OBJECT:      f[0] = 79 #"O"
  *             else:
  *                 raise ValueError(u"unknown dtype code in numpy.pxd (%d)" % t)             # <<<<<<<<<<<<<<
@@ -6645,7 +6645,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       }
       __pyx_L15:;
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":902
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":902
  *             else:
  *                 raise ValueError(u"unknown dtype code in numpy.pxd (%d)" % t)
  *             f += 1             # <<<<<<<<<<<<<<
@@ -6654,7 +6654,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
       __pyx_v_f = (__pyx_v_f + 1);
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":877
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":877
  *         offset[0] += child.itemsize
  * 
  *         if not PyDataType_HASFIELDS(child):             # <<<<<<<<<<<<<<
@@ -6664,7 +6664,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       goto __pyx_L13;
     }
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":906
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":906
  *             # Cython ignores struct boundary information ("T{...}"),
  *             # so don't output it
  *             f = _util_dtypestring(child, f, end, offset)             # <<<<<<<<<<<<<<
@@ -6677,7 +6677,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     }
     __pyx_L13:;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":851
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":851
  *     cdef tuple fields
  * 
  *     for childname in descr.names:             # <<<<<<<<<<<<<<
@@ -6687,7 +6687,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":907
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":907
  *             # so don't output it
  *             f = _util_dtypestring(child, f, end, offset)
  *     return f             # <<<<<<<<<<<<<<
@@ -6697,7 +6697,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
   __pyx_r = __pyx_v_f;
   goto __pyx_L0;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":842
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":842
  *         return ()
  * 
  * cdef inline char* _util_dtypestring(dtype descr, char* f, char* end, int* offset) except NULL:             # <<<<<<<<<<<<<<
@@ -6722,7 +6722,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
   return __pyx_r;
 }
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1022
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1022
  *     int _import_umath() except -1
  * 
  * cdef inline void set_array_base(ndarray arr, object base):             # <<<<<<<<<<<<<<
@@ -6734,7 +6734,7 @@ static CYTHON_INLINE void __pyx_f_5numpy_set_array_base(PyArrayObject *__pyx_v_a
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("set_array_base", 0);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1023
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1023
  * 
  * cdef inline void set_array_base(ndarray arr, object base):
  *     Py_INCREF(base) # important to do this before stealing the reference below!             # <<<<<<<<<<<<<<
@@ -6743,7 +6743,7 @@ static CYTHON_INLINE void __pyx_f_5numpy_set_array_base(PyArrayObject *__pyx_v_a
  */
   Py_INCREF(__pyx_v_base);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1024
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1024
  * cdef inline void set_array_base(ndarray arr, object base):
  *     Py_INCREF(base) # important to do this before stealing the reference below!
  *     PyArray_SetBaseObject(arr, base)             # <<<<<<<<<<<<<<
@@ -6752,7 +6752,7 @@ static CYTHON_INLINE void __pyx_f_5numpy_set_array_base(PyArrayObject *__pyx_v_a
  */
   (void)(PyArray_SetBaseObject(__pyx_v_arr, __pyx_v_base));
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1022
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1022
  *     int _import_umath() except -1
  * 
  * cdef inline void set_array_base(ndarray arr, object base):             # <<<<<<<<<<<<<<
@@ -6764,7 +6764,7 @@ static CYTHON_INLINE void __pyx_f_5numpy_set_array_base(PyArrayObject *__pyx_v_a
   __Pyx_RefNannyFinishContext();
 }
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1026
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1026
  *     PyArray_SetBaseObject(arr, base)
  * 
  * cdef inline object get_array_base(ndarray arr):             # <<<<<<<<<<<<<<
@@ -6779,7 +6779,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
   int __pyx_t_1;
   __Pyx_RefNannySetupContext("get_array_base", 0);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1027
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1027
  * 
  * cdef inline object get_array_base(ndarray arr):
  *     base = PyArray_BASE(arr)             # <<<<<<<<<<<<<<
@@ -6788,7 +6788,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
  */
   __pyx_v_base = PyArray_BASE(__pyx_v_arr);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1028
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1028
  * cdef inline object get_array_base(ndarray arr):
  *     base = PyArray_BASE(arr)
  *     if base is NULL:             # <<<<<<<<<<<<<<
@@ -6798,7 +6798,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
   __pyx_t_1 = ((__pyx_v_base == NULL) != 0);
   if (__pyx_t_1) {
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1029
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1029
  *     base = PyArray_BASE(arr)
  *     if base is NULL:
  *         return None             # <<<<<<<<<<<<<<
@@ -6809,7 +6809,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
     __pyx_r = Py_None; __Pyx_INCREF(Py_None);
     goto __pyx_L0;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1028
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1028
  * cdef inline object get_array_base(ndarray arr):
  *     base = PyArray_BASE(arr)
  *     if base is NULL:             # <<<<<<<<<<<<<<
@@ -6818,7 +6818,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
  */
   }
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1030
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1030
  *     if base is NULL:
  *         return None
  *     return <object>base             # <<<<<<<<<<<<<<
@@ -6830,7 +6830,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
   __pyx_r = ((PyObject *)__pyx_v_base);
   goto __pyx_L0;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1026
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1026
  *     PyArray_SetBaseObject(arr, base)
  * 
  * cdef inline object get_array_base(ndarray arr):             # <<<<<<<<<<<<<<
@@ -6845,7 +6845,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
   return __pyx_r;
 }
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1034
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1034
  * # Versions of the import_* functions which are more suitable for
  * # Cython code.
  * cdef inline int import_array() except -1:             # <<<<<<<<<<<<<<
@@ -6866,7 +6866,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
   PyObject *__pyx_t_8 = NULL;
   __Pyx_RefNannySetupContext("import_array", 0);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1035
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1035
  * # Cython code.
  * cdef inline int import_array() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -6882,7 +6882,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1036
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1036
  * cdef inline int import_array() except -1:
  *     try:
  *         _import_array()             # <<<<<<<<<<<<<<
@@ -6891,7 +6891,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
  */
       __pyx_t_4 = _import_array(); if (unlikely(__pyx_t_4 == ((int)-1))) __PYX_ERR(2, 1036, __pyx_L3_error)
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1035
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1035
  * # Cython code.
  * cdef inline int import_array() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -6905,7 +6905,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
     goto __pyx_L8_try_end;
     __pyx_L3_error:;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1037
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1037
  *     try:
  *         _import_array()
  *     except Exception:             # <<<<<<<<<<<<<<
@@ -6920,7 +6920,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GOTREF(__pyx_t_7);
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1038
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1038
  *         _import_array()
  *     except Exception:
  *         raise ImportError("numpy.core.multiarray failed to import")             # <<<<<<<<<<<<<<
@@ -6936,7 +6936,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
     goto __pyx_L5_except_error;
     __pyx_L5_except_error:;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1035
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1035
  * # Cython code.
  * cdef inline int import_array() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -6951,7 +6951,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
     __pyx_L8_try_end:;
   }
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1034
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1034
  * # Versions of the import_* functions which are more suitable for
  * # Cython code.
  * cdef inline int import_array() except -1:             # <<<<<<<<<<<<<<
@@ -6974,7 +6974,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
   return __pyx_r;
 }
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1040
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1040
  *         raise ImportError("numpy.core.multiarray failed to import")
  * 
  * cdef inline int import_umath() except -1:             # <<<<<<<<<<<<<<
@@ -6995,7 +6995,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
   PyObject *__pyx_t_8 = NULL;
   __Pyx_RefNannySetupContext("import_umath", 0);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1041
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1041
  * 
  * cdef inline int import_umath() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -7011,7 +7011,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1042
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1042
  * cdef inline int import_umath() except -1:
  *     try:
  *         _import_umath()             # <<<<<<<<<<<<<<
@@ -7020,7 +7020,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
  */
       __pyx_t_4 = _import_umath(); if (unlikely(__pyx_t_4 == ((int)-1))) __PYX_ERR(2, 1042, __pyx_L3_error)
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1041
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1041
  * 
  * cdef inline int import_umath() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -7034,7 +7034,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
     goto __pyx_L8_try_end;
     __pyx_L3_error:;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1043
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1043
  *     try:
  *         _import_umath()
  *     except Exception:             # <<<<<<<<<<<<<<
@@ -7049,7 +7049,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GOTREF(__pyx_t_7);
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1044
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1044
  *         _import_umath()
  *     except Exception:
  *         raise ImportError("numpy.core.umath failed to import")             # <<<<<<<<<<<<<<
@@ -7065,7 +7065,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
     goto __pyx_L5_except_error;
     __pyx_L5_except_error:;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1041
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1041
  * 
  * cdef inline int import_umath() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -7080,7 +7080,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
     __pyx_L8_try_end:;
   }
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1040
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1040
  *         raise ImportError("numpy.core.multiarray failed to import")
  * 
  * cdef inline int import_umath() except -1:             # <<<<<<<<<<<<<<
@@ -7103,7 +7103,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
   return __pyx_r;
 }
 
-/* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1046
+/* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1046
  *         raise ImportError("numpy.core.umath failed to import")
  * 
  * cdef inline int import_ufunc() except -1:             # <<<<<<<<<<<<<<
@@ -7124,7 +7124,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
   PyObject *__pyx_t_8 = NULL;
   __Pyx_RefNannySetupContext("import_ufunc", 0);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1047
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1047
  * 
  * cdef inline int import_ufunc() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -7140,7 +7140,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1048
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1048
  * cdef inline int import_ufunc() except -1:
  *     try:
  *         _import_umath()             # <<<<<<<<<<<<<<
@@ -7149,7 +7149,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
  */
       __pyx_t_4 = _import_umath(); if (unlikely(__pyx_t_4 == ((int)-1))) __PYX_ERR(2, 1048, __pyx_L3_error)
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1047
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1047
  * 
  * cdef inline int import_ufunc() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -7163,7 +7163,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
     goto __pyx_L8_try_end;
     __pyx_L3_error:;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1049
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1049
  *     try:
  *         _import_umath()
  *     except Exception:             # <<<<<<<<<<<<<<
@@ -7177,7 +7177,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GOTREF(__pyx_t_7);
 
-      /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1050
+      /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1050
  *         _import_umath()
  *     except Exception:
  *         raise ImportError("numpy.core.umath failed to import")             # <<<<<<<<<<<<<<
@@ -7191,7 +7191,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
     goto __pyx_L5_except_error;
     __pyx_L5_except_error:;
 
-    /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1047
+    /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1047
  * 
  * cdef inline int import_ufunc() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -7206,7 +7206,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
     __pyx_L8_try_end:;
   }
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1046
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1046
  *         raise ImportError("numpy.core.umath failed to import")
  * 
  * cdef inline int import_ufunc() except -1:             # <<<<<<<<<<<<<<
@@ -7228,10 +7228,10 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
-static struct __pyx_vtabstruct_7chisurf_4math_8reaction_9_reaction_Model __pyx_vtable_7chisurf_4math_8reaction_9_reaction_Model;
+static struct __pyx_vtabstruct_5isurf_4math_8reaction_9_reaction_Model __pyx_vtable_5isurf_4math_8reaction_9_reaction_Model;
 
-static PyObject *__pyx_tp_new_7chisurf_4math_8reaction_9_reaction_Model(PyTypeObject *t, CYTHON_UNUSED PyObject *a, CYTHON_UNUSED PyObject *k) {
-  struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *p;
+static PyObject *__pyx_tp_new_5isurf_4math_8reaction_9_reaction_Model(PyTypeObject *t, CYTHON_UNUSED PyObject *a, CYTHON_UNUSED PyObject *k) {
+  struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *p;
   PyObject *o;
   if (likely((t->tp_flags & Py_TPFLAGS_IS_ABSTRACT) == 0)) {
     o = (*t->tp_alloc)(t, 0);
@@ -7239,8 +7239,8 @@ static PyObject *__pyx_tp_new_7chisurf_4math_8reaction_9_reaction_Model(PyTypeOb
     o = (PyObject *) PyBaseObject_Type.tp_new(t, __pyx_empty_tuple, 0);
   }
   if (unlikely(!o)) return 0;
-  p = ((struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)o);
-  p->__pyx_vtab = __pyx_vtabptr_7chisurf_4math_8reaction_9_reaction_Model;
+  p = ((struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *)o);
+  p->__pyx_vtab = __pyx_vtabptr_5isurf_4math_8reaction_9_reaction_Model;
   p->vn = Py_None; Py_INCREF(Py_None);
   p->rates = Py_None; Py_INCREF(Py_None);
   p->inits = Py_None; Py_INCREF(Py_None);
@@ -7253,8 +7253,8 @@ static PyObject *__pyx_tp_new_7chisurf_4math_8reaction_9_reaction_Model(PyTypeOb
   return o;
 }
 
-static void __pyx_tp_dealloc_7chisurf_4math_8reaction_9_reaction_Model(PyObject *o) {
-  struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *p = (struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)o;
+static void __pyx_tp_dealloc_5isurf_4math_8reaction_9_reaction_Model(PyObject *o) {
+  struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *p = (struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *)o;
   #if CYTHON_USE_TP_FINALIZE
   if (unlikely(PyType_HasFeature(Py_TYPE(o), Py_TPFLAGS_HAVE_FINALIZE) && Py_TYPE(o)->tp_finalize) && !_PyGC_FINALIZED(o)) {
     if (PyObject_CallFinalizerFromDealloc(o)) return;
@@ -7273,9 +7273,9 @@ static void __pyx_tp_dealloc_7chisurf_4math_8reaction_9_reaction_Model(PyObject 
   (*Py_TYPE(o)->tp_free)(o);
 }
 
-static int __pyx_tp_traverse_7chisurf_4math_8reaction_9_reaction_Model(PyObject *o, visitproc v, void *a) {
+static int __pyx_tp_traverse_5isurf_4math_8reaction_9_reaction_Model(PyObject *o, visitproc v, void *a) {
   int e;
-  struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *p = (struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)o;
+  struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *p = (struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *)o;
   if (p->vn) {
     e = (*v)(p->vn, a); if (e) return e;
   }
@@ -7306,9 +7306,9 @@ static int __pyx_tp_traverse_7chisurf_4math_8reaction_9_reaction_Model(PyObject 
   return 0;
 }
 
-static int __pyx_tp_clear_7chisurf_4math_8reaction_9_reaction_Model(PyObject *o) {
+static int __pyx_tp_clear_5isurf_4math_8reaction_9_reaction_Model(PyObject *o) {
   PyObject* tmp;
-  struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *p = (struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *)o;
+  struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *p = (struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *)o;
   tmp = ((PyObject*)p->vn);
   p->vn = Py_None; Py_INCREF(Py_None);
   Py_XDECREF(tmp);
@@ -7339,22 +7339,22 @@ static int __pyx_tp_clear_7chisurf_4math_8reaction_9_reaction_Model(PyObject *o)
   return 0;
 }
 
-static PyMethodDef __pyx_methods_7chisurf_4math_8reaction_9_reaction_Model[] = {
-  {"run", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_3run, METH_VARARGS|METH_KEYWORDS, 0},
-  {"getStats", (PyCFunction)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_5getStats, METH_NOARGS, 0},
-  {"GSSA", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_7GSSA, METH_VARARGS|METH_KEYWORDS, __pyx_doc_7chisurf_4math_8reaction_9_reaction_5Model_6GSSA},
-  {"CR", (PyCFunction)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_9CR, METH_O, __pyx_doc_7chisurf_4math_8reaction_9_reaction_5Model_8CR},
-  {"__reduce_cython__", (PyCFunction)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_11__reduce_cython__, METH_NOARGS, 0},
-  {"__setstate_cython__", (PyCFunction)__pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_13__setstate_cython__, METH_O, 0},
+static PyMethodDef __pyx_methods_5isurf_4math_8reaction_9_reaction_Model[] = {
+  {"run", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_3run, METH_VARARGS|METH_KEYWORDS, 0},
+  {"getStats", (PyCFunction)__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_5getStats, METH_NOARGS, 0},
+  {"GSSA", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_7GSSA, METH_VARARGS|METH_KEYWORDS, __pyx_doc_5isurf_4math_8reaction_9_reaction_5Model_6GSSA},
+  {"CR", (PyCFunction)__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_9CR, METH_O, __pyx_doc_5isurf_4math_8reaction_9_reaction_5Model_8CR},
+  {"__reduce_cython__", (PyCFunction)__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_11__reduce_cython__, METH_NOARGS, 0},
+  {"__setstate_cython__", (PyCFunction)__pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_13__setstate_cython__, METH_O, 0},
   {0, 0, 0, 0}
 };
 
-static PyTypeObject __pyx_type_7chisurf_4math_8reaction_9_reaction_Model = {
+static PyTypeObject __pyx_type_5isurf_4math_8reaction_9_reaction_Model = {
   PyVarObject_HEAD_INIT(0, 0)
-  "chisurf.math.reaction._reaction.Model", /*tp_name*/
-  sizeof(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model), /*tp_basicsize*/
+  "isurf.math.reaction._reaction.Model", /*tp_name*/
+  sizeof(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model), /*tp_basicsize*/
   0, /*tp_itemsize*/
-  __pyx_tp_dealloc_7chisurf_4math_8reaction_9_reaction_Model, /*tp_dealloc*/
+  __pyx_tp_dealloc_5isurf_4math_8reaction_9_reaction_Model, /*tp_dealloc*/
   0, /*tp_print*/
   0, /*tp_getattr*/
   0, /*tp_setattr*/
@@ -7376,13 +7376,13 @@ static PyTypeObject __pyx_type_7chisurf_4math_8reaction_9_reaction_Model = {
   0, /*tp_as_buffer*/
   Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC, /*tp_flags*/
   0, /*tp_doc*/
-  __pyx_tp_traverse_7chisurf_4math_8reaction_9_reaction_Model, /*tp_traverse*/
-  __pyx_tp_clear_7chisurf_4math_8reaction_9_reaction_Model, /*tp_clear*/
+  __pyx_tp_traverse_5isurf_4math_8reaction_9_reaction_Model, /*tp_traverse*/
+  __pyx_tp_clear_5isurf_4math_8reaction_9_reaction_Model, /*tp_clear*/
   0, /*tp_richcompare*/
   0, /*tp_weaklistoffset*/
   0, /*tp_iter*/
   0, /*tp_iternext*/
-  __pyx_methods_7chisurf_4math_8reaction_9_reaction_Model, /*tp_methods*/
+  __pyx_methods_5isurf_4math_8reaction_9_reaction_Model, /*tp_methods*/
   0, /*tp_members*/
   0, /*tp_getset*/
   0, /*tp_base*/
@@ -7390,9 +7390,9 @@ static PyTypeObject __pyx_type_7chisurf_4math_8reaction_9_reaction_Model = {
   0, /*tp_descr_get*/
   0, /*tp_descr_set*/
   0, /*tp_dictoffset*/
-  __pyx_pw_7chisurf_4math_8reaction_9_reaction_5Model_1__init__, /*tp_init*/
+  __pyx_pw_5isurf_4math_8reaction_9_reaction_5Model_1__init__, /*tp_init*/
   0, /*tp_alloc*/
-  __pyx_tp_new_7chisurf_4math_8reaction_9_reaction_Model, /*tp_new*/
+  __pyx_tp_new_5isurf_4math_8reaction_9_reaction_Model, /*tp_new*/
   0, /*tp_free*/
   0, /*tp_is_gc*/
   0, /*tp_bases*/
@@ -7471,7 +7471,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_ValueError, __pyx_k_ValueError, sizeof(__pyx_k_ValueError), 0, 0, 1, 1},
   {&__pyx_n_s_arange, __pyx_k_arange, sizeof(__pyx_k_arange), 0, 0, 1, 1},
   {&__pyx_kp_s_chisurf_math_reaction__reaction, __pyx_k_chisurf_math_reaction__reaction, sizeof(__pyx_k_chisurf_math_reaction__reaction), 0, 0, 1, 0},
-  {&__pyx_n_s_chisurf_math_reaction__reaction_2, __pyx_k_chisurf_math_reaction__reaction_2, sizeof(__pyx_k_chisurf_math_reaction__reaction_2), 0, 0, 1, 1},
   {&__pyx_n_s_cline_in_traceback, __pyx_k_cline_in_traceback, sizeof(__pyx_k_cline_in_traceback), 0, 0, 1, 1},
   {&__pyx_n_s_dict, __pyx_k_dict, sizeof(__pyx_k_dict), 0, 0, 1, 1},
   {&__pyx_n_s_double, __pyx_k_double, sizeof(__pyx_k_double), 0, 0, 1, 1},
@@ -7482,6 +7481,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
   {&__pyx_n_s_ini, __pyx_k_ini, sizeof(__pyx_k_ini), 0, 0, 1, 1},
   {&__pyx_n_s_inits, __pyx_k_inits, sizeof(__pyx_k_inits), 0, 0, 1, 1},
+  {&__pyx_n_s_isurf_math_reaction__reaction, __pyx_k_isurf_math_reaction__reaction, sizeof(__pyx_k_isurf_math_reaction__reaction), 0, 0, 1, 1},
   {&__pyx_n_s_l1, __pyx_k_l1, sizeof(__pyx_k_l1), 0, 0, 1, 1},
   {&__pyx_n_s_l2, __pyx_k_l2, sizeof(__pyx_k_l2), 0, 0, 1, 1},
   {&__pyx_n_s_log, __pyx_k_log, sizeof(__pyx_k_log), 0, 0, 1, 1},
@@ -7545,7 +7545,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "chisurf/math/reaction/_reaction.pyx":91
+  /* "isurf/math/reaction/_reaction.pyx":91
  *         tc = 0
  *         steps = 0
  *         self.res[0,:,round]= ini             # <<<<<<<<<<<<<<
@@ -7556,7 +7556,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_slice_);
   __Pyx_GIVEREF(__pyx_slice_);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":272
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":272
  *             if ((flags & pybuf.PyBUF_C_CONTIGUOUS == pybuf.PyBUF_C_CONTIGUOUS)
  *                 and not PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS)):
  *                 raise ValueError(u"ndarray is not C contiguous")             # <<<<<<<<<<<<<<
@@ -7567,7 +7567,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__2);
   __Pyx_GIVEREF(__pyx_tuple__2);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":276
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":276
  *             if ((flags & pybuf.PyBUF_F_CONTIGUOUS == pybuf.PyBUF_F_CONTIGUOUS)
  *                 and not PyArray_CHKFLAGS(self, NPY_ARRAY_F_CONTIGUOUS)):
  *                 raise ValueError(u"ndarray is not Fortran contiguous")             # <<<<<<<<<<<<<<
@@ -7578,7 +7578,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__3);
   __Pyx_GIVEREF(__pyx_tuple__3);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":306
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":306
  *                 if ((descr.byteorder == c'>' and little_endian) or
  *                     (descr.byteorder == c'<' and not little_endian)):
  *                     raise ValueError(u"Non-native byte order not supported")             # <<<<<<<<<<<<<<
@@ -7589,7 +7589,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__4);
   __Pyx_GIVEREF(__pyx_tuple__4);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":856
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":856
  * 
  *         if (end - f) - <int>(new_offset - offset[0]) < 15:
  *             raise RuntimeError(u"Format string allocated too short, see comment in numpy.pxd")             # <<<<<<<<<<<<<<
@@ -7600,7 +7600,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__5);
   __Pyx_GIVEREF(__pyx_tuple__5);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":880
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":880
  *             t = child.type_num
  *             if end - f < 5:
  *                 raise RuntimeError(u"Format string allocated too short.")             # <<<<<<<<<<<<<<
@@ -7611,7 +7611,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__6);
   __Pyx_GIVEREF(__pyx_tuple__6);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1038
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1038
  *         _import_array()
  *     except Exception:
  *         raise ImportError("numpy.core.multiarray failed to import")             # <<<<<<<<<<<<<<
@@ -7622,7 +7622,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__7);
   __Pyx_GIVEREF(__pyx_tuple__7);
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1044
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1044
  *         _import_umath()
  *     except Exception:
  *         raise ImportError("numpy.core.umath failed to import")             # <<<<<<<<<<<<<<
@@ -7633,7 +7633,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__8);
   __Pyx_GIVEREF(__pyx_tuple__8);
 
-  /* "chisurf/math/reaction/_reaction.pyx":130
+  /* "isurf/math/reaction/_reaction.pyx":130
  * #     return s
  * 
  * def l1(             # <<<<<<<<<<<<<<
@@ -7645,7 +7645,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(__pyx_tuple__9);
   __pyx_codeobj__10 = (PyObject*)__Pyx_PyCode_New(2, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__9, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_chisurf_math_reaction__reaction, __pyx_n_s_l1, 130, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__10)) __PYX_ERR(0, 130, __pyx_L1_error)
 
-  /* "chisurf/math/reaction/_reaction.pyx":136
+  /* "isurf/math/reaction/_reaction.pyx":136
  *     return r[0]*ini[0]*ini[1]
  * 
  * def l2(             # <<<<<<<<<<<<<<
@@ -7719,29 +7719,29 @@ static int __Pyx_modinit_type_init_code(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_modinit_type_init_code", 0);
   /*--- Type init code ---*/
-  __pyx_vtabptr_7chisurf_4math_8reaction_9_reaction_Model = &__pyx_vtable_7chisurf_4math_8reaction_9_reaction_Model;
-  __pyx_vtable_7chisurf_4math_8reaction_9_reaction_Model.GSSA = (int (*)(struct __pyx_obj_7chisurf_4math_8reaction_9_reaction_Model *, int __pyx_skip_dispatch, struct __pyx_opt_args_7chisurf_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args))__pyx_f_7chisurf_4math_8reaction_9_reaction_5Model_GSSA;
-  if (PyType_Ready(&__pyx_type_7chisurf_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_vtabptr_5isurf_4math_8reaction_9_reaction_Model = &__pyx_vtable_5isurf_4math_8reaction_9_reaction_Model;
+  __pyx_vtable_5isurf_4math_8reaction_9_reaction_Model.GSSA = (int (*)(struct __pyx_obj_5isurf_4math_8reaction_9_reaction_Model *, int __pyx_skip_dispatch, struct __pyx_opt_args_5isurf_4math_8reaction_9_reaction_5Model_GSSA *__pyx_optional_args))__pyx_f_5isurf_4math_8reaction_9_reaction_5Model_GSSA;
+  if (PyType_Ready(&__pyx_type_5isurf_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
   #if PY_VERSION_HEX < 0x030800B1
-  __pyx_type_7chisurf_4math_8reaction_9_reaction_Model.tp_print = 0;
+  __pyx_type_5isurf_4math_8reaction_9_reaction_Model.tp_print = 0;
   #endif
-  if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_type_7chisurf_4math_8reaction_9_reaction_Model.tp_dictoffset && __pyx_type_7chisurf_4math_8reaction_9_reaction_Model.tp_getattro == PyObject_GenericGetAttr)) {
-    __pyx_type_7chisurf_4math_8reaction_9_reaction_Model.tp_getattro = __Pyx_PyObject_GenericGetAttr;
+  if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) && likely(!__pyx_type_5isurf_4math_8reaction_9_reaction_Model.tp_dictoffset && __pyx_type_5isurf_4math_8reaction_9_reaction_Model.tp_getattro == PyObject_GenericGetAttr)) {
+    __pyx_type_5isurf_4math_8reaction_9_reaction_Model.tp_getattro = __Pyx_PyObject_GenericGetAttr;
   }
   #if CYTHON_COMPILING_IN_CPYTHON
   {
-    PyObject *wrapper = PyObject_GetAttrString((PyObject *)&__pyx_type_7chisurf_4math_8reaction_9_reaction_Model, "__init__"); if (unlikely(!wrapper)) __PYX_ERR(0, 14, __pyx_L1_error)
+    PyObject *wrapper = PyObject_GetAttrString((PyObject *)&__pyx_type_5isurf_4math_8reaction_9_reaction_Model, "__init__"); if (unlikely(!wrapper)) __PYX_ERR(0, 14, __pyx_L1_error)
     if (Py_TYPE(wrapper) == &PyWrapperDescr_Type) {
-      __pyx_wrapperbase_7chisurf_4math_8reaction_9_reaction_5Model___init__ = *((PyWrapperDescrObject *)wrapper)->d_base;
-      __pyx_wrapperbase_7chisurf_4math_8reaction_9_reaction_5Model___init__.doc = __pyx_doc_7chisurf_4math_8reaction_9_reaction_5Model___init__;
-      ((PyWrapperDescrObject *)wrapper)->d_base = &__pyx_wrapperbase_7chisurf_4math_8reaction_9_reaction_5Model___init__;
+      __pyx_wrapperbase_5isurf_4math_8reaction_9_reaction_5Model___init__ = *((PyWrapperDescrObject *)wrapper)->d_base;
+      __pyx_wrapperbase_5isurf_4math_8reaction_9_reaction_5Model___init__.doc = __pyx_doc_5isurf_4math_8reaction_9_reaction_5Model___init__;
+      ((PyWrapperDescrObject *)wrapper)->d_base = &__pyx_wrapperbase_5isurf_4math_8reaction_9_reaction_5Model___init__;
     }
   }
   #endif
-  if (__Pyx_SetVtable(__pyx_type_7chisurf_4math_8reaction_9_reaction_Model.tp_dict, __pyx_vtabptr_7chisurf_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_Model, (PyObject *)&__pyx_type_7chisurf_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
-  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_7chisurf_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
-  __pyx_ptype_7chisurf_4math_8reaction_9_reaction_Model = &__pyx_type_7chisurf_4math_8reaction_9_reaction_Model;
+  if (__Pyx_SetVtable(__pyx_type_5isurf_4math_8reaction_9_reaction_Model.tp_dict, __pyx_vtabptr_5isurf_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (PyObject_SetAttr(__pyx_m, __pyx_n_s_Model, (PyObject *)&__pyx_type_5isurf_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_5isurf_4math_8reaction_9_reaction_Model) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_ptype_5isurf_4math_8reaction_9_reaction_Model = &__pyx_type_5isurf_4math_8reaction_9_reaction_Model;
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -7972,14 +7972,14 @@ if (!__Pyx_RefNanny) {
   #if PY_MAJOR_VERSION < 3 && (__PYX_DEFAULT_STRING_ENCODING_IS_ASCII || __PYX_DEFAULT_STRING_ENCODING_IS_DEFAULT)
   if (__Pyx_init_sys_getdefaultencoding_params() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
-  if (__pyx_module_is_main_chisurf__math__reaction___reaction) {
+  if (__pyx_module_is_main_isurf__math__reaction___reaction) {
     if (PyObject_SetAttr(__pyx_m, __pyx_n_s_name, __pyx_n_s_main) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   }
   #if PY_MAJOR_VERSION >= 3
   {
     PyObject *modules = PyImport_GetModuleDict(); if (unlikely(!modules)) __PYX_ERR(0, 1, __pyx_L1_error)
-    if (!PyDict_GetItemString(modules, "chisurf.math.reaction._reaction")) {
-      if (unlikely(PyDict_SetItemString(modules, "chisurf.math.reaction._reaction", __pyx_m) < 0)) __PYX_ERR(0, 1, __pyx_L1_error)
+    if (!PyDict_GetItemString(modules, "isurf.math.reaction._reaction")) {
+      if (unlikely(PyDict_SetItemString(modules, "isurf.math.reaction._reaction", __pyx_m) < 0)) __PYX_ERR(0, 1, __pyx_L1_error)
     }
   }
   #endif
@@ -8000,7 +8000,7 @@ if (!__Pyx_RefNanny) {
   if (__Pyx_patch_abc() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
 
-  /* "chisurf/math/reaction/_reaction.pyx":4
+  /* "isurf/math/reaction/_reaction.pyx":4
  * 
  * cimport numpy as np
  * import numpy as np             # <<<<<<<<<<<<<<
@@ -8012,7 +8012,7 @@ if (!__Pyx_RefNanny) {
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_1) < 0) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":5
+  /* "isurf/math/reaction/_reaction.pyx":5
  * cimport numpy as np
  * import numpy as np
  * from numpy.random import multinomial             # <<<<<<<<<<<<<<
@@ -8033,7 +8033,7 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":10
+  /* "isurf/math/reaction/_reaction.pyx":10
  * # http://pyinsci.blogspot.de/2008/10/fast-gillespies-direct-algorithm-in.html
  * 
  * DTYPE = np.double             # <<<<<<<<<<<<<<
@@ -8048,26 +8048,26 @@ if (!__Pyx_RefNanny) {
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_DTYPE, __pyx_t_1) < 0) __PYX_ERR(0, 10, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":130
+  /* "isurf/math/reaction/_reaction.pyx":130
  * #     return s
  * 
  * def l1(             # <<<<<<<<<<<<<<
  *         np.ndarray r,
  *         np.ndarray ini
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7chisurf_4math_8reaction_9_reaction_1l1, NULL, __pyx_n_s_chisurf_math_reaction__reaction_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 130, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_5isurf_4math_8reaction_9_reaction_1l1, NULL, __pyx_n_s_isurf_math_reaction__reaction); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 130, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_l1, __pyx_t_1) < 0) __PYX_ERR(0, 130, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":136
+  /* "isurf/math/reaction/_reaction.pyx":136
  *     return r[0]*ini[0]*ini[1]
  * 
  * def l2(             # <<<<<<<<<<<<<<
  *         np.ndarray
  *         r,np.ndarray ini
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7chisurf_4math_8reaction_9_reaction_3l2, NULL, __pyx_n_s_chisurf_math_reaction__reaction_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 136, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_5isurf_4math_8reaction_9_reaction_3l2, NULL, __pyx_n_s_isurf_math_reaction__reaction); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 136, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_l2, __pyx_t_1) < 0) __PYX_ERR(0, 136, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -8077,12 +8077,12 @@ if (!__Pyx_RefNanny) {
  *     cdef object __pyx_PickleError
  *     cdef object __pyx_result
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7chisurf_4math_8reaction_9_reaction_5__pyx_unpickle_Model, NULL, __pyx_n_s_chisurf_math_reaction__reaction_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_5isurf_4math_8reaction_9_reaction_5__pyx_unpickle_Model, NULL, __pyx_n_s_isurf_math_reaction__reaction); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_Model, __pyx_t_1) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "chisurf/math/reaction/_reaction.pyx":1
+  /* "isurf/math/reaction/_reaction.pyx":1
  * #from numpy import arange, array, empty,zeros             # <<<<<<<<<<<<<<
  * 
  * cimport numpy as np
@@ -8092,7 +8092,7 @@ if (!__Pyx_RefNanny) {
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_1) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "../../../../../../home/parallels/miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1046
+  /* "../../../miniconda3/envs/chisurf/lib/python3.7/site-packages/Cython/Includes/numpy/__init__.pxd":1046
  *         raise ImportError("numpy.core.umath failed to import")
  * 
  * cdef inline int import_ufunc() except -1:             # <<<<<<<<<<<<<<
@@ -8108,11 +8108,11 @@ if (!__Pyx_RefNanny) {
   __Pyx_XDECREF(__pyx_t_2);
   if (__pyx_m) {
     if (__pyx_d) {
-      __Pyx_AddTraceback("init chisurf.math.reaction._reaction", __pyx_clineno, __pyx_lineno, __pyx_filename);
+      __Pyx_AddTraceback("init isurf.math.reaction._reaction", __pyx_clineno, __pyx_lineno, __pyx_filename);
     }
     Py_CLEAR(__pyx_m);
   } else if (!PyErr_Occurred()) {
-    PyErr_SetString(PyExc_ImportError, "init chisurf.math.reaction._reaction");
+    PyErr_SetString(PyExc_ImportError, "init isurf.math.reaction._reaction");
   }
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
