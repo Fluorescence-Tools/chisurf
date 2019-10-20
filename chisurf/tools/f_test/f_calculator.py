@@ -7,16 +7,16 @@ import qdarkstyle
 
 from scipy.stats import f as fdist
 
-import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.models
-import fitting.fit
+import chisurf.fitting.fit
 import chisurf.math.statistics
 
 
 class FTestWidget(QtWidgets.QWidget):
 
     def read_values(self, target):
+
         def linkcall():
             fit = target[0]
             self._selected_fit = fit
@@ -96,7 +96,7 @@ class FTestWidget(QtWidgets.QWidget):
     def calculate_chi2_max(self):
         if isinstance(
                 self._selected_fit,
-                fitting.fit.Fit
+                chisurf.fitting.fit.Fit
         ):
             self.chi2_min = self._selected_fit.chi2r
         dof = max(1, self.dof)

@@ -1,13 +1,13 @@
 """
 This module contains a collection of tools
 """
-from . import tttr
-from . import fret_calculator
-from . import traj2fret
-from . import fps_json
-from . import f_test
-from . import kappa2_distribution
-from . import decay_generator
-from . import modelling
+import chisurf.tools.tttr
+import chisurf.tools.fret_calculator
+import chisurf.tools.traj2fret
+import chisurf.tools.fps_json
+import chisurf.tools.f_test
+import chisurf.tools.kappa2_distribution
+import chisurf.tools.decay_generator
+import chisurf.tools.modelling
 
 

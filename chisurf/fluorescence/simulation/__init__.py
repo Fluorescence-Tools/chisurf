@@ -1,4 +1,4 @@
 """
 
 """
-from . import photon
+import chisurf.fluorescence.simulation.photon

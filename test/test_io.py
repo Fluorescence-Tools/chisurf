@@ -7,7 +7,7 @@ import numpy as np
 
 
 TOPDIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '../chisurf/')
+    os.path.join(os.path.dirname(__file__), '..')
 )
 utils.set_search_paths(TOPDIR)
 
@@ -270,7 +270,7 @@ class Tests(unittest.TestCase):
 
     def test_photons(self):
         import chisurf.fio
-        directory = './data/tttr/'
+        directory = './test/data/tttr/'
         test_data = [
             {
                 "routine": "bh132",
@@ -332,7 +332,7 @@ class Tests(unittest.TestCase):
     # def test_mmcif_read(self):
     #     import mmcif.fio.PdbxReader
     #     import chisurf.fio.zipped
-    #     filename = "./data/atomic_coordinates/mmcif/1ffk.cif.gz"
+    #     filename = "./test/data/atomic_coordinates/mmcif/1ffk.cif.gz"
     #
     #     data = []
     #     with chisurf.fio.zipped.open_maybe_zipped(

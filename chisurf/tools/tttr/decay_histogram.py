@@ -8,10 +8,9 @@ import pyqtgraph as pg
 from PyQt5 import QtWidgets
 import qdarkstyle
 
-import chisurf.settings as mfm
 import chisurf.decorators
-import experiments.data
-import experiments.widgets
+import chisurf.experiments.data
+import chisurf.experiments.widgets
 import chisurf.fluorescence.tcspc
 import chisurf.fio.widgets
 
@@ -31,7 +30,7 @@ class HistogramTTTR(
         self.verticalLayout.addWidget(
             self.tcspc_setup_widget
         )
-        self.curve_selector = experiments.widgets.ExperimentalDataSelector(
+        self.curve_selector = chisurf.experiments.widgets.ExperimentalDataSelector(
             get_data_sets=self.get_data_curves,
             click_close=False
         )
@@ -233,7 +232,7 @@ class TcspcTTTRWidget(
         y = self.y
         w = chisurf.fluorescence.tcspc.weights(y)
         name = self.spcFileWidget.sample_name + "_" + str(self.chs)
-        d = experiments.data.DataCurve(
+        d = chisurf.experiments.data.DataCurve(
             x=x,
             y=y,
             ey=1./w,

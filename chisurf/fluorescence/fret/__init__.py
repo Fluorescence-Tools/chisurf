@@ -4,7 +4,7 @@
 import numpy as np
 
 from chisurf.fluorescence.intensity import nusiance
-from . import acceptor
+import chisurf.fluorescence.fret.acceptor as acceptor
 
 
 @nusiance
