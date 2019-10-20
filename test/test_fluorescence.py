@@ -11,6 +11,7 @@ import numpy as np
 import chisurf.fio
 import chisurf.fluorescence
 import chisurf.fluorescence.fret
+import chisurf.fluorescence.anisotropy
 
 
 class Tests(unittest.TestCase):
