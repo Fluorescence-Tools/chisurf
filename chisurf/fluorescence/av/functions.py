@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Tuple, Type
 
 import chisurf.fluorescence
-from . import _fps
+import chisurf.fluorescence.av.fps
 import chisurf.settings
 import chisurf.settings as mfm
 import numpy as np
@@ -14,8 +14,8 @@ fps_settings = chisurf.settings.cs_settings['fps']
 
 
 def histogram_rda(
-        av1: Type[chisurf.fluorescence.fps.BasicAV],
-        av2: Type[chisurf.fluorescence.fps.BasicAV],
+        av1: Type[chisurf.fluorescence.av.BasicAV],
+        av2: Type[chisurf.fluorescence.av.BasicAV],
         **kwargs
 ) -> Tuple[
     np.ndarray,
@@ -35,8 +35,8 @@ def histogram_rda(
 
     >>> import chisurf
     >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-    >>> av1 = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=18, atom_name='CB')
-    >>> av2 = chisurf.fluorescence.fps.BasicAV(structure, residue_seq_number=577, atom_name='CB')
+    >>> av1 = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
+    >>> av2 = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=577, atom_name='CB')
     >>> y, x = av1.pRDA(av2)
 
     """
@@ -53,8 +53,8 @@ def histogram_rda(
 
 
 def RDAMean(
-        av1: chisurf.fluorescence.fps.BasicAV,
-        av2: chisurf.fluorescence.fps.BasicAV,
+        av1: chisurf.fluorescence.av.BasicAV,
+        av2: chisurf.fluorescence.av.BasicAV,
         **kwargs
 ) -> float:
     """Calculate the mean distance between two accessible volumes
@@ -62,9 +62,9 @@ def RDAMean(
     >>> import chisurf
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = chisurf.structure(pdb_filename)
-    >>> av1 = chisurf.fluorescence.fps.AV(structure, residue_seq_number=72, atom_name='CB')
-    >>> av2 = chisurf.fluorescence.fps.AV(structure, residue_seq_number=134, atom_name='CB')
-    >>> chisurf.fluorescence.fps.functions.RDAMean(av1, av2)
+    >>> av1 = chisurf.fluorescence.av.AV(structure, residue_seq_number=72, atom_name='CB')
+    >>> av2 = chisurf.fluorescence.av.AV(structure, residue_seq_number=134, atom_name='CB')
+    >>> chisurf.fluorescence.av.functions.RDAMean(av1, av2)
     52.93390285282142
     """
     n_samples = kwargs.get('distance_samples', fps_settings['distance_samples'])
@@ -73,8 +73,8 @@ def RDAMean(
 
 
 def widthRDA(
-        av1: chisurf.fluorescence.fps.BasicAV,
-        av2: chisurf.fluorescence.fps.BasicAV,
+        av1: chisurf.fluorescence.av.BasicAV,
+        av2: chisurf.fluorescence.av.BasicAV,
         **kwargs
 ):
     """Calculate the width of the distance distribution between two accessible volumes
@@ -82,9 +82,9 @@ def widthRDA(
     >>> import chisurf
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = mfm.structure.Structure(pdb_filename)
-    >>> av1 = chisurf.fluorescence.fps.AV(structure, residue_seq_number=72, atom_name='CB')
-    >>> av2 = chisurf.fluorescence.fps.AV(structure, residue_seq_number=134, atom_name='CB')
-    >>> chisurf.fluorescence.fps.functions.widthRDA(av1, av2)
+    >>> av1 = chisurf.fluorescence.av.AV(structure, residue_seq_number=72, atom_name='CB')
+    >>> av2 = chisurf.fluorescence.av.AV(structure, residue_seq_number=134, atom_name='CB')
+    >>> chisurf.fluorescence.av.functions.widthRDA(av1, av2)
     52.93390285282142
     """
     n_samples = kwargs.get('distance_samples', fps_settings['distance_samples'])
@@ -96,8 +96,8 @@ def widthRDA(
 
 
 def RDAMeanE(
-        av1: chisurf.fluorescence.fps.BasicAV,
-        av2: chisurf.fluorescence.fps.BasicAV,
+        av1: chisurf.fluorescence.av.BasicAV,
+        av2: chisurf.fluorescence.av.BasicAV,
         R0: float = 52.0,
         **kwargs
 ) -> float:
@@ -121,8 +121,8 @@ def RDAMeanE(
 
 
 def dRmp(
-        av1: chisurf.fluorescence.fps.BasicAV,
-        av2: chisurf.fluorescence.fps.BasicAV,
+        av1: chisurf.fluorescence.av.BasicAV,
+        av2: chisurf.fluorescence.av.BasicAV,
 ) -> float:
     """Calculate the distance between the mean position of two accessible volumes
 
@@ -592,7 +592,7 @@ def reset_density_av(density):
     :return:
     """
     ng = density.shape[0]
-    _fps.reset_density_av(density, ng)
+    chisurf.fluorescence.av.fps.reset_density_av(density, ng)
 
 
 @nb.jit
@@ -712,4 +712,7 @@ def modify_av(density, dg, radius, rs, r0, factor):
 
     density = np.copy(density)
 
-    _fps.modify_av(density, ng, dg, radius, rs, r0, n_radii, factor)
+    chisurf.fluorescence.av.fps.modify_av(
+        density, ng, dg,
+        radius, rs, r0, n_radii, factor
+    )

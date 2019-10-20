@@ -5,7 +5,7 @@ from qtpy import QtWidgets
 
 import chisurf.settings
 import chisurf.fitting
-from chisurf.fluorescence.fps.dynamic import ProteinQuenching, Dye, Sticking
+from chisurf.fluorescence.av.dynamic import ProteinQuenching, Dye, Sticking
 from chisurf.fitting.widgets import FittingParameterWidget
 import chisurf.structure
 
@@ -99,7 +99,7 @@ class DyeWidget(Dye, QtWidgets.QGroupBox):
     ):
         QtWidgets.QGroupBox.__init__(self)
         self.dye_select = QtWidgets.QComboBox()
-        self.dye_select.addItems(chisurf.fluorescence.fps.dye_names)
+        self.dye_select.addItems(chisurf.fluorescence.av.dye_names)
         Dye.__init__(self, **kwargs)
 
         layout = QtWidgets.QVBoxLayout()

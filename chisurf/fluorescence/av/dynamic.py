@@ -15,7 +15,7 @@ import chisurf.fio.coordinates
 import chisurf.models
 import chisurf.parameter
 import chisurf.structure
-import chisurf.fluorescence.fps._fps
+import chisurf.fluorescence.av.fps
 from chisurf.parameter import ParameterGroup
 
 
@@ -49,7 +49,7 @@ def simulate_trajectory(
 
     http://labs.physics.berkeley.edu/mediawiki/index.php/Simulating_Brownian_Motion
     """
-    return chisurf.fluorescence.fps._fps.simulate_traj_point(
+    return chisurf.fluorescence.av.fps.simulate_traj_point(
         d, ds, dg, t_max, t_step, diffusion_coefficient, slow_fact
     )
 

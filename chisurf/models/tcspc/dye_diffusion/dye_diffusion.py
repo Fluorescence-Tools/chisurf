@@ -10,15 +10,15 @@ import numpy as np
 from qtpy import QtWidgets, uic
 
 import chisurf.fio.coordinates
-from chisurf.fluorescence.fps.dynamic import DiffusionSimulation, Dye, Sticking, \
+from chisurf.fluorescence.av.dynamic import DiffusionSimulation, Dye, Sticking, \
     ProteinQuenching
-from chisurf.fluorescence.fps.widgets import ProteinQuenchingWidget, DyeWidget, StickingWidget
+from chisurf.fluorescence.av.widgets import ProteinQuenchingWidget, DyeWidget, StickingWidget
 
 import chisurf.settings as mfm
 import chisurf.fitting.fit
 import chisurf.models.tcspc.nusiance
 import chisurf.fitting.widgets
-import chisurf.fluorescence.fps as fps
+import chisurf.fluorescence.av as fps
 import chisurf.fluorescence.tcspc.convolve
 import chisurf.fio
 import chisurf.math
@@ -28,7 +28,7 @@ import chisurf.structure.structure
 import chisurf.plots
 from chisurf.curve import Curve
 from chisurf.models.model import Model
-from chisurf.fluorescence.fps import ACV
+from chisurf.fluorescence.av import ACV
 from chisurf.fluorescence.simulation import photon
 from chisurf.structure import Structure, get_coordinates_of_residues
 from chisurf.widgets.pdb import PDBSelector

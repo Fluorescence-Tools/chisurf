@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import chisurf.settings as mfm
 from chisurf.models.tcspc.lifetime import LifetimeModel
-from chisurf.fluorescence.fps import DynamicAV
+from chisurf.fluorescence.av import DynamicAV
 from fitting.parameter import FittingParameter
 
 

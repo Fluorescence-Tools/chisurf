@@ -6,7 +6,7 @@ from typing import List, Type, Tuple
 
 import chisurf.base
 import chisurf.models
-from . import reader
+import chisurf.experiments.reader
 
 
 class Experiment(
@@ -93,12 +93,12 @@ class Experiment(
         for v in self._readers:
             if isinstance(
                     v,
-                    reader.ExperimentReader
+                    chisurf.experiments.reader.ExperimentReader
             ):
                 readers.append(v)
             elif isinstance(
                     v,
-                    reader.ExperimentReaderController
+                    chisurf.experiments.reader.ExperimentReaderController
             ):
                 readers.append(v.experiment_reader)
         return readers
