@@ -25,6 +25,7 @@ install:
 test_script:
   - conda install --use-local chisurf
   - conda install nose coverage
+  - python setup.py build_ext --inplace --force
   - cmd: echo %CD%
   - cmd: cd C:\projects\chisurf\test\
   - cmd: echo %CD%

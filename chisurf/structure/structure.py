@@ -16,7 +16,11 @@ import chisurf.fio
 import chisurf.fio.coordinates
 import chisurf.base
 
-clusterCriteria = ['maxclust', 'inconsistent', 'distance']
+clusterCriteria = [
+    'maxclust',
+    'inconsistent',
+    'distance'
+]
 
 
 class Structure(chisurf.base.Base):
