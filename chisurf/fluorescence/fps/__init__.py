@@ -10,13 +10,10 @@ import chisurf.settings as mfm
 import chisurf.base
 import chisurf.fio.density
 
-from . import dynamic
-from . import static
-from . import functions
-
-#from .functions import assign_diffusion_to_grid_1, assign_diffusion_to_grid_2, \
-#    get_kQ_rC, create_quenching_map, assign_diffusion_to_grid_3
-from .static import calculate_1_radius, calculate_3_radius
+import chisurf.fluorescence.fps.dynamic
+import chisurf.fluorescence.fps.static
+import chisurf.fluorescence.fps.functions
+from chisurf.fluorescence.fps.static import calculate_1_radius, calculate_3_radius
 
 package_directory = os.path.dirname(__file__)
 dye_file = os.path.join(

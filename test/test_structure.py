@@ -144,3 +144,10 @@ class Tests(unittest.TestCase):
             464
         )
 
+    # def test_traj_writing(self):
+    #     _, filename = tempfile.mkstemp('.h5')
+    #     traj_write = chisurf.structure.TrajectoryFile(
+    #         filename,
+    #         mode='w'
+    #     )
+

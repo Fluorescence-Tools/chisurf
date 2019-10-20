@@ -12,9 +12,9 @@ The :py:mod:`.models`
 
 
 """
-from . import model
-from . import parse
-from . import fcs
-from . import tcspc
-from . import global_model
-from . import stopped_flow
+import chisurf.models.model
+import chisurf.models.parse
+import chisurf.models.fcs
+import chisurf.models.tcspc
+import chisurf.models.global_model
+import chisurf.models.stopped_flow
