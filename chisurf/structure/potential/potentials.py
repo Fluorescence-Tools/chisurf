@@ -11,7 +11,7 @@ import numba as nb
 import scipy.stats
 
 import chisurf.fluorescence
-import chisurf.fluorescence.av
+#import chisurf.fluorescence.av
 import chisurf.structure
 import chisurf.structure.potential.cPotentials
 #import chisurf.widgets
