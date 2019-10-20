@@ -7,13 +7,11 @@ from qtpy.QtTest import QTest
 from qtpy.QtCore import Qt
 
 TOPDIR = os.path.abspath(
-    os.path.join(
-        os.path.dirname(__file__), '../'
-    )
+    os.path.join(os.path.dirname(__file__), '..')
 )
 utils.set_search_paths(TOPDIR)
-import mfm.io
-import mfm.tools
+import chisurf.fio
+import chisurf.tools
 
 
 app = QApplication(sys.argv)
@@ -28,7 +26,7 @@ class Tests(unittest.TestCase):
         """
         Create the GUI
         """
-        self.form = mfm.tools.tttr.decay_histogram.HistogramTTTR()
+        self.form = chisurf.tools.tttr.decay_histogram.HistogramTTTR()
 
     def test_load_data(self):
         import glob
@@ -42,7 +40,7 @@ class Tests(unittest.TestCase):
         )
 
         spcFileWidget = self.form.tcspc_setup_widget.spcFileWidget
-        filenames = glob.glob("./data/tttr/BH/132/*.spc")
+        filenames = glob.glob("./test/data/tttr/BH/132/*.spc")
         file_type = "bh132"
         spcFileWidget.onLoadSample(
             event=None,

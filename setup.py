@@ -6,15 +6,15 @@ import os
 import platform
 
 from Cython.Distutils import build_ext
-from setuptools import setup, find_packages
-from setuptools.extension import Extension
+from setuptools import setup, find_packages, Extension
 
 
+name = 'chisurf'
 settings = {
     'version': 'NA'
 }
 settings_file = os.path.join(
-    './mfm/settings/',
+    './chisurf/settings/',
     'chisurf.yaml'
 )
 with open(settings_file) as fp:
@@ -22,7 +22,7 @@ with open(settings_file) as fp:
 
 
 args = sys.argv[1:]
-# We want to always use build_ext --inplace
+# Always use build_ext --inplace
 if args.count("build_ext") > 0 and args.count("--inplace") == 0:
     sys.argv.insert(sys.argv.index("build_ext")+1, "--inplace")
 
@@ -57,18 +57,18 @@ def make_extension(ext):
 # and build up the set of Extension objects
 eList = [
     [
-        './mfm/fluorescence/simulation/_simulation.pyx',
-        './mfm/math/rand/mt19937cok.cpp'
+        './chisurf/fluorescence/simulation/_simulation.pyx',
+        './chisurf/math/rand/mt19937cok.cpp'
     ],
     [
-        './mfm/fluorescence/fps/_fps.pyx',
-        './mfm/fluorescence/fps/mt19937cok.cpp'
+        './chisurf/fluorescence/av/fps.pyx',
+        './chisurf/fluorescence/av/mt19937cok.cpp'
     ],
     [
-        './mfm/structure/potential/cPotentials.pyx'
+        './chisurf/structure/potential/cPotentials.pyx'
     ],
     [
-        './mfm/math/reaction/_reaction.pyx'
+        './chisurf/math/reaction/_reaction.pyx'
     ]
 ]
 
@@ -76,12 +76,12 @@ extensions = [make_extension(extension) for extension in eList]
 
 
 setup(
+    name=name,
     version=settings['version'],
     description="Fluorescence-Fitting",
     author="Thomas-Otavio Peulen",
     author_email='thomas.otavio.peulen@gmail.com',
     url='https://fluorescence-tools.github.io/chisurf/',
-    name="ChiSurf",
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Win64 (MS Windows)',
@@ -96,10 +96,27 @@ setup(
         'Topic :: Scientific/Engineering',
     ],
     keywords='fluorescence single-molecule spectroscopy',
-    packages=find_packages(),
+    packages=find_packages(
+        include=(name + "*",)
+    ),
+    package_dir={
+        name: name
+    },
     package_data={
         # If any package contains the listed file types and include them:
-        '': ['*.json', '*.yaml', '*.ui', '*.png', '*.svg', '*.css'],
+        '': [
+            'py',
+            '*.json',
+            '*.yaml',
+            '*.ui',
+            '*.png',
+            '*.svg',
+            '*.css',
+            '*.csv',
+            '*.npy',
+            '*.dll',
+            '*.so'
+        ]
     },
     install_requires=[
         'numpy',
@@ -135,7 +152,8 @@ setup(
         'build_ext': build_ext
     },
     entry_points={
-        "gui_scripts": ["chisurf=gui"]
+        "gui_scripts": [
+            "chisurf=chisurf.gui:gui"
+        ]
     }
 )
-

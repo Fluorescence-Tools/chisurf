@@ -1,4 +1,0 @@
-"C:\Program Files (x86)\JetBrains\CLion 2016.3.5\bin\cmake\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - MinGW Makefiles" C:\Users\peulen\OneDrive\Programming\ChiSurf\mfm\fluorescence\fps\dll\v1.2
--- Configuring done
--- Generating done
--- Build files have been written to: C:/Users/peulen/OneDrive/Programming/ChiSurf/mfm/fluorescence/fps/dll/v1.2/cmake-build-debug
