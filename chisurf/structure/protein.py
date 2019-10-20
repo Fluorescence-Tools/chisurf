@@ -78,7 +78,20 @@ def r2i(coord_i, a1, a2, a3, a4, ai):
 
 
 @nb.jit('float64[:,:](float64[:,:], int32[:,:], float64[:,:], int32)', nogil=True, nopython=True)
-def atom_dist(aDist, resLookUp, xyz, aID):
+def atom_dist(
+        aDist: np.ndarray,
+        resLookUp: np.ndarray,
+        xyz: np.ndarray,
+        aID: np.ndarray
+):
+    """
+
+    :param aDist: a 2D array that is used to write out the distance matrix
+    :param resLookUp: a lookup array that is used to identify the atom types
+    :param xyz: the coordinates of all atoms
+    :param aID: the atom type (an integer) for that the distance matrix is calculated
+    :return:
+    """
     n_residues = resLookUp.shape[0]
     for i in range(n_residues):
         ia1 = resLookUp[i, aID]
