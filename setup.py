@@ -113,15 +113,9 @@ setup(
             '*.svg',
             '*.css',
             '*.csv',
-            '*.npy'
-        ],
-        'FPS': [
-            os.path.join(
-                os.path.dirname(
-                    __file__
-                ),
-                './chisurf/fluorescence/fps/dll/*.*'
-            )
+            '*.npy',
+            '*.dll',
+            '*.so'
         ]
     },
     install_requires=[
