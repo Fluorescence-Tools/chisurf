@@ -404,7 +404,7 @@ class CrFilterWidget(QtWidgets.QWidget):
         self.photon_source = photon_source
         self.parent = parent
 
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.verbose)
         self.time_window = kwargs.get('time_window', settings['time_window'])
         self.max_count_rate = kwargs.get('max_count_rate', settings['max_count_rate'])
 

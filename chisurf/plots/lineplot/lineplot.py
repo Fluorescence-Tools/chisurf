@@ -453,7 +453,7 @@ class LinePlot(plotbase.Plot):
         except AttributeError:
             irf_y = np.ones(10)
             irf_x = np.ones(10)
-            if mfm.verbose:
+            if chisurf.verbose:
                 print("No instrument response to plot.")
 
         xmin = max(

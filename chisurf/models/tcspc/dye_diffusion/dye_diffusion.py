@@ -755,7 +755,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
             fit: chisurf.fitting.fit.FitGroup,
             **kwargs
     ):
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.verbose)
         generic = chisurf.models.tcspc.widgets.GenericWidget(
             fit=fit,
             parent=self,

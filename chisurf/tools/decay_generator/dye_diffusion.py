@@ -11,7 +11,7 @@ from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
 import qdarkstyle
 
-import chisurf.settings as mfm
+import chisurf.math
 import chisurf.fio.coordinates
 import chisurf.fluorescence.av.widgets
 from chisurf.fluorescence.simulation.dye_diffusion import DyeDecay
@@ -202,19 +202,25 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
     def __init__(
             self,
             *args,
+            dye_diffusion_settings_file: str = None,
+            verbose: bool = chisurf.verbose,
             **kwargs
     ):
-        fn = os.path.join(mfm.package_directory, './settings/sample.json')
-        dye_diffusion_settings_file = kwargs.get('dye_diffusion_settings_file', fn)
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        if dye_diffusion_settings_file is None:
+            dye_diffusion_settings_file = os.path.join(
+                chisurf.settings.package_directory, './settings/sample.json'
+            )
         settings = json.load(
             chisurf.fio.zipped.open_maybe_zipped(
                 filename=dye_diffusion_settings_file,
                 mode='r'
             )
         )
-
-        super().__init__(*args, **settings)
+        super().__init__(
+            *args,
+            verbose=verbose,
+            **settings
+        )
 
         QtWidgets.QWidget.__init__(self)
         uic.loadUi(

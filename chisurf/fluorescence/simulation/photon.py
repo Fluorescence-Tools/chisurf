@@ -1,7 +1,10 @@
+from __future__ import annotations
+
+
 import numpy as np
 import numpy.random as random
 
-import chisurf.settings as mfm
+import chisurf
 from chisurf.fluorescence.simulation import _simulation
 
 
@@ -45,7 +48,7 @@ def simulate_photon_trace_rate(
         The first element contains the waiting times of the unquenched dye
         The second element contains an array if actually a photon was emitted of the type np.unit8
     """
-    verbose = kwargs.get('verbose', mfm.verbose)
+    verbose = kwargs.get('verbose', chisurf.verbose)
     ravel_traj = kwargs.get('ravel_traj', True)
 
     n_ph /= n_traj
@@ -71,7 +74,12 @@ def simulate_photon_trace_rate(
         dts_i = dts[i, :]
         phs_i = phs[i, :]
         rand_shift_i = rand_shift[i]
-        _simulation.simulate_photons(dts_i, phs_i, n_ph, quench, t_step, tau0, n_traj, rand_shift_i)
+        _simulation.simulate_photons(
+            dts_i, phs_i,
+            n_ph, quench,
+            t_step, tau0,
+            n_traj, rand_shift_i
+        )
 
     if ravel_traj:
         dts = dts.ravel()
@@ -104,7 +112,6 @@ def simulate_decay_quench(
         Lifetime of the dye in absence of quenching
 
     """
-    verbose = kwargs.get('verbose', mfm.verbose)
     shift = np.random.randint(0, int(k_quench.shape[0] // 2), int(n_curves))
     _simulation.simulate_decay(
         n_curves=n_curves,

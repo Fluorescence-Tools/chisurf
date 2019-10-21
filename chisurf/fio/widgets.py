@@ -271,7 +271,7 @@ class CsvWidget(
         self.actionColumnsChanged.triggered.connect(
             self.changeCsvParameter
         )
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.verbose)
 
     def changeCsvParameter(self):
         set_errx_on = bool(self.checkBox_3.isChecked())

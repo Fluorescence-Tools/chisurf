@@ -557,7 +557,7 @@ class Convolve(FittingParameterGroup):
             decay: np.array = None
     ) -> np.array:
         if verbose is None:
-            verbose = mfm.verbose
+            verbose = chisurf.verbose
         if mode is None:
             mode = self.mode
         if dt is None:

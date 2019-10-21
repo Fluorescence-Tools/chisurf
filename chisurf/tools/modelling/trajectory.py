@@ -371,7 +371,7 @@ class RotateTranslateTrajectoryWidget(QtWidgets.QWidget):
     @chisurf.decorators.init_with_ui(ui_filename="rotate_translate_traj.ui")
     def __init__(self, **kwargs):
         self.trajectory = None
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.verbose)
         self.actionOpen_trajectory.triggered.connect(self.onOpenTrajectory)
         self.actionSave_trajectory.triggered.connect(self.onSaveTrajectory)
 
@@ -432,7 +432,7 @@ class MDConverter(QtWidgets.QWidget):
         self.toolButton_2.clicked.connect(self.onSelecteTargetDir)
         self.pushButton_3.clicked.connect(self.onConvert)
         self.actionOpen_Topology.triggered.connect(self.onOpenTopology)
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.verbose)
 
     def onOpenTopology(self):
         #self.topology_file = str(QtGui.QFileDialog.getOpenFileName(self, 'Open PDB-File', '.', 'PDB-File (*.pdb)'))

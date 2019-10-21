@@ -164,7 +164,7 @@ def read_fcs(
     csv = chisurf.fio.ascii.Csv()
     csv.load(
         filename=filename,
-        verbose=mfm.verbose,
+        verbose=chisurf.verbose,
         *args,
         **kwargs
     )
@@ -238,7 +238,7 @@ def save_fcs_kristine(
 def read_fcs_kristine(
         filename: str,
         experiment_reader: chisurf.experiments.reader.ExperimentReader = None,
-        verbose=mfm.verbose
+        verbose=chisurf.verbose
 ) -> chisurf.experiments.data.DataCurve:
     """Uses either the error provided by the correlator (4. column)
     or calculates the error based on the correlation curve,

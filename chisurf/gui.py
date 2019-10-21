@@ -318,8 +318,8 @@ class Main(QtWidgets.QMainWindow):
             **kwargs
     ):
         if directory is None:
-            chisurf.chisurf.working_path = chisurf.widgets.get_directory(**kwargs)
-        chisurf.chisurf.working_path = directory
+            chisurf.working_path = chisurf.widgets.get_directory(**kwargs)
+        chisurf.working_path = directory
         chisurf.console.run('chisurf.macros.save_fit()')
 
     def onOpenHelp(
@@ -329,8 +329,8 @@ class Main(QtWidgets.QMainWindow):
         webbrowser.open_new(url)
 
     def init_widgets(self):
-        #self.decay_generator = chisurf.tools.dye_diffusion.TransientDecayGenerator()
-        #self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
+        # self.decay_generator = chisurf.tools.decay_generator.TransientDecayGenerator()
+        # self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
 
         #self.fret_lines = chisurf.tools.fret_lines.FRETLineGeneratorWidget()
         #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.fret_lines.show)

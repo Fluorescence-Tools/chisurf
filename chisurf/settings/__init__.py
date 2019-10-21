@@ -33,7 +33,6 @@ fitting = cs_settings['fitting']
 fret = cs_settings['fret']
 tcspc = cs_settings['tcspc']
 pyqtgraph_settings = gui['plot']["pyqtgraph"]
-verbose = cs_settings['verbose']
 package_directory = os.path.dirname(os.path.abspath(__file__))
 eps = np.sqrt(np.finfo(float).eps)
 working_path = ''
