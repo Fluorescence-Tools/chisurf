@@ -29,7 +29,7 @@ install:
   - conda env create -f environment.yaml
   - activate chisurf
   - python.exe setup.py build_ext --inplace
-  - python setup.py install
+#  - python setup.py install
 
 ## use conda build
 #test_script:
@@ -44,10 +44,7 @@ install:
 
 test_script:
   - conda install nose coverage
-  - cmd: echo %CD%
-  - cmd: cd C:\projects\chisurf\test\
-  - cmd: echo %CD%
-  - nosetests
+  - nosetests .\test\
 
 #### scripts to run after tests
 #deploy_script:
