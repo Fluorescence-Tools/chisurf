@@ -18,6 +18,9 @@ requirements:
   build:
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
+    - python {{ python }}
+    - setuptools
+    - cmake
     - git
   host:
     - python {{ python }}
