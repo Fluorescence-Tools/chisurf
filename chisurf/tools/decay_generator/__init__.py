@@ -1,1 +1,1 @@
-from . import dye_diffusion
+from .dye_diffusion import *

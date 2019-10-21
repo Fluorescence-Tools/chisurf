@@ -265,7 +265,7 @@ class EtModelFree(
     def __init__(
             self,
             fit: fitting.fit.FitGroup,
-            verbose: bool = mfm.verbose,
+            verbose: bool = chisurf.verbose,
             **kwargs
     ):
         Model.__init__(self, fit=fit)

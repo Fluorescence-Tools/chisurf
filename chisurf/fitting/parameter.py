@@ -364,7 +364,7 @@ class FittingParameterGroup(
             *args,
             **kwargs
         )
-        if mfm.verbose:
+        if chisurf.verbose:
             print("---------------")
             print("Class: %s" % self.__class__.name)
             print(kwargs)

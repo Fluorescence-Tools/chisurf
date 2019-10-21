@@ -311,7 +311,7 @@ class LifetimeModel(ModelCurve):
             shift_bg_with_irf: bool = None,
             lifetime_spectrum: np.array = None,
             scatter: float = None,
-            verbose: bool = mfm.verbose,
+            verbose: bool = chisurf.verbose,
             background: float = None,
             background_curve: chisurf.curve.Curve = None,
             **kwargs

@@ -182,7 +182,6 @@ def load_fit_result(
 def group_datasets(
         dataset_indices: List[int]
 ) -> None:
-    #selected_data = mfm.data_sets[dataset_numbers]
     selected_data = [
         chisurf.imported_datasets[i] for i in dataset_indices
     ]

@@ -114,7 +114,7 @@ class DiffusionSimulation(object):
         :param verbose:
         """
         if verbose is None:
-            verbose = mfm.verbose
+            verbose = chisurf.verbose
         self.verbose = verbose
 
         self.dye = dye
@@ -445,7 +445,7 @@ class Dye(ParameterGroup):
             **kwargs
     ):
         ParameterGroup.__init__(self)
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.verbose)
         self.sticking = sticking
         self.structure = sticking.structure
         self.model = kwargs.get('model', None)
@@ -565,7 +565,7 @@ class Sticking(ParameterGroup):
         :param kwargs:
         """
         super().__init__(fit, **kwargs)
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.verbose)
         self.quenching_parameter = quenching_parameter
         self.structure = structure
         self.model = kwargs.get('model', None)
@@ -686,7 +686,7 @@ class ProteinQuenching(ParameterGroup):
         return s
 
     def __init__(self, structure, **kwargs):
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.verbose)
         self.structure = structure
 
         self._quencher = None

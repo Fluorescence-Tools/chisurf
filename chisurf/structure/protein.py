@@ -247,7 +247,7 @@ def calc_internal_coordinates_bb(
         **kwargs
 ):
     if verbose is None:
-        verbose = chisurf.settings.verbose
+        verbose = chisurf.verbose
 
     structure.coord_i = np.zeros(
         structure.atoms.shape[0],

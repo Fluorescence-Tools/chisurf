@@ -42,3 +42,5 @@ console = object
 experiment = list()
 fit_windows = list()
 working_path = ''
+verbose = settings.cs_settings['verbose']
+

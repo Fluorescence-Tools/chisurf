@@ -37,7 +37,7 @@ def maxent(
     x0 = kwargs.get('x0', np.zeros(m))
 
     prior = kwargs.get('prior_distribution', np.ones(m))
-    verbose = kwargs.get('verbose', mfm.verbose)
+    verbose = kwargs.get('verbose', chisurf.verbose)
 
     # Treat each nu separately.
     bounds = [(lower_bound, upper_bound) for i in range(m)]
