@@ -19,7 +19,7 @@ install:
   - conda config --add channels conda-forge
   - conda config --add channels tpeulen
   - conda install git conda-build anaconda-client
-  - conda activate base
+  - activate base
   - conda build conda-recipe
 
 ## to run your custom scripts instead of automatic tests
