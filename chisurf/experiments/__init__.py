@@ -17,6 +17,8 @@ import chisurf.experiments.tcspc
 import chisurf.experiments.globalfit
 import chisurf.experiments.modelling
 
+from chisurf.experiments.experiment import Experiment
+
 
 def get_data(
         curve_type: str = 'experiment',

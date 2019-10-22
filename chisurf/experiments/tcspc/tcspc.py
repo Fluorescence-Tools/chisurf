@@ -106,7 +106,7 @@ class TCSPCReader(
             filename: str = None,
             *args,
             **kwargs
-    ) -> experiments.data.DataCurveGroup:
+    ) -> chisurf.experiments.data.DataCurveGroup:
         return chisurf.fio.fluorescence.read_tcspc_csv(
             filename=filename,
             skiprows=self.skiprows,
