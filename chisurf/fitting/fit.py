@@ -547,6 +547,10 @@ class FitGroup(
             self._fits.append(fit)
 
         list.__init__(self, self._fits)
+        # super().__init__(
+        #     data=data,
+        #     **kwargs
+        # )
         Fit.__init__(
             self,
             data=data,

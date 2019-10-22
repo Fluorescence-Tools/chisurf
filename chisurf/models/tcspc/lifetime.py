@@ -5,7 +5,7 @@ import math
 
 import numpy as np
 
-import chisurf.settings as mfm
+import chisurf.curve
 import chisurf.math.datatools
 from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 from chisurf.models.model import ModelCurve

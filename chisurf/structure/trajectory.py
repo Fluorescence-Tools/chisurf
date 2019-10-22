@@ -172,13 +172,19 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
     ):
         """
 
-        Parameters
-        ----------
-
-        pdb_model : int
-            the models number of the pdb (optional argument). By default the
-            first models in the PDB-File is used.
-
+        :param p_object: either a string pointing to an .hdf or .pdb file; a mdtraj.Trajectory object;
+            or a chisurf.structure.Structure object;
+        :param filename:
+        :param make_coarse:
+        :param rmsd_ref_state:
+        :param stride:
+        :param inverse_trajectory:
+        :param center:
+        :param verbose:
+        :param atom_indices:
+        :param mode:
+        :param args:
+        :param kwargs:
         """
         self.mode = mode
         self.atom_indices = atom_indices
@@ -205,60 +211,31 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
         ):
             if p_object.endswith('.pdb'):
                 self._mdtraj = mdtraj.Trajectory.load(p_object)
+                structure = chisurf.structure.Structure(p_object)
             elif p_object.endswith('.h5'):
                 self._filename = p_object
-                if self.mode == 'r':
-                    self._mdtraj = mdtraj.Trajectory.load(
-                        p_object,
-                        stride=self.stride
-                    )
-                    self._mdtraj[0].save(
-                        pdb_tmp
-                    )
-                    structure = chisurf.structure.Structure(
-                        pdb_tmp
-                    )
-                    mdtraj.Trajectory.__init__(
-                        self,
-                        self._mdtraj.xyz,
-                        self._mdtraj.topology
-                    )
-                elif self.mode == 'w':
-                    self._mdtraj = mdtraj.Trajectory.load(pdb_tmp)
-                    self._mdtraj.save_hdf5(p_object)
-                    self._filename = p_object
-                    mdtraj.Trajectory.__init__(
-                        self,
-                        self._mdtraj.xyz,
-                        self._mdtraj.topology
-                    )
-
+                self._mdtraj = mdtraj.Trajectory.load(
+                    p_object,
+                    stride=self.stride
+                )
+                self._mdtraj[0].save_pdb(pdb_tmp)
+                structure = chisurf.structure.Structure(pdb_tmp)
         elif isinstance(
                 p_object,
                 mdtraj.Trajectory
         ):
             self._mdtraj = p_object
+            self._mdtraj[0].save_pdb(pdb_tmp)
+            structure = chisurf.structure.Structure(pdb_tmp)
             mdtraj.Trajectory.__init__(
                 self,
                 xyz=p_object.xyz,
                 topology=p_object.topology
             )
-            if filename is None:
-                _, filename = tempfile.mkstemp(
-                    suffix=".h5"
-                )
-            self._filename = filename
-
         elif isinstance(
                 p_object,
                 chisurf.structure.Structure
         ):
-            if filename is None:
-                _, filename = tempfile.mkstemp(
-                    suffix=".h5"
-                )
-            self._filename = filename
-
             p_object.write(pdb_tmp)
             self._mdtraj = mdtraj.Trajectory.load(pdb_tmp)
             self._mdtraj.save_hdf5(filename=self._filename)
@@ -279,6 +256,15 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
 
         if self.center:
             self._mdtraj.center_coordinates()
+
+        if self.mode == 'w' :
+            self._mdtraj = mdtraj.Trajectory.load(pdb_tmp)
+            self._mdtraj.save_hdf5(p_object)
+        mdtraj.Trajectory.__init__(
+            self,
+            self._mdtraj.xyz,
+            self._mdtraj.topology
+        )
 
         #super(TrajectoryFile, self).__init__(*args, **kwargs)
 
@@ -423,9 +409,7 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
         The average structure (:py:class:`~mfm.structure.mfm.structure.Structure`)
         of the trajectory
         """
-        return chisurf.structure.average(
-            self[:len(self)]
-        )
+        return chisurf.structure.average(self[:len(self)])
 
     @property
     def values(

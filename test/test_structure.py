@@ -130,6 +130,8 @@ class Tests(unittest.TestCase):
         )
 
     def test_traj_opening(self):
+        import tempfile
+        import chisurf.structure
         traj = chisurf.structure.TrajectoryFile(
             './test/data/atomic_coordinates/trajectory/h5-file/hgbp1_transition.h5',
             reading_routine='r',
@@ -145,9 +147,20 @@ class Tests(unittest.TestCase):
         )
 
     # def test_traj_writing(self):
+    #     import tempfile
+    #     import chisurf.structure
+    #
     #     _, filename = tempfile.mkstemp('.h5')
+    #     structure = chisurf.structure.ProteinCentroid(
+    #         './test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb',
+    #         auto_update=True
+    #     )
     #     traj_write = chisurf.structure.TrajectoryFile(
-    #         filename,
+    #         structure,
+    #         filename=filename,
     #         mode='w'
     #     )
-
+    #     # append structure
+    #     structure.omega *= 0.0
+    #     traj_write.append(structure)
+    #
