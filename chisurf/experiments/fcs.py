@@ -39,6 +39,7 @@ class FCS(
             verbose: bool = None,
             **kwargs
     ) -> chisurf.experiments.data.ExperimentDataCurveGroup:
+
         if self.experiment_reader == 'Kristine':
             r = chisurf.fio.fluorescence.read_fcs_kristine(
                 filename=filename,
