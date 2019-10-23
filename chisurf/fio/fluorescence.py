@@ -268,7 +268,8 @@ def read_fcs_kristine(
     )
     data = csv.data
     d = chisurf.experiments.data.DataCurve(
-        setup=experiment_reader
+        setup=experiment_reader,
+        name=filename
     )
 
     # In Kristine file-type
