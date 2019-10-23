@@ -148,6 +148,11 @@ class FittingControllerWidget(
 
     def onRunFit(self):
         chisurf.run("cs.current_fit.run()")
+        for p in self.fit.model.parameters_all:
+            try:
+                p.controller.finalize()
+            except AttributeError:
+                print("Parameter %s has no controller" % p.name)
 
     def onAutoFitRange(self):
         try:

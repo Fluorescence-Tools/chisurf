@@ -57,7 +57,7 @@ def read_burst_ids(
     Examples
     --------
 
-    >>> import chisurf.settings as mfm, glob
+    >>> import chisurf.fio, glob
     >>> directory = "./test/data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\BID"
     >>> files = glob.glob(directory+'/*.bst')
     >>> bids = chisurf.fio.photons.read_burst_ids(files)
@@ -132,8 +132,7 @@ class Photons(object):
     Examples
     --------
 
-    >>> import glob
-    >>> import chisurf.fio
+    >>> import chisurf.fio, glob
     >>> directory = './test/data/tttr/BH/'
     >>> spc_files = glob.glob(directory+'/BH_SPC132.spc')
     >>> photons = chisurf.fio.photons.Photons(spc_files, file_type="bh132")

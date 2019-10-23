@@ -4,8 +4,9 @@ from typing import Tuple
 
 import numpy as np
 
-import chisurf.settings as mfm
 import chisurf.fluorescence
+import chisurf.fluorescence.fcs
+import chisurf.fluorescence.tcspc
 import chisurf.experiments
 from chisurf.experiments import reader
 from chisurf.fio.ascii import Csv
@@ -44,7 +45,13 @@ def read_tcspc_csv(
 
     # Load data
     rebin_x, rebin_y = rebin
-    mc = matrix_columns
+
+    if is_jordi:
+        infer_delimiter = False
+        mc = None
+    else:
+        mc = matrix_columns
+        infer_delimiter = True
 
     csvSetup = Csv(
         *args,
@@ -54,7 +61,8 @@ def read_tcspc_csv(
         filename,
         skiprows=skiprows,
         use_header=use_header,
-        usecols=mc
+        usecols=mc,
+        infer_delimiter=infer_delimiter
     )
     data = csvSetup.data
 
@@ -62,7 +70,7 @@ def read_tcspc_csv(
         if data.ndim == 1:
             data = data.reshape(1, len(data))
         n_data_sets, n_vv_vh = data.shape
-        n_data_points = n_vv_vh / 2
+        n_data_points = n_vv_vh // 2
         c1, c2 = data[:, :n_data_points], data[:, n_data_points:]
 
         new_channels = int(n_data_points / rebin_y)
