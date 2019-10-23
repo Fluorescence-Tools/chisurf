@@ -180,6 +180,28 @@ class Tests(unittest.TestCase):
             4096
         )
 
+    def test_FCS_Reader(self):
+        filename = './test/data/fcs/Kristine/Kristine_with_error.cor'
+        ex = chisurf.experiments.experiment.Experiment(
+            'FCS'
+        )
+        g1 = chisurf.experiments.fcs.FCS(
+            experiment=ex,
+            experiment_reader='Kristine'
+        )
+        fcs_curve = g1.read(
+            filename=filename
+        )
+        # there is one FCS curve in the Kristine file
+        self.assertEqual(
+            len(fcs_curve),
+            1
+        )
+        self.assertEqual(
+            len(fcs_curve.x),
+            207
+        )
+
     def test_DataCurve(self):
         x = np.linspace(0, np.pi * 2.0)
         y = np.sin(x)
