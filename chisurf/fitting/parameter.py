@@ -10,12 +10,11 @@ from qtpy import QtWidgets
 import numpy as np
 
 import chisurf.settings
-import chisurf.settings as mfm
 import chisurf.fitting
 import chisurf.base
 import chisurf.parameter
 import chisurf.decorators
-#import chisurf.models.model
+import chisurf.models.model
 
 parameter_settings = chisurf.settings.parameter
 

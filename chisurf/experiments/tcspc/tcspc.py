@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Tuple
 
 import chisurf.settings
-import chisurf.settings as mfm
+import chisurf.fluorescence.tcspc
 import chisurf.experiments
 import chisurf.base
 import chisurf.fluorescence

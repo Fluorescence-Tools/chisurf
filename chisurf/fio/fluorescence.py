@@ -67,8 +67,10 @@ def read_tcspc_csv(
     data = csvSetup.data
 
     if is_jordi:
+
         if data.ndim == 1:
             data = data.reshape(1, len(data))
+
         n_data_sets, n_vv_vh = data.shape
         n_data_points = n_vv_vh // 2
         c1, c2 = data[:, :n_data_points], data[:, n_data_points:]
@@ -168,7 +170,7 @@ def read_fcs(
         setup: reader.ExperimentReader = None,
         *args,
         **kwargs
-) -> chisurf.experiments.data.DataCurve:
+) -> chisurf.experiments.data.ExperimentDataCurveGroup:
     csv = chisurf.fio.ascii.Csv()
     csv.load(
         filename=filename,
@@ -185,7 +187,7 @@ def read_fcs(
         ey=w,
         ex=np.ones_like(x)
     )
-    return d
+    return chisurf.experiments.data.ExperimentDataCurveGroup([d])
 
 
 def save_fcs_kristine(
@@ -247,7 +249,7 @@ def read_fcs_kristine(
         filename: str,
         experiment_reader: chisurf.experiments.reader.ExperimentReader = None,
         verbose=chisurf.verbose
-) -> chisurf.experiments.data.DataCurve:
+) -> chisurf.experiments.data.ExperimentDataCurveGroup:
     """Uses either the error provided by the correlator (4. column)
     or calculates the error based on the correlation curve,
     the aquisition time and the count-rate.
@@ -293,4 +295,4 @@ def read_fcs_kristine(
         ex=np.ones_like(x),
         ey=w
     )
-    return d
+    return chisurf.experiments.data.ExperimentDataCurveGroup([d])
