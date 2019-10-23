@@ -328,6 +328,154 @@ class Tests(unittest.TestCase):
                 d["dt"]
             )
 
+    def test_read_tcspc_csv_jordi(self):
+        import chisurf.fio.fluorescence
+        filename = './test/data/tcspc/Jordi/H2O_8-0 ps_2048 ch.dat'
+        dt = 0.032
+
+        ref_vv = np.array(
+            [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+             0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+             0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+             0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+             0., 0., 1., 4., 2., 10., 6., 14., 13., 15., 8.,
+             12., 7., 21., 16., 13., 15., 24., 17., 25., 21., 12.,
+             22., 20., 29., 23., 20., 29., 25., 36., 47., 37., 48.,
+             60., 44., 59., 86., 83., 106., 88., 122., 96., 126., 139.,
+             181., 179., 214., 233., 243., 284., 341., 374., 401., 460., 509.,
+             561.]
+        )
+
+        ref_vh = np.array(
+            [
+                0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+                0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+                0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+                0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+                0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+                0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+                0., 3., 5., 6., 10., 11., 10., 8., 15., 12., 13., 14., 17.,
+                14., 12., 15., 23., 16., 23., 22., 23., 27.
+            ]
+        )
+
+        # read vv from jordi
+        decay_data_curve_vv = chisurf.fio.fluorescence.read_tcspc_csv(
+            filename=filename,
+            skiprows=0,
+            dt=dt,
+            is_jordi=True,
+            polarization='vv'
+        )
+        self.assertEqual(
+            np.allclose(
+                decay_data_curve_vv.y[200:300],
+                ref_vv
+            ),
+            True
+        )
+
+        # read vh from jordi
+        decay_data_curve_vh = chisurf.fio.fluorescence.read_tcspc_csv(
+            filename=filename,
+            skiprows=0,
+            dt=dt,
+            is_jordi=True,
+            polarization='vh'
+        )
+
+        self.assertEqual(
+            np.allclose(
+                decay_data_curve_vh.y[200:300],
+                ref_vh
+            ),
+            True
+        )
+
+        # combines vv and vh and adjusts the noise of the combined curve (not poisson anymore)
+        g_factor = 1.5
+        decay_data_curve_vm = chisurf.fio.fluorescence.read_tcspc_csv(
+            filename=filename,
+            skiprows=0,
+            dt=dt,
+            is_jordi=True,
+            polarization='vm',
+            g_factor=1.5
+        )
+        ref_vm = ref_vv + ref_vh * 2.0 * g_factor
+        self.assertEqual(
+            np.allclose(
+                decay_data_curve_vm.y[200:300],
+                ref_vm
+            ),
+            True
+        )
+
+        # reads vv/vh in a group
+        decay_data_curve_vv_vh = chisurf.fio.fluorescence.read_tcspc_csv(
+            filename=filename,
+            skiprows=0,
+            dt=dt,
+            is_jordi=True,
+            polarization='vv/vh'
+        )
+        self.assertEqual(
+            len(decay_data_curve_vv_vh),
+            2
+        )
+        self.assertEqual(
+            np.allclose(
+                decay_data_curve_vv_vh[0].y[200:300],
+                ref_vv
+            ),
+            True
+        )
+        self.assertEqual(
+            np.allclose(
+                decay_data_curve_vv_vh[1].y[200:300],
+                ref_vh
+            ),
+            True
+        )
+
+    def test_read_fcs_kristine(self):
+        import chisurf.fio.fluorescence
+        ref_fcs = np.array(
+            [4.21595667, 3.87717445, 3.67014087, 1.62239048, 3.6475554,
+             3.91858119, 4.01645162, 3.95622368, 3.85835326, 3.97504493,
+             3.92987397, 3.83953205, 3.92610974, 3.95622372, 4.04280141,
+             3.89976003, 4.01645171, 3.74542593, 3.93740254, 3.85458912,
+             3.92987408, 3.69649077, 3.99198419, 3.82635732, 3.80094868,
+             3.82729844, 3.90258342, 3.89787814, 3.93740276, 3.77459909,
+             3.8837623, 3.84423773, 3.82306389, 3.85506005, 3.80518383,
+             3.86823503, 3.76612987, 3.72707586, 3.80236087, 3.7411919]
+        )
+
+        filename = './test/data/fcs/Kristine/Kristine_with_error.cor'
+        fcs_data_curve_1 = chisurf.fio.fluorescence.read_fcs_kristine(
+            filename=filename
+        )
+        self.assertEqual(
+            np.allclose(
+                fcs_data_curve_1.y[0:40],
+                ref_fcs
+            ),
+            True
+        )
+
+        filename = './test/data/fcs/Kristine/Kristine_without_error.cor'
+        fcs_data_curve_2 = chisurf.fio.fluorescence.read_fcs_kristine(
+            filename=filename
+        )
+        self.assertEqual(
+            np.allclose(
+                fcs_data_curve_2.y[0:40],
+                ref_fcs
+            ),
+            True
+        )
+
+
     # Removed for now because mmcif does not exist for Windows
     # def test_mmcif_read(self):
     #     import mmcif.fio.PdbxReader

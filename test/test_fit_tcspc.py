@@ -78,7 +78,10 @@ class FitTests(unittest.TestCase):
             model_class=chisurf.models.tcspc.fret.GaussianModel
         )
         model_da = fit_da.model
-        model_da.donors.append()
+
+        # By default there will be already a lifetime
+        #model_da.donors.append()
+
         model_da.append(
             mean=50,
             sigma=6,

@@ -184,6 +184,8 @@ class Csv(object):
             verbose: bool = chisurf.verbose,
             delimiter: str = None,
             file_type: str = None,
+            infer_delimiter: bool = True,
+            usecols: List[int] = None,
             **kwargs
     ) -> None:
         """
@@ -232,7 +234,7 @@ class Csv(object):
                     print(csvfile.read()[:512])
 
             if file_type == 'csv':
-                if delimiter is None:
+                if (delimiter is None) and infer_delimiter:
                     with chisurf.fio.zipped.open_maybe_zipped(
                             filename=filename,
                             mode='r'
@@ -247,13 +249,15 @@ class Csv(object):
                     fname=filename,
                     delimiter=delimiter,
                     skip_header=skiprows,
-                    **kwargs
+                    usecols=usecols,
+                    ** kwargs
                 )
             else:
                 d = np.genfromtxt(
                     skip_header=skiprows,
                     fname=filename,
                     delimiter=colspecs,
+                    usecols=usecols,
                     names=header,
                     **kwargs
                 )
