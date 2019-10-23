@@ -598,7 +598,7 @@ class FRETModel(LifetimeModel):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             lifetimes: Lifetime = None,
             **kwargs
     ):
@@ -672,7 +672,7 @@ class GaussianModel(FRETModel):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             **kwargs
     ):
         super().__init__(
@@ -730,7 +730,7 @@ class FRETrateModel(FRETModel):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             fret_rates: DiscreteDistance = None,
             **kwargs
     ):
@@ -789,7 +789,7 @@ class WormLikeChainModel(FRETModel):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             use_dye_linker: bool = False,
             **kwargs
     ):
@@ -880,7 +880,7 @@ class SingleDistanceModel(FRETModel):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             **kwargs
     ):
         super().__init__(

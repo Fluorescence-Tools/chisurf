@@ -24,11 +24,16 @@ class ParseDecayModel(parse.ParseModel):
         if self.convolve.irf is not None:
             decay = self.convolve.convolve(self._y_values, mode='full')[:self._y_values.shape[0]]
 
-        self.convolve.scale(decay, self.fit.data, bg=background, start=self.fit.xmin, stop=self.fit.xmax)
+        self.convolve.scale(
+            decay,
+            self.fit.data,
+            bg=background,
+            start=self.fit.xmin,
+            stop=self.fit.xmax
+        )
         decay += self.generic.background
         decay[decay < 0.0] = 0.0
         if self.corrections.lintable is not None:
             decay *= self.corrections.lintable
         self._y_values = decay
-
 

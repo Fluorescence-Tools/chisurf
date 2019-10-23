@@ -133,7 +133,9 @@ class FittingControllerWidget(
         self.onAutoFitRange()
 
     def onDatasetChanged(self):
-        chisurf.run("chisurf.macros.change_selected_fit_of_group(%s)" % self.selected_fit)
+        chisurf.run(
+            "chisurf.macros.change_selected_fit_of_group(%s)" % self.selected_fit
+        )
 
     def onErrorEstimate(self):
         filename = chisurf.widgets.save_file('Error estimate', '*.er4')
