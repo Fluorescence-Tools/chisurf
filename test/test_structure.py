@@ -130,7 +130,6 @@ class Tests(unittest.TestCase):
         )
 
     def test_traj_opening(self):
-        import tempfile
         import chisurf.structure
         traj = chisurf.structure.TrajectoryFile(
             './test/data/atomic_coordinates/trajectory/h5-file/hgbp1_transition.h5',
@@ -145,6 +144,7 @@ class Tests(unittest.TestCase):
             len(traj),
             464
         )
+
 
     # def test_traj_writing(self):
     #     import tempfile

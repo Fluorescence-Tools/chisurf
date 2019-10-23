@@ -7,6 +7,7 @@ TOPDIR = os.path.abspath(
 )
 utils.set_search_paths(TOPDIR)
 
+import tempfile
 import numpy as np
 import copy
 
@@ -210,5 +211,108 @@ class FitTests(unittest.TestCase):
             data_2
         )
 
-    def test_fit_weighted_residuals(self):
-        pass
+    def test_fit_sample(self):
+        import chisurf.experiments
+        import chisurf.models
+        import chisurf.fitting
+
+        c_value = 3.1
+        a_value = 1.2
+        x_data, y_data = get_data_values(
+            a_value=a_value,
+            c_value=c_value
+        )
+
+        data = chisurf.experiments.data.DataCurve(
+            x=x_data,
+            y=y_data,
+            ey=np.ones_like(y_data)
+        )
+        fit = chisurf.fitting.fit.FitGroup(
+            data=chisurf.experiments.data.DataGroup(
+                [data]
+            ),
+            model_class=chisurf.models.parse.ParseModel
+        )
+        fit.fit_range = 0, len(fit.model.y)
+
+        model = fit.model
+        model.parse.func = 'c+a*x**2'
+        fit.model.find_parameters()
+        r = chisurf.fitting.sample.sample_emcee(
+            fit=fit,
+            steps=1000,
+            nwalkers=5,
+            thin=10
+        )
+        self.assertSetEqual(
+            {'chi2r', 'parameter_values', 'parameter_names'},
+            set(r.keys())
+        )
+        self.assertEqual(
+            len(r['chi2r']),
+            500
+        )
+
+        # There is an alternative sampler that directly saves to files
+        _, filename = tempfile.mkstemp(
+            suffix='.er4'
+        )
+        n_runs = 5
+        sampling_method = 'emcee'
+        chisurf.fitting.fit.sample_fit(
+            fit=fit,
+            filename=filename,
+            steps=1000,
+            thin=1,
+            n_runs=n_runs,
+            method=sampling_method
+        )
+
+        # Every run is a file. Test if all the runs are written out
+        for i_run in range(n_runs):
+            fn = os.path.splitext(filename)[0] + "_" + str(i_run) + '.er4'
+            self.assertTrue(
+                os.path.isfile(
+                    fn
+                )
+            )
+
+        r = chisurf.fitting.sample.walk_mcmc(
+            fit=fit,
+            steps=100,
+            step_size=0.1,
+            chi2max=10,
+            temp=1,
+            thin=1
+        )
+        self.assertEqual(
+            len(r['chi2r']),
+            100
+        )
+
+        sampling_method = 'mcmc'
+        n_runs = 2
+        chisurf.fitting.fit.sample_fit(
+            fit=fit,
+            filename=filename,
+            steps=100,
+            thin=1,
+            n_runs=n_runs,
+            method=sampling_method
+        )
+
+        fit.run()
+
+        import chisurf.fitting.support_plane
+        r = chisurf.fitting.support_plane.scan_parameter(
+            fit=fit,
+            parameter_name='c',
+            rel_range=0.2,
+            n_steps=20
+        )
+        self.assertEqual(
+            len(r['chi2r']),
+            20
+        )
+

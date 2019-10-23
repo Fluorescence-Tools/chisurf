@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-from typing import Tuple
+from typing import Dict
 
 import numpy as np
 
@@ -15,14 +15,14 @@ def scan_parameter(
         scan_range=(None, None),
         rel_range: float = 0.2,
         n_steps: int = 30
-) -> Tuple[np.array, np.array]:
+) -> Dict:
     """Performs a chi2-scan for the parameter
 
     :param fit: the fit of type 'fitting.Fit'
     :param parameter_name: the name of the parameter (in the parameter dictionary)
     :param scan_range: the range within the parameter is scanned if not provided 'rel_range' is used
-    :param rel_range: defines +- values for scanning
-    :param n_steps: number of steps between +-
+    :param rel_range: defines +/- values for scanning
+    :param n_steps: number of steps between +/-
     :return:
     """
     # Store initial values before varying the parameter
@@ -32,7 +32,7 @@ def scan_parameter(
     is_fixed = varied_parameter.fixed
 
     varied_parameter.fixed = True
-    chi2r_array = np.zeros(n_steps, dtype=float)
+    chi2r_array = np.empty(n_steps, dtype=float)
 
     # Determine range within the parameter is varied
     parameter_value = varied_parameter.value
@@ -54,4 +54,8 @@ def scan_parameter(
     fit.model.parameter_values = initial_parameter_values
     fit.update()
 
-    return parameter_array, chi2r_array
+    return {
+        'chi2r': chi2r_array,
+        'parameter_values': parameter_array,
+        'parameter_names': [parameter_name]
+    }
