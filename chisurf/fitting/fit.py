@@ -338,7 +338,8 @@ class Fit(
             self,
             parameter_name: str,
             rel_range: float = None,
-            **kwargs
+            scan_range: Tuple[float, float] = (None, None),
+            n_steps: int = 30
     ) -> Tuple[np.array, np.array]:
         """Perform a chi2-scan on a parameter of the fit.
 
@@ -359,7 +360,8 @@ class Fit(
             fit=self,
             parameter_name=parameter_name,
             rel_range=rel_range,
-            **kwargs
+            scan_range=scan_range,
+            n_steps=n_steps
         )
         parameter.parameter_scan = r['parameter_values'], r['chi2r']
         return parameter.parameter_scan

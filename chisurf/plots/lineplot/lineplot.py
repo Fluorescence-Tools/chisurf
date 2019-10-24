@@ -33,10 +33,7 @@ class LinePlotControl(
             r_scaley: str = 'lin',
             reference_curve: bool = False,
             xmin: float = 0.0,
-            ymin: float = 1.0,
-            *args,
-            **kwargs
-
+            ymin: float = 1.0
     ):
         self.parent = parent
         self.use_reference = reference_curve
@@ -287,8 +284,7 @@ class LinePlot(plotbase.Plot):
             scale_x=scale_x,
             d_scaley=d_scaley,
             r_scaley=r_scaley,
-            reference_curve=reference_curve,
-            **kwargs
+            reference_curve=reference_curve
         )
 
         self.layout = QtWidgets.QVBoxLayout(self)

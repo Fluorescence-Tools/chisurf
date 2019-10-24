@@ -52,4 +52,3 @@ class ParseFCSWidget(
             **kwargs
         )
 
-

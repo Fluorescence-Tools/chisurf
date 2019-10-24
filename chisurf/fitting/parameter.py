@@ -98,10 +98,12 @@ class FittingParameter(
     def scan(
             self,
             fit: chisurf.fitting.fit.Fit,
+            rel_range: float = None,
             **kwargs
     ) -> None:
         fit.chi2_scan(
-            self.name,
+            parameter_name=self.name,
+            rel_range=rel_range,
             **kwargs
         )
 

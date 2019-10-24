@@ -294,6 +294,6 @@ def read_fcs_kristine(
         x=x,
         y=y,
         ex=np.ones_like(x),
-        ey=w
+        ey=1./w
     )
     return chisurf.experiments.data.ExperimentDataCurveGroup([d])
