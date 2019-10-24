@@ -30,7 +30,6 @@ def weights(
     """
     if weight_type is None:
         weight_type = cs_settings['fcs']['weight_type']
-
     if weight_type == 'suren':
         dt = np.diff(times)
         dt = np.hstack([dt, dt[-1]])

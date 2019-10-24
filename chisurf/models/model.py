@@ -247,7 +247,6 @@ class ModelWidget(
             **kwargs
         )
         self.plots = list()
-
         if icon is None:
             icon = QtGui.QIcon(":/icons/document-open.png")
         self.icon = icon

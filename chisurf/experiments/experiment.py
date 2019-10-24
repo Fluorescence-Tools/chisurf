@@ -54,7 +54,9 @@ class Experiment(
 
     def add_model_classes(
             self,
-            models: List[Type[chisurf.models.model.Model]]
+            models: List[
+                Type[chisurf.models.model.Model]
+            ]
     ):
         for model in models:
             self.add_model_class(model)
