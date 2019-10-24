@@ -6,6 +6,7 @@ environment:
   matrix:
     - PYTHON: "C:\\Miniconda3-x64"
     # SET PYTHON=C:\Miniconda3-x64
+    #SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
 
 ## For debugging uncomment the lines below
 #init:

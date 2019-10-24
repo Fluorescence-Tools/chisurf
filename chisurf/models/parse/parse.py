@@ -2,15 +2,16 @@ from __future__ import annotations
 from typing import List
 
 import os
-import tempfile
-from collections import defaultdict, OrderedDict
-import sympy
+
 import yaml
 from numpy import *
-from sympy.printing.latex import latex
+# from collections import defaultdict
+# import sympy
+# import sympy.printing.latex
+# import sympy.parsing.sympy_parser
 from re import Scanner
 
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets, QtSvg
 
 import chisurf.decorators
 import chisurf.widgets
@@ -19,12 +20,13 @@ import chisurf.fio
 from chisurf.models.model import ModelWidget, ModelCurve
 from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
 
-
-class GenerateSymbols(defaultdict):
-
-    def __missing__(self, key):
-        return sympy.Symbol(key)
-
+#
+# class GenerateSymbols(defaultdict):
+#
+#     def __missing__(self, key):
+#         print(key)
+#         return sympy.Symbol(key)
+#
 
 class ParseFormula(
     FittingParameterGroup
@@ -174,6 +176,8 @@ class ParseFormulaWidget(
         if model_name is None:
             model_name = list(self._models)[0]
         self.model_name = model_name
+        self.svg_equation = QtSvg.QSvgWidget()
+        self.verticalLayout.addWidget(self.svg_equation)
 
     def load_model_file(self, filename):
         with chisurf.fio.zipped.open_maybe_zipped(
@@ -231,10 +235,32 @@ class ParseFormulaWidget(
         except AttributeError:
             print("No initial values")
 
+        #
+        # # d = GenerateSymbols()
+        # print(function_str)
+        # try:
+        #     #expr = eval(function_str, d)
+        #     tex = sympy.printing.latex(
+        #         sympy.parsing.sympy_parser.parse_expr(
+        #             function_str
+        #         )
+        #     )
+        #     print(tex)
+        #     self.svg_equation.load(
+        #         chisurf.widgets.tex2svg(
+        #             tex
+        #         )
+        #     )
+        # except:
+        #     print("erre")
+
     def onModelChanged(self):
         func = self.models[self.model_name]['equation']
         self.plainTextEdit.setPlainText(
             func
+        )
+        self.textEdit.setHtml(
+            self.models[self.model_name]['description']
         )
         self.onUpdateFunc()
         self.onEquationChanged()

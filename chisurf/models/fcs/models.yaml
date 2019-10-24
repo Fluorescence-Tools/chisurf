@@ -10,7 +10,7 @@
 3D Gauss, 1 bunching:
   equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba+ba*exp(-x/bt))
   initial:
-    N: 1
+    Nc: 1
     s: 3.5
     td: 0.5
     b: 1
@@ -28,7 +28,7 @@
 3D Gauss, 2 bunching:
   equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2))
   initial:
-    N: 1
+    Nc: 1
     s: 3.5
     td: 0.5
     b: 1
@@ -40,7 +40,7 @@
 3D Gauss, 3 bunching:
   equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3))
   initial:
-    N: 1
+    Nc: 1
     s: 3.5
     td: 0.5
     b: 1
@@ -54,7 +54,7 @@
 3D Gauss, 7 bunching:
   equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3)-ba4+ba4*exp(-x/bt4)-ba5+ba5*exp(-x/bt5))*(1-ba6+ba6*exp(-x/bt6))*(1-ba7+ba7*exp(-x/bt7))
   initial:
-    N: 1
+    Nc: 1
     s: 3.5
     td: 0.5
     b: 1
@@ -77,7 +77,7 @@
   equation: b+1/abs(N)*(1+x/td)**(-1)/sqrt(1+1/s**2*x/td)*(1-abs(ba1)+abs(ba1)*exp(-x/abs(bt1)))*(1-abs(aba)*exp(-x/abs(abt)))*(1-
     abs(abf)*(abs(aba1)*exp(-x/abs(abt1))+abs(aba2)*exp(-x/abs(abt2))+abs(aba3)*exp(-x/abs(abt3))+abs(aba4)*exp(-x/abs(abt4))+abs(1-abs(aba1)-abs(aba2)-abs(aba3)-abs(aba4))*exp(-x/abs(abt5))))
   initial:
-    N: 1
+    Nc: 1
     s: 3.5
     td: 0.5
     b: 1
@@ -101,7 +101,7 @@
   equation: b+1/abs(N)*(a1*(1+x/abs(td1))**(-1)/sqrt(1+1/s**2*x/abs(td1))*(1-abs(ba11)+abs(ba11)*exp(-x/abs(bt11))-abs(ba21)+abs(ba21)*exp(-x/abs(bt21))-abs(ba31)+abs(ba31)*exp(-x/abs(bt31)))+(1-a1)
     * (1+x/abs(td2))**(-1)*(1+1/s**2*x/abs(td2))**(-0.5)*(1-abs(ba12)+abs(ba12)*exp(-x/abs(bt12))-abs(ba22)+abs(ba22)*exp(-x/abs(bt22))-abs(ba32)+abs(ba32)*exp(-x/abs(bt32))))
   initial:
-    N: 1
+    Nc: 1
     s: 3.5
     td1: 0.5
     td2: 0.5
@@ -123,7 +123,7 @@
 3D Gauss, 1 exp. bunch, 1 stretched exp. bunch:
   equation: b+1/abs(N)*(1+x/abs(td))**(-1)*(1+1/s**2*x/abs(td))**(-0.5)*(1-abs(ba1)+abs(ba1)*exp(-x/abs(bt1))-abs(ba2)+abs(ba2)*exp(-(x/abs(bt2))**bs2))
   initial:
-    N: 1
+    Nc: 1
     s: 3.5
     td: 0.5
     b: 1
@@ -138,7 +138,7 @@
   equation: b+1/abs(N) * (a1 * (1+x/abs(td1))**(-1)*(1+1/s**2*x/abs(td1))**(-0.5)*(1-abs(ba11)+abs(ba11)*exp(-x/abs(bt11))-abs(ba21)+abs(ba21)*exp(-(x/abs(bt21))**bs21))+(1-a1)
     * (1+x/abs(td2))**(-1)*(1+1/s**2*x/abs(td2))**(-0.5)*(1-abs(ba12)+abs(ba12)*exp(-x/abs(bt12))-abs(ba22)+abs(ba22)*exp(-(x/abs(bt22))**bs22)))
   initial:
-    N: 1
+    Nc: 1
     s: 3.5
     td1: 0.5
     td2: 0.5
