@@ -115,6 +115,19 @@ class Main(QtWidgets.QMainWindow):
         ]
         return current_setup
 
+    @property
+    def current_experiment_reader(self):
+        if isinstance(
+            self.current_setup,
+            experiments.reader.ExperimentReader
+        ):
+            return self.current_setup
+        elif isinstance(
+                self.current_setup,
+                experiments.reader.ExperimentReaderController
+        ):
+            return self.current_setup.experiment_reader
+
     @current_setup.setter
     def current_setup(
             self,
@@ -285,23 +298,9 @@ class Main(QtWidgets.QMainWindow):
             filename = self.current_setup.controller.filename
         except AttributeError:
             filename = None
-
-        if isinstance(
-            self.current_setup,
-            experiments.reader.ExperimentReader
-        ):
-            chisurf.macros.add_dataset(
-                self.current_setup,
-                filename=filename
-            )
-        if isinstance(
-                self.current_setup,
-                experiments.reader.ExperimentReaderController
-        ):
-            chisurf.macros.add_dataset(
-                self.current_setup.experiment_reader,
-                filename=filename
-            )
+        chisurf.run(
+            'chisurf.macros.add_dataset(filename="%s")' % filename
+        )
 
     def onSaveFits(
             self,
