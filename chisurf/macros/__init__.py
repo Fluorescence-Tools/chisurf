@@ -237,15 +237,15 @@ def remove_datasets(
 
 
 def add_dataset(
-        setup: chisurf.experiments.reader.ExperimentReader = None,
+        expriment_reader: chisurf.experiments.reader.ExperimentReader = None,
         dataset: chisurf.base.Data = None,
         **kwargs
 ) -> None:
     cs = chisurf.cs
-    if setup is None:
-        setup = cs.current_setup
+    if expriment_reader is None:
+        expriment_reader = cs.current_experiment_reader
     if dataset is None:
-        dataset = setup.get_data(
+        dataset = expriment_reader.get_data(
             **kwargs
         )
     dataset_group = dataset if isinstance(
