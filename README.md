@@ -5,7 +5,6 @@
 [![Anaconda-Server Version](https://anaconda.org/tpeulen/chisurf/badges/version.svg)](https://anaconda.org/tpeulen/chisurf)
 [![DOI](https://zenodo.org/badge/149296509.svg)](https://zenodo.org/badge/latestdoi/149296509)
 
-
 # ChiSurf
 
 ChiSurf is a software package for the analysis of complex fluorescence data 
@@ -34,36 +33,37 @@ explicitly demand these functions.
 
 ### General features
 
-*  Scripting interface and open API
-*  Interactive analysis of multiple datasets
-*  Combined analysis of different experimental techniques
+  *  Scripting interface and open API
+  *  Interactive analysis of multiple datasets
+  *  Combined analysis of different experimental techniques
 
 ### Global analysis
 
-*  Analysis of multiple data sets by joint model function freely defined by the user
-*  Freely definable models for FCS analysis & adaptable models for fluorescence decays analysis
-*  Fluorescence decay analysis
-*  Global analysis of multiple fluorescence decays
-*  Generation of fluorescence decay histograms based on TTTR data
-*  Analysis of time-resolved anisotropy decays
-*  Analysis of FRET quenched fluorescence decays by physical model functions
+  *  Analysis of multiple data sets by joint model function freely defined by
+  the user
+  *  Freely definable models for FCS analysis & adaptable models for
+  fluorescence decays analysis
+  *  Fluorescence decay analysis
+  *  Global analysis of multiple fluorescence decays
+  *  Generation of fluorescence decay histograms based on TTTR data
+  *  Analysis of time-resolved anisotropy decays
+  *  Analysis of FRET quenched fluorescence decays by physical model functions
  
 [![DOI for citing FPS](https://img.shields.io/badge/DOI-10.1021/acs.jpcb.7b03441.2222-blue.svg)](http://pubs.acs.org/doi/abs/10.1021/acs.jpcb.7b03441)
 
-## Fluorescence correlation spectroscopy
+### Fluorescence correlation spectroscopy
 
-*  Analysis of FCS curves
-*  Correlation of TTTR-data by efficient correlation algorithms 
+  *  Analysis of FCS curves
+  *  Correlation of TTTR-data by efficient correlation algorithms 
 [![DOI for citing FPS](https://img.shields.io/badge/DOI-10.1364/OE.11.003583.2222-blue.svg)](https://doi.org/10.1364/OE.11.003583)
 
-## Simulation of fluorescence observables
+### Simulation of fluorescence observables
 
-*  Kappa2 distributions based on residual anisotropies 
-*  Simulation of fluorescence quenching in protein by aromatic amino acids 
-[![DOI for citing FPS](https://img.shields.io/badge/DOI-10.1021/acs.jpcb.7b03441.2222-blue.svg)](http://pubs.acs.org/doi/abs/10.1021/acs.jpcb.7b03441)
-*  Simulation of FRET rate constant distributions based on accessible volumes
+  *  Kappa2 distributions based on residual anisotropies 
+  *  Simulation of fluorescence quenching in protein by aromatic amino acids 
+  *  Simulation of FRET rate constant distributions based on accessible volumes
 
-# Download
+## Download
 
 ChiSurf is available as a compiled Windows installation file. By downloading and using ChiSurf, you agree with the 
 following terms:
@@ -73,31 +73,31 @@ any event, be held liable for any claim, damages or other liability arising from
 are not allowed to redistribute any or all of the code, in any manner to other parties. The downloaded code is for 
 your use only. ChiSurf is provided free of charge to both academic and commercial users.
 
-## Windows
+### Windows
 
-*  [19.07.08](https://github.com/Fluorescence-Tools/ChiSurf/releases/download/Stable/chisurf_19.07.09-windows.exe)
-*  [17.03.24](https://github.com/Fluorescence-Tools/ChiSurf/releases/download/17.03.24/windows_17.03.24.exe)
-*  [Legacy](https://drive.google.com/open?id=1GT8i_ZVnUXCIf_GBhk3TaS-T3DRhWHD2)
+  *  [19.07.08](https://github.com/Fluorescence-Tools/ChiSurf/releases/download/Stable/chisurf_19.07.09-windows.exe)
+  *  [17.03.24](https://github.com/Fluorescence-Tools/ChiSurf/releases/download/17.03.24/windows_17.03.24.exe)
+  *  [Legacy](https://drive.google.com/open?id=1GT8i_ZVnUXCIf_GBhk3TaS-T3DRhWHD2)
 
-## MacOS
+### MacOS
 
-*  [19.07.08](https://github.com/Fluorescence-Tools/ChiSurf/releases/download/Stable/chisurf_19.07.08-macos.dmg)
-*  [17.03.24](https://github.com/Fluorescence-Tools/ChiSurf/releases/download/17.03.24/macos_17.03.24.zip)
+  *  [19.07.08](https://github.com/Fluorescence-Tools/ChiSurf/releases/download/Stable/chisurf_19.07.08-macos.dmg)
+  *  [17.03.24](https://github.com/Fluorescence-Tools/ChiSurf/releases/download/17.03.24/macos_17.03.24.zip)
 
-## Linux
+### Linux
 
 Linux users with snap scan simply install ChiSurf using snap.
 
 [![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-white.svg)](https://snapcraft.io/chisurf)
 
-# Support
+## Support
 
 Please submit feature requests, questions, and bugs as GitHub issues. General questions are addressed in the Google
 group linked below.
 
 [Group](https://groups.google.com/d/forum/chisurf-software)
 
-# References
+## References
 
 1.  Peulen T, Opanasyuk O, Seidel C. Combining Graphical and Analytical Methods with Molecular Simulations To Analyze 
 Time-Resolved FRET Measurements of Labeled Macromolecules Accurately. J Phys Chem B. 2017;121(35):8211-8241.
