@@ -127,7 +127,7 @@ setup(
         'numba',
         'scipy',
         'pyqtgraph',
-        'sympy',
+        #'sympy',
         'PyYAML',
         'tables',
         'numexpr',

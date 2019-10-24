@@ -15,7 +15,7 @@ dependencies:
     - numpy
     - numba
     - scipy
-    - sympy
+    #- sympy
     - emcee
     - numexpr
     - pytables
