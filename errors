@@ -1,0 +1,16 @@
+
+
+------
+/Users/tpeulen/miniconda3/envs/chisurf/bin/python /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/gui.py
+loading filename:  /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/settings/chisurf.yaml
+objc[12114]: Class FIFinderSyncExtensionHost is implemented in both /System/Library/PrivateFrameworks/FinderKit.framework/Versions/A/FinderKit (0x7fff92e463d8) and /System/Library/PrivateFrameworks/FileProvider.framework/OverrideBundles/FinderSyncCollaborationFileProviderOverride.bundle/Contents/MacOS/FinderSyncCollaborationFileProviderOverride (0x1339c1f50). One of the two will be used. Which one is undefined.
+/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/PlotDataItem.py:533: RuntimeWarning: invalid value encountered in log10
+  y = np.log10(y)
+Traceback (most recent call last):
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/plots/lineplot/lineplot.py", line 241, in SetDensity
+    self.parent.update_all()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/plots/lineplot/lineplot.py", line 518, in update_all
+    y=data_y[idx]
+IndexError: index 255 is out of bounds for axis 0 with size 255
+-------
+

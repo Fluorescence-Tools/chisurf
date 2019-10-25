@@ -168,7 +168,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
     def update(self, *args):
         self.setWindowTitle(self.fit.name)
         QtWidgets.QMdiSubWindow.update(self, *args)
-        self.tw.update(*args)
+        self.plot_tab_widget.update(*args)
 
     def __init__(
             self,
@@ -190,19 +190,13 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         self.close_confirm = close_confirm
 
         layout = self.layout()
-        self.tw = QtWidgets.QTabWidget()
-        self.tw.setTabShape(QtWidgets.QTabWidget.Triangular)
-        self.tw.setTabPosition(QtWidgets.QTabWidget.South)
-        self.tw.currentChanged.connect(self.on_change_plot)
-        layout.addWidget(self.tw)
+        self.plot_tab_widget = QtWidgets.QTabWidget()
+        layout.addWidget(self.plot_tab_widget)
 
         self.current_plt_ctrl = QtWidgets.QWidget(self)
         self.current_plt_ctrl.hide()
 
         plots = list()
-        print(fit.model.plot_classes)
-        print(fit)
-        print(kwargs)
         for plot_class, kwargs in fit.model.plot_classes:
             plot = plot_class(
                 fit,
@@ -210,7 +204,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             )
             plot.pltControl.hide()
             plots.append(plot)
-            self.tw.addTab(plot, plot.name)
+            self.plot_tab_widget.addTab(plot, plot.name)
             control_layout.addWidget(plot.pltControl)
 
         fit.plots = plots
@@ -218,9 +212,10 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             f.plots = plots
 
         self.on_change_plot()
+        self.plot_tab_widget.currentChanged.connect(self.on_change_plot)
 
     def on_change_plot(self):
-        idx = self.tw.currentIndex()
+        idx = self.plot_tab_widget.currentIndex()
         self.current_plt_ctrl.hide()
         self.current_plt_ctrl = self.fit.plots[idx].pltControl
         self.current_plt_ctrl.show()

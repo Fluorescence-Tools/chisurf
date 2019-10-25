@@ -66,7 +66,8 @@ class ParameterScanWidget(
     ) -> None:
         p_min = float(self.doubleSpinBox.value())
         p_max = float(self.doubleSpinBox_2.value())
-        v = self.selected_parameter.value
+        _, name = self.selected_parameter
+        v = self.model.parameter_dict[name].value
         v_min = (1. - p_min) * v
         v_max = (1. + p_max) * v
         n_steps = int(self.spinBox.value())

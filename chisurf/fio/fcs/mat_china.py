@@ -7,7 +7,7 @@ import numpy as np
 from . import util
 
 
-def open_china_mat(
+def fcs_read_china_mat(
         filename: str,
         verbose: bool = False
 ) -> List[Dict]:
@@ -61,14 +61,14 @@ def open_china_mat(
             )
             correlations.append(
                 {
-                    'measurement_id'        : "%s_%s" % (correlation_key, measurement_number),
-                    'correlation_time'      : correlation_time,
-                    'correlation_amplitude' : correlation_amplitude,
-                    'weights'               : weights,
-                    'acquisition_time'      : aquisition_time,
-                    'mean_count_rate'       : mean_count_rate,
-                    'intensity_trace_time'  : intensity_time,
-                    'intensity_trace'       : intensity,
+                    'measurement_id': "%s_%s" % (correlation_key, measurement_number),
+                    'correlation_time': correlation_time,
+                    'correlation_amplitude': correlation_amplitude,
+                    'weights': weights,
+                    'acquisition_time': aquisition_time,
+                    'mean_count_rate': mean_count_rate,
+                    'intensity_trace_time': intensity_time,
+                    'intensity_trace': intensity,
                 }
             )
     return correlations

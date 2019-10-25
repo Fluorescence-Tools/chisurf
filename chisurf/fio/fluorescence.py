@@ -1,7 +1,7 @@
 from __future__ import annotations
-
 from typing import Tuple
 
+import os
 import numpy as np
 
 import chisurf.fluorescence
@@ -207,9 +207,44 @@ def read_fcs_kristine(
 
     :return:
     """
-    r = chisurf.fio.fcs.fcs_kristine.read_fcs_kristine(
+    r = chisurf.fio.fcs.cor_kristine.fcs_read_kristine(
         filename=filename,
         verbose=verbose
+    )
+    d = chisurf.experiments.data.DataCurve(
+        setup=experiment_reader,
+        name=filename
+    )
+    x = r[0]['correlation_time']
+    y = r[0]['correlation_amplitude']
+    ey = 1. / r[0]['weights']
+    ex = np.ones_like(x)
+    d.set_data(
+        x=x,
+        y=y,
+        ex=ex,
+        ey=ey
+    )
+    return chisurf.experiments.data.ExperimentDataCurveGroup([d])
+
+
+def read_fcs_sin(
+        filename: str,
+        experiment_reader: chisurf.experiments.reader.ExperimentReader = None,
+        verbose=chisurf.verbose
+) -> chisurf.experiments.data.ExperimentDataCurveGroup:
+    """Uses either the error provided by the correlator (4. column)
+    or calculates the error based on the correlation curve,
+    the aquisition time and the count-rate.
+
+    :param experiment_reader:
+    :param filename:
+    :param verbose:
+
+    :return:
+    """
+    r = chisurf.fio.fcs.sin_correlator_com.open_sin_fcs(
+        filename=filename
     )
     d = chisurf.experiments.data.DataCurve(
         setup=experiment_reader,
@@ -233,13 +268,16 @@ def read_fcs_china_mat(
         experiment_reader: chisurf.experiments.reader.ExperimentReader = None,
         verbose=chisurf.verbose
 ) -> chisurf.experiments.data.ExperimentDataCurveGroup:
-    ds = chisurf.fio.fcs.read_mat_china.open_china_mat(
+    ds = chisurf.fio.fcs.mat_china.fcs_read_china_mat(
         filename=filename,
         verbose=verbose
     )
     data_sets = list()
     for r in ds:
-        name = r['measurement_id'] + "_" + filename
+        root, ext = os.path.splitext(
+            os.path.basename(filename)
+        )
+        name = root + "_" + r['measurement_id']
         d = chisurf.experiments.data.DataCurve(
             setup=experiment_reader,
             name=name
@@ -265,7 +303,7 @@ def read_fcs_alv(
         experiment_reader: chisurf.experiments.reader.ExperimentReader = None,
         verbose=chisurf.verbose
 ) -> chisurf.experiments.data.ExperimentDataCurveGroup:
-    ds = chisurf.fio.fcs.read_fcs_read_asc_alv.fcs_read_asc(
+    ds = chisurf.fio.fcs.asc_alv.fcs_read_asc(
         filename
     )
     data_sets = list()
