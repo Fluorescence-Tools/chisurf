@@ -257,7 +257,11 @@ class FittingParameterWidget(QtWidgets.QWidget):
             tooltip = " linked to " + parameter_name
             chisurf.run(
                 "cs.current_fit.model.parameters_all_dict['%s'].link = chisurf.fits[%s].model.parameters_all_dict['%s']" %
-                (self.name, fit_idx, parameter_name)
+                (
+                    self.fitting_parameter.name,
+                    fit_idx,
+                    parameter_name
+                )
             )
             self.widget_link.setToolTip(tooltip)
             self.widget_link.setChecked(True)
@@ -462,7 +466,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
         self.blockSignals(False)
 
     def finalize(self, *args):
-        super(FittingParameterWidget, self).update(*args)
+        super().update(*args)
         self.blockSignals(True)
 
         # Update value of widget
