@@ -137,8 +137,13 @@ class Fit(
     @property
     def weighted_residuals(
             self
-    ) -> np.array:
-        return self.model.weighted_residuals
+    ) -> chisurf.curve.Curve:
+        wres_x, _ = self.model[self.xmin:self.xmax]
+        wres_y = self.model.weighted_residuals
+        return chisurf.curve.Curve(
+            x=wres_x,
+            y=wres_y
+        )
 
     @property
     def chi2(
@@ -228,8 +233,12 @@ class Fit(
         :return:
         """
         return {
-            'model': self.model,
-            'data': self.data
+            'model': chisurf.curve.Curve(
+                x=self.model.x[self.xmin:self.xmax],
+                y=self.model.y[self.xmin:self.xmax]
+            ),
+            'data': self.data,
+            'weighted residuals': self.weighted_residuals
         }
 
     def get_chi2(
@@ -272,7 +281,7 @@ class Fit(
         self.model.save(filename + '.json')
         if file_type == 'txt':
             csv = chisurf.fio.ascii.Csv()
-            wr = self.weighted_residuals
+            wr = self.weighted_residuals.y
             xmin, xmax = self.xmin, self.xmax
             x, m = self.model[xmin:xmax]
             csv.save(
@@ -420,7 +429,7 @@ class FitGroup(
     @property
     def weighted_residuals(
             self
-    ) -> np.ndarray:
+    ) -> chisurf.curve.Curve:
         return self.selected_fit.weighted_residuals
 
     @property

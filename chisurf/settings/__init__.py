@@ -32,7 +32,6 @@ parameter = cs_settings['parameter']
 fitting = cs_settings['fitting']
 fret = cs_settings['fret']
 tcspc = cs_settings['tcspc']
-pyqtgraph_settings = gui['plot']["pyqtgraph"]
 package_directory = os.path.dirname(os.path.abspath(__file__))
 eps = sys.float_info.epsilon
 working_path = ''
@@ -43,11 +42,6 @@ style_sheet_file = os.path.join(
     gui['style_sheet']
 )
 
-# for setting in pyqtgraph_settings:
-#     pg.setConfigOption(
-#         setting,
-#         gui['plot']['pyqtgraph'][setting]
-#     )
 
 with open(os.path.join(
         package_directory,
