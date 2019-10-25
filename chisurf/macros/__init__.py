@@ -281,7 +281,7 @@ def save_fits(
 def close_fit(
         idx: int = None
 ):
-    cs = mfm.cs
+    cs = chisurf.cs
     if idx is None:
         sub_window = cs.mdiarea.currentSubWindow()
         for i, w in enumerate(chisurf.fit_windows):
@@ -306,7 +306,7 @@ def change_selected_fit_of_group(
     """
     cs = chisurf.cs
     cs.current_fit.model.hide()
-    cs.current_fit.current_fit = selected_fit
+    cs.current_fit.selected_fit = selected_fit
     cs.current_fit.update()
     cs.current_fit.model.show()
 
