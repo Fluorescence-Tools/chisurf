@@ -5,7 +5,7 @@ import numpy as np
 from . util import fcs_weights
 
 
-def save_fcs_kristine(
+def fcs_write_kristine(
         filename: str,
         correlation_amplitude: np.ndarray,
         correlation_time: np.ndarray,
@@ -60,7 +60,7 @@ def save_fcs_kristine(
     )
 
 
-def read_fcs_kristine(
+def fcs_read_kristine(
         filename: str,
         verbose: bool
 ) -> List[Dict]:

@@ -5,28 +5,18 @@ import os
 
 import yaml
 from numpy import *
-# from collections import defaultdict
-# import sympy
-# import sympy.printing.latex
-# import sympy.parsing.sympy_parser
 from re import Scanner
 
 from qtpy import QtCore, QtWidgets, QtSvg
 
+import chisurf.fio
 import chisurf.decorators
 import chisurf.widgets
 import chisurf.parameter
-import chisurf.fio
+import chisurf.fitting.widgets
 from chisurf.models.model import ModelWidget, ModelCurve
 from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
 
-#
-# class GenerateSymbols(defaultdict):
-#
-#     def __missing__(self, key):
-#         print(key)
-#         return sympy.Symbol(key)
-#
 
 class ParseFormula(
     FittingParameterGroup
@@ -161,9 +151,6 @@ class ParseFormulaWidget(
             n_columns = chisurf.settings.gui['fit_models']['n_columns']
         self.n_columns = n_columns
 
-        self.actionFormulaChanged.triggered.connect(self.onEquationChanged)
-        self.actionModelChanged.triggered.connect(self.onModelChanged)
-
         self._models = {}
         if model_file is None:
             model_file = os.path.join(
@@ -175,9 +162,13 @@ class ParseFormulaWidget(
 
         if model_name is None:
             model_name = list(self._models)[0]
+
         self.model_name = model_name
         self.svg_equation = QtSvg.QSvgWidget()
         self.verticalLayout.addWidget(self.svg_equation)
+
+        self.actionFormulaChanged.triggered.connect(self.onEquationChanged)
+        self.actionModelChanged.triggered.connect(self.onModelChanged)
 
     def load_model_file(self, filename):
         with chisurf.fio.zipped.open_maybe_zipped(
@@ -224,35 +215,16 @@ class ParseFormulaWidget(
             "\n".join(
                 [
                     "cs.current_fit.model.parse.func = '%s'" % function_str,
-                    "cs.current_fit.update()"
                 ]
             )
         )
+        self.model.fit.update()
         try:
             ivs = self.models[self.model_name]['initial']
             for key in ivs.keys():
                 self.model.parameter_dict[key].value = ivs[key]
-        except AttributeError:
+        except (AttributeError, KeyError):
             print("No initial values")
-
-        #
-        # # d = GenerateSymbols()
-        # print(function_str)
-        # try:
-        #     #expr = eval(function_str, d)
-        #     tex = sympy.printing.latex(
-        #         sympy.parsing.sympy_parser.parse_expr(
-        #             function_str
-        #         )
-        #     )
-        #     print(tex)
-        #     self.svg_equation.load(
-        #         chisurf.widgets.tex2svg(
-        #             tex
-        #         )
-        #     )
-        # except:
-        #     print("erre")
 
     def onModelChanged(self):
         func = self.models[self.model_name]['equation']
@@ -271,7 +243,13 @@ class ParseFormulaWidget(
         chisurf.widgets.clear_layout(layout)
         n_columns = self.n_columns
         row = 1
-        for i, p in enumerate(self.model.parameters):
+
+        for i, k in enumerate(
+            sorted(
+                self.model.parameters_all_dict.keys()
+            )
+        ):
+            p = self.model.parameters_all_dict[k]
             pw = chisurf.fitting.widgets.make_fitting_parameter_widget(
                 fitting_parameter=p
             )

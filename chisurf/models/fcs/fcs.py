@@ -19,12 +19,11 @@ class ParseFCSWidget(
     plot_classes = [
         (
             plots.LinePlot, {
-                'scale_x': 'lin',
-                'd_scaley': 'log',
+                'scale_x': 'log',
+                'd_scaley': 'lin',
                 'r_scaley': 'lin',
                 'x_label': 'x',
-                'y_label': 'y',
-                'plot_irf': True
+                'y_label': 'y'
             }
         ),
         (plots.FitInfo, {}),
