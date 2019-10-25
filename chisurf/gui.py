@@ -673,7 +673,7 @@ def gui():
               os.path.dirname(
                   __file__
               ),
-              './settings/gui/styles/night.qss'
+              './settings/gui/styles/day.qss'
           ),
           mode='r'
       ).read()
