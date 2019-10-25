@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import os
-import numpy as np
+import sys
 import yaml
 import json
-import pyqtgraph as pg
+#import pyqtgraph as pg
 
 #######################################################
 #        SETTINGS  & CONSTANTS                        #
@@ -34,7 +34,7 @@ fret = cs_settings['fret']
 tcspc = cs_settings['tcspc']
 pyqtgraph_settings = gui['plot']["pyqtgraph"]
 package_directory = os.path.dirname(os.path.abspath(__file__))
-eps = np.sqrt(np.finfo(float).eps)
+eps = sys.float_info.epsilon
 working_path = ''
 
 style_sheet_file = os.path.join(
@@ -43,11 +43,11 @@ style_sheet_file = os.path.join(
     gui['style_sheet']
 )
 
-for setting in pyqtgraph_settings:
-    pg.setConfigOption(
-        setting,
-        gui['plot']['pyqtgraph'][setting]
-    )
+# for setting in pyqtgraph_settings:
+#     pg.setConfigOption(
+#         setting,
+#         gui['plot']['pyqtgraph'][setting]
+#     )
 
 with open(os.path.join(
         package_directory,

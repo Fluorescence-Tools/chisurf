@@ -11,7 +11,6 @@ import numpy as np
 import tables
 
 import chisurf
-import chisurf.settings as mfm
 
 
 class Photon(tables.IsDescription):

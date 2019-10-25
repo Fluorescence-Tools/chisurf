@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-from qtpy import QtWidgets
-
 import chisurf.fio.ascii
-import chisurf.fio.widgets
 import chisurf.widgets
 import chisurf.fluorescence.fcs
 import chisurf.experiments.data
@@ -45,6 +42,16 @@ class FCS(
                 filename=filename,
                 verbose=verbose
             )
+        elif self.experiment_reader == 'China-mat':
+            r = chisurf.fio.fluorescence.read_fcs_china_mat(
+                filename=filename,
+                verbose=verbose
+            )
+        elif self.experiment_reader == 'ALV':
+            r = chisurf.fio.fluorescence.read_fcs_alv(
+                filename=filename,
+                verbose=verbose
+            )
         else:
             r = chisurf.fio.fluorescence.read_fcs(
                 filename=filename,
@@ -54,41 +61,5 @@ class FCS(
             )
         r.experiment = self
         return r
-
-
-class FCSController(
-    reader.ExperimentReaderController,
-    QtWidgets.QWidget
-):
-
-    @property
-    def filename(
-            self
-    ) -> str:
-        return self.get_filename()
-
-    def __init__(
-            self,
-            file_type='Kristine files (*.cor)',
-            *args,
-            **kwargs
-    ):
-        super().__init__(*args, **kwargs)
-        self.file_type = file_type
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        self.layout = layout
-        self.layout.addWidget(
-            chisurf.fio.widgets.CsvWidget()
-        )
-
-    def get_filename(
-            self
-    ) -> str:
-        return chisurf.widgets.get_filename(
-                'FCS-CSV files',
-                file_type=self.file_type
-            )
 
 

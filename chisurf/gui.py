@@ -476,19 +476,41 @@ class Main(QtWidgets.QMainWindow):
                 (
                     experiments.fcs.FCS(
                         name='FCS-CSV',
-                        experiment=fcs
+                        experiment=fcs,
+                        experiment_reader='csv'
                     ),
-                    experiments.fcs.FCSController(
+                    chisurf.experiments.widgets.FCSController(
                         file_type='All files (*.*)'
                     )
                 ),
                 (
                     experiments.fcs.FCS(
                         name='Kristine',
-                        experiment=fcs
+                        experiment=fcs,
+                        experiment_reader='Kristine'
                     ),
-                    experiments.fcs.FCSController(
+                    chisurf.experiments.widgets.FCSController(
                         file_type='Kristine files (*.cor)'
+                    )
+                ),
+                (
+                    experiments.fcs.FCS(
+                        name='China-mat',
+                        experiment=fcs,
+                        experiment_reader='China-mat'
+                    ),
+                    chisurf.experiments.widgets.FCSController(
+                        file_type='Kristine files (*.mat)'
+                    )
+                ),
+                (
+                    experiments.fcs.FCS(
+                        name='ALV',
+                        experiment=fcs,
+                        experiment_reader='ALV'
+                    ),
+                    chisurf.experiments.widgets.FCSController(
+                        file_type='Kristine files (*.asc)'
                     )
                 )
             ]
@@ -645,7 +667,18 @@ def gui():
     chisurf.console.history_widget = win.plainTextEditHistory
     chisurf.cs = win
     win.init_setups()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    app.setStyleSheet(
+      open(
+          os.path.join(
+              os.path.dirname(
+                  __file__
+              ),
+              './settings/gui/styles/night.qss'
+          ),
+          mode='r'
+      ).read()
+    )
+    #app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
     win.show()
     return app

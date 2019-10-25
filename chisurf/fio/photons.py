@@ -40,17 +40,23 @@ def read_burst_ids(
         stack_files: bool = True
 ) -> np.array:
     """
-    Reads Seidel-BID files and returns a list of numpy arrays. Each numpy array contains the indexes of the photons of
-    the burst. These indexes can be used to slice a photon-stream.
+    Reads Seidel-BID files and returns a list of numpy
+    arrays. Each numpy array contains the indexes of
+    the photons of the burst. These indexes can be used
+    to slice a photon-stream.
 
-    Seidel BID-files only contain the first and the last photon of the Burst and not all photons of
-    the burst. Thus, the Seidel BID-files have to be converted to array-type objects containing all
-    photons of the burst to be able to use standard Python slicing syntax to select photons.
+    Seidel BID-files only contain the first and the
+    last photon of the Burst and not all photons of
+    the burst. Thus, the Seidel BID-files have to be
+    converted to array-type objects containing all
+    photons of the burst to be able to use standard
+    Python slicing syntax to select photons.
 
     :param filenames:
         filename pointing to a Seidel BID-file
     :param stack_files: bool
-        If stack is True the returned list is stacked and the numbering of the bursts is made continuous.
+        If stack is True the returned list is stacked
+        and the numbering of the bursts is made continuous.
         This is the default behavior.
     :return:
 

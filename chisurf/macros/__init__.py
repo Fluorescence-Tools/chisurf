@@ -298,6 +298,12 @@ def close_fit(
 def change_selected_fit_of_group(
     selected_fit: int
 ) -> None:
+    """
+    Changes the currently selected fit
+
+    :param selected_fit:
+    :return:
+    """
     cs = chisurf.cs
     cs.current_fit.model.hide()
     cs.current_fit.current_fit = selected_fit
@@ -309,6 +315,15 @@ def link_fit_group(
         fitting_parameter_name: str,
         csi: int = 0
 ) -> None:
+    """
+    This macro links the parameters with a name
+    specified by fitting_parameter_name within
+    a FitGroup
+
+    :param fitting_parameter_name:
+    :param csi:
+    :return:
+    """
     cs = chisurf.cs
     if csi == 2:
         s = cs.current_fit.model.parameters_all_dict[fitting_parameter_name]

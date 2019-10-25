@@ -6,7 +6,7 @@ from typing import Tuple
 
 import numba as nb
 import numpy as np
-from numpy import linalg as linalg
+from numpy import linalg
 
 
 def kappasqAllDelta(

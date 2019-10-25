@@ -1,57 +1,9 @@
-import ctypes as C
-import platform
-import os
 import numpy as np
 import numba as nb
 
 import chisurf
 import LabelLib as ll
 
-# b, o = platform.architecture()
-#
-# path = os.path.join(
-#     os.path.dirname(
-#         os.path.abspath(__file__)
-#     )
-#     ,
-#     'dll'
-# )
-#
-#
-# if 'Windows' in o:
-#     if '32' in b:
-#         fpslibrary = 'fpsnative.win32.dll'
-#     elif '64' in b:
-#         fpslibrary = 'fpsnative.win64.dll'
-# else:
-#     if platform.system() == 'Linux':
-#         fpslibrary = 'libfpsnative.linux64.so'
-#     else:
-#         fpslibrary = 'libav.dylib'
-#
-# _fps = np.ctypeslib.load_library(
-#     fpslibrary,
-#     path
-# )
-#
-# _fps.calculate1R.restype = C.c_int
-# _fps.calculate1R.argtypes = [
-#     C.c_double, C.c_double, C.c_double,
-#     C.c_int, C.c_double,
-#     C.POINTER(C.c_double), C.POINTER(C.c_double), C.POINTER(C.c_double),
-#     C.POINTER(C.c_double), C.c_int, C.c_double,
-#     C.c_double, C.c_int,
-#     C.POINTER(C.c_char)
-# ]
-# _fps.calculate3R.argtypes = [
-#     C.c_double, C.c_double, C.c_double, C.c_double, C.c_double,
-#     C.c_int, C.c_double,
-#     C.POINTER(C.c_double), C.POINTER(C.c_double), C.POINTER(C.c_double),
-#     C.POINTER(C.c_double), C.c_int, C.c_double,
-#     C.c_double, C.c_int,
-#     C.POINTER(C.c_char)
-# ]
-#
 
 def calculate_1_radius(
         l,
@@ -260,44 +212,7 @@ def calculate_3_radius(l, w, r1, r2, r3, atom_i, x, y, z, vdw, **kwargs):
     :return:
 
     """
-    # verbose = kwargs.get('verbose', chisurf.settings['verbose'])
-    # linkersphere = kwargs.get('linkersphere', chisurf.settings['fps']['allowed_sphere_radius'])
-    # linknodes = kwargs.get('linknodes', chisurf.settings['fps']['linknodes'])
-    # vdw_max = kwargs.get('vdw_max', chisurf.settings['fps']['vdw_max'])
     dg = kwargs.get('dg', chisurf.settings['fps']['simulation_grid_resolution'])
-    #
-    # if verbose:
-    #     print("AV: calculate3R")
-    # n_atoms = len(vdw)
-    #
-    # npm = int(np.floor(l / dg))
-    # ng = 2 * npm + 1
-    # ng3 = ng * ng * ng
-    # density = np.zeros(ng3, dtype=np.uint8)
-    # x0, y0, z0 = x[atom_i], y[atom_i], z[atom_i]
-    # r0 = np.array([x0, y0, z0])
-    #
-    # x = np.ascontiguousarray(x)
-    # y = np.ascontiguousarray(y)
-    # z = np.ascontiguousarray(z)
-    # vdw = np.ascontiguousarray(vdw)
-    #
-    # _x = x.ctypes.data_as(C.POINTER(C.c_double))
-    # _y = y.ctypes.data_as(C.POINTER(C.c_double))
-    # _z = z.ctypes.data_as(C.POINTER(C.c_double))
-    # _vdw = vdw.ctypes.data_as(C.POINTER(C.c_double))
-    #
-    # _density = density.ctypes.data_as(C.POINTER(C.c_char))
-    # n = _fps.calculate3R(l, w, r1, r2, r3, atom_i, dg, _x, _y, _z, _vdw,
-    #                      n_atoms, vdw_max, linkersphere, linknodes, _density)
-    # if verbose:
-    #     print("Number of atoms: %i" % n_atoms)
-    #     print("Attachment atom: %s" % r0)
-    #     print("Points in AV: %i" % n)
-    #
-    # density = density.astype(np.float32)
-    # density = density.reshape([ng, ng, ng])
-    # return density, ng, r0
     xyzr = np.vstack(
         [x, y, z, vdw]
     ).T

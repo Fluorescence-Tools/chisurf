@@ -32,10 +32,6 @@ import os
 import urllib.request
 import numpy as np
 
-# Removed for now because mmcif does not exist for Windows
-#import mmcif.fio.PdbxReader
-
-import chisurf.settings as mfm
 import chisurf
 import chisurf.common
 

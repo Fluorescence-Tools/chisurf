@@ -2,13 +2,14 @@ from __future__ import annotations
 from typing import List, Tuple
 
 import numpy as np
-from qtpy import QtWidgets, QtGui
 
 import chisurf.parameter
 import chisurf.curve
-from chisurf.fitting.parameter import FittingParameterGroup
 import chisurf.fitting.widgets
 import chisurf.plots
+
+from qtpy import QtWidgets, QtGui
+from chisurf.fitting.parameter import FittingParameterGroup
 
 
 class Model(
