@@ -11,7 +11,6 @@ import chisurf.math.datatools
 from chisurf.plots import plotbase
 
 plot_settings = chisurf.settings.gui['plot']
-pyqtgraph_settings = chisurf.settings.pyqtgraph_settings
 colors = plot_settings['colors']
 color_scheme = chisurf.settings.colors
 lw = plot_settings['line_width']

@@ -121,7 +121,7 @@ class FitTests(unittest.TestCase):
         )
         self.assertEqual(
             np.allclose(
-                fit.weighted_residuals,
+                fit.weighted_residuals.y,
                 np.array(
                     [2.1, 2.31311134, 2.95244537, 4.01800208,
                      5.50978148, 7.42778356, 9.77200832, 12.54245578,

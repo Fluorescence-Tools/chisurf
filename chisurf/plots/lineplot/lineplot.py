@@ -14,7 +14,6 @@ import chisurf.math.statistics
 from chisurf.plots import plotbase
 from pyqtgraph.dockarea import *
 
-pyqtgraph_settings = chisurf.settings.pyqtgraph_settings
 color_scheme = chisurf.settings.colors
 
 
@@ -45,11 +44,11 @@ class LinePlotControl(
         self.ymin = ymin
 
         self.actionUpdate_Plot.triggered.connect(parent.update_all)
-        self.checkBox.stateChanged[int].connect(self.SetLog)
-        self.checkBox_2.stateChanged[int].connect(self.SetLog)
-        self.checkBox_4.stateChanged[int].connect(self.SetLog)
-        self.checkBox_5.stateChanged[int].connect(self.SetReference)
-        self.checkBox_3.stateChanged[int].connect(self.SetDensity)
+        self.checkBox.stateChanged.connect(self.SetLog)
+        self.checkBox_2.stateChanged.connect(self.SetLog)
+        self.checkBox_4.stateChanged.connect(self.SetLog)
+        self.checkBox_5.stateChanged.connect(self.SetReference)
+        self.checkBox_3.stateChanged.connect(self.SetDensity)
 
     @property
     def plot_ftt(
@@ -299,9 +298,9 @@ class LinePlot(plotbase.Plot):
         d2 = Dock("a.corr.", size=(300, 80), hideTitle=hide_title)
         d3 = Dock("Fit", size=(300, 300), hideTitle=hide_title)
 
-        p1 = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])
-        p2 = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])
-        p3 = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])
+        p1 = pg.PlotWidget()
+        p2 = pg.PlotWidget()
+        p3 = pg.PlotWidget()
 
         d1.addWidget(p1)
         d2.addWidget(p2)
@@ -407,8 +406,7 @@ class LinePlot(plotbase.Plot):
             *args,
             **kwargs
     ):
-        fit = self.fit
-        curves = fit.get_curves()
+        curves = self.fit.get_curves()
         # Get parameters from plot-control
         plt_ctrl = self.pltControl
 
@@ -420,20 +418,21 @@ class LinePlot(plotbase.Plot):
         x_shift = plt_ctrl.x_shift
 
         # Model function
-        model_x, model_y = fit.model[fit.xmin:fit.xmax]
-        #model_x, model_y = curves['model'].x, curves['model'].y
-        model_x = np.copy(model_x) + x_shift
-        model_y = np.copy(model_y) + y_shift
+        model = curves['model']
+        model_x = np.copy(model.x) + x_shift
+        model_y = np.copy(model.y) + y_shift
 
         # Update fitting-region
-        data_y = self.fit.data.y
-        data_x = self.fit.data.x
-        #data_x, data_y = curves['data'].x, curves['data'].y
+        data = curves['data']
+        data_y = data.y
+        data_x = data.x
 
         data_x = np.copy(data_x) + x_shift
         data_y = np.copy(data_y) + y_shift
         # Weighted residuals + Autocorrelation
-        wres_y = fit.weighted_residuals
+        wres = curves['weighted residuals']
+        wres_y = wres.y
+
         if self.pltControl.is_density:
             data_y = data_y[1:]
             data_y /= np.diff(data_x)
@@ -443,8 +442,8 @@ class LinePlot(plotbase.Plot):
 
         # IRF
         try:
-            norm = fit.data.y.max() / fit.model.convolve.irf.y.max()
-            irf_y = fit.model.convolve.irf.y * norm
+            norm = self.fit.data.y.max() / self.fit.model.convolve.irf.y.max()
+            irf_y = self.fit.model.convolve.irf.y * norm
             irf_x = data_x
         except AttributeError:
             irf_y = np.ones(10)
@@ -452,13 +451,16 @@ class LinePlot(plotbase.Plot):
             if chisurf.verbose:
                 print("No instrument response to plot.")
 
-        xmin = max(
-            np.searchsorted(
-                data_x,
-                1e-12,
-                side='right'
-            ), self.fit.xmin
-        ) if data_log_x else self.fit.xmin
+        xmin = self.fit.xmin
+        if data_log_x:
+            xmin = max(
+                np.searchsorted(
+                    data_x,
+                    1e-12,
+                    side='right'
+                ), self.fit.xmin
+            )
+
         lb_min, ub_max = data_x[0], data_x[-1]
         lb, ub = data_x[xmin], data_x[self.fit.xmax]
         if data_log_x:
@@ -484,20 +486,21 @@ class LinePlot(plotbase.Plot):
             '         DW=%.4f'
             '     </span>'
             '</div>' % (
-                fit.xmin, fit.xmax,
-                fit.chi2r,
+                self.fit.xmin, self.fit.xmax,
+                self.fit.chi2r,
                 chisurf.math.statistics.durbin_watson(
-                    fit.weighted_residuals)
+                    wres.y
+                )
             )
         )
 
         # Reference-function
         if use_reference:
-            reference = fit.model.reference
+            reference = self.fit.model.reference
             if reference is None:
                 reference = np.ones_like(data_y)
                 print("WARNING: no reference curve provided by the model.")
-            model_y /= reference[fit.xmin:fit.xmax]
+            model_y /= reference[self.fit.xmin:self.fit.xmax]
             data_y /= reference
             mm = max(model_y)
             irf_y *= mm / max(irf_y)
@@ -565,15 +568,14 @@ class LinePlot(plotbase.Plot):
         lw = chisurf.settings.gui['plot']['line_width']
 
         self.residuals_plot.plot(
-            x=model_x,
-            y=wres_y,
+            x=wres.x,
+            y=wres.y,
             pen=pg.mkPen(colors['residuals'], width=lw),
             name='residues'
         )
-        ac_y = chisurf.math.signal.autocorr(wres_y)
         self.auto_corr_plot.plot(
-            x=model_x[1:],
-            y=ac_y[1:],
+            x=wres.x[1:],
+            y=chisurf.math.signal.autocorr(wres.y)[1:],
             pen=pg.mkPen(colors['auto_corr'], width=lw),
             name='residues'
         )

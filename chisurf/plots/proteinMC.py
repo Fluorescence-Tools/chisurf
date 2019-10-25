@@ -9,7 +9,6 @@ from pyqtgraph.dockarea import DockArea, Dock
 import chisurf.settings
 from chisurf.plots.plotbase import Plot
 
-pyqtgraph_settings = chisurf.settings.gui['plot']["pyqtgraph"]
 colors = chisurf.settings.gui['plot']['colors']
 color_scheme = chisurf.settings.colors
 
@@ -35,10 +34,10 @@ class ProteinMCPlot(Plot):
         d3 = Dock("Energy")
         d4 = Dock("FRET")
 
-        p1 = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])
-        p2 = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])
-        p3 = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])
-        p4 = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])
+        p1 = pg.PlotWidget()
+        p2 = pg.PlotWidget()
+        p3 = pg.PlotWidget()
+        p4 = pg.PlotWidget()
 
         d1.addWidget(p1)
         d2.addWidget(p2)
