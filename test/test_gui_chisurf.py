@@ -75,7 +75,5 @@ class Tests(unittest.TestCase):
         QTest.mouseClick(cs.pushButton_2, Qt.LeftButton)
 
 
-
-
 if __name__ == "__main__":
     unittest.main()

@@ -8,7 +8,6 @@ import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 
 import chisurf.settings
-import chisurf.settings as mfm
 import chisurf.experiments.widgets
 import chisurf.widgets
 
@@ -244,7 +243,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
                 QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No
             )
             if reply == QtWidgets.QMessageBox.Yes:
-                mfm.console.execute('chisurf.macros.close_fit()')
+                chisurf.console.execute('chisurf.macros.close_fit()')
             else:
                 event.ignore()
         else:
@@ -458,7 +457,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
         self.widget_link.setCheckState(QtCore.Qt.Checked)
         self.widget_value.setEnabled(False)
         chisurf.run(
-            "chisurf.macros.fitting_parameter_name(%s, %s)" % (
+            "chisurf.macros.link_fit_group('%s', %s)" % (
                 self.fitting_parameter.name,
                 cs
             )

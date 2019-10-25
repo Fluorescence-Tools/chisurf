@@ -14,12 +14,6 @@ from . import dynamic
 from . import static
 from . import functions
 from . import fps
-
-# import chisurf.fluorescence.av.dynamic
-# import chisurf.fluorescence.av.static
-# import chisurf.fluorescence.av.functions
-# import chisurf.fluorescence.av.fps
-
 from . static import calculate_1_radius, calculate_3_radius
 
 package_directory = os.path.dirname(__file__)

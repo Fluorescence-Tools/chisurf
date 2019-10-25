@@ -3,10 +3,11 @@ import itertools
 import numexpr as ne
 import numpy as np
 import tables
-from chisurf.fluorescence.av.dynamic import DiffusionSimulation
 
 import chisurf.settings
+
 from chisurf.curve import Curve
+from chisurf.fluorescence.av.dynamic import DiffusionSimulation
 from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 
 

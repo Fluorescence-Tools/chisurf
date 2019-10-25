@@ -8,8 +8,10 @@ import chisurf.fluorescence
 import chisurf.fluorescence.fcs
 import chisurf.fluorescence.tcspc
 import chisurf.experiments
+import chisurf.fio.fcs
 from chisurf.experiments import reader
 from chisurf.fio.ascii import Csv
+
 
 
 def read_tcspc_csv(
@@ -190,61 +192,6 @@ def read_fcs(
     return chisurf.experiments.data.ExperimentDataCurveGroup([d])
 
 
-def save_fcs_kristine(
-        filename: str,
-        correlation_amplitude: np.ndarray,
-        correlation_time: np.ndarray,
-        mean_countrate: float,
-        acquisition_time: float,
-        correlation_amplitude_uncertainty: np.ndarray = None,
-        verbose: bool = True
-) -> None:
-    """
-
-    :param filename: the filename
-    :param correlation_amplitude: an array containing the amplitude of the
-    correlation function
-    :param correlation_amplitude_uncertainty: an estimate for the
-    uncertainty of the correlation amplitude
-    :param correlation_time: an array containing the correlation times
-    :param mean_countrate: the mean countrate of the experiment in kHz
-    :param acquisition_time: the acquisition of the FCS experiment in
-    seconds
-    :return:
-    """
-    if verbose:
-        print("Saving correlation: %s" % filename)
-    col_1 = np.array(correlation_time)
-    col_2 = np.array(correlation_amplitude)
-    col_3 = np.zeros_like(correlation_amplitude)
-    col_3[0] = mean_countrate
-    col_3[1] = acquisition_time
-    if isinstance(
-            correlation_amplitude_uncertainty,
-            np.ndarray
-    ):
-        data = np.vstack(
-            [
-                col_1,
-                col_2,
-                col_3,
-                correlation_amplitude_uncertainty
-            ]
-        ).T
-    else:
-        data = np.vstack(
-            [
-                col_1,
-                col_2,
-                col_3
-            ]
-        ).T
-    np.savetxt(
-        filename,
-        data,
-    )
-
-
 def read_fcs_kristine(
         filename: str,
         experiment_reader: chisurf.experiments.reader.ExperimentReader = None,
@@ -260,40 +207,85 @@ def read_fcs_kristine(
 
     :return:
     """
-    csv = chisurf.fio.ascii.Csv(
-        skiprows=0,
-        use_header=False,
+    r = chisurf.fio.fcs.fcs_kristine.read_fcs_kristine(
         filename=filename,
         verbose=verbose
     )
-    data = csv.data
     d = chisurf.experiments.data.DataCurve(
         setup=experiment_reader,
         name=filename
     )
-
-    # In Kristine file-type
-    # First try to use experimental errors
-    x, y = data[0], data[1]
-    i = np.where(x > 0.0)
-    x = x[i]
-    y = y[i]
-    try:
-        w = 1. / data[3][i]
-    except IndexError:
-        # In case this doesnt work
-        # use calculated errors using count-rate and duration
-        try:
-            dur, cr = data[2, 0], data[2, 1]
-            w = chisurf.fluorescence.fcs.weights(x, y, dur, cr)
-        except IndexError:
-            # In case everything fails
-            # Use no errors at all but uniform weighting
-            w = np.ones_like(y)
+    x = r[0]['correlation_time']
+    y = r[0]['correlation_amplitude']
+    ey = 1. / r[0]['weights']
+    ex = np.ones_like(x)
     d.set_data(
         x=x,
         y=y,
-        ex=np.ones_like(x),
-        ey=1./w
+        ex=ex,
+        ey=ey
     )
     return chisurf.experiments.data.ExperimentDataCurveGroup([d])
+
+
+def read_fcs_china_mat(
+        filename: str,
+        experiment_reader: chisurf.experiments.reader.ExperimentReader = None,
+        verbose=chisurf.verbose
+) -> chisurf.experiments.data.ExperimentDataCurveGroup:
+    ds = chisurf.fio.fcs.read_mat_china.open_china_mat(
+        filename=filename,
+        verbose=verbose
+    )
+    data_sets = list()
+    for r in ds:
+        name = r['measurement_id'] + "_" + filename
+        d = chisurf.experiments.data.DataCurve(
+            setup=experiment_reader,
+            name=name
+        )
+        x = r['correlation_time']
+        y = r['correlation_amplitude']
+        ey = 1. / r['weights']
+        ex = np.ones_like(x)
+        d.set_data(
+            x=x,
+            y=y,
+            ex=ex,
+            ey=ey
+        )
+        data_sets.append(d)
+    return chisurf.experiments.data.ExperimentDataCurveGroup(
+        data_sets
+    )
+
+
+def read_fcs_alv(
+        filename: str,
+        experiment_reader: chisurf.experiments.reader.ExperimentReader = None,
+        verbose=chisurf.verbose
+) -> chisurf.experiments.data.ExperimentDataCurveGroup:
+    ds = chisurf.fio.fcs.read_fcs_read_asc_alv.fcs_read_asc(
+        filename
+    )
+    data_sets = list()
+    for r in ds:
+        name = r['measurement_id'] + "_" + filename
+        d = chisurf.experiments.data.DataCurve(
+            setup=experiment_reader,
+            name=name
+        )
+        x = r['correlation_time']
+        y = r['correlation_amplitude']
+        ey = 1. / r['weights']
+        ex = np.ones_like(x)
+        d.set_data(
+            x=x,
+            y=y,
+            ex=ex,
+            ey=ey
+        )
+        data_sets.append(d)
+    return chisurf.experiments.data.ExperimentDataCurveGroup(
+        data_sets
+    )

@@ -111,7 +111,7 @@ setup(
             '*.ui',
             '*.png',
             '*.svg',
-            '*.css',
+            '*.css', '*.qss'
             '*.csv',
             '*.npy',
             '*.dll',
