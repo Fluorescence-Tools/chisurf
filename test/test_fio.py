@@ -298,7 +298,6 @@ class Tests(unittest.TestCase):
                 d["files"],
                 reading_routine=d["routine"]
             )
-            print(d["files"])
             self.assertListEqual(
                 photons.filenames,
                 d["files"]

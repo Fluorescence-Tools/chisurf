@@ -41,7 +41,6 @@ class RemoveClashedFrames(QtWidgets.QWidget):
         return float(self.doubleSpinBox.value()) / 10.0
 
     def onRemoveClashes(self):
-        print("onRemoveClashes")
         target_filename = chisurf.widgets.save_file('H5-Trajectory file', 'H5-File (*.h5)')
         # target_filename = 'clash_dimer.h5'
         filename = self.trajectory_filename
@@ -69,9 +68,10 @@ class RemoveClashedFrames(QtWidgets.QWidget):
                 table.root.time.append(times)
 
     def onOpenTrajectory(self, filename=None):
-        print("onOpenTrajectory 1")
         if filename is None:
-            filename = chisurf.widgets.get_filename('Open H5-Model file', 'H5-files (*.h5)')
+            filename = chisurf.widgets.get_filename(
+                'Open H5-Model file', 'H5-files (*.h5)'
+            )
             self.trajectory_filename = filename
 
     @chisurf.decorators.init_with_ui(ui_filename="remove_clashes.ui")

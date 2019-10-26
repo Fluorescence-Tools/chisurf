@@ -207,6 +207,14 @@ class FittingParameterGroup(
     """
 
     @property
+    def parameter_bounds(
+            self
+    ) -> List[
+        Tuple[float, float]
+    ]:
+        return [pi.bounds for pi in self.parameters]
+
+    @property
     def parameters_all(
             self
     ) -> List[
@@ -215,12 +223,16 @@ class FittingParameterGroup(
         return self._parameters
 
     @property
-    def parameters_all_dict(self):
-        return dict([(p.name, p) for p in self.parameters_all])
+    def parameters(
+            self
+    ) -> List[
+        chisurf.fitting.parameter.FittingParameter
+    ]:
+        return [p for p in self.parameters_all if not (p.fixed or p.is_linked)]
 
     @property
-    def parameters(self) -> List[chisurf.parameter.Parameter]:
-        return self.parameters_all
+    def parameters_all_dict(self):
+        return dict([(p.name, p) for p in self.parameters_all])
 
     @property
     def aggregated_parameters(self):
