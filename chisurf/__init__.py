@@ -1,6 +1,9 @@
 from typing import List, Iterable
 import chisurf.settings as settings
 
+#import tensorflow as tf
+#tf_sess = tf.InteractiveSession()
+
 __version__ = settings.cs_settings['version']
 __name__ = settings.cs_settings['name']
 
@@ -17,7 +20,8 @@ def c(
 
     Example
     -------
-    >>> mfm.c(self.checkBox.stateChanged, models, self.checkBox.isChecked)
+    >>> import chisurf
+    >>> chisurf.c(self.checkBox.stateChanged, models, self.checkBox.isChecked)
     >>> cs.current_fit.model.update_rmsd=True
 
     :param t: The signal of the qt-widget

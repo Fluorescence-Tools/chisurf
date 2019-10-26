@@ -167,7 +167,6 @@ class FitTests(unittest.TestCase):
         )
 
         curves = fit.get_curves()
-        print(curves)
 
     def test_fit_data_setter(self):
         c_value = 3.1

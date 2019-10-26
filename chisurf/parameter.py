@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import List, TypeVar, Tuple, Type
 
 import numpy as np
+#import tensorflow as tf
 
 import chisurf.base
 import chisurf.decorators
@@ -48,7 +49,9 @@ class Parameter(
         self._bounds_on = bool(v)
 
     @property
-    def value(self) -> float:
+    def value(
+            self
+    ) -> float:
         """The value of the parameter.
 
         This value of the parameter considers links and
@@ -58,6 +61,7 @@ class Parameter(
 
         :return:
         """
+        #v = self._value.eval()
         v = self._value
         if callable(v):
             return v()
@@ -80,6 +84,7 @@ class Parameter(
             self,
             value: float
     ):
+        #self._value.load(value)
         self._value = value
         if self.is_linked:
             self.link.value = value
@@ -273,6 +278,8 @@ class Parameter(
         self._bounds_on = bounds_on
         self._link = link
         self._value = value
+        #self._value = tf.Variable(value)
+        #chisurf.tf_sess.run(tf.global_variables_initializer())
         self._lb = lb
         self._ub = ub
 

@@ -32,22 +32,6 @@ class Model(
         self.model_number = model_number
 
     @property
-    def parameters(
-            self
-    ) -> List[
-        chisurf.fitting.parameter.FittingParameter
-    ]:
-        return [p for p in self.parameters_all if not (p.fixed or p.is_linked)]
-
-    @property
-    def parameter_bounds(
-            self
-    ) -> List[
-        Tuple[float, float]
-    ]:
-        return [pi.bounds for pi in self.parameters]
-
-    @property
     def n_free(
             self
     ) -> int:
