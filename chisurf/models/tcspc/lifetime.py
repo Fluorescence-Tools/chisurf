@@ -297,6 +297,11 @@ class LifetimeModel(ModelCurve):
         super().finalize()
         self.lifetimes.update()
 
+    def get_curves(self):
+        d = super().get_curves()
+        d['IRF'] = self.convolve.irf
+        return d
+
     def decay(
             self,
             time: np.array

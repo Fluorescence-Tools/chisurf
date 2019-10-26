@@ -152,6 +152,14 @@ class ModelCurve(
             **kwargs
         )
 
+    def get_curves(self):
+        return {
+            'model': chisurf.curve.Curve(
+                x=self.model.x[self.xmin :self.xmax],
+                y=self.model.y[self.xmin :self.xmax]
+            )
+        }
+
     def __getitem__(
             self,
             key
