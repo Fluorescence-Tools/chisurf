@@ -272,8 +272,7 @@ class LinePlot(plotbase.Plot):
             y_label: str = 'y',
             plot_irf: bool = False,
             data_x: np.array = None,
-            data_y: np.array = None,
-            **kwargs
+            data_y: np.array = None
     ):
         super().__init__(fit)
 
@@ -370,33 +369,31 @@ class LinePlot(plotbase.Plot):
             data_plot.setLabel('left', y_label)
             data_plot.setLabel('bottom', x_label)
 
-        # Plotted lines
         lw = chisurf.settings.gui['plot']['line_width']
-        if self.plot_irf:
-            self.irf_curve = data_plot.plot(
-                x=[0.0],
-                y=[0.0],
-                pen=pg.mkPen(
-                    colors['irf'],
-                    width=lw
-                ), name='IRF'
+        curves = self.fit.get_curves()
+        lines = dict()
+        for i, curve_key in enumerate(curves.keys()):
+            if curve_key in ['weighted residuals', 'autocorrelation']:
+                continue
+            color = chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex']
+            lines[curve_key] = data_plot.plot(
+                x=[0.0], y=[0.0],
+                pen=pg.mkPen(color, width=lw),
+                name=curve_key
             )
-        self.data_curve = data_plot.plot(
-            x=[0.0],
-            y=[0.0],
-            pen=pg.mkPen(
-                colors['data'],
-                width=lw
-            ), name='Data'
+
+        lines['weighted residuals'] = residuals_plot.plot(
+            x=[0.0], y=[0.0],
+            pen=pg.mkPen(colors['residuals'], width=lw),
+            name='residues'
         )
-        self.fit_curve = data_plot.plot(
-            x=[0.0],
-            y=[0.0],
-            pen=pg.mkPen(
-                colors['model'], width=lw
-            ),
-            name='Model'
+        lines['autocorrelation'] = self.auto_corr_plot.plot(
+            x=[0.0], y=[0.0],
+            pen=pg.mkPen(colors['auto_corr'], width=lw),
+            name='residues'
         )
+
+        self.lines = lines
         p1.setXLink(p3)
         p2.setXLink(p3)
 
@@ -406,78 +403,36 @@ class LinePlot(plotbase.Plot):
             *args,
             **kwargs
     ):
-        curves = self.fit.get_curves()
-        # Get parameters from plot-control
         plt_ctrl = self.pltControl
 
+        y_shift = plt_ctrl.y_shift
+        x_shift = plt_ctrl.x_shift
+
+        curves = self.fit.get_curves()
+        for curve_key in curves.keys():
+            try:
+                curve = curves[curve_key]
+                y = curve.y
+                if self.pltControl.is_density:
+                    y = curve.y / np.diff(curve.x)
+                self.lines[curve_key].setData(
+                        x=curve.x + x_shift,
+                        y=y
+                    )
+            except:
+                print("Skipping plot %s" % curve_key)
+
+        # Get parameters from plot-control
         data_log_y = plt_ctrl.data_is_log_y
         data_log_x = plt_ctrl.data_is_log_x
         res_log_y = plt_ctrl.res_is_log_y
         use_reference = self.pltControl.use_reference
-        y_shift = plt_ctrl.y_shift
-        x_shift = plt_ctrl.x_shift
 
-        # Model function
-        model = curves['model']
-        model_x = np.copy(model.x) + x_shift
-        model_y = np.copy(model.y) + y_shift
+        #
+        # model_y = np.copy(model.y) + y_shift
+        # data_y = np.copy(data_y) + y_shift
+        #
 
-        # Update fitting-region
-        data = curves['data']
-        data_y = data.y
-        data_x = data.x
-
-        data_x = np.copy(data_x) + x_shift
-        data_y = np.copy(data_y) + y_shift
-        # Weighted residuals + Autocorrelation
-        wres = curves['weighted residuals']
-        wres_y = wres.y
-
-        if self.pltControl.is_density:
-            data_y = data_y[1:]
-            data_y /= np.diff(data_x)
-
-            model_y = model_y[1:]
-            model_y /= np.diff(model_x)
-
-        # IRF
-        try:
-            norm = self.fit.data.y.max() / self.fit.model.convolve.irf.y.max()
-            irf_y = self.fit.model.convolve.irf.y * norm
-            irf_x = data_x
-        except AttributeError:
-            irf_y = np.ones(10)
-            irf_x = np.ones(10)
-            if chisurf.verbose:
-                print("No instrument response to plot.")
-
-        xmin = self.fit.xmin
-        if data_log_x:
-            xmin = max(
-                np.searchsorted(
-                    data_x,
-                    1e-12,
-                    side='right'
-                ), self.fit.xmin
-            )
-
-        lb_min, ub_max = data_x[0], data_x[-1]
-        lb, ub = data_x[xmin], data_x[self.fit.xmax]
-        if data_log_x:
-            lb = np.log10(lb)
-            ub = np.log10(ub)
-            lb_min = np.log10(lb_min)
-            ub_max = np.log10(ub_max)
-
-        # Label
-        y_max = data_y.max()
-        if data_log_y:
-            y_max = np.log10(y_max)
-        self.text.setPos(
-            ub_max * .7,
-            y_max * .9
-        )
-        #self.legend.setPos(ub_max * .7, y_max * .3)
         self.text.setHtml(
             '<div style="name-align: center">'
             '     <span style="color: #FF0; font-size: 10pt;">'
@@ -488,97 +443,99 @@ class LinePlot(plotbase.Plot):
             '</div>' % (
                 self.fit.xmin, self.fit.xmax,
                 self.fit.chi2r,
-                chisurf.math.statistics.durbin_watson(
-                    wres.y
-                )
+                self.fit.durbin_watson
             )
         )
 
-        # Reference-function
-        if use_reference:
-            reference = self.fit.model.reference
-            if reference is None:
-                reference = np.ones_like(data_y)
-                print("WARNING: no reference curve provided by the model.")
-            model_y /= reference[self.fit.xmin:self.fit.xmax]
-            data_y /= reference
-            mm = max(model_y)
-            irf_y *= mm / max(irf_y)
-
-        if not only_fit_range:
-            idx = np.where(
-                data_y > plt_ctrl.ymin
-            )[0] if data_log_y else list(range(len(data_x)))
-
-            if plt_ctrl.plot_ftt:
-                self.data_curve.setData(
-                    x=data_x[idx],
-                    y=data_y[idx] * data_x[idx]
-                )
-            else:
-                self.data_curve.setData(
-                    x=data_x[idx],
-                    y=data_y[idx]
-                )
-            if self.plot_irf:
-                idx = np.where(
-                    irf_y > plt_ctrl.ymin
-                )[0] if data_log_y else list(range(len(irf_x)))
-                self.irf_curve.setData(
-                    x=irf_x[idx],
-                    y=irf_y[idx]
-                )
-
-            # Set log-scales
-            self.res_plot.setLogMode(
-                x=data_log_x,
-                y=res_log_y
-            )
-            self.auto_corr_plot.setLogMode(
-                x=data_log_x,
-                y=res_log_y
-            )
-            self.data_plot.setLogMode(
-                x=data_log_x,
-                y=data_log_y
-            )
-
-            self.region.setBounds((lb_min, ub_max))
-            self.region.setRegion((lb, ub))
-
-        # Update the Model-lines (Model, wres, acorr)
-        idx = np.where(
-            model_y > 0.0
-        )[0] if data_log_y else list(range(len(model_x)))
-        if plt_ctrl.plot_ftt:
-            self.fit_curve.setData(
-                x=model_x[idx],
-                y=model_y[idx] * model_x[idx]
-            )
-        else:
-            self.fit_curve.setData(
-                x=model_x[idx],
-                y=model_y[idx]
-            )
-
-        self.residuals_plot.clear()
-        self.auto_corr_plot.clear()
-
-        colors = chisurf.settings.gui['plot']['colors']
-        lw = chisurf.settings.gui['plot']['line_width']
-
-        self.residuals_plot.plot(
-            x=wres.x,
-            y=wres.y,
-            pen=pg.mkPen(colors['residuals'], width=lw),
-            name='residues'
+        # # Reference-function
+        # if use_reference:
+        #     reference = self.fit.model.reference
+        #     if reference is None:
+        #         reference = np.ones_like(data_y)
+        #         print("WARNING: no reference curve provided by the model.")
+        #     model_y /= reference[self.fit.xmin:self.fit.xmax]
+        #     data_y /= reference
+        #     mm = max(model_y)
+        #     irf_y *= mm / max(irf_y)
+        #
+        # if not only_fit_range:
+        #     idx = np.where(
+        #         data_y > plt_ctrl.ymin
+        #     )[0] if data_log_y else list(range(len(data_x)))
+        #
+        #     if plt_ctrl.plot_ftt:
+        #         self.data_curve.setData(
+        #             x=data_x[idx],
+        #             y=data_y[idx] * data_x[idx]
+        #         )
+        #     else:
+        #         self.data_curve.setData(
+        #             x=data_x[idx],
+        #             y=data_y[idx]
+        #         )
+        #     if self.plot_irf:
+        #         idx = np.where(
+        #             irf_y > plt_ctrl.ymin
+        #         )[0] if data_log_y else list(range(len(irf_x)))
+        #         self.irf_curve.setData(
+        #             x=irf_x[idx],
+        #             y=irf_y[idx]
+        #         )
+        #
+        # Set log-scales
+        self.res_plot.setLogMode(
+            x=data_log_x,
+            y=res_log_y
         )
-        self.auto_corr_plot.plot(
-            x=wres.x[1:],
-            y=chisurf.math.signal.autocorr(wres.y)[1:],
-            pen=pg.mkPen(colors['auto_corr'], width=lw),
-            name='residues'
+        self.auto_corr_plot.setLogMode(
+            x=data_log_x,
+            y=res_log_y
         )
-        self.data_x = data_x
-        self.data_y = data_y
+        self.data_plot.setLogMode(
+            x=data_log_x,
+            y=data_log_y
+        )
 
+        # data = curves['data']
+        # lb_min, ub_max = data.x[0], data.x[-1]
+        # lb, ub = data.x[self.fit.xmin], data.x[self.fit.xmax]
+        # self.region.setBounds((lb_min, ub_max))
+        # self.region.setRegion((lb, ub))
+
+        #
+        # # Update the Model-lines (Model, wres, acorr)
+        # idx = np.where(
+        #     model_y > 0.0
+        # )[0] if data_log_y else list(range(len(model_x)))
+        # if plt_ctrl.plot_ftt:
+        #     self.fit_curve.setData(
+        #         x=model_x[idx],
+        #         y=model_y[idx] * model_x[idx]
+        #     )
+        # else:
+        #     self.fit_curve.setData(
+        #         x=model_x[idx],
+        #         y=model_y[idx]
+        #     )
+        #
+        # self.residuals_plot.clear()
+        # self.auto_corr_plot.clear()
+        #
+        # colors = chisurf.settings.gui['plot']['colors']
+        # lw = chisurf.settings.gui['plot']['line_width']
+        #
+        # self.residuals_plot.plot(
+        #     x=wres.x,
+        #     y=wres.y,
+        #     pen=pg.mkPen(colors['residuals'], width=lw),
+        #     name='residues'
+        # )
+        # self.auto_corr_plot.plot(
+        #     x=wres.x[1:],
+        #     y=chisurf.math.signal.autocorr(wres.y)[1:],
+        #     pen=pg.mkPen(colors['auto_corr'], width=lw),
+        #     name='residues'
+        # )
+        # self.data_x = data_x
+        # self.data_y = data_y
+        #

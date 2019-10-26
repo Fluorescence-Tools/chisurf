@@ -60,3 +60,33 @@ TypeError: must be real number, not RefVariable
 
 
 ----------------
+
+
+/Users/tpeulen/miniconda3/envs/chisurf/bin/python /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/gui.py
+loading filename:  /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/settings/chisurf.yaml
+libpng warning: iCCP: known incorrect sRGB profile
+objc[21457]: Class FIFinderSyncExtensionHost is implemented in both /System/Library/PrivateFrameworks/FinderKit.framework/Versions/A/FinderKit (0x7fff92e463d8) and /System/Library/PrivateFrameworks/FileProvider.framework/OverrideBundles/FinderSyncCollaborationFileProviderOverride.bundle/Contents/MacOS/FinderSyncCollaborationFileProviderOverride (0x1338aef50). One of the two will be used. Which one is undefined.
+/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/AxisItem.py:764: RuntimeWarning: overflow encountered in power
+  return ["%0.1g"%x for x in 10 ** np.array(values).astype(float)]
+Traceback (most recent call last):
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/plots/lineplot/lineplot.py", line 240, in SetDensity
+    self.parent.update_all()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/plots/lineplot/lineplot.py", line 411, in update_all
+    curves = self.fit.get_curves()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/fitting/fit.py", line 249, in get_curves
+    'autocorrelation': self.autocorrelation
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/fitting/fit.py", line 154, in autocorrelation
+    y=chisurf.math.signal.autocorr(wres.y)[1:]
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/math/signal.py", line 146, in autocorr
+    normalize=normalize
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/math/signal.py", line 168, in xcorr_fft
+    f1 = np.fft.fft(c-np.mean(c, axis=axis), n=2*n, axis=axis)
+  File "<__array_function__ internals>", line 6, in fft
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/numpy/fft/pocketfft.py", line 188, in fft
+    output = _raw_fft(a, n, axis, False, True, inv_norm)
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/numpy/fft/pocketfft.py", line 58, in _raw_fft
+    % n)
+ValueError: Invalid number of FFT data points (0) specified.
+
+---------------
+

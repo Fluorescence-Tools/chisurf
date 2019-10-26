@@ -202,6 +202,17 @@ class Tests(unittest.TestCase):
             len(traj_write),
             n + 1
         )
-
         len(traj_write)
 
+    @unittest.expectedFailure
+    def test_labeled_structure(self):
+        import chisurf.structure
+        import chisurf.structure.labeled_structure
+        structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+        donor_description = {'residue_seq_number': 18, 'atom_name' : 'CB'}
+        acceptor_description = {'residue_seq_number': 577, 'atom_name' : 'CB'}
+        pRDA, rda = chisurf.structure.labeled_structure.av_distance_distribution(
+            structure,
+            donor_av_parameter=donor_description,
+            acceptor_av_parameter=acceptor_description
+        )

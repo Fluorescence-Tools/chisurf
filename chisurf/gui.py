@@ -1,11 +1,17 @@
 from __future__ import annotations
+import utils
+import os
+
+TOPDIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')
+)
+utils.set_search_paths(TOPDIR)
 
 import os
 import sys
 import webbrowser
 
 from qtpy import QtCore, QtGui, QtWidgets, uic
-import qdarkstyle
 import numpy as np
 
 import chisurf
@@ -673,12 +679,11 @@ def gui():
               os.path.dirname(
                   __file__
               ),
-              './settings/gui/styles/day.qss'
+              './settings/gui/styles/dark.qss'
           ),
           mode='r'
       ).read()
     )
-    #app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
     win.show()
     return app

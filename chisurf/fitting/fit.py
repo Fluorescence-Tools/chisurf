@@ -19,6 +19,7 @@ import chisurf.fitting.parameter
 import chisurf.fitting.sample
 import chisurf.fitting.support_plane
 import chisurf.models
+import chisurf.math.statistics
 
 from chisurf.math.optimization.leastsqbound import leastsqbound
 
@@ -146,6 +147,14 @@ class Fit(
         )
 
     @property
+    def autocorrelation(self):
+        wres = self.weighted_residuals
+        return chisurf.curve.Curve(
+            x=wres.x[1:],
+            y=chisurf.math.signal.autocorr(wres.y)[1:]
+        )
+
+    @property
     def chi2(
             self
     ) -> float:
@@ -232,14 +241,15 @@ class Fit(
 
         :return:
         """
-        return {
-            'model': chisurf.curve.Curve(
-                x=self.model.x[self.xmin:self.xmax],
-                y=self.model.y[self.xmin:self.xmax]
-            ),
-            'data': self.data,
-            'weighted residuals': self.weighted_residuals
-        }
+        d = self.model.get_curves()
+        d.update(
+            {
+                'data': self.data,
+                'weighted residuals': self.weighted_residuals,
+                'autocorrelation': self.autocorrelation
+            }
+        )
+        return d
 
     def get_chi2(
             self,
@@ -437,6 +447,14 @@ class FitGroup(
             self
     ) -> float:
         return self.selected_fit.chi2r
+
+    @property
+    def durbin_watson(
+            self
+    ) -> float:
+        return chisurf.math.statistics.durbin_watson(
+            self.weighted_residuals.y
+        )
 
     @property
     def fit_range(
