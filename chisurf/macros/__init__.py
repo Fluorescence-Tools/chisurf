@@ -326,16 +326,16 @@ def link_fit_group(
     """
     cs = chisurf.cs
     if csi == 2:
-        s = cs.current_fit.model.parameters_all_dict[fitting_parameter_name]
+        current_fit = cs.current_fit
+        parameter = current_fit.model.parameters_all_dict[fitting_parameter_name]
         for f in cs.current_fit:
             try:
                 p = f.model.parameters_all_dict[fitting_parameter_name]
-                if p is not s:
-                    p.link = s
+                if p is not parameter:
+                    p.link = parameter
             except KeyError:
                 pass
     if csi == 0:
-        s = cs.current_fit.model.parameters_all_dict[fitting_parameter_name]
         for f in cs.current_fit:
             try:
                 p = f.model.parameters_all_dict[fitting_parameter_name]

@@ -235,6 +235,10 @@ class FittingParameterGroup(
         return dict([(p.name, p) for p in self.parameters_all])
 
     @property
+    def parameters_dict(self):
+        return dict([(p.name, p) for p in self.parameters])
+
+    @property
     def aggregated_parameters(self):
         a = list()
         for value in self.__dict__.values():
