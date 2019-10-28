@@ -2,7 +2,9 @@
     font: bold 10pt;
     color: #c8c8c8;
     font-family: Tahoma, sans-serif;
-    background-color: #636363;
+	background: #191919;
+	color: #DDDDDD;
+	border: solid #191919;
 }
 
 QToolBar::handle

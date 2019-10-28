@@ -116,7 +116,7 @@ def calculate_1_radius(
     # linkersphere = kwargs.get('linkersphere', chisurf.settings['fps']['allowed_sphere_radius'])
     # linknodes = kwargs.get('linknodes', chisurf.settings['fps']['linknodes'])
     # vdw_max = kwargs.get('vdw_max', chisurf.settings['fps']['vdw_max'])
-    dg = kwargs.get('dg', chisurf.settings['fps']['simulation_grid_resolution'])
+    dg = kwargs.get('dg', chisurf.settings.cs_settings['fps']['simulation_grid_resolution'])
     # n_mul = kwargs.get('n_mul', 32)
     #
     # n_atoms = len(vdw)
@@ -160,7 +160,7 @@ def calculate_1_radius(
         [x, y, z, vdw]
     ).T
     dye_attachment_point = np.array(
-        x[atom_i], y[atom_i], z[atom_i]
+        [x[atom_i], y[atom_i], z[atom_i]]
     )
     linker_length = l
     linker_width = w
@@ -217,7 +217,7 @@ def calculate_3_radius(l, w, r1, r2, r3, atom_i, x, y, z, vdw, **kwargs):
         [x, y, z, vdw]
     ).T
     dye_attachment_point = np.array(
-        x[atom_i], y[atom_i], z[atom_i]
+        [x[atom_i], y[atom_i], z[atom_i]]
     )
     linker_length = l
     linker_width = w

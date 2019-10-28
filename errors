@@ -90,3 +90,50 @@ ValueError: Invalid number of FFT data points (0) specified.
 
 ---------------
 
+/Users/tpeulen/miniconda3/envs/chisurf/bin/python /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/gui.py
+loading filename:  /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/settings/chisurf.yaml
+objc[33811]: Class FIFinderSyncExtensionHost is implemented in both /System/Library/PrivateFrameworks/FinderKit.framework/Versions/A/FinderKit (0x7fffb14283d8) and /System/Library/PrivateFrameworks/FileProvider.framework/OverrideBundles/FinderSyncCollaborationFileProviderOverride.bundle/Contents/MacOS/FinderSyncCollaborationFileProviderOverride (0x136311f50). One of the two will be used. Which one is undefined.
+ParameterScanPlot: update_all failed
+/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/math/signal.py:172: FutureWarning: Using a non-tuple sequence for multidimensional indexing is deprecated; use `arr[tuple(seq)]` instead of `arr[seq]`. In the future this will be interpreted as an array index, `arr[np.array(seq)]`, which will result either in an error or a different result.
+  acf = np.fft.ifft(f1 * np.conjugate(f2), axis=axis)[m].real
+ParameterScanPlot: update_all failed
+ParameterScanPlot: update_all failed
+/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/PlotCurveItem.py:131: RuntimeWarning: All-NaN slice encountered
+  b = (np.nanmin(d), np.nanmax(d))
+Traceback (most recent call last):
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/ViewBox/ViewBox.py", line 298, in prepareForPaint
+    self.updateAutoRange()
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/ViewBox/ViewBox.py", line 886, in updateAutoRange
+    childRange = self.childrenBounds(frac=fractionVisible)
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/ViewBox/ViewBox.py", line 1371, in childrenBounds
+    px, py = [v.length() if v is not None else 0 for v in self.childGroup.pixelVectors()]
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/ViewBox/ViewBox.py", line 1371, in <listcomp>
+    px, py = [v.length() if v is not None else 0 for v in self.childGroup.pixelVectors()]
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/Point.py", line 108, in length
+    return (self[0]**2 + self[1]**2) ** 0.5
+OverflowError: (34, 'Result too large')
+
+Process finished with exit code 134 (interrupted by signal 6: SIGABRT)
+
+------------
+
+/Users/tpeulen/miniconda3/envs/chisurf/bin/python /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/gui.py
+loading filename:  /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/settings/chisurf.yaml
+objc[34607]: Class FIFinderSyncExtensionHost is implemented in both /System/Library/PrivateFrameworks/FinderKit.framework/Versions/A/FinderKit (0x7fffb14283d8) and /System/Library/PrivateFrameworks/FileProvider.framework/OverrideBundles/FinderSyncCollaborationFileProviderOverride.bundle/Contents/MacOS/FinderSyncCollaborationFileProviderOverride (0x12e830f50). One of the two will be used. Which one is undefined.
+/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/math/signal.py:172: FutureWarning: Using a non-tuple sequence for multidimensional indexing is deprecated; use `arr[tuple(seq)]` instead of `arr[seq]`. In the future this will be interpreted as an array index, `arr[np.array(seq)]`, which will result either in an error or a different result.
+  acf = np.fft.ifft(f1 * np.conjugate(f2), axis=axis)[m].real
+ParameterScanPlot: update_all failed
+ParameterScanPlot: update_all failed
+ParameterScanPlot: update_all failed
+ParameterScanPlot: update_all failed
+ParameterScanPlot: update_all failed
+ParameterScanPlot: update_all failed
+Traceback (most recent call last):
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/qtconsole/console_widget.py", line 428, in eventFilter
+    event.button() == QtCore.Qt.MidButton and \
+AttributeError: 'QContextMenuEvent' object has no attribute 'button'
+
+Process finished with exit code 134 (interrupted by signal 6: SIGABRT)
+
+--------------
+

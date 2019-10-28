@@ -267,7 +267,6 @@ class FittingParameterWidget(QtWidgets.QWidget):
             self.widget_link.setChecked(True)
             self.widget_value.setEnabled(False)
 
-        self.update()
         return linkcall
 
     def contextMenuEvent(
@@ -276,7 +275,9 @@ class FittingParameterWidget(QtWidgets.QWidget):
     ):
 
         menu = QtWidgets.QMenu(self)
-        menu.setTitle("Link " + self.fitting_parameter.name + " to:")
+        menu.setTitle(
+            "Link " + self.fitting_parameter.name + " to:"
+        )
 
         for fit_idx, f in enumerate(chisurf.fits):
             for fs in f:
@@ -292,7 +293,9 @@ class FittingParameterWidget(QtWidgets.QWidget):
                     for p in ut:
                         if p is not self:
                             Action = action_submenu.addAction(p.name)
-                            Action.triggered.connect(self.make_linkcall(fit_idx, p.name))
+                            Action.triggered.connect(
+                                self.make_linkcall(fit_idx, p.name)
+                            )
                     submenu.addMenu(action_submenu)
                 action_submenu = QtWidgets.QMenu(submenu)
 
@@ -389,7 +392,6 @@ class FittingParameterWidget(QtWidgets.QWidget):
 
         # Display of values
         self.widget_value.setValue(float(self.fitting_parameter.value))
-
         self.label.setText(label_text.ljust(5))
 
         # variable bounds
@@ -450,15 +452,24 @@ class FittingParameterWidget(QtWidgets.QWidget):
         if isinstance(layout, QtWidgets.QLayout):
             layout.addWidget(self)
 
+    def set_linked(
+            self,
+            is_linked: bool
+    ):
+        if is_linked:
+            self.widget_value.setEnabled(False)
+            self.widget_link.setCheckState(QtCore.Qt.Checked)
+        else:
+            self.widget_link.setCheckState(QtCore.Qt.Unchecked)
+            self.widget_value.setEnabled(True)
+
     def onLinkFitGroup(self):
         self.blockSignals(True)
-        cs = self.widget_link.checkState()
-        self.widget_link.setCheckState(QtCore.Qt.Checked)
         self.widget_value.setEnabled(False)
         chisurf.run(
             "chisurf.macros.link_fit_group('%s', %s)" % (
                 self.fitting_parameter.name,
-                cs
+                self.widget_link.checkState()
             )
         )
         self.widget_value.setEnabled(True)
