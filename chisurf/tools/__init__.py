@@ -9,5 +9,4 @@ import chisurf.tools.f_test
 import chisurf.tools.kappa2_distribution
 import chisurf.tools.decay_generator
 import chisurf.tools.modelling
-
-
+import chisurf.tools.text_editor

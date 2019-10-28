@@ -286,6 +286,9 @@ class LinePlot(plotbase.Plot):
         )
 
         self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+
         self.data_x = data_x
         self.data_y = data_y
         self.plot_irf = plot_irf
@@ -293,9 +296,9 @@ class LinePlot(plotbase.Plot):
         area = DockArea()
         self.layout.addWidget(area)
         hide_title = chisurf.settings.gui['plot']['hideTitle']
-        d1 = Dock("residuals", size=(300, 80), hideTitle=hide_title)
-        d2 = Dock("a.corr.", size=(300, 80), hideTitle=hide_title)
-        d3 = Dock("Fit", size=(300, 300), hideTitle=hide_title)
+        d1 = Dock("residuals", size=(250, 80), hideTitle=hide_title)
+        d2 = Dock("a.corr.", size=(250, 80), hideTitle=hide_title)
+        d3 = Dock("Fit", size=(250, 250), hideTitle=hide_title)
 
         p1 = pg.PlotWidget()
         p2 = pg.PlotWidget()

@@ -9,6 +9,7 @@ import chisurf.base
 import chisurf.experiments
 import chisurf.models
 import chisurf.fitting
+import chisurf.fitting.widgets
 import chisurf.widgets
 import chisurf.macros.tcspc
 

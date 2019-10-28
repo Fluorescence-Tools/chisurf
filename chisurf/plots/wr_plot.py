@@ -64,7 +64,8 @@ class ResidualPlot(plotbase.Plot):
         fits = self.fit
         for ci, fi in zip(self.curves, fits):
             w_res = fi.weighted_residuals
+            x = np.arange(len(w_res.y))
             ci.setData(
-                x=w_res.x,
+                x=x,
                 y=w_res.y
             )
