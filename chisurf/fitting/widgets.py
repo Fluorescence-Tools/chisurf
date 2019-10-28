@@ -254,6 +254,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
     ):
 
         def linkcall():
+            self.blockSignals(True)
             tooltip = " linked to " + parameter_name
             chisurf.run(
                 "cs.current_fit.model.parameters_all_dict['%s'].link = chisurf.fits[%s].model.parameters_all_dict['%s']" %
@@ -264,8 +265,9 @@ class FittingParameterWidget(QtWidgets.QWidget):
                 )
             )
             self.widget_link.setToolTip(tooltip)
-            self.widget_link.setCheckState(QtCore.Qt.PartiallyChecked)
+            self.widget_link.setCheckState(QtCore.Qt.Checked)
             self.widget_value.setEnabled(False)
+            self.blockSignals(False)
 
         return linkcall
 
@@ -291,7 +293,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
                     ut = a.parameters
                     ut.sort(key=lambda x: x.name, reverse=False)
                     for p in ut:
-                        if p is not self:
+                        if p is not self.fitting_parameter:
                             Action = action_submenu.addAction(p.name)
                             Action.triggered.connect(
                                 self.make_linkcall(fit_idx, p.name)
