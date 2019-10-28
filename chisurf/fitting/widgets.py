@@ -264,7 +264,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
                 )
             )
             self.widget_link.setToolTip(tooltip)
-            self.widget_link.setChecked(True)
+            self.widget_link.setCheckState(QtCore.Qt.PartiallyChecked)
             self.widget_value.setEnabled(False)
 
         return linkcall
@@ -473,7 +473,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
             )
         )
         self.widget_value.setEnabled(True)
-        self.widget_link.setCheckState(QtCore.Qt.Unchecked)
+        self.widget_link.setCheckState(QtCore.Qt.Checked)
         self.blockSignals(False)
 
     def finalize(self, *args):
