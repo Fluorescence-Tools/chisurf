@@ -264,9 +264,18 @@ class FittingParameterWidget(QtWidgets.QWidget):
                     parameter_name
                 )
             )
+            # Adjust widget of parameter that is linker
             self.widget_link.setToolTip(tooltip)
-            self.widget_link.setCheckState(QtCore.Qt.Checked)
+            self.widget_link.setCheckState(QtCore.Qt.PartiallyChecked)
             self.widget_value.setEnabled(False)
+
+            try:
+                # Adjust widget of parameter that is linked to
+                p = chisurf.fits[fit_idx].model.parameters_all_dict[parameter_name]
+                p.controller.widget_link.setCheckState(QtCore.Qt.Checked)
+            except AttributeError:
+                print("Could not set widget properties of controller")
+
             self.blockSignals(False)
 
         return linkcall
@@ -460,22 +469,20 @@ class FittingParameterWidget(QtWidgets.QWidget):
     ):
         if is_linked:
             self.widget_value.setEnabled(False)
-            self.widget_link.setCheckState(QtCore.Qt.Checked)
+            self.widget_link.setCheckState(QtCore.Qt.PartiallyChecked)
         else:
             self.widget_link.setCheckState(QtCore.Qt.Unchecked)
             self.widget_value.setEnabled(True)
 
     def onLinkFitGroup(self):
         self.blockSignals(True)
-        self.widget_value.setEnabled(False)
+        self.widget_value.setEnabled(True)
         chisurf.run(
             "chisurf.macros.link_fit_group('%s', %s)" % (
                 self.fitting_parameter.name,
                 self.widget_link.checkState()
             )
         )
-        self.widget_value.setEnabled(True)
-        self.widget_link.setCheckState(QtCore.Qt.Checked)
         self.blockSignals(False)
 
     def finalize(self, *args):

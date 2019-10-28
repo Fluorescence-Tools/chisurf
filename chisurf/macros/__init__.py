@@ -324,6 +324,7 @@ def link_fit_group(
     :param csi:
     :return:
     """
+    print("Check state: %s" % csi)
     cs = chisurf.cs
     if csi == 2:
         current_fit = cs.current_fit
@@ -334,7 +335,7 @@ def link_fit_group(
                 if p is not parameter:
                     p.link = parameter
             except KeyError:
-                pass
+                print("The fit %s has no parameter %s" % (f.name, fitting_parameter_name))
     if csi == 0:
         for f in cs.current_fit:
             try:

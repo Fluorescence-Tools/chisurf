@@ -27,7 +27,8 @@ class ParseFCSWidget(
             }
         ),
         (plots.FitInfo, {}),
-        (plots.ParameterScanPlot, {})
+        (plots.ParameterScanPlot, {}),
+        (chisurf.plots.ResidualPlot, {})
     ]
 
     def __init__(
