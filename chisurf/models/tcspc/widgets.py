@@ -7,6 +7,8 @@ from qtpy import QtWidgets, uic, QtCore, QtGui
 
 import os
 
+import chisurf
+import chisurf.fitting
 import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.math
@@ -37,7 +39,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
     @chisurf.decorators.init_with_ui(ui_filename="convolveWidget.ui")
     def __init__(
             self,
-            fit: fitting.fit.Fit,
+            fit: chisurf.fitting.fit.Fit,
             hide_curve_convolution: bool = True,
             *args,
             **kwargs
@@ -161,7 +163,7 @@ class CorrectionsWidget(
 
     def __init__(
             self,
-            fit: fitting.fit.Fit,
+            fit: chisurf.fitting.fit.Fit,
             hide_corrections: bool = False,
             **kwargs
     ):
@@ -290,6 +292,8 @@ class GenericWidget(
             self.hide()
 
         self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
         gb = QtWidgets.QGroupBox()
         gb.setTitle("Generic")
@@ -300,8 +304,9 @@ class GenericWidget(
         gb.setLayout(gbl)
         # Generic parameters
         l = QtWidgets.QGridLayout()
+        l.setContentsMargins(0, 0, 0, 0)
+        l.setSpacing(0)
         gbl.addLayout(l)
-
         sc_w = chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._sc,
             text='Sc'
@@ -372,6 +377,8 @@ class AnisotropyWidget(
 
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
 
         self.gb = QtWidgets.QGroupBox()
         self.gb.setTitle("Rotational-times")
@@ -697,6 +704,8 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         super().__init__(**kwargs)
 
         self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
         self.gb = QtWidgets.QGroupBox()
         self.gb.setTitle(title)
         self.lh = QtWidgets.QVBoxLayout()
@@ -706,6 +715,8 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         self._lifetime_widgets = list()
 
         lh = QtWidgets.QHBoxLayout()
+        lh.setContentsMargins(0, 0, 0, 0)
+        lh.setSpacing(0)
 
         addDonor = QtWidgets.QPushButton()
         addDonor.setText("add")
@@ -828,11 +839,6 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
             parent=self,
             **kwargs
         )
-        anisotropy = AnisotropyWidget(
-            name='anisotropy',
-            short='rL',
-            **kwargs
-        )
         convolve = ConvolveWidget(
             name='convolve',
             fit=fit,
@@ -846,25 +852,23 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
         )
         layout = QtWidgets.QVBoxLayout(self)
         layout.setAlignment(QtCore.Qt.AlignTop)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         ## add widgets
         if not hide_nuisances:
             layout.addWidget(convolve)
             layout.addWidget(generic)
-
-        self.layout_parameter = QtWidgets.QVBoxLayout()
-
-        layout.addLayout(self.layout_parameter)
-        if not hide_nuisances:
-            layout.addWidget(anisotropy)
             layout.addWidget(corrections)
+
+        if hide_nuisances:
+            corrections.hide()
 
         self.setLayout(layout)
         self.layout = layout
 
         self.generic = generic
         self.corrections = corrections
-        self.anisotropy = anisotropy
         self.convolve = convolve
 
 
@@ -886,7 +890,14 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
             short='L',
             fit=fit
         )
-        self.layout_parameter.addWidget(self.lifetimes)
+        anisotropy = AnisotropyWidget(
+            name='anisotropy',
+            short='rL',
+            **kwargs
+        )
+        self.anisotropy = anisotropy
+        self.layout.addWidget(self.lifetimes)
+        self.layout.addWidget(anisotropy)
 
 
 class GaussianWidget(Gaussians, QtWidgets.QWidget):
