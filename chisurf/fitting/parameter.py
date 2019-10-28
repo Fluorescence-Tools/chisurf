@@ -228,7 +228,9 @@ class FittingParameterGroup(
     ) -> List[
         chisurf.fitting.parameter.FittingParameter
     ]:
-        return [p for p in self.parameters_all if not (p.fixed or p.is_linked)]
+        return [
+            p for p in self.parameters_all if not (p.fixed or p.is_linked)
+        ]
 
     @property
     def parameters_all_dict(self):
@@ -320,10 +322,13 @@ class FittingParameterGroup(
 
         ap = list()
         for o in set(ag):
-            if not isinstance(o, chisurf.models.model.Model):
+            if not isinstance(
+                    o,
+                    chisurf.models.model.Model
+            ):
                 o.find_parameters()
                 self.__dict__[o.name] = o
-                ap += o.parameters
+                ap += o.parameters_all
 
         mp = chisurf.base.find_objects(
             d, parameter_type

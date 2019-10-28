@@ -123,7 +123,7 @@ class ParseModel(
         self.parse = ParseFormula()
 
     def update_model(self, **kwargs):
-        a = [p.value for p in self.parse.parameters]
+        a = [p.value for p in self.parse.parameters_all]
         x = self.fit.data.x
         try:
             y = eval(self.parse.code)
