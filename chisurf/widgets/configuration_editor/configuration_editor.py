@@ -19,7 +19,8 @@ import json
 import re
 from collections import OrderedDict
 
-import chisurf.settings as mfm
+import chisurf.fio
+import chisurf.settings
 import chisurf.widgets
 
 
@@ -100,12 +101,12 @@ class ParameterEditor(QtWidgets.QWidget):
             json_file: str = None,
             windows_title: str = None,
     ):
-        super(ParameterEditor, self).__init__()
+        super().__init__()
 
         if json_file is None:
             json_file = chisurf.widgets.get_filename()
         if target is None:
-            target = mfm
+            target = chisurf.settings.cs_settings
         if windows_title is None:
             windows_title = "Configuration: %s" % json_file
 
@@ -129,11 +130,17 @@ class ParameterEditor(QtWidgets.QWidget):
         self.setWindowTitle(windows_title)
         win = QtWidgets.QWidget()
         layout = QtWidgets.QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
         win.setLayout(layout)
         layout.addWidget(t, 1, 0, 1, 1)
         win.show()
         win.resize(450, 400)
         layout = QtWidgets.QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
         self.setLayout(layout)
         layout.addWidget(t, 1, 0, 1, 1)
 

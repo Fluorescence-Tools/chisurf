@@ -190,6 +190,8 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         self.close_confirm = close_confirm
 
         layout = self.layout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         self.plot_tab_widget = QtWidgets.QTabWidget()
         layout.addWidget(self.plot_tab_widget)
 
@@ -213,6 +215,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
 
         self.on_change_plot()
         self.plot_tab_widget.currentChanged.connect(self.on_change_plot)
+        self.resize(350, 300)
 
     def on_change_plot(self):
         idx = self.plot_tab_widget.currentIndex()

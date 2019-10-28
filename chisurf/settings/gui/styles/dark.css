@@ -317,7 +317,6 @@ QRadioButton::indicator, QCheckBox::indicator {
 
 QRadioButton::indicator::unchecked, QCheckBox::indicator::unchecked {
 	border: 1px solid #5A5A5A;
-	background: #295a1f;
 }
 
 QRadioButton::indicator:unchecked:hover, QCheckBox::indicator:unchecked:hover {
@@ -470,8 +469,8 @@ QTabBar::tab:!selected:hover
 
 
 QTreeView {
-    alternate-background-color: #26292c;
-    background-color: QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #4d4d4d, stop: 0.1 #646464, stop: 1 #5d5d5d);
+    alternate-background-color: #383c3e;
+    background-color: #333739;
     margin: 0;
     padding: 0;
 }

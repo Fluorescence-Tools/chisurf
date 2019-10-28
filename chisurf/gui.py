@@ -584,7 +584,7 @@ class Main(QtWidgets.QMainWindow):
 
         self.setCentralWidget(self.mdiarea)
         self.init_widgets()
-        self.configuration = chisurf.widgets.text_editor.CodeEditor(
+        self.configuration = chisurf.tools.text_editor.CodeEditor(
             filename=chisurf.settings.settings_file,
             language='YAML',
             can_load=False
@@ -630,7 +630,7 @@ class Main(QtWidgets.QMainWindow):
         self.tabifyDockWidget(self.dockWidgetAnalysis, self.dockWidgetPlot)
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
-        self.editor = chisurf.widgets.text_editor.CodeEditor()
+        self.editor = chisurf.tools.text_editor.CodeEditor()
         self.verticalLayout_10.addWidget(self.editor)
 
         self.modelLayout.setAlignment(QtCore.Qt.AlignTop)
