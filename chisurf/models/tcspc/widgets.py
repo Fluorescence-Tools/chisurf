@@ -52,7 +52,6 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         """
         if hide_curve_convolution:
             self.radioButton_3.setVisible(not hide_curve_convolution)
-
         layout = QtWidgets.QHBoxLayout()
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._dt,
@@ -157,14 +156,17 @@ class CorrectionsWidget(
     Corrections,
     QtWidgets.QWidget
 ):
-    """
 
-    """
-
+    @chisurf.decorators.init_with_ui(
+        ui_filename="tcspcCorrections.ui"
+    )
     def __init__(
             self,
-            fit: chisurf.fitting.fit.Fit,
+            fit: chisurf.fitting.fit.Fit = None,
             hide_corrections: bool = False,
+            threshold = 0.9,
+            reverse = False,
+            enabled = False,
             **kwargs
     ):
         """
@@ -173,22 +175,6 @@ class CorrectionsWidget(
         :param hide_corrections:
         :param kwargs:
         """
-        super().__init__(
-            fit=fit,
-            threshold=0.9,
-            reverse=False,
-            enabled=False,
-            **kwargs
-        )
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "tcspcCorrections.ui"
-            ),
-            self
-        )
-
         self.groupBox.setChecked(False)
         self.comboBox.addItems(chisurf.math.signal.window_function_types)
         if hide_corrections:
@@ -208,7 +194,7 @@ class CorrectionsWidget(
         self.lin_select = ExperimentalDataSelector(
             parent=None,
             change_event=self.onChangeLin,
-            fit=self.fit,
+            fit=fit,
             setup=chisurf.experiments.tcspc.tcspc.TCSPCReader
         )
 
@@ -383,6 +369,9 @@ class AnisotropyWidget(
         self.gb = QtWidgets.QGroupBox()
         self.gb.setTitle("Rotational-times")
         self.lh = QtWidgets.QVBoxLayout()
+        self.lh.setContentsMargins(0, 0, 0, 0)
+        self.lh.setSpacing(0)
+
         self.gb.setLayout(self.lh)
         self.layout.addWidget(self.gb)
         self.rot_vis = False
@@ -422,6 +411,8 @@ class AnisotropyWidget(
         )
 
         layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
         add_rho = QtWidgets.QPushButton()
         add_rho.setText("add")
@@ -446,10 +437,16 @@ class AnisotropyWidget(
 
         self.gb = QtWidgets.QGroupBox()
         self.lh.addWidget(self.gb)
+
         self.lh = QtWidgets.QVBoxLayout()
+        self.lh.setContentsMargins(0, 0, 0, 0)
+        self.lh.setSpacing(0)
         self.gb.setLayout(self.lh)
 
         layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._r0,
             text='r0',
@@ -517,6 +514,9 @@ class AnisotropyWidget(
     def add_rotation(self, **kwargs):
         Anisotropy.add_rotation(self, **kwargs)
         layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
         self.lh.addLayout(layout)
         self._rho_widgets.append(
             chisurf.fitting.widgets.make_fitting_parameter_widget(
@@ -706,9 +706,14 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
+
         self.gb = QtWidgets.QGroupBox()
         self.gb.setTitle(title)
+
         self.lh = QtWidgets.QVBoxLayout()
+        self.lh.setContentsMargins(0, 0, 0, 0)
+        self.lh.setSpacing(0)
+
         self.gb.setLayout(self.lh)
         self.layout.addWidget(self.gb)
         self._amp_widgets = list()
@@ -785,6 +790,8 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
     def append(self, *args, **kwargs):
         Lifetime.append(self, *args, **kwargs)
         layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         #amplitude = self._amplitudes[-1].make_widget(layout=layout)
         #self._amp_widgets.append(amplitude)
 
@@ -794,9 +801,6 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
                 layout=layout
             )
         )
-
-        #lifetime = self._lifetimes[-1].make_widget(layout=layout)
-        #self._lifetime_widgets.append(lifetime)
 
         self._lifetime_widgets.append(
             chisurf.fitting.widgets.make_fitting_parameter_widget(

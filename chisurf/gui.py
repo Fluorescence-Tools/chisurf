@@ -679,7 +679,7 @@ def gui():
               os.path.dirname(
                   __file__
               ),
-              './settings/gui/styles/dark.qss'
+              './settings/gui/styles/dark.css'
           ),
           mode='r'
       ).read()
