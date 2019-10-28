@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import chisurf.settings as mfm
+import chisurf.fluorescence.tcspc
 import chisurf.fluorescence.anisotropy.kappa2
 import chisurf.math
 import chisurf.math.datatools
@@ -13,7 +13,8 @@ from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
 rda_axis = np.linspace(
     chisurf.settings.fret['rda_min'],
     chisurf.settings.fret['rda_max'],
-    chisurf.settings.fret['rda_resolution'], dtype=np.float64
+    chisurf.settings.fret['rda_resolution'],
+    dtype=np.float64
 )
 
 
@@ -598,7 +599,7 @@ class FRETModel(LifetimeModel):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             lifetimes: Lifetime = None,
             **kwargs
     ):
@@ -616,10 +617,9 @@ class FRETModel(LifetimeModel):
                 **kwargs
             )
         )
-        if lifetimes is None:
-            lifetimes = Lifetime()
 
-        self._donors = lifetimes
+        self.lifetimes.append()
+        self._donors = self.lifetimes
         self._reference = LifetimeModel(
             fit,
             **kwargs
@@ -672,7 +672,7 @@ class GaussianModel(FRETModel):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             **kwargs
     ):
         super().__init__(
@@ -730,7 +730,7 @@ class FRETrateModel(FRETModel):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             fret_rates: DiscreteDistance = None,
             **kwargs
     ):
@@ -789,7 +789,7 @@ class WormLikeChainModel(FRETModel):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             use_dye_linker: bool = False,
             **kwargs
     ):
@@ -880,7 +880,7 @@ class SingleDistanceModel(FRETModel):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             **kwargs
     ):
         super().__init__(

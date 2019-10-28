@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import chisurf.settings as mfm
+import chisurf.experiments
 import chisurf.macros
 import chisurf.fluorescence.tcspc.convolve
 import chisurf.fluorescence.tcspc.corrections
@@ -128,7 +128,7 @@ class Generic(FittingParameterGroup):
 
     def __init__(
             self,
-            background_curve: experiments.data.DataCurve = None,
+            background_curve: chisurf.experiments.data.DataCurve = None,
             name: str = 'Nuisance',
             **kwargs
     ):
@@ -318,7 +318,7 @@ class Corrections(FittingParameterGroup):
 
     def __init__(
             self,
-            fit: fitting.fit.Fit,
+            fit: chisurf.fitting.fit.Fit,
             name: str = 'Corrections',
             reverse: bool = False,
             correct_dnl: bool = False,
@@ -481,7 +481,10 @@ class Convolve(FittingParameterGroup):
             self,
             v: chisurf.curve.Curve
     ):
-        self.n_photons_irf = v.normalize(mode="sum")
+        self.n_photons_irf = v.normalize(
+            mode="sum",
+            inplace=False
+        )
         self.__irf = v
         try:
             # Approximate n0 the initial number of donor molecules in the
@@ -503,7 +506,7 @@ class Convolve(FittingParameterGroup):
     @property
     def data(
             self
-    ) -> experiments.data.DataCurve:
+    ) -> chisurf.experiments.data.DataCurve:
         if self._data is None:
             try:
                 return self.fit.data
@@ -515,13 +518,13 @@ class Convolve(FittingParameterGroup):
     @data.setter
     def data(
             self,
-            v: experiments.data.DataCurve
+            v: chisurf.experiments.data.DataCurve
     ):
         self._data = v
 
     def scale(
             self,
-            decay: experiments.data.DataCurve,
+            decay: chisurf.experiments.data.DataCurve,
             start: int = None,
             stop: int = None,
             bg: float = 0.0,
@@ -547,7 +550,7 @@ class Convolve(FittingParameterGroup):
 
     def convolve(
             self,
-            data: experiments.data.DataCurve,
+            data: chisurf.experiments.data.DataCurve,
             verbose: bool = None,
             mode: str = None,
             dt: float = None,
@@ -557,7 +560,7 @@ class Convolve(FittingParameterGroup):
             decay: np.array = None
     ) -> np.array:
         if verbose is None:
-            verbose = mfm.verbose
+            verbose = chisurf.verbose
         if mode is None:
             mode = self.mode
         if dt is None:
@@ -622,7 +625,7 @@ class Convolve(FittingParameterGroup):
 
     def __init__(
             self,
-            fit: fitting.fit.Fit,
+            fit: chisurf.fitting.fit.Fit,
             name: str = 'Convolution',
             irf: chisurf.curve.Curve = None,
             **kwargs
@@ -640,7 +643,7 @@ class Convolve(FittingParameterGroup):
             rep_rate = data.setup.rep_rate
             stop = len(data) * dt
             self.data = data
-        except AttributeError:
+        except (AttributeError, TypeError):
             dt = kwargs.get('dt', 1.0)
             rep_rate = kwargs.get('rep_rate', 1.0)
             stop = 1

@@ -18,6 +18,9 @@ requirements:
   build:
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
+    - python {{ python }}
+    - setuptools
+    - cmake
     - git
   host:
     - python {{ python }}
@@ -32,7 +35,6 @@ requirements:
     - numpy
     - numba
     - scipy
-    - sympy
     - emcee
     - numexpr
     - pytables
@@ -55,6 +57,7 @@ requirements:
     - qdarkstyle
     - mrcfile
     - htmd-pdb2pqr
+    - pymol-open-source
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf

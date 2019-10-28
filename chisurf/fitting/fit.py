@@ -19,6 +19,7 @@ import chisurf.fitting.parameter
 import chisurf.fitting.sample
 import chisurf.fitting.support_plane
 import chisurf.models
+import chisurf.math.statistics
 
 from chisurf.math.optimization.leastsqbound import leastsqbound
 
@@ -137,8 +138,21 @@ class Fit(
     @property
     def weighted_residuals(
             self
-    ) -> np.array:
-        return self.model.weighted_residuals
+    ) -> chisurf.curve.Curve:
+        wres_x, _ = self.model[self.xmin:self.xmax]
+        wres_y = self.model.weighted_residuals
+        return chisurf.curve.Curve(
+            x=wres_x,
+            y=wres_y
+        )
+
+    @property
+    def autocorrelation(self):
+        wres = self.weighted_residuals
+        return chisurf.curve.Curve(
+            x=wres.x[1:],
+            y=chisurf.math.signal.autocorr(wres.y)[1:]
+        )
 
     @property
     def chi2(
@@ -227,10 +241,15 @@ class Fit(
 
         :return:
         """
-        return {
-            'model': self.model,
-            'data': self.data
-        }
+        d = self.model.get_curves()
+        d.update(
+            {
+                'data': self.data,
+                'weighted residuals': self.weighted_residuals,
+                'autocorrelation': self.autocorrelation
+            }
+        )
+        return d
 
     def get_chi2(
             self,
@@ -272,7 +291,7 @@ class Fit(
         self.model.save(filename + '.json')
         if file_type == 'txt':
             csv = chisurf.fio.ascii.Csv()
-            wr = self.weighted_residuals
+            wr = self.weighted_residuals.y
             xmin, xmax = self.xmin, self.xmax
             x, m = self.model[xmin:xmax]
             csv.save(
@@ -338,7 +357,8 @@ class Fit(
             self,
             parameter_name: str,
             rel_range: float = None,
-            **kwargs
+            scan_range: Tuple[float, float] = (None, None),
+            n_steps: int = 30
     ) -> Tuple[np.array, np.array]:
         """Perform a chi2-scan on a parameter of the fit.
 
@@ -355,12 +375,14 @@ class Fit(
                 parameter.error_estimate * 3.0 / parameter.value,
                 0.25
             )
-        kwargs['rel_range'] = (rel_range, rel_range)
-        parameter.parameter_scan = chisurf.fitting.support_plane.scan_parameter(
-            self,
-            parameter_name,
-            **kwargs
+        r = chisurf.fitting.support_plane.scan_parameter(
+            fit=self,
+            parameter_name=parameter_name,
+            rel_range=rel_range,
+            scan_range=scan_range,
+            n_steps=n_steps
         )
+        parameter.parameter_scan = r['parameter_values'], r['chi2r']
         return parameter.parameter_scan
 
 
@@ -417,7 +439,7 @@ class FitGroup(
     @property
     def weighted_residuals(
             self
-    ) -> np.ndarray:
+    ) -> chisurf.curve.Curve:
         return self.selected_fit.weighted_residuals
 
     @property
@@ -425,6 +447,14 @@ class FitGroup(
             self
     ) -> float:
         return self.selected_fit.chi2r
+
+    @property
+    def durbin_watson(
+            self
+    ) -> float:
+        return chisurf.math.statistics.durbin_watson(
+            self.weighted_residuals.y
+        )
 
     @property
     def fit_range(
@@ -547,6 +577,10 @@ class FitGroup(
             self._fits.append(fit)
 
         list.__init__(self, self._fits)
+        # super().__init__(
+        #     data=data,
+        #     **kwargs
+        # )
         Fit.__init__(
             self,
             data=data,
@@ -581,34 +615,56 @@ def sample_fit(
         thin: int = 1,
         chi2max: float = float("inf"),
         n_runs: int = 10,
+        step_size: float = 0.1,
+        temp: float = 1.0,
         **kwargs
 ):
+    """Samples the free paramter of a fit and writes the parameters with
+    corresponding chi2 to a text file.
+
+    :param fit:
+    :param filename:
+    :param method:
+    :param steps:
+    :param thin:
+    :param chi2max:
+    :param n_runs:
+    :param kwargs:
+    :return:
+    """
     # save initial parameter values
     pv = fit.model.parameter_values
     for i_run in range(n_runs):
         fn = os.path.splitext(filename)[0] + "_" + str(i_run) + '.er4'
 
-        if method != 'emcee':
-            pass
-        else:
+        if method == 'mcmc':
+            r = chisurf.fitting.sample.walk_mcmc(
+                fit=fit,
+                steps=steps,
+                thin=thin,
+                chi2max=chi2max,
+                step_size=step_size,
+                temp=temp
+            )
+        else: #'emcee'
             n_walkers = int(fit.n_free * 2)
-            try:
-                chi2, para = chisurf.fitting.sample.sample_emcee(
-                    fit,
-                    steps=steps,
-                    nwalkers=n_walkers,
-                    thin=thin,
-                    chi2max=chi2max,
-                    **kwargs
-                )
-            except ValueError:
-                fit.models.parameter_values = pv
-                fit.models.update()
+            r = chisurf.fitting.sample.sample_emcee(
+                fit,
+                steps=steps,
+                nwalkers=n_walkers,
+                thin=thin,
+                chi2max=chi2max,
+                **kwargs
+            )
+
+        chi2 = r['chi2r']
+        parameter_values = r['parameter_values']
+        parameter_names = r['parameter_names']
 
         mask = np.where(np.isfinite(chi2))
-        scan = np.vstack([chi2[mask], para[mask].T])
-        header = "chi2\t"
-        header += "\t".join(fit.model.parameter_names)
+        scan = np.vstack([chi2[mask], parameter_values[mask].T])
+        header = "chi2r\t"
+        header += "\t".join(parameter_names)
         chisurf.fio.ascii.Csv().save(
             scan,
             fn,
@@ -750,7 +806,9 @@ def get_chi2(
 def lnprior(
         parameter_values: List[float],
         fit: chisurf.fitting.fit.Fit,
-        bounds: List[Tuple[float, float]] = None
+        bounds: List[
+            Tuple[float, float]
+        ] = None
 ) -> float:
     """The probability determined by the prior which is given by the bounds
     of the models parameters. If the models parameters leave the bounds, the
@@ -773,20 +831,31 @@ def lnprob(
         parameter_values: List[float],
         fit: Fit,
         chi2max: float = float("inf"),
-        **kwargs
+        bounds: List[
+            Tuple[float, float]
+        ] = None
 ) -> float:
     """
 
     :param parameter_values:
+    :param bounds:
     :param fit:
     :param chi2max:
     :return:
     """
-    lp = lnprior(parameter_values, fit, **kwargs)
+    lp = lnprior(
+        parameter_values,
+        fit,
+        bounds=bounds
+    )
     if not np.isfinite(lp):
         return float("-inf")
     else:
-        chi2 = get_chi2(parameter_values, model=fit.model, reduced=False)
+        chi2 = get_chi2(
+            parameter_values,
+            model=fit.model,
+            reduced=False
+        )
         lnlike = -0.5 * chi2 if chi2 < chi2max else -np.inf
         return lnlike + lp
 

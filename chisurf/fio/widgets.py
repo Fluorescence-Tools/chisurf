@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 from qtpy import QtWidgets
 
-import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.base
 import chisurf.structure
@@ -17,7 +16,9 @@ class SpcFileWidget(
     QtWidgets.QWidget
 ):
 
-    @chisurf.decorators.init_with_ui(ui_filename="spcSampleSelectWidget.ui")
+    @chisurf.decorators.init_with_ui(
+        ui_filename="spcSampleSelectWidget.ui"
+    )
     def __init__(
             self,
             *args,
@@ -271,7 +272,7 @@ class CsvWidget(
         self.actionColumnsChanged.triggered.connect(
             self.changeCsvParameter
         )
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.verbose)
 
     def changeCsvParameter(self):
         set_errx_on = bool(self.checkBox_3.isChecked())

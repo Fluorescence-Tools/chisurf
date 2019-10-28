@@ -5,11 +5,13 @@ from typing import List, Callable
 
 from qtpy import QtWidgets, QtCore, QtGui
 
-import chisurf.settings as mfm
+import chisurf.fio
+import chisurf.fio.widgets
 import chisurf.experiments.data
 import chisurf.fitting
 import chisurf.widgets
 import chisurf.decorators
+from chisurf.experiments import reader
 
 
 @chisurf.decorators.register
@@ -289,3 +291,39 @@ class ExperimentalDataSelector(
 
         self.clicked.connect(self.onCurveChanged)
         self.itemChanged.connect(self.onItemChanged)
+
+
+class FCSController(
+    reader.ExperimentReaderController,
+    QtWidgets.QWidget
+):
+
+    @property
+    def filename(
+            self
+    ) -> str:
+        return self.get_filename()
+
+    def __init__(
+            self,
+            file_type='Kristine files (*.cor)',
+            *args,
+            **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self.file_type = file_type
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        self.layout = layout
+        self.layout.addWidget(
+            chisurf.fio.widgets.CsvWidget()
+        )
+
+    def get_filename(
+            self
+    ) -> str:
+        return chisurf.widgets.get_filename(
+                'FCS-CSV files',
+                file_type=self.file_type
+            )

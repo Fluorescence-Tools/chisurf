@@ -14,12 +14,6 @@ from . import dynamic
 from . import static
 from . import functions
 from . import fps
-
-# import chisurf.fluorescence.av.dynamic
-# import chisurf.fluorescence.av.static
-# import chisurf.fluorescence.av.functions
-# import chisurf.fluorescence.av.fps
-
 from . static import calculate_1_radius, calculate_3_radius
 
 package_directory = os.path.dirname(__file__)
@@ -68,12 +62,12 @@ class BasicAV(object):
             *args,
             **kwargs
     ):
-        super(BasicAV, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if simulation_grid_resolution is None:
-            simulation_grid_resolution = chisurf.settings['fps']['simulation_grid_resolution']
+            simulation_grid_resolution = chisurf.settings.cs_settings['fps']['simulation_grid_resolution']
         self.dg = simulation_grid_resolution
         if allowed_sphere_radius is None:
-            allowed_sphere_radius = chisurf.settings['fps']['allowed_sphere_radius']
+            allowed_sphere_radius = chisurf.settings.cs_settings['fps']['allowed_sphere_radius']
         self.allowed_sphere_radius = allowed_sphere_radius
 
         self.position_name = position_name

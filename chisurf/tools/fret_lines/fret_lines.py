@@ -106,7 +106,7 @@ class FRETLineGenerator(object):
     def __init__(
             self,
             polynomial_degree: int = 4,
-            verbose: bool = mfm.verbose,
+            verbose: bool = chisurf.verbose,
             quantum_yield_donor: float = 0.8,
             quantum_yield_acceptor: float = 0.32,
             n_points: int = 500,
@@ -748,7 +748,7 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
         self.fit = mfm.FitQtThread()  # the fit has to be a QtThread
         self.fit.data = self._data_points
 
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.verbose)
         self.model_names = [str(model[0].name) for model in self.models]
         self.comboBox.addItems(self.model_names)
         self.model = self.current_model_index

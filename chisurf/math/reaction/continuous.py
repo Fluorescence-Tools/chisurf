@@ -118,7 +118,7 @@ class ReactionSystem(object):
 
     def __init__(
             self,
-            verbose: bool = mfm.verbose,
+            verbose: bool = chisurf.verbose,
             **kwargs
     ):
         """

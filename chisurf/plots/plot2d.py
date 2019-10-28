@@ -109,11 +109,8 @@ class SurfacePlotWidget(QtWidgets.QWidget):
         self.tableWidget.setRowCount(0)
 
     def onAutoRangeX(self):
-        print("onAutoRangeX")
         xmin = self.parent.xmin
-        print("xmin: %s" % xmin)
         xmax = self.parent.xmax
-        print("xmax: %s" % xmax)
         self.xmin.blockSignals(True)
         self.xmax.blockSignals(True)
         self.xmin.setValue(xmin)
@@ -123,11 +120,8 @@ class SurfacePlotWidget(QtWidgets.QWidget):
         self.parent.update_plots()
 
     def onAutoRangeY(self):
-        print("onAutoRangeY")
         ymin = self.parent.ymin
         ymax = self.parent.ymax
-        print("ymin: %s" % ymin)
-        print("ymax: %s" % ymax)
         self.ymin.blockSignals(True)
         self.ymax.blockSignals(True)
         self.ymin.setValue(ymin)
@@ -234,7 +228,6 @@ class SurfacePlotWidget(QtWidgets.QWidget):
         return mask
 
     def SetLog(self):
-        print("SetLog")
         self.parent.resPlot.setLogMode(x=self.checkBox_3.isChecked(), y=self.checkBox_4.isChecked())
         self.parent.dataPlot.setLogMode(x=self.checkBox_2.isChecked(), y=self.checkBox.isChecked())
 

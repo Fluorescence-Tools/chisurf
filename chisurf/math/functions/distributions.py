@@ -15,7 +15,7 @@ def poisson_0toN(lam, N):
     Examples
     --------
 
-    >>> import chisurf.settings as mfm
+    >>> import chisurf.math
     >>> r = chisurf.math.functions.distributions.poisson_0toN(0.2, 5)
     >>> r
     array([  8.18730753e-01,   3.27492301e-02,   1.30996920e-03,

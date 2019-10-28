@@ -2,95 +2,45 @@ from __future__ import annotations
 from typing import List
 
 import os
-import tempfile
-from collections import defaultdict, OrderedDict
-import sympy
+
 import yaml
 from numpy import *
-from sympy.printing.latex import latex
 from re import Scanner
 
-from qtpy import QtCore, QtWidgets, QtWebEngineWidgets
-from qtpy.QtCore import QFile, QFileInfo, QTextStream, QUrl
+from qtpy import QtCore, QtWidgets, QtSvg
 
+import chisurf.fio
 import chisurf.decorators
 import chisurf.widgets
-import chisurf.fio
+import chisurf.parameter
+import chisurf.fitting.widgets
 from chisurf.models.model import ModelWidget, ModelCurve
 from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
 
 
-class GenerateSymbols(defaultdict):
-
-    def __missing__(self, key):
-        return sympy.Symbol(key)
-
-
-class ParseFormula(FittingParameterGroup):
+class ParseFormula(
+    FittingParameterGroup
+):
 
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit = None,
             model: chisurf.models.model.Model = None,
             short: str = '',
-            parameters: List[
-                chisurf.fitting.parameter.FittingParameter
-            ] = None,
-            model_file: str = None,
-            model_name: str = None,
             **kwargs
     ):
         super().__init__(
             fit=fit,
             model=model,
             short=short,
-            parameters=parameters,
             **kwargs
         )
 
         self._keys = list()
-        self._model_file = None
         self._models = dict()
         self._count = 0
         self._func = "x*0"
-
-        if model_file is None:
-            model_file = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                'models.yaml'
-            )
-        self.model_file = model_file
-
-        if model_name is None:
-            model_name = list(self.models)[0]
-        self.model_name = model_name
-
         self.code = self._func
-
-    @property
-    def initial_values(self):
-        try:
-            ivs = self.models[self.model_name]['initial']
-        except AttributeError:
-            ivs = OrderedDict([(k, 1.0) for k in self._keys])
-        return ivs
-
-    @property
-    def models(self):
-        return self._models
-
-    @models.setter
-    def models(self, v):
-        self._models = v
-
-    @property
-    def model_file(self):
-        return self._model_file
-
-    @model_file.setter
-    def model_file(self, v):
-        self._model_file = v
-        self.load_model_file(v)
 
     @property
     def func(self):
@@ -142,20 +92,8 @@ class ParseFormula(FittingParameterGroup):
         # Define parameters
         self._parameters = list()
         for key in self._keys:
-            try:
-                iv = self.initial_values[key]
-            except KeyError:
-                iv = 1.0
-            p = FittingParameter(name=key, value=iv)
+            p = FittingParameter(name=key, value=1.0)
             self._parameters.append(p)
-
-    def load_model_file(self, filename):
-        with chisurf.fio.zipped.open_maybe_zipped(
-                filename=filename,
-                mode='r'
-        ) as fp:
-            self._model_file = filename
-            self.models = yaml.safe_load(fp)
 
     def find_parameters(
             self,
@@ -165,7 +103,9 @@ class ParseFormula(FittingParameterGroup):
         pass
 
 
-class ParseModel(ModelCurve):
+class ParseModel(
+    ModelCurve
+):
 
     name = "Parse-Model"
 
@@ -173,7 +113,6 @@ class ParseModel(ModelCurve):
             self,
             fit: chisurf.fitting.fit.FitGroup,
             *args,
-            parse: object = None,
             **kwargs
     ):
         super().__init__(
@@ -181,12 +120,10 @@ class ParseModel(ModelCurve):
             *args,
             **kwargs
         )
-        if parse is None:
-            parse = ParseFormula()
-        self.parse = parse
+        self.parse = ParseFormula()
 
     def update_model(self, **kwargs):
-        a = [p.value for p in self.parse.parameters]
+        a = [p.value for p in self.parse.parameters_all]
         x = self.fit.data.x
         try:
             y = eval(self.parse.code)
@@ -196,56 +133,50 @@ class ParseModel(ModelCurve):
 
 
 class ParseFormulaWidget(
-    ParseFormula,
     QtWidgets.QWidget
 ):
 
-    @chisurf.decorators.init_with_ui(ui_filename="parseWidget.ui")
+    @chisurf.decorators.init_with_ui(
+        ui_filename="parseWidget.ui"
+    )
     def __init__(
             self,
-            fit: chisurf.fitting.fit.FitGroup,
-            model: chisurf.models.model.Model,
-            short: str = '',
-            parameters: List[
-                chisurf.fitting.parameter.FittingParameter
-            ] = None,
             n_columns: int = None,
-            **kwargs
+            model_file: str = None,
+            model_name: str = None,
+            model: chisurf.models.model.Model = None
     ):
+        self.model = model
         if n_columns is None:
             n_columns = chisurf.settings.gui['fit_models']['n_columns']
         self.n_columns = n_columns
 
-        self.webview = QtWebEngineWidgets.QWebEngineView()
-        self.verticalLayout_4.addWidget(self.webview)
+        self._models = {}
+        if model_file is None:
+            model_file = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                'models.yaml'
+            )
+        self._model_file = model_file
+        self.load_model_file(model_file)
 
-        self.comboBox.currentIndexChanged[int].connect(self.onModelChanged)
-        self.toolButton.clicked.connect(self.onUpdateFunc)
-        self._func = self.models[self.model_name]['equation']
+        if model_name is None:
+            model_name = list(self._models)[0]
 
-    @property
-    def func(self):
-        return super(ParseFormulaWidget, self.__class__).func
+        self.model_name = model_name
+        self.svg_equation = QtSvg.QSvgWidget()
+        self.verticalLayout.addWidget(self.svg_equation)
 
-    @func.setter
-    def func(self, v):
-        super(ParseFormulaWidget, self.__class__).func = v
+        self.actionFormulaChanged.triggered.connect(self.onEquationChanged)
+        self.actionModelChanged.triggered.connect(self.onModelChanged)
 
-        self.plainTextEdit.setPlainText(v)
-        layout = self.gridLayout_2
-        chisurf.widgets.clear_layout(layout)
-        n_columns = self.n_columns
-
-        pn = list()
-        row = 1
-        for i, p in enumerate(self._parameters):
-            pw = p.make_widget()
-            column = i % n_columns
-            if column == 0:
-                row += 1
-            layout.addWidget(pw, row, column)
-            pn.append(pw.fitting_parameter)
-        self._parameters = pn
+    def load_model_file(self, filename):
+        with chisurf.fio.zipped.open_maybe_zipped(
+                filename=filename,
+                mode='r'
+        ) as fp:
+            self._model_file = filename
+            self.models = yaml.safe_load(fp)
 
     @property
     def models(self):
@@ -253,7 +184,7 @@ class ParseFormulaWidget(
 
     @models.setter
     def models(self, v):
-        ParseFormula.models.fset(self, v)
+        self._models = v
         self.comboBox.clear()
         self.comboBox.addItems(list(v.keys()))
 
@@ -269,39 +200,14 @@ class ParseFormulaWidget(
         idx = self.comboBox.findText(v)
         self.comboBox.setCurrentIndex(idx)
 
-    def onUpdateEquation(self):
-        s = """<html><head>
-            <script type="name/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_SVG.js"></script>
-            </head><body>
-            <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
-            <h3>%s</h3>
-            <p><mathjax>
-            $$
-            """ % self.model_name
-        try:
-            f = eval(self.func, GenerateSymbols())
-            s += latex(f)
-        except:
-            s += "Error"
-        s += "$$</mathjax></p>"
-        s += self.models[self.model_name]['description']
-        s += "</body></html>"
-        file = tempfile.TemporaryFile(
-            suffix='.html'
-        )
-        tempFile = QFile(
-            file.name
-        )
-        tempFile.open(QFile.WriteOnly)
-        stream = QTextStream(tempFile)
-        stream << s
-        tempFile.close()
-        fileUrl = QUrl.fromLocalFile(
-            QFileInfo(
-                tempFile
-            ).canonicalFilePath()
-        )
-        self.webview.load(fileUrl)
+    @property
+    def model_file(self):
+        return self._model_file
+
+    @model_file.setter
+    def model_file(self, v):
+        self._model_file = v
+        self.load_model_file(v)
 
     def onUpdateFunc(self):
         function_str = str(self.plainTextEdit.toPlainText())
@@ -309,25 +215,48 @@ class ParseFormulaWidget(
             "\n".join(
                 [
                     "cs.current_fit.model.parse.func = '%s'" % function_str,
-                    "cs.current_fit.update()"
                 ]
             )
         )
-        self.onUpdateEquation()
+        self.model.fit.update()
+        try:
+            ivs = self.models[self.model_name]['initial']
+            for key in ivs.keys():
+                self.model.parameter_dict[key].value = ivs[key]
+        except (AttributeError, KeyError):
+            print("No initial values")
 
     def onModelChanged(self):
-        chisurf.run(
-            "\n".join(
-                [
-                    "cs.current_fit.model.parse.model_name = '%s'" %
-                    self.model_name,
-                    "cs.current_fit.model.parse.func = '%s'" %
-                    self.models[self.model_name]['equation'],
-                    "cs.current_fit.update()"
-                ]
-            )
+        func = self.models[self.model_name]['equation']
+        self.plainTextEdit.setPlainText(
+            func
         )
-        self.onUpdateEquation()
+        self.textEdit.setHtml(
+            self.models[self.model_name]['description']
+        )
+        self.onUpdateFunc()
+        self.onEquationChanged()
+
+    def onEquationChanged(self):
+        self.onUpdateFunc()
+        layout = self.gridLayout_2
+        chisurf.widgets.clear_layout(layout)
+        n_columns = self.n_columns
+        row = 1
+
+        for i, k in enumerate(
+            sorted(
+                self.model.parameters_all_dict.keys()
+            )
+        ):
+            p = self.model.parameters_all_dict[k]
+            pw = chisurf.fitting.widgets.make_fitting_parameter_widget(
+                fitting_parameter=p
+            )
+            column = i % n_columns
+            if column == 0:
+                row += 1
+            layout.addWidget(pw, row, column)
 
     def onLoadModelFile(
             self,
@@ -338,34 +267,36 @@ class ParseFormulaWidget(
                 'Open models-file',
                 'link file (*.yaml)'
             )
-        chisurf.run(
-            "cs.current_fit.model.parse.load_model_file(%s)" % filename
-        )
+        self.load_model_file(filename)
 
 
-class ParseModelWidget(ParseModel, ModelWidget):
+class ParseModelWidget(
+    ParseModel,
+    ModelWidget
+):
 
     def __init__(
             self,
             fit: chisurf.fitting.fit.FitGroup,
+            *args,
             **kwargs
     ):
-        ModelWidget.__init__(self, fit, **kwargs)
-        parse = ParseFormulaWidget(
-            fit=fit,
-            model=self,
+        super().__init__(
+            fit,
+            *args,
             **kwargs
         )
-        ParseModel.__init__(
-            self,
-            fit=fit,
-            parse=parse
+        parse = ParseFormulaWidget(
+            model=self
         )
-        #self.update()
-
-        #self.layout = QtWidgets.QVBoxLayout(self)
-        #self.layout.setAlignment(QtCore.Qt.AlignTop)
-        #self.layout.addWidget(self.parse)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setAlignment(QtCore.Qt.AlignTop)
+        layout.addWidget(
+            parse
+        )
+        self.setLayout(
+            layout
+        )
 
     def update_model(self, **kwargs):
         ParseModel.update_model(self, **kwargs)

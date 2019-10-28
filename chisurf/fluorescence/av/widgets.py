@@ -5,9 +5,10 @@ from qtpy import QtWidgets
 
 import chisurf.settings
 import chisurf.fitting
+import chisurf.structure
+
 from chisurf.fluorescence.av.dynamic import ProteinQuenching, Dye, Sticking
 from chisurf.fitting.widgets import FittingParameterWidget
-import chisurf.structure
 
 
 class ProteinQuenchingWidget(ProteinQuenching, QtWidgets.QGroupBox):

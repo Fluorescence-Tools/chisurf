@@ -21,7 +21,6 @@ from chisurf.fio.widgets import SpcFileWidget
 
 settings = chisurf.settings.cs_settings['correlator']
 plot_settings = chisurf.settings.gui['plot']
-pyqtgraph_settings = plot_settings["pyqtgraph"]
 lw = plot_settings['line_width']
 
 
@@ -104,7 +103,7 @@ class CorrelateTTTR(QtWidgets.QWidget):
         w.correlator.correlator_thread.finished.connect(self.add_curve)
         #self.curve_selector.itemClicked[QListWidgetItem].connect(self.plot_curves)
 
-        self.plot = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])
+        self.plot = pg.PlotWidget()
         plot = self.plot.getPlotItem()
         self.verticalLayout_9.addWidget(self.plot)
         self.legend = plot.addLegend()
@@ -404,7 +403,7 @@ class CrFilterWidget(QtWidgets.QWidget):
         self.photon_source = photon_source
         self.parent = parent
 
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.verbose)
         self.time_window = kwargs.get('time_window', settings['time_window'])
         self.max_count_rate = kwargs.get('max_count_rate', settings['max_count_rate'])
 

@@ -2,13 +2,14 @@ from __future__ import annotations
 from typing import List, Tuple
 
 import numpy as np
-from qtpy import QtWidgets, QtGui
 
 import chisurf.parameter
 import chisurf.curve
-from chisurf.fitting.parameter import FittingParameterGroup
 import chisurf.fitting.widgets
 import chisurf.plots
+
+from qtpy import QtWidgets, QtGui
+from chisurf.fitting.parameter import FittingParameterGroup
 
 
 class Model(
@@ -29,22 +30,6 @@ class Model(
         self.fit = fit
         self.flatten_weighted_residuals = True
         self.model_number = model_number
-
-    @property
-    def parameters(
-            self
-    ) -> List[
-        chisurf.fitting.parameter.FittingParameter
-    ]:
-        return [p for p in self.parameters_all if not (p.fixed or p.is_linked)]
-
-    @property
-    def parameter_bounds(
-            self
-    ) -> List[
-        Tuple[float, float]
-    ]:
-        return [pi.bounds for pi in self.parameters]
 
     @property
     def n_free(
@@ -167,6 +152,14 @@ class ModelCurve(
             **kwargs
         )
 
+    def get_curves(self):
+        return {
+            'model': chisurf.curve.Curve(
+                x=self.model.x[self.xmin :self.xmax],
+                y=self.model.y[self.xmin :self.xmax]
+            )
+        }
+
     def __getitem__(
             self,
             key
@@ -247,7 +240,6 @@ class ModelWidget(
             **kwargs
         )
         self.plots = list()
-
         if icon is None:
             icon = QtGui.QIcon(":/icons/document-open.png")
         self.icon = icon

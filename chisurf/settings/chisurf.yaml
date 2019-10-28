@@ -190,9 +190,3 @@ gui:
       auto_corr_inactive: "#ff00ff"
       inactive_transparency: 0.2
       active_transparency: 1
-    pyqtgraph:
-      background: "#022700"
-      foreground: "#f2f2f2"
-      antialias: true
-      useOpenGL: false
-      useWeave: true

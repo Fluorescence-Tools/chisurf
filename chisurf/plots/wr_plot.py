@@ -8,7 +8,6 @@ import chisurf.settings as mfm
 import chisurf.fitting
 from chisurf.plots import plotbase
 
-pyqtgraph_settings = chisurf.settings.gui['plot']["pyqtgraph"]
 color_scheme = chisurf.settings.colors
 
 
@@ -48,11 +47,8 @@ class ResidualPlot(plotbase.Plot):
 
         curves = list()
         lw = chisurf.settings.gui['plot']['line_width']
-        self.curves = curves
 
-        p = pg.PlotWidget(
-            useOpenGL=pyqtgraph_settings['useOpenGL']
-        )
+        p = pg.PlotWidget()
         self.layout.addWidget(p)
 
         for i, f in enumerate(fit):
@@ -61,16 +57,14 @@ class ResidualPlot(plotbase.Plot):
             p.addItem(c)
             c.setPos(0, i*6)
             curves.append(c)
+        self.curves = curves
 
     def update_all(self, *args, **kwargs):
         # Get parameters from plot-control
         fits = self.fit
         for ci, fi in zip(self.curves, fits):
-            y_res = fi.weighted_residuals
+            w_res = fi.weighted_residuals
             ci.setData(
-                x=np.arange(
-                    0,
-                    len(y_res)
-                ),
-                y=y_res
+                x=w_res.x,
+                y=w_res.y
             )

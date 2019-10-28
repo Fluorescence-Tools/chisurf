@@ -6,14 +6,13 @@ import os
 import numpy as np
 
 import chisurf
-import chisurf.settings as mfm
 
 
 def save_xy(
         filename: str,
         x: np.array,
         y: np.array,
-        verbose: bool = mfm.verbose,
+        verbose: bool = chisurf.verbose,
         fmt: str = "%.3f\t%.3f",
         header_string: str = None
 ) -> None:
@@ -42,7 +41,7 @@ def save_xy(
 
 def load_xy(
         filename: str,
-        verbose: bool = mfm.verbose,
+        verbose: bool = chisurf.verbose,
         usecols: Tuple[int, int] = None,
         skiprows: int = 0,
         delimiter: str = "\t"
@@ -117,7 +116,7 @@ class Csv(object):
             error_x_on: bool = False,
             directory: str = '.',
             skiprows: int = 9,
-            verbose: bool = mfm.verbose,
+            verbose: bool = chisurf.verbose,
             file_type: str = 'csv',
             **kwargs
     ):
@@ -182,9 +181,11 @@ class Csv(object):
             filename: str,
             skiprows: int = None,
             use_header: bool = None,
-            verbose: bool = mfm.verbose,
+            verbose: bool = chisurf.verbose,
             delimiter: str = None,
             file_type: str = None,
+            infer_delimiter: bool = True,
+            usecols: List[int] = None,
             **kwargs
     ) -> None:
         """
@@ -233,7 +234,7 @@ class Csv(object):
                     print(csvfile.read()[:512])
 
             if file_type == 'csv':
-                if delimiter is None:
+                if (delimiter is None) and infer_delimiter:
                     with chisurf.fio.zipped.open_maybe_zipped(
                             filename=filename,
                             mode='r'
@@ -248,13 +249,15 @@ class Csv(object):
                     fname=filename,
                     delimiter=delimiter,
                     skip_header=skiprows,
-                    **kwargs
+                    usecols=usecols,
+                    ** kwargs
                 )
             else:
                 d = np.genfromtxt(
                     skip_header=skiprows,
                     fname=filename,
                     delimiter=colspecs,
+                    usecols=usecols,
                     names=header,
                     **kwargs
                 )

@@ -11,7 +11,6 @@ import numpy as np
 import tables
 
 import chisurf
-import chisurf.settings as mfm
 
 
 class Photon(tables.IsDescription):
@@ -352,7 +351,7 @@ def iss_photons(
     :return:
     """
 
-    verbose = kwargs.get('verbose', mfm.verbose)
+    verbose = kwargs.get('verbose', chisurf.verbose)
     step = 1 if (data[1] == 72) or (data[1] == 104) else 2
 
     #  X (88) two channel time reading_routine, x (120) two channel photon reading_routine
@@ -426,7 +425,7 @@ def ht3_header(
 def make_hdf(
         title: str = None,
         filename: str = None,
-        verbose: bool = mfm.verbose,
+        verbose: bool = chisurf.verbose,
         complib: str = chisurf.settings.cs_settings['photons']['complib'],
         **kwargs
 ):
@@ -472,7 +471,7 @@ def spc2hdf(
         spc_files: List[str],
         routine_name: str = "bh132",
         title: str = "spc",
-        verbose: bool = mfm.verbose,
+        verbose: bool = chisurf.verbose,
         filename: str = None,
         **kwargs
 ):

@@ -6,7 +6,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtCore import Qt
 from PyQt5.QtOpenGL import *
 
-# import pymol2
+import pymol2
 from chisurf.plots.plotbase import Plot
 
 
@@ -39,10 +39,10 @@ class MolQtWidget(QGLWidget):
         QGLWidget.__init__(self, f, parent=parent)
         self.setMinimumSize(200, 150)
         self._enableUi = enableUi
-        #self.pymol = pymol2.PyMOL()# _pymolPool.getInstance()
+        self.pymol = pymol2.PyMOL()# _pymolPool.getInstance()
         self.pymol.start()
         self.cmd = self.pymol.cmd
-        # self.toPymolName = self.pymol.toPymolName ### Attribute Error
+        self.toPymolName = self.pymol.toPymolName ### Attribute Error
         self._pymolProcess()
 
         if not self._enableUi:

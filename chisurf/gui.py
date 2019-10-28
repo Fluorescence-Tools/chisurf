@@ -1,11 +1,17 @@
 from __future__ import annotations
+import utils
+import os
+
+TOPDIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')
+)
+utils.set_search_paths(TOPDIR)
 
 import os
 import sys
 import webbrowser
 
 from qtpy import QtCore, QtGui, QtWidgets, uic
-import qdarkstyle
 import numpy as np
 
 import chisurf
@@ -114,6 +120,19 @@ class Main(QtWidgets.QMainWindow):
             self.current_setup_idx
         ]
         return current_setup
+
+    @property
+    def current_experiment_reader(self):
+        if isinstance(
+            self.current_setup,
+            experiments.reader.ExperimentReader
+        ):
+            return self.current_setup
+        elif isinstance(
+                self.current_setup,
+                experiments.reader.ExperimentReaderController
+        ):
+            return self.current_setup.experiment_reader
 
     @current_setup.setter
     def current_setup(
@@ -285,23 +304,9 @@ class Main(QtWidgets.QMainWindow):
             filename = self.current_setup.controller.filename
         except AttributeError:
             filename = None
-
-        if isinstance(
-            self.current_setup,
-            experiments.reader.ExperimentReader
-        ):
-            chisurf.macros.add_dataset(
-                self.current_setup,
-                filename=filename
-            )
-        if isinstance(
-                self.current_setup,
-                experiments.reader.ExperimentReaderController
-        ):
-            chisurf.macros.add_dataset(
-                self.current_setup.experiment_reader,
-                filename=filename
-            )
+        chisurf.run(
+            'chisurf.macros.add_dataset(filename="%s")' % filename
+        )
 
     def onSaveFits(
             self,
@@ -318,8 +323,8 @@ class Main(QtWidgets.QMainWindow):
             **kwargs
     ):
         if directory is None:
-            chisurf.chisurf.working_path = chisurf.widgets.get_directory(**kwargs)
-        chisurf.chisurf.working_path = directory
+            chisurf.working_path = chisurf.widgets.get_directory(**kwargs)
+        chisurf.working_path = directory
         chisurf.console.run('chisurf.macros.save_fit()')
 
     def onOpenHelp(
@@ -329,8 +334,8 @@ class Main(QtWidgets.QMainWindow):
         webbrowser.open_new(url)
 
     def init_widgets(self):
-        #self.decay_generator = chisurf.tools.dye_diffusion.TransientDecayGenerator()
-        #self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
+        # self.decay_generator = chisurf.tools.decay_generator.TransientDecayGenerator()
+        # self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
 
         #self.fret_lines = chisurf.tools.fret_lines.FRETLineGeneratorWidget()
         #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.fret_lines.show)
@@ -477,19 +482,41 @@ class Main(QtWidgets.QMainWindow):
                 (
                     experiments.fcs.FCS(
                         name='FCS-CSV',
-                        experiment=fcs
+                        experiment=fcs,
+                        experiment_reader='csv'
                     ),
-                    experiments.fcs.FCSController(
+                    chisurf.experiments.widgets.FCSController(
                         file_type='All files (*.*)'
                     )
                 ),
                 (
                     experiments.fcs.FCS(
                         name='Kristine',
-                        experiment=fcs
+                        experiment=fcs,
+                        experiment_reader='Kristine'
                     ),
-                    experiments.fcs.FCSController(
+                    chisurf.experiments.widgets.FCSController(
                         file_type='Kristine files (*.cor)'
+                    )
+                ),
+                (
+                    experiments.fcs.FCS(
+                        name='China-mat',
+                        experiment=fcs,
+                        experiment_reader='China-mat'
+                    ),
+                    chisurf.experiments.widgets.FCSController(
+                        file_type='Kristine files (*.mat)'
+                    )
+                ),
+                (
+                    experiments.fcs.FCS(
+                        name='ALV',
+                        experiment=fcs,
+                        experiment_reader='ALV'
+                    ),
+                    chisurf.experiments.widgets.FCSController(
+                        file_type='Kristine files (*.asc)'
                     )
                 )
             ]
@@ -646,7 +673,17 @@ def gui():
     chisurf.console.history_widget = win.plainTextEditHistory
     chisurf.cs = win
     win.init_setups()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    app.setStyleSheet(
+      open(
+          os.path.join(
+              os.path.dirname(
+                  __file__
+              ),
+              './settings/gui/styles/dark.qss'
+          ),
+          mode='r'
+      ).read()
+    )
 
     win.show()
     return app

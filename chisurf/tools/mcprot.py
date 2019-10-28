@@ -8,10 +8,9 @@ import tempfile
 import numpy as np
 from progressbar import Bar, ETA, ProgressBar, RotatingMarker, Percentage
 
-import chisurf.settings as mfm
+import chisurf.settings
 from chisurf.math.rand import weighted_choice, mc
-from mfm.structure.protein import ProteinCentroid
-from mfm.structure.trajectory import TrajectoryFile, Universe
+from chisurf.structure import ProteinCentroid, TrajectoryFile, Universe
 
 verbose = False
 
@@ -20,7 +19,7 @@ class ProteinMCWorker(object):
 
     def __init__(
             self,
-            structure: mfm.structure.protein.ProteinCentroid,
+            structure: chisurf.structure.ProteinCentroid,
             output_traj_file: str = None,
             settings: dict = None,
             update_rmsd: bool = False,
@@ -118,7 +117,7 @@ class ProteinMCWorker(object):
          Example
          -------
 
-        >>> structure = mfm.structure.protein.ProteinCentroid('./test/data/atomic_coordinates/pdb_files/eGFP-mCherry.pqr')
+        >>> structure = chisurf.structure.ProteinCentroid('./test/data/atomic_coordinates/pdb_files/eGFP-mCherry.pqr')
         >>> mcw = ProteinMCWorker(structure)
         >>> mcw.run(n_out=100, n_iter=10000)
         """

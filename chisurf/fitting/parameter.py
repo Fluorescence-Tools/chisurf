@@ -10,12 +10,11 @@ from qtpy import QtWidgets
 import numpy as np
 
 import chisurf.settings
-import chisurf.settings as mfm
 import chisurf.fitting
 import chisurf.base
 import chisurf.parameter
 import chisurf.decorators
-#import chisurf.models.model
+import chisurf.models.model
 
 parameter_settings = chisurf.settings.parameter
 
@@ -99,10 +98,12 @@ class FittingParameter(
     def scan(
             self,
             fit: chisurf.fitting.fit.Fit,
+            rel_range: float = None,
             **kwargs
     ) -> None:
         fit.chi2_scan(
-            self.name,
+            parameter_name=self.name,
+            rel_range=rel_range,
             **kwargs
         )
 
@@ -206,6 +207,14 @@ class FittingParameterGroup(
     """
 
     @property
+    def parameter_bounds(
+            self
+    ) -> List[
+        Tuple[float, float]
+    ]:
+        return [pi.bounds for pi in self.parameters]
+
+    @property
     def parameters_all(
             self
     ) -> List[
@@ -214,12 +223,22 @@ class FittingParameterGroup(
         return self._parameters
 
     @property
+    def parameters(
+            self
+    ) -> List[
+        chisurf.fitting.parameter.FittingParameter
+    ]:
+        return [
+            p for p in self.parameters_all if not (p.fixed or p.is_linked)
+        ]
+
+    @property
     def parameters_all_dict(self):
         return dict([(p.name, p) for p in self.parameters_all])
 
     @property
-    def parameters(self) -> List[chisurf.parameter.Parameter]:
-        return self.parameters_all
+    def parameters_dict(self):
+        return dict([(p.name, p) for p in self.parameters])
 
     @property
     def aggregated_parameters(self):
@@ -303,10 +322,13 @@ class FittingParameterGroup(
 
         ap = list()
         for o in set(ag):
-            if not isinstance(o, chisurf.models.model.Model):
+            if not isinstance(
+                    o,
+                    chisurf.models.model.Model
+            ):
                 o.find_parameters()
                 self.__dict__[o.name] = o
-                ap += o._parameters
+                ap += o.parameters_all
 
         mp = chisurf.base.find_objects(
             d, parameter_type
@@ -364,7 +386,7 @@ class FittingParameterGroup(
             *args,
             **kwargs
         )
-        if mfm.verbose:
+        if chisurf.verbose:
             print("---------------")
             print("Class: %s" % self.__class__.name)
             print(kwargs)
