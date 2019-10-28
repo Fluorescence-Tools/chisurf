@@ -2,6 +2,7 @@ import utils
 import os
 import unittest
 import tempfile
+import copy
 import numpy as np
 
 TOPDIR = os.path.abspath(
@@ -20,12 +21,18 @@ class Tests(unittest.TestCase):
         pdb_filename,
         verbose=True
     )
+
     s1_ref_xyz = np.array(
         [[72.739, -17.501, 8.879],
          [73.841, -17.042, 9.747],
          [74.361, -18.178, 10.643],
          [73.642, -18.708, 11.489],
          [73.1036816, -14.05035305, 10.73760945]]
+    )
+
+    s2 = chisurf.structure.Structure(
+        pdb_filename,
+        verbose=True
     )
 
     def test_structure_Structure(self):
@@ -76,6 +83,30 @@ class Tests(unittest.TestCase):
         self.assertAlmostEqual(
             s4.radius_gyration,
             23.439021926160564
+        )
+
+    def test_structure_copy(self):
+        s2 = self.s2
+        s5 = copy.copy(s2)
+        self.assertEqual(
+            s5.atoms is s2.atoms,
+            True
+        )
+        s6 = copy.deepcopy(s2)
+        self.assertEqual(
+            s6.atoms is s2.atoms,
+            False
+        )
+        s1 = self.s1
+        s6 = copy.deepcopy(s1)
+        self.assertEqual(
+            s6.atoms is s1.atoms,
+            False
+        )
+        s7 = copy.copy(s1)
+        self.assertEqual(
+            s7.atoms is s1.atoms,
+            True
         )
 
     def test_angles(self):
@@ -130,9 +161,9 @@ class Tests(unittest.TestCase):
         )
 
     def test_traj_opening(self):
+        import chisurf.structure
         traj = chisurf.structure.TrajectoryFile(
             './test/data/atomic_coordinates/trajectory/h5-file/hgbp1_transition.h5',
-            reading_routine='r',
             stride=1
         )
         self.assertEqual(
@@ -144,10 +175,44 @@ class Tests(unittest.TestCase):
             464
         )
 
-    # def test_traj_writing(self):
-    #     _, filename = tempfile.mkstemp('.h5')
-    #     traj_write = chisurf.structure.TrajectoryFile(
-    #         filename,
-    #         mode='w'
-    #     )
+    def test_traj_writing(self):
+        import tempfile
+        import chisurf.structure
 
+        _, filename = tempfile.mkstemp('.h5')
+        structure = chisurf.structure.ProteinCentroid(
+            './test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb',
+            auto_update=True
+        )
+        traj_write = chisurf.structure.TrajectoryFile(
+            structure,
+            filename=filename
+        )
+        self.assertEqual(
+            len(traj_write),
+            1
+        )
+
+        # append structures
+        structure.omega *= 0.0
+        n = 22
+        for i in range(n):
+            traj_write.append(structure)
+        self.assertEqual(
+            len(traj_write),
+            n + 1
+        )
+        len(traj_write)
+
+    @unittest.expectedFailure
+    def test_labeled_structure(self):
+        import chisurf.structure
+        import chisurf.structure.labeled_structure
+        structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+        donor_description = {'residue_seq_number': 18, 'atom_name' : 'CB'}
+        acceptor_description = {'residue_seq_number': 577, 'atom_name' : 'CB'}
+        pRDA, rda = chisurf.structure.labeled_structure.av_distance_distribution(
+            structure,
+            donor_av_parameter=donor_description,
+            acceptor_av_parameter=acceptor_description
+        )

@@ -15,7 +15,7 @@ dependencies:
     - numpy
     - numba
     - scipy
-    - sympy
+    #- sympy
     - emcee
     - numexpr
     - pytables
@@ -38,6 +38,7 @@ dependencies:
     - qdarkstyle
     - sphinx
     - htmd-pdb2pqr
+    - pymol-open-source
 #    - sphinx_bootstrap_theme
 #    - sphinx-autodoc-typehints
 #    - numpydoc

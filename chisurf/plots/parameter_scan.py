@@ -6,8 +6,8 @@ import pyqtgraph as pg
 from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
+import chisurf
 import chisurf.settings
-import chisurf.settings as mfm
 import chisurf.fitting
 import chisurf.parameter
 import chisurf.decorators
@@ -15,7 +15,6 @@ import chisurf.models
 from chisurf.plots import plotbase
 
 plot_settings = chisurf.settings.gui['plot']
-pyqtgraph_settings = chisurf.settings.pyqtgraph_settings
 colors = plot_settings['colors']
 color_scheme = chisurf.settings.colors
 lw = plot_settings['line_width']
@@ -66,12 +65,16 @@ class ParameterScanWidget(
     ) -> None:
         p_min = float(self.doubleSpinBox.value())
         p_max = float(self.doubleSpinBox_2.value())
+        _, name = self.selected_parameter
+        v = self.model.parameter_dict[name].value
+        v_min = (1. - p_min) * v
+        v_max = (1. + p_max) * v
         n_steps = int(self.spinBox.value())
-        chisurf.chisurf.run(
-            "cs.current_fit.model.parameters_all_dict['%s'].scan(cs.current_fit, rel_range=(%s, %s), n_steps=%s)" % (
+        chisurf.run(
+            "cs.current_fit.model.parameters_all_dict['%s'].scan(cs.current_fit, scan_range=(%s, %s), n_steps=%s)" % (
                 self.parameter.name,
-                p_min,
-                p_max,
+                v_min,
+                v_max,
                 n_steps
             )
         )
@@ -99,21 +102,6 @@ class ParameterScanWidget(
 class ParameterScanPlot(
     plotbase.Plot
 ):
-    """
-    Started off as a plotting class to display TCSPC-data displaying the IRF, the experimental data, the residuals
-    and the autocorrelation of the residuals. Now it is also used also for fcs-data.
-
-    In case the model is a :py:class:`~experiment.model.tcspc.LifetimeModel` it takes the irf and displays it:
-
-        irf = fit.model.convolve.irf
-        irf_y = irf.y
-
-    The model data and the weighted residuals are taken directly from the fit:
-
-        model_x, model_y = fit[:]
-        wres_y = fit.weighted_residuals
-
-    """
 
     name = "Parameter scan"
 
@@ -160,13 +148,11 @@ class ParameterScanPlot(
             *args,
             **kwargs
     ) -> None:
-        pass
         try:
             p = self.pltControl.parameter
             x, y = p.parameter_scan
             if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
                 self.distribution_curve.setData(x=x, y=y)
         except:
-            pass
-
+            print("ParameterScanPlot: update_all failed")
 

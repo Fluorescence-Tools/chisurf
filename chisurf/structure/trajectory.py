@@ -66,7 +66,10 @@ class Universe(object):
         return scales * Es
 
 
-class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
+class TrajectoryFile(
+    mdtraj.Trajectory,
+    chisurf.base.Base
+):
 
     """
     Creates an Trajectory of mfm.structure.Structures given a HDF5-File using
@@ -159,30 +162,31 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
             self,
             p_object,
             filename: str = None,
-            make_coarse: bool = False,
             rmsd_ref_state: int = 0,
             stride: int = 1,
             inverse_trajectory: bool = False,
             center: bool = False,
             verbose: bool = False,
             atom_indices: List[int] = None,
-            mode: str = 'r',
-            *args,
-            **kwargs
+            mode: str = 'r'
     ):
         """
 
-        Parameters
-        ----------
-
-        pdb_model : int
-            the models number of the pdb (optional argument). By default the
-            first models in the PDB-File is used.
-
+        :param p_object: either a string pointing to an .hdf or .pdb file; a mdtraj.Trajectory object;
+            or a chisurf.structure.Structure object;
+        :param filename:
+        :param rmsd_ref_state:
+        :param stride:
+        :param inverse_trajectory:
+        :param center:
+        :param verbose:
+        :param atom_indices:
+        :param mode:
+        :param args:
+        :param kwargs:
         """
         self.mode = mode
         self.atom_indices = atom_indices
-        self.make_coarse = make_coarse
         self.stride = stride
         self._rmsd_ref_state = rmsd_ref_state
         self.verbose = verbose
@@ -190,97 +194,58 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
         self._invert = inverse_trajectory
         self._structure = None
 
-        if filename is None:
-            _, filename = tempfile.mkstemp(
-                suffix=".h5"
-            )
-        self._filename = filename
+        _, h5_tmp = tempfile.mkstemp(
+            suffix=".h5"
+        )
         _, pdb_tmp = tempfile.mkstemp(
             suffix=".pdb"
         )
+        if filename is None:
+            self._filename = h5_tmp
+        else:
+            self._filename = filename
 
         if isinstance(
-                p_object,
-                str
+                p_object, str
         ):
             if p_object.endswith('.pdb'):
+                structure = chisurf.structure.Structure(p_object)
                 self._mdtraj = mdtraj.Trajectory.load(p_object)
+                self._mdtraj.save_hdf5(self._filename)
             elif p_object.endswith('.h5'):
                 self._filename = p_object
-                if self.mode == 'r':
-                    self._mdtraj = mdtraj.Trajectory.load(
-                        p_object,
-                        stride=self.stride
-                    )
-                    self._mdtraj[0].save(
-                        pdb_tmp
-                    )
-                    structure = chisurf.structure.Structure(
-                        pdb_tmp
-                    )
-                    mdtraj.Trajectory.__init__(
-                        self,
-                        self._mdtraj.xyz,
-                        self._mdtraj.topology
-                    )
-                elif self.mode == 'w':
-                    self._mdtraj = mdtraj.Trajectory.load(pdb_tmp)
-                    self._mdtraj.save_hdf5(p_object)
-                    self._filename = p_object
-                    mdtraj.Trajectory.__init__(
-                        self,
-                        self._mdtraj.xyz,
-                        self._mdtraj.topology
-                    )
-
+                self._mdtraj = mdtraj.Trajectory.load(
+                    p_object,
+                    stride=self.stride
+                )
+                self._mdtraj[0].save_pdb(pdb_tmp)
+                structure = chisurf.structure.Structure(pdb_tmp)
+            else:
+                structure = chisurf.structure.Structure(pdb_tmp)
         elif isinstance(
                 p_object,
                 mdtraj.Trajectory
         ):
             self._mdtraj = p_object
-            mdtraj.Trajectory.__init__(
-                self,
-                xyz=p_object.xyz,
-                topology=p_object.topology
-            )
-            if filename is None:
-                _, filename = tempfile.mkstemp(
-                    suffix=".h5"
-                )
-            self._filename = filename
-
+            self._mdtraj[0].save_pdb(pdb_tmp)
+            structure = chisurf.structure.Structure(pdb_tmp)
         elif isinstance(
                 p_object,
                 chisurf.structure.Structure
         ):
-            if filename is None:
-                _, filename = tempfile.mkstemp(
-                    suffix=".h5"
-                )
-            self._filename = filename
-
             p_object.write(pdb_tmp)
             self._mdtraj = mdtraj.Trajectory.load(pdb_tmp)
             self._mdtraj.save_hdf5(filename=self._filename)
-            mdtraj.Trajectory.__init__(
-                self,
-                xyz=self._mdtraj.xyz,
-                topology=self._mdtraj.topology
-            )
             structure = p_object
-        else:
-            self._mdtraj[0].save_pdb(pdb_tmp)
-            structure = chisurf.structure.Structure(
-                pdb_tmp,
-                verbose=self.verbose
-            )
 
-        self.structure = kwargs.get('structure', structure)
+        self.structure = structure
+        super().__init__(
+            xyz=self._mdtraj.xyz,
+            topology=self._mdtraj.topology
+        )
 
         if self.center:
             self._mdtraj.center_coordinates()
-
-        #super(TrajectoryFile, self).__init__(*args, **kwargs)
 
         self.rmsd_ref_state = rmsd_ref_state
         self.rmsd = list()
@@ -296,7 +261,6 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
         self.chi2r = list()
         self.rmsd_ref_state = 0
 
-    '''
     @property
     def xyz(self):
         """Cartesian coordinates of each atom in each simulation frame
@@ -305,14 +269,13 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
         oder of the trajectory is inverted
         """
         if self.invert:
-            return self._xyz[::-1]
+            return self._mdtraj.xyz[::-1]
         else:
-            return self._xyz
+            return self._mdtraj.xyz
 
     @xyz.setter
     def xyz(self, v):
         self._xyz = v
-    '''
 
     @property
     def structure(
@@ -423,9 +386,7 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
         The average structure (:py:class:`~mfm.structure.mfm.structure.Structure`)
         of the trajectory
         """
-        return chisurf.structure.average(
-            self[:len(self)]
-        )
+        return chisurf.structure.average(self[:len(self)])
 
     @property
     def values(
@@ -466,7 +427,7 @@ class TrajectoryFile(chisurf.base.Base, mdtraj.Trajectory):
             update_rmsd: bool = True,
             energy: float = np.inf,
             energy_fret: float = np.inf,
-            verbose: bool = True
+            verbose: bool = False
     ):
         """Append a structure of type :py::class`mfm.mfm.structure.Structure`
         to the trajectory

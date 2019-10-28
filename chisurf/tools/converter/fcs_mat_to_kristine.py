@@ -89,6 +89,8 @@ def save_intensity_trace(
     )
 
 
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
@@ -157,7 +159,6 @@ if __name__ == "__main__":
             )
             correlations.append(correlation_amplitude)
         correlations = np.array(correlations)
-        print(correlations)
         save_fcs_kristine(
             filename=file_prefix + '_%s_mean' % (
                 correlation_key

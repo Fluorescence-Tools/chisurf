@@ -2,22 +2,23 @@
 
 """
 from __future__ import annotations
-from typing import Tuple
+from typing import Dict
 
 import emcee
 import numpy as np
 
-from chisurf.fitting import fit
+import chisurf
+import chisurf.fitting
 
 
 def walk_mcmc(
-        fit: fit.Fit,
+        fit: chisurf.fitting.fit.Fit,
         steps: int,
         step_size: float,
-        chi2max: float,
-        temp: float,
-        thin: int
-):
+        temp: float = 1.0,
+        thin: int = 1,
+        chi2max: float = np.inf
+) -> Dict:
     """
 
     :param fit:
@@ -33,15 +34,33 @@ def walk_mcmc(
     n_samples = steps // thin
     # initialize arrays
     lnp = np.empty(n_samples)
-    parameter = np.zeros((n_samples, dim))
+    parameter = np.empty((n_samples, dim))
     n_accepted = 0
     state_prev = np.copy(state_initial)
-    lnp_prev = np.array(fit.lnprob(state_initial))
+    bounds = fit.model.parameter_bounds
+
+    lnp_prev = np.array(
+        chisurf.fitting.fit.lnprob(
+            parameter_values=state_initial,
+            fit=fit,
+            chi2max=chi2max,
+            bounds=bounds
+        )
+    )
+
     while n_accepted < n_samples:
+
         state_next = state_prev + np.random.normal(0.0, step_size, dim) * state_initial
-        lnp_next = fit.lnprob(state_next, chi2max)
+        lnp_next = chisurf.fitting.fit.lnprob(
+            parameter_values=state_next,
+            fit=fit,
+            chi2max=chi2max,
+            bounds=bounds
+        )
+
         if not np.isfinite(lnp_next):
             continue
+
         if (-lnp_next + lnp_prev) / temp > np.log(np.random.rand()):
             # save results
             parameter[n_accepted] = state_next
@@ -50,20 +69,24 @@ def walk_mcmc(
             np.copyto(state_prev, state_next)
             np.copyto(lnp_prev, lnp_next)
             n_accepted += 1
-    return lnp, parameter
+
+    chi2 = -2. * lnp / float(fit.model.n_points - fit.model.n_free - 1.0)
+
+    return {
+        'chi2r': chi2,
+        'parameter_values': parameter,
+        'parameter_names': fit.model.parameter_names
+    }
 
 
 def sample_emcee(
-        fit: fit.Fit,
+        fit: chisurf.fitting.fit.Fit,
         steps: int,
         nwalkers: int,
         thin: int = 10,
         std: float = 1e-4,
         chi2max: float = np.inf
-) -> Tuple[
-    np.array,
-    np.array
-]:
+) -> Dict:
     """Sample the parameter space by emcee using a number of 'walkers'
 
     :param fit: the fit to be samples
@@ -75,20 +98,30 @@ def sample_emcee(
     :return: a list containing the chi2 and the parameter values
     """
     model = fit.model
-    ndim = fit.n_free # Number of free parameters to be sampled (number of dimensions)
+    ndim = fit.n_free  # Number of free parameters to be sampled (number of dimensions)
     kw = {
-        'parameters': fit.model.parameters,
         'bounds': fit.model.parameter_bounds,
         'chi2max': chi2max
     }
     sampler = emcee.EnsembleSampler(
-        nwalkers, ndim,
-        fit.lnprob,
-        args=[fit], kwargs=kw
+        nwalkers=nwalkers,
+        ndim=ndim,
+        log_prob_fn=chisurf.fitting.fit.lnprob,
+        args=[fit],
+        kwargs=kw
     )
     std = np.array(fit.model.parameter_values) * std
-    pos = [fit.model.parameter_values + std * np.random.randn(ndim) for i in range(nwalkers)]
-    sampler.run_mcmc(pos, steps, thin=thin)
+    pos = [
+        fit.model.parameter_values + std * np.random.randn(ndim) for i in range(nwalkers)
+    ]
+    sampler.run_mcmc(
+        pos,
+        steps,
+        thin=thin
+    )
     chi2 = -2. * sampler.flatlnprobability / float(model.n_points - model.n_free - 1.0)
-
-    return chi2, sampler.flatchain
+    return {
+        'chi2r': chi2,
+        'parameter_values': sampler.flatchain,
+        'parameter_names': fit.model.parameter_names
+    }

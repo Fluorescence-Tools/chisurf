@@ -32,10 +32,6 @@ import os
 import urllib.request
 import numpy as np
 
-# Removed for now because mmcif does not exist for Windows
-#import mmcif.fio.PdbxReader
-
-import chisurf.settings as mfm
 import chisurf
 import chisurf.common
 
@@ -109,7 +105,7 @@ def assign_element_to_atom_name(
 def parse_string_pdb(
         string: str,
         assign_charge: bool = False,
-        verbose: bool = mfm.verbose
+        verbose: bool = chisurf.verbose
 ):
     """
 
@@ -164,7 +160,7 @@ def parse_string_pdb(
 def read(
         filename: str,
         assign_charge: bool = False,
-        verbose: bool = mfm.verbose,
+        verbose: bool = chisurf.verbose,
         **kwargs
 ) -> np.ndarray:
     """ Open pdb_file and read each line into pdb (a list of lines)
@@ -319,7 +315,7 @@ def get_atom_index(
         raise ValueError(
             "Either attachment_atom number or residue and atom_name have to be provided."
         )
-    verbose = kwargs.get('verbose', mfm.verbose)
+    verbose = kwargs.get('verbose', chisurf.verbose)
     ignore_multiple_selections = kwargs.get('ignore_multiple_selections', True)
     if verbose:
         print("Labeling position")
@@ -355,7 +351,7 @@ def get_atom_index(
 
 def parse_string_pqr(
         string: str,
-        verbose: bool = mfm.verbose
+        verbose: bool = chisurf.verbose
 ):
     rows = string.splitlines()
     atoms = np.zeros(len(rows), dtype={'names': keys, 'formats': formats})
@@ -390,7 +386,7 @@ def parse_string_pqr(
 def write_xyz(
         filename: str,
         points: np.array,
-        verbose: bool = mfm.verbose
+        verbose: bool = chisurf.verbose
 ):
     """
     Writes the points as xyz-format file. The xyz-format file can be opened and displayed for instance

@@ -182,7 +182,6 @@ def load_fit_result(
 def group_datasets(
         dataset_indices: List[int]
 ) -> None:
-    #selected_data = mfm.data_sets[dataset_numbers]
     selected_data = [
         chisurf.imported_datasets[i] for i in dataset_indices
     ]
@@ -238,15 +237,15 @@ def remove_datasets(
 
 
 def add_dataset(
-        setup: chisurf.experiments.reader.ExperimentReader = None,
+        expriment_reader: chisurf.experiments.reader.ExperimentReader = None,
         dataset: chisurf.base.Data = None,
         **kwargs
 ) -> None:
     cs = chisurf.cs
-    if setup is None:
-        setup = cs.current_setup
+    if expriment_reader is None:
+        expriment_reader = cs.current_experiment_reader
     if dataset is None:
-        dataset = setup.get_data(
+        dataset = expriment_reader.get_data(
             **kwargs
         )
     dataset_group = dataset if isinstance(
@@ -282,7 +281,7 @@ def save_fits(
 def close_fit(
         idx: int = None
 ):
-    cs = mfm.cs
+    cs = chisurf.cs
     if idx is None:
         sub_window = cs.mdiarea.currentSubWindow()
         for i, w in enumerate(chisurf.fit_windows):
@@ -299,9 +298,15 @@ def close_fit(
 def change_selected_fit_of_group(
     selected_fit: int
 ) -> None:
+    """
+    Changes the currently selected fit
+
+    :param selected_fit:
+    :return:
+    """
     cs = chisurf.cs
     cs.current_fit.model.hide()
-    cs.current_fit.current_fit = selected_fit
+    cs.current_fit.selected_fit = selected_fit
     cs.current_fit.update()
     cs.current_fit.model.show()
 
@@ -310,18 +315,27 @@ def link_fit_group(
         fitting_parameter_name: str,
         csi: int = 0
 ) -> None:
+    """
+    This macro links the parameters with a name
+    specified by fitting_parameter_name within
+    a FitGroup
+
+    :param fitting_parameter_name:
+    :param csi:
+    :return:
+    """
     cs = chisurf.cs
     if csi == 2:
-        s = cs.current_fit.model.parameters_all_dict[fitting_parameter_name]
+        current_fit = cs.current_fit
+        parameter = current_fit.model.parameters_all_dict[fitting_parameter_name]
         for f in cs.current_fit:
             try:
                 p = f.model.parameters_all_dict[fitting_parameter_name]
-                if p is not s:
-                    p.link = s
+                if p is not parameter:
+                    p.link = parameter
             except KeyError:
                 pass
     if csi == 0:
-        s = cs.current_fit.model.parameters_all_dict[fitting_parameter_name]
         for f in cs.current_fit:
             try:
                 p = f.model.parameters_all_dict[fitting_parameter_name]

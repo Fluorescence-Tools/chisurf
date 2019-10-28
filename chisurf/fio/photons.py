@@ -40,24 +40,30 @@ def read_burst_ids(
         stack_files: bool = True
 ) -> np.array:
     """
-    Reads Seidel-BID files and returns a list of numpy arrays. Each numpy array contains the indexes of the photons of
-    the burst. These indexes can be used to slice a photon-stream.
+    Reads Seidel-BID files and returns a list of numpy
+    arrays. Each numpy array contains the indexes of
+    the photons of the burst. These indexes can be used
+    to slice a photon-stream.
 
-    Seidel BID-files only contain the first and the last photon of the Burst and not all photons of
-    the burst. Thus, the Seidel BID-files have to be converted to array-type objects containing all
-    photons of the burst to be able to use standard Python slicing syntax to select photons.
+    Seidel BID-files only contain the first and the
+    last photon of the Burst and not all photons of
+    the burst. Thus, the Seidel BID-files have to be
+    converted to array-type objects containing all
+    photons of the burst to be able to use standard
+    Python slicing syntax to select photons.
 
     :param filenames:
         filename pointing to a Seidel BID-file
     :param stack_files: bool
-        If stack is True the returned list is stacked and the numbering of the bursts is made continuous.
+        If stack is True the returned list is stacked
+        and the numbering of the bursts is made continuous.
         This is the default behavior.
     :return:
 
     Examples
     --------
 
-    >>> import chisurf.settings as mfm, glob
+    >>> import chisurf.fio, glob
     >>> directory = "./test/data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\BID"
     >>> files = glob.glob(directory+'/*.bst')
     >>> bids = chisurf.fio.photons.read_burst_ids(files)
@@ -132,8 +138,7 @@ class Photons(object):
     Examples
     --------
 
-    >>> import glob
-    >>> import chisurf.fio
+    >>> import chisurf.fio, glob
     >>> directory = './test/data/tttr/BH/'
     >>> spc_files = glob.glob(directory+'/BH_SPC132.spc')
     >>> photons = chisurf.fio.photons.Photons(spc_files, file_type="bh132")

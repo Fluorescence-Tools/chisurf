@@ -3,11 +3,11 @@ import itertools
 import numexpr as ne
 import numpy as np
 import tables
-from chisurf.fluorescence.av.dynamic import DiffusionSimulation
 
 import chisurf.settings
-import chisurf.settings as mfm
+
 from chisurf.curve import Curve
+from chisurf.fluorescence.av.dynamic import DiffusionSimulation
 from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 
 
@@ -352,7 +352,7 @@ class DyeDecay(Curve):
             **kwargs
     ):
         n_photons = kwargs.get('n_photons', self.decay_parameter.n_photons)
-        verbose = kwargs.get('verbose', mfm.verbose)
+        verbose = kwargs.get('verbose', chisurf.verbose)
         tau0 = kwargs.get('tau0', self.diffusion.dye.tauD0)
         kq_array = kwargs.get('quenching', self.diffusion.quenching_trajectory)
         t_step = kwargs.get('t_step', self.diffusion.simulation_parameter.t_step)
@@ -475,7 +475,7 @@ class FRETDecay(
             donor_diffusion,
             **kwargs
         )
-        self.verbose = kwargs.get('verbose', mfm.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.verbose)
 
         self.donor_diffusion = donor_diffusion
         self.acceptor_diffusion = acceptor_diffusion

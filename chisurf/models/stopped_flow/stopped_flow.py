@@ -4,11 +4,10 @@ import json
 import os
 
 import numpy as np
-from qtpy import  QtWidgets, uic
+from qtpy import QtWidgets, uic
 from chisurf.models.parse import ParseModelWidget
 
 import chisurf.settings
-import chisurf.settings as mfm
 import chisurf.fitting.widgets
 from chisurf import plots
 from chisurf.models.model import Model
@@ -30,8 +29,10 @@ class ParseStoppedFlowWidget(ParseModelWidget):
     ]
 
     def __init__(self, fit):
-        fn = os.path.join(mfm.package_directory,
-                          'settings/stopped_flow.models.json')
+        fn = os.path.join(
+            chisurf.settings.package_directory,
+            'settings/stopped_flow.models.json'
+        )
         ParseModelWidget.__init__(self, fit, model_file=fn)
 
 

@@ -111,7 +111,7 @@ setup(
             '*.ui',
             '*.png',
             '*.svg',
-            '*.css',
+            '*.css', '*.qss'
             '*.csv',
             '*.npy',
             '*.dll',
@@ -127,7 +127,7 @@ setup(
         'numba',
         'scipy',
         'pyqtgraph',
-        'sympy',
+        #'sympy',
         'PyYAML',
         'tables',
         'numexpr',

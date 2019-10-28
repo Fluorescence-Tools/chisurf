@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 
-import chisurf.settings as mfm
 import chisurf.fluorescence
-from mfm.structure.structure import Structure
+import chisurf.fluorescence.av
+from chisurf.structure.structure import Structure
 
 
 def av_distance_distribution(
@@ -25,7 +25,8 @@ def av_distance_distribution(
     Examples
     --------
 
-import chisurf.settings as mfm.structure    >>> structure = mfm.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
+    >>> import chisurf.structure
+    >>> structure = chisurf.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
     >>> donor_description = {'residue_seq_number': 18, 'atom_name': 'CB'}
     >>> acceptor_description = {'residue_seq_number': 577, 'atom_name': 'CB'}
     >>> pRDA, rda = av_distance_distribution(structure, donor_av_parameter=donor_description, acceptor_av_parameter=acceptor_description)
@@ -127,8 +128,8 @@ def av_filtered_fcs_weights(
 
     >>> from chisurf.fluorescence.fcs.filtered import calc_lifetime_filter
     >>> from chisurf.fluorescence.general import calculate_fluorescence_decay
-    >>> from mfm.structure.structure import Structure
-    >>> from mfm.structure.trajectory import TrajectoryFile
+    >>> from chisurf.structure.structure import Structure
+    >>> from chisurf.structure.trajectory import TrajectoryFile
 
     Define where the donor and the acceptor are attached to
 

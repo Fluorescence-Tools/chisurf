@@ -153,7 +153,7 @@ class Structure(chisurf.base.Base):
                 self.pdbid = p_object
             else:
                 return
-        if protonate:
+        if protonate and p_object is not None:
             self.protonate()
 
     @property
@@ -417,7 +417,6 @@ class Structure(chisurf.base.Base):
         new = copy.copy(self)
         new._atoms = np.copy(self._atoms)
         new.filename = copy.copy(self.filename)
-        new.io = self.io
         return new
 
 

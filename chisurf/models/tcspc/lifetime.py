@@ -5,7 +5,7 @@ import math
 
 import numpy as np
 
-import chisurf.settings as mfm
+import chisurf.curve
 import chisurf.math.datatools
 from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 from chisurf.models.model import ModelCurve
@@ -297,6 +297,11 @@ class LifetimeModel(ModelCurve):
         super().finalize()
         self.lifetimes.update()
 
+    def get_curves(self):
+        d = super().get_curves()
+        d['IRF'] = self.convolve.irf
+        return d
+
     def decay(
             self,
             time: np.array
@@ -311,7 +316,7 @@ class LifetimeModel(ModelCurve):
             shift_bg_with_irf: bool = None,
             lifetime_spectrum: np.array = None,
             scatter: float = None,
-            verbose: bool = mfm.verbose,
+            verbose: bool = chisurf.verbose,
             background: float = None,
             background_curve: chisurf.curve.Curve = None,
             **kwargs

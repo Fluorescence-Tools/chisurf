@@ -1,0 +1,139 @@
+
+
+------
+/Users/tpeulen/miniconda3/envs/chisurf/bin/python /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/gui.py
+loading filename:  /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/settings/chisurf.yaml
+objc[12114]: Class FIFinderSyncExtensionHost is implemented in both /System/Library/PrivateFrameworks/FinderKit.framework/Versions/A/FinderKit (0x7fff92e463d8) and /System/Library/PrivateFrameworks/FileProvider.framework/OverrideBundles/FinderSyncCollaborationFileProviderOverride.bundle/Contents/MacOS/FinderSyncCollaborationFileProviderOverride (0x1339c1f50). One of the two will be used. Which one is undefined.
+/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/PlotDataItem.py:533: RuntimeWarning: invalid value encountered in log10
+  y = np.log10(y)
+Traceback (most recent call last):
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/plots/lineplot/lineplot.py", line 241, in SetDensity
+    self.parent.update_all()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/plots/lineplot/lineplot.py", line 518, in update_all
+    y=data_y[idx]
+IndexError: index 255 is out of bounds for axis 0 with size 255
+-------
+
+/Users/tpeulen/miniconda3/envs/chisurf/bin/python /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/gui.py
+/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:526: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint8 = np.dtype([("qint8", np.int8, 1)])
+/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:527: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint8 = np.dtype([("quint8", np.uint8, 1)])
+/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:528: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint16 = np.dtype([("qint16", np.int16, 1)])
+/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:529: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_quint16 = np.dtype([("quint16", np.uint16, 1)])
+/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:530: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  _np_qint32 = np.dtype([("qint32", np.int32, 1)])
+/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/tensorflow/python/framework/dtypes.py:535: FutureWarning: Passing (type, 1) or '1type' as a synonym of type is deprecated; in a future version of numpy, it will be understood as (type, (1,)) / '(1,)type'.
+  np_resource = np.dtype([("resource", np.ubyte, 1)])
+loading filename:  /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/settings/chisurf.yaml
+objc[15882]: Class FIFinderSyncExtensionHost is implemented in both /System/Library/PrivateFrameworks/FinderKit.framework/Versions/A/FinderKit (0x7fff92e463d8) and /System/Library/PrivateFrameworks/FileProvider.framework/OverrideBundles/FinderSyncCollaborationFileProviderOverride.bundle/Contents/MacOS/FinderSyncCollaborationFileProviderOverride (0x13c870f50). One of the two will be used. Which one is undefined.
+/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/AxisItem.py:764: RuntimeWarning: overflow encountered in power
+  return ["%0.1g"%x for x in 10 ** np.array(values).astype(float)]
+WARNING:tensorflow:From /Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/tensorflow/python/framework/op_def_library.py:263: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+WARNING:tensorflow:From /Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/tensorflow/python/framework/op_def_library.py:263: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+Traceback (most recent call last):
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/parse/parse.py", line 241, in onEquationChanged
+    self.onUpdateFunc()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/parse/parse.py", line 221, in onUpdateFunc
+    self.model.fit.update()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/fitting/fit.py", line 335, in update
+    self.model.update()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/model.py", line 233, in update
+    self.update_plots()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/model.py", line 214, in update_plots
+    **kwargs
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/plots/fitinfo.py", line 36, in update_all
+    self.textedit.setPlainText(str(fit))
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/fitting/fit.py", line 580, in __str__
+    s += str(f)
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/fitting/fit.py", line 73, in __str__
+    s += str(self.model)
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/model.py", line 116, in __str__
+    s += "%s\t%.4e\t%s\t%s\t%s\n" % p
+TypeError: must be real number, not RefVariable
+
+
+----------------
+
+
+/Users/tpeulen/miniconda3/envs/chisurf/bin/python /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/gui.py
+loading filename:  /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/settings/chisurf.yaml
+libpng warning: iCCP: known incorrect sRGB profile
+objc[21457]: Class FIFinderSyncExtensionHost is implemented in both /System/Library/PrivateFrameworks/FinderKit.framework/Versions/A/FinderKit (0x7fff92e463d8) and /System/Library/PrivateFrameworks/FileProvider.framework/OverrideBundles/FinderSyncCollaborationFileProviderOverride.bundle/Contents/MacOS/FinderSyncCollaborationFileProviderOverride (0x1338aef50). One of the two will be used. Which one is undefined.
+/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/AxisItem.py:764: RuntimeWarning: overflow encountered in power
+  return ["%0.1g"%x for x in 10 ** np.array(values).astype(float)]
+Traceback (most recent call last):
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/plots/lineplot/lineplot.py", line 240, in SetDensity
+    self.parent.update_all()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/plots/lineplot/lineplot.py", line 411, in update_all
+    curves = self.fit.get_curves()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/fitting/fit.py", line 249, in get_curves
+    'autocorrelation': self.autocorrelation
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/fitting/fit.py", line 154, in autocorrelation
+    y=chisurf.math.signal.autocorr(wres.y)[1:]
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/math/signal.py", line 146, in autocorr
+    normalize=normalize
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/math/signal.py", line 168, in xcorr_fft
+    f1 = np.fft.fft(c-np.mean(c, axis=axis), n=2*n, axis=axis)
+  File "<__array_function__ internals>", line 6, in fft
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/numpy/fft/pocketfft.py", line 188, in fft
+    output = _raw_fft(a, n, axis, False, True, inv_norm)
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/numpy/fft/pocketfft.py", line 58, in _raw_fft
+    % n)
+ValueError: Invalid number of FFT data points (0) specified.
+
+---------------
+
+/Users/tpeulen/miniconda3/envs/chisurf/bin/python /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/gui.py
+loading filename:  /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/settings/chisurf.yaml
+objc[33811]: Class FIFinderSyncExtensionHost is implemented in both /System/Library/PrivateFrameworks/FinderKit.framework/Versions/A/FinderKit (0x7fffb14283d8) and /System/Library/PrivateFrameworks/FileProvider.framework/OverrideBundles/FinderSyncCollaborationFileProviderOverride.bundle/Contents/MacOS/FinderSyncCollaborationFileProviderOverride (0x136311f50). One of the two will be used. Which one is undefined.
+ParameterScanPlot: update_all failed
+/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/math/signal.py:172: FutureWarning: Using a non-tuple sequence for multidimensional indexing is deprecated; use `arr[tuple(seq)]` instead of `arr[seq]`. In the future this will be interpreted as an array index, `arr[np.array(seq)]`, which will result either in an error or a different result.
+  acf = np.fft.ifft(f1 * np.conjugate(f2), axis=axis)[m].real
+ParameterScanPlot: update_all failed
+ParameterScanPlot: update_all failed
+/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/PlotCurveItem.py:131: RuntimeWarning: All-NaN slice encountered
+  b = (np.nanmin(d), np.nanmax(d))
+Traceback (most recent call last):
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/ViewBox/ViewBox.py", line 298, in prepareForPaint
+    self.updateAutoRange()
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/ViewBox/ViewBox.py", line 886, in updateAutoRange
+    childRange = self.childrenBounds(frac=fractionVisible)
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/ViewBox/ViewBox.py", line 1371, in childrenBounds
+    px, py = [v.length() if v is not None else 0 for v in self.childGroup.pixelVectors()]
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/ViewBox/ViewBox.py", line 1371, in <listcomp>
+    px, py = [v.length() if v is not None else 0 for v in self.childGroup.pixelVectors()]
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/Point.py", line 108, in length
+    return (self[0]**2 + self[1]**2) ** 0.5
+OverflowError: (34, 'Result too large')
+
+Process finished with exit code 134 (interrupted by signal 6: SIGABRT)
+
+------------
+
+/Users/tpeulen/miniconda3/envs/chisurf/bin/python /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/gui.py
+loading filename:  /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/settings/chisurf.yaml
+objc[34607]: Class FIFinderSyncExtensionHost is implemented in both /System/Library/PrivateFrameworks/FinderKit.framework/Versions/A/FinderKit (0x7fffb14283d8) and /System/Library/PrivateFrameworks/FileProvider.framework/OverrideBundles/FinderSyncCollaborationFileProviderOverride.bundle/Contents/MacOS/FinderSyncCollaborationFileProviderOverride (0x12e830f50). One of the two will be used. Which one is undefined.
+/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/math/signal.py:172: FutureWarning: Using a non-tuple sequence for multidimensional indexing is deprecated; use `arr[tuple(seq)]` instead of `arr[seq]`. In the future this will be interpreted as an array index, `arr[np.array(seq)]`, which will result either in an error or a different result.
+  acf = np.fft.ifft(f1 * np.conjugate(f2), axis=axis)[m].real
+ParameterScanPlot: update_all failed
+ParameterScanPlot: update_all failed
+ParameterScanPlot: update_all failed
+ParameterScanPlot: update_all failed
+ParameterScanPlot: update_all failed
+ParameterScanPlot: update_all failed
+Traceback (most recent call last):
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/qtconsole/console_widget.py", line 428, in eventFilter
+    event.button() == QtCore.Qt.MidButton and \
+AttributeError: 'QContextMenuEvent' object has no attribute 'button'
+
+Process finished with exit code 134 (interrupted by signal 6: SIGABRT)
+
+--------------
+

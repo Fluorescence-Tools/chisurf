@@ -8,7 +8,6 @@ import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 
 import chisurf.settings
-import chisurf.settings as mfm
 import chisurf.experiments.widgets
 import chisurf.widgets
 
@@ -133,7 +132,9 @@ class FittingControllerWidget(
         self.onAutoFitRange()
 
     def onDatasetChanged(self):
-        chisurf.run("chisurf.macros.change_selected_fit_of_group(%s)" % self.selected_fit)
+        chisurf.run(
+            "chisurf.macros.change_selected_fit_of_group(%s)" % self.selected_fit
+        )
 
     def onErrorEstimate(self):
         filename = chisurf.widgets.save_file('Error estimate', '*.er4')
@@ -146,6 +147,11 @@ class FittingControllerWidget(
 
     def onRunFit(self):
         chisurf.run("cs.current_fit.run()")
+        for p in self.fit.model.parameters_all:
+            try:
+                p.controller.finalize()
+            except AttributeError:
+                print("Parameter %s has no controller" % p.name)
 
     def onAutoFitRange(self):
         try:
@@ -162,7 +168,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
     def update(self, *args):
         self.setWindowTitle(self.fit.name)
         QtWidgets.QMdiSubWindow.update(self, *args)
-        self.tw.update(*args)
+        self.plot_tab_widget.update(*args)
 
     def __init__(
             self,
@@ -184,19 +190,13 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         self.close_confirm = close_confirm
 
         layout = self.layout()
-        self.tw = QtWidgets.QTabWidget()
-        self.tw.setTabShape(QtWidgets.QTabWidget.Triangular)
-        self.tw.setTabPosition(QtWidgets.QTabWidget.South)
-        self.tw.currentChanged.connect(self.on_change_plot)
-        layout.addWidget(self.tw)
+        self.plot_tab_widget = QtWidgets.QTabWidget()
+        layout.addWidget(self.plot_tab_widget)
 
         self.current_plt_ctrl = QtWidgets.QWidget(self)
         self.current_plt_ctrl.hide()
 
         plots = list()
-        print(fit.model.plot_classes)
-        print(fit)
-        print(kwargs)
         for plot_class, kwargs in fit.model.plot_classes:
             plot = plot_class(
                 fit,
@@ -204,7 +204,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             )
             plot.pltControl.hide()
             plots.append(plot)
-            self.tw.addTab(plot, plot.name)
+            self.plot_tab_widget.addTab(plot, plot.name)
             control_layout.addWidget(plot.pltControl)
 
         fit.plots = plots
@@ -212,9 +212,10 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             f.plots = plots
 
         self.on_change_plot()
+        self.plot_tab_widget.currentChanged.connect(self.on_change_plot)
 
     def on_change_plot(self):
-        idx = self.tw.currentIndex()
+        idx = self.plot_tab_widget.currentIndex()
         self.current_plt_ctrl.hide()
         self.current_plt_ctrl = self.fit.plots[idx].pltControl
         self.current_plt_ctrl.show()
@@ -237,7 +238,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
                 QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No
             )
             if reply == QtWidgets.QMessageBox.Yes:
-                mfm.console.execute('chisurf.macros.close_fit()')
+                chisurf.console.execute('chisurf.macros.close_fit()')
             else:
                 event.ignore()
         else:
@@ -256,13 +257,16 @@ class FittingParameterWidget(QtWidgets.QWidget):
             tooltip = " linked to " + parameter_name
             chisurf.run(
                 "cs.current_fit.model.parameters_all_dict['%s'].link = chisurf.fits[%s].model.parameters_all_dict['%s']" %
-                (self.name, fit_idx, parameter_name)
+                (
+                    self.fitting_parameter.name,
+                    fit_idx,
+                    parameter_name
+                )
             )
             self.widget_link.setToolTip(tooltip)
-            self.widget_link.setChecked(True)
+            self.widget_link.setCheckState(QtCore.Qt.PartiallyChecked)
             self.widget_value.setEnabled(False)
 
-        self.update()
         return linkcall
 
     def contextMenuEvent(
@@ -271,7 +275,9 @@ class FittingParameterWidget(QtWidgets.QWidget):
     ):
 
         menu = QtWidgets.QMenu(self)
-        menu.setTitle("Link " + self.fitting_parameter.name + " to:")
+        menu.setTitle(
+            "Link " + self.fitting_parameter.name + " to:"
+        )
 
         for fit_idx, f in enumerate(chisurf.fits):
             for fs in f:
@@ -287,7 +293,9 @@ class FittingParameterWidget(QtWidgets.QWidget):
                     for p in ut:
                         if p is not self:
                             Action = action_submenu.addAction(p.name)
-                            Action.triggered.connect(self.make_linkcall(fit_idx, p.name))
+                            Action.triggered.connect(
+                                self.make_linkcall(fit_idx, p.name)
+                            )
                     submenu.addMenu(action_submenu)
                 action_submenu = QtWidgets.QMenu(submenu)
 
@@ -384,7 +392,6 @@ class FittingParameterWidget(QtWidgets.QWidget):
 
         # Display of values
         self.widget_value.setValue(float(self.fitting_parameter.value))
-
         self.label.setText(label_text.ljust(5))
 
         # variable bounds
@@ -445,23 +452,32 @@ class FittingParameterWidget(QtWidgets.QWidget):
         if isinstance(layout, QtWidgets.QLayout):
             layout.addWidget(self)
 
+    def set_linked(
+            self,
+            is_linked: bool
+    ):
+        if is_linked:
+            self.widget_value.setEnabled(False)
+            self.widget_link.setCheckState(QtCore.Qt.Checked)
+        else:
+            self.widget_link.setCheckState(QtCore.Qt.Unchecked)
+            self.widget_value.setEnabled(True)
+
     def onLinkFitGroup(self):
         self.blockSignals(True)
-        cs = self.widget_link.checkState()
-        self.widget_link.setCheckState(QtCore.Qt.Checked)
         self.widget_value.setEnabled(False)
         chisurf.run(
-            "chisurf.macros.fitting_parameter_name(%s, %s)" % (
+            "chisurf.macros.link_fit_group('%s', %s)" % (
                 self.fitting_parameter.name,
-                cs
+                self.widget_link.checkState()
             )
         )
         self.widget_value.setEnabled(True)
-        self.widget_link.setCheckState(QtCore.Qt.Unchecked)
+        self.widget_link.setCheckState(QtCore.Qt.Checked)
         self.blockSignals(False)
 
     def finalize(self, *args):
-        super(FittingParameterWidget, self).update(*args)
+        super().update(*args)
         self.blockSignals(True)
 
         # Update value of widget

@@ -247,7 +247,7 @@ def calc_internal_coordinates_bb(
         **kwargs
 ):
     if verbose is None:
-        verbose = chisurf.settings.verbose
+        verbose = chisurf.verbose
 
     structure.coord_i = np.zeros(
         structure.atoms.shape[0],
@@ -386,12 +386,9 @@ class ProteinCentroid(Structure):
         self.update_coordinates()
 
     def __deepcopy__(self, memo):
-        new = copy(self)
-        new.atoms = np.copy(self.atoms)
+        new = super().__deepcopy__(self)
         new.dist_ca = np.copy(self.dist_ca)
-        new.filename = copy(self.filename)
         new.coord_i = np.copy(self.internal_coordinates)
-        new.io = self.io
 
         new.l_ca = deepcopy(self.l_ca)
         new.l_cb = deepcopy(self.l_cb)
@@ -431,7 +428,8 @@ class ProteinCentroid(Structure):
             self.n_atoms * 3,
             dtype=np.float64
         )  # used to convert internal to cartesian coordinates
-        self.to_coarse()
+        if p_object is not None:
+            self.to_coarse()
 
         ####################################################
         #              LOOKUP TABLES                       #
@@ -506,10 +504,10 @@ class ProteinCentroid(Structure):
         array([ 0.        ,  3.09665806, -3.08322105,  3.13562203,  3.09102453,...])
         """
         self.is_coarse = True
+
         ####################################################
         ######       TAKE ONLY INTERNAL ATOMS         ######
         ####################################################
-
         all_atoms = np.copy(self.atoms)
         tmp = list()
         n_atoms = 0
