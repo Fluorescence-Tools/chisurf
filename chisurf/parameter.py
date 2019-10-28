@@ -100,6 +100,10 @@ class Parameter(
     ):
         if isinstance(link, Parameter):
             self._link = link
+            if self.controller is not None:
+                self.controller.set_linked(
+                    link is not None
+                )
         elif link is None:
             try:
                 self._value = self._link.value
@@ -282,6 +286,7 @@ class Parameter(
         #chisurf.tf_sess.run(tf.global_variables_initializer())
         self._lb = lb
         self._ub = ub
+        self.controller = None
 
 
 class ParameterGroup(

@@ -8,7 +8,6 @@ import numpy as np
 import tables
 import numexpr as ne
 
-import chisurf.fitting
 import chisurf.fio
 import chisurf.fio.coordinates
 import chisurf.models

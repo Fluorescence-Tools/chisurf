@@ -319,7 +319,7 @@ class FittingParameterGroup(
             if not isinstance(o, chisurf.models.model.Model):
                 o.find_parameters()
                 self.__dict__[o.name] = o
-                ap += o._parameters
+                ap += o.parameters
 
         mp = chisurf.base.find_objects(
             d, parameter_type
