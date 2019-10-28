@@ -72,9 +72,12 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>20</width>
+          <width>25</width>
           <height>0</height>
          </size>
+        </property>
+        <property name="lineWidth">
+         <number>0</number>
         </property>
         <property name="text">
          <string>agg</string>
