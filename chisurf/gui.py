@@ -585,7 +585,7 @@ class Main(QtWidgets.QMainWindow):
         self.setCentralWidget(self.mdiarea)
         self.init_widgets()
         self.configuration = chisurf.tools.text_editor.CodeEditor(
-            filename=chisurf.settings.settings_file,
+            filename=chisurf.settings.chisurf_settings_file,
             language='YAML',
             can_load=False
         )

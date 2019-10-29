@@ -4,7 +4,7 @@ import os
 import sys
 import yaml
 import json
-#import pyqtgraph as pg
+import shutil
 
 #######################################################
 #        SETTINGS  & CONSTANTS                        #
@@ -13,19 +13,42 @@ import json
 package_directory = os.path.dirname(
     os.path.abspath(__file__)
 )
-settings_file = os.path.join(
-    package_directory, 'chisurf.yaml'
+
+# Open chisurf settings file
+chisurf_settings_file = os.path.abspath(
+    os.path.join(
+        os.path.expanduser("~"),
+        '.chisurf/settings_chisurf.yaml')
 )
-with open(settings_file) as fp:
+# If settings file does not exist in user folder
+# copy settings file from program directory
+if not os.path.isfile(chisurf_settings_file):
+    shutil.copyfile(
+        os.path.join(
+            package_directory, 'settings_chisurf.yaml'
+        ),
+        chisurf_settings_file
+    )
+with open(chisurf_settings_file) as fp:
     cs_settings = yaml.safe_load(fp)
 
-with open(
+# Open color settings file
+color_settings_file = os.path.join(
+        os.path.expanduser("~"),
+        '.chisurf/settings_colors.yaml'
+)
+# If settings file does not exist in user folder
+# copy settings file from program directory
+if not os.path.isfile(color_settings_file):
+    shutil.copyfile(
         os.path.join(
-            package_directory,
-            './gui/colors.yaml'
-        )
-) as fp:
+            package_directory, 'settings_colors.yaml'
+        ),
+        color_settings_file
+    )
+with open(color_settings_file) as fp:
     colors = yaml.safe_load(fp)
+
 
 gui = cs_settings['gui']
 parameter = cs_settings['parameter']
@@ -41,7 +64,6 @@ style_sheet_file = os.path.join(
     './gui/styles/',
     gui['style_sheet']
 )
-
 
 with open(os.path.join(
         package_directory,
