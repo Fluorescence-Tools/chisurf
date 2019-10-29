@@ -19,6 +19,7 @@ from IPython.lib import guisupport
 import pyqtgraph as pg
 import matplotlib.pyplot as plt
 
+import chisurf.fio
 import chisurf.settings
 import chisurf.curve
 
