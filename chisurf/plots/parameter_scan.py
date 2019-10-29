@@ -114,6 +114,9 @@ class ParameterScanPlot(
         super(ParameterScanPlot, self).__init__(fit)
 
         self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+
         self.data_x, self.data_y = None, None
 
         self.pltControl = ParameterScanWidget(

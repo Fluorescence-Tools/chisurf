@@ -72,7 +72,7 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>25</width>
+          <width>30</width>
           <height>0</height>
          </size>
         </property>
@@ -216,7 +216,7 @@ Right-click to link, uncheck to un-link</string>
          <bool>true</bool>
         </property>
         <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -229,7 +229,7 @@ Right-click to link, uncheck to un-link</string>
         </property>
         <property name="maximumSize">
          <size>
-          <width>40</width>
+          <width>30</width>
           <height>16777215</height>
          </size>
         </property>

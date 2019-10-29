@@ -311,8 +311,8 @@ QCheckBox, QRadioButton {
 }
 
 QRadioButton::indicator, QCheckBox::indicator {
-	width: 10px;
-	height: 10px;
+	width: 12px;
+	height: 12px;
 }
 
 QRadioButton::indicator::unchecked, QCheckBox::indicator::unchecked {
