@@ -7,6 +7,7 @@ import os
 import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 
+import chisurf.decorators
 import chisurf.settings
 import chisurf.experiments.widgets
 import chisurf.widgets
@@ -206,7 +207,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             )
             plot.pltControl.hide()
             plots.append(plot)
-            self.plot_tab_widget.addTab(plot, plot.name)
+            self.plot_tab_widget.addTab(plot, plot_class.name)
             control_layout.addWidget(plot.pltControl)
 
         fit.plots = plots
@@ -329,6 +330,9 @@ class FittingParameterWidget(QtWidgets.QWidget):
     def __str__(self):
         return ""
 
+    @chisurf.decorators.init_with_ui(
+        ui_filename="variable_widget.ui"
+    )
     def __init__(
             self,
             fitting_parameter: chisurf.fitting.parameter.FittingParameter = None,
@@ -361,15 +365,6 @@ class FittingParameterWidget(QtWidgets.QWidget):
             hide_label = parameter_settings['hide_label']
         if decimals is None:
             decimals = parameter_settings['decimals']
-
-        super().__init__(*args, **kwargs)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "variable_widget.ui"
-            ),
-            self
-        )
 
         if fitting_parameter is None:
             fitting_parameter = chisurf.fitting.parameter.FittingParameter(
@@ -493,7 +488,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
         self.blockSignals(True)
 
         # Update value of widget
-        self.widget_value.setValue(float(self.fitting_parameter.value))
+        self.widget_value.setValue(self.fitting_parameter.value)
         if self.fitting_parameter.fixed:
             self.widget_fix.setCheckState(QtCore.Qt.Checked)
         else:

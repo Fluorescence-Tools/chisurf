@@ -19,13 +19,14 @@ import chisurf.decorators
 import chisurf.base
 import chisurf.macros
 import chisurf.tools
-from chisurf import fitting
-from chisurf import experiments
 import chisurf.experiments.widgets
 import chisurf.experiments.tcspc.controller
 import chisurf.widgets
 import chisurf.models
 import chisurf.settings.ui.resource
+
+from chisurf import fitting
+from chisurf import experiments
 
 
 class Main(QtWidgets.QMainWindow):
