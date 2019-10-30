@@ -23,14 +23,18 @@ chisurf_settings_file = os.path.abspath(
 # If settings file does not exist in user folder
 # copy settings file from program directory
 if not os.path.isfile(chisurf_settings_file):
-    shutil.copyfile(
-        os.path.join(
+    original_settings = os.path.join(
             package_directory, 'settings_chisurf.yaml'
-        ),
+        )
+    shutil.copyfile(
+        original_settings,
         chisurf_settings_file
     )
-with open(chisurf_settings_file) as fp:
-    cs_settings = yaml.safe_load(fp)
+    with open(original_settings) as fp:
+        cs_settings = yaml.safe_load(fp)
+else:
+    with open(chisurf_settings_file) as fp:
+        cs_settings = yaml.safe_load(fp)
 
 # Open color settings file
 color_settings_file = os.path.join(
@@ -40,14 +44,18 @@ color_settings_file = os.path.join(
 # If settings file does not exist in user folder
 # copy settings file from program directory
 if not os.path.isfile(color_settings_file):
-    shutil.copyfile(
-        os.path.join(
+    original_colors = os.path.join(
             package_directory, 'settings_colors.yaml'
-        ),
+        )
+    shutil.copyfile(
+        original_colors,
         color_settings_file
     )
-with open(color_settings_file) as fp:
-    colors = yaml.safe_load(fp)
+    with open(original_colors) as fp:
+        colors = yaml.safe_load(fp)
+else:
+    with open(color_settings_file) as fp:
+        colors = yaml.safe_load(fp)
 
 
 gui = cs_settings['gui']
