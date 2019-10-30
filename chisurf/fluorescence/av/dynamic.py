@@ -11,8 +11,10 @@ import numexpr as ne
 import chisurf.fio
 import chisurf.fio.coordinates
 import chisurf.models
+import chisurf.fitting
 import chisurf.parameter
 import chisurf.structure
+
 from . import fps
 from chisurf.parameter import ParameterGroup
 
@@ -552,7 +554,7 @@ class Sticking(ParameterGroup):
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit,
-            structure: chisurf.structure.structure.Structure,
+            structure: chisurf.structure.Structure,
             quenching_parameter=None,
             **kwargs
     ):

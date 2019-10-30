@@ -24,7 +24,6 @@ import chisurf.fio
 import chisurf.math
 import chisurf.models.tcspc.widgets
 import chisurf.structure
-import chisurf.structure.structure
 import chisurf.plots
 from chisurf.curve import Curve
 from chisurf.models.model import Model

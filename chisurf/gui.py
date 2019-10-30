@@ -1,18 +1,16 @@
 from __future__ import annotations
 import utils
 import os
+import sys
+
+import webbrowser
+import numpy as np
+from qtpy import QtCore, QtGui, QtWidgets, uic
 
 TOPDIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')
 )
 utils.set_search_paths(TOPDIR)
-
-import os
-import sys
-import webbrowser
-
-from qtpy import QtCore, QtGui, QtWidgets, uic
-import numpy as np
 
 import chisurf
 import chisurf.decorators
@@ -680,7 +678,7 @@ def gui():
               os.path.dirname(
                   __file__
               ),
-              './settings/gui/styles/dark.css'
+              './settings/gui_styles/dark.css'
           ),
           mode='r'
       ).read()

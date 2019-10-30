@@ -183,7 +183,7 @@ QComboBox::drop-down {
 }
 
 QGroupBox {
-	margin-top: 14px;
+	margin-top: 18px;
 }
 QGroupBox::title {
 	top: -14px;
