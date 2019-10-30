@@ -15,7 +15,7 @@ settings = {
 }
 settings_file = os.path.join(
     './chisurf/settings/',
-    'chisurf.yaml'
+    'settings_chisurf.yaml'
 )
 with open(settings_file) as fp:
     settings.update(yaml.safe_load(fp))
