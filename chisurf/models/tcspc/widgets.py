@@ -106,7 +106,6 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         self.radioButton_3.clicked.connect(self.onConvolutionModeChanged)
         self.radioButton_2.clicked.connect(self.onConvolutionModeChanged)
         self.radioButton.clicked.connect(self.onConvolutionModeChanged)
-        self.groupBox.toggled.connect(self.onConvolutionModeChanged)
 
     def onConvolutionModeChanged(self):
         chisurf.run(
@@ -238,7 +237,7 @@ class CorrectionsWidget(
 
 
 class GenericWidget(
-    QtWidgets.QWidget,
+    QtWidgets.QGroupBox,
     Generic
 ):
     """
@@ -263,6 +262,7 @@ class GenericWidget(
     def __init__(
             self,
             hide_generic: bool = False,
+            *args,
             **kwargs
     ):
         """
@@ -270,32 +270,22 @@ class GenericWidget(
         :param hide_generic:
         :param kwargs:
         """
-        super().__init__(**kwargs)
-
-        self.parent = kwargs.get('parent', None)
-
+        super().__init__(
+            *args,
+            **kwargs
+        )
         if hide_generic:
             self.hide()
-
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
-        gb = QtWidgets.QGroupBox()
-        gb.setTitle("Generic")
-        self.layout.addWidget(gb)
+        self.setTitle("Generic")
 
-        gbl = QtWidgets.QVBoxLayout()
-
-        gb.setLayout(gbl)
         # Generic parameters
-        l = QtWidgets.QGridLayout()
-        l.setContentsMargins(0, 0, 0, 0)
-        l.setSpacing(0)
-        gbl.addLayout(l)
         sc_w = chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._sc,
-            text='Sc'
+            text='Sc',
         )
         bg_w = chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._bg,
@@ -310,10 +300,14 @@ class GenericWidget(
             text='t<sub>Meas</sub>'
         )
 
+        l = QtWidgets.QGridLayout()
+        l.setContentsMargins(0, 0, 0, 0)
+        l.setSpacing(0)
         l.addWidget(sc_w, 1, 0)
         l.addWidget(bg_w, 1, 1)
         l.addWidget(tmeas_bg_w, 2, 0)
         l.addWidget(tmeas_exp_w, 2, 1)
+        self.layout.addLayout(l)
 
         ly = QtWidgets.QHBoxLayout()
         l.addLayout(ly, 0, 0, 1, 2)
@@ -347,7 +341,7 @@ class GenericWidget(
 
 class AnisotropyWidget(
     Anisotropy,
-    QtWidgets.QWidget
+    QtWidgets.QGroupBox
 ):
     """
 
@@ -355,25 +349,20 @@ class AnisotropyWidget(
 
     def __init__(
             self,
+            *args,
             **kwargs
     ):
         super().__init__(
+            *args,
             **kwargs
         )
 
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setAlignment(QtCore.Qt.AlignTop)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(0)
-
-        self.gb = QtWidgets.QGroupBox()
-        self.gb.setTitle("Rotational-times")
+        self.setTitle("Rotational-times")
         self.lh = QtWidgets.QVBoxLayout()
         self.lh.setContentsMargins(0, 0, 0, 0)
         self.lh.setSpacing(0)
 
-        self.gb.setLayout(self.lh)
-        self.layout.addWidget(self.gb)
+        self.setLayout(self.lh)
         self.rot_vis = False
         self._rho_widgets = list()
         self._b_widgets = list()
@@ -542,17 +531,14 @@ class AnisotropyWidget(
 
 class PDDEMWidget(QtWidgets.QWidget, PDDEM):
 
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        PDDEM.__init__(self, **kwargs)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "pddem.ui"
-            ),
-            self
-        )
-
+    @chisurf.decorators.init_with_ui(
+        ui_filename="pddem.ui"
+    )
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
         layout = QtWidgets.QHBoxLayout()
         self._fAB = self._fAB.make_widget(layout=layout, text='A>B')
         self._fBA = self._fBA.make_widget(layout=layout, text='B>A')
