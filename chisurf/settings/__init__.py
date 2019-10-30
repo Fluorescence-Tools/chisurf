@@ -14,10 +14,15 @@ package_directory = os.path.dirname(
     os.path.abspath(__file__)
 )
 
+home = os.path.expanduser("~")
+path = os.path.abspath(os.path.join(home, '.chisurf'))
+if not os.path.isdir(path):
+    os.makedirs(path)
+
 # Open chisurf settings file
 chisurf_settings_file = os.path.abspath(
     os.path.join(
-        os.path.expanduser("~"),
+        home,
         '.chisurf/settings_chisurf.yaml')
 )
 # If settings file does not exist in user folder
@@ -30,15 +35,12 @@ if not os.path.isfile(chisurf_settings_file):
         original_settings,
         chisurf_settings_file
     )
-    with open(original_settings) as fp:
-        cs_settings = yaml.safe_load(fp)
-else:
-    with open(chisurf_settings_file) as fp:
-        cs_settings = yaml.safe_load(fp)
+with open(chisurf_settings_file) as fp:
+    cs_settings = yaml.safe_load(fp)
 
 # Open color settings file
 color_settings_file = os.path.join(
-        os.path.expanduser("~"),
+        home,
         '.chisurf/settings_colors.yaml'
 )
 # If settings file does not exist in user folder
@@ -51,11 +53,8 @@ if not os.path.isfile(color_settings_file):
         original_colors,
         color_settings_file
     )
-    with open(original_colors) as fp:
-        colors = yaml.safe_load(fp)
-else:
-    with open(color_settings_file) as fp:
-        colors = yaml.safe_load(fp)
+with open(color_settings_file) as fp:
+    colors = yaml.safe_load(fp)
 
 
 gui = cs_settings['gui']

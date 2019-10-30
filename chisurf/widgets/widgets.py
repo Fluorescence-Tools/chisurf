@@ -153,7 +153,7 @@ class QIPythonWidget(
         # save nevertheless every inputs into a session file
         filename = datetime.now().strftime('session_%H_%M_%d_%m_%Y.py')
         home = os.path.expanduser("~")
-        path = os.path.abspath(os.path.join(home, './.chisurf'))
+        path = os.path.abspath(os.path.join(home, '.chisurf'))
         if not os.path.isdir(path):
             os.makedirs(path)
         self.session_file = os.path.join(path, filename)
