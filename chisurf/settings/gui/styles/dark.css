@@ -1,7 +1,6 @@
 *{
     font: bold 10pt;
-    color: #c8c8c8;
-    font-family: Tahoma, sans-serif;
+    font-family: sans-serif;
 	background: #191919;
 	color: #DDDDDD;
 	border: solid #191919;
@@ -137,7 +136,6 @@ QPushButton:selected
     color: #37b158;
 }
 
-
 QComboBox
 {
     selection-background-color: #ffaa00;
@@ -182,14 +180,37 @@ QComboBox::drop-down {
      border-left-style: solid; /* just a single line */
      border-top-right-radius: 3px; /* same radius as the QComboBox */
      border-bottom-right-radius: 3px;
- }
+}
+
+QGroupBox {
+	margin-top: 14px;
+}
+QGroupBox::title {
+	top: -14px;
+	left: 0px;
+    font: bold underline 10pt;
+}
+QGroupBox::indicator {
+    width: 10px;
+    height: 10px;
+}
+QGroupBox::indicator:unchecked {
+	border: 1px solid #5A5A5A;
+}
+QGroupBox::indicator:unchecked:hover {
+	border: 1px solid #DDDDDD;
+}
+QGroupBox::indicator:checked {
+	border: 1px solid #5A5A5A;
+	background: #942d14;
+}
 
 /*
 QGroupBox:focus
 {
 border: 2px solid QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #ffa02f, stop: 1 #d7801a);
 }
-*/
+ */
 
 QTextEdit:focus
 {
@@ -311,8 +332,8 @@ QCheckBox, QRadioButton {
 }
 
 QRadioButton::indicator, QCheckBox::indicator {
-	width: 12px;
-	height: 12px;
+	width: 10px;
+	height: 10px;
 }
 
 QRadioButton::indicator::unchecked, QCheckBox::indicator::unchecked {
@@ -351,7 +372,8 @@ QDockWidget
 QDockWidget::title
 {
     text-align: center;
-    spacing: 3px; /* spacing between items in the tool bar */
+    spacing: 5px; /* spacing between items in the tool bar */
+    color: #ff9e28;
 }
 
 QDockWidget::close-button, QDockWidget::float-button
@@ -368,6 +390,12 @@ QDockWidget::close-button:hover, QDockWidget::float-button:hover
 QDockWidget::close-button:pressed, QDockWidget::float-button:pressed
 {
     padding: 1px -1px -1px 1px;
+}
+
+QDockWidget::title {
+    font: bold;
+    text-align: center;
+    background: #282828;
 }
 
 QMainWindow::separator

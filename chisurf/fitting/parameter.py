@@ -25,7 +25,7 @@ class FittingParameter(
 
     def __init__(
             self,
-            model: chisurf.models.model.Model = None,
+            model: chisurf.models.Model = None,
             fixed: bool = False,
             *args,
             **kwargs
@@ -324,7 +324,7 @@ class FittingParameterGroup(
         for o in set(ag):
             if not isinstance(
                     o,
-                    chisurf.models.model.Model
+                    chisurf.models.Model
             ):
                 o.find_parameters()
                 self.__dict__[o.name] = o
@@ -366,7 +366,7 @@ class FittingParameterGroup(
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit = None,
-            model: chisurf.models.model.Model = None,
+            model: chisurf.models.Model = None,
             short: str = '',
             parameters: List[
                 chisurf.fitting.parameter.FittingParameter
@@ -391,7 +391,7 @@ class FittingParameterGroup(
             print("Class: %s" % self.__class__.name)
             print(kwargs)
             print("---------------")
-        # super(chisurf.base, self).__init__(*args, **kwargs)
+
         self.short = short
         self.model = model
         self.fit = fit

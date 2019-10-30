@@ -4,7 +4,7 @@ from typing import Dict, List
 import scipy.io
 import numpy as np
 
-from . import util
+import chisurf.fluorescence.fcs
 
 
 def fcs_read_china_mat(
@@ -53,7 +53,7 @@ def fcs_read_china_mat(
                 intensity = m[intensity_key][:, measurement_number]
             aquisition_time = intensity_time[-1]
             mean_count_rate = intensity.mean() / 1000.0
-            weights = util.fcs_weights(
+            weights = chisurf.fluorescence.fcs.weights(
                 correlation_time,
                 correlation_amplitude,
                 aquisition_time,

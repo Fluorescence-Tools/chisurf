@@ -32,6 +32,7 @@ import tempfile
 import numpy as np
 import tables
 
+import chisurf
 from . import tttr
 
 
@@ -165,6 +166,9 @@ class Photons(object):
             self,
             p_object,
             reading_routine: str = None,
+            verbose: bool = chisurf.verbose,
+            sample_name: str = 'tttr',
+            complib: str = chisurf.settings.cs_settings['photons']['complib'],
             **kwargs
     ):
         self._tempfile = None
@@ -181,13 +185,13 @@ class Photons(object):
                         p_object[0], mode='r'
                     )
                 except IOError:
-                    tttr.make_hdf(**kwargs)
+                    tttr.make_hdf(
+                        title=sample_name,
+                        verbose=verbose,
+                        complib=complib,
+                        **kwargs
+                    )
             else:
-                #file = tempfile.NamedTemporaryFile(
-                #    suffix=".photons.h5",
-                #    delete=False
-                #)
-                #filename = file.name
                 _, filename = tempfile.mkstemp(
                     suffix=".photons.h5",
                 )
@@ -254,9 +258,11 @@ class Photons(object):
         return self._filenames
 
     @property
-    def h5(self):
+    def h5(
+            self
+    ) -> tables.File:
         """
-        The h5-handle (PyTables)
+        The h5 File handle (PyTables)
         """
         return self._h5
 
@@ -330,7 +336,10 @@ class Photons(object):
         """
         Number of TAC channels
         """
-        return self.sample.header[0]['nTAC']# if self._number_of_tac_channels is None else self._number_of_tac_channels
+        if self._number_of_tac_channels is None:
+            return self.sample.header[0]['nTAC']
+        else:
+            return self._number_of_tac_channels
 
     @n_tac.setter
     def n_tac(
@@ -346,7 +355,10 @@ class Photons(object):
         """
         Number of routing channels
         """
-        return self.sample.header[0]['NROUT'] if self._number_of_routing_channels is None else self._number_of_routing_channels
+        if self._number_of_routing_channels is None:
+            return self.sample.header[0]['NROUT']
+        else:
+            return self._number_of_routing_channels
 
     @n_rout.setter
     def n_rout(
@@ -384,26 +396,35 @@ class Photons(object):
             return None
 
     @sample.setter
-    def sample(self, v):
+    def sample(
+            self,
+            v: str
+    ):
         if isinstance(v, str):
             self._sample_name = str
             self._selection = None
 
     @property
-    def samples(self):
+    def samples(
+            self
+    ) -> List:
         return [s for s in self.h5.root]
 
     @property
-    def sample_names(self):
+    def sample_names(
+            self
+    ) -> List[str]:
         """
         The sample names within the opened H5-File
         """
-        return [sample._v_name for sample in self.h5.root]
+        return [
+            sample._v_name for sample in self.h5.get_node('/')
+        ]
 
     def read_where(
             self,
             selection: np.ndarray
-    ):
+    ) -> Photons:
         """This function uses the pytables selection syntax
 
         :param selection:
@@ -432,7 +453,7 @@ class Photons(object):
     def take(
             self,
             keys
-    ):
+    ) -> Photons:
         re = Photons(None)
         if isinstance(self.selection, np.ndarray):
             selection = np.intersect1d(
@@ -468,11 +489,11 @@ class Photons(object):
         s += "MTCLK [ms]:\t%s\n" % self.mt_clk
         return s
 
-    def __del__(self):
-        if self.h5 is not None:
-            self.h5.close()
-            #if self.filetype in ['bh132', 'bh630_x48']:
-            #    os.unlink(self._tempfile)
+    # def __del__(self):
+    #     if self.h5 is not None:
+    #         self.h5.close()
+    #         #if self.filetype in ['bh132', 'bh630_x48']:
+    #         #    os.unlink(self._tempfile)
 
     def __len__(self):
         return self.nPh

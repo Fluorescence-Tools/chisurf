@@ -22,7 +22,7 @@ correlator:
   max_count_rate: 120
   time_window: 500
   count_rate_filter: false
-  nCasc: 25
+  number_of_cascades: 25
   B: 9
   split: 6
   weighting: 0

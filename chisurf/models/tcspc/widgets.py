@@ -1017,7 +1017,7 @@ class DiscreteDistanceWidget(
     def __init__(
             self,
             donors,
-            model: chisurf.models.model.Model = None,
+            model: chisurf.models.Model = None,
             **kwargs
     ):
         super().__init__(
