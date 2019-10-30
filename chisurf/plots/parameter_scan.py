@@ -29,7 +29,7 @@ class ParameterScanWidget(
     )
     def __init__(
             self,
-            model: chisurf.models.model.Model = None,
+            model: chisurf.models.Model = None,
             parent: QtWidgets.QWidget = None,
             *args,
             **kwargs

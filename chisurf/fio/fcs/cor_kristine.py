@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Dict, List
 import numpy as np
 
-from . util import fcs_weights
+from chisurf.fluorescence.fcs import weights
 
 
 def fcs_write_kristine(
@@ -87,7 +87,7 @@ def fcs_read_kristine(
     except IndexError:
         # In case everything fails
         # Use no errors at all but uniform weighting
-        w = fcs_weights(x, y, dur, cr)
+        w = weights(x, y, dur, cr)
     return [
         {
             'correlation_time': x,

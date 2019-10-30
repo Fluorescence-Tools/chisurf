@@ -5,7 +5,8 @@ from typing import Dict, List
 import csv
 import pathlib
 import warnings
-from . import util
+
+import chisurf.fluorescence.fcs
 
 import numpy as np
 
@@ -81,7 +82,7 @@ def fcs_read_asc(
         aquisition_time = intensity_time[-1]
         mean_count_rate = np.mean(intensity)
 
-        weights = util.fcs_weights(
+        weights = chisurf.fluorescence.fcs.weights(
             correlation_time,
             correlation_amplitude,
             aquisition_time,

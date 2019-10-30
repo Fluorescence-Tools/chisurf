@@ -36,7 +36,7 @@ class Experiment(
     @property
     def model_classes(
             self
-    ) -> List[Type[chisurf.models.model.Model]]:
+    ) -> List[Type[chisurf.models.Model]]:
         return list(self._model_classes)
 
     @property
@@ -47,7 +47,7 @@ class Experiment(
 
     def add_model_class(
             self,
-            model: Type[chisurf.models.model.Model]
+            model: Type[chisurf.models.Model]
     ):
         if model not in self.model_classes:
             self._model_classes.append(model)
@@ -55,7 +55,7 @@ class Experiment(
     def add_model_classes(
             self,
             models: List[
-                Type[chisurf.models.model.Model]
+                Type[chisurf.models.Model]
             ]
     ):
         for model in models:

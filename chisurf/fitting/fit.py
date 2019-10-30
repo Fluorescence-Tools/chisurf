@@ -33,7 +33,7 @@ class Fit(
 
     def __init__(
             self,
-            model_class: Type[chisurf.models.model.Model] = type,
+            model_class: Type[chisurf.models.Model] = type,
             data: chisurf.experiments.data.DataCurve = None,
             xmin: int = 0,
             xmax: int = 0,
@@ -119,7 +119,7 @@ class Fit(
     @property
     def model(
             self
-    ) -> chisurf.models.model.ModelCurve:
+    ) -> chisurf.models.ModelCurve:
         return self._model
 
     @model.setter
@@ -129,7 +129,7 @@ class Fit(
                 chisurf.models.model.ModelCurve
             ]
     ):
-        if issubclass(model_class, chisurf.models.model.Model):
+        if issubclass(model_class, chisurf.models.Model):
             self._model = model_class(
                 self,
                 **self._model_kw
@@ -254,7 +254,7 @@ class Fit(
     def get_chi2(
             self,
             parameter=None,
-            model: chisurf.models.model.Model = None,
+            model: chisurf.models.Model = None,
             reduced: bool = True
     ) -> float:
         if model is None:
@@ -426,13 +426,13 @@ class FitGroup(
     @property
     def model(
             self
-    ) -> chisurf.models.model.Model:
+    ) -> chisurf.models.Model:
         return self.selected_fit.model
 
     @model.setter
     def model(
             self,
-            v: Type[chisurf.models.model.Model]
+            v: Type[chisurf.models.Model]
     ):
         self.selected_fit.model = v
 
@@ -526,9 +526,7 @@ class FitGroup(
 
         if local_first:
             for f in fit:
-                f.run(
-                    **kwargs
-                )
+                f.run(**kwargs)
         for f in fit:
             f.model.find_parameters()
 
@@ -553,7 +551,7 @@ class FitGroup(
     def __init__(
             self,
             data: chisurf.experiments.data.DataGroup,
-            model_class: Type[chisurf.models.model.Model] = type,
+            model_class: Type[chisurf.models.Model] = type,
             model_kw: Dict = None,
             **kwargs
     ):
@@ -763,7 +761,7 @@ def covariance_matrix(
 
 def get_wres(
         parameter: List[float],
-        model: chisurf.models.model.Model
+        model: chisurf.models.Model
 ) -> np.array:
     """Returns the weighted residuals for a list of parameters of a models
 

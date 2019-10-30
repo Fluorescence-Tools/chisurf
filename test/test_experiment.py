@@ -25,21 +25,21 @@ class Tests(unittest.TestCase):
             "AAA"
         )
         experiment.add_model_class(
-            chisurf.models.model.Model
+            chisurf.models.Model
         )
         self.assertEqual(
-            chisurf.models.model.Model in experiment.model_classes,
+            chisurf.models.Model in experiment.model_classes,
             True
         )
         experiment.add_model_classes(
             [
-                chisurf.models.model.Model
+                chisurf.models.Model
             ]
         )
 
         # Models are unique
         experiment.add_model_class(
-            chisurf.models.model.Model
+            chisurf.models.Model
         )
         self.assertEqual(
             len(experiment.model_classes),

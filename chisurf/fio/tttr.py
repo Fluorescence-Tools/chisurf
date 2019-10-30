@@ -332,7 +332,7 @@ def iss_32(
 
 def iss_photons(
         data,
-        **kwargs
+        verbose: bool = chisurf.verbose
 ) -> Tuple[
     np.array,
     np.array,
@@ -350,8 +350,6 @@ def iss_photons(
     :param kwargs:
     :return:
     """
-
-    verbose = kwargs.get('verbose', chisurf.verbose)
     step = 1 if (data[1] == 72) or (data[1] == 104) else 2
 
     #  X (88) two channel time reading_routine, x (120) two channel photon reading_routine

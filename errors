@@ -137,3 +137,29 @@ Process finished with exit code 134 (interrupted by signal 6: SIGABRT)
 
 --------------
 
+/Users/tpeulen/miniconda3/envs/chisurf/bin/python /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/gui.py
+loading filename:  /Users/tpeulen/.chisurf/settings_chisurf.yaml
+objc[50417]: Class FIFinderSyncExtensionHost is implemented in both /System/Library/PrivateFrameworks/FinderKit.framework/Versions/A/FinderKit (0x7fffb14283d8) and /System/Library/PrivateFrameworks/FileProvider.framework/OverrideBundles/FinderSyncCollaborationFileProviderOverride.bundle/Contents/MacOS/FinderSyncCollaborationFileProviderOverride (0x12c608f50). One of the two will be used. Which one is undefined.
+Traceback (most recent call last):
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/parse/parse.py", line 239, in onEquationChanged
+    self.onUpdateFunc()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/parse/parse.py", line 219, in onUpdateFunc
+    self.model.fit.update()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/fitting/fit.py", line 345, in update
+    self.model.update()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/model.py", line 225, in update
+    self.update_plots()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/model.py", line 206, in update_plots
+    **kwargs
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/plots/fitinfo.py", line 39, in update_all
+    self.textedit.setPlainText(str(fit))
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/fitting/fit.py", line 596, in __str__
+    s += str(f)
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/fitting/fit.py", line 74, in __str__
+    s += str(self.model)
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/model.py", line 100, in __str__
+    s += "%s\t%.4e\t%s\t%s\t%s\n" % p
+TypeError: must be real number, not NoneType
+
+---------------
+
