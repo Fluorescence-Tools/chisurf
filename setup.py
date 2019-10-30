@@ -13,6 +13,7 @@ name = 'chisurf'
 settings = {
     'version': 'NA'
 }
+
 settings_file = os.path.join(
     './chisurf/settings/',
     'settings_chisurf.yaml'
