@@ -163,3 +163,18 @@ TypeError: must be real number, not NoneType
 
 ---------------
 
+Change name of correlation curve in list
+
+
+Correlation Nbr.: 3
+Correlation Nbr.: 4
+Correlation Nbr.: 5
+correlation done
+Traceback (most recent call last):
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/experiments/widgets.py", line 216, in onItemChanged
+    ds.name = str(self.currentItem().text(0))
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/base.py", line 174, in __setattr__
+    raise AttributeError("can't set attribute")
+AttributeError: can't set attribute
+
+---------------

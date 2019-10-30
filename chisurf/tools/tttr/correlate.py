@@ -146,7 +146,7 @@ class Correlator(QtCore.QThread):
                 tau = tau.astype(np.float64)
                 tau *= self.p.dt
                 self._results.append([cr, dur, tau, corr])
-            self.partDone.emit(float(i_group) / self.p.split * 100)
+            self.partDone.emit(float(i_group + 1) / n_groups * 100)
 
         # Calculate average correlations
         cors = list()
