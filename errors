@@ -178,3 +178,21 @@ Traceback (most recent call last):
 AttributeError: can't set attribute
 
 ---------------
+
+
+objc[30642]: Class FIFinderSyncExtensionHost is implemented in both /System/Library/PrivateFrameworks/FinderKit.framework/Versions/A/FinderKit (0x7fffb14283d8) and /System/Library/PrivateFrameworks/FileProvider.framework/OverrideBundles/FinderSyncCollaborationFileProviderOverride.bundle/Contents/MacOS/FinderSyncCollaborationFileProviderOverride (0x12f2bef50). One of the two will be used. Which one is undefined.
+/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/PlotDataItem.py:533: RuntimeWarning: divide by zero encountered in log10
+  y = np.log10(y)
+Traceback (most recent call last):
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/PlotCurveItem.py", line 175, in boundingRect
+    (ymn, ymx) = self.dataBounds(ax=1)
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/pyqtgraph/graphicsItems/PlotCurveItem.py", line 135, in dataBounds
+    b = (d.min(), d.max())
+  File "/Users/tpeulen/miniconda3/envs/chisurf/lib/python3.7/site-packages/numpy/core/_methods.py", line 34, in _amin
+    return umr_minimum(a, axis, None, out, keepdims, initial, where)
+ValueError: zero-size array to reduction operation minimum which has no identity
+
+Process finished with exit code 134 (interrupted by signal 6: SIGABRT)
+
+
+------------

@@ -52,10 +52,10 @@ class SpcFileWidget(
 
     def onSampleChanged(self):
         index = 0 # TODO: fix multiple samples per HDF self.comboBox.currentIndex()
-        self._photons.sample = self.samples[index]
+        #self._photons.sample = self.samples[index]
         self.dt = float(self._photons.mt_clk / self._photons.n_tac) * 1e6
         self.nTAC = self._photons.n_tac
-        self.nROUT = self._photons.n_rout
+        #self.nROUT = self._photons.n_rout
         self.number_of_photons = self._photons.nPh
         self.measurement_time = self._photons.measurement_time
         self.lineEdit_7.setText("%.2f" % self.count_rate)
@@ -99,18 +99,18 @@ class SpcFileWidget(
     ):
         self.doubleSpinBox_2.setValue(v)
 
-    @property
-    def nROUT(
-            self
-    ) -> int:
-        return int(self.lineEdit_3.text())
-
-    @nROUT.setter
-    def nROUT(
-            self,
-            v: int
-    ):
-        self.lineEdit_3.setText(str(v))
+    # @property
+    # def nROUT(
+    #         self
+    # ) -> int:
+    #     return int(self.lineEdit_3.text())
+    #
+    # @nROUT.setter
+    # def nROUT(
+    #         self,
+    #         v: int
+    # ):
+    #     self.lineEdit_3.setText(str(v))
 
     @property
     def nTAC(
@@ -200,7 +200,7 @@ class SpcFileWidget(
             filenames,
             file_type
         )
-        self.samples = self._photons.samples
+        #self.samples = self._photons.samples
         #self.comboBox.addItems(self._photons.sample_names)
         self.onSampleChanged()
 

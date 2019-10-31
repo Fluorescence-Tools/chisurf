@@ -63,7 +63,8 @@ class Correlator(QtCore.QThread):
 
     def getWeightStream(
             self,
-            tacWeighting
+            tacWeighting,
+            max_number_of_routing_channels: int = 256
     ) -> np.ndarray:
         """
         :param tacWeighting: is either a list of integers or a numpy-array.
@@ -79,8 +80,11 @@ class Correlator(QtCore.QThread):
         photons = self.p.photon_source.photons
         if type(tacWeighting) is list:
             print("channel-wise selection")
-            print("Max-Rout: %s" % photons.n_rout)
-            wt = np.zeros([photons.n_rout, photons.n_tac], dtype=np.float32)
+            #print("Max-Rout: %s" % photons.n_rout)
+            wt = np.zeros(
+                [max_number_of_routing_channels, photons.n_tac],
+                dtype=np.float32
+            )
             wt[tacWeighting] = 1.0
         elif type(tacWeighting) is np.ndarray:
             print("TAC-weighted")
@@ -120,10 +124,10 @@ class Correlator(QtCore.QThread):
             p = photons[index_start: index_stop]
             wi1 = w1[index_start: index_stop]
             wi2 = w2[index_start: index_stop]
-
+            cr_filter = np.ones_like(wi1)
             if self.p.method == 'tp':
                 results = chisurf.fluorescence.fcs.correlate.log_corr(
-                    p.mt, p.tac, p.rout, p.cr_filter,
+                    p.mt, p.tac, p.rout, cr_filter,
                     wi1, wi2,
                     self.p.B, self.p.number_of_cascades,
                     self.p.fine,
