@@ -459,7 +459,7 @@ def make_hdf(
         complib: str = chisurf.settings.cs_settings['photons']['complib'],
         driver: str = "H5FD_CORE",
         **kwargs
-):
+) -> tables.File:
     """
     Creates a new h5-file/h5-handle for photons
 
@@ -531,7 +531,7 @@ def make_tp_photon_hdf(
         number_of_tac_channels: int,
         spcs: list,
         **kwargs
-) -> tables.Table:
+) -> tables.File:
     h5 = make_hdf(
         title=title,
         filename=filename,

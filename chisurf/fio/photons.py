@@ -215,6 +215,7 @@ class Photons(object):
                                 filename=filename
                             )
                         )
+                    self._tttrs = spcs
                     self._h5 = chisurf.fio.tttr.make_tp_photon_hdf(
                         title=self._sample_name_hdf_tp,
                         filename=self._h5_tempfile,
@@ -418,7 +419,6 @@ class Photons(object):
         else:
             s += "None\n"
         s += "nTAC:\t%d\n" % self.n_tac
-        s += "nROUT:\t%d\n" % self.n_rout
         s += "MTCLK [ms]:\t%s\n" % self.mt_clk
         return s
 

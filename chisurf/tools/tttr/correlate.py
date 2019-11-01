@@ -9,6 +9,8 @@ import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets
 import qdarkstyle
 
+import tttrlib
+
 import chisurf.decorators
 import chisurf.experiments.widgets
 import chisurf.tools
@@ -97,7 +99,10 @@ class Correlator(QtCore.QThread):
         )
         return w
 
-    def run(self):
+    def run(
+            self,
+            use_tttrlib: bool = True
+    ):
         data_curve = chisurf.experiments.data.DataCurve()
 
         w1 = self.getWeightStream(self.p.ch1)
@@ -107,68 +112,90 @@ class Correlator(QtCore.QThread):
         print("Fine-correlation: %s" % self.p.fine)
         print("Data stream split into %s correlations." % self.p.split)
         photons = self.p.photon_source.photons
-        n_tac = photons.n_tac
 
-        self._results = list()
-        n_photons = len(photons)
-        n_groups = self.p.split
-        n_photons_per_groups = n_photons // n_groups
-        dt = self.p.dt
-        B = self.p.B
-        self.partDone.emit(0.0)
-
-        for i_group in range(n_groups):
-            print("Correlation Nbr.: %s" % i_group)
-            index_start = i_group * (n_photons_per_groups - 1)
-            index_stop = (i_group + 1) * (n_photons_per_groups - 1)
-            p = photons[index_start: index_stop]
-            wi1 = w1[index_start: index_stop]
-            wi2 = w2[index_start: index_stop]
-            cr_filter = np.ones_like(wi1)
-            if self.p.method == 'tp':
-                results = chisurf.fluorescence.fcs.correlate.log_corr(
-                    p.macro_times, p.micro_times, p.routing_channels, cr_filter,
-                    wi1, wi2,
-                    self.p.B, self.p.number_of_cascades,
-                    self.p.fine,
-                    n_tac
-                )
-                np_1 = results['number_of_photons_ch1']
-                np_2 = results['number_of_photons_ch2']
-                dt_1 = results['measurement_time_ch1']
-                dt_2 = results['measurement_time_ch2']
-                tau = results['correlation_time_axis']
-                corr = results['correlation_amplitude']
-                cr = chisurf.fluorescence.fcs.correlate.normalize(
-                    np_1, np_2,
-                    dt_1, dt_2,
-                    tau, corr,
-                    B
-                )
-                cr /= dt
-                dur = float(min(dt_1, dt_2)) * self.p.dt / 1000.0  # seconds
-                tau = tau.astype(np.float64)
-                tau *= self.p.dt
-                self._results.append([cr, dur, tau, corr])
-            self.partDone.emit(float(i_group + 1) / n_groups * 100)
-
-        # Calculate average correlations
-        cors = list()
-        taus = list()
-        weights = list()
-        for c in self._results:
-            cr, dur, tau, corr = c
+        if use_tttrlib:
+            correlator = tttrlib.Correlator()
+            correlator.set_n_bins(self.p.B)
+            t1 = photons.macro_times
+            t2 = photons.macro_times
+            correlator.set_n_casc(self.p.number_of_cascades)
+            correlator.set_events(
+                t1, w1,
+                t2, w2
+            )
+            correlator.run()
+            tau = correlator.get_x_axis_normalized()
+            corr = correlator.get_corr_normalized()
+            dur = t1[-1]
+            cr = np.mean(w1 + w2)
             weight = self.weight(tau, corr, dur, cr)
-            weights.append(weight)
-            cors.append(corr)
-            taus.append(tau)
 
-        cor = np.array(cors)
-        w = np.array(weights)
+            data_curve.x = tau
+            data_curve.y = corr
+            data_curve.ey = 1. / weight
 
-        data_curve.x = np.array(taus).mean(axis=0)[1:]
-        data_curve.y = cor.mean(axis=0)[1:]
-        data_curve.ey = 1. / w.mean(axis=0)[1:]
+        else:
+            n_tac = photons.n_tac
+            self._results = list()
+            n_photons = len(photons)
+            n_groups = self.p.split
+            n_photons_per_groups = n_photons // n_groups
+            dt = self.p.dt
+            B = self.p.B
+            self.partDone.emit(0.0)
+            for i_group in range(n_groups):
+                print("Correlation Nbr.: %s" % i_group)
+                index_start = i_group * (n_photons_per_groups - 1)
+                index_stop = (i_group + 1) * (n_photons_per_groups - 1)
+                p = photons[index_start: index_stop]
+                wi1 = w1[index_start: index_stop]
+                wi2 = w2[index_start: index_stop]
+                cr_filter = np.ones_like(wi1)
+                if self.p.method == 'tp':
+                    results = chisurf.fluorescence.fcs.correlate.log_corr(
+                        p.macro_times, p.micro_times, p.routing_channels, cr_filter,
+                        wi1, wi2,
+                        self.p.B, self.p.number_of_cascades,
+                        self.p.fine,
+                        n_tac
+                    )
+                    np_1 = results['number_of_photons_ch1']
+                    np_2 = results['number_of_photons_ch2']
+                    dt_1 = results['measurement_time_ch1']
+                    dt_2 = results['measurement_time_ch2']
+                    tau = results['correlation_time_axis']
+                    corr = results['correlation_amplitude']
+                    cr = chisurf.fluorescence.fcs.correlate.normalize(
+                        np_1, np_2,
+                        dt_1, dt_2,
+                        tau, corr,
+                        B
+                    )
+                    cr /= dt
+                    dur = float(min(dt_1, dt_2)) * self.p.dt / 1000.0  # seconds
+                    tau = tau.astype(np.float64)
+                    tau *= self.p.dt
+                    self._results.append([cr, dur, tau, corr])
+                self.partDone.emit(float(i_group + 1) / n_groups * 100)
+
+            # Calculate average correlations
+            cors = list()
+            taus = list()
+            weights = list()
+
+            for c in self._results:
+                cr, dur, tau, corr = c
+                weight = self.weight(tau, corr, dur, cr)
+                weights.append(weight)
+                cors.append(corr)
+                taus.append(tau)
+
+            cor = np.array(cors)
+            w = np.array(weights)
+
+            data_curve.x = np.array(taus).mean(axis=0)[1:]
+            data_curve.y = cor.mean(axis=0)[1:]
+            data_curve.ey = 1. / w.mean(axis=0)[1:]
 
         print("correlation done")
         self._data_curve = data_curve
