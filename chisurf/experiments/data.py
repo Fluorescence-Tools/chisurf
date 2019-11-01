@@ -27,10 +27,10 @@ class ExperimentalData(
     ) -> chisurf.experiments.experiment.Experiment:
         if self._experiment is None:
             if isinstance(
-                self.setup,
+                self.data_reader,
                 chisurf.experiments.reader.ExperimentReader
             ):
-                return self.setup.experiment
+                return self.data_reader.experiment
         else:
             return self._experiment
 
@@ -82,9 +82,9 @@ class ExperimentalData(
     def to_dict(self):
         d = super().to_dict()
         try:
-            d['reader'] = self.setup.to_dict()
+            d['data_reader'] = self.data_reader.to_dict()
         except AttributeError:
-            d['reader'] = None
+            d['data_reader'] = None
         try:
             d['experiment'] = self.experiment.to_dict()
         except AttributeError:

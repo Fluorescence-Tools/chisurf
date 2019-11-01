@@ -180,17 +180,27 @@ class Base(object):
             self,
             key: str
     ):
-        return self.__dict__.get(key, None)
+        return self.__dict__[key]
+
+    def __getstate__(self):
+        d = {}
+        d.update(self.__dict__)
+        return d
+
+    def __setstate__(self, state):
+        self.from_dict(
+            state
+        )
 
     # There is a strange problem with the __str__ method and
     # PyQt therefore it is commented right now
-    # def __str__(self):
-    #     s = 'class: %s\n' % self.__class__.__name__
-    #     s += self.to_yaml()
-    #     return s
+    def __str__(self):
+        s = 'class: %s\n' % self.__class__.__name__
+        #s += self.to_yaml()
+        return s
 
-    # def __repr__(self):
-    #     return self.__str__()
+    def __repr__(self):
+        return self.__str__()
 
     def __init__(
             self,
@@ -274,8 +284,8 @@ class Data(Base):
             *args,
             **kwargs
         )
-        self._filename = filename
         self._data = data
+        self._filename = None
 
         if embed_data is None:
             embed_data = chisurf.settings.cs_settings['database']['embed_data']
@@ -285,7 +295,7 @@ class Data(Base):
         self._embed_data = embed_data
         self._max_file_size = read_file_size_limit
 
-        self.filename = self._filename
+        self.filename = filename
 
     @property
     def embed_data(
@@ -350,7 +360,7 @@ class Data(Base):
                 print("File size [byte]: %s" % file_size)
         except FileNotFoundError:
             if self.verbose:
-                print("Filename: ", v, "not found.")
+                chisurf.logging.warning("Filename: %s not found" % v)
 
     def __str__(self):
         s = super().__str__()

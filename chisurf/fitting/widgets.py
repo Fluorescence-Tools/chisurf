@@ -550,23 +550,23 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
 
 
 def make_fitting_parameter_widget(
-        fitting_parameter,
+        fitting_parameter: chisurf.fitting.parameter.FittingParameter,
         text: str = None,
         layout: QtWidgets.QLayout = None,
-        decimals: int = None,
-        **kwargs
+        decimals: int = None
 ) -> FittingParameterWidget:
 
     if text is None:
         text = fitting_parameter.name
-    if decimals is None:
-        decimals = fitting_parameter.decimals
     kw = {
         'name': text,
         'decimals': decimals,
         'layout': layout
     }
-    widget = FittingParameterWidget(fitting_parameter, **kw)
+    widget = FittingParameterWidget(
+        fitting_parameter,
+        **kw
+    )
     fitting_parameter.controller = widget
     return widget
 

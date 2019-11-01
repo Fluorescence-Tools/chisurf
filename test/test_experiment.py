@@ -24,6 +24,17 @@ class Tests(unittest.TestCase):
             experiment.name,
             "AAA"
         )
+
+        experiment_json = experiment.to_json()
+        e2 = chisurf.experiments.experiment.Experiment(name=None)
+        e2.from_json(
+            experiment_json
+        )
+        self.assertDictEqual(
+            experiment.to_dict(),
+            e2.to_dict()
+        )
+
         experiment.add_model_class(
             chisurf.models.Model
         )

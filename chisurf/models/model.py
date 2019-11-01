@@ -153,10 +153,12 @@ class ModelCurve(
         )
 
     def get_curves(self):
+        xmin = self.fit.xmin
+        xmax = self.fit.xmax
         return {
             'model': chisurf.curve.Curve(
-                x=self.model.x[self.xmin :self.xmax],
-                y=self.model.y[self.xmin :self.xmax]
+                x=self.x[xmin:xmax],
+                y=self.y[xmin:xmax]
             )
         }
 
