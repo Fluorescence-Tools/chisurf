@@ -28,7 +28,7 @@ class FCS(
         self.name = name
         self.skiprows = skiprows
         self.use_header = use_header
-        self.experiment_reader = experiment_reader
+        self.experiment_reader = experiment_reader.lower()
 
     def read(
             self,
@@ -36,29 +36,13 @@ class FCS(
             verbose: bool = None,
             **kwargs
     ) -> chisurf.experiments.data.ExperimentDataCurveGroup:
-
-        if self.experiment_reader == 'Kristine':
-            r = chisurf.fio.fluorescence.read_fcs_kristine(
-                filename=filename,
-                verbose=verbose
-            )
-        elif self.experiment_reader == 'China-mat':
-            r = chisurf.fio.fluorescence.read_fcs_china_mat(
-                filename=filename,
-                verbose=verbose
-            )
-        elif self.experiment_reader == 'ALV':
-            r = chisurf.fio.fluorescence.read_fcs_alv(
-                filename=filename,
-                verbose=verbose
-            )
-        else:
-            r = chisurf.fio.fluorescence.read_fcs(
-                filename=filename,
-                setup=self,
-                skiprows=self.skiprows,
-                use_header=self.use_header
-            )
+        r = chisurf.fio.fluorescence.read_fcs(
+            filename=filename,
+            data_reader=self,
+            skiprows=self.skiprows,
+            use_header=self.use_header,
+            reader_name=self.experiment_reader
+        )
         r.experiment = self
         return r
 
