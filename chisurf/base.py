@@ -13,7 +13,7 @@ import yaml
 from slugify import slugify
 
 import chisurf
-import chisurf.settings as mfm
+import chisurf.fio
 
 
 class Base(object):

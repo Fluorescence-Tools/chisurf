@@ -9,7 +9,6 @@ import inspect
 import fnmatch
 import numbers
 import os
-from datetime import datetime
 
 from qtpy import QtGui, QtWidgets, uic
 from qtconsole.qtconsoleapp import RichJupyterWidget
@@ -151,12 +150,7 @@ class QIPythonWidget(
         self.recording = False
 
         # save nevertheless every inputs into a session file
-        filename = datetime.now().strftime('session_%H_%M_%d_%m_%Y.py')
-        home = os.path.expanduser("~")
-        path = os.path.abspath(os.path.join(home, '.chisurf'))
-        if not os.path.isdir(path):
-            os.makedirs(path)
-        self.session_file = os.path.join(path, filename)
+        self.session_file = chisurf.settings.session_file
         self.set_default_style(
             chisurf.settings.gui['console']['style']
         )

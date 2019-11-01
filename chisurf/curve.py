@@ -42,27 +42,11 @@ class Curve(
         """
         return np.diff(self.x)
 
-    @property
-    def x(self) -> np.array:
-        return self._x
-
-    @x.setter
-    def x(self, v) -> None:
-        self._x = v
-
-    @property
-    def y(self) -> np.array:
-        return self._y
-
-    @y.setter
-    def y(self, v) -> None:
-        self._y = v
-
     def to_dict(self) -> dict:
         d = dict()
         d.update(super().to_dict())
-        d['_x'] = d.pop('_x').tolist()
-        d['_y'] = d.pop('_y').tolist()
+        d['x'] = d.pop('x').tolist()
+        d['y'] = d.pop('y').tolist()
         return d
 
     def to_json(
@@ -82,8 +66,8 @@ class Curve(
             self,
             v: dict
     ):
-        v['_y'] = np.array(v['_y'], dtype=np.float64)
-        v['_x'] = np.array(v['_x'], dtype=np.float64)
+        v['y'] = np.array(v['y'], dtype=np.float64)
+        v['x'] = np.array(v['x'], dtype=np.float64)
         super().from_dict(v)
 
     def __init__(
@@ -106,11 +90,11 @@ class Curve(
                 )
             )
         if copy_array:
-            self._x = np.copy(x)
-            self._y = np.copy(y)
+            self.x = np.copy(x)
+            self.y = np.copy(y)
         else:
-            self._x = x
-            self._y = y
+            self.x = x
+            self.y = y
         super().__init__(
             *args,
             **kwargs

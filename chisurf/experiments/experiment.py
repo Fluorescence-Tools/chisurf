@@ -105,7 +105,9 @@ class Experiment(
                 readers.append(v.experiment_reader)
         return readers
 
-    def get_reader_names(self) -> List[str]:
+    def get_reader_names(
+            self
+    ) -> List[str]:
         names = list()
         for s in self.readers:
             names.append(s.name)

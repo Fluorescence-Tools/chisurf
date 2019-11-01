@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import datetime
 import sys
 import yaml
 import json
@@ -79,8 +80,12 @@ with open(os.path.join(
     structure_data = json.load(fp)
 
 
-#######################################################
-#        LIST OF FITS, DATA, EXPERIMENTS              #
-#######################################################
+session_str = datetime.datetime.now().strftime('session_%H_%M_%d_%m_%Y')
 
+home = os.path.expanduser("~")
+path = os.path.abspath(os.path.join(home, '.chisurf'))
+if not os.path.isdir(path):
+    os.makedirs(path)
 
+session_file = os.path.join(path, session_str + ".py")
+session_log = os.path.join(path, session_str + ".log")
