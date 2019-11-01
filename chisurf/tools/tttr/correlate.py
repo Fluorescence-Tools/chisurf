@@ -90,8 +90,8 @@ class Correlator(QtCore.QThread):
             print("TAC-weighted")
             wt = tacWeighting
         w = chisurf.fluorescence.fcs.correlate.get_weights(
-            photons.rout,
-            photons.tac,
+            photons.routing_channels,
+            photons.micro_times,
             wt,
             photons.nPh
         )
@@ -127,7 +127,7 @@ class Correlator(QtCore.QThread):
             cr_filter = np.ones_like(wi1)
             if self.p.method == 'tp':
                 results = chisurf.fluorescence.fcs.correlate.log_corr(
-                    p.mt, p.tac, p.rout, cr_filter,
+                    p.macro_times, p.micro_times, p.routing_channels, cr_filter,
                     wi1, wi2,
                     self.p.B, self.p.number_of_cascades,
                     self.p.fine,
@@ -414,7 +414,7 @@ class CrFilterWidget(QtWidgets.QWidget):
                 print("Window-size [n(MTCLK)]: %s" % tw)
                 print("---------------------------------")
 
-            mt = photons.mt
+            mt = photons.macro_times
             n_ph = mt.shape[0]
             w = np.ones(n_ph, dtype=np.float32)
             chisurf.fluorescence.fcs.correlate.count_rate_filter(
