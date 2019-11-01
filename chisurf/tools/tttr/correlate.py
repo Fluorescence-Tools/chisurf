@@ -103,7 +103,6 @@ class Correlator(QtCore.QThread):
             self,
             use_tttrlib: bool = True
     ):
-        data_curve = chisurf.experiments.data.DataCurve()
 
         w1 = self.getWeightStream(self.p.ch1)
         w2 = self.getWeightStream(self.p.ch2)
@@ -114,26 +113,34 @@ class Correlator(QtCore.QThread):
         photons = self.p.photon_source.photons
 
         if use_tttrlib:
-            correlator = tttrlib.Correlator()
-            correlator.set_n_bins(self.p.B)
-            t1 = photons.macro_times
-            t2 = photons.macro_times
-            correlator.set_n_casc(self.p.number_of_cascades)
-            correlator.set_events(
-                t1, w1,
-                t2, w2
-            )
-            correlator.run()
-            tau = correlator.get_x_axis_normalized()
-            corr = correlator.get_corr_normalized()
-            dur = t1[-1]
-            cr = np.mean(w1 + w2)
-            weight = self.weight(tau, corr, dur, cr)
+            n_photons = len(photons)
+            n_groups = self.p.split
+            n_photons_per_groups = n_photons // n_groups
+            n_groups = self.p.split
+            for i_group in range(n_groups):
+                print("Correlation Nbr.: %s" % i_group)
+                index_start = i_group * (n_photons_per_groups - 1)
+                index_stop = (i_group + 1) * (n_photons_per_groups - 1)
+                p = photons[index_start: index_stop]
+                wi1 = w1[index_start: index_stop]
+                wi2 = w2[index_start: index_stop]
 
-            data_curve.x = tau
-            data_curve.y = corr
-            data_curve.ey = 1. / weight
-
+                correlator = tttrlib.Correlator()
+                correlator.set_n_bins(self.p.B)
+                t1 = p.macro_times
+                t2 = p.macro_times
+                correlator.set_n_casc(self.p.number_of_cascades)
+                correlator.set_events(
+                    t1, wi1,
+                    t2, wi2
+                )
+                correlator.run()
+                tau = correlator.get_x_axis_normalized()
+                corr = correlator.get_corr_normalized()
+                dur = t1[-1]
+                cr = float(np.mean(w1 + w2))
+                self._results.append([cr, dur, tau, corr])
+                self.partDone.emit(float(i_group + 1) / n_groups * 100)
         else:
             n_tac = photons.n_tac
             self._results = list()
@@ -178,24 +185,26 @@ class Correlator(QtCore.QThread):
                     self._results.append([cr, dur, tau, corr])
                 self.partDone.emit(float(i_group + 1) / n_groups * 100)
 
-            # Calculate average correlations
-            cors = list()
-            taus = list()
-            weights = list()
+        # Calculate average correlations
+        cors = list()
+        taus = list()
+        weights = list()
 
-            for c in self._results:
-                cr, dur, tau, corr = c
-                weight = self.weight(tau, corr, dur, cr)
-                weights.append(weight)
-                cors.append(corr)
-                taus.append(tau)
+        for c in self._results:
+            cr, dur, tau, corr = c
+            weight = self.weight(tau, corr, dur, cr)
+            weights.append(weight)
+            cors.append(corr)
+            taus.append(tau)
 
-            cor = np.array(cors)
-            w = np.array(weights)
+        cor = np.array(cors)
+        w = np.array(weights)
 
-            data_curve.x = np.array(taus).mean(axis=0)[1:]
-            data_curve.y = cor.mean(axis=0)[1:]
-            data_curve.ey = 1. / w.mean(axis=0)[1:]
+        data_curve = chisurf.experiments.data.DataCurve(
+            x=np.array(taus).mean(axis=0)[1:],
+            y=cor.mean(axis=0)[1:],
+            ey=1. / w.mean(axis=0)[1:]
+        )
 
         print("correlation done")
         self._data_curve = data_curve

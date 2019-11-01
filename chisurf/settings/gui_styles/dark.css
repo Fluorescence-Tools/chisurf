@@ -312,7 +312,6 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical
 
 QPlainTextEdit, QTextEdit {
     font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
-    font: bold 10pt;
     background-color: #2b2b2b;
     color: #f8e4d6;
     selection-background-color: #767662;

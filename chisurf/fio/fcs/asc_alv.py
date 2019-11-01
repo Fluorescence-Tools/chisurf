@@ -2,13 +2,13 @@
 from __future__ import annotations
 from typing import Dict, List
 
-import csv
+
+import os
 import pathlib
 import warnings
-
-import chisurf.fluorescence.fcs
-
 import numpy as np
+import csv
+from . import weights
 
 
 avl_to_yaml = {
@@ -69,8 +69,11 @@ def fcs_read_asc_header(
 
 
 def fcs_read_asc(
-        filename: str
+        filename: str,
+        verbose: bool = False
 ) -> List[Dict]:
+    if verbose:
+        print("Reading ALV .asc from file: ", filename)
     d = openASC(filename)
     correlations = list()
 
@@ -82,7 +85,7 @@ def fcs_read_asc(
         aquisition_time = intensity_time[-1]
         mean_count_rate = np.mean(intensity)
 
-        weights = chisurf.fluorescence.fcs.weights(
+        w = weights.weights(
             correlation_time,
             correlation_amplitude,
             aquisition_time,
@@ -91,14 +94,15 @@ def fcs_read_asc(
 
         correlations.append(
             {
-                'measurement_id'        : "%s_%s" % (d['Filename'], i),
-                'correlation_time'      : correlation_time,
-                'correlation_amplitude' : correlation_amplitude,
-                'weights'               : weights,
-                'acquisition_time'      : aquisition_time,
-                'mean_count_rate'       : mean_count_rate,
-                'intensity_trace_time'  : intensity_time,
-                'intensity_trace'       : intensity,
+                'filename': filename,
+                'measurement_id': "%s_%s" % (d['Filename'], i),
+                'correlation_time': correlation_time.tolist(),
+                'correlation_amplitude': correlation_amplitude.tolist(),
+                'weights': w.tolist(),
+                'acquisition_time': aquisition_time,
+                'mean_count_rate': mean_count_rate,
+                'intensity_trace_time': intensity_time.tolist(),
+                'intensity_trace': intensity.tolist(),
             }
         )
 

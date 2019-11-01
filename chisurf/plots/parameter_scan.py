@@ -157,5 +157,5 @@ class ParameterScanPlot(
             if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
                 self.distribution_curve.setData(x=x, y=y)
         except:
-            print("ParameterScanPlot: update_all failed")
+            chisurf.logging.warning("ParameterScanPlot: update_all failed")
 

@@ -13,7 +13,6 @@ from chisurf.experiments import reader
 from chisurf.fio.ascii import Csv
 
 
-
 def read_tcspc_csv(
         filename: str = None,
         skiprows: int = None,
@@ -215,9 +214,9 @@ def read_fcs_kristine(
         setup=experiment_reader,
         name=filename
     )
-    x = r[0]['correlation_time']
-    y = r[0]['correlation_amplitude']
-    ey = 1. / r[0]['weights']
+    x = np.array(r[0]['correlation_time'])
+    y = np.array(r[0]['correlation_amplitude'])
+    ey = 1. / np.array(r[0]['weights'])
     ex = np.ones_like(x)
     d.set_data(
         x=x,
@@ -282,9 +281,9 @@ def read_fcs_china_mat(
             setup=experiment_reader,
             name=name
         )
-        x = r['correlation_time']
-        y = r['correlation_amplitude']
-        ey = 1. / r['weights']
+        x = np.array(r['correlation_time'])
+        y = np.array(r['correlation_amplitude'])
+        ey = 1. / np.array(r['weights'])
         ex = np.ones_like(x)
         d.set_data(
             x=x,
