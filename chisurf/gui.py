@@ -329,8 +329,7 @@ class Main(QtWidgets.QMainWindow):
     def onOpenHelp(
             self
     ):
-        url = 'https://github.com/Fluorescence-Tools/chisurf'
-        webbrowser.open_new(url)
+        webbrowser.open_new(chisurf.settings.url)
 
     def init_widgets(self):
         # self.decay_generator = chisurf.tools.decay_generator.TransientDecayGenerator()
@@ -506,6 +505,16 @@ class Main(QtWidgets.QMainWindow):
                     ),
                     chisurf.experiments.widgets.FCSController(
                         file_type='Kristine files (*.mat)'
+                    )
+                ),
+                (
+                    experiments.fcs.FCS(
+                        name='Zeiss Confocor3',
+                        experiment=fcs,
+                        experiment_reader='confocor3'
+                    ),
+                    chisurf.experiments.widgets.FCSController(
+                        file_type='Confocor3 files (*.fcs)'
                     )
                 ),
                 (

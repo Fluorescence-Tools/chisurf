@@ -89,3 +89,5 @@ if not os.path.isdir(path):
 
 session_file = os.path.join(path, session_str + ".py")
 session_log = os.path.join(path, session_str + ".log")
+
+url = 'https://github.com/Fluorescence-Tools/chisurf'
