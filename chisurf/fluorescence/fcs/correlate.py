@@ -10,11 +10,6 @@ import numba as nb
 import numpy as np
 
 
-@deprecation.deprecated(
-        deprecated_in="19.10.31",
-        current_version="19.08.23",
-        details="Correlation should be done using tttrlib"
-    )
 @nb.jit(nopython=True, nogil=True)
 def correlate(
         n: int,
@@ -94,7 +89,7 @@ def normalize(
     return float(min(cr1, cr2))
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def get_weights(
         rout: np.ndarray,
         tac: np.ndarray,
@@ -115,7 +110,7 @@ def get_weights(
     return w
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def count_rate_filter(
         mt: np.array,
         tw: int,
@@ -145,11 +140,6 @@ def count_rate_filter(
         i = r
 
 
-@deprecation.deprecated(
-        deprecated_in="19.10.31",
-        current_version="19.08.23",
-        details="Correlation should be done using tttrlib"
-    )
 @nb.jit(nopython=True)
 def make_fine(
         t: np.array,
@@ -167,11 +157,6 @@ def make_fine(
         t[i] = t[i] * number_of_tac_channels + tac[i]
 
 
-@deprecation.deprecated(
-        deprecated_in="19.10.31",
-        current_version="19.08.23",
-        details="Correlation should be done using tttrlib"
-    )
 @nb.jit
 def count_photons(
         w: np.array
@@ -189,11 +174,6 @@ def count_photons(
     return k
 
 
-@deprecation.deprecated(
-        deprecated_in="19.10.31",
-        current_version="19.08.23",
-        details="Correlation should be done using tttrlib"
-    )
 @nb.jit(nopython=True, nogil=True)
 def compact(
         t: np.array,
@@ -218,11 +198,6 @@ def compact(
         t[j, 0] = k - 1
 
 
-@deprecation.deprecated(
-        deprecated_in="19.10.31",
-        current_version="19.08.23",
-        details="Correlation should be done using tttrlib"
-    )
 @nb.jit(nopython=True, nogil=True)
 def coarsen(
         times: np.array,
