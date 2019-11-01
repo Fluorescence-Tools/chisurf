@@ -168,11 +168,6 @@ class TcspcTTTRWidget(
 
     def make_histogram(self):
         # get right data
-        #h5 = self.spcFileWidget.photons.h5
-        nodeName = self.spcFileWidget.photons #.sample_names[0] #str(self.spcFileWidget.comboBox.currentText())
-
-        h5 = self.spcFileWidget.photons._h5
-        #table = h5.get_node('/' + self.spcFileWidget.photons._sample_name)
         table = self.spcFileWidget.photons.photon_table
         selection_tac = np.ma.array(
             [

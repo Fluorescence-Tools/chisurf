@@ -170,6 +170,9 @@ class Photons(object):
             verbose: bool = chisurf.verbose
     ):
         self._tttrs = None
+        self._h5 = None
+        self._sample_name_hdf_tp = 'spc'
+        _, self._h5_tempfile = tempfile.mkstemp('.h5')
         if isinstance(p_object, tables.file.File):
             self._h5 = p_object
             self._filenames = []
@@ -186,26 +189,45 @@ class Photons(object):
                     p_object[0], mode='r'
                 )
             elif reading_routine == 'iss':
-                _, self._h5_tempfile = tempfile.mkstemp('.h5')
                 self._h5 = tttr.spc2hdf(
                     self._filenames,
                     routine_name=reading_routine,
                     filename=self._h5_tempfile
                 )
-            elif reading_routine == 'bh132':
-                self._tttrs = [
-                    tttrlib.TTTR(
-                        filename,
-                        'SPC-130'
+            else:
+                # tttrlib
+                if reading_routine == 'bh132':
+                    spcs = []
+                    for i, filename in enumerate(self._filenames):
+                        t = tttrlib.TTTR(filename, 'SPC-130')
+                        header = t.get_header()
+                        number_of_tac_channels = header.number_of_tac_channels
+                        if i > 0:
+                            t.shift_macro_time(spcs[i-1]['photon']['MT'][-1])
+                        spcs.append(
+                            tttr.make_spc_dict(
+                                macro_times=t.get_macro_time(),
+                                micro_times=t.get_micro_time(),
+                                routing_channels=t.get_routing_channel(),
+                                macro_time_resolution=header.macro_time_resolution,
+                                number_of_events=t.get_n_valid_events(),
+                                event_types=t.get_event_type(),
+                                filename=filename
+                            )
+                        )
+                    self._h5 = chisurf.fio.tttr.make_tp_photon_hdf(
+                        title=self._sample_name_hdf_tp,
+                        filename=self._h5_tempfile,
+                        verbose=verbose,
+                        routine_name=reading_routine,
+                        number_of_tac_channels=number_of_tac_channels,
+                        number_of_routing_channels=255,
+                        spcs=spcs
                     )
-                    for filename in self._filenames
-                ]
 
         self.verbose = verbose
         self._photon_array = None
         self.filetype = reading_routine
-        self._sample_name = 'spc'
-        # self._cr_filter = None
         self._selection = None
         self._number_of_tac_channels = None
         self._number_of_routing_channels = None
@@ -216,17 +238,21 @@ class Photons(object):
         return self._selection
 
     @selection.setter
-    def selection(self, v):
+    def selection(
+            self,
+            v
+    ):
         self._selection = v
         self._photon_array = self.photon_table.read_coordinates(
             self._selection
         )
 
     @property
-    def photon_table(self):
-        if self._h5:
-            sample = self._h5.get_node('/' + self._sample_name)
-            return sample.photons
+    def photon_table(
+            self
+    ) -> tables.Table:
+        sample = self._h5.get_node('/' + self._sample_name_hdf_tp)
+        return sample.photons
 
     @property
     def photon_array(self):
@@ -235,36 +261,37 @@ class Photons(object):
         return self._photon_array
 
     @property
-    def filenames(self) -> List[str]:
+    def filenames(
+            self
+    ) -> List[str]:
         """
         Original filename of the data
         """
         return self._filenames
 
     @property
-    def measurement_time(self) -> float:
+    def measurement_time(
+            self
+    ) -> float:
         """
         Total measurement time in seconds?
         """
-        return self.mt[-1] * self.mt_clk / 1000.0
+        return self.macro_times[-1] * self.mt_clk / 1000.0
 
     @property
-    def dt(self) -> float:
+    def dt(
+            self
+    ) -> float:
         """
         The micro-time calibration
         """
-        if self._tttrs is not None:
-            t = self._tttrs[0]
-            header = t.get_header()
-            return header.micro_time_resolution
-        else:
-            return self.mt_clk / self.n_tac
+        return self.mt_clk / self.n_tac
 
     @property
     def shape(
             self
     ) -> Tuple[int]:
-        return self.rout.shape
+        return self.routing_channels.shape
 
     @property
     def nPh(
@@ -273,43 +300,43 @@ class Photons(object):
         """
         Total number of photons
         """
-        return self.rout.shape[0]
+        return self.routing_channels.shape[0]
 
     @property
-    def rout(
+    def routing_channels(
             self
     ) -> np.array:
         """
         Array containing the routing channel of the photons
         """
-        if self._h5:
-            return self.photon_array['ROUT']
-        else:
-            return np.hstack([t.get_routing_channel() for t in self._tttrs])
+        return self.photon_array['ROUT']
 
     @property
-    def tac(
+    def micro_times(
             self
     ) -> np.array:
         """
         Array containing the micro-time clock counts (TAC) of the photons
         """
-        if self._h5:
-            return self.photon_array['TAC']
-        else:
-            return np.hstack([t.get_micro_time() for t in self._tttrs])
+        return self.photon_array['TAC']
 
     @property
-    def mt(
+    def event_types(
+            self
+    ) -> np.array:
+        """
+        Array containing the event types
+        """
+        return self.photon_array['EVENT']
+
+    @property
+    def macro_times(
             self
     ) -> np.array:
         """
         Array containing the macros-time clock counts of the photons
         """
-        if self._h5:
-            return self.photon_array['MT']
-        else:
-            return np.hstack([t.get_macro_time() for t in self._tttrs])
+        return self.photon_array['MT']
 
     @property
     def n_tac(
@@ -318,16 +345,8 @@ class Photons(object):
         """
         Number of TAC channels
         """
-        if self._h5:
-            if self._number_of_tac_channels is None:
-                sample = self._h5.get_node('/' + self._sample_name)
-                return sample.header[0]['nTAC']
-            else:
-                return self._number_of_tac_channels
-        else:
-            t = self._tttrs[0]
-            header = t.get_header()
-            return header.number_of_tac_channels
+        sample = self._h5.get_node('/' + self._sample_name_hdf_tp)
+        return sample.header[0]['nTAC']
 
     @property
     def mt_clk(
@@ -337,13 +356,8 @@ class Photons(object):
         Macro-time clock of the data (time between the macrotime events
         in milli-seconds)
         """
-        if self._h5:
-            sample = self._h5.get_node('/' + self._sample_name)
-            return sample.header[0]['MTCLK'] * 1e-6 if self._MTCLK is None else self._MTCLK
-        else:
-            t = self._tttrs[0]
-            header = t.get_header()
-            return header.macro_time_resolution
+        sample = self._h5.get_node('/' + self._sample_name_hdf_tp)
+        return sample.header[0]['MTCLK'] * 1e-6 if self._MTCLK is None else self._MTCLK
 
     def read_where(
             self,
@@ -386,7 +400,7 @@ class Photons(object):
         re._h5 = self._h5
         re.selection = selection
         self.filetype = self.filetype
-        self._sample_name = self._sample_name
+        self._sample_name_hdf_tp = self._sample_name_hdf_tp
         self._selection = self._selection
         self._number_of_tac_channels = self._number_of_tac_channels
         self._number_of_routing_channels = self._number_of_routing_channels
