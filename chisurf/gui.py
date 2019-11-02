@@ -228,12 +228,14 @@ class Main(QtWidgets.QMainWindow):
         self.mdiarea.cascadeSubWindows()
 
     def onCurrentDatasetChanged(self):
-        #chisurf.run("cs.current_dataset = %s" % self.curve_selector.selected_curve_index)
         self.comboBox_Model.clear()
         ds = self.current_dataset
         if chisurf.imported_datasets:
-            model_names = ds.experiment.get_model_names()
-            self.comboBox_Model.addItems(model_names)
+            try:
+                model_names = ds.experiment.get_model_names()
+                self.comboBox_Model.addItems(model_names)
+            except AttributeError:
+                pass
 
     def onAddFit(self):
         chisurf.run(

@@ -139,8 +139,6 @@ class Tests(unittest.TestCase):
         )
 
     def test_reading(self):
-        #file = tempfile.NamedTemporaryFile(suffix='.yaml')
-        #filename = file.name
         _, filename = tempfile.mkstemp(
             suffix='.yaml'
         )

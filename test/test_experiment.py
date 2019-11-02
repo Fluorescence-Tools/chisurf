@@ -3,6 +3,7 @@ import os
 import unittest
 import numpy as np
 import tempfile
+import copy
 
 TOPDIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')
@@ -194,6 +195,11 @@ class Tests(unittest.TestCase):
     def test_FCS_Reader(self):
         import chisurf.experiments
         filename = './test/data/fcs/Kristine/Kristine_with_error.cor'
+        root, ext = os.path.splitext(
+            os.path.basename(
+                filename
+            )
+        )
         ex = chisurf.experiments.experiment.Experiment(
             'FCS'
         )
@@ -206,7 +212,7 @@ class Tests(unittest.TestCase):
         )
         self.assertEqual(
             fcs_curve.name,
-            filename
+            root
         )
         # there is one FCS curve in the Kristine file
         self.assertEqual(
@@ -227,10 +233,6 @@ class Tests(unittest.TestCase):
         csv_io = chisurf.fio.ascii.Csv(
             use_header=False
         )
-        #file = tempfile.NamedTemporaryFile(
-        #    suffix='.txt'
-        #)
-        #filename = file.name
         _, filename = tempfile.mkstemp(
             suffix='.txt'
         )
@@ -242,11 +244,30 @@ class Tests(unittest.TestCase):
         d = chisurf.experiments.data.DataCurve(
             *data
         )
+        d_copy = copy.copy(d)
+        self.assertEqual(
+            np.allclose(
+                d_copy.x,
+                d.x
+            ),
+            True
+        )
+        self.assertEqual(
+            np.allclose(
+                d_copy.y,
+                d.y
+            ),
+            True
+        )
+        self.assertEqual(
+            d.name,
+            d_copy.name
+        )
+        self.assertEqual(
+            d.verbose,
+            d_copy.verbose
+        )
 
-        #file = tempfile.NamedTemporaryFile(
-        #    suffix='.txt'
-        #)
-        #filename = file.name
         _, filename = tempfile.mkstemp(
             suffix='.txt'
         )
