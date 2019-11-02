@@ -201,7 +201,7 @@ class LabelStructure(
             'PDB-Files (*.pdb);;PDB-GZ (*.pdb.gz)'
         )
         self.pdb_filename = filename
-        self.structure = mfm.structure.structure.Structure(self.pdb_filename)
+        self.structure = chisurf.structure.Structure(self.pdb_filename)
         self.atom_select.atoms = self.structure.atoms
 
     def onAddLabel(self):
