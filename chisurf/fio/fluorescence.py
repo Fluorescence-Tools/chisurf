@@ -171,7 +171,6 @@ def read_fcs(
         data_reader: chisurf.experiments.reader.ExperimentReader = None,
         reader_name: str = 'csv',
         verbose: bool = False,
-        *args,
         **kwargs
 ) -> chisurf.experiments.data.ExperimentDataCurveGroup:
     """
@@ -202,7 +201,6 @@ def read_fcs(
             csv.load(
                 filename=filename,
                 verbose=chisurf.verbose,
-                *args,
                 **kwargs
             )
             x, y = csv.data[0], csv.data[1]
@@ -224,6 +222,7 @@ def read_fcs(
                 x=x, y=y, ey=ey, ex=ex
             )
         )
+    # Files with multiple curves per file
     elif reader_name in ['china-mat', 'confocor3', 'alv']:
         if reader_name == 'confocor3':
             ds = chisurf.fio.fcs.fcs_confocor3.fcs_read_zeiss_fcs(

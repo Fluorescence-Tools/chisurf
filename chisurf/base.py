@@ -268,6 +268,15 @@ class Base(object):
         c.unique_identifier = str(uuid.uuid4())
         return c
 
+    def __deepcopy__(self, memodict={}):
+        c = self.__class__()
+        c.from_dict(
+            copy.deepcopy(self.to_dict())
+        )
+        # make sure that the copy gets a new uuid
+        c.unique_identifier = str(uuid.uuid4())
+        return c
+
 
 class Data(Base):
 

@@ -443,7 +443,8 @@ class Tests(unittest.TestCase):
         )
 
         filename = './test/data/fcs/Kristine/Kristine_with_error.cor'
-        fcs_data_curve_1 = chisurf.fio.fluorescence.read_fcs_kristine(
+        fcs_data_curve_1 = chisurf.fio.fluorescence.read_fcs(
+            reader_name='kristine',
             filename=filename
         )
         self.assertEqual(
@@ -455,7 +456,8 @@ class Tests(unittest.TestCase):
         )
 
         filename = './test/data/fcs/Kristine/Kristine_without_error.cor'
-        fcs_data_curve_2 = chisurf.fio.fluorescence.read_fcs_kristine(
+        fcs_data_curve_2 = chisurf.fio.fluorescence.read_fcs(
+            reader_name='kristine',
             filename=filename
         )
         self.assertEqual(
