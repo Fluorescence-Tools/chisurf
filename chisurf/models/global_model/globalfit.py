@@ -17,10 +17,9 @@ from chisurf.models import model
 from chisurf.fitting.parameter import GlobalFittingParameter
 
 
-class GlobalFitModel(model.Model, Curve):
-    """
-
-    """
+class GlobalFitModel(
+    model.Model, Curve
+):
 
     name = "Global fit"
 
@@ -57,13 +56,13 @@ class GlobalFitModel(model.Model, Curve):
     @property
     def links(
             self
-    ) -> List[fitting.parameter.FittingParameter]:
+    ) -> List[chisurf.fitting.parameter.FittingParameter]:
         return self._links
 
     @links.setter
     def links(
             self,
-            v: List[fitting.parameter.FittingParameter]
+            v: List[chisurf.fitting.parameter.FittingParameter]
     ):
         self._links = v if isinstance(v, list) else list()
 
@@ -77,7 +76,7 @@ class GlobalFitModel(model.Model, Curve):
     @property
     def global_parameters_all(
             self
-    ) -> List[fitting.parameter.FittingParameter]:
+    ) -> List[chisurf.fitting.parameter.FittingParameter]:
         return list(self._global_parameters.values())
 
     @property
@@ -89,7 +88,7 @@ class GlobalFitModel(model.Model, Curve):
     @property
     def global_parameters(
             self
-    ) -> List[fitting.parameter.FittingParameter]:
+    ) -> List[chisurf.fitting.parameter.FittingParameter]:
         return [p for p in self.global_parameters_all if not p.fixed]
 
     @property
@@ -115,7 +114,7 @@ class GlobalFitModel(model.Model, Curve):
     @property
     def parameters(
             self
-    ) -> List[fitting.parameter.FittingParameter]:
+    ) -> List[chisurf.fitting.parameter.FittingParameter]:
         p = list()
         for f in self.fits:
             p += f.model.parameters
@@ -139,7 +138,7 @@ class GlobalFitModel(model.Model, Curve):
     @property
     def parameters_all(
             self
-    ) -> List[fitting.parameter.FittingParameter]:
+    ) -> List[chisurf.fitting.parameter.FittingParameter]:
         try:
             re = list()
             for f in self.fits:
