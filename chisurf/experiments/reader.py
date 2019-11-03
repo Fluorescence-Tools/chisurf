@@ -14,9 +14,6 @@ import chisurf.experiments
 class ExperimentReader(
     chisurf.base.Base
 ):
-    """
-
-    """
 
     def __init__(
             self,
@@ -35,20 +32,7 @@ class ExperimentReader(
             **kwargs
         )
         self.experiment = experiment
-        self._controller = controller
-
-    @property
-    def controller(
-            self
-    ) -> ExperimentReaderController:
-        return self._controller
-
-    @controller.setter
-    def controller(
-            self,
-            v: ExperimentReaderController
-    ):
-        self._controller = v
+        self.controller = controller
 
     @abstractmethod
     def autofitrange(
@@ -99,19 +83,6 @@ class ExperimentReaderController(
     chisurf.base.Base
 ):
 
-    @property
-    def experiment_reader(
-            self
-    ) -> ExperimentReader:
-        return self._experiment_reader
-
-    @experiment_reader.setter
-    def experiment_reader(
-            self,
-            v: ExperimentReader
-    ):
-        self._experiment_reader = v
-
     def __init__(
             self,
             experiment_reader: ExperimentReader = None,
@@ -122,7 +93,7 @@ class ExperimentReaderController(
             *args,
             **kwargs
         )
-        self._experiment_reader = experiment_reader
+        self.experiment_reader = experiment_reader
         self._call_dict = dict()
         if isinstance(
                 experiment_reader,

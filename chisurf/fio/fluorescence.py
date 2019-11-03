@@ -23,7 +23,7 @@ def read_tcspc_csv(
         is_jordi: bool = False,
         polarization: str = "vm",
         g_factor: float = 1.0,
-        setup: reader.ExperimentReader = None,
+        experiment: chisurf.experiments.Experiment = None,
         *args,
         **kwargs
 ) -> chisurf.experiments.data.DataCurveGroup:
@@ -153,7 +153,7 @@ def read_tcspc_csv(
             y=yi,
             ex=ex,
             ey=1. / eyi,
-            setup=setup,
+            experiment=experiment,
             name=name,
             **kwargs
         )
@@ -171,6 +171,7 @@ def read_fcs(
         data_reader: chisurf.experiments.reader.ExperimentReader = None,
         reader_name: str = 'csv',
         verbose: bool = False,
+        experiment: chisurf.experiments.Experiment = None,
         **kwargs
 ) -> chisurf.experiments.data.ExperimentDataCurveGroup:
     """
@@ -228,7 +229,8 @@ def read_fcs(
             chisurf.experiments.data.DataCurve(
                 data_reader=data_reader,
                 name=name,
-                x=x, y=y, ey=ey, ex=ex
+                x=x, y=y, ey=ey, ex=ex,
+                experiment=experiment
             )
         )
     # Files with multiple curves per file

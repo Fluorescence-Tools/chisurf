@@ -56,13 +56,11 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._dt,
             layout=layout,
-            fixed=True,
             hide_bounds=True
         )
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._n0,
             layout=layout,
-            fixed=True,
             hide_bounds=True
         )
         self.verticalLayout_2.addLayout(layout)
@@ -92,7 +90,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             fitting_parameter=self._rep,
             layout=self.horizontalLayout_3,
-            text='r[MHz]'
+            label_text='r[MHz]'
         )
 
         self.irf_select = ExperimentalDataSelector(
@@ -182,12 +180,12 @@ class CorrectionsWidget(
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._dead_time,
             layout=self.horizontalLayout_2,
-            text='t<sub>dead</sub>[ns]'
+            label_text='t<sub>dead</sub>[ns]'
         )
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._window_length,
             layout=self.horizontalLayout_2,
-            text='t<sub>dead</sub>[ns]'
+            label_text='t<sub>dead</sub>[ns]'
         )
 
         self.lin_select = ExperimentalDataSelector(
@@ -285,19 +283,19 @@ class GenericWidget(
         # Generic parameters
         sc_w = chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._sc,
-            text='Sc',
+            label_text='Sc',
         )
         bg_w = chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._bg,
-            text='Bg'
+            label_text='Bg'
         )
         tmeas_bg_w = chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_bg,
-            text='t<sub>Bg</sub>'
+            label_text='t<sub>Bg</sub>'
         )
         tmeas_exp_w = chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_exp,
-            text='t<sub>Meas</sub>'
+            label_text='t<sub>Meas</sub>'
         )
 
         l = QtWidgets.QGridLayout()
@@ -343,9 +341,6 @@ class AnisotropyWidget(
     Anisotropy,
     QtWidgets.QGroupBox
 ):
-    """
-
-    """
 
     def __init__(
             self,
@@ -438,31 +433,27 @@ class AnisotropyWidget(
 
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._r0,
-            text='r0',
-            layout=layout,
-            fixed=True
+            label_text='r0',
+            layout=layout
         )
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._g,
-            text='g',
-            layout=layout,
-            fixed=True
+            label_text='g',
+            layout=layout
         )
         self.lh.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._l1,
-            text='l1',
+            label_text='l1',
             layout=layout,
-            fixed=True,
             decimals=4
         )
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._l2,
-            text='l2',
+            label_text='l2',
             layout=layout,
-            fixed=True,
             decimals=4
         )
         self.lh.addLayout(layout)

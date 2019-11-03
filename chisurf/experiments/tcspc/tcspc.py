@@ -107,7 +107,7 @@ class TCSPCReader(
             *args,
             **kwargs
     ) -> chisurf.experiments.data.DataCurveGroup:
-        return chisurf.fio.fluorescence.read_tcspc_csv(
+        data_group = chisurf.fio.fluorescence.read_tcspc_csv(
             filename=filename,
             skiprows=self.skiprows,
             rebin=self.rebin,
@@ -117,7 +117,8 @@ class TCSPCReader(
             is_jordi=self.is_jordi,
             polarization=self.polarization,
             g_factor=self.g_factor,
-            setup=self,
+            experiment=self.experiment,
+            data_reader=self
         )
-
-
+        data_group.data_reader = self
+        return data_group
