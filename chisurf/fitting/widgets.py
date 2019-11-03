@@ -95,22 +95,8 @@ class FittingControllerWidget(
                     *args,
                     **kwargs
             ):
-                print(args)
-                print(kwargs)
-                f(
-                    *args,
-                    **kwargs
-                )
+                f(*args, **kwargs)
                 self.update(*args)
-
-                #for p in self.plots:
-                #    p.update_all(
-                #        *args,
-                #        only_fit_range=True,
-                #        **kwargs
-                #    )
-                #    p.update()
-
             return update_new
 
         self.fit.run = wrapper(self.fit.run)
@@ -148,11 +134,13 @@ class FittingControllerWidget(
 
     def onRunFit(self):
         chisurf.run("cs.current_fit.run()")
-        for p in self.fit.model.parameters_all:
+        for pa in chisurf.fitting.parameter.FittingParameter.get_instances():
             try:
-                p.controller.finalize()
-            except AttributeError:
-                print("Parameter %s has no controller" % p.name)
+                pa.controller.finalize()
+            except (AttributeError, RuntimeError):
+                chisurf.logging.warning(
+                    "Fitting parameter %s does not have a controller to update." % pa.name
+                )
 
     def onAutoFitRange(self):
         try:
