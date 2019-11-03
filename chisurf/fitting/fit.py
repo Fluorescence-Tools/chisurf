@@ -351,7 +351,7 @@ class Fit(
             for p, e in zip(used_parameters, err):
                 fit.model.parameters[p].error_estimate = e
         except ValueError:
-            print("Problems calculating the covariances")
+            chisurf.logging.warning("Problems calculating the covariances")
 
     def chi2_scan(
             self,
@@ -507,6 +507,8 @@ class FitGroup(
         self.global_model.update()
         for p in self.plots:
             p.update_all()
+        for f in self._fits:
+            f.model.update()
 
     def run(
             self,
@@ -544,9 +546,7 @@ class FitGroup(
             **fitting_options
         )
         self.results = results
-
         self.update()
-        self.global_model.finalize()
 
     def __init__(
             self,
