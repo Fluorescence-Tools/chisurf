@@ -300,7 +300,7 @@ class FittingParameterGroup(
             try:
                 parameter_target[pn].from_dict(parameter[pn])
             except KeyError:
-                print("Key %s not found skipping" % pn)
+                chisurf.logging.warning("Key %s not found skipping" % pn)
 
     def find_parameters(
             self,
