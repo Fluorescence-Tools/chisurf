@@ -293,10 +293,6 @@ class LifetimeModel(ModelCurve):
     ) -> np.array:
         return self.lifetimes.lifetime_spectrum
 
-    def finalize(self) -> None:
-        super().finalize()
-        self.lifetimes.update()
-
     def get_curves(self):
         d = super().get_curves()
         d['IRF'] = self.convolve.irf
