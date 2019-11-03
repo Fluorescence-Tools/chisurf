@@ -491,9 +491,9 @@ class Main(QtWidgets.QMainWindow):
                 ),
                 (
                     experiments.fcs.FCS(
-                        name='Kristine',
+                        name='Seidel Kristine',
                         experiment=fcs,
-                        experiment_reader='Kristine'
+                        experiment_reader='kristine'
                     ),
                     chisurf.experiments.widgets.FCSController(
                         file_type='Kristine files (*.cor)'
@@ -501,9 +501,9 @@ class Main(QtWidgets.QMainWindow):
                 ),
                 (
                     experiments.fcs.FCS(
-                        name='China-mat',
+                        name='China FCS',
                         experiment=fcs,
-                        experiment_reader='China-mat'
+                        experiment_reader='china-mat'
                     ),
                     chisurf.experiments.widgets.FCSController(
                         file_type='Kristine files (*.mat)'
@@ -521,9 +521,19 @@ class Main(QtWidgets.QMainWindow):
                 ),
                 (
                     experiments.fcs.FCS(
-                        name='ALV',
+                        name='PyCorrFit',
                         experiment=fcs,
-                        experiment_reader='ALV'
+                        experiment_reader='pycorrfit'
+                    ),
+                    chisurf.experiments.widgets.FCSController(
+                        file_type='PyCorrFit csv files (*.csv)'
+                    )
+                ),
+                (
+                    experiments.fcs.FCS(
+                        name='ALV-Correlator',
+                        experiment=fcs,
+                        experiment_reader='alv'
                     ),
                     chisurf.experiments.widgets.FCSController(
                         file_type='Kristine files (*.asc)'
