@@ -310,6 +310,33 @@ class ParameterGroup(
             parameters = list()
         self._parameter = parameters
 
+    def __setattr__(
+            self,
+            k: str,
+            v: object
+    ):
+        try:
+            propobj = getattr(self, k, None)
+            if isinstance(propobj, property):
+                if propobj.fset is None:
+                    raise AttributeError("can't set attribute")
+                propobj.fset(self, v)
+            elif isinstance(propobj, chisurf.parameter.Parameter):
+                propobj.value = v
+            else:
+                super().__setattr__(k, v)
+        except KeyError:
+            super().__setattr__(k, v)
+
+    def __getattr__(
+            self,
+            key: str
+    ):
+        v = self.__dict__[key]
+        if isinstance(v, chisurf.parameter.Parameter):
+            return v.value
+        return v
+
     def append(
             self,
             parameter: Parameter,
