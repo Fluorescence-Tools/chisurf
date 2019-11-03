@@ -54,31 +54,9 @@ def simulate_trajectory(
     )
 
 
-class DiffusionSimulationParameter(ParameterGroup):
-
-    @property
-    def t_max(self) -> float:
-        return self._t_max.value
-
-    @t_max.setter
-    def t_max(
-            self,
-            v: float
-    ):
-        self._t_max = v
-
-    @property
-    def t_step(
-            self
-    ) -> float:
-        return self._t_step.value
-
-    @t_step.setter
-    def t_step(
-            self,
-            v: float
-    ):
-        self._t_step.value = v
+class DiffusionSimulationParameter(
+    chisurf.parameter.ParameterGroup
+):
 
     def __init__(
             self,
@@ -86,12 +64,12 @@ class DiffusionSimulationParameter(ParameterGroup):
             t_step: float = 0.05,
             n_simulations: int = 4
     ):
-        super(DiffusionSimulationParameter, self).__init__()
-        self._t_max = chisurf.parameter.Parameter(
+        super().__init__()
+        self.t_max = chisurf.parameter.Parameter(
             value=t_max,
             name='t-max'
         )
-        self._t_step = chisurf.parameter.Parameter(
+        self.t_step = chisurf.parameter.Parameter(
             value=t_step,
             name='t-step'
         )

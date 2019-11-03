@@ -291,6 +291,29 @@ class Tests(unittest.TestCase):
             p2.value
         )
 
+    def test_parameter_group(self):
+
+        class A(chisurf.parameter.ParameterGroup):
+
+            def __init__(self):
+                self.pv = chisurf.parameter.Parameter(
+                    value=11
+                )
+
+        # The values of Parameters that are grouped in a ParameterGroup
+        # can be written to without explicitly addressing the Parameter
+        #  value attribute
+        a = A()
+        self.assertEqual(
+            a.pv.value,
+            11
+        )
+        a.pv = 22
+        self.assertEqual(
+            a.pv.value,
+            22
+        )
+
 
 if __name__ == '__main__':
     unittest.main()
