@@ -1,104 +1,13 @@
-from __future__ import annotations
 """ALV .ASC files"""
 """Confocor .fcs files"""
-
-from typing import Dict, List
 import csv
 import pathlib
 import warnings
 
 import numpy as np
 
-from . import weights
 from . import util
 
-
-def fcs_read_zeiss_fcs(
-        filename: str,
-        verbose: bool = False
-) -> List[Dict]:
-    if verbose:
-        print("Reading ALV .asc from file: ", filename)
-    d = openFCS(filename)
-
-    correlations = list()
-    for i, correlation in enumerate(d['Correlation']):
-        correlation_time = correlation[:, 0]
-        correlation_amplitude = correlation[:, 1]
-
-        trace = d['Trace'][i]
-        if len(trace) == 2:
-            # Cross correlation and two channels
-            # Intensity in channel 1
-            intensity_time_ch1 = trace[0][:, 0]
-            intensity_ch1 = trace[0][:, 1]
-            aquisition_time_ch1 = intensity_time_ch1[-1]
-            mean_count_rate_ch1 = np.mean(intensity_ch1)
-
-            # Intensity in channel 2
-            intensity_time_ch2 = trace[1][:, 0]
-            intensity_ch2 = trace[1][:, 1]
-            aquisition_time_ch2 = intensity_time_ch2[-1]
-            mean_count_rate_ch2 = np.mean(intensity_ch2)
-
-            # Mean intensity
-            mean_count_rate = 0.5 * (mean_count_rate_ch1 + mean_count_rate_ch2)
-
-            # Mean aquisition time
-            aquisition_time = 0.5 * (aquisition_time_ch1 + aquisition_time_ch2) / 1000.0
-
-            w = weights.weights(
-                correlation_time,
-                correlation_amplitude,
-                aquisition_time,
-                mean_count_rate=mean_count_rate
-            )
-
-            correlations.append(
-                {
-                    'filename': filename,
-                    'measurement_id': "%s_%s" % (d['Filename'][i], i),
-                    'correlation_time': correlation_time.tolist(),
-                    'correlation_amplitude': correlation_amplitude.tolist(),
-                    'weights': w.tolist(),
-                    'acquisition_time': aquisition_time,
-                    'mean_count_rate': mean_count_rate,
-                    'intensity_trace_time_ch1': intensity_time_ch1.tolist(),
-                    'intensity_trace_ch1': intensity_ch1.tolist(),
-                    'intensity_trace_time_ch2': intensity_time_ch2.tolist(),
-                    'intensity_trace_ch2': intensity_ch2.tolist(),
-                }
-            )
-        else:
-            # Auto correlation only one channel
-            # Intensity in channel 1
-            intensity_time = trace[:, 0]
-            intensity = trace[:, 1]
-            aquisition_time = intensity_time[-1] / 1000.0
-            mean_count_rate = float(np.mean(intensity))
-
-            w = weights.weights(
-                correlation_time,
-                correlation_amplitude,
-                aquisition_time,
-                mean_count_rate=mean_count_rate
-            )
-
-            correlations.append(
-                {
-                    'filename': filename,
-                    'measurement_id': "%s_%s" % (d['Filename'][i], i),
-                    'correlation_time': correlation_time.tolist(),
-                    'correlation_amplitude': correlation_amplitude.tolist(),
-                    'weights': w.tolist(),
-                    'acquisition_time': aquisition_time,
-                    'mean_count_rate': mean_count_rate,
-                    'intensity_trace_time_ch1': intensity_time.tolist(),
-                    'intensity_trace_ch1': intensity.tolist(),
-                }
-            )
-
-    return correlations
 
 
 def openFCS(path, filename=None):

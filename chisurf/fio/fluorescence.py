@@ -195,7 +195,7 @@ def read_fcs(
     )
 
     # Files with single curve
-    if reader_name in ['csv', 'kristine']:
+    if reader_name in ['csv', 'kristine', 'pycorrfit']:
         if reader_name == 'csv':
             csv = chisurf.fio.ascii.Csv()
             csv.load(
@@ -206,7 +206,16 @@ def read_fcs(
             x, y = csv.data[0], csv.data[1]
             ey = csv.data[2]
         elif reader_name == 'kristine':
-            r = chisurf.fio.fcs.cor_kristine.fcs_read_kristine(
+            r = chisurf.fio.fcs.read_kristine(
+                filename=filename,
+                verbose=verbose
+            )
+            x = np.array(r[0]['correlation_time'])
+            y = np.array(r[0]['correlation_amplitude'])
+            ey = 1. / np.array(r[0]['weights'])
+            ex = np.ones_like(x)
+        elif reader_name == 'pycorrfit':
+            r = chisurf.fio.fcs.read_pycorrfit(
                 filename=filename,
                 verbose=verbose
             )
@@ -225,17 +234,17 @@ def read_fcs(
     # Files with multiple curves per file
     elif reader_name in ['china-mat', 'confocor3', 'alv']:
         if reader_name == 'confocor3':
-            ds = chisurf.fio.fcs.fcs_confocor3.fcs_read_zeiss_fcs(
+            ds = chisurf.fio.fcs.read_zeiss_fcs(
                 filename=filename,
                 verbose=verbose
             )
         elif reader_name == 'china-mat':
-            ds = chisurf.fio.fcs.mat_china.fcs_read_china_mat(
+            ds = chisurf.fio.fcs.read_china_mat(
                 filename=filename,
                 verbose=verbose
             )
         elif reader_name == 'alv':
-            ds = chisurf.fio.fcs.asc_alv.fcs_read_asc(
+            ds = chisurf.fio.fcs.read_asc(
                 filename
             )
         for r in ds:
