@@ -37,14 +37,6 @@ class Model(
     ) -> int:
         return len(self.parameters)
 
-    def finalize(self):
-        self.update()
-        for a in self.aggregated_parameters:
-            if a is not self:
-                a.finalize()
-        #for pa in fitting.parameter.FittingParameter.get_instances():
-        #    pa.finalize()
-
     @property
     def weighted_residuals(
             self
