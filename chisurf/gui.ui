@@ -199,7 +199,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>499</width>
+          <width>254</width>
           <height>145</height>
          </rect>
         </property>
@@ -864,7 +864,7 @@
      <item row="1" column="4">
       <widget class="QLabel" name="label_16">
        <property name="text">
-        <string>Setup</string>
+        <string>File type</string>
        </property>
       </widget>
      </item>

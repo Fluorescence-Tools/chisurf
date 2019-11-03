@@ -442,20 +442,6 @@ class LinePlot(plotbase.Plot):
         # data_y = np.copy(data_y) + y_shift
         #
 
-        self.text.setHtml(
-            '<div style="name-align: center">'
-            '     <span style="color: #FF0; font-size: 10pt;">'
-            '         Fit-range: %s, %s <br />'
-            '         &Chi;<sup>2</sup>=%.4f <br />'
-            '         DW=%.4f'
-            '     </span>'
-            '</div>' % (
-                self.fit.xmin, self.fit.xmax,
-                self.fit.chi2r,
-                self.fit.durbin_watson
-            )
-        )
-
         # Set log-scales
         self.res_plot.setLogMode(
             x=data_log_x,
@@ -481,3 +467,22 @@ class LinePlot(plotbase.Plot):
             ub_max = np.log10(ub_max)
         self.region.setBounds((lb_min, ub_max))
         self.region.setRegion((lb, ub))
+
+        self.text.setPos(
+            min(data.x),
+            max(data.y)
+        )
+        self.text.updateTextPos()
+        self.text.setHtml(
+            '<div style="name-align: center">'
+            '     <span style="color: #FF0; font-size: 10pt;">'
+            '         Fit-range: %s, %s <br />'
+            '         &Chi;<sup>2</sup>=%.4f <br />'
+            '         DW=%.4f'
+            '     </span>'
+            '</div>' % (
+                self.fit.xmin, self.fit.xmax,
+                self.fit.chi2r,
+                self.fit.durbin_watson
+            )
+        )
