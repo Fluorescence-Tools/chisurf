@@ -73,14 +73,14 @@ class Experiment(
 
     def add_readers(
             self,
-            setups: List[
+            readers: List[
                 Tuple[
                     chisurf.experiments.reader.ExperimentReader,
                     chisurf.experiments.reader.ExperimentReaderController
                 ]
             ]
     ):
-        for reader, controller in setups:
+        for reader, controller in readers:
             self.add_reader(
                 reader,
                 controller
