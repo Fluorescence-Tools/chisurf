@@ -196,3 +196,28 @@ Process finished with exit code 134 (interrupted by signal 6: SIGABRT)
 
 
 ------------
+
+/Users/tpeulen/miniconda3/envs/chisurf/bin/python /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/gui.py
+loading filename:  /Users/tpeulen/.chisurf/settings_chisurf.yaml
+objc[47431]: Class FIFinderSyncExtensionHost is implemented in both /System/Library/PrivateFrameworks/FinderKit.framework/Versions/A/FinderKit (0x7fffb14283d8) and /System/Library/PrivateFrameworks/FileProvider.framework/OverrideBundles/FinderSyncCollaborationFileProviderOverride.bundle/Contents/MacOS/FinderSyncCollaborationFileProviderOverride (0x135bf3f50). One of the two will be used. Which one is undefined.
+Traceback (most recent call last):
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/gui.py", line 207, in subWindowActivated
+    self.current_fit.model.update()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/global_model/globalfit.py", line 349, in update
+    super().update()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/model.py", line 227, in update
+    self.update_plots()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/model.py", line 208, in update_plots
+    **kwargs
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/plots/fitinfo.py", line 39, in update_all
+    self.textedit.setPlainText(str(fit))
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/fitting/fit.py", line 596, in __str__
+    s += str(f)
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/fitting/fit.py", line 68, in __str__
+    s += str(self.data)
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/experiments/data.py", line 168, in __str__
+    x, y, ex, ey = lx[i], ly[i], lex[i], ley[i]
+IndexError: index 0 is out of bounds for axis 0 with size 0
+
+------------
+
