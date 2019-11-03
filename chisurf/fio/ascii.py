@@ -263,7 +263,7 @@ class Csv(object):
                 )
             self._data = d
         else:
-            print("File not found")
+            chisurf.logging.warning("File %s not found" % filename)
 
     def save(
             self,

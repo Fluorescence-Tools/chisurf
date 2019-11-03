@@ -78,7 +78,7 @@ class Correlator(QtCore.QThread):
         :return: numpy-array with same length as photon-stream, each photon
         is associated to one weight.
         """
-        print("Correlator:getWeightStream")
+        chisurf.logging.info("Correlator:getWeightStream")
         photons = self.p.photon_source.photons
         if type(tacWeighting) is list:
             print("channel-wise selection")
