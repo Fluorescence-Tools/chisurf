@@ -151,8 +151,8 @@ gui:
     font_size: 9
     font_family: Courier
     language: Python
-  style_sheet: style_sheet_night.qss
-  show_console: true
+  style_sheet: ./settings/gui_styles/dark.css
+  show_console: false
   show_macro_edit: true
   confirm_close_fit: true
   confirm_close_program: true
@@ -170,7 +170,7 @@ gui:
     show_data_grid: true
     show_residual_grid: true
     show_acorr_grid: true
-    line_width: 1.5
+    line_width: 0.5
     hideTitle: true
     enable_region_selector: true
     show_legend: false
