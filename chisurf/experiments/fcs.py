@@ -41,9 +41,9 @@ class FCS(
             data_reader=self,
             skiprows=self.skiprows,
             use_header=self.use_header,
-            reader_name=self.experiment_reader
+            reader_name=self.experiment_reader,
+            experiment=self.experiment
         )
-        r.experiment = self
         return r
 
 

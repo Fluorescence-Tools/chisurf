@@ -72,7 +72,7 @@ class FittingControllerWidget(
             parent=None,
             fit=fit,
             change_event=self.change_dataset,
-            setup=fit.data.setup.__class__
+            setup=fit.data.experiment.__class__
         )
         uic.loadUi(
             os.path.join(
@@ -143,12 +143,9 @@ class FittingControllerWidget(
                 )
 
     def onAutoFitRange(self):
-        try:
-            self.fit.fit_range = self.fit.data.setup.autofitrange(
-                self.fit.data
-            )
-        except AttributeError:
-            self.fit.fit_range = 0, len(self.fit.data.x)
+        self.fit.fit_range = self.fit.data.data_reader.autofitrange(
+            self.fit.data
+        )
         self.fit.update()
 
 
@@ -204,7 +201,8 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
 
         self.on_change_plot()
         self.plot_tab_widget.currentChanged.connect(self.on_change_plot)
-        self.resize(350, 300)
+        xs, ys = chisurf.settings.cs_settings['gui']['fit_windows_size']
+        self.resize(xs, ys)
 
     def on_change_plot(self):
         idx = self.plot_tab_widget.currentIndex()
@@ -332,9 +330,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
             hide_bounds: bool = None,
             name: str = None,
             label_text: str = None,
-            hide_link: bool = None,
-            *args,
-            **kwargs
+            hide_link: bool = None
     ):
         if hide_link is None:
             hide_link = parameter_settings['hide_link']
@@ -539,21 +535,30 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
 
 def make_fitting_parameter_widget(
         fitting_parameter: chisurf.fitting.parameter.FittingParameter,
-        text: str = None,
+        label_text: str = None,
         layout: QtWidgets.QLayout = None,
-        decimals: int = None
+        decimals: int = None,
+        hide_label: bool = None,
+        hide_error: bool = None,
+        fixable: bool = None,
+        hide_bounds: bool = None,
+        name: str = None,
+        hide_link: bool = None
 ) -> FittingParameterWidget:
 
-    if text is None:
-        text = fitting_parameter.name
-    kw = {
-        'name': text,
-        'decimals': decimals,
-        'layout': layout
-    }
+    if label_text is None:
+        label_text = fitting_parameter.name
     widget = FittingParameterWidget(
         fitting_parameter,
-        **kw
+        hide_label=hide_label,
+        layout=layout,
+        decimals=decimals,
+        hide_error=hide_error,
+        fixable=fixable,
+        hide_bounds=hide_bounds,
+        name=name,
+        hide_link=hide_link,
+        label_text=label_text
     )
     fitting_parameter.controller = widget
     return widget

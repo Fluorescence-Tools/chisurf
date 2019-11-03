@@ -40,11 +40,11 @@ class ExperimentalDataSelector(
         data_curves = self.get_data_sets(
             curve_type=self.curve_type
         )
-        if self.setup is not None:
+        if self.data_reader is not None:
             return [
                 d for d in data_curves if isinstance(
-                    d.setup,
-                    self.setup
+                    d.data_reader,
+                    self.data_reader
                 )
             ]
         else:
@@ -269,7 +269,7 @@ class ExperimentalDataSelector(
         self.curve_type = curve_types
         self.click_close = click_close
         self.fit = fit
-        self.setup = setup
+        self.data_reader = setup
         self.context_menu_enabled = context_menu_enabled
 
         super().__init__(

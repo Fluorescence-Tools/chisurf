@@ -231,11 +231,8 @@ class Main(QtWidgets.QMainWindow):
         self.comboBox_Model.clear()
         ds = self.current_dataset
         if chisurf.imported_datasets:
-            try:
-                model_names = ds.experiment.get_model_names()
-                self.comboBox_Model.addItems(model_names)
-            except AttributeError:
-                pass
+            model_names = ds.experiment.get_model_names()
+            self.comboBox_Model.addItems(model_names)
 
     def onAddFit(self):
         chisurf.run(

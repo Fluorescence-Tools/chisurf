@@ -152,11 +152,11 @@ gui:
     font_family: Courier
     language: Python
   style_sheet: ./settings/gui_styles/dark.css
-  show_console: false
+  show_console: true
   show_macro_edit: true
   confirm_close_fit: true
   confirm_close_program: true
-  fit_windows_size: [300, 300]
+  fit_windows_size: [350, 350]
   console:
     style: 'linux' # options are linux, lightbg, or nocolor
     init: |
@@ -170,7 +170,7 @@ gui:
     show_data_grid: true
     show_residual_grid: true
     show_acorr_grid: true
-    line_width: 0.5
+    line_width: 2.0
     hideTitle: true
     enable_region_selector: true
     show_legend: false

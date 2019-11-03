@@ -522,7 +522,7 @@ class CorrelateTTTR(
             )
 
     def add_curve(self):
-        #d.setup = self
+        #d.data_reader = self
         #d.name = self.corr.fileWidget.sample_name
         self._curves.append(self.correlator.data)
         self.cs.update()

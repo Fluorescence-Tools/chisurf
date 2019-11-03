@@ -41,17 +41,6 @@ class ExperimentalData(
     ) -> None:
         self._experiment = v
 
-    @property
-    def data_reader(self):
-        return self._data_reader
-
-    @data_reader.setter
-    def data_reader(
-        self,
-        v: chisurf.experiments.reader.ExperimentReader
-    ):
-        self._data_reader = v
-
     def __init__(
             self,
             data_reader: chisurf.experiments.reader.ExperimentReader = None,
@@ -70,14 +59,8 @@ class ExperimentalData(
             *args,
             **kwargs
         )
-        if data_reader is None:
-            data_reader = chisurf.experiments.reader.ExperimentReader(
-                *args,
-                experiment=experiment,
-                **kwargs
-            )
         self._experiment = experiment
-        self._data_reader = data_reader
+        self.data_reader = data_reader
 
     def to_dict(self):
         d = super().to_dict()

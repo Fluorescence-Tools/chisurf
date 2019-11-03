@@ -325,8 +325,15 @@ class LinePlot(plotbase.Plot):
             text='',
             border='w',
             fill=(0, 0, 255, 100),
-            anchor=(0, 0)
+            anchor=(0, 1)
         )
+        # curves = self.fit.get_curves()
+        # data = curves['data']
+        # self.text.setPos(
+        #     min(data.x * 0.5),
+        #     max(data.y * 0.5)
+        # )
+
         self.data_plot.addItem(self.text)
         colors = chisurf.settings.gui['plot']['colors']
 
@@ -468,10 +475,6 @@ class LinePlot(plotbase.Plot):
         self.region.setBounds((lb_min, ub_max))
         self.region.setRegion((lb, ub))
 
-        self.text.setPos(
-            min(data.x),
-            max(data.y)
-        )
         self.text.updateTextPos()
         self.text.setHtml(
             '<div style="name-align: center">'
