@@ -139,12 +139,12 @@ class Tests(unittest.TestCase):
             'name': 'Parameter',
             'verbose': False,
             'unique_identifier': 'b671b0b3-3009-42df-824a-6d690c2b3e54',
-            '_bounds_on': True,
+            'bounds_on': True,
             'controller': None,
             '_link': None,
             '_value': 2.0,
-            '_lb': 1.0,
-            '_ub': 2.5
+            'lb': 1.0,
+            'ub': 2.5
         }
         self.assertEqual(
             p1.to_dict(),

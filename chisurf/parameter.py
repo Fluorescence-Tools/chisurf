@@ -25,7 +25,7 @@ class Parameter(
         the upper (second value) of the bound.
         """
         if self.bounds_on:
-            return self._lb, self._ub
+            return self.lb, self.ub
         else:
             return float("-inf"), float("inf")
 
@@ -34,18 +34,7 @@ class Parameter(
             self,
             b: Tuple[float, float]
     ):
-        self._lb, self._ub = b
-
-    @property
-    def bounds_on(self) -> bool:
-        return self._bounds_on
-
-    @bounds_on.setter
-    def bounds_on(
-            self,
-            v: bool
-    ):
-        self._bounds_on = bool(v)
+        self.lb, self.ub = b
 
     @property
     def value(
@@ -276,11 +265,11 @@ class Parameter(
             *args,
             **kwargs
         )
-        self._bounds_on = bounds_on
         self._link = link
         self._value = value
-        self._lb = lb
-        self._ub = ub
+        self.bounds_on = bounds_on
+        self.lb = lb
+        self.ub = ub
         self.controller = None
 
 
