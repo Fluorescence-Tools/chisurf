@@ -140,7 +140,8 @@ setup(
         'qtpy',
         'mrcfile',
         'qtconsole',
-        'ipython'
+        'ipython',
+        'docx'
     ],
     setup_requires=[
         "cython",
