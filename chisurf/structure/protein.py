@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import math
-import tempfile
-from collections import OrderedDict
-from copy import copy, deepcopy
+from copy import deepcopy
 import numpy as np
 import numba as nb
 
@@ -25,7 +23,7 @@ internal_atom_numbers = [
     ('CG', 6),
     ('CD', 7),
 ]
-residue_atoms_internal = OrderedDict([
+residue_atoms_internal = dict([
     ('CYS', ['N', 'C', 'CA', 'CB', 'O', 'H']),
     ('MET', ['N', 'C', 'CA', 'CB', 'O', 'H']),
     ('PHE', ['N', 'C', 'CA', 'CB', 'O', 'H']),
