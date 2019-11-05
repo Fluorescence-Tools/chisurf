@@ -17,7 +17,6 @@ import qdarkstyle
 
 import json
 import re
-from collections import OrderedDict
 
 import chisurf.fio
 import chisurf.settings
@@ -60,7 +59,7 @@ def dict_to_parameter_tree(
 
 def parameter_tree_to_dict(
         parameter_tree
-) -> OrderedDict:
+) -> Dict:
     """Converts a pyqtgraph parameter tree to an ordinary dictionary that could be saved
     as JSON file
 
@@ -68,7 +67,7 @@ def parameter_tree_to_dict(
     :param target:
     :return:
     """
-    target = OrderedDict()
+    target = dict()
 
     children = parameter_tree.children()
     for child in children:
@@ -169,7 +168,7 @@ class ParameterEditor(QtWidgets.QWidget):
 
     @property
     def parameter_dict(self) -> List:
-        od = OrderedDict(self.dict)
+        od = dict(self.dict)
         params = dict_to_parameter_tree(od)
         params.append(
             {

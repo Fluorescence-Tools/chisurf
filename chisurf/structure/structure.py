@@ -4,7 +4,6 @@ from typing import Dict
 import copy
 import os
 import tempfile
-from collections import OrderedDict
 from copy import deepcopy
 from typing import List
 
@@ -552,15 +551,15 @@ def find_best(target, reference, atom_indices=None):
 
 
 def make_dictionary_of_atoms(atoms):
-    """Organizes atoms residue-wise in an OrderedDict
+    """Organizes atoms residue-wise in an dict
 
     :param atoms:
-    :return: OrderedDict
+    :return: dict
     """
-    residue_dict = OrderedDict()
+    residue_dict = dict()
     for res in list(set(atoms['res_id'])):
         at_nbr = np.where(atoms['res_id'] == res)
-        residue_dict[res] = OrderedDict()
+        residue_dict[res] = dict()
         for atom in atoms[at_nbr]:
             residue_dict[res][atom['atom_name']] = atom
     return residue_dict
@@ -589,7 +588,7 @@ def get_coordinates_of_residues(atoms, quencher, verbose=False):
     Number of atoms: 9316
     --------------------------------------
     >>> chisurf.tools.dye_diffusion.dye_diffusion.get_quencher_coordinates(pdb, {'TRP': ['CA']})
-    OrderedDict([('TRP', array([[ 74.783,  -7.884,  18.04 ],
+    dict([('TRP', array([[ 74.783,  -7.884,  18.04 ],
         [ 71.558, -13.346,  15.126],
        [ 70.873,   4.983,  23.373],
        [ 61.507,  -8.977,  33.237]]))])
@@ -598,7 +597,7 @@ def get_coordinates_of_residues(atoms, quencher, verbose=False):
         print("Finding quenchers")
         print(quencher)
     atom_idx = get_atom_index_of_residue_types(atoms, quencher)
-    coordinates = OrderedDict()
+    coordinates = dict()
     for res_key in quencher:
         coordinates[res_key] = atoms['xyz'][atom_idx[res_key]]
     if verbose:
@@ -613,19 +612,19 @@ def get_atom_index_of_residue_types(
         verbose: bool = False
 ):
     """
-    Returns atom-indices given a selection of residue types and atom names as OrderedDict.
+    Returns atom-indices given a selection of residue types and atom names as dict.
     The selection is based on dictionaries. For each residue-type only the atoms within a
     list are selected (see example)
 
     :param pdb:
     :param res_types: dict
     :param verbose: bool
-    :return: OrderedDict
+    :return: dict
 
     Examples
     --------
 
-    >>> import chisurf.settings as mfm
+    >>> import chisurf.fio
     >>> pdb_file = models
     >>> pdb = chisurf.fio.PDB.read(pdb_file, verbose=True)
     Opening PDB-file: ./test/data/model/hgbp1/hGBP1_closed.pdb
@@ -638,12 +637,12 @@ def get_atom_index_of_residue_types(
     Get all atom-indices of all C-alphas in the TRY
 
     >>> chisurf.tools.dye_diffusion.dye_diffusion.selection2atom_idx(pdb, {'TRP': ['CA']})
-    OrderedDict([('TRP', array([1114, 1155, 1651, 2690], dtype=uint32))])
+    dict([('TRP', array([1114, 1155, 1651, 2690], dtype=uint32))])
     >>> chisurf.tools.dye_diffusion.dye_diffusion.selection2atom_idx(pdb, {'TRP': ['CA'], 'TYR': ['CA']})
-    OrderedDict([('TRP', array([1114, 1155, 1651, 2690], dtype=uint32)), ('TYR', array([ 608,  707, 1879,
+    dict([('TRP', array([1114, 1155, 1651, 2690], dtype=uint32)), ('TYR', array([ 608,  707, 1879,
     2107, 2128, 3013, 3067, 4231, 4667, 5169, 6651, 6733, 7005, 7026, 7289, 8272], dtype=uint32))])
     """
-    atom_idx = OrderedDict()
+    atom_idx = dict()
     for residue_key in res_types:
         atoms = []
         for atom_name in res_types[residue_key]:
@@ -684,9 +683,9 @@ def get_atom_index_by_name(
     Get all atom-indices of all C-alphas in the TRY
 
     >>> chisurf.tools.dye_diffusion.dye_diffusion.selection2atom_idx(pdb, {'TRP': ['CA']})
-    OrderedDict([('TRP', array([1114, 1155, 1651, 2690], dtype=uint32))])
+    dict([('TRP', array([1114, 1155, 1651, 2690], dtype=uint32))])
     >>> chisurf.tools.dye_diffusion.dye_diffusion.selection2atom_idx(pdb, {'TRP': ['CA'], 'TYR': ['CA']})
-    OrderedDict([('TRP', array([1114, 1155, 1651, 2690], dtype=uint32)), ('TYR', array([ 608,  707, 1879,
+    dict([('TRP', array([1114, 1155, 1651, 2690], dtype=uint32)), ('TYR', array([ 608,  707, 1879,
     2107, 2128, 3013, 3067, 4231, 4667, 5169, 6651, 6733, 7005, 7026, 7289, 8272], dtype=uint32))])
     """
     atoms = []

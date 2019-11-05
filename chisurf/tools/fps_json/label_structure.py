@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import sys
 import json
-from collections import OrderedDict
 import traceback
 
 from qtpy import QtWidgets, QtCore
@@ -62,8 +61,8 @@ class LabelStructure(
 
         self.structure = None
         self.json_file = None
-        self.positions = OrderedDict()
-        self.distances = OrderedDict()
+        self.positions = dict()
+        self.distances = dict()
 
     def onReadTextEdit(self):
         s = str(self.textEdit_2.text())
@@ -282,7 +281,7 @@ class LabelStructure(
             )
 
     def onUpdateJSON(self):
-        p = OrderedDict()
+        p = dict()
         p["Distances"] = self.distances
         p["Positions"] = self.positions
         s = json.dumps(
@@ -302,8 +301,8 @@ class LabelStructure(
             QtWidgets.QMessageBox.No
         )
         if reply == QtWidgets.QMessageBox.Yes:
-            self.positions = OrderedDict()
-            self.distances = OrderedDict()
+            self.positions = dict()
+            self.distances = dict()
             self.onUpdateInterface()
             self.onUpdateJSON()
 

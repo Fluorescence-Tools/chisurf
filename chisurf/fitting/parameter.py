@@ -42,7 +42,7 @@ class FittingParameter(
             **kwargs
         )
         self.model = model
-        self._fixed = fixed
+        self.fixed = fixed
         self._error_estimate = None
         self._chi2s = None
         self._values = None
@@ -81,19 +81,6 @@ class FittingParameter(
             v: float
     ):
         self._error_estimate = v
-
-    @property
-    def fixed(
-            self
-    ) -> bool:
-        return self._fixed
-
-    @fixed.setter
-    def fixed(
-            self,
-            v: bool
-    ):
-        self._fixed = v
 
     def scan(
             self,
