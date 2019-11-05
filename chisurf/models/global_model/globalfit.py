@@ -21,9 +21,12 @@ class GlobalFitModel(
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit,
+            fits: List[chisurf.fitting.fit.Fit] = None,
             **kwargs
     ):
-        self.fits = []
+        if fits is None:
+            fits = []
+        self.fits = fits
         self.fit = fit
         self._global_parameters = dict()
         self.parameters_calculated = list()

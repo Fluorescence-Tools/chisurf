@@ -37,6 +37,7 @@ class Fit(
             data: chisurf.experiments.data.DataCurve = None,
             xmin: int = 0,
             xmax: int = 0,
+            model_kw: Dict = None,
             **kwargs
     ):
         """
@@ -58,7 +59,9 @@ class Fit(
         self._data = data
         self.plots = list()
         self._xmin, self._xmax = xmin, xmax
-        self._model_kw = kwargs.get('model_kw', {})
+        if model_kw is None:
+            model_kw = {}
+        self._model_kw = model_kw
         self.model = model_class
 
     def __str__(self):
@@ -288,8 +291,8 @@ class Fit(
             verbose: bool = False,
             **kwargs
     ) -> None:
-        self.model.save(
-            filename=filename + '.json',
+        super().save(
+            filename=filename,
             file_type=file_type,
             verbose=verbose
         )
@@ -380,7 +383,6 @@ class Fit(
 
 
 class FitGroup(
-    list,
     Fit
 ):
 
@@ -388,7 +390,7 @@ class FitGroup(
     def selected_fit(
             self
     ) -> Fit:
-        return self[self.selected_fit_index]
+        return self.grouped_fits[self.selected_fit_index]
 
     @property
     def selected_fit_index(
@@ -492,10 +494,30 @@ class FitGroup(
         for f in self:
             f.xmax = v
 
+    def save(
+            self,
+            filename: str,
+            file_type: str = 'txt',
+            verbose: bool = False,
+            **kwargs
+    ) -> None:
+        root, ext = os.path.splitext(filename)
+        for i, fit in enumerate(self):
+            root += "_%02d" % i
+            fit.save(
+                filename=filename,
+                file_type=file_type,
+                verbose=verbose,
+                **kwargs
+            )
+
+    def finalize(self):
+        self._model.finalize()
+
     def update(
             self
     ) -> None:
-        self.global_model.update()
+        self._model.update()
         for p in self.plots:
             p.update_all()
         for f in self.grouped_fits:
@@ -523,15 +545,15 @@ class FitGroup(
         for f in fit:
             f.model.find_parameters()
 
-        fit.global_model.find_parameters()
+        fit._model.find_parameters()
         fitting_options = chisurf.settings.fitting['leastsq']
-        bounds = [pi.bounds for pi in fit.global_model.parameters]
+        bounds = [pi.bounds for pi in fit._model.parameters]
 
         results = leastsqbound(
             get_wres,
-            fit.global_model.parameter_values,
+            fit._model.parameter_values,
             args=(
-                fit.global_model,
+                fit._model,
             ),
             bounds=bounds,
             **fitting_options
@@ -565,21 +587,13 @@ class FitGroup(
             )
             self.grouped_fits.append(fit)
 
-        list.__init__(self, self.grouped_fits)
-        # super().__init__(
-        #     data=data,
-        #     **kwargs
-        # )
-        Fit.__init__(
-            self,
-            data=data,
-            **kwargs
+        super().__init__(
+            data=data
         )
-
-        self.global_model = chisurf.models.global_model.GlobalFitModel(
-            self
+        self._model = chisurf.models.global_model.GlobalFitModel(
+            fit=self,
+            fits=self.grouped_fits
         )
-        self.global_model.fits = self.grouped_fits
 
     def to_dict(self) -> Dict:
         d = super().to_dict()
@@ -599,6 +613,19 @@ class FitGroup(
         else:
             self._selected_fit_index += 1
             return self.grouped_fits[self._selected_fit_index - 1]
+
+    def __getitem__(
+            self,
+            key
+    ) -> List[Fit]:
+        if isinstance(key, int):
+            return self.grouped_fits.__getitem__(key)
+        else:
+            start = 0 if key.start is None else key.start
+            stop = len(self.grouped_fits) if key.stop is None else key.stop
+            step = 1 if key.step is None else key.step
+            key = slice(start, stop, step)
+            return self.grouped_fits.__getitem__(key)
 
 
 def sample_fit(

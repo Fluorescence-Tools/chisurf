@@ -2,10 +2,9 @@
 
 """
 from __future__ import annotations
-from typing import Tuple
 
+import typing
 import os.path
-from typing import Sequence, List
 import numpy as np
 
 import chisurf.base
@@ -45,7 +44,13 @@ class ExperimentalData(
             self,
             data_reader: chisurf.experiments.reader.ExperimentReader = None,
             experiment: chisurf.experiments.experiment.Experiment = None,
-            *args,
+            filename: str = "None",
+            data: bytes = None,
+            embed_data: bool = None,
+            read_file_size_limit: int = None,
+            name: object = None,
+            verbose: bool = False,
+            unique_identifier: str = None,
             **kwargs
     ):
         """
@@ -56,7 +61,13 @@ class ExperimentalData(
         :param kwargs:
         """
         super().__init__(
-            *args,
+            filename=filename,
+            data=data,
+            embed_data=embed_data,
+            read_file_size_limit=read_file_size_limit,
+            name=name,
+            verbose=verbose,
+            unique_identifier=unique_identifier,
             **kwargs
         )
         self._experiment = experiment
@@ -109,12 +120,16 @@ class DataCurve(
             ex: np.array = None,
             ey: np.array = None,
             filename: str = '',
+            data_reader: chisurf.experiments.reader.ExperimentReader = None,
+            experiment: chisurf.experiments.experiment.Experiment = None,
             *args,
             **kwargs
     ):
         super().__init__(
             x=x,
             y=y,
+            data_reader=data_reader,
+            experiment=experiment,
             *args,
             **kwargs
         )
@@ -259,7 +274,7 @@ class DataCurve(
     def __getitem__(
             self,
             key: str
-    ) -> Tuple[
+    ) -> typing.Tuple[
         np.ndarray,
         np.ndarray,
         np.ndarray,
@@ -277,7 +292,7 @@ class DataGroup(
     @property
     def names(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         return [d.name for d in self]
 
     @property
@@ -322,7 +337,7 @@ class DataGroup(
 
     def __init__(
             self,
-            seq: Sequence,
+            seq: typing.Sequence,
             *args,
             **kwargs
     ):

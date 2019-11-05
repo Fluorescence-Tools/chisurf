@@ -1251,7 +1251,10 @@ class WormLikeChainModelWidget(
             layout=layout
         )
 
-        self.layout_parameter.addWidget(self.fret_parameters.to_widget())
+        chisurf.fitting.widgets.make_fitting_parameter_group_widget(
+            fitting_parameter_group=self.fret_parameters,
+            layout=self.layout_parameter
+        )
         self.layout_parameter.addWidget(donors)
         self.layout_parameter.addLayout(layout)
 

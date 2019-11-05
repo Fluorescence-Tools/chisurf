@@ -1,10 +1,10 @@
 from __future__ import annotations
+
 import os
 import sys
-
 import webbrowser
-import numpy as np
 from qtpy import QtCore, QtGui, QtWidgets, uic
+import numpy as np
 
 import chisurf
 import chisurf.decorators
@@ -15,10 +15,8 @@ import chisurf.experiments.widgets
 import chisurf.experiments.tcspc.controller
 import chisurf.widgets
 import chisurf.models
+import chisurf.fitting
 import chisurf.settings.ui.resource
-
-from chisurf import fitting
-from chisurf import experiments
 
 
 class Main(QtWidgets.QMainWindow):
@@ -68,7 +66,7 @@ class Main(QtWidgets.QMainWindow):
     @property
     def current_experiment(
             self
-    ) -> experiments.experiment.Experiment:
+    ) -> chisurf.experiments.Experiment:
         return chisurf.experiment[
             self.current_experiment_idx
         ]
@@ -108,7 +106,7 @@ class Main(QtWidgets.QMainWindow):
     @property
     def current_setup(
             self
-    ) -> experiments.reader.ExperimentReader:
+    ) -> chisurf.experiments.reader.ExperimentReader:
         current_setup = self.current_experiment.readers[
             self.current_setup_idx
         ]
@@ -118,7 +116,7 @@ class Main(QtWidgets.QMainWindow):
     def current_experiment_reader(self):
         if isinstance(
             self.current_setup,
-            experiments.reader.ExperimentReader
+            chisurf.experiments.reader.ExperimentReader
         ):
             return self.current_setup
         elif isinstance(
@@ -153,13 +151,13 @@ class Main(QtWidgets.QMainWindow):
     @property
     def current_fit(
             self
-    ) -> fitting.fit.FitGroup:
+    ) -> chisurf.fitting.fit.FitGroup:
         return self._current_fit
 
     @current_fit.setter
     def current_fit(
             self,
-            v: fitting.fit.FitGroup
+            v: chisurf.fitting.fit.FitGroup
     ) -> None:
         self._current_fit = v
 
@@ -337,11 +335,11 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #       Structure                                        #
         ##########################################################
-        structure = experiments.experiment.Experiment('Modelling')
+        structure = chisurf.experiments.Experiment('Modelling')
         structure.add_readers(
             [
                 (
-                    experiments.modelling.LoadStructure(
+                    chisurf.experiments.modelling.LoadStructure(
                         experiment=structure
                     ),
                     None
@@ -358,29 +356,29 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #       TCSPC                                            #
         ##########################################################
-        tcspc = experiments.experiment.Experiment('TCSPC')
+        tcspc = chisurf.experiments.Experiment('TCSPC')
         tcspc.add_readers(
             [
                 (
-                    experiments.tcspc.TCSPCReader(
+                    chisurf.experiments.tcspc.TCSPCReader(
                         experiment=tcspc
                     ),
-                    experiments.tcspc.controller.TCSPCReaderControlWidget(
+                    chisurf.experiments.tcspc.controller.TCSPCReaderControlWidget(
                         name='CSV/PQ/IBH',
                         **chisurf.settings.cs_settings['tcspc_csv'],
                     )
                 ),
                 (
-                    experiments.tcspc.bh_sdt.TCSPCSetupSDTWidget(
+                    chisurf.experiments.tcspc.bh_sdt.TCSPCSetupSDTWidget(
                         experiment=tcspc
                     ),
                     None
                 ),
                 (
-                    experiments.tcspc.dummy.TCSPCSetupDummy(
+                    chisurf.experiments.tcspc.dummy.TCSPCSetupDummy(
                         experiment=tcspc
                     ),
-                    experiments.tcspc.controller.TCSPCSetupDummyWidget()
+                    chisurf.experiments.tcspc.controller.TCSPCSetupDummyWidget()
                 )
             ]
         )
@@ -398,11 +396,11 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #       FCS                                              #
         ##########################################################
-        fcs = experiments.experiment.Experiment('FCS')
+        fcs = chisurf.experiments.experiment.Experiment('FCS')
         fcs.add_readers(
             [
                 (
-                    experiments.fcs.FCS(
+                    chisurf.experiments.fcs.FCS(
                         name='FCS-CSV',
                         experiment=fcs,
                         experiment_reader='csv'
@@ -412,7 +410,7 @@ class Main(QtWidgets.QMainWindow):
                     )
                 ),
                 (
-                    experiments.fcs.FCS(
+                    chisurf.experiments.fcs.FCS(
                         name='Seidel Kristine',
                         experiment=fcs,
                         experiment_reader='kristine'
@@ -422,7 +420,7 @@ class Main(QtWidgets.QMainWindow):
                     )
                 ),
                 (
-                    experiments.fcs.FCS(
+                    chisurf.experiments.fcs.FCS(
                         name='China FCS',
                         experiment=fcs,
                         experiment_reader='china-mat'
@@ -432,7 +430,7 @@ class Main(QtWidgets.QMainWindow):
                     )
                 ),
                 (
-                    experiments.fcs.FCS(
+                    chisurf.experiments.fcs.FCS(
                         name='Zeiss Confocor3',
                         experiment=fcs,
                         experiment_reader='confocor3'
@@ -442,7 +440,7 @@ class Main(QtWidgets.QMainWindow):
                     )
                 ),
                 (
-                    experiments.fcs.FCS(
+                    chisurf.experiments.fcs.FCS(
                         name='PyCorrFit',
                         experiment=fcs,
                         experiment_reader='pycorrfit'
@@ -452,7 +450,7 @@ class Main(QtWidgets.QMainWindow):
                     )
                 ),
                 (
-                    experiments.fcs.FCS(
+                    chisurf.experiments.fcs.FCS(
                         name='ALV-Correlator',
                         experiment=fcs,
                         experiment_reader='alv'
@@ -473,8 +471,8 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #       Global datasets                                  #
         ##########################################################
-        global_fit = experiments.experiment.Experiment('Global')
-        global_setup = experiments.globalfit.GlobalFitSetup(
+        global_fit = chisurf.experiments.experiment.Experiment('Global')
+        global_setup = chisurf.experiments.globalfit.GlobalFitSetup(
             name='Global-Fit',
             experiment=global_fit
         )
@@ -669,7 +667,7 @@ class Main(QtWidgets.QMainWindow):
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
-        self.dataset_selector = experiments.widgets.ExperimentalDataSelector(
+        self.dataset_selector = chisurf.experiments.widgets.ExperimentalDataSelector(
             click_close=False,
             curve_types='all',
             change_event=self.onCurrentDatasetChanged,

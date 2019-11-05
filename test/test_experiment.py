@@ -17,7 +17,6 @@ import chisurf.fio
 
 class Tests(unittest.TestCase):
 
-    @unittest.expectedFailure
     def test_experiment(self):
         experiment = chisurf.experiments.experiment.Experiment(
             name="AAA"
