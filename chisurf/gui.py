@@ -1,16 +1,10 @@
 from __future__ import annotations
-import utils
 import os
 import sys
 
 import webbrowser
 import numpy as np
 from qtpy import QtCore, QtGui, QtWidgets, uic
-
-TOPDIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')
-)
-utils.set_search_paths(TOPDIR)
 
 import chisurf
 import chisurf.decorators
@@ -308,22 +302,20 @@ class Main(QtWidgets.QMainWindow):
 
     def onSaveFits(
             self,
-            path: str = None,
-            **kwargs
+            event: QtCore.QEvent = None,
     ):
-        if path is None:
-            path = chisurf.widgets.get_directory(**kwargs)
-        chisurf.macros.save_fits(path)
+        path = chisurf.widgets.get_directory()
+        chisurf.working_path = path
+        chisurf.run('chisurf.macros.save_fits(target_path="%s")' % path)
 
     def onSaveFit(
             self,
-            directory: str = None,
+            event: QtCore.QEvent = None,
             **kwargs
     ):
-        if directory is None:
-            chisurf.working_path = chisurf.widgets.get_directory(**kwargs)
-        chisurf.working_path = directory
-        chisurf.console.run('chisurf.macros.save_fit()')
+        path = chisurf.widgets.get_directory(**kwargs)
+        chisurf.working_path = path
+        chisurf.run('chisurf.macros.save_fit(target_path="%s")' % path)
 
     def onOpenHelp(
             self

@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import List
 
 import os
-from docx import Document
+import docx
 from docx.shared import Inches
 
 import chisurf.base
@@ -77,95 +77,96 @@ def add_fit(
             fit_window.show()
 
 
-def save_fit():
+def save_fit(
+        target_path: str = None
+):
     cs = chisurf.cs
 
     fit_control_widget = cs.current_fit_widget
-    fs = fit_control_widget.fit
-    fww = cs.mdiarea.currentSubWindow()
+    fit_group = fit_control_widget.fit
+    current_fit_window = cs.mdiarea.currentSubWindow()
 
-    document = Document()
+    document = docx.Document()
     document.add_heading(cs.current_fit.name, 0)
 
-    pk = cs.current_fit.model.parameters_all_dict.keys()
-    pk.sort()
+    if target_path is None:
+        target_path = chisurf.working_path
+    if os.path.isdir(target_path):
+        _ = document.add_heading('Fit-Results', level=1)
+        for i, fit in enumerate(fit_group):
 
-    target_path = chisurf.working_path
-
-    document.add_heading('Fit-Results', level=1)
-    for i, f in enumerate(fs):
-
-        fit_control_widget.selected_fit_index = i
-        filename = chisurf.base.clean_string(os.path.basename(f.data.name)[0])
-        document.add_paragraph(
-            filename, style='ListNumber'
-        )
-
-        target_dir = os.path.join(target_path, str(i), filename)
-        try:
-            os.makedirs(target_dir)
-        except WindowsError:
-            pass
-
-        fit_png = os.path.join(target_dir, 'screenshot_fit.png')
-        fww.grab().save(fit_png)
-
-        model_png = os.path.join(target_dir, 'screenshot_model.png')
-        cs.current_fit.model.grab().save(model_png)
-
-        document.add_picture(model_png, width=Inches(2.5))
-        document.add_picture(fit_png, width=Inches(2.5))
-        try:
-            tr = cs.current_fit.name.replace(':', '_')
-            cs.current_fit.save(target_dir, tr)
-        except IOError:
-            cs.current_fit.save(target_dir, 'fit')
-
-    document.add_heading('Summary', level=1)
-
-    p = document.add_paragraph('Parameters which are fitted are given in ')
-    p.add_run('bold').bold = True
-    p.add_run(', linked parameters in ')
-    p.add_run('italic.').italic = True
-    p.add_run(' fixed parameters are plain name. ')
-
-    table = document.add_table(rows=1, cols=len(fs) + 1)
-    hdr_cells = table.rows[0].cells
-    hdr_cells[0].text = "Fit-Nbr"
-    for i, f in enumerate(fs):
-        hdr_cells[i + 1].text = str(i + 1)
-
-    for k in pk:
-        row_cells = table.add_row().cells
-        row_cells[0].text = str(k)
-        for i, f in enumerate(fs):
-            paragraph = row_cells[i + 1].paragraphs[0]
-            run = paragraph.add_run(
-                '{:.3f}'.format(f.model.parameters_all_dict[k].value)
+            fit_control_widget.selected_fit = i
+            fit_name = os.path.basename(fit.data.name)[0]
+            model = cs.current_fit.model
+            document.add_paragraph(
+                text=fit_name,
+                style='ListNumber'
             )
-            if f.model.parameters_all_dict[k].fixed:
-                continue
-            else:
-                if f.model.parameters_all_dict[k].link is not None:
-                    run.italic = True
-                else:
-                    run.bold = True
 
-    row_cells = table.add_row().cells
-    row_cells[0].text = str("Chi2r")
-    for i, f in enumerate(fs):
-        paragraph = row_cells[i + 1].paragraphs[0]
-        run = paragraph.add_run('{:.4f}'.format(f.chi2r))
-    try:
-        tr = chisurf.base.clean_string(fs.name)
-        document.save(
-            os.path.join(target_path, tr + '.docx')
+            clean_name = chisurf.base.clean_string(fit_name)
+            target_dir = os.path.join(target_path, str(i) + clean_name)
+            os.makedirs(target_dir)
+
+            for png_name, source in zip(
+                ['screenshot_fit.png', 'screenshot_model.png'],
+                [current_fit_window, model]
+            ):
+                png_filename = os.path.join(target_dir, png_name)
+                source.grab().save(png_filename)
+                document.add_picture(
+                    os.path.join(
+                        target_dir,
+                        png_filename
+                    ),
+                    width=Inches(2.0)
+                )
+            cs.current_fit.save(target_dir, clean_name)
+
+        document.add_heading(
+            text='Summary',
+            level=1
         )
-    except IOError:
-        document.save(
-            os.path.join(target_path, 'fit.docx')
-        )
-        cs.current_fit.save(target_dir, 'fit')
+
+        p = document.add_paragraph(text='Parameters which are fitted are given in ')
+        p.add_run('bold').bold = True
+        p.add_run(', linked parameters in ')
+        p.add_run('italic.').italic = True
+        p.add_run(' fixed parameters are plain name. ')
+
+        table = document.add_table(rows=1, cols=len(fit_group) + 1)
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = "Fit-Nbr"
+        for i, fit in enumerate(fit_group):
+            hdr_cells[i + 1].text = str(i + 1)
+            model = fit.model
+            pk = list(model.parameters_all_dict.keys())
+            pk.sort()
+            for k in pk:
+                row_cells = table.add_row().cells
+                row_cells[0].text = str(k)
+                for i, fit in enumerate(fit_group):
+                    paragraph = row_cells[i + 1].paragraphs[0]
+                    run = paragraph.add_run(
+                        text='{:.3f}'.format(model.parameters_all_dict[k].value)
+                    )
+                    if model.parameters_all_dict[k].fixed:
+                        continue
+                    else:
+                        if model.parameters_all_dict[k].link is not None:
+                            run.italic = True
+                        else:
+                            run.bold = True
+
+        row_cells = table.add_row().cells
+        row_cells[0].text = str("Chi2r")
+        for i, fit in enumerate(fit_group):
+            paragraph = row_cells[i + 1].paragraphs[0]
+            run = paragraph.add_run('{:.4f}'.format(fit.chi2r))
+
+        tr = chisurf.base.clean_string(fit_group.name)
+        document.save(os.path.join(target_path, tr + '.docx'))
+    else:
+        chisurf.logging.warning('The target folder %s does not exist', target_path)
 
 
 def load_fit_result(
@@ -263,19 +264,20 @@ def add_dataset(
 
 
 def save_fits(
-        path: str,
-        **kwargs
+        target_path: str,
 ):
     cs = chisurf.cs
-    if os.path.isdir(path):
+    if os.path.isdir(target_path):
         cf = cs.fit_idx
         for fit in chisurf.fits:
             fit_name = fit.name
             path_name = chisurf.base.clean_string(fit_name)
-            p2 = path + '//' + path_name
+            p2 = target_path + '//' + path_name
             os.mkdir(p2)
             cs.current_fit = fit
-            cs.onSaveFit(directory=p2)
+            save_fit(
+                target_path=p2
+            )
         cs.current_fit = chisurf.fits[cf]
 
 
@@ -325,7 +327,6 @@ def link_fit_group(
     :param csi:
     :return:
     """
-    print("Check state: %s" % csi)
     cs = chisurf.cs
     if csi == 2:
         current_fit = cs.current_fit
@@ -336,7 +337,7 @@ def link_fit_group(
                 if p is not parameter:
                     p.link = parameter
             except KeyError:
-                print("The fit %s has no parameter %s" % (f.name, fitting_parameter_name))
+                chisurf.logging.warning("The fit %s has no parameter %s" % (f.name, fitting_parameter_name))
     if csi == 0:
         for f in cs.current_fit:
             try:

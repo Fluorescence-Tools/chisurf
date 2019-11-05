@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Type, List
+from typing import Type, List, Dict
 
 import os
 import uuid
@@ -11,6 +11,7 @@ from collections.abc import Iterable
 
 import yaml
 from slugify import slugify
+import numpy as np
 
 import chisurf
 import chisurf.fio
@@ -44,17 +45,27 @@ class Base(object):
             file_type: str = 'yaml',
             verbose: bool = False
     ) -> None:
-        if file_type == "yaml":
-            txt = self.to_yaml()
-        else:
-            txt = self.to_json()
-        if verbose:
-            print(txt)
-        with chisurf.fio.zipped.open_maybe_zipped(
-                filename=filename,
-                mode='w'
-        ) as fp:
-            fp.write(txt)
+        chisurf.logging.info(
+            "%s is saving filename %s as file type %s" % (
+                self.__class__.__name__, filename, file_type
+            )
+        )
+        if file_type in ["yaml", "json"]:
+            txt = ""
+            # check for filename extension
+            root, ext = os.path.splitext(filename)
+            filename = root + "." + file_type
+            if file_type == "yaml":
+                txt = self.to_yaml()
+            elif file_type == "json":
+                txt = self.to_json()
+            if verbose:
+                print(txt)
+            with chisurf.fio.zipped.open_maybe_zipped(
+                    filename=filename,
+                    mode='w'
+            ) as fp:
+                fp.write(txt)
 
     def load(
             self,
@@ -74,7 +85,7 @@ class Base(object):
             )
 
     def to_dict(self) -> dict:
-        return self.__dict__
+        return copy.copy(self.__dict__)
 
     def from_dict(
             self,
@@ -86,17 +97,25 @@ class Base(object):
     def to_json(
             self,
             indent: int = 4,
-            sort_keys: bool = True
+            sort_keys: bool = True,
+            d: Dict = None
     ) -> str:
+        if d is None:
+            d = self.to_dict()
         return json.dumps(
-            self.to_dict(),
+            to_elementary(
+                d
+            ),
             indent=indent,
             sort_keys=sort_keys
         )
 
     def to_yaml(self) -> str:
-        d = self.to_dict()
-        return yaml.dump(d)
+        return yaml.dump(
+            to_elementary(
+                self.to_dict()
+            )
+        )
 
     def from_yaml(
             self,
@@ -192,15 +211,10 @@ class Base(object):
             state
         )
 
-    # There is a strange problem with the __str__ method and
-    # PyQt therefore it is commented right now
     def __str__(self):
         s = 'class: %s\n' % self.__class__.__name__
         #s += self.to_yaml()
         return s
-
-    def __repr__(self):
-        return self.__str__()
 
     def __init__(
             self,
@@ -414,3 +428,26 @@ def find_objects(
         return list(set(re))
     else:
         return re
+
+
+def to_elementary(
+        d: Dict
+) -> Dict:
+    """
+
+    :param d:
+    :return:
+    """
+    elementary_dict = dict()
+    for k in d.keys():
+        ele = d[k]
+        try:
+            elementary_dict[k] = ele.to_dict()
+        except (AttributeError, TypeError):
+            if isinstance(ele, (str, float, int, bool)) or ele is None:
+                elementary_dict[k] = ele
+            elif isinstance(ele, np.ndarray):
+                elementary_dict[k] = ele.tolist()
+            else:
+                chisurf.logging.warning("Element %s does not have a method to_dict" % k)
+    return elementary_dict

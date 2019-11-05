@@ -3,10 +3,12 @@ from __future__ import annotations
 from qtpy import QtWidgets
 
 import chisurf.fitting
-from chisurf.base import Base
+import chisurf.widgets
 
 
-class Plot(QtWidgets.QWidget, Base):
+class Plot(
+    chisurf.widgets.View
+):
 
     def __init__(
             self,
@@ -14,7 +16,7 @@ class Plot(QtWidgets.QWidget, Base):
             parent=None,
             **kwargs
     ):
-        super(Plot, self).__init__()
+        super().__init__()
         self.parent = parent
         self.fit = fit
         self.pltControl = QtWidgets.QWidget()
