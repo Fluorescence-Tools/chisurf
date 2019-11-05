@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import List, Tuple, Dict
 
 import pickle
-from collections import OrderedDict
 
 from qtpy import QtCore, QtWidgets
 
@@ -129,7 +128,7 @@ class GlobalFitModelWidget(
 
     def onClearVariables(self):
         chisurf.logging.info("onClearVariables")
-        self._global_parameters = OrderedDict()
+        self._global_parameters = dict()
         layout = self.verticalLayout
         for i in reversed(list(range(layout.count()))):
             layout.itemAt(i).widget().deleteLater()

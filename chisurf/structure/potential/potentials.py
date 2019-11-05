@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import json
 import math
-from collections import OrderedDict
 import copy
 
 import numpy as np
@@ -694,7 +693,7 @@ class AvPotential(object):
         self.n_av_samples = av_samples
         self.min_av = min_av
 
-        self.avs = OrderedDict()
+        self.avs = dict()
 
     @property
     def labeling_file(self):

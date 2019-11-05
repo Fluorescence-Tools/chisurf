@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import List, Tuple, Dict
 
 import threading
-from collections import OrderedDict
 
 import numpy as np
 
@@ -26,7 +25,7 @@ class GlobalFitModel(
     ):
         self.fits = []
         self.fit = fit
-        self._global_parameters = OrderedDict()
+        self._global_parameters = dict()
         self.parameters_calculated = list()
         self._links = list()
         super().__init__(
