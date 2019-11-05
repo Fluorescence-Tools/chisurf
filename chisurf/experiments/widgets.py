@@ -304,6 +304,14 @@ class FCSController(
     ) -> str:
         return self.get_filename()
 
+    def get_filename(
+            self
+    ) -> str:
+        return chisurf.widgets.get_filename(
+                'FCS-CSV files',
+                file_type=self.file_type
+            )
+
     def __init__(
             self,
             file_type='Kristine files (*.cor)',
@@ -319,11 +327,3 @@ class FCSController(
         self.layout.addWidget(
             chisurf.fio.widgets.CsvWidget()
         )
-
-    def get_filename(
-            self
-    ) -> str:
-        return chisurf.widgets.get_filename(
-                'FCS-CSV files',
-                file_type=self.file_type
-            )

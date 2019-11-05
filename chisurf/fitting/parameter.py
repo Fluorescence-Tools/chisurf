@@ -302,23 +302,21 @@ class FittingParameterGroup(
         self._parameters = None
         d = [v for v in self.__dict__.values() if v is not self]
         ag = chisurf.base.find_objects(
-            d,
-            chisurf.fitting.parameter.FittingParameterGroup
+            search_iterable=d,
+            searched_object_type=chisurf.fitting.parameter.FittingParameterGroup
         )
         self._aggregated_parameters = ag
 
         ap = list()
         for o in set(ag):
-            if not isinstance(
-                    o,
-                    chisurf.models.Model
-            ):
+            if not isinstance(o, chisurf.models.Model):
                 o.find_parameters()
                 self.__dict__[o.name] = o
                 ap += o.parameters_all
 
         mp = chisurf.base.find_objects(
-            d, parameter_type
+            search_iterable=d,
+            searched_object_type=parameter_type
         )
         self._parameters = list(set(mp + ap))
 
@@ -394,20 +392,20 @@ class FittingParameterGroup(
             if isinstance(p0, FittingParameterGroup):
                 self.__dict__ = p0.__dict__
 
-    @deprecation.deprecated(
-        deprecated_in="19.08.23",
-        removed_in="20.01.01",
-        current_version="19.08.23",
-        details="use the fitting.widget.make_fitting_parameter_group_widget function instead"
-    )
-    def to_widget(
-            self,
-            *args,
-            **kwargs
-    ) -> chisurf.fitting.widgets.FittingParameterGroupWidget:
-        return chisurf.fitting.widgets.FittingParameterGroupWidget(
-            self, *args,
-            **kwargs
-        )
+    # @deprecation.deprecated(
+    #     deprecated_in="19.08.23",
+    #     removed_in="20.01.01",
+    #     current_version="19.08.23",
+    #     details="use the fitting.widget.make_fitting_parameter_group_widget function instead"
+    # )
+    # def to_widget(
+    #         self,
+    #         *args,
+    #         **kwargs
+    # ) -> chisurf.fitting.widgets.FittingParameterGroupWidget:
+    #     return chisurf.fitting.widgets.FittingParameterGroupWidget(
+    #         self, *args,
+    #         **kwargs
+    #     )
 
 

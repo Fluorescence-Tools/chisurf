@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Type, List, Dict
+import typing
 
 import os
 import uuid
@@ -91,19 +91,18 @@ class Base(object):
             self,
             v: dict
     ) -> None:
-        self.__dict__.clear()
         self.__dict__.update(v)
 
     def to_json(
             self,
             indent: int = 4,
             sort_keys: bool = True,
-            d: Dict = None
+            d: typing.Dict = None
     ) -> str:
         if d is None:
             d = self.to_dict()
         return json.dumps(
-            to_elementary(
+            obj=to_elementary(
                 d
             ),
             indent=indent,
@@ -112,7 +111,7 @@ class Base(object):
 
     def to_yaml(self) -> str:
         return yaml.dump(
-            to_elementary(
+            data=to_elementary(
                 self.to_dict()
             )
         )
@@ -202,18 +201,14 @@ class Base(object):
         return self.__dict__[key]
 
     def __getstate__(self):
-        d = {}
-        d.update(self.__dict__)
-        return d
+        return self.__dict__
 
     def __setstate__(self, state):
-        self.from_dict(
-            state
-        )
+        self.__dict__.clear()
+        self.__dict__.update(state)
 
     def __str__(self):
         s = 'class: %s\n' % self.__class__.__name__
-        #s += self.to_yaml()
         return s
 
     def __init__(
@@ -273,7 +268,7 @@ class Base(object):
 
     def __copy__(
             self
-    ) -> Type[Base]:
+    ) -> typing.Type[Base]:
         c = self.__class__()
         c.from_dict(
             copy.copy(self.to_dict())
@@ -300,11 +295,15 @@ class Data(Base):
             data: bytes = None,
             embed_data: bool = None,
             read_file_size_limit: int = None,
-            *args,
+            name: object = None,
+            verbose: bool = False,
+            unique_identifier: str = None,
             **kwargs
     ):
         super().__init__(
-            *args,
+            name=name,
+            verbose=verbose,
+            unique_identifier=unique_identifier,
             **kwargs
         )
         self._data = data
@@ -406,48 +405,53 @@ def clean_string(
 
 
 def find_objects(
-        search_list: Iterable,
-        object_type,
-        remove_double: bool = True
-) -> List[object]:
-    """Traverse a list recursively a an return all objects of type `object_type` as
+        search_iterable: Iterable,
+        searched_object_type: typing.Type,
+        remove_doublets: bool = True
+) -> typing.List[object]:
+    """Traverse a list recursively a an return all objects of type `searched_object_type` as
     a list
 
-    :param search_list: list
-    :param object_type: an object type
-    :param remove_double: boolean
+    :param search_iterable: list
+    :param searched_object_type: an object type
+    :param remove_doublets: boolean
     :return: list of objects with certain object type
     """
     re = list()
-    for value in search_list:
-        if isinstance(value, object_type):
+    for value in search_iterable:
+        if isinstance(value, searched_object_type):
             re.append(value)
         elif isinstance(value, list):
-            re += find_objects(value, object_type)
-    if remove_double:
+            re += find_objects(value, searched_object_type)
+    if remove_doublets:
         return list(set(re))
     else:
         return re
 
 
 def to_elementary(
-        d: Dict
-) -> Dict:
+    obj: typing.Dict
+) -> typing.Dict:
     """
 
     :param d:
     :return:
     """
-    elementary_dict = dict()
-    for k in d.keys():
-        ele = d[k]
-        try:
-            elementary_dict[k] = ele.to_dict()
-        except (AttributeError, TypeError):
-            if isinstance(ele, (str, float, int, bool)) or ele is None:
-                elementary_dict[k] = ele
-            elif isinstance(ele, np.ndarray):
-                elementary_dict[k] = ele.tolist()
-            else:
-                chisurf.logging.warning("Element %s does not have a method to_dict" % k)
-    return elementary_dict
+
+    if isinstance(obj, dict):
+        re = dict()
+        for k in obj:
+            re[k] = to_elementary(obj[k])
+        return re
+    else:
+        if isinstance(obj, (str, float, int, bool)) or obj is None:
+            return obj
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, list):
+            return [to_elementary(e) for e in obj]
+        elif isinstance(obj, chisurf.base.Base):
+            print(obj.name)
+            return to_elementary(obj.to_dict())
+        else:
+            return None

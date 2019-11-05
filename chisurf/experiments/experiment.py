@@ -67,7 +67,6 @@ class Experiment(
             controller: chisurf.experiments.reader.ExperimentReaderController = None
     ):
         if reader not in self.readers:
-            reader.experiment = self
             reader.controller = controller
             self._readers.append(reader)
 

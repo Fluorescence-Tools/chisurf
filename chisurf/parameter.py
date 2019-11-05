@@ -1,12 +1,12 @@
 from __future__ import annotations
-from typing import List, TypeVar, Tuple, Type
+import typing
 
 import numpy as np
 
 import chisurf.base
 import chisurf.decorators
 
-T = TypeVar('T', bound='Parameter')
+T = typing.TypeVar('T', bound='Parameter')
 
 
 @chisurf.decorators.register
@@ -20,7 +20,7 @@ class Parameter(
     @property
     def bounds(
             self
-    ) -> Tuple[float, float]:
+    ) -> typing.Tuple[float, float]:
         """A tuple containing the values for the lower (first value) and
         the upper (second value) of the bound.
         """
@@ -32,7 +32,7 @@ class Parameter(
     @bounds.setter
     def bounds(
             self,
-            b: Tuple[float, float]
+            b: typing.Tuple[float, float]
     ):
         self.lb, self.ub = b
 
@@ -106,7 +106,7 @@ class Parameter(
     def __add__(
             self,
             other: T
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -116,7 +116,7 @@ class Parameter(
     def __mul__(
             self,
             other: T
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -126,7 +126,7 @@ class Parameter(
     def __truediv__(
             self,
             other: T
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -136,7 +136,7 @@ class Parameter(
     def __floordiv__(
             self,
             other: T
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -146,7 +146,7 @@ class Parameter(
     def __sub__(
             self,
             other: T
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -156,7 +156,7 @@ class Parameter(
     def __mod__(
             self,
             other: T
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -166,7 +166,7 @@ class Parameter(
     def __pow__(
             self,
             other: T
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -175,7 +175,7 @@ class Parameter(
 
     def __invert__(
             self
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         return self.__class__(
             value=(1./a)
@@ -218,9 +218,7 @@ class Parameter(
             value=self.value.__round__()
         )
 
-    def to_dict(
-            self
-    ) -> dict:
+    def to_dict(self) -> typing.Dict:
         d = super().to_dict()
         if self.link is not None:
             d['_link'] = self.link.unique_identifier
@@ -282,7 +280,7 @@ class ParameterGroup(
 
     def __init__(
             self,
-            parameters: List[Parameter] = None,
+            parameters: typing.List[Parameter] = None,
             *args,
             **kwargs
     ):
@@ -339,13 +337,13 @@ class ParameterGroup(
     @property
     def parameters(
             self
-    ) -> List[Parameter]:
+    ) -> typing.List[Parameter]:
         return self._parameter
 
     @property
     def parameter_names(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         return [p.name for p in self.parameters]
 
     @property

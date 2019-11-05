@@ -2,7 +2,6 @@ import os
 
 from qtpy import QtWidgets
 
-import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.widgets
 from chisurf.experiments import reader

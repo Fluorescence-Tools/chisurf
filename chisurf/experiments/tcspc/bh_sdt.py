@@ -3,13 +3,12 @@ from __future__ import annotations
 import os
 
 import numpy as np
-from qtpy import QtWidgets, uic
+from qtpy import QtWidgets
 
-import chisurf.settings as mfm
 import chisurf.fluorescence
 import chisurf.decorators
 import chisurf.experiments.data
-from chisurf.experiments.tcspc import TCSPCReader
+from chisurf.experiments.tcspc.tcspc import TCSPCReader
 from chisurf.fio import sdtfile
 
 
@@ -182,9 +181,6 @@ class TCSPCSetupSDTWidget(
     @curve_nbr.setter
     def curve_nbr(self, v):
         self.tcspcSDT.curve_number = v
-
-    def __str__(self):
-        return "Dummy TCSPC"
 
     def __init__(
             self,

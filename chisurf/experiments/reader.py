@@ -2,9 +2,9 @@
 
 """
 from __future__ import annotations
-from typing import Tuple, Callable, Dict
 
-from abc import abstractmethod, abstractproperty
+import abc
+import typing
 
 import chisurf.base
 import chisurf.curve
@@ -17,7 +17,6 @@ class ExperimentReader(
 
     def __init__(
             self,
-            experiment: chisurf.experiments.experiment.Experiment,
             *args,
             controller: ExperimentReaderController = None,
             **kwargs
@@ -31,18 +30,17 @@ class ExperimentReader(
             *args,
             **kwargs
         )
-        self.experiment = experiment
         self.controller = controller
 
-    @abstractmethod
+    @abc.abstractmethod
     def autofitrange(
             self,
             data: chisurf.base.Data,
             **kwargs
-    ) -> Tuple[int, int]:
+    ) -> typing.Tuple[int, int]:
         return 0, len(data.y) - 1
 
-    @abstractmethod
+    @abc.abstractmethod
     def read(
             self,
             name: str = None,
@@ -104,8 +102,8 @@ class ExperimentReaderController(
     def add_call(
             self,
             call_name: str,
-            call_function: Callable,
-            call_parameters: Dict
+            call_function: typing.Callable,
+            call_parameters: typing.Dict
     ):
         self._call_dict[call_name] = {
             'call_function': call_function,
@@ -136,13 +134,14 @@ class ExperimentReaderController(
             item
         )
 
-    @abstractproperty
+    @property
+    @abc.abstractmethod
     def filename(
             self
     ) -> str:
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_filename(
             self
     ) -> str:
