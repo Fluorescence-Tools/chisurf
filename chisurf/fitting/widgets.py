@@ -16,7 +16,7 @@ parameter_settings = chisurf.settings.parameter
 
 
 class FittingControllerWidget(
-    QtWidgets.QWidget
+    chisurf.widgets.Controller
 ):
 
     @property
@@ -235,7 +235,9 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             event.accept()
 
 
-class FittingParameterWidget(QtWidgets.QWidget):
+class FittingParameterWidget(
+    chisurf.widgets.Controller
+):
 
     def make_linkcall(
             self,

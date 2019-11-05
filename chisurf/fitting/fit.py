@@ -288,37 +288,30 @@ class Fit(
             verbose: bool = False,
             **kwargs
     ) -> None:
-        self.model.save(filename + '.json')
-        if file_type == 'txt':
-            csv = chisurf.fio.ascii.Csv()
-            wr = self.weighted_residuals.y
-            xmin, xmax = self.xmin, self.xmax
-            x, m = self.model[xmin:xmax]
-            csv.save(
-                data=np.vstack([x, wr]),
-                filename=filename+'_wr.txt'
+        self.model.save(
+            filename=filename + '.json',
+            file_type=file_type,
+            verbose=verbose
+        )
+        # Save fit as txt (for plotting)
+        curve_dict = self.get_curves()
+        with open(filename+'_info.txt', mode='w') as fp:
+            fp.write(str(self))
+        for curve_key in curve_dict:
+            curve = curve_dict[curve_key]
+            curve_file_root = filename + "_%s" % curve_key
+            curve.save(
+                filename=curve_file_root,
+                file_type='txt'
             )
-            csv.save(
-                data=self.model[:],
-                filename=filename+'_fit.txt'
+            curve.save(
+                filename=curve_file_root,
+                file_type='json'
             )
-            if isinstance(
-                    self.data,
-                    chisurf.curve.Curve
-            ):
-                self.data.save(
-                    filename=filename + '_data.txt',
-                    file_type='txt'
-                )
-                self.data.save(
-                    filename=filename + '_data.json',
-                    file_type='json'
-                )
-                with chisurf.fio.zipped.open_maybe_zipped(
-                        filename=filename+'_info.txt',
-                        mode='w'
-                ) as fp:
-                    fp.write(str(self))
+            curve.save(
+                filename=curve_file_root,
+                file_type='yaml'
+            )
 
     def run(
             self,
@@ -484,7 +477,6 @@ class FitGroup(
     ):
         for f in self:
             f.xmin = v
-        self._xmin = v
 
     @property
     def xmax(
@@ -499,7 +491,6 @@ class FitGroup(
     ):
         for f in self:
             f.xmax = v
-        self._xmax = v
 
     def update(
             self
@@ -507,7 +498,7 @@ class FitGroup(
         self.global_model.update()
         for p in self.plots:
             p.update_all()
-        for f in self._fits:
+        for f in self.grouped_fits:
             f.model.update()
 
     def run(
@@ -562,7 +553,7 @@ class FitGroup(
         :param kwargs:
         """
         self._selected_fit_index = 0
-        self._fits = list()
+        self.grouped_fits = list()
 
         for d in data:
             if model_kw is None:
@@ -572,9 +563,9 @@ class FitGroup(
                 data=d,
                 model_kw=model_kw
             )
-            self._fits.append(fit)
+            self.grouped_fits.append(fit)
 
-        list.__init__(self, self._fits)
+        list.__init__(self, self.grouped_fits)
         # super().__init__(
         #     data=data,
         #     **kwargs
@@ -588,7 +579,12 @@ class FitGroup(
         self.global_model = chisurf.models.global_model.GlobalFitModel(
             self
         )
-        self.global_model.fits = self._fits
+        self.global_model.fits = self.grouped_fits
+
+    def to_dict(self) -> Dict:
+        d = super().to_dict()
+        d['grouped_fits'] = [f.to_dict() for f in self.grouped_fits]
+        return d
 
     def __str__(self):
         s = ""
@@ -598,11 +594,11 @@ class FitGroup(
         return s
 
     def next(self):
-        if self._selected_fit_index > len(self._fits):
+        if self._selected_fit_index > len(self.grouped_fits):
             raise StopIteration
         else:
             self._selected_fit_index += 1
-            return self._fits[self._selected_fit_index - 1]
+            return self.grouped_fits[self._selected_fit_index - 1]
 
 
 def sample_fit(

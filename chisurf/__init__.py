@@ -1,8 +1,6 @@
 from typing import List, Iterable
 import chisurf.settings as settings
 import logging
-#import tensorflow as tf
-#tf_sess = tf.InteractiveSession()
 
 __version__ = settings.cs_settings['version']
 __name__ = settings.cs_settings['name']

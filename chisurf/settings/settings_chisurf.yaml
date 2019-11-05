@@ -158,7 +158,7 @@ gui:
   confirm_close_program: true
   fit_windows_size: [350, 350]
   console:
-    style: 'linux' # options are linux, lightbg, or nocolor
+    style: 'lightbg' # options are linux, lightbg, or nocolor
     init: |
       %matplotlib inline
       import pylab as p

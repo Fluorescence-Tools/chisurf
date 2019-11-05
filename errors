@@ -221,3 +221,96 @@ IndexError: index 0 is out of bounds for axis 0 with size 0
 
 ------------
 
+/Users/tpeulen/miniconda3/envs/chisurf/bin/python /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/gui.py
+loading filename:  /Users/tpeulen/.chisurf/settings_chisurf.yaml
+objc[62311]: Class FIFinderSyncExtensionHost is implemented in both /System/Library/PrivateFrameworks/FinderKit.framework/Versions/A/FinderKit (0x7fffb14283d8) and /System/Library/PrivateFrameworks/FileProvider.framework/OverrideBundles/FinderSyncCollaborationFileProviderOverride.bundle/Contents/MacOS/FinderSyncCollaborationFileProviderOverride (0x133c67f50). One of the two will be used. Which one is undefined.
+/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/math/signal.py:172: FutureWarning: Using a non-tuple sequence for multidimensional indexing is deprecated; use `arr[tuple(seq)]` instead of `arr[seq]`. In the future this will be interpreted as an array index, `arr[np.array(seq)]`, which will result either in an error or a different result.
+  acf = np.fft.ifft(f1 * np.conjugate(f2), axis=axis)[m].real
+ ** On entry to DSYEVR parameter number  6 had an illegal value
+ ** On entry to DSYEVR parameter number  6 had an illegal value
+Traceback (most recent call last):
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/gui.py", line 320, in onSaveFit
+    chisurf.console.run('chisurf.macros.save_fit()')
+AttributeError: 'QIPythonWidget' object has no attribute 'run'
+
+Process finished with exit code 134 (interrupted by signal 6: SIGABRT)
+
+-------------
+
+chisurf.macros.save_fit()
+---------------------------------------------------------------------------
+AttributeError                            Traceback (most recent call last)
+<ipython-input-14-02baca20d77f> in <module>
+----> 1 chisurf.macros.save_fit()
+
+~/development/fluorescence-tools/chisurf/chisurf/macros/__init__.py in save_fit()
+     89
+     90     pk = cs.current_fit.model.parameters_all_dict.keys()
+---> 91     pk.sort()
+     92
+     93     target_path = chisurf.working_path
+
+AttributeError: 'dict_keys' object has no attribute 'sort'
+
+chisurf.macros.save_fit()
+---------------------------------------------------------------------------
+AttributeError                            Traceback (most recent call last)
+<ipython-input-15-02baca20d77f> in <module>
+----> 1 chisurf.macros.save_fit()
+
+~/development/fluorescence-tools/chisurf/chisurf/macros/__init__.py in save_fit()
+     89
+     90     pk = cs.current_fit.model.parameters_all_dict.keys()
+---> 91     pk.sort()
+     92
+     93     target_path = chisurf.working_path
+
+AttributeError: 'dict_keys' object has no attribute 'sort'
+
+chisurf.macros.save_fit()
+---------------------------------------------------------------------------
+AttributeError                            Traceback (most recent call last)
+<ipython-input-16-02baca20d77f> in <module>
+----> 1 chisurf.macros.save_fit()
+
+~/development/fluorescence-tools/chisurf/chisurf/macros/__init__.py in save_fit()
+     89
+     90     pk = cs.current_fit.model.parameters_all_dict.keys()
+---> 91     pk.sort()
+     92
+     93     target_path = chisurf.working_path
+
+AttributeError: 'dict_keys' object has no attribute 'sort'
+
+chisurf.macros.save_fit()
+---------------------------------------------------------------------------
+AttributeError                            Traceback (most recent call last)
+<ipython-input-17-02baca20d77f> in <module>
+----> 1 chisurf.macros.save_fit()
+
+~/development/fluorescence-tools/chisurf/chisurf/macros/__init__.py in save_fit()
+     89
+     90     pk = cs.current_fit.model.parameters_all_dict.keys()
+---> 91     pk.sort()
+     92
+     93     target_path = chisurf.working_path
+
+AttributeError: 'dict_keys' object has no attribute 'sort'
+
+chisurf.macros.save_fit()
+---------------------------------------------------------------------------
+AttributeError                            Traceback (most recent call last)
+<ipython-input-18-02baca20d77f> in <module>
+----> 1 chisurf.macros.save_fit()
+
+~/development/fluorescence-tools/chisurf/chisurf/macros/__init__.py in save_fit()
+     89
+     90     pk = cs.current_fit.model.parameters_all_dict.keys()
+---> 91     pk.sort()
+     92
+     93     target_path = chisurf.working_path
+
+AttributeError: 'dict_keys' object has no attribute 'sort'
+
+----------
+
