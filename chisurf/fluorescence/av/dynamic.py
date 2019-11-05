@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Tuple
 
-from collections import OrderedDict
 import time
 import json
 import numpy as np
@@ -361,7 +360,7 @@ class Dye(ParameterGroup):
 
     @property
     def av_parameter(self):
-        p = OrderedDict()
+        p = dict()
         p['linker_length'] = self.av_length
         p['linker_width'] = self.av_width
         p['radius1'] = self.av_radius
@@ -600,7 +599,7 @@ class ProteinQuenching(ParameterGroup):
     @quencher.setter
     def quencher(self, v):
 
-        q_new = OrderedDict()
+        q_new = dict()
         atoms = self.structure.atoms
         for residue_key in v:
             if self.all_atoms_quench:
