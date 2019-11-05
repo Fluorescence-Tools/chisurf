@@ -4,7 +4,6 @@ import deprecation
 
 import fnmatch
 import tempfile
-from collections import OrderedDict
 import struct
 
 import numba as nb
@@ -712,7 +711,7 @@ def read_header(
     return dHeader
 
 
-filetypes = OrderedDict([
+filetypes = dict([
     ("hdf", {
         'name': "High density file",
         'ending': '.h5'
