@@ -9,22 +9,25 @@ import inspect
 import fnmatch
 import numbers
 import os
-from datetime import datetime
 
 from qtpy import QtGui, QtWidgets, uic
-from qtconsole.qtconsoleapp import RichJupyterWidget
-from qtconsole.inprocess import QtInProcessKernelManager
-from IPython.lib import guisupport
+import qtconsole
+import qtconsole.styles
+import qtconsole.qtconsoleapp
+import qtconsole.inprocess
+import IPython.lib
 
 import pyqtgraph as pg
 import matplotlib.pyplot as plt
 
+import chisurf.fio
 import chisurf.settings
 import chisurf.curve
+import chisurf.base
 
 
 class QIPythonWidget(
-    RichJupyterWidget
+    qtconsole.qtconsoleapp.RichJupyterWidget
 ):
 
     def start_recording(self):
@@ -96,8 +99,7 @@ class QIPythonWidget(
                     self.history_widget.insertPlainText(new_text)
             except IndexError:
                 pass
-        RichJupyterWidget.execute(
-            self,
+        super().execute(
             *args,
             **kwargs
         )
@@ -131,7 +133,7 @@ class QIPythonWidget(
         super().__init__(*args, **kwargs)
         self.history_widget = history_widget
 
-        self.kernel_manager = kernel_manager = QtInProcessKernelManager()
+        self.kernel_manager = kernel_manager = qtconsole.inprocess.QtInProcessKernelManager()
         kernel_manager.start_kernel()
         self.kernel_client = kernel_client = kernel_manager.client()
         kernel_client.start_channels()
@@ -139,7 +141,7 @@ class QIPythonWidget(
         def stop():
             kernel_client.stop_channels()
             kernel_manager.shutdown_kernel()
-            guisupport.get_app_qt4().exit()
+            IPython.lib.guisupport.get_app_qt4().exit()
 
         self.exit_requested.connect(stop)
         self.width = kwargs.get(
@@ -150,15 +152,11 @@ class QIPythonWidget(
         self.recording = False
 
         # save nevertheless every inputs into a session file
-        filename = datetime.now().strftime('session_%H_%M_%d_%m_%Y.py')
-        home = os.path.expanduser("~")
-        path = os.path.abspath(os.path.join(home, './.chisurf'))
-        if not os.path.isdir(path):
-            os.makedirs(path)
-        self.session_file = os.path.join(path, filename)
-        self.set_default_style(
-            chisurf.settings.gui['console']['style']
-        )
+        self.session_file = chisurf.settings.session_file
+        #self.set_default_style(
+        #    chisurf.settings.gui['console']['style']
+        #)
+        self.style_sheet = qtconsole.styles.default_light_style_sheet
 
     def pushVariables(self, variableDict):
         """ Given a dictionary containing name / value pairs, push those
@@ -477,7 +475,7 @@ def make_widget_from_yaml(
     >>> import collections
     >>> import yaml
     >>> d = yaml.safe_load(open("./test_session.yaml"))['datasets']
-    >>> od = collections.OrderedDict(sorted(d.items()))
+    >>> od =dict(sorted(d.items()))
     >>> w = make_widget_from_yaml(od, 'test')
     >>> w.show()
     :param variable_dictionary: 
@@ -543,8 +541,15 @@ def tex2svg(formula, fontsize=12, dpi=300):
     fig.text(0, 0, r'${}$'.format(formula), fontsize=fontsize)
 
     output = BytesIO()
-    fig.savefig(output, dpi=dpi, transparent=True, format='svg',
-                bbox_inches='tight', pad_inches=0.0, frameon=False)
+    fig.savefig(
+        output,
+        dpi=dpi,
+        transparent=True,
+        format='svg',
+        bbox_inches='tight',
+        pad_inches=0.0,
+        frameon=False
+    )
     plt.close(fig)
 
     output.seek(0)
@@ -567,3 +572,45 @@ def get_all_items(tree_widget):
         top_item = tree_widget.topLevelItem(i)
         all_items.extend(get_subtree_nodes(top_item))
     return all_items
+
+
+class Controller(
+    QtWidgets.QWidget,
+    chisurf.base.Base
+):
+
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super().__init__()
+
+    def to_dict(
+            self
+    ):
+        return {
+            'type': 'controller',
+            'class': self.__class__.__name__
+        }
+
+
+class View(
+    QtWidgets.QWidget,
+    chisurf.base.Base
+):
+
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        super().__init__()
+
+    def to_dict(
+            self
+    ):
+        return {
+            'type': 'view',
+            'class': self.__class__.__name__
+        }

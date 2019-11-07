@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Tuple
 
-from collections import OrderedDict
 import time
 import json
 import numpy as np
@@ -11,8 +10,10 @@ import numexpr as ne
 import chisurf.fio
 import chisurf.fio.coordinates
 import chisurf.models
+import chisurf.fitting
 import chisurf.parameter
 import chisurf.structure
+
 from . import fps
 from chisurf.parameter import ParameterGroup
 
@@ -52,31 +53,9 @@ def simulate_trajectory(
     )
 
 
-class DiffusionSimulationParameter(ParameterGroup):
-
-    @property
-    def t_max(self) -> float:
-        return self._t_max.value
-
-    @t_max.setter
-    def t_max(
-            self,
-            v: float
-    ):
-        self._t_max = v
-
-    @property
-    def t_step(
-            self
-    ) -> float:
-        return self._t_step.value
-
-    @t_step.setter
-    def t_step(
-            self,
-            v: float
-    ):
-        self._t_step.value = v
+class DiffusionSimulationParameter(
+    chisurf.parameter.ParameterGroup
+):
 
     def __init__(
             self,
@@ -84,12 +63,12 @@ class DiffusionSimulationParameter(ParameterGroup):
             t_step: float = 0.05,
             n_simulations: int = 4
     ):
-        super(DiffusionSimulationParameter, self).__init__()
-        self._t_max = chisurf.parameter.Parameter(
+        super().__init__()
+        self.t_max = chisurf.parameter.Parameter(
             value=t_max,
             name='t-max'
         )
-        self._t_step = chisurf.parameter.Parameter(
+        self.t_step = chisurf.parameter.Parameter(
             value=t_step,
             name='t-step'
         )
@@ -381,7 +360,7 @@ class Dye(ParameterGroup):
 
     @property
     def av_parameter(self):
-        p = OrderedDict()
+        p = dict()
         p['linker_length'] = self.av_length
         p['linker_width'] = self.av_width
         p['radius1'] = self.av_radius
@@ -552,7 +531,7 @@ class Sticking(ParameterGroup):
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit,
-            structure: chisurf.structure.structure.Structure,
+            structure: chisurf.structure.Structure,
             quenching_parameter=None,
             **kwargs
     ):
@@ -620,7 +599,7 @@ class ProteinQuenching(ParameterGroup):
     @quencher.setter
     def quencher(self, v):
 
-        q_new = OrderedDict()
+        q_new = dict()
         atoms = self.structure.atoms
         for residue_key in v:
             if self.all_atoms_quench:

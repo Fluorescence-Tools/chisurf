@@ -545,10 +545,8 @@ class TrajectoryFile(
     def __getitem__(self, key):
         # TODO: do sth. about the evaluation speed (maybe lazy evaluation)
         # http://code.activestate.com/recipes/576410-lazy-lists/
-
         if isinstance(key, int):
             s = copy.copy(self.structure)
-            s._filename = self.structure.labeling_file
             s.xyz = self.mdtraj[key].xyz * 10.0
             s.update()
             return s

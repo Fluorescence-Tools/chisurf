@@ -29,7 +29,7 @@ class ParameterScanWidget(
     )
     def __init__(
             self,
-            model: chisurf.models.model.Model = None,
+            model: chisurf.models.Model = None,
             parent: QtWidgets.QWidget = None,
             *args,
             **kwargs
@@ -114,6 +114,9 @@ class ParameterScanPlot(
         super(ParameterScanPlot, self).__init__(fit)
 
         self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+
         self.data_x, self.data_y = None, None
 
         self.pltControl = ParameterScanWidget(
@@ -154,5 +157,5 @@ class ParameterScanPlot(
             if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
                 self.distribution_curve.setData(x=x, y=y)
         except:
-            print("ParameterScanPlot: update_all failed")
+            chisurf.logging.warning("ParameterScanPlot: update_all failed")
 

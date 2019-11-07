@@ -22,7 +22,7 @@ correlator:
   max_count_rate: 120
   time_window: 500
   count_rate_filter: false
-  nCasc: 25
+  number_of_cascades: 25
   B: 9
   split: 6
   weighting: 0
@@ -151,14 +151,14 @@ gui:
     font_size: 9
     font_family: Courier
     language: Python
-  style_sheet: style_sheet_night.qss
+  style_sheet: ./settings/gui_styles/dark.css
   show_console: true
   show_macro_edit: true
   confirm_close_fit: true
   confirm_close_program: true
-  fit_windows_size: [300, 300]
+  fit_windows_size: [350, 350]
   console:
-    style: 'linux' # options are linux, lightbg, or nocolor
+    style: 'lightbg' # options are linux, lightbg, or nocolor
     init: |
       %matplotlib inline
       import pylab as p
@@ -170,7 +170,7 @@ gui:
     show_data_grid: true
     show_residual_grid: true
     show_acorr_grid: true
-    line_width: 1.5
+    line_width: 2.0
     hideTitle: true
     enable_region_selector: true
     show_legend: false

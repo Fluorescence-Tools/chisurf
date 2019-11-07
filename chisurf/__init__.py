@@ -1,12 +1,9 @@
 from typing import List, Iterable
 import chisurf.settings as settings
-
-#import tensorflow as tf
-#tf_sess = tf.InteractiveSession()
+import logging
 
 __version__ = settings.cs_settings['version']
 __name__ = settings.cs_settings['name']
-
 
 def c(
         t,
@@ -47,4 +44,9 @@ experiment = list()
 fit_windows = list()
 working_path = ''
 verbose = settings.cs_settings['verbose']
+
+logging.basicConfig(
+    filename=settings.session_log,
+    level=logging.DEBUG
+)
 

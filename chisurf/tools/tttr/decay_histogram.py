@@ -168,9 +168,7 @@ class TcspcTTTRWidget(
 
     def make_histogram(self):
         # get right data
-        h5 = self.spcFileWidget.photons.h5
-        nodeName = self.spcFileWidget.photons.sample_names[0] #str(self.spcFileWidget.comboBox.currentText())
-        table = h5.get_node('/' + nodeName, 'photons')
+        table = self.spcFileWidget.photons.photon_table
         selection_tac = np.ma.array(
             [
                 row['TAC'] for row in table.where(self.histSelection)
@@ -219,7 +217,7 @@ class TcspcTTTRWidget(
         self.lineEdit_2.setText("%.3f" % self.dt)
 
     def onLoadFile(self):
-        self.nROUT = self.spcFileWidget.nROUT
+        #self.nROUT = self.spcFileWidget.nROUT
         self.onTacDivChanged()
 
     def load_data(

@@ -30,7 +30,6 @@ class SpcFileWidget(
         # Actions
         self.actionSample_changed.triggered.connect(self.onSampleChanged)
         self.actionLoad_sample.triggered.connect(self.onLoadSample)
-        #self.connect(self.comboBox_2, QtCore.SIGNAL("currentIndexChanged(int)"), self.onFileTypeChanged)
 
     @property
     def sample_name(self) -> str:
@@ -51,11 +50,8 @@ class SpcFileWidget(
         self.doubleSpinBox.setValue(v)
 
     def onSampleChanged(self):
-        index = 0 # TODO: fix multiple samples per HDF self.comboBox.currentIndex()
-        self._photons.sample = self.samples[index]
         self.dt = float(self._photons.mt_clk / self._photons.n_tac) * 1e6
         self.nTAC = self._photons.n_tac
-        self.nROUT = self._photons.n_rout
         self.number_of_photons = self._photons.nPh
         self.measurement_time = self._photons.measurement_time
         self.lineEdit_7.setText("%.2f" % self.count_rate)
@@ -100,19 +96,6 @@ class SpcFileWidget(
         self.doubleSpinBox_2.setValue(v)
 
     @property
-    def nROUT(
-            self
-    ) -> int:
-        return int(self.lineEdit_3.text())
-
-    @nROUT.setter
-    def nROUT(
-            self,
-            v: int
-    ):
-        self.lineEdit_3.setText(str(v))
-
-    @property
     def nTAC(
             self
     ) -> int:
@@ -125,37 +108,17 @@ class SpcFileWidget(
     ):
         self.lineEdit.setText(str(v))
 
-    """
-    @property
-    def filetypes(self):
-        return self._file_types
-
-    @filetypes.setter
-    def filetypes(self, v):
-        self._file_types = v
-        #self.comboBox_2.addItems(list(v.keys()))
-    """
-
     @property
     def count_rate(
             self
     ) -> float:
         return self._photons.nPh / float(self._photons.measurement_time) / 1000.0
 
-    def onFileTypeChanged(self):
-        self._photons = None
-        #self.comboBox.clear()
-        #if self.fileType == "hdf":
-        #    self.comboBox.setDisabled(False)
-        #else:
-        #    self.comboBox.setDisabled(True)
-
     @property
     def file_type(
             self
     ) -> str:
         return "hdf"
-        #return str(self.comboBox_2.currentText())
 
     @property
     def filename(
@@ -200,7 +163,7 @@ class SpcFileWidget(
             filenames,
             file_type
         )
-        self.samples = self._photons.samples
+        #self.samples = self._photons.samples
         #self.comboBox.addItems(self._photons.sample_names)
         self.onSampleChanged()
 

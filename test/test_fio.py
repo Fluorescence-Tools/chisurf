@@ -253,9 +253,6 @@ class Tests(unittest.TestCase):
         import tempfile
 
         filetype = "bh132"
-        #file = tempfile.NamedTemporaryFile(
-        #   suffix='.photon.h5'
-        #)
         _, filename = tempfile.mkstemp(
             suffix='.photon.h5'
         )
@@ -269,25 +266,24 @@ class Tests(unittest.TestCase):
         h5.close()
 
     def test_photons(self):
+        import glob
         import chisurf.fio
         directory = './test/data/tttr/'
         test_data = [
             {
                 "routine": "bh132",
                 "files": glob.glob(directory + '/BH/132/*.spc'),
-                "n_tac": 4095,
-                "measurement_time": 62.328307194000004,
-                "n_rout": 255,
-                "n_photons": 183656,
+                "n_tac": 4096,
+                "measurement_time": 61.1826801165,
+                "n_photons": 152312,
                 "mt_clk": 1.35e-05,
                 "dt": 3.2967032967032967e-09
             },
             # {
-            #     "routine": "bh132",
-            #     "files": glob.glob(directory + '/BH_SPC630_256.spc'),
+            #     "routine": "hdf",
+            #     "files": glob.glob(directory + '/HDF_TP/*.h5'),
             #     "n_tac": 4095,
             #     "measurement_time": 62.328307194000004,
-            #     "n_rout": 255,
             #     "n_photons": 183656,
             #     "mt_clk": 1.35e-05,
             #     "dt": 3.2967032967032967e-09
@@ -305,10 +301,6 @@ class Tests(unittest.TestCase):
             self.assertAlmostEqual(
                 photons.measurement_time,
                 d["measurement_time"]
-            )
-            self.assertEqual(
-                photons.n_rout,
-                d["n_rout"]
             )
             self.assertEqual(
                 photons.n_tac,
@@ -451,7 +443,8 @@ class Tests(unittest.TestCase):
         )
 
         filename = './test/data/fcs/Kristine/Kristine_with_error.cor'
-        fcs_data_curve_1 = chisurf.fio.fluorescence.read_fcs_kristine(
+        fcs_data_curve_1 = chisurf.fio.fluorescence.read_fcs(
+            reader_name='kristine',
             filename=filename
         )
         self.assertEqual(
@@ -463,7 +456,8 @@ class Tests(unittest.TestCase):
         )
 
         filename = './test/data/fcs/Kristine/Kristine_without_error.cor'
-        fcs_data_curve_2 = chisurf.fio.fluorescence.read_fcs_kristine(
+        fcs_data_curve_2 = chisurf.fio.fluorescence.read_fcs(
+            reader_name='kristine',
             filename=filename
         )
         self.assertEqual(

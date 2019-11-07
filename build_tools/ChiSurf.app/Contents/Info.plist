@@ -6,31 +6,8 @@
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>ChiSurf</string>
-	<key>CFBundleDocumentTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeIconFile</key>
-			<string>opensesame.icns</string>
-			<key>CFBundleTypeName</key>
-			<string>OpenSesame experiment</string>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>LSHandlerRank</key>
-			<string>Owner</string>
-			<key>LSItemContentTypes</key>
-			<array>
-				<string>nl.cogsci.osdoc.osexp</string>
-			</array>
-			<key>NSExportableTypes</key>
-			<array>
-				<string>nl.cogsci.osdoc.osexp</string>
-			</array>
-		</dict>
-	</array>
 	<key>CFBundleExecutable</key>
 	<string>ChiSurf</string>
-	<key>CFBundleIconFile</key>
-	<string>opensesame.icns</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>181208</string>
 	<key>CFBundleName</key>

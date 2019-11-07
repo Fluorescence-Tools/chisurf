@@ -4,7 +4,7 @@ import numpy as np
 
 import chisurf.fluorescence
 import chisurf.fluorescence.av
-from chisurf.structure.structure import Structure
+from chisurf.structure import Structure
 
 
 def av_distance_distribution(
@@ -128,7 +128,7 @@ def av_filtered_fcs_weights(
 
     >>> from chisurf.fluorescence.fcs.filtered import calc_lifetime_filter
     >>> from chisurf.fluorescence.general import calculate_fluorescence_decay
-    >>> from chisurf.structure.structure import Structure
+    >>> from chisurf.structure import Structure
     >>> from chisurf.structure.trajectory import TrajectoryFile
 
     Define where the donor and the acceptor are attached to

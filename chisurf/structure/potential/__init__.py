@@ -1,9 +1,7 @@
-from collections import OrderedDict
-
 from . import potentials
 from . import widgets
 
-potentialDict = OrderedDict()
+potentialDict = dict()
 potentialDict['H-Bond'] = widgets.HPotentialWidget
 potentialDict['AV-Potential'] = widgets.AvPotentialWidget
 potentialDict['Iso-UNRES'] = widgets.CEPotentialWidget

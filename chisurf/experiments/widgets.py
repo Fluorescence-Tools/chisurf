@@ -40,11 +40,11 @@ class ExperimentalDataSelector(
         data_curves = self.get_data_sets(
             curve_type=self.curve_type
         )
-        if self.setup is not None:
+        if self.data_reader is not None:
             return [
                 d for d in data_curves if isinstance(
-                    d.setup,
-                    self.setup
+                    d.data_reader,
+                    self.data_reader
                 )
             ]
         else:
@@ -269,7 +269,7 @@ class ExperimentalDataSelector(
         self.curve_type = curve_types
         self.click_close = click_close
         self.fit = fit
-        self.setup = setup
+        self.data_reader = setup
         self.context_menu_enabled = context_menu_enabled
 
         super().__init__(
@@ -304,6 +304,14 @@ class FCSController(
     ) -> str:
         return self.get_filename()
 
+    def get_filename(
+            self
+    ) -> str:
+        return chisurf.widgets.get_filename(
+                'FCS-CSV files',
+                file_type=self.file_type
+            )
+
     def __init__(
             self,
             file_type='Kristine files (*.cor)',
@@ -319,11 +327,3 @@ class FCSController(
         self.layout.addWidget(
             chisurf.fio.widgets.CsvWidget()
         )
-
-    def get_filename(
-            self
-    ) -> str:
-        return chisurf.widgets.get_filename(
-                'FCS-CSV files',
-                file_type=self.file_type
-            )

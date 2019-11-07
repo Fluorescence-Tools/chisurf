@@ -3,7 +3,7 @@ import os
 import numpy as np
 from qtpy import  QtWidgets, uic, QtCore
 
-import chisurf.settings as mfm
+import chisurf.decorators
 import chisurf.fio
 from chisurf.structure import Structure
 from chisurf.structure.trajectory import TrajectoryFile
@@ -16,6 +16,9 @@ class PDBSelector(
 
     """
 
+    @chisurf.decorators.init_with_ui(
+        ui_filename="pdb_widget.ui"
+    )
     def __init__(
             self,
             show_labels: bool = True,
@@ -26,14 +29,6 @@ class PDBSelector(
         :param show_labels:
         :param update:
         """
-        super(PDBSelector, self).__init__()
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "pdb_widget.ui"
-            ),
-            self
-        )
         self._pdb = None
         self.comboBox.currentIndexChanged[int].connect(self.onChainChanged)
         self.comboBox_2.currentIndexChanged[int].connect(self.onResidueChanged)

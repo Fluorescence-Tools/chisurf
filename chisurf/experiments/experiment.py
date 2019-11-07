@@ -36,7 +36,7 @@ class Experiment(
     @property
     def model_classes(
             self
-    ) -> List[Type[chisurf.models.model.Model]]:
+    ) -> List[Type[chisurf.models.Model]]:
         return list(self._model_classes)
 
     @property
@@ -47,7 +47,7 @@ class Experiment(
 
     def add_model_class(
             self,
-            model: Type[chisurf.models.model.Model]
+            model: Type[chisurf.models.Model]
     ):
         if model not in self.model_classes:
             self._model_classes.append(model)
@@ -55,7 +55,7 @@ class Experiment(
     def add_model_classes(
             self,
             models: List[
-                Type[chisurf.models.model.Model]
+                Type[chisurf.models.Model]
             ]
     ):
         for model in models:
@@ -67,20 +67,19 @@ class Experiment(
             controller: chisurf.experiments.reader.ExperimentReaderController = None
     ):
         if reader not in self.readers:
-            reader.experiment = self
             reader.controller = controller
             self._readers.append(reader)
 
     def add_readers(
             self,
-            setups: List[
+            readers: List[
                 Tuple[
                     chisurf.experiments.reader.ExperimentReader,
                     chisurf.experiments.reader.ExperimentReaderController
                 ]
             ]
     ):
-        for reader, controller in setups:
+        for reader, controller in readers:
             self.add_reader(
                 reader,
                 controller
@@ -105,7 +104,9 @@ class Experiment(
                 readers.append(v.experiment_reader)
         return readers
 
-    def get_reader_names(self) -> List[str]:
+    def get_reader_names(
+            self
+    ) -> List[str]:
         names = list()
         for s in self.readers:
             names.append(s.name)

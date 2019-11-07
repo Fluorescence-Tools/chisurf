@@ -33,10 +33,11 @@ class Fit(
 
     def __init__(
             self,
-            model_class: Type[chisurf.models.model.Model] = type,
+            model_class: Type[chisurf.models.Model] = type,
             data: chisurf.experiments.data.DataCurve = None,
             xmin: int = 0,
             xmax: int = 0,
+            model_kw: Dict = None,
             **kwargs
     ):
         """
@@ -58,7 +59,9 @@ class Fit(
         self._data = data
         self.plots = list()
         self._xmin, self._xmax = xmin, xmax
-        self._model_kw = kwargs.get('model_kw', {})
+        if model_kw is None:
+            model_kw = {}
+        self._model_kw = model_kw
         self.model = model_class
 
     def __str__(self):
@@ -119,7 +122,7 @@ class Fit(
     @property
     def model(
             self
-    ) -> chisurf.models.model.ModelCurve:
+    ) -> chisurf.models.ModelCurve:
         return self._model
 
     @model.setter
@@ -129,7 +132,7 @@ class Fit(
                 chisurf.models.model.ModelCurve
             ]
     ):
-        if issubclass(model_class, chisurf.models.model.Model):
+        if issubclass(model_class, chisurf.models.Model):
             self._model = model_class(
                 self,
                 **self._model_kw
@@ -254,7 +257,7 @@ class Fit(
     def get_chi2(
             self,
             parameter=None,
-            model: chisurf.models.model.Model = None,
+            model: chisurf.models.Model = None,
             reduced: bool = True
     ) -> float:
         if model is None:
@@ -288,37 +291,30 @@ class Fit(
             verbose: bool = False,
             **kwargs
     ) -> None:
-        self.model.save(filename + '.json')
-        if file_type == 'txt':
-            csv = chisurf.fio.ascii.Csv()
-            wr = self.weighted_residuals.y
-            xmin, xmax = self.xmin, self.xmax
-            x, m = self.model[xmin:xmax]
-            csv.save(
-                data=np.vstack([x, wr]),
-                filename=filename+'_wr.txt'
+        super().save(
+            filename=filename,
+            file_type=file_type,
+            verbose=verbose
+        )
+        # Save fit as txt (for plotting)
+        curve_dict = self.get_curves()
+        with open(filename+'_info.txt', mode='w') as fp:
+            fp.write(str(self))
+        for curve_key in curve_dict:
+            curve = curve_dict[curve_key]
+            curve_file_root = filename + "_%s" % curve_key
+            curve.save(
+                filename=curve_file_root,
+                file_type='txt'
             )
-            csv.save(
-                data=self.model[:],
-                filename=filename+'_fit.txt'
+            curve.save(
+                filename=curve_file_root,
+                file_type='json'
             )
-            if isinstance(
-                    self.data,
-                    chisurf.curve.Curve
-            ):
-                self.data.save(
-                    filename=filename + '_data.txt',
-                    file_type='txt'
-                )
-                self.data.save(
-                    filename=filename + '_data.json',
-                    file_type='json'
-                )
-                with chisurf.fio.zipped.open_maybe_zipped(
-                        filename=filename+'_info.txt',
-                        mode='w'
-                ) as fp:
-                    fp.write(str(self))
+            curve.save(
+                filename=curve_file_root,
+                file_type='yaml'
+            )
 
     def run(
             self,
@@ -351,7 +347,7 @@ class Fit(
             for p, e in zip(used_parameters, err):
                 fit.model.parameters[p].error_estimate = e
         except ValueError:
-            print("Problems calculating the covariances")
+            chisurf.logging.warning("Problems calculating the covariances")
 
     def chi2_scan(
             self,
@@ -387,7 +383,6 @@ class Fit(
 
 
 class FitGroup(
-    list,
     Fit
 ):
 
@@ -395,7 +390,7 @@ class FitGroup(
     def selected_fit(
             self
     ) -> Fit:
-        return self[self.selected_fit_index]
+        return self.grouped_fits[self.selected_fit_index]
 
     @property
     def selected_fit_index(
@@ -426,13 +421,13 @@ class FitGroup(
     @property
     def model(
             self
-    ) -> chisurf.models.model.Model:
+    ) -> chisurf.models.Model:
         return self.selected_fit.model
 
     @model.setter
     def model(
             self,
-            v: Type[chisurf.models.model.Model]
+            v: Type[chisurf.models.Model]
     ):
         self.selected_fit.model = v
 
@@ -484,7 +479,6 @@ class FitGroup(
     ):
         for f in self:
             f.xmin = v
-        self._xmin = v
 
     @property
     def xmax(
@@ -499,14 +493,35 @@ class FitGroup(
     ):
         for f in self:
             f.xmax = v
-        self._xmax = v
+
+    def save(
+            self,
+            filename: str,
+            file_type: str = 'txt',
+            verbose: bool = False,
+            **kwargs
+    ) -> None:
+        root, ext = os.path.splitext(filename)
+        for i, fit in enumerate(self):
+            root += "_%02d" % i
+            fit.save(
+                filename=filename,
+                file_type=file_type,
+                verbose=verbose,
+                **kwargs
+            )
+
+    def finalize(self):
+        self._model.finalize()
 
     def update(
             self
     ) -> None:
-        self.global_model.update()
+        self._model.update()
         for p in self.plots:
             p.update_all()
+        for f in self.grouped_fits:
+            f.model.update()
 
     def run(
             self,
@@ -526,34 +541,30 @@ class FitGroup(
 
         if local_first:
             for f in fit:
-                f.run(
-                    **kwargs
-                )
+                f.run(**kwargs)
         for f in fit:
             f.model.find_parameters()
 
-        fit.global_model.find_parameters()
+        fit._model.find_parameters()
         fitting_options = chisurf.settings.fitting['leastsq']
-        bounds = [pi.bounds for pi in fit.global_model.parameters]
+        bounds = [pi.bounds for pi in fit._model.parameters]
 
         results = leastsqbound(
             get_wres,
-            fit.global_model.parameter_values,
+            fit._model.parameter_values,
             args=(
-                fit.global_model,
+                fit._model,
             ),
             bounds=bounds,
             **fitting_options
         )
         self.results = results
-
         self.update()
-        self.global_model.finalize()
 
     def __init__(
             self,
             data: chisurf.experiments.data.DataGroup,
-            model_class: Type[chisurf.models.model.Model] = type,
+            model_class: Type[chisurf.models.Model] = type,
             model_kw: Dict = None,
             **kwargs
     ):
@@ -564,7 +575,7 @@ class FitGroup(
         :param kwargs:
         """
         self._selected_fit_index = 0
-        self._fits = list()
+        self.grouped_fits = list()
 
         for d in data:
             if model_kw is None:
@@ -574,23 +585,20 @@ class FitGroup(
                 data=d,
                 model_kw=model_kw
             )
-            self._fits.append(fit)
+            self.grouped_fits.append(fit)
 
-        list.__init__(self, self._fits)
-        # super().__init__(
-        #     data=data,
-        #     **kwargs
-        # )
-        Fit.__init__(
-            self,
-            data=data,
-            **kwargs
+        super().__init__(
+            data=data
+        )
+        self._model = chisurf.models.global_model.GlobalFitModel(
+            fit=self,
+            fits=self.grouped_fits
         )
 
-        self.global_model = chisurf.models.global_model.GlobalFitModel(
-            self
-        )
-        self.global_model.fits = self._fits
+    def to_dict(self) -> Dict:
+        d = super().to_dict()
+        d['grouped_fits'] = [f.to_dict() for f in self.grouped_fits]
+        return d
 
     def __str__(self):
         s = ""
@@ -600,11 +608,24 @@ class FitGroup(
         return s
 
     def next(self):
-        if self._selected_fit_index > len(self._fits):
+        if self._selected_fit_index > len(self.grouped_fits):
             raise StopIteration
         else:
             self._selected_fit_index += 1
-            return self._fits[self._selected_fit_index - 1]
+            return self.grouped_fits[self._selected_fit_index - 1]
+
+    def __getitem__(
+            self,
+            key
+    ) -> List[Fit]:
+        if isinstance(key, int):
+            return self.grouped_fits.__getitem__(key)
+        else:
+            start = 0 if key.start is None else key.start
+            stop = len(self.grouped_fits) if key.stop is None else key.stop
+            step = 1 if key.step is None else key.step
+            key = slice(start, stop, step)
+            return self.grouped_fits.__getitem__(key)
 
 
 def sample_fit(
@@ -763,7 +784,7 @@ def covariance_matrix(
 
 def get_wres(
         parameter: List[float],
-        model: chisurf.models.model.Model
+        model: chisurf.models.Model
 ) -> np.array:
     """Returns the weighted residuals for a list of parameters of a models
 

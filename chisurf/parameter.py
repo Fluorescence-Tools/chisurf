@@ -1,13 +1,12 @@
 from __future__ import annotations
-from typing import List, TypeVar, Tuple, Type
+import typing
 
 import numpy as np
-#import tensorflow as tf
 
 import chisurf.base
 import chisurf.decorators
 
-T = TypeVar('T', bound='Parameter')
+T = typing.TypeVar('T', bound='Parameter')
 
 
 @chisurf.decorators.register
@@ -21,32 +20,21 @@ class Parameter(
     @property
     def bounds(
             self
-    ) -> Tuple[float, float]:
+    ) -> typing.Tuple[float, float]:
         """A tuple containing the values for the lower (first value) and
         the upper (second value) of the bound.
         """
         if self.bounds_on:
-            return self._lb, self._ub
+            return self.lb, self.ub
         else:
             return float("-inf"), float("inf")
 
     @bounds.setter
     def bounds(
             self,
-            b: Tuple[float, float]
+            b: typing.Tuple[float, float]
     ):
-        self._lb, self._ub = b
-
-    @property
-    def bounds_on(self) -> bool:
-        return self._bounds_on
-
-    @bounds_on.setter
-    def bounds_on(
-            self,
-            v: bool
-    ):
-        self._bounds_on = bool(v)
+        self.lb, self.ub = b
 
     @property
     def value(
@@ -61,7 +49,6 @@ class Parameter(
 
         :return:
         """
-        #v = self._value.eval()
         v = self._value
         if callable(v):
             return v()
@@ -84,7 +71,6 @@ class Parameter(
             self,
             value: float
     ):
-        #self._value.load(value)
         self._value = value
         if self.is_linked:
             self.link.value = value
@@ -120,7 +106,7 @@ class Parameter(
     def __add__(
             self,
             other: T
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -130,7 +116,7 @@ class Parameter(
     def __mul__(
             self,
             other: T
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -140,7 +126,7 @@ class Parameter(
     def __truediv__(
             self,
             other: T
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -150,7 +136,7 @@ class Parameter(
     def __floordiv__(
             self,
             other: T
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -160,7 +146,7 @@ class Parameter(
     def __sub__(
             self,
             other: T
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -170,7 +156,7 @@ class Parameter(
     def __mod__(
             self,
             other: T
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -180,7 +166,7 @@ class Parameter(
     def __pow__(
             self,
             other: T
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -189,7 +175,7 @@ class Parameter(
 
     def __invert__(
             self
-    ) -> Type[Parameter]:
+    ) -> typing.Type[Parameter]:
         a = self.value
         return self.__class__(
             value=(1./a)
@@ -232,9 +218,7 @@ class Parameter(
             value=self.value.__round__()
         )
 
-    def to_dict(
-            self
-    ) -> dict:
+    def to_dict(self) -> typing.Dict:
         d = super().to_dict()
         if self.link is not None:
             d['_link'] = self.link.unique_identifier
@@ -279,13 +263,11 @@ class Parameter(
             *args,
             **kwargs
         )
-        self._bounds_on = bounds_on
         self._link = link
         self._value = value
-        #self._value = tf.Variable(value)
-        #chisurf.tf_sess.run(tf.global_variables_initializer())
-        self._lb = lb
-        self._ub = ub
+        self.bounds_on = bounds_on
+        self.lb = lb
+        self.ub = ub
         self.controller = None
 
 
@@ -298,7 +280,7 @@ class ParameterGroup(
 
     def __init__(
             self,
-            parameters: List[Parameter] = None,
+            parameters: typing.List[Parameter] = None,
             *args,
             **kwargs
     ):
@@ -315,6 +297,33 @@ class ParameterGroup(
             parameters = list()
         self._parameter = parameters
 
+    def __setattr__(
+            self,
+            k: str,
+            v: object
+    ):
+        try:
+            propobj = getattr(self, k, None)
+            if isinstance(propobj, property):
+                if propobj.fset is None:
+                    raise AttributeError("can't set attribute")
+                propobj.fset(self, v)
+            elif isinstance(propobj, chisurf.parameter.Parameter):
+                propobj.value = v
+            else:
+                super().__setattr__(k, v)
+        except KeyError:
+            super().__setattr__(k, v)
+
+    def __getattr__(
+            self,
+            key: str
+    ):
+        v = self.__dict__[key]
+        if isinstance(v, chisurf.parameter.Parameter):
+            return v.value
+        return v
+
     def append(
             self,
             parameter: Parameter,
@@ -328,13 +337,13 @@ class ParameterGroup(
     @property
     def parameters(
             self
-    ) -> List[Parameter]:
+    ) -> typing.List[Parameter]:
         return self._parameter
 
     @property
     def parameter_names(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         return [p.name for p in self.parameters]
 
     @property

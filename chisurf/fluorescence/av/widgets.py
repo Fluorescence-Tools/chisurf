@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import OrderedDict
 from qtpy import QtWidgets
 
 import chisurf.settings
@@ -14,7 +13,7 @@ from chisurf.fitting.widgets import FittingParameterWidget
 class ProteinQuenchingWidget(ProteinQuenching, QtWidgets.QGroupBox):
     @property
     def quencher(self):
-        p = OrderedDict()
+        p = dict()
         for qn in str(self.lineEdit_3.text()).split():
             p[qn] = ['CB']
         return p

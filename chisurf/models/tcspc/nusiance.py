@@ -640,7 +640,7 @@ class Convolve(FittingParameterGroup):
         try:
             data = kwargs.get('data', fit.data)
             dt = data.dx[0]
-            rep_rate = data.setup.rep_rate
+            rep_rate = data.data_reader.rep_rate
             stop = len(data) * dt
             self.data = data
         except (AttributeError, TypeError):

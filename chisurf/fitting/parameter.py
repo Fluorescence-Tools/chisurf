@@ -25,7 +25,7 @@ class FittingParameter(
 
     def __init__(
             self,
-            model: chisurf.models.model.Model = None,
+            model: chisurf.models.Model = None,
             fixed: bool = False,
             *args,
             **kwargs
@@ -42,7 +42,7 @@ class FittingParameter(
             **kwargs
         )
         self.model = model
-        self._fixed = fixed
+        self.fixed = fixed
         self._error_estimate = None
         self._chi2s = None
         self._values = None
@@ -81,19 +81,6 @@ class FittingParameter(
             v: float
     ):
         self._error_estimate = v
-
-    @property
-    def fixed(
-            self
-    ) -> bool:
-        return self._fixed
-
-    @fixed.setter
-    def fixed(
-            self,
-            v: bool
-    ):
-        self._fixed = v
 
     def scan(
             self,
@@ -300,7 +287,7 @@ class FittingParameterGroup(
             try:
                 parameter_target[pn].from_dict(parameter[pn])
             except KeyError:
-                print("Key %s not found skipping" % pn)
+                chisurf.logging.warning("Key %s not found skipping" % pn)
 
     def find_parameters(
             self,
@@ -315,23 +302,21 @@ class FittingParameterGroup(
         self._parameters = None
         d = [v for v in self.__dict__.values() if v is not self]
         ag = chisurf.base.find_objects(
-            d,
-            chisurf.fitting.parameter.FittingParameterGroup
+            search_iterable=d,
+            searched_object_type=chisurf.fitting.parameter.FittingParameterGroup
         )
         self._aggregated_parameters = ag
 
         ap = list()
         for o in set(ag):
-            if not isinstance(
-                    o,
-                    chisurf.models.model.Model
-            ):
+            if not isinstance(o, chisurf.models.Model):
                 o.find_parameters()
                 self.__dict__[o.name] = o
                 ap += o.parameters_all
 
         mp = chisurf.base.find_objects(
-            d, parameter_type
+            search_iterable=d,
+            searched_object_type=parameter_type
         )
         self._parameters = list(set(mp + ap))
 
@@ -366,7 +351,7 @@ class FittingParameterGroup(
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit = None,
-            model: chisurf.models.model.Model = None,
+            model: chisurf.models.Model = None,
             short: str = '',
             parameters: List[
                 chisurf.fitting.parameter.FittingParameter
@@ -391,7 +376,7 @@ class FittingParameterGroup(
             print("Class: %s" % self.__class__.name)
             print(kwargs)
             print("---------------")
-        # super(chisurf.base, self).__init__(*args, **kwargs)
+
         self.short = short
         self.model = model
         self.fit = fit
@@ -407,20 +392,20 @@ class FittingParameterGroup(
             if isinstance(p0, FittingParameterGroup):
                 self.__dict__ = p0.__dict__
 
-    @deprecation.deprecated(
-        deprecated_in="19.08.23",
-        removed_in="20.01.01",
-        current_version="19.08.23",
-        details="use the fitting.widget.make_fitting_parameter_group_widget function instead"
-    )
-    def to_widget(
-            self,
-            *args,
-            **kwargs
-    ) -> chisurf.fitting.widgets.FittingParameterGroupWidget:
-        return chisurf.fitting.widgets.FittingParameterGroupWidget(
-            self, *args,
-            **kwargs
-        )
+    # @deprecation.deprecated(
+    #     deprecated_in="19.08.23",
+    #     removed_in="20.01.01",
+    #     current_version="19.08.23",
+    #     details="use the fitting.widget.make_fitting_parameter_group_widget function instead"
+    # )
+    # def to_widget(
+    #         self,
+    #         *args,
+    #         **kwargs
+    # ) -> chisurf.fitting.widgets.FittingParameterGroupWidget:
+    #     return chisurf.fitting.widgets.FittingParameterGroupWidget(
+    #         self, *args,
+    #         **kwargs
+    #     )
 
 

@@ -18,15 +18,11 @@ class Tests(unittest.TestCase):
     def test_curve_init(self):
         c1 = chisurf.curve.Curve()
         self.assertEqual(
-            np.array_equal(
-                c1.x, np.array([], dtype=np.float64)
-            ),
+            np.array_equal(c1.x, np.array([], dtype=np.float64)),
             True
         )
         self.assertEqual(
-            np.array_equal(
-                c1.y, np.array([], dtype=np.float64)
-            ),
+            np.array_equal(c1.y, np.array([], dtype=np.float64)),
             True
         )
         self.assertEqual(c1.name, 'Curve')
@@ -40,7 +36,8 @@ class Tests(unittest.TestCase):
         name = 'C2'
         c2 = chisurf.curve.Curve(x, y, name=name)
         self.assertEqual(
-            np.array_equal(c1.x, c2.x), True
+            np.array_equal(c1.x, c2.x),
+            True
         )
         self.assertEqual(
             np.array_equal(c1.y, c2.y),
@@ -54,10 +51,23 @@ class Tests(unittest.TestCase):
         c3.from_json(
             json_string=c2.to_json()
         )
-        self.assertEqual(
-            c2.to_dict(),
-            c3.to_dict()
-        )
+
+        c2_dict = c2.to_dict()
+        c3_dict = c2.to_dict()
+        for k in c2_dict:
+            if isinstance(c2_dict[k], np.ndarray):
+                self.assertEqual(
+                    np.allclose(
+                        c2_dict[k],
+                        c3_dict[k]
+                    ),
+                    True
+                )
+            else:
+                self.assertEqual(
+                    c2_dict[k],
+                    c3_dict[k]
+                )
 
         # test no copy option
         x = np.linspace(0, 2.0 * np.pi, 20)
@@ -139,8 +149,6 @@ class Tests(unittest.TestCase):
         )
 
     def test_reading(self):
-        #file = tempfile.NamedTemporaryFile(suffix='.yaml')
-        #filename = file.name
         _, filename = tempfile.mkstemp(
             suffix='.yaml'
         )

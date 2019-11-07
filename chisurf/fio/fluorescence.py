@@ -13,7 +13,6 @@ from chisurf.experiments import reader
 from chisurf.fio.ascii import Csv
 
 
-
 def read_tcspc_csv(
         filename: str = None,
         skiprows: int = None,
@@ -24,7 +23,7 @@ def read_tcspc_csv(
         is_jordi: bool = False,
         polarization: str = "vm",
         g_factor: float = 1.0,
-        setup: reader.ExperimentReader = None,
+        experiment: chisurf.experiments.Experiment = None,
         *args,
         **kwargs
 ) -> chisurf.experiments.data.DataCurveGroup:
@@ -154,7 +153,7 @@ def read_tcspc_csv(
             y=yi,
             ex=ex,
             ey=1. / eyi,
-            setup=setup,
+            experiment=experiment,
             name=name,
             **kwargs
         )
@@ -169,161 +168,98 @@ def read_tcspc_csv(
 
 def read_fcs(
         filename: str,
-        setup: reader.ExperimentReader = None,
-        *args,
+        data_reader: chisurf.experiments.reader.ExperimentReader = None,
+        reader_name: str = 'csv',
+        verbose: bool = False,
+        experiment: chisurf.experiments.Experiment = None,
         **kwargs
 ) -> chisurf.experiments.data.ExperimentDataCurveGroup:
-    csv = chisurf.fio.ascii.Csv()
-    csv.load(
-        filename=filename,
-        verbose=chisurf.verbose,
-        *args,
-        **kwargs
-    )
-    x, y = csv.data[0], csv.data[1]
-    w = csv.data[2]
-    d = chisurf.experiments.data.DataCurve(
-        setup=setup,
-        x=x,
-        y=y,
-        ey=w,
-        ex=np.ones_like(x)
-    )
-    return chisurf.experiments.data.ExperimentDataCurveGroup([d])
+    """
 
+    Option Kristine:
 
-def read_fcs_kristine(
-        filename: str,
-        experiment_reader: chisurf.experiments.reader.ExperimentReader = None,
-        verbose=chisurf.verbose
-) -> chisurf.experiments.data.ExperimentDataCurveGroup:
-    """Uses either the error provided by the correlator (4. column)
+    Uses either the error provided by the correlator (4. column)
     or calculates the error based on the correlation curve,
     the aquisition time and the count-rate.
 
-    :param experiment_reader:
     :param filename:
+    :param data_reader:
+    :param data_reader:
     :param verbose:
-
+    :param args:
+    :param kwargs:
     :return:
     """
-    r = chisurf.fio.fcs.cor_kristine.fcs_read_kristine(
-        filename=filename,
-        verbose=verbose
-    )
-    d = chisurf.experiments.data.DataCurve(
-        setup=experiment_reader,
-        name=filename
-    )
-    x = r[0]['correlation_time']
-    y = r[0]['correlation_amplitude']
-    ey = 1. / r[0]['weights']
-    ex = np.ones_like(x)
-    d.set_data(
-        x=x,
-        y=y,
-        ex=ex,
-        ey=ey
-    )
-    return chisurf.experiments.data.ExperimentDataCurveGroup([d])
-
-
-def read_fcs_sin(
-        filename: str,
-        experiment_reader: chisurf.experiments.reader.ExperimentReader = None,
-        verbose=chisurf.verbose
-) -> chisurf.experiments.data.ExperimentDataCurveGroup:
-    """Uses either the error provided by the correlator (4. column)
-    or calculates the error based on the correlation curve,
-    the aquisition time and the count-rate.
-
-    :param experiment_reader:
-    :param filename:
-    :param verbose:
-
-    :return:
-    """
-    r = chisurf.fio.fcs.sin_correlator_com.open_sin_fcs(
-        filename=filename
-    )
-    d = chisurf.experiments.data.DataCurve(
-        setup=experiment_reader,
-        name=filename
-    )
-    x = r[0]['correlation_time']
-    y = r[0]['correlation_amplitude']
-    ey = 1. / r[0]['weights']
-    ex = np.ones_like(x)
-    d.set_data(
-        x=x,
-        y=y,
-        ex=ex,
-        ey=ey
-    )
-    return chisurf.experiments.data.ExperimentDataCurveGroup([d])
-
-
-def read_fcs_china_mat(
-        filename: str,
-        experiment_reader: chisurf.experiments.reader.ExperimentReader = None,
-        verbose=chisurf.verbose
-) -> chisurf.experiments.data.ExperimentDataCurveGroup:
-    ds = chisurf.fio.fcs.mat_china.fcs_read_china_mat(
-        filename=filename,
-        verbose=verbose
-    )
     data_sets = list()
-    for r in ds:
-        root, ext = os.path.splitext(
-            os.path.basename(filename)
-        )
-        name = root + "_" + r['measurement_id']
-        d = chisurf.experiments.data.DataCurve(
-            setup=experiment_reader,
-            name=name
-        )
-        x = r['correlation_time']
-        y = r['correlation_amplitude']
-        ey = 1. / r['weights']
-        ex = np.ones_like(x)
-        d.set_data(
-            x=x,
-            y=y,
-            ex=ex,
-            ey=ey
-        )
-        data_sets.append(d)
-    return chisurf.experiments.data.ExperimentDataCurveGroup(
-        data_sets
+    root, ext = os.path.splitext(
+        os.path.basename(filename)
     )
 
-
-def read_fcs_alv(
-        filename: str,
-        experiment_reader: chisurf.experiments.reader.ExperimentReader = None,
-        verbose=chisurf.verbose
-) -> chisurf.experiments.data.ExperimentDataCurveGroup:
-    ds = chisurf.fio.fcs.asc_alv.fcs_read_asc(
-        filename
-    )
-    data_sets = list()
-    for r in ds:
-        name = r['measurement_id'] + "_" + filename
-        d = chisurf.experiments.data.DataCurve(
-            setup=experiment_reader,
-            name=name
+    # Files with single curve
+    if reader_name in ['csv', 'kristine', 'pycorrfit']:
+        if reader_name == 'csv':
+            csv = chisurf.fio.ascii.Csv()
+            csv.load(
+                filename=filename,
+                verbose=chisurf.verbose,
+                **kwargs
+            )
+            x, y = csv.data[0], csv.data[1]
+            ey = csv.data[2]
+        elif reader_name == 'kristine':
+            r = chisurf.fio.fcs.read_kristine(
+                filename=filename,
+                verbose=verbose
+            )
+            x = np.array(r[0]['correlation_time'])
+            y = np.array(r[0]['correlation_amplitude'])
+            ey = 1. / np.array(r[0]['weights'])
+            ex = np.ones_like(x)
+        elif reader_name == 'pycorrfit':
+            r = chisurf.fio.fcs.read_pycorrfit(
+                filename=filename,
+                verbose=verbose
+            )
+            x = np.array(r[0]['correlation_time'])
+            y = np.array(r[0]['correlation_amplitude'])
+            ey = 1. / np.array(r[0]['weights'])
+            ex = np.ones_like(x)
+        name = root
+        data_sets.append(
+            chisurf.experiments.data.DataCurve(
+                data_reader=data_reader,
+                name=name,
+                x=x, y=y, ey=ey, ex=ex,
+                experiment=experiment
+            )
         )
-        x = r['correlation_time']
-        y = r['correlation_amplitude']
-        ey = 1. / r['weights']
-        ex = np.ones_like(x)
-        d.set_data(
-            x=x,
-            y=y,
-            ex=ex,
-            ey=ey
-        )
-        data_sets.append(d)
-    return chisurf.experiments.data.ExperimentDataCurveGroup(
-        data_sets
-    )
+    # Files with multiple curves per file
+    elif reader_name in ['china-mat', 'confocor3', 'alv']:
+        if reader_name == 'confocor3':
+            ds = chisurf.fio.fcs.read_zeiss_fcs(
+                filename=filename,
+                verbose=verbose
+            )
+        elif reader_name == 'china-mat':
+            ds = chisurf.fio.fcs.read_china_mat(
+                filename=filename,
+                verbose=verbose
+            )
+        elif reader_name == 'alv':
+            ds = chisurf.fio.fcs.read_asc(
+                filename
+            )
+        for r in ds:
+            name = root + "_" + r['measurement_id']
+            x = np.array(r['correlation_time'])
+            y = np.array(r['correlation_amplitude'])
+            ey = 1. / np.array(r['weights'])
+            ex = np.ones_like(x)
+            data_sets.append(
+                chisurf.experiments.data.DataCurve(
+                    name=name,
+                    data_reader=data_reader,
+                    x=x, y=y, ey=ey, ex=ex
+                )
+            )
+    return chisurf.experiments.data.ExperimentDataCurveGroup(data_sets)

@@ -3,6 +3,7 @@
 """
 from __future__ import annotations
 from typing import Dict
+import deprecation
 
 from math import floor, pow
 import numba as nb
@@ -30,7 +31,7 @@ def correlate(
     """
     for b in range(B):
         j = (n * B + b)
-        shift = taus[j] // (pow(2.0, float(j / B)))
+        shift = taus[j] // (pow(2.0, float(j // B)))
         # STARTING CHANNEL
         ca = 0 if t[0, 1] < t[1, 1] else 1  # currently active correlation channel
         ci = 1 if t[0, 1] < t[1, 1] else 0  # currently inactive correlation channel
@@ -52,6 +53,11 @@ def correlate(
     return corr
 
 
+@deprecation.deprecated(
+        deprecated_in="19.10.31",
+        current_version="19.08.23",
+        details="Correlation should be done using tttrlib"
+    )
 def normalize(
         np1: int,
         np2: int,
@@ -75,21 +81,21 @@ def normalize(
     cr1 = float(np1) / float(dt1)
     cr2 = float(np2) / float(dt2)
     for j in range(corr.shape[0]):
-        pw = 2.0 ** int(j / B)
+        pw = 2.0 ** int(j // B)
         tCor = dt1 if dt1 < dt2 - tau[j] else dt2 - tau[j]
         corr[j] /= (tCor * float(pw))
         corr[j] /= (cr1 * cr2)
-        tau[j] = tau[j] // pw * pw
+        tau[j] = tau[j] / pw * pw
     return float(min(cr1, cr2))
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def get_weights(
-        rout: np.array,
-        tac: np.array,
-        wt: np.array,
+        rout: np.ndarray,
+        tac: np.ndarray,
+        wt: np.ndarray,
         number_of_photons: int
-):
+) -> np.ndarray:
     """
 
     :param rout:
@@ -104,7 +110,7 @@ def get_weights(
     return w
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def count_rate_filter(
         mt: np.array,
         tw: int,
@@ -204,15 +210,20 @@ def coarsen(
     :return:
     """
     for j in range(times.shape[0]):
-        times[j, 1] /= 2
+        times[j, 1] //= 2
         for i in range(2, times[j, 0]):
-            times[j, i] /= 2
+            times[j, i] //= 2
             if times[j, i - 1] == times[j, i]:
                 weights[j, i - 1] += weights[j, i]
                 weights[j, i] = 0.0
     compact(times, weights, False)
 
 
+@deprecation.deprecated(
+        deprecated_in="19.10.31",
+        current_version="19.08.23",
+        details="Correlation should be done using tttrlib"
+    )
 def log_corr(
         macro_times: np.array,
         tac_channels: np.array,
