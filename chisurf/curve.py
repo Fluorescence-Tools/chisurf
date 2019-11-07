@@ -2,8 +2,9 @@ from __future__ import annotations
 from typing import TypeVar, Tuple, Type
 
 import numpy as np
+import os
 
-import chisurf.settings as mfm
+import chisurf.fio
 import chisurf.base
 import chisurf.decorators
 import chisurf.math
@@ -42,49 +43,38 @@ class Curve(
         """
         return np.diff(self.x)
 
-    @property
-    def x(self) -> np.array:
-        return self._x
-
-    @x.setter
-    def x(self, v) -> None:
-        self._x = v
-
-    @property
-    def y(self) -> np.array:
-        return self._y
-
-    @y.setter
-    def y(self, v) -> None:
-        self._y = v
-
-    def to_dict(self) -> dict:
-        d = dict()
-        d.update(super().to_dict())
-        d['_x'] = d.pop('_x').tolist()
-        d['_y'] = d.pop('_y').tolist()
-        return d
-
-    def to_json(
+    def save(
             self,
-            indent: int = 4,
-            sort_keys: bool = True
-    ) -> str:
-        return super().to_json(
-            indent,
-            sort_keys
+            filename: str,
+            file_type: str = 'yaml',
+            verbose: bool = False,
+            xmin: int = None,
+            xmax: int = None
+    ) -> None:
+        super().save(
+            filename=filename,
+            file_type=file_type,
+            verbose=verbose
         )
+        # check for filename extension
+        root, ext = os.path.splitext(filename)
+        filename = root + "." + file_type
 
-    def to_yaml(self) -> str:
-        return super().to_yaml()
+        if file_type == "txt":
+            csv = chisurf.fio.ascii.Csv()
+            x, y = self[xmin:xmax]
+            csv.save(
+                data=np.vstack([x, y]),
+                filename=filename
+            )
 
     def from_dict(
             self,
             v: dict
     ):
-        v['_y'] = np.array(v['_y'], dtype=np.float64)
-        v['_x'] = np.array(v['_x'], dtype=np.float64)
         super().from_dict(v)
+        self.__dict__['y'] = np.array(v['y'], dtype=np.float64)
+        self.__dict__['x'] = np.array(v['x'], dtype=np.float64)
 
     def __init__(
             self,
@@ -106,11 +96,11 @@ class Curve(
                 )
             )
         if copy_array:
-            self._x = np.copy(x)
-            self._y = np.copy(y)
+            self.x = np.copy(x)
+            self.y = np.copy(y)
         else:
-            self._x = x
-            self._y = y
+            self.x = x
+            self.y = y
         super().__init__(
             *args,
             **kwargs

@@ -31,10 +31,8 @@ class Tests(unittest.TestCase):
     def test_base_init(self):
         b1 = chisurf.base.Base()
         self.assertEqual(b1.name, 'Base')
-
         b2 = chisurf.base.Base(name='B')
         self.assertEqual(b2.name, 'B')
-
         b3 = chisurf.base.Base(
             name='B',
             test_parameter='aa'

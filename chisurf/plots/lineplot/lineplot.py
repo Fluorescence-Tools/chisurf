@@ -286,6 +286,9 @@ class LinePlot(plotbase.Plot):
         )
 
         self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+
         self.data_x = data_x
         self.data_y = data_y
         self.plot_irf = plot_irf
@@ -293,9 +296,9 @@ class LinePlot(plotbase.Plot):
         area = DockArea()
         self.layout.addWidget(area)
         hide_title = chisurf.settings.gui['plot']['hideTitle']
-        d1 = Dock("residuals", size=(300, 80), hideTitle=hide_title)
-        d2 = Dock("a.corr.", size=(300, 80), hideTitle=hide_title)
-        d3 = Dock("Fit", size=(300, 300), hideTitle=hide_title)
+        d1 = Dock("residuals", size=(250, 80), hideTitle=hide_title)
+        d2 = Dock("a.corr.", size=(250, 80), hideTitle=hide_title)
+        d3 = Dock("Fit", size=(250, 250), hideTitle=hide_title)
 
         p1 = pg.PlotWidget()
         p2 = pg.PlotWidget()
@@ -322,8 +325,15 @@ class LinePlot(plotbase.Plot):
             text='',
             border='w',
             fill=(0, 0, 255, 100),
-            anchor=(0, 0)
+            anchor=(0, 1)
         )
+        # curves = self.fit.get_curves()
+        # data = curves['data']
+        # self.text.setPos(
+        #     min(data.x * 0.5),
+        #     max(data.y * 0.5)
+        # )
+
         self.data_plot.addItem(self.text)
         colors = chisurf.settings.gui['plot']['colors']
 
@@ -403,50 +413,12 @@ class LinePlot(plotbase.Plot):
             *args,
             **kwargs
     ):
-        plt_ctrl = self.pltControl
-
-        y_shift = plt_ctrl.y_shift
-        x_shift = plt_ctrl.x_shift
-
-        curves = self.fit.get_curves()
-        for curve_key in curves.keys():
-            try:
-                curve = curves[curve_key]
-                y = curve.y
-                if self.pltControl.is_density:
-                    y = curve.y / np.diff(curve.x)
-                self.lines[curve_key].setData(
-                        x=curve.x + x_shift,
-                        y=y
-                    )
-            except:
-                print("Skipping plot %s" % curve_key)
-
         # Get parameters from plot-control
+        plt_ctrl = self.pltControl
         data_log_y = plt_ctrl.data_is_log_y
         data_log_x = plt_ctrl.data_is_log_x
         res_log_y = plt_ctrl.res_is_log_y
         use_reference = self.pltControl.use_reference
-
-        #
-        # model_y = np.copy(model.y) + y_shift
-        # data_y = np.copy(data_y) + y_shift
-        #
-
-        self.text.setHtml(
-            '<div style="name-align: center">'
-            '     <span style="color: #FF0; font-size: 10pt;">'
-            '         Fit-range: %s, %s <br />'
-            '         &Chi;<sup>2</sup>=%.4f <br />'
-            '         DW=%.4f'
-            '     </span>'
-            '</div>' % (
-                self.fit.xmin, self.fit.xmax,
-                self.fit.chi2r,
-                self.fit.durbin_watson
-            )
-        )
-
         # # Reference-function
         # if use_reference:
         #     reference = self.fit.model.reference
@@ -457,31 +429,26 @@ class LinePlot(plotbase.Plot):
         #     data_y /= reference
         #     mm = max(model_y)
         #     irf_y *= mm / max(irf_y)
+
+        y_shift = plt_ctrl.y_shift
+        x_shift = plt_ctrl.x_shift
+
+        curves = self.fit.get_curves()
+        for curve_key in curves.keys():
+            curve = curves[curve_key]
+            y = curve.y
+            if self.pltControl.is_density:
+                y = curve.y / np.diff(curve.x)
+            self.lines[curve_key].setData(
+                    x=curve.x + x_shift,
+                    y=y
+                )
+
         #
-        # if not only_fit_range:
-        #     idx = np.where(
-        #         data_y > plt_ctrl.ymin
-        #     )[0] if data_log_y else list(range(len(data_x)))
+        # model_y = np.copy(model.y) + y_shift
+        # data_y = np.copy(data_y) + y_shift
         #
-        #     if plt_ctrl.plot_ftt:
-        #         self.data_curve.setData(
-        #             x=data_x[idx],
-        #             y=data_y[idx] * data_x[idx]
-        #         )
-        #     else:
-        #         self.data_curve.setData(
-        #             x=data_x[idx],
-        #             y=data_y[idx]
-        #         )
-        #     if self.plot_irf:
-        #         idx = np.where(
-        #             irf_y > plt_ctrl.ymin
-        #         )[0] if data_log_y else list(range(len(irf_x)))
-        #         self.irf_curve.setData(
-        #             x=irf_x[idx],
-        #             y=irf_y[idx]
-        #         )
-        #
+
         # Set log-scales
         self.res_plot.setLogMode(
             x=data_log_x,
@@ -496,46 +463,29 @@ class LinePlot(plotbase.Plot):
             y=data_log_y
         )
 
-        # data = curves['data']
-        # lb_min, ub_max = data.x[0], data.x[-1]
-        # lb, ub = data.x[self.fit.xmin], data.x[self.fit.xmax]
-        # self.region.setBounds((lb_min, ub_max))
-        # self.region.setRegion((lb, ub))
+        # update region selector
+        data = curves['data']
+        lb_min, ub_max = data.x[0], data.x[-1]
+        lb, ub = data.x[self.fit.xmin], data.x[self.fit.xmax]
+        if data_log_x:
+            lb = np.log10(lb)
+            ub = np.log10(ub)
+            lb_min = np.log10(lb_min)
+            ub_max = np.log10(ub_max)
+        self.region.setBounds((lb_min, ub_max))
+        self.region.setRegion((lb, ub))
 
-        #
-        # # Update the Model-lines (Model, wres, acorr)
-        # idx = np.where(
-        #     model_y > 0.0
-        # )[0] if data_log_y else list(range(len(model_x)))
-        # if plt_ctrl.plot_ftt:
-        #     self.fit_curve.setData(
-        #         x=model_x[idx],
-        #         y=model_y[idx] * model_x[idx]
-        #     )
-        # else:
-        #     self.fit_curve.setData(
-        #         x=model_x[idx],
-        #         y=model_y[idx]
-        #     )
-        #
-        # self.residuals_plot.clear()
-        # self.auto_corr_plot.clear()
-        #
-        # colors = chisurf.settings.gui['plot']['colors']
-        # lw = chisurf.settings.gui['plot']['line_width']
-        #
-        # self.residuals_plot.plot(
-        #     x=wres.x,
-        #     y=wres.y,
-        #     pen=pg.mkPen(colors['residuals'], width=lw),
-        #     name='residues'
-        # )
-        # self.auto_corr_plot.plot(
-        #     x=wres.x[1:],
-        #     y=chisurf.math.signal.autocorr(wres.y)[1:],
-        #     pen=pg.mkPen(colors['auto_corr'], width=lw),
-        #     name='residues'
-        # )
-        # self.data_x = data_x
-        # self.data_y = data_y
-        #
+        self.text.updateTextPos()
+        self.text.setHtml(
+            '<div style="name-align: center">'
+            '     <span style="color: #FF0; font-size: 10pt;">'
+            '         Fit-range: %s, %s <br />'
+            '         &Chi;<sup>2</sup>=%.4f <br />'
+            '         DW=%.4f'
+            '     </span>'
+            '</div>' % (
+                self.fit.xmin, self.fit.xmax,
+                self.fit.chi2r,
+                self.fit.durbin_watson
+            )
+        )

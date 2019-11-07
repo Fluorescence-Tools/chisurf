@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import chisurf.settings as mfm
+import chisurf.settings
 from chisurf.models.tcspc.fret import Gaussians
 from chisurf.fluorescence import tcspc
 from chisurf.fluorescence.general import distribution2rates

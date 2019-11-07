@@ -2,9 +2,9 @@
 
 """
 from __future__ import annotations
-from typing import Tuple, Callable, Dict
 
-from abc import abstractmethod, abstractproperty
+import abc
+import typing
 
 import chisurf.base
 import chisurf.curve
@@ -14,13 +14,9 @@ import chisurf.experiments
 class ExperimentReader(
     chisurf.base.Base
 ):
-    """
-
-    """
 
     def __init__(
             self,
-            experiment: chisurf.experiments.experiment.Experiment,
             *args,
             controller: ExperimentReaderController = None,
             **kwargs
@@ -34,31 +30,17 @@ class ExperimentReader(
             *args,
             **kwargs
         )
-        self.experiment = experiment
-        self._controller = controller
+        self.controller = controller
 
-    @property
-    def controller(
-            self
-    ) -> ExperimentReaderController:
-        return self._controller
-
-    @controller.setter
-    def controller(
-            self,
-            v: ExperimentReaderController
-    ):
-        self._controller = v
-
-    @abstractmethod
+    @abc.abstractmethod
     def autofitrange(
             self,
             data: chisurf.base.Data,
             **kwargs
-    ) -> Tuple[int, int]:
+    ) -> typing.Tuple[int, int]:
         return 0, len(data.y) - 1
 
-    @abstractmethod
+    @abc.abstractmethod
     def read(
             self,
             name: str = None,
@@ -99,19 +81,6 @@ class ExperimentReaderController(
     chisurf.base.Base
 ):
 
-    @property
-    def experiment_reader(
-            self
-    ) -> ExperimentReader:
-        return self._experiment_reader
-
-    @experiment_reader.setter
-    def experiment_reader(
-            self,
-            v: ExperimentReader
-    ):
-        self._experiment_reader = v
-
     def __init__(
             self,
             experiment_reader: ExperimentReader = None,
@@ -122,7 +91,7 @@ class ExperimentReaderController(
             *args,
             **kwargs
         )
-        self._experiment_reader = experiment_reader
+        self.experiment_reader = experiment_reader
         self._call_dict = dict()
         if isinstance(
                 experiment_reader,
@@ -133,8 +102,8 @@ class ExperimentReaderController(
     def add_call(
             self,
             call_name: str,
-            call_function: Callable,
-            call_parameters: Dict
+            call_function: typing.Callable,
+            call_parameters: typing.Dict
     ):
         self._call_dict[call_name] = {
             'call_function': call_function,
@@ -165,13 +134,14 @@ class ExperimentReaderController(
             item
         )
 
-    @abstractproperty
+    @property
+    @abc.abstractmethod
     def filename(
             self
     ) -> str:
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_filename(
             self
     ) -> str:

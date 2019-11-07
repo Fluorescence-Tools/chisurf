@@ -4,7 +4,6 @@
 from __future__ import annotations
 from typing import Tuple
 
-from collections import OrderedDict
 from qtpy import QtWidgets
 
 import chisurf.experiments
@@ -31,7 +30,7 @@ class GlobalFitSetup(
         )
         self.hide()
         self.parameterWidgets = list()
-        self.parameters = OrderedDict([])
+        self.parameters = dict([])
 
     @staticmethod
     def autofitrange(

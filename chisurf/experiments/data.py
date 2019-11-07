@@ -2,10 +2,9 @@
 
 """
 from __future__ import annotations
-from typing import Tuple
 
+import typing
 import os.path
-from typing import Sequence, List
 import numpy as np
 
 import chisurf.base
@@ -27,10 +26,10 @@ class ExperimentalData(
     ) -> chisurf.experiments.experiment.Experiment:
         if self._experiment is None:
             if isinstance(
-                self.setup,
+                self.data_reader,
                 chisurf.experiments.reader.ExperimentReader
             ):
-                return self.setup.experiment
+                return self.data_reader.experiment
         else:
             return self._experiment
 
@@ -41,22 +40,17 @@ class ExperimentalData(
     ) -> None:
         self._experiment = v
 
-    @property
-    def data_reader(self):
-        return self._data_reader
-
-    @data_reader.setter
-    def data_reader(
-        self,
-        v: chisurf.experiments.reader.ExperimentReader
-    ):
-        self._data_reader = v
-
     def __init__(
             self,
             data_reader: chisurf.experiments.reader.ExperimentReader = None,
             experiment: chisurf.experiments.experiment.Experiment = None,
-            *args,
+            filename: str = "None",
+            data: bytes = None,
+            embed_data: bool = None,
+            read_file_size_limit: int = None,
+            name: object = None,
+            verbose: bool = False,
+            unique_identifier: str = None,
             **kwargs
     ):
         """
@@ -67,24 +61,24 @@ class ExperimentalData(
         :param kwargs:
         """
         super().__init__(
-            *args,
+            filename=filename,
+            data=data,
+            embed_data=embed_data,
+            read_file_size_limit=read_file_size_limit,
+            name=name,
+            verbose=verbose,
+            unique_identifier=unique_identifier,
             **kwargs
         )
-        if data_reader is None:
-            data_reader = chisurf.experiments.reader.ExperimentReader(
-                *args,
-                experiment=experiment,
-                **kwargs
-            )
         self._experiment = experiment
-        self._data_reader = data_reader
+        self.data_reader = data_reader
 
     def to_dict(self):
         d = super().to_dict()
         try:
-            d['reader'] = self.setup.to_dict()
+            d['data_reader'] = self.data_reader.to_dict()
         except AttributeError:
-            d['reader'] = None
+            d['data_reader'] = None
         try:
             d['experiment'] = self.experiment.to_dict()
         except AttributeError:
@@ -126,12 +120,16 @@ class DataCurve(
             ex: np.array = None,
             ey: np.array = None,
             filename: str = '',
+            data_reader: chisurf.experiments.reader.ExperimentReader = None,
+            experiment: chisurf.experiments.experiment.Experiment = None,
             *args,
             **kwargs
     ):
         super().__init__(
             x=x,
             y=y,
+            data_reader=data_reader,
+            experiment=experiment,
             *args,
             **kwargs
         )
@@ -276,7 +274,7 @@ class DataCurve(
     def __getitem__(
             self,
             key: str
-    ) -> Tuple[
+    ) -> typing.Tuple[
         np.ndarray,
         np.ndarray,
         np.ndarray,
@@ -294,7 +292,7 @@ class DataGroup(
     @property
     def names(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         return [d.name for d in self]
 
     @property
@@ -339,7 +337,7 @@ class DataGroup(
 
     def __init__(
             self,
-            seq: Sequence,
+            seq: typing.Sequence,
             *args,
             **kwargs
     ):

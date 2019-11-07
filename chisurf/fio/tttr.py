@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import Tuple, List, Dict
+import deprecation
 
 import fnmatch
 import tempfile
-from collections import OrderedDict
 import struct
 
 import numba as nb
@@ -14,10 +14,10 @@ import chisurf
 
 
 class Photon(tables.IsDescription):
-    ROUT = tables.UInt8Col()
+    ROUT = tables.Int16Col()
+    EVENT = tables.Int16Col()
     TAC = tables.UInt32Col()
     MT = tables.UInt64Col()
-    FileID = tables.UInt16Col()
 
 
 class Header(tables.IsDescription):
@@ -30,6 +30,11 @@ class Header(tables.IsDescription):
     routine = tables.StringCol(10)
 
 
+@deprecation.deprecated(
+        deprecated_in="19.10.31",
+        current_version="19.08.23",
+        details="Reading of TTTR files should be done using tttrlib"
+    )
 @nb.jit(nopython=True)
 def pq_photons(
         b: np.array,
@@ -71,6 +76,11 @@ def pq_photons(
     return g, mt, tac, can
 
 
+@deprecation.deprecated(
+        deprecated_in="19.10.31",
+        current_version="19.08.23",
+        details="Reading of TTTR files should be done using tttrlib"
+    )
 @nb.jit(nopython=True)
 def bh132_photons(
         b: np.array
@@ -125,6 +135,11 @@ def bh132_photons(
     return g, mt, tac, can
 
 
+@deprecation.deprecated(
+        deprecated_in="19.10.31",
+        current_version="19.08.23",
+        details="Reading of TTTR files should be done using tttrlib"
+    )
 @nb.jit()
 def ht3_photons(
         b: np.array
@@ -168,6 +183,11 @@ def ht3_photons(
     return g, mt, tac, can
 
 
+@deprecation.deprecated(
+        deprecated_in="19.10.31",
+        current_version="19.08.23",
+        details="Reading of TTTR files should be done using tttrlib"
+    )
 @nb.jit()
 def ht3_sf(
         b: np.array,
@@ -332,7 +352,7 @@ def iss_32(
 
 def iss_photons(
         data,
-        **kwargs
+        verbose: bool = chisurf.verbose
 ) -> Tuple[
     np.array,
     np.array,
@@ -350,8 +370,6 @@ def iss_photons(
     :param kwargs:
     :return:
     """
-
-    verbose = kwargs.get('verbose', chisurf.verbose)
     step = 1 if (data[1] == 72) or (data[1] == 104) else 2
 
     #  X (88) two channel time reading_routine, x (120) two channel photon reading_routine
@@ -388,6 +406,12 @@ def iss_photons(
     return k, mt[:k], tac[:k], can[:k]
 
 
+@deprecation.deprecated(
+        deprecated_in="19.10.31",
+        removed_in="20.01.01",
+        current_version="19.08.23",
+        details="the reading of BH132 headers is now in tttrlib"
+    )
 def bh123_header(
         b: np.array
 ) -> Tuple[float, bool]:
@@ -404,7 +428,7 @@ def bh123_header(
 
 
 def iss_header(
-        b
+        b: np.ndarray
 ) -> Tuple[float, bool]:
     # acquisition frequency in Hz
     frequency = b[2:6].view(dtype=np.uint32)[0]
@@ -412,9 +436,14 @@ def iss_header(
     return MTclock, False
 
 
+@deprecation.deprecated(
+        deprecated_in="19.10.31",
+        current_version="19.08.23",
+        details="Reading of TTTR files should be done using tttrlib"
+    )
 def ht3_header(
-        b
-) -> Tuple[float, bool]:
+        b: np.ndarray
+) -> Tuple[float, int]:
     # TODO doesnt read header properly!!!!!
     frequency = b[2:6].view(dtype=np.uint32)[0]
     MTclock = 1. / float(frequency) * 1.e9
@@ -427,8 +456,9 @@ def make_hdf(
         filename: str = None,
         verbose: bool = chisurf.verbose,
         complib: str = chisurf.settings.cs_settings['photons']['complib'],
+        driver: str = "H5FD_CORE",
         **kwargs
-):
+) -> tables.File:
     """
     Creates a new h5-file/h5-handle for photons
 
@@ -439,9 +469,6 @@ def make_hdf(
     if title is None:
         title = str(chisurf.settings.cs_settings['photons']['title'])
     if filename is None:
-        #filename = tempfile.NamedTemporaryFile(
-        #    suffix=".photons.h5"
-        #)
         _, filename = tempfile.mkstemp(
             suffix=".photons.h5"
         )
@@ -454,7 +481,8 @@ def make_hdf(
     h5 = tables.open_file(
         filename,
         mode="a",
-        title=title
+        title=title,
+        driver=driver
     )
     filters = tables.Filters(
         complib=complib,
@@ -467,6 +495,84 @@ def make_hdf(
     return h5
 
 
+def make_spc_dict(
+        macro_times: np.ndarray,
+        micro_times: np.ndarray,
+        routing_channels: np.ndarray,
+        event_types: np.ndarray,
+        macro_time_resolution: float,
+        number_of_events: int,
+        filename: str
+) -> Dict:
+    spc = {
+        'filename': filename,
+        'header': {
+            'DINV': 0,
+            'MTCLK': macro_time_resolution,
+            'nEvents': number_of_events
+        },
+        'photon': {
+            'ROUT': routing_channels,
+            'MT': macro_times,
+            'TAC': micro_times,
+            'TYPE': event_types
+        }
+    }
+    return spc
+
+
+def make_tp_photon_hdf(
+        title: str,
+        filename: str,
+        verbose: bool,
+        routine_name: str,
+        number_of_routing_channels: int,
+        number_of_tac_channels: int,
+        spcs: list,
+        **kwargs
+) -> tables.File:
+    h5 = make_hdf(
+        title=title,
+        filename=filename,
+        verbose=verbose,
+        **kwargs
+    )
+    headertable = h5.get_node('/'+title+'/header')
+    header = headertable.row
+    photontable = h5.get_node('/'+title+'/photons')
+    for fileID, spc in enumerate(spcs):
+        # Add Header
+        header['DINV'] = spc['header']['DINV']
+        header['MTCLK'] = spc['header']['MTCLK']
+        header['NROUT'] = number_of_routing_channels
+        header['Filename'] = spc['filename']
+        header['FileID'] = fileID
+        header['routine'] = routine_name
+        header['nTAC'] = number_of_tac_channels
+        header.append()
+
+        photonA = np.rec.array(
+            (
+                spc['photon']['TYPE'],
+                spc['photon']['MT'],
+                spc['photon']['ROUT'],
+                spc['photon']['TAC']
+            )
+        )
+        photontable.append(photonA)
+
+    photontable.cols.ROUT.create_index()
+    h5.flush()
+    if verbose:
+        print("Reading done!")
+    return h5
+
+
+@deprecation.deprecated(
+        deprecated_in="19.10.31",
+        current_version="19.08.23",
+        details="Reading of TTTR files should be done using tttrlib"
+    )
 def spc2hdf(
         spc_files: List[str],
         routine_name: str = "bh132",
@@ -506,7 +612,6 @@ def spc2hdf(
     >>> import glob
     >>> spc_files = glob.glob('./test/data/tttr/BH/132/*.spc')
     >>> h5 = chisurf.fio.tttr.spc2hdf(spc_files, filename='test.h5', title='hGBP1_18D')
-    >>> h5 = chisurf.fio.photons.spc2hdf(spc_files, filename='test.h5', title='hGBP1_18D_2')
     >>> h5.close()
 
     """
@@ -531,15 +636,15 @@ def spc2hdf(
             b = np.fromfile(fp, dtype=np.uint8)
             header = read_header(b, routine_name)
             nPh, aMT, aTAC, aROUT = read(b)
-            spc = {
-                'filename': spc_file,
-                'header': header,
-                'photon': {
-                    'ROUT': aROUT[:nPh],
-                    'MT': aMT[:nPh],
-                    'TAC': aTAC[:nPh]
-                }
-            }
+            spc = make_spc_dict(
+                macro_times=aMT,
+                micro_times=aTAC,
+                filename=spc_file,
+                number_of_events=nPh,
+                routing_channels=aROUT,
+                macro_time_resolution=header['MTCLK'],
+                event_types=np.ones_like(aROUT)
+            )
             spc['photon']['MT'] += max(spcs[-1]['photon']['MT']) if i > 0 else 0
             spcs.append(spc)
             if verbose:
@@ -552,45 +657,16 @@ def spc2hdf(
         print("-------------------------------------------")
         print(" Total number of files: %i " % (len(spc_files)))
         print("===========================================")
-
-    h5 = make_hdf(
+    return make_tp_photon_hdf(
         title=title,
         filename=filename,
         verbose=verbose,
+        routine_name=routine_name,
+        number_of_tac_channels=nTAC,
+        number_of_routing_channels=nROUT,
+        spcs=spcs,
         **kwargs
     )
-    headertable = h5.get_node('/'+title+'/header')
-    header = headertable.row
-    photontable = h5.get_node('/'+title+'/photons')
-    for fileID, spc in enumerate(spcs):
-        # Add Header
-        header['DINV'] = spc['header']['DINV']
-        header['NROUT'] = nROUT
-        header['Filename'] = spc['filename']
-        header['MTCLK'] = spc['header']['MTCLK']
-        header['FileID'] = fileID
-        header['routine'] = routine_name
-        header['nTAC'] = nTAC
-        header.append()
-        # Add Photons
-        fileID = np.zeros(
-            spc['photon']['MT'].shape, np.uint16
-        ) + fileID
-        photonA = np.rec.array(
-            (
-                fileID,
-                spc['photon']['MT'],
-                spc['photon']['ROUT'],
-                spc['photon']['TAC']
-            )
-        )
-        photontable.append(photonA)
-
-    photontable.cols.ROUT.create_index()
-    h5.flush()
-    if verbose:
-        print("Reading done!")
-    return h5
 
 
 def read_header(
@@ -613,11 +689,11 @@ def read_header(
 
     Reading Seidel-BID files
 
-    >>> import glob, mfm
+    >>> import glob, chisurf.fio.tttr
     >>> directory = "./test/data/tttr/BH/hGBP1_18D"
     >>> spc_files = glob.glob(directory+'/*.spc')
     >>> b = np.fromfile(spc_files[0], dtype=np.uint8)
-    >>> header = chisurf.fio.photons.read_header(b, 'bh132')
+    >>> header = chisurf.fio.tttr.read_header(b, 'bh132')
     >>> print(header)
     {'MTCLK': 13.6, 'DINV': 0, 'nEvents': 1200000}
 
@@ -635,7 +711,7 @@ def read_header(
     return dHeader
 
 
-filetypes = OrderedDict([
+filetypes = dict([
     ("hdf", {
         'name': "High density file",
         'ending': '.h5'
@@ -679,6 +755,11 @@ filetypes = OrderedDict([
 )
 
 
+@deprecation.deprecated(
+        deprecated_in="19.10.31",
+        current_version="19.08.23",
+        details="Reading of TTTR files should be done using tttrlib"
+    )
 @nb.jit(nopython=True)
 def read_hht3(
         data: np.array,
@@ -725,6 +806,11 @@ def read_hht3(
     return sb[:nph], mt[:nph], mi[:nph], cn[:nph]
 
 
+@deprecation.deprecated(
+        deprecated_in="19.10.31",
+        current_version="19.08.23",
+        details="Reading of TTTR files should be done using tttrlib"
+    )
 @nb.jit(nopython=True)
 def read_pht3(
         data: np.array,
@@ -888,6 +974,11 @@ pq_hardware = {
 }
 
 
+@deprecation.deprecated(
+        deprecated_in="19.10.31",
+        current_version="19.08.23",
+        details="Reading of TTTR files should be done using tttrlib"
+    )
 def read_ptu(
         filename: str
 ) -> Dict:

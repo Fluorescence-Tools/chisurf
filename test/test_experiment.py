@@ -3,6 +3,7 @@ import os
 import unittest
 import numpy as np
 import tempfile
+import copy
 
 TOPDIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')
@@ -24,22 +25,36 @@ class Tests(unittest.TestCase):
             experiment.name,
             "AAA"
         )
+
+        experiment_json = experiment.to_json()
+        e2 = chisurf.experiments.experiment.Experiment(name=None)
+        e2.from_json(
+            experiment_json
+        )
+        ref_dict = experiment.to_dict()
+        c_dict = e2.to_dict()
+        for k in ref_dict:
+            self.assertEqual(
+                c_dict[k],
+                ref_dict[k]
+            )
+
         experiment.add_model_class(
-            chisurf.models.model.Model
+            chisurf.models.Model
         )
         self.assertEqual(
-            chisurf.models.model.Model in experiment.model_classes,
+            chisurf.models.Model in experiment.model_classes,
             True
         )
         experiment.add_model_classes(
             [
-                chisurf.models.model.Model
+                chisurf.models.Model
             ]
         )
 
         # Models are unique
         experiment.add_model_class(
-            chisurf.models.model.Model
+            chisurf.models.Model
         )
         self.assertEqual(
             len(experiment.model_classes),
@@ -183,6 +198,11 @@ class Tests(unittest.TestCase):
     def test_FCS_Reader(self):
         import chisurf.experiments
         filename = './test/data/fcs/Kristine/Kristine_with_error.cor'
+        root, ext = os.path.splitext(
+            os.path.basename(
+                filename
+            )
+        )
         ex = chisurf.experiments.experiment.Experiment(
             'FCS'
         )
@@ -195,7 +215,7 @@ class Tests(unittest.TestCase):
         )
         self.assertEqual(
             fcs_curve.name,
-            filename
+            root
         )
         # there is one FCS curve in the Kristine file
         self.assertEqual(
@@ -216,10 +236,6 @@ class Tests(unittest.TestCase):
         csv_io = chisurf.fio.ascii.Csv(
             use_header=False
         )
-        #file = tempfile.NamedTemporaryFile(
-        #    suffix='.txt'
-        #)
-        #filename = file.name
         _, filename = tempfile.mkstemp(
             suffix='.txt'
         )
@@ -231,11 +247,30 @@ class Tests(unittest.TestCase):
         d = chisurf.experiments.data.DataCurve(
             *data
         )
+        d_copy = copy.copy(d)
+        self.assertEqual(
+            np.allclose(
+                d_copy.x,
+                d.x
+            ),
+            True
+        )
+        self.assertEqual(
+            np.allclose(
+                d_copy.y,
+                d.y
+            ),
+            True
+        )
+        self.assertEqual(
+            d.name,
+            d_copy.name
+        )
+        self.assertEqual(
+            d.verbose,
+            d_copy.verbose
+        )
 
-        #file = tempfile.NamedTemporaryFile(
-        #    suffix='.txt'
-        #)
-        #filename = file.name
         _, filename = tempfile.mkstemp(
             suffix='.txt'
         )

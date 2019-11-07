@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Type, List
+import typing
 
 import os
 import uuid
@@ -11,9 +11,10 @@ from collections.abc import Iterable
 
 import yaml
 from slugify import slugify
+import numpy as np
 
 import chisurf
-import chisurf.settings as mfm
+import chisurf.fio
 
 
 class Base(object):
@@ -44,17 +45,27 @@ class Base(object):
             file_type: str = 'yaml',
             verbose: bool = False
     ) -> None:
-        if file_type == "yaml":
-            txt = self.to_yaml()
-        else:
-            txt = self.to_json()
-        if verbose:
-            print(txt)
-        with chisurf.fio.zipped.open_maybe_zipped(
-                filename=filename,
-                mode='w'
-        ) as fp:
-            fp.write(txt)
+        chisurf.logging.info(
+            "%s is saving filename %s as file type %s" % (
+                self.__class__.__name__, filename, file_type
+            )
+        )
+        if file_type in ["yaml", "json"]:
+            txt = ""
+            # check for filename extension
+            root, ext = os.path.splitext(filename)
+            filename = root + "." + file_type
+            if file_type == "yaml":
+                txt = self.to_yaml()
+            elif file_type == "json":
+                txt = self.to_json()
+            if verbose:
+                print(txt)
+            with chisurf.fio.zipped.open_maybe_zipped(
+                    filename=filename,
+                    mode='w'
+            ) as fp:
+                fp.write(txt)
 
     def load(
             self,
@@ -74,29 +85,36 @@ class Base(object):
             )
 
     def to_dict(self) -> dict:
-        return self.__dict__
+        return copy.copy(self.__dict__)
 
     def from_dict(
             self,
             v: dict
     ) -> None:
-        self.__dict__.clear()
         self.__dict__.update(v)
 
     def to_json(
             self,
             indent: int = 4,
-            sort_keys: bool = True
+            sort_keys: bool = True,
+            d: typing.Dict = None
     ) -> str:
+        if d is None:
+            d = self.to_dict()
         return json.dumps(
-            self.to_dict(),
+            obj=to_elementary(
+                d
+            ),
             indent=indent,
             sort_keys=sort_keys
         )
 
     def to_yaml(self) -> str:
-        d = self.to_dict()
-        return yaml.dump(d)
+        return yaml.dump(
+            data=to_elementary(
+                self.to_dict()
+            )
+        )
 
     def from_yaml(
             self,
@@ -180,17 +198,18 @@ class Base(object):
             self,
             key: str
     ):
-        return self.__dict__.get(key, None)
+        return self.__dict__[key]
 
-    # There is a strange problem with the __str__ method and
-    # PyQt therefore it is commented right now
-    # def __str__(self):
-    #     s = 'class: %s\n' % self.__class__.__name__
-    #     s += self.to_yaml()
-    #     return s
+    def __getstate__(self):
+        return self.__dict__
 
-    # def __repr__(self):
-    #     return self.__str__()
+    def __setstate__(self, state):
+        self.__dict__.clear()
+        self.__dict__.update(state)
+
+    def __str__(self):
+        s = 'class: %s\n' % self.__class__.__name__
+        return s
 
     def __init__(
             self,
@@ -249,10 +268,19 @@ class Base(object):
 
     def __copy__(
             self
-    ) -> Type[Base]:
+    ) -> typing.Type[Base]:
         c = self.__class__()
         c.from_dict(
             copy.copy(self.to_dict())
+        )
+        # make sure that the copy gets a new uuid
+        c.unique_identifier = str(uuid.uuid4())
+        return c
+
+    def __deepcopy__(self, memodict={}):
+        c = self.__class__()
+        c.from_dict(
+            copy.deepcopy(self.to_dict())
         )
         # make sure that the copy gets a new uuid
         c.unique_identifier = str(uuid.uuid4())
@@ -267,15 +295,19 @@ class Data(Base):
             data: bytes = None,
             embed_data: bool = None,
             read_file_size_limit: int = None,
-            *args,
+            name: object = None,
+            verbose: bool = False,
+            unique_identifier: str = None,
             **kwargs
     ):
         super().__init__(
-            *args,
+            name=name,
+            verbose=verbose,
+            unique_identifier=unique_identifier,
             **kwargs
         )
-        self._filename = filename
         self._data = data
+        self._filename = None
 
         if embed_data is None:
             embed_data = chisurf.settings.cs_settings['database']['embed_data']
@@ -285,7 +317,7 @@ class Data(Base):
         self._embed_data = embed_data
         self._max_file_size = read_file_size_limit
 
-        self.filename = self._filename
+        self.filename = filename
 
     @property
     def embed_data(
@@ -350,7 +382,7 @@ class Data(Base):
                 print("File size [byte]: %s" % file_size)
         except FileNotFoundError:
             if self.verbose:
-                print("Filename: ", v, "not found.")
+                chisurf.logging.warning("Filename: %s not found" % v)
 
     def __str__(self):
         s = super().__str__()
@@ -373,25 +405,53 @@ def clean_string(
 
 
 def find_objects(
-        search_list: Iterable,
-        object_type,
-        remove_double: bool = True
-) -> List[object]:
-    """Traverse a list recursively a an return all objects of type `object_type` as
+        search_iterable: Iterable,
+        searched_object_type: typing.Type,
+        remove_doublets: bool = True
+) -> typing.List[object]:
+    """Traverse a list recursively a an return all objects of type `searched_object_type` as
     a list
 
-    :param search_list: list
-    :param object_type: an object type
-    :param remove_double: boolean
+    :param search_iterable: list
+    :param searched_object_type: an object type
+    :param remove_doublets: boolean
     :return: list of objects with certain object type
     """
     re = list()
-    for value in search_list:
-        if isinstance(value, object_type):
+    for value in search_iterable:
+        if isinstance(value, searched_object_type):
             re.append(value)
         elif isinstance(value, list):
-            re += find_objects(value, object_type)
-    if remove_double:
+            re += find_objects(value, searched_object_type)
+    if remove_doublets:
         return list(set(re))
     else:
         return re
+
+
+def to_elementary(
+    obj: typing.Dict
+) -> typing.Dict:
+    """
+
+    :param d:
+    :return:
+    """
+
+    if isinstance(obj, dict):
+        re = dict()
+        for k in obj:
+            re[k] = to_elementary(obj[k])
+        return re
+    else:
+        if isinstance(obj, (str, float, int, bool)) or obj is None:
+            return obj
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, list):
+            return [to_elementary(e) for e in obj]
+        elif isinstance(obj, chisurf.base.Base):
+            print(obj.name)
+            return to_elementary(obj.to_dict())
+        else:
+            return None

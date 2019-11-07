@@ -25,7 +25,7 @@ class ParseFormula(
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit = None,
-            model: chisurf.models.model.Model = None,
+            model: chisurf.models.Model = None,
             short: str = '',
             **kwargs
     ):
@@ -144,7 +144,7 @@ class ParseFormulaWidget(
             n_columns: int = None,
             model_file: str = None,
             model_name: str = None,
-            model: chisurf.models.model.Model = None
+            model: chisurf.models.Model = None
     ):
         self.model = model
         if n_columns is None:
@@ -164,8 +164,6 @@ class ParseFormulaWidget(
             model_name = list(self._models)[0]
 
         self.model_name = model_name
-        self.svg_equation = QtSvg.QSvgWidget()
-        self.verticalLayout.addWidget(self.svg_equation)
 
         self.actionFormulaChanged.triggered.connect(self.onEquationChanged)
         self.actionModelChanged.triggered.connect(self.onModelChanged)
@@ -290,6 +288,8 @@ class ParseModelWidget(
             model=self
         )
         layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         layout.setAlignment(QtCore.Qt.AlignTop)
         layout.addWidget(
             parse

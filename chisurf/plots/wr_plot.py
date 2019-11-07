@@ -43,6 +43,9 @@ class ResidualPlot(plotbase.Plot):
             **kwargs
         )
         self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+
         self.data_x, self.data_y = None, None
 
         curves = list()
@@ -64,7 +67,8 @@ class ResidualPlot(plotbase.Plot):
         fits = self.fit
         for ci, fi in zip(self.curves, fits):
             w_res = fi.weighted_residuals
+            x = np.arange(len(w_res.y))
             ci.setData(
-                x=w_res.x,
+                x=x,
                 y=w_res.y
             )

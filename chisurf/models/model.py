@@ -37,14 +37,6 @@ class Model(
     ) -> int:
         return len(self.parameters)
 
-    def finalize(self):
-        self.update()
-        for a in self.aggregated_parameters:
-            if a is not self:
-                a.finalize()
-        #for pa in fitting.parameter.FittingParameter.get_instances():
-        #    pa.finalize()
-
     @property
     def weighted_residuals(
             self
@@ -153,10 +145,12 @@ class ModelCurve(
         )
 
     def get_curves(self):
+        xmin = self.fit.xmin
+        xmax = self.fit.xmax
         return {
             'model': chisurf.curve.Curve(
-                x=self.model.x[self.xmin :self.xmax],
-                y=self.model.y[self.xmin :self.xmax]
+                x=self.x[xmin:xmax],
+                y=self.y[xmin:xmax]
             )
         }
 

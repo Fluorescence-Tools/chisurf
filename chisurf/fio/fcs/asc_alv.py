@@ -1,107 +1,12 @@
 """ALV .ASC files"""
-from __future__ import annotations
-from typing import Dict, List
-
-import csv
 import pathlib
 import warnings
-from . import util
-
 import numpy as np
-
-
-avl_to_yaml = {
-    'Temperature [K] :': {
-        'name': 'temperature',
-        'type': float
-    },
-    'Viscosity [cp]  :': {
-        'name': 'viscosity',
-        'type': float
-    },
-    'Duration [s]    :': {
-        'name': 'acquisition time',
-        'type': float
-    },
-    'MeanCR0 [kHz]   :': {
-        'name': 'mean count rate',
-        'type': float
-    },
-    'MeanCR1 [kHz]   :': {
-        'name': 'mean count rate',
-        'type': float
-    },
-    'MeanCR2 [kHz]   :': {
-        'name': 'mean count rate',
-        'type': float
-    },
-    'MeanCR3 [kHz]   :': {
-        'name': 'mean count rate',
-        'type': float
-    }
-}
+import csv
 
 
 class LoadALVError(BaseException):
     pass
-
-
-def fcs_read_asc_header(
-    filename: str
-):
-    path = pathlib.Path(filename)
-    d = dict()
-    with path.open(
-        mode='r',
-        encoding="iso8859_1"
-    ) as fp:
-        for line in fp.readlines():
-            lv = line.split("\t")
-            try:
-                print(lv[0])
-                d[
-                    avl_to_yaml[lv[0]]['name']
-                ] = avl_to_yaml[lv[0]]['type'].__call__(lv[1])
-            except:
-                pass
-    return d
-
-
-def fcs_read_asc(
-        filename: str
-) -> List[Dict]:
-    d = openASC(filename)
-    correlations = list()
-
-    for i, correlation in enumerate(d['Correlation']):
-        correlation_time = correlation[:, 0]
-        correlation_amplitude = correlation[:, 1]
-        intensity_time = d['Trace'][i][:, 0]
-        intensity = d['Trace'][i][:, 1]
-        aquisition_time = intensity_time[-1]
-        mean_count_rate = np.mean(intensity)
-
-        weights = util.fcs_weights(
-            correlation_time,
-            correlation_amplitude,
-            aquisition_time,
-            mean_count_rate=mean_count_rate
-        )
-
-        correlations.append(
-            {
-                'measurement_id'        : "%s_%s" % (d['Filename'], i),
-                'correlation_time'      : correlation_time,
-                'correlation_amplitude' : correlation_amplitude,
-                'weights'               : weights,
-                'acquisition_time'      : aquisition_time,
-                'mean_count_rate'       : mean_count_rate,
-                'intensity_trace_time'  : intensity_time,
-                'intensity_trace'       : intensity,
-            }
-        )
-
-    return correlations
 
 
 def openASC(path, filename=None):

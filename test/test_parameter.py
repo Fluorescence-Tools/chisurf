@@ -139,12 +139,12 @@ class Tests(unittest.TestCase):
             'name': 'Parameter',
             'verbose': False,
             'unique_identifier': 'b671b0b3-3009-42df-824a-6d690c2b3e54',
-            '_bounds_on': True,
+            'bounds_on': True,
             'controller': None,
             '_link': None,
             '_value': 2.0,
-            '_lb': 1.0,
-            '_ub': 2.5
+            'lb': 1.0,
+            'ub': 2.5
         }
         self.assertEqual(
             p1.to_dict(),
@@ -289,6 +289,29 @@ class Tests(unittest.TestCase):
         self.assertEqual(
             abs(p1.value),
             p2.value
+        )
+
+    def test_parameter_group(self):
+
+        class A(chisurf.parameter.ParameterGroup):
+
+            def __init__(self):
+                self.pv = chisurf.parameter.Parameter(
+                    value=11
+                )
+
+        # The values of Parameters that are grouped in a ParameterGroup
+        # can be written to without explicitly addressing the Parameter
+        #  value attribute
+        a = A()
+        self.assertEqual(
+            a.pv.value,
+            11
+        )
+        a.pv = 22
+        self.assertEqual(
+            a.pv.value,
+            22
         )
 
 

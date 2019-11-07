@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import sys
 import json
-from collections import OrderedDict
 import traceback
 
 from qtpy import QtWidgets, QtCore
@@ -38,7 +37,7 @@ class LabelStructure(
         self.av_properties = chisurf.widgets.accessible_volume.AVProperties()
         self.verticalLayout_4.addWidget(self.av_properties)
 
-        self.textEdit_2 = chisurf.widgets.text_editor.SimpleCodeEditor(
+        self.textEdit_2 = chisurf.tools.text_editor.SimpleCodeEditor(
             language='JSON'
         )
         self.tab_2.layout().addWidget(self.textEdit_2)
@@ -62,8 +61,8 @@ class LabelStructure(
 
         self.structure = None
         self.json_file = None
-        self.positions = OrderedDict()
-        self.distances = OrderedDict()
+        self.positions = dict()
+        self.distances = dict()
 
     def onReadTextEdit(self):
         s = str(self.textEdit_2.text())
@@ -201,7 +200,7 @@ class LabelStructure(
             'PDB-Files (*.pdb);;PDB-GZ (*.pdb.gz)'
         )
         self.pdb_filename = filename
-        self.structure = mfm.structure.structure.Structure(self.pdb_filename)
+        self.structure = chisurf.structure.Structure(self.pdb_filename)
         self.atom_select.atoms = self.structure.atoms
 
     def onAddLabel(self):
@@ -282,7 +281,7 @@ class LabelStructure(
             )
 
     def onUpdateJSON(self):
-        p = OrderedDict()
+        p = dict()
         p["Distances"] = self.distances
         p["Positions"] = self.positions
         s = json.dumps(
@@ -302,8 +301,8 @@ class LabelStructure(
             QtWidgets.QMessageBox.No
         )
         if reply == QtWidgets.QMessageBox.Yes:
-            self.positions = OrderedDict()
-            self.distances = OrderedDict()
+            self.positions = dict()
+            self.distances = dict()
             self.onUpdateInterface()
             self.onUpdateJSON()
 

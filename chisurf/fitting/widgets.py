@@ -7,6 +7,7 @@ import os
 import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 
+import chisurf.decorators
 import chisurf.settings
 import chisurf.experiments.widgets
 import chisurf.widgets
@@ -15,7 +16,7 @@ parameter_settings = chisurf.settings.parameter
 
 
 class FittingControllerWidget(
-    QtWidgets.QWidget
+    chisurf.widgets.Controller
 ):
 
     @property
@@ -71,7 +72,7 @@ class FittingControllerWidget(
             parent=None,
             fit=fit,
             change_event=self.change_dataset,
-            setup=fit.data.setup.__class__
+            setup=fit.data.experiment.__class__
         )
         uic.loadUi(
             os.path.join(
@@ -94,22 +95,8 @@ class FittingControllerWidget(
                     *args,
                     **kwargs
             ):
-                print(args)
-                print(kwargs)
-                f(
-                    *args,
-                    **kwargs
-                )
+                f(*args, **kwargs)
                 self.update(*args)
-
-                #for p in self.plots:
-                #    p.update_all(
-                #        *args,
-                #        only_fit_range=True,
-                #        **kwargs
-                #    )
-                #    p.update()
-
             return update_new
 
         self.fit.run = wrapper(self.fit.run)
@@ -147,19 +134,18 @@ class FittingControllerWidget(
 
     def onRunFit(self):
         chisurf.run("cs.current_fit.run()")
-        for p in self.fit.model.parameters_all:
+        for pa in chisurf.fitting.parameter.FittingParameter.get_instances():
             try:
-                p.controller.finalize()
-            except AttributeError:
-                print("Parameter %s has no controller" % p.name)
+                pa.controller.finalize()
+            except (AttributeError, RuntimeError):
+                chisurf.logging.warning(
+                    "Fitting parameter %s does not have a controller to update." % pa.name
+                )
 
     def onAutoFitRange(self):
-        try:
-            self.fit.fit_range = self.fit.data.setup.autofitrange(
-                self.fit.data
-            )
-        except AttributeError:
-            self.fit.fit_range = 0, len(self.fit.data.x)
+        self.fit.fit_range = self.fit.data.data_reader.autofitrange(
+            self.fit.data
+        )
         self.fit.update()
 
 
@@ -190,6 +176,8 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         self.close_confirm = close_confirm
 
         layout = self.layout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         self.plot_tab_widget = QtWidgets.QTabWidget()
         layout.addWidget(self.plot_tab_widget)
 
@@ -204,7 +192,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             )
             plot.pltControl.hide()
             plots.append(plot)
-            self.plot_tab_widget.addTab(plot, plot.name)
+            self.plot_tab_widget.addTab(plot, plot_class.name)
             control_layout.addWidget(plot.pltControl)
 
         fit.plots = plots
@@ -213,6 +201,8 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
 
         self.on_change_plot()
         self.plot_tab_widget.currentChanged.connect(self.on_change_plot)
+        xs, ys = chisurf.settings.cs_settings['gui']['fit_windows_size']
+        self.resize(xs, ys)
 
     def on_change_plot(self):
         idx = self.plot_tab_widget.currentIndex()
@@ -245,7 +235,9 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             event.accept()
 
 
-class FittingParameterWidget(QtWidgets.QWidget):
+class FittingParameterWidget(
+    chisurf.widgets.Controller
+):
 
     def make_linkcall(
             self,
@@ -254,6 +246,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
     ):
 
         def linkcall():
+            self.blockSignals(True)
             tooltip = " linked to " + parameter_name
             chisurf.run(
                 "cs.current_fit.model.parameters_all_dict['%s'].link = chisurf.fits[%s].model.parameters_all_dict['%s']" %
@@ -263,9 +256,19 @@ class FittingParameterWidget(QtWidgets.QWidget):
                     parameter_name
                 )
             )
+            # Adjust widget of parameter that is linker
             self.widget_link.setToolTip(tooltip)
             self.widget_link.setCheckState(QtCore.Qt.PartiallyChecked)
             self.widget_value.setEnabled(False)
+
+            try:
+                # Adjust widget of parameter that is linked to
+                p = chisurf.fits[fit_idx].model.parameters_all_dict[parameter_name]
+                p.controller.widget_link.setCheckState(QtCore.Qt.Checked)
+            except AttributeError:
+                print("Could not set widget properties of controller")
+
+            self.blockSignals(False)
 
         return linkcall
 
@@ -291,7 +294,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
                     ut = a.parameters
                     ut.sort(key=lambda x: x.name, reverse=False)
                     for p in ut:
-                        if p is not self:
+                        if p is not self.fitting_parameter:
                             Action = action_submenu.addAction(p.name)
                             Action.triggered.connect(
                                 self.make_linkcall(fit_idx, p.name)
@@ -315,6 +318,9 @@ class FittingParameterWidget(QtWidgets.QWidget):
     def __str__(self):
         return ""
 
+    @chisurf.decorators.init_with_ui(
+        ui_filename="variable_widget.ui"
+    )
     def __init__(
             self,
             fitting_parameter: chisurf.fitting.parameter.FittingParameter = None,
@@ -326,9 +332,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
             hide_bounds: bool = None,
             name: str = None,
             label_text: str = None,
-            hide_link: bool = None,
-            *args,
-            **kwargs
+            hide_link: bool = None
     ):
         if hide_link is None:
             hide_link = parameter_settings['hide_link']
@@ -347,15 +351,6 @@ class FittingParameterWidget(QtWidgets.QWidget):
             hide_label = parameter_settings['hide_label']
         if decimals is None:
             decimals = parameter_settings['decimals']
-
-        super().__init__(*args, **kwargs)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "variable_widget.ui"
-            ),
-            self
-        )
 
         if fitting_parameter is None:
             fitting_parameter = chisurf.fitting.parameter.FittingParameter(
@@ -458,22 +453,20 @@ class FittingParameterWidget(QtWidgets.QWidget):
     ):
         if is_linked:
             self.widget_value.setEnabled(False)
-            self.widget_link.setCheckState(QtCore.Qt.Checked)
+            self.widget_link.setCheckState(QtCore.Qt.PartiallyChecked)
         else:
             self.widget_link.setCheckState(QtCore.Qt.Unchecked)
             self.widget_value.setEnabled(True)
 
     def onLinkFitGroup(self):
         self.blockSignals(True)
-        self.widget_value.setEnabled(False)
+        self.widget_value.setEnabled(True)
         chisurf.run(
             "chisurf.macros.link_fit_group('%s', %s)" % (
                 self.fitting_parameter.name,
                 self.widget_link.checkState()
             )
         )
-        self.widget_value.setEnabled(True)
-        self.widget_link.setCheckState(QtCore.Qt.Checked)
         self.blockSignals(False)
 
     def finalize(self, *args):
@@ -481,7 +474,7 @@ class FittingParameterWidget(QtWidgets.QWidget):
         self.blockSignals(True)
 
         # Update value of widget
-        self.widget_value.setValue(float(self.fitting_parameter.value))
+        self.widget_value.setValue(self.fitting_parameter.value)
         if self.fitting_parameter.fixed:
             self.widget_fix.setCheckState(QtCore.Qt.Checked)
         else:
@@ -543,24 +536,32 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
 
 
 def make_fitting_parameter_widget(
-        fitting_parameter,
-        text: str = None,
+        fitting_parameter: chisurf.fitting.parameter.FittingParameter,
+        label_text: str = None,
         layout: QtWidgets.QLayout = None,
         decimals: int = None,
-        **kwargs
+        hide_label: bool = None,
+        hide_error: bool = None,
+        fixable: bool = None,
+        hide_bounds: bool = None,
+        name: str = None,
+        hide_link: bool = None
 ) -> FittingParameterWidget:
 
-    if text is None:
-        text = fitting_parameter.name
-    if decimals is None:
-        decimals = fitting_parameter.decimals
-    update_widget = kwargs.get('update_widget', lambda x: x)
-    kw = {
-        'name': text,
-        'decimals': decimals,
-        'layout': layout
-    }
-    widget = FittingParameterWidget(fitting_parameter, **kw)
+    if label_text is None:
+        label_text = fitting_parameter.name
+    widget = FittingParameterWidget(
+        fitting_parameter,
+        hide_label=hide_label,
+        layout=layout,
+        decimals=decimals,
+        hide_error=hide_error,
+        fixable=fixable,
+        hide_bounds=hide_bounds,
+        name=name,
+        hide_link=hide_link,
+        label_text=label_text
+    )
     fitting_parameter.controller = widget
     return widget
 

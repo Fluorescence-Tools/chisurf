@@ -183,6 +183,9 @@ class CodeEditor(QWidget):
         super(CodeEditor, self).__init__(*args, **kwargs)
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
         self.filename = None
         self.setLayout(layout)
         self.line_edit = QLineEdit()

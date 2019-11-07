@@ -7,6 +7,8 @@ from qtpy import QtWidgets, uic, QtCore, QtGui
 
 import os
 
+import chisurf
+import chisurf.fitting
 import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.math
@@ -37,7 +39,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
     @chisurf.decorators.init_with_ui(ui_filename="convolveWidget.ui")
     def __init__(
             self,
-            fit: fitting.fit.Fit,
+            fit: chisurf.fitting.fit.Fit,
             hide_curve_convolution: bool = True,
             *args,
             **kwargs
@@ -50,18 +52,15 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         """
         if hide_curve_convolution:
             self.radioButton_3.setVisible(not hide_curve_convolution)
-
         layout = QtWidgets.QHBoxLayout()
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._dt,
             layout=layout,
-            fixed=True,
             hide_bounds=True
         )
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._n0,
             layout=layout,
-            fixed=True,
             hide_bounds=True
         )
         self.verticalLayout_2.addLayout(layout)
@@ -91,7 +90,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             fitting_parameter=self._rep,
             layout=self.horizontalLayout_3,
-            text='r[MHz]'
+            label_text='r[MHz]'
         )
 
         self.irf_select = ExperimentalDataSelector(
@@ -105,7 +104,6 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         self.radioButton_3.clicked.connect(self.onConvolutionModeChanged)
         self.radioButton_2.clicked.connect(self.onConvolutionModeChanged)
         self.radioButton.clicked.connect(self.onConvolutionModeChanged)
-        self.groupBox.toggled.connect(self.onConvolutionModeChanged)
 
     def onConvolutionModeChanged(self):
         chisurf.run(
@@ -155,14 +153,17 @@ class CorrectionsWidget(
     Corrections,
     QtWidgets.QWidget
 ):
-    """
 
-    """
-
+    @chisurf.decorators.init_with_ui(
+        ui_filename="tcspcCorrections.ui"
+    )
     def __init__(
             self,
-            fit: fitting.fit.Fit,
+            fit: chisurf.fitting.fit.Fit = None,
             hide_corrections: bool = False,
+            threshold = 0.9,
+            reverse = False,
+            enabled = False,
             **kwargs
     ):
         """
@@ -171,22 +172,6 @@ class CorrectionsWidget(
         :param hide_corrections:
         :param kwargs:
         """
-        super().__init__(
-            fit=fit,
-            threshold=0.9,
-            reverse=False,
-            enabled=False,
-            **kwargs
-        )
-        QtWidgets.QWidget.__init__(self)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "tcspcCorrections.ui"
-            ),
-            self
-        )
-
         self.groupBox.setChecked(False)
         self.comboBox.addItems(chisurf.math.signal.window_function_types)
         if hide_corrections:
@@ -195,18 +180,18 @@ class CorrectionsWidget(
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._dead_time,
             layout=self.horizontalLayout_2,
-            text='t<sub>dead</sub>[ns]'
+            label_text='t<sub>dead</sub>[ns]'
         )
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._window_length,
             layout=self.horizontalLayout_2,
-            text='t<sub>dead</sub>[ns]'
+            label_text='t<sub>dead</sub>[ns]'
         )
 
         self.lin_select = ExperimentalDataSelector(
             parent=None,
             change_event=self.onChangeLin,
-            fit=self.fit,
+            fit=fit,
             setup=chisurf.experiments.tcspc.tcspc.TCSPCReader
         )
 
@@ -250,7 +235,7 @@ class CorrectionsWidget(
 
 
 class GenericWidget(
-    QtWidgets.QWidget,
+    QtWidgets.QGroupBox,
     Generic
 ):
     """
@@ -275,6 +260,7 @@ class GenericWidget(
     def __init__(
             self,
             hide_generic: bool = False,
+            *args,
             **kwargs
     ):
         """
@@ -282,47 +268,44 @@ class GenericWidget(
         :param hide_generic:
         :param kwargs:
         """
-        super().__init__(**kwargs)
-
-        self.parent = kwargs.get('parent', None)
-
+        super().__init__(
+            *args,
+            **kwargs
+        )
         if hide_generic:
             self.hide()
-
         self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
-        gb = QtWidgets.QGroupBox()
-        gb.setTitle("Generic")
-        self.layout.addWidget(gb)
+        self.setTitle("Generic")
 
-        gbl = QtWidgets.QVBoxLayout()
-
-        gb.setLayout(gbl)
         # Generic parameters
-        l = QtWidgets.QGridLayout()
-        gbl.addLayout(l)
-
         sc_w = chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._sc,
-            text='Sc'
+            label_text='Sc',
         )
         bg_w = chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._bg,
-            text='Bg'
+            label_text='Bg'
         )
         tmeas_bg_w = chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_bg,
-            text='t<sub>Bg</sub>'
+            label_text='t<sub>Bg</sub>'
         )
         tmeas_exp_w = chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_exp,
-            text='t<sub>Meas</sub>'
+            label_text='t<sub>Meas</sub>'
         )
 
+        l = QtWidgets.QGridLayout()
+        l.setContentsMargins(0, 0, 0, 0)
+        l.setSpacing(0)
         l.addWidget(sc_w, 1, 0)
         l.addWidget(bg_w, 1, 1)
         l.addWidget(tmeas_bg_w, 2, 0)
         l.addWidget(tmeas_exp_w, 2, 1)
+        self.layout.addLayout(l)
 
         ly = QtWidgets.QHBoxLayout()
         l.addLayout(ly, 0, 0, 1, 2)
@@ -356,28 +339,25 @@ class GenericWidget(
 
 class AnisotropyWidget(
     Anisotropy,
-    QtWidgets.QWidget
+    QtWidgets.QGroupBox
 ):
-    """
-
-    """
 
     def __init__(
             self,
+            *args,
             **kwargs
     ):
         super().__init__(
+            *args,
             **kwargs
         )
 
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setAlignment(QtCore.Qt.AlignTop)
-
-        self.gb = QtWidgets.QGroupBox()
-        self.gb.setTitle("Rotational-times")
+        self.setTitle("Rotational-times")
         self.lh = QtWidgets.QVBoxLayout()
-        self.gb.setLayout(self.lh)
-        self.layout.addWidget(self.gb)
+        self.lh.setContentsMargins(0, 0, 0, 0)
+        self.lh.setSpacing(0)
+
+        self.setLayout(self.lh)
         self.rot_vis = False
         self._rho_widgets = list()
         self._b_widgets = list()
@@ -415,6 +395,8 @@ class AnisotropyWidget(
         )
 
         layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
         add_rho = QtWidgets.QPushButton()
         add_rho.setText("add")
@@ -439,37 +421,39 @@ class AnisotropyWidget(
 
         self.gb = QtWidgets.QGroupBox()
         self.lh.addWidget(self.gb)
+
         self.lh = QtWidgets.QVBoxLayout()
+        self.lh.setContentsMargins(0, 0, 0, 0)
+        self.lh.setSpacing(0)
         self.gb.setLayout(self.lh)
 
         layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._r0,
-            text='r0',
-            layout=layout,
-            fixed=True
+            label_text='r0',
+            layout=layout
         )
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._g,
-            text='g',
-            layout=layout,
-            fixed=True
+            label_text='g',
+            layout=layout
         )
         self.lh.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._l1,
-            text='l1',
+            label_text='l1',
             layout=layout,
-            fixed=True,
             decimals=4
         )
         chisurf.fitting.widgets.make_fitting_parameter_widget(
             self._l2,
-            text='l2',
+            label_text='l2',
             layout=layout,
-            fixed=True,
             decimals=4
         )
         self.lh.addLayout(layout)
@@ -510,6 +494,9 @@ class AnisotropyWidget(
     def add_rotation(self, **kwargs):
         Anisotropy.add_rotation(self, **kwargs)
         layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
         self.lh.addLayout(layout)
         self._rho_widgets.append(
             chisurf.fitting.widgets.make_fitting_parameter_widget(
@@ -535,17 +522,14 @@ class AnisotropyWidget(
 
 class PDDEMWidget(QtWidgets.QWidget, PDDEM):
 
-    def __init__(self, **kwargs):
-        QtWidgets.QWidget.__init__(self)
-        PDDEM.__init__(self, **kwargs)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "pddem.ui"
-            ),
-            self
-        )
-
+    @chisurf.decorators.init_with_ui(
+        ui_filename="pddem.ui"
+    )
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
         layout = QtWidgets.QHBoxLayout()
         self._fAB = self._fAB.make_widget(layout=layout, text='A>B')
         self._fBA = self._fBA.make_widget(layout=layout, text='B>A')
@@ -697,15 +681,24 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         super().__init__(**kwargs)
 
         self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+
         self.gb = QtWidgets.QGroupBox()
         self.gb.setTitle(title)
+
         self.lh = QtWidgets.QVBoxLayout()
+        self.lh.setContentsMargins(0, 0, 0, 0)
+        self.lh.setSpacing(0)
+
         self.gb.setLayout(self.lh)
         self.layout.addWidget(self.gb)
         self._amp_widgets = list()
         self._lifetime_widgets = list()
 
         lh = QtWidgets.QHBoxLayout()
+        lh.setContentsMargins(0, 0, 0, 0)
+        lh.setSpacing(0)
 
         addDonor = QtWidgets.QPushButton()
         addDonor.setText("add")
@@ -774,6 +767,8 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
     def append(self, *args, **kwargs):
         Lifetime.append(self, *args, **kwargs)
         layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         #amplitude = self._amplitudes[-1].make_widget(layout=layout)
         #self._amp_widgets.append(amplitude)
 
@@ -783,9 +778,6 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
                 layout=layout
             )
         )
-
-        #lifetime = self._lifetimes[-1].make_widget(layout=layout)
-        #self._lifetime_widgets.append(lifetime)
 
         self._lifetime_widgets.append(
             chisurf.fitting.widgets.make_fitting_parameter_widget(
@@ -828,11 +820,6 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
             parent=self,
             **kwargs
         )
-        anisotropy = AnisotropyWidget(
-            name='anisotropy',
-            short='rL',
-            **kwargs
-        )
         convolve = ConvolveWidget(
             name='convolve',
             fit=fit,
@@ -846,25 +833,23 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
         )
         layout = QtWidgets.QVBoxLayout(self)
         layout.setAlignment(QtCore.Qt.AlignTop)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         ## add widgets
         if not hide_nuisances:
             layout.addWidget(convolve)
             layout.addWidget(generic)
-
-        self.layout_parameter = QtWidgets.QVBoxLayout()
-
-        layout.addLayout(self.layout_parameter)
-        if not hide_nuisances:
-            layout.addWidget(anisotropy)
             layout.addWidget(corrections)
+
+        if hide_nuisances:
+            corrections.hide()
 
         self.setLayout(layout)
         self.layout = layout
 
         self.generic = generic
         self.corrections = corrections
-        self.anisotropy = anisotropy
         self.convolve = convolve
 
 
@@ -886,7 +871,14 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
             short='L',
             fit=fit
         )
-        self.layout_parameter.addWidget(self.lifetimes)
+        anisotropy = AnisotropyWidget(
+            name='anisotropy',
+            short='rL',
+            **kwargs
+        )
+        self.anisotropy = anisotropy
+        self.layout.addWidget(self.lifetimes)
+        self.layout.addWidget(anisotropy)
 
 
 class GaussianWidget(Gaussians, QtWidgets.QWidget):
@@ -1002,7 +994,7 @@ class DiscreteDistanceWidget(
     def __init__(
             self,
             donors,
-            model: chisurf.models.model.Model = None,
+            model: chisurf.models.Model = None,
             **kwargs
     ):
         super().__init__(
@@ -1259,7 +1251,10 @@ class WormLikeChainModelWidget(
             layout=layout
         )
 
-        self.layout_parameter.addWidget(self.fret_parameters.to_widget())
+        chisurf.fitting.widgets.make_fitting_parameter_group_widget(
+            fitting_parameter_group=self.fret_parameters,
+            layout=self.layout_parameter
+        )
         self.layout_parameter.addWidget(donors)
         self.layout_parameter.addLayout(layout)
 
