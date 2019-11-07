@@ -1,21 +1,8 @@
-dist: xenial
 language: python
 sudo: required
-python:
- # We don't actually use the Travis Python, but this keeps it organized.
- - "3.7"
-
-language: python
-
-matrix:
-  include:
-    # Python for osx currently not supported. We don't need it anyways.
-    - os: osx
-      language: generic
-      env: TRAVIS_PYTHON_VERSION=3.7
-    - os: linux
-      language: generic
-      env: TRAVIS_PYTHON_VERSION=3.7
+os:
+  - linux
+  - osx
 
 addons:
   apt:

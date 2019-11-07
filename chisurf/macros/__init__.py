@@ -81,7 +81,7 @@ def save_fit(
         target_path: str = None
 ):
     cs = chisurf.cs
-
+    fit = cs.current_fit
     fit_control_widget = cs.current_fit_widget
     fit_group = fit_control_widget.fit
     current_fit_window = cs.mdiarea.currentSubWindow()
@@ -93,19 +93,17 @@ def save_fit(
         target_path = chisurf.working_path
     if os.path.isdir(target_path):
         _ = document.add_heading('Fit-Results', level=1)
-        for i, fit in enumerate(fit_group):
-
+        clean_name = chisurf.base.clean_string(fit.name)
+        filename = os.path.join(target_path, clean_name)
+        fit.save(filename, clean_name)
+        for i, f in enumerate(fit):
             fit_control_widget.selected_fit = i
             fit_name = os.path.basename(fit.data.name)[0]
-            model = cs.current_fit.model
+            model = f.model
             document.add_paragraph(
                 text=fit_name,
                 style='ListNumber'
             )
-
-            clean_name = chisurf.base.clean_string(fit_name)
-            target_dir = os.path.join(target_path, str(i) + clean_name)
-            os.makedirs(target_dir)
 
             for png_name, source in zip(
                 ['screenshot_fit.png', 'screenshot_model.png'],
@@ -120,7 +118,6 @@ def save_fit(
                     ),
                     width=Inches(2.0)
                 )
-            cs.current_fit.save(target_dir, clean_name)
 
         document.add_heading(
             text='Summary',
