@@ -26,7 +26,6 @@ services:
   - xvfb
 
 before_install:
-  - git fetch --unshallow
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MINICONDA_OS=Linux; else MINICONDA_OS=MacOSX; fi
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-$MINICONDA_OS-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
@@ -39,6 +38,9 @@ before_install:
   - conda update -q conda
   - conda info -a
   - conda install git conda-build anaconda-client jinja2
+  - conda activate base
+  - git pull
+  - git fetch --unshallow
   - conda build conda-recipe --output-folder bld-dir
   - conda config --add channels "file://`pwd`/bld-dir"
 
