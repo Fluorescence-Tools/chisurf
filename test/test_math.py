@@ -90,4 +90,3 @@ class Tests(unittest.TestCase):
         self.assertEqual(f_lower, 2.727272727272727)
         self.assertEqual(f_upper, 7.2727272727272725)
 
-

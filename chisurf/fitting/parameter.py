@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-from typing import Tuple, List
+import typing
 import deprecation
 
 from qtpy import QtWidgets
@@ -50,7 +50,7 @@ class FittingParameter(
     @property
     def parameter_scan(
             self
-    ) -> Tuple[
+    ) -> typing.Tuple[
         np.array,
         np.array
     ]:
@@ -59,7 +59,7 @@ class FittingParameter(
     @parameter_scan.setter
     def parameter_scan(
             self,
-            v: Tuple[np.array, np.array]
+            v: typing.Tuple[np.array, np.array]
     ):
         self._values, self._chi2s = v
 
@@ -196,15 +196,15 @@ class FittingParameterGroup(
     @property
     def parameter_bounds(
             self
-    ) -> List[
-        Tuple[float, float]
+    ) -> typing.List[
+        typing.Tuple[float, float]
     ]:
         return [pi.bounds for pi in self.parameters]
 
     @property
     def parameters_all(
             self
-    ) -> List[
+    ) -> typing.List[
         chisurf.fitting.parameter.FittingParameter
     ]:
         return self._parameters
@@ -212,7 +212,7 @@ class FittingParameterGroup(
     @property
     def parameters(
             self
-    ) -> List[
+    ) -> typing.List[
         chisurf.fitting.parameter.FittingParameter
     ]:
         return [
@@ -220,7 +220,9 @@ class FittingParameterGroup(
         ]
 
     @property
-    def parameters_all_dict(self):
+    def parameters_all_dict(
+            self
+    ) -> typing.Dict:
         return dict([(p.name, p) for p in self.parameters_all])
 
     @property
@@ -247,19 +249,19 @@ class FittingParameterGroup(
     @property
     def parameter_names(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         return [p.name for p in self.parameters]
 
     @property
     def parameter_values(
             self
-    ) -> List[float]:
+    ) -> typing.List[float]:
         return [p.value for p in self.parameters]
 
     @parameter_values.setter
     def parameter_values(
             self,
-            vs: List[float]
+            vs: typing.List[float]
     ):
         ps = self.parameters
         for i, v in enumerate(vs):
@@ -353,7 +355,7 @@ class FittingParameterGroup(
             fit: chisurf.fitting.fit.Fit = None,
             model: chisurf.models.Model = None,
             short: str = '',
-            parameters: List[
+            parameters: typing.List[
                 chisurf.fitting.parameter.FittingParameter
             ] = None,
             *args, **kwargs):

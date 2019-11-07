@@ -88,8 +88,13 @@ class Model(
 
         s += "Parameter\tValue\tBounds\tFixed\tLinked\n"
         for k in keylist:
-            p = (pd[k].name, pd[k].value, pd[k].bounds, pd[k].fixed, pd[k].is_linked)
-            s += "%s\t%.4e\t%s\t%s\t%s\n" % p
+            p = pd[k]
+            if isinstance(p, chisurf.fitting.parameter.FittingParameter):
+                s += "%s\t%.4e\t%s\t%s\t%s\n" % (p[k].name, p[k].value, p[k].bounds, p[k].fixed, p[k].is_linked)
+            else:
+                chisurf.logging.warning(
+                    "The object is of type %s and is not a FittingParameter" % p.__class__.__name__
+                )
         return s
 
 
