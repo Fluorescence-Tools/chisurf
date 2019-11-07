@@ -4,8 +4,8 @@ sudo: required
 env:
   # Build and test package on all supported python versions
   - BUILD_TARGET=3.7 MINICONDA_VERSION=latest
-  # To make sure it's still working with conda 4.6 and 4.5
-  - BUILD_TARGET=3.7 MINICONDA_VERSION=4.6.14
+  # To make sure it's still working with conda 4.6
+  # - BUILD_TARGET=3.7 MINICONDA_VERSION=4.6.14
 
 matrix:
   include:
@@ -51,9 +51,13 @@ install:
   - conda install chisurf
 
 script:
-  - conda install nose coverage
-  - python setup.py build_ext --inplace --force
-  - xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test/test_*.py
+  - | # osx does not have xvfb server for testing gui
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]];
+    then
+      conda install nose coverage
+      python setup.py build_ext --inplace --force
+      xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test/test_*.py;
+    fi
 
 after_success:
   - OS=$TRAVIS_OS_NAME-64
