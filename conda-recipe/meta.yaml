@@ -58,6 +58,7 @@ requirements:
     - mrcfile
     - htmd-pdb2pqr
     - pymol-open-source
+    - tttrlib
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
