@@ -38,7 +38,7 @@ before_install:
   - conda update -q conda
   - conda info -a
   - conda create -q -n build-environment python=$TRAVIS_PYTHON_VERSION conda-build anaconda-client jinja2 git
-  - conda activate test-environment
+  - source activate build-environment
   - git pull
   - git fetch --unshallow
   - conda build conda-recipe --output-folder bld-dir
