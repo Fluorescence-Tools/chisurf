@@ -1,21 +1,16 @@
 language: python
 sudo: required
 
+os:
+  - osx
+  - linux
+
 env:
   # Build and test package on all supported python versions
   - BUILD_TARGET=3.7 MINICONDA_VERSION=latest
   # To make sure it's still working with conda 4.6 and 4.5
   - BUILD_TARGET=3.7 MINICONDA_VERSION=4.6.14
   - BUILD_TARGET=3.7 MINICONDA_VERSION=4.5.12
-
-matrix:
-  include:
-    - os: osx
-      language: generic
-      env: TRAVIS_PYTHON_VERSION=2.7
-    - os: linux
-      language: generic
-      env: TRAVIS_PYTHON_VERSION=3.7
 
 addons:
   apt:
