@@ -1,8 +1,18 @@
-dist: xenial
 language: python
 sudo: required
-python:
-  - "3.7"
+
+env:
+  # Build and test package on all supported python versions
+  - BUILD_TARGET=3.7 MINICONDA_VERSION=latest
+  # To make sure it's still working with conda 4.6
+  # - BUILD_TARGET=3.7 MINICONDA_VERSION=4.6.14
+
+matrix:
+  include:
+    - os: osx
+      language: generic
+    - os: linux
+      language: generic
 
 addons:
   apt:
@@ -20,9 +30,8 @@ services:
   - xvfb
 
 before_install:
-  - git fetch --unshallow
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MINICONDA_OS=Linux; else MINICONDA_OS=MacOSX; fi
-  - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-$MINICONDA_OS-x86_64.sh -O miniconda.sh
+  - wget https://repo.continuum.io/miniconda/Miniconda3-$MINICONDA_VERSION-$MINICONDA_OS-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
@@ -32,7 +41,9 @@ before_install:
   - conda config --add channels tpeulen
   - conda update -q conda
   - conda info -a
-  - conda install git conda-build anaconda-client jinja2
+  - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git
+  - source activate build-environment
+  - git fetch --unshallow --tags --force
   - conda build conda-recipe --output-folder bld-dir
   - conda config --add channels "file://`pwd`/bld-dir"
 
@@ -40,9 +51,13 @@ install:
   - conda install chisurf
 
 script:
-  - conda install nose coverage
-  - python setup.py build_ext --inplace --force
-  - xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test/test_*.py
+  - | # osx does not have xvfb server for testing gui
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]];
+    then
+      conda install nose coverage
+      python setup.py build_ext --inplace --force
+      xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test/test_*.py;
+    fi
 
 after_success:
   - OS=$TRAVIS_OS_NAME-64
