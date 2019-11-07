@@ -8,7 +8,7 @@ matrix:
       env: TRAVIS_PYTHON_VERSION=2.7
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.6
+      env: TRAVIS_PYTHON_VERSION=3.7
 
 addons:
   apt:
@@ -39,8 +39,7 @@ before_install:
   - conda info -a
   - conda create -q -n build-environment python=$TRAVIS_PYTHON_VERSION conda-build anaconda-client jinja2 git
   - source activate build-environment
-  - git pull
-  - git fetch --unshallow
+  - git fetch --unshallow --tags --force
   - conda build conda-recipe --output-folder bld-dir
   - conda config --add channels "file://`pwd`/bld-dir"
 
