@@ -1,9 +1,9 @@
 {% set name = "chisurf" %}
-{% set version = "19.9.22" %}
+{% set version = "latest" %}
 
 package:
   name: {{ name|lower }}
-  version: {{ GIT_DESCRIBE_TAG }}
+  version: {{ version|lower }}
 
 source:
   git_url: ..
