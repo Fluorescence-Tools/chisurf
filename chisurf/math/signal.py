@@ -94,9 +94,8 @@ def shift_array(
 
 
 def autocorr(
-        x: np.array,
+        x: np.ndarray,
         axis: int = 0,
-        fast: bool = False,
         normalize: bool = True
 ) -> np.array:
     """
@@ -115,66 +114,67 @@ def autocorr(
         (default: False)
 
     """
-    # OLD
-    # x = np.atleast_1d(x)
-    # m = [slice(None), ] * len(x.shape)
-    #
-    # # For computational efficiency, crop the chain to the largest power of
-    # # two if requested.
     # if fast:
+    #     # For computational efficiency, crop the chain to the largest power of two.
+    #     x = np.atleast_1d(x)
+    #     m = [slice(None), ] * len(x.shape)
     #     n = int(2**np.floor(np.log2(x.shape[axis])))
     #     m[axis] = slice(0, n)
-    #     x = x
+    #     # Compute the FFT and then (from that) the auto-correlation function.
+    #     f = np.fft.fft(x-np.mean(x, axis=axis), n=2*n, axis=axis)
+    #     m[axis] = slice(0, n)
+    #     acf = np.fft.ifft(f * np.conjugate(f), axis=axis)[m].real
+    #     m[axis] = 0
+    #     if normalize:
+    #         return acf / acf[m]
+    #     else:
+    #         return acf
     # else:
-    #     n = x.shape[axis]
-    #
-    # # Compute the FFT and then (from that) the auto-correlation function.
-    # f = np.fft.fft(x-np.mean(x, axis=axis), n=2*n, axis=axis)
-    # m[axis] = slice(0, n)
-    # acf = np.fft.ifft(f * np.conjugate(f), axis=axis)[m].real
-    # m[axis] = 0
-    # if normalize:
-    #     return acf / acf[m]
-    # else:
-    #     return acf
-
-    return xcorr_fft(
-        x,
-        x,
-        axis=axis,
-        fast=fast,
-        normalize=normalize
-    )
+    if len(x) > 0:
+        return xcorr_fft(
+            in_1=x,
+            in_2=x,
+            axis=axis,
+            normalize=normalize
+        )
+    else:
+        return np.array([], dtype=x.dtype)
 
 
 def xcorr_fft(
-        c: np.array,
-        d: np.array,
+        in_1: np.ndarray,
+        in_2: np.ndarray,
         axis: int = 0,
-        normalize: bool = True,
-        fast: bool = False
-) -> np.array:
+        normalize: bool = True
+) -> np.ndarray:
+    """Computes the cross-correlation function of two arrays using fast fourier transforms.
+
+    If the ccf could not be computed a numpy array filled with ones is returned.
+
+    :param in_1: a numpy array that is cross-correlated with signal_b
+    :param in_2: a numpy array that is cross-correlated with signal_a
+    :param normalize: if normalize is True a normalized cross correlation function is returned
+    :return: a cross-correlation of the two input signals
     """
+    if len(in_1) > 0 and len(in_2) > 0:
+        c = in_1
+        d = in_2
+        n = c.shape[axis]
+        m = [slice(None), ] * len(c.shape)
 
-    :param a:
-    :param b:
-    :return:
-    """
+        # Compute the FFT and then (from that) the auto-correlation function.
+        f1 = np.fft.fft(c-np.mean(c, axis=axis), n=2*n, axis=axis)
+        f2 = np.fft.fft(d-np.mean(d, axis=axis), n=2*n, axis=axis)
 
-    n = c.shape[axis]
-    m = [slice(None), ] * len(c.shape)
-
-    # Compute the FFT and then (from that) the auto-correlation function.
-    f1 = np.fft.fft(c-np.mean(c, axis=axis), n=2*n, axis=axis)
-    f2 = np.fft.fft(d-np.mean(d, axis=axis), n=2*n, axis=axis)
-
-    m[axis] = slice(0, n)
-    acf = np.fft.ifft(f1 * np.conjugate(f2), axis=axis)[m].real
-    m[axis] = 0
-    if normalize:
-        return acf / acf[m]
+        m[axis] = slice(0, n)
+        acf = np.fft.ifft(f1 * np.conjugate(f2), axis=axis)[m].real
+        m[axis] = 0
+        if normalize:
+            return acf / acf[m]
+        else:
+            return acf
     else:
-        return acf
+        return np.array([], dtype=in_1.dtype)
 
 
 def calculate_fwhm(
