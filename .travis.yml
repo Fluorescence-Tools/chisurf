@@ -37,9 +37,8 @@ before_install:
   - conda config --add channels tpeulen
   - conda update -q conda
   - conda info -a
-  - conda install git conda-build anaconda-client jinja2
-  - conda init bash
-  - conda activate base
+  - conda create -q -n build-environment python=$TRAVIS_PYTHON_VERSION conda-build anaconda-client jinja2 git
+  - conda activate test-environment
   - git pull
   - git fetch --unshallow
   - conda build conda-recipe --output-folder bld-dir
