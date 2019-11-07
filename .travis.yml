@@ -1,5 +1,12 @@
 language: python
 sudo: required
+
+env:
+  # Build and test package on all supported python versions
+  - BUILD_TARGET=3.7 MINICONDA_VERSION=4.7.10
+  # To make sure it's still working with conda 4.5 and 4.6
+  - BUILD_TARGET=3.7 MINICONDA_VERSION=4.6.14
+
 os:
   - linux
   - osx
@@ -20,9 +27,8 @@ services:
   - xvfb
 
 before_install:
-  - git fetch --unshallow
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MINICONDA_OS=Linux; else MINICONDA_OS=MacOSX; fi
-  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-$MINICONDA_OS-x86_64.sh -O miniconda.sh
+  - wget https://repo.anaconda.com/miniconda/Miniconda3-$MINICONDA_VERSION-$MINICONDA_OS-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
