@@ -38,6 +38,7 @@ before_install:
   - conda update -q conda
   - conda info -a
   - conda install git conda-build anaconda-client jinja2
+  - conda init bash
   - conda activate base
   - git pull
   - git fetch --unshallow
