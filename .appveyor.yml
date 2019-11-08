@@ -3,6 +3,7 @@ platform:
 image: Visual Studio 2017
 
 environment:
+  BUILD_TARGET: 3.7
   matrix:
     - PYTHON: "C:\\Miniconda3-x64"
 
@@ -19,7 +20,7 @@ install:
   - conda config --add channels tpeulen
   - conda update -q conda
   - conda info -a
-  - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git nose coverage
+  - conda create -q -n build-environment python=%BUILD_TARGET% conda-build anaconda-client jinja2 git nose coverage
   - activate build-environment
   - git fetch --tags --force
   - conda build conda-recipe
