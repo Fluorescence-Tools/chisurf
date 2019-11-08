@@ -676,7 +676,7 @@ class Main(QtWidgets.QMainWindow):
         self.verticalLayout_8.addWidget(self.dataset_selector)
 
 
-def gui():
+def qt_app():
     app = QtWidgets.QApplication(sys.argv)
     chisurf.console = chisurf.widgets.QIPythonWidget()
     win = Main()
@@ -699,6 +699,11 @@ def gui():
     return app
 
 
-if __name__ == "__main__":
-    app = gui()
+def main():
+    app = qt_app()
     sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()
+
