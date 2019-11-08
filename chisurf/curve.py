@@ -90,10 +90,7 @@ class Curve(
             y = np.array(list(), dtype=np.float64)
         if len(y) != len(x):
             raise ValueError(
-                "length of x (%s) and y (%s) differ" % (
-                    len(self._x),
-                    len(self._y)
-                )
+                "length of x (%s) and y (%s) differ" % (len(x), len(y))
             )
         if copy_array:
             self.x = np.copy(x)

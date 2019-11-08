@@ -227,6 +227,22 @@ class Tests(unittest.TestCase):
             207
         )
 
+        ref_str = """Dataset:
+filename: None
+length  : 207
+x	y	error-x	error-y
+1.360e-05   	4.216e+00   	1.000e+00   	1.174e-01   	
+2.719e-05   	3.877e+00   	1.000e+00   	1.370e-01   	
+4.079e-05   	3.670e+00   	1.000e+00   	1.329e-01   	
+....
+2.737e+03   	1.007e+00   	1.000e+00   	9.853e-03   	
+2.965e+03   	1.005e+00   	1.000e+00   	6.491e-03   	
+"""
+        self.assertEqual(
+            ref_str,
+            fcs_curve[0].__str__()
+        )
+
     def test_DataCurve(self):
         x = np.linspace(0, np.pi * 2.0)
         y = np.sin(x)
@@ -239,14 +255,11 @@ class Tests(unittest.TestCase):
         _, filename = tempfile.mkstemp(
             suffix='.txt'
         )
-
         csv_io.save(
             data=data,
             filename=filename
         )
-        d = chisurf.experiments.data.DataCurve(
-            *data
-        )
+        d = chisurf.experiments.data.DataCurve(*data)
         d_copy = copy.copy(d)
         self.assertEqual(
             np.allclose(
@@ -282,18 +295,6 @@ class Tests(unittest.TestCase):
         self.assertEqual(
             d.filename,
             filename
-        )
-
-        reference_string = """
-length  : 50
-x	y	error-x	error-y
-0.000e+00   	0.000e+00   	0.000e+00   	1.000e+00   	
-1.282e-01   	1.279e-01   	0.000e+00   	1.000e+00   	
-....
-6.027e+00   	-2.537e-01  	0.000e+00   	1.000e+00  """
-        self.assertEqual(
-            reference_string in d.__str__(),
-            True
         )
 
         d2 = chisurf.experiments.data.DataCurve()

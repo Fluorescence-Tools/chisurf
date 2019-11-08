@@ -7,24 +7,24 @@ import qdarkstyle
 
 import mdtraj
 
+import chisurf.fio
 import chisurf.widgets
-import chisurf.settings as mfm
 import chisurf.decorators
-from chisurf.structure.potential import potentialDict
-from chisurf.structure.trajectory import TrajectoryFile, Universe
+import chisurf.structure.potential
+import chisurf.structure.trajectory
 
 
 class PotentialEnergyWidget(QtWidgets.QWidget):
 
     name = "Potential-Energy calculator"
 
-    @chisurf.decorators.init_with_ui(ui_filename="calculate_potential.ui")
+    @chisurf.decorators.init_with_ui(
+        ui_filename="calculate_potential.ui"
+    )
     def __init__(
             self,
             verbose: bool = False,
-            structure: mfm.structure.structure.Structure = None,
-            *args,
-            **kwargs
+            structure: chisurf.structure.Structure = None
     ):
         self._trajectory_file = ''
         self.potential_weight = 1.0
@@ -32,7 +32,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
 
         self.verbose = verbose
         self.structure = structure
-        self.universe = Universe()
+        self.universe = chisurf.structure.Universe()
 
         self.actionOpen_trajectory.triggered.connect(self.onLoadTrajectory)
         self.actionProcess_trajectory.triggered.connect(self.onProcessTrajectory)
@@ -40,21 +40,29 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         self.tableWidget.cellDoubleClicked [int, int].connect(self.onRemovePotential)
         self.actionCurrent_potential_changed.triggered.connect(self.onSelectedPotentialChanged)
 
-        self.comboBox_2.addItems(list(potentialDict))
+        self.comboBox_2.addItems(
+            list(chisurf.structure.potential.potentialDict)
+        )
 
     @property
-    def potential_number(self) -> int:
+    def potential_number(
+            self
+    ) -> int:
         return int(self.comboBox_2.currentIndex())
 
     @property
-    def potential_name(self) -> str:
-        return list(potentialDict)[self.potential_number]
+    def potential_name(
+            self
+    ) -> str:
+        return list(
+            chisurf.structure.potential.potentialDict
+        )[self.potential_number]
 
     def onProcessTrajectory(self):
         print("onProcessTrajectory")
         energy_file = chisurf.widgets.save_file(
-            'Save energies',
-            'CSV-name file (*.txt)'
+            description='Save energies',
+            file_type='CSV-name file (*.txt)'
         )
 
         s = 'FrameNbr\t'
@@ -66,11 +74,10 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
             mode='w'
         ).write(s)
 
-        self.structure = TrajectoryFile(
+        self.structure = chisurf.structure.TrajectoryFile(
             mdtraj.load_frame(
                 self.trajectory_file, 0
-            ),
-            make_coarse=True
+            )
         )[0]
         i = 0
         for chunk in mdtraj.iterload(self.trajectory_file):
@@ -88,8 +95,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
     def onSelectedPotentialChanged(self) -> None:
         layout = self.verticalLayout_2
         chisurf.widgets.hide_items_in_layout(layout)
-
-        self.potential = potentialDict[self.potential_name](
+        self.potential = chisurf.structure.potential.potentialDict[self.potential_name](
             structure=self.structure,
             parent=self
         )

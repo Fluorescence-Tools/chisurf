@@ -1,4 +1,3 @@
-import utils
 import os
 import sys
 import unittest
@@ -6,18 +5,13 @@ from qtpy.QtWidgets import QApplication
 from qtpy.QtTest import QTest
 from qtpy.QtCore import Qt
 
-TOPDIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')
-)
-utils.set_search_paths(TOPDIR)
-
 import chisurf
 import chisurf.widgets
 import chisurf.macros
 import chisurf.gui
 
 app = QApplication(sys.argv)
-cs_app = chisurf.gui.gui()
+cs_app = chisurf.gui.qt_app()
 
 
 class Tests(unittest.TestCase):

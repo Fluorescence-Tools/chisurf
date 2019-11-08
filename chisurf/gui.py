@@ -567,8 +567,8 @@ class Main(QtWidgets.QMainWindow):
         self.trajectory_rot_trans = chisurf.tools.modelling.trajectory.RotateTranslateTrajectoryWidget()
         self.actionRotate_Translate_trajectory.triggered.connect(self.trajectory_rot_trans.show)
 
-        self.calculate_potential = chisurf.tools.modelling.potential_enery.PotentialEnergyWidget()
-        self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
+        # self.calculate_potential = chisurf.tools.modelling.potential_energy.PotentialEnergyWidget()
+        # self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
 
         self.pdb2label = chisurf.tools.fps_json.label_structure.LabelStructure()
         self.actionPDB2Label.triggered.connect(self.pdb2label.show)
@@ -676,7 +676,7 @@ class Main(QtWidgets.QMainWindow):
         self.verticalLayout_8.addWidget(self.dataset_selector)
 
 
-def gui():
+def qt_app():
     app = QtWidgets.QApplication(sys.argv)
     chisurf.console = chisurf.widgets.QIPythonWidget()
     win = Main()
@@ -699,6 +699,11 @@ def gui():
     return app
 
 
-if __name__ == "__main__":
-    app = gui()
+def main():
+    app = qt_app()
     sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()
+

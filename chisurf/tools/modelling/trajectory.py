@@ -4,9 +4,9 @@ from typing import Tuple
 import os
 import glob
 import numba as nb
-import chisurf.settings as mfm
 import numpy as np
-from qtpy import QtWidgets, uic
+from qtpy import QtWidgets
+
 import mdtraj as md
 import tables
 import mdtraj.scripts.mdconvert as mdconvert
