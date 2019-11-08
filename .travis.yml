@@ -1,18 +1,15 @@
-language: python
+language: generic
 sudo: required
+
+os:
+  - osx
+  - linux
 
 env:
   # Build and test package on all supported python versions
   - BUILD_TARGET=3.7 MINICONDA_VERSION=latest
   # To make sure it's still working with conda 4.6
   # - BUILD_TARGET=3.7 MINICONDA_VERSION=4.6.14
-
-matrix:
-  include:
-    - os: osx
-      language: generic
-    - os: linux
-      language: generic
 
 addons:
   apt:
