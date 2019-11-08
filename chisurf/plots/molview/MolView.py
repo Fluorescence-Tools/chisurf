@@ -1,22 +1,22 @@
 import os
 import sys
 
+from qtpy import QtGui, QtCore, uic, QtWidgets
 from OpenGL.GL import *
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from PyQt5.QtCore import Qt
-from PyQt5.QtOpenGL import *
+from qtpy.QtOpenGL import *
+from qtpy.QtCore import Qt
 
 import pymol2
 from chisurf.plots.plotbase import Plot
 
 
-class EmittingStream(QtCore.QObject):
-
-    textWritten = QtCore.pyqtSignal(str)
-
-    def write(self, text):
-        self.textWritten.emit(str(text))
-
+# class EmittingStream(QtCore.QObject):
+#
+#     textWritten = QtCore.pyqtSignal(str)
+#
+#     def write(self, text):
+#         self.textWritten.emit(str(text))
+#
 
 class MolQtWidget(QGLWidget):
     """
@@ -256,7 +256,7 @@ class ControlWidget(QtWidgets.QWidget):
 
     def onExeCommand(self):
         print("onExeCommand")
-        sys.stdout = EmittingStream(textWritten=self.normalOutputWritten)
+        #sys.stdout = EmittingStream(textWritten=self.normalOutputWritten)
         c = str(self.lineEdit.text())
         print("%s" % c)
         self.parent.pymolWidget.pymol.cmd.do(c)
