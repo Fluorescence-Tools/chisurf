@@ -1323,7 +1323,10 @@ class WormLikeChainModelWidget(
         #print "load_distance_distribution"
         verbose = kwargs.get('verbose', self.verbose)
         #filename = kwargs.get('filename', str(QtGui.QFileDialog.getOpenFileName(self, 'Open File')))
-        filename = chisurf.widgets.get_filename('Open distance distribution', 'CSV-files (*.csv)')
+        filename = chisurf.widgets.get_filename(
+            description='Open distance distribution',
+            file_type='CSV-files (*.csv)'
+        )
         self.lineEdit.setText(filename)
         csv = chisurf.fio.ascii.Csv(filename)
         ar = csv.data.T

@@ -13,8 +13,6 @@ import chisurf.fluorescence
 import chisurf.fluorescence.av
 import chisurf.structure
 import chisurf.structure.potential.cPotentials
-#import chisurf.widgets
-import chisurf.settings as mfm
 
 
 @nb.njit
@@ -134,7 +132,7 @@ def internal_potential(
 
 
 def internal_potential_calpha(
-        structure: mfm.structure.structure.Structure,
+        structure: chisurf.structure.Structure,
         **kwargs
 ) -> float:
     """Calculates a *internal* potential based on the similarity of the bonds length, angles, and dihedrals
@@ -177,7 +175,7 @@ def lj_calpha(
 
 
 def lennard_jones_calpha(
-        structure: mfm.structure.structure.Structure,
+        structure: chisurf.structure.Structure,
         rm: float = 3.8208650279
 ):
     """
@@ -186,7 +184,7 @@ def lennard_jones_calpha(
     :param rm: is the C-alpha equilibrium distance
     :return:
     """
-    sel = mfm.structure.structure.get_atom_index_by_name(
+    sel = chisurf.structure.get_atom_index_by_name(
         structure.atoms, ['CA']
     )
     ca_atoms = structure.atoms.take(sel)
@@ -288,13 +286,17 @@ class Ramachandran(object):
 
     def __init__(
             self,
-            structure: mfm.structure.structure.Structure,
-            filename: str = './mfm/structure/potential/database/rama_ala_pro_gly.npy'
+            structure: chisurf.structure.Structure,
+            filename: str = None
     ):
         """
         :param filename:
         :return:
         """
+        if filename is None:
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), 'database/rama_ala_pro_gly.npy'
+            )
         self.structure = structure
         self.name = 'rama'
         self.filename = filename
@@ -302,7 +304,7 @@ class Ramachandran(object):
 
     def getEnergy(self) -> float:
         c = self.structure
-        Erama = mfm.structure.potential.cPotentials.ramaEnergy(
+        Erama = chisurf.structure.potential.cPotentials.ramaEnergy(
             c.residue_lookup_i,
             c.iAtoms,
             self.ramaPot
@@ -324,7 +326,7 @@ class Electrostatics(object):
         self.structure = structure
         self.name = 'ele'
         if type == 'gb':
-            self.p = mfm.structure.potential.cPotentials.gb
+            self.p = chisurf.structure.potential.cPotentials.gb
 
     def getEnergy(self) -> float:
         structure = self.structure
@@ -338,7 +340,7 @@ class LJ_Bead(object):
 
     def __init__(
             self,
-            structure: mfm.structure.structure.Structure
+            structure: chisurf.structure.Structure
     ):
         self.structure = structure
         self.name = 'LJ_bead'
@@ -355,7 +357,7 @@ class HPotential(object):
 
     def __init__(
             self,
-            structure: mfm.structure.structure.Structure,
+            structure: chisurf.structure.Structure,
             cutoff_ca: float = 8.0,
             cutoff_hbond: float = 3.0,
             **kwargs
@@ -366,7 +368,8 @@ class HPotential(object):
         self.potential = kwargs.get(
             'potential',
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), './database/hb.csv')
+                os.path.dirname(os.path.abspath(__file__)), 'database/hb.npy'
+            )
         )
         self.oh = kwargs.get('oh', 1.0)
         self.on = kwargs.get('on', 1.0)
@@ -378,7 +381,9 @@ class HPotential(object):
         s1 = self.structure
         cca2 = self.cutoffCA ** 2
         ch2 = self.cutoffH ** 2
-        nHbond, Ehbond = mfm.structure.potential.cPotentials.hBondLookUpAll(s1.l_res, s1.dist_ca, s1.xyz, self._hPot, cca2, ch2)
+        nHbond, Ehbond = chisurf.structure.potential.cPotentials.hBondLookUpAll(
+            s1.l_res, s1.dist_ca, s1.xyz, self._hPot, cca2, ch2
+        )
         self.E = Ehbond
         self.nHbond = nHbond
         return self.E
@@ -409,13 +414,16 @@ class HPotential(object):
 
     @potential.setter
     def potential(self, v):
-        self._hPot = np.loadtxt(v, skiprows=1, dtype=np.float64).T[1:, :]
+        self._hPot = np.load(v) #np.loadtxt(v, skiprows=1, dtype=np.float64).T[1:, :]
         self.hPot = self._hPot
 
 
 class GoPotential(object):
 
-    def __init__(self, structure):
+    def __init__(
+            self,
+            structure: chisurf.structure.Structure
+    ):
         self.structure = structure
         self.name = 'go'
 
@@ -423,12 +431,16 @@ class GoPotential(object):
         c = self.structure
         nnEFactor = self.nnEFactor if self.non_native_contact_on else 0.0
         cutoff = self.cutoff if self.native_cutoff_on else 1e6
-        self.eMatrix, self.sMatrix = mfm.structure.potential.cPotentials.go_init(c.residue_lookup_r, c.dist_ca,
-                                                         self.epsilon, nnEFactor, cutoff)
+        self.eMatrix, self.sMatrix = chisurf.structure.potential.cPotentials.go_init(
+            c.residue_lookup_r, c.dist_ca,
+            self.epsilon, nnEFactor, cutoff
+        )
 
     def getEnergy(self):
         c = self.structure
-        Etot, nNa, Ena, nNN, Enn = mfm.structure.potential.cPotentials.go(c.residue_lookup_r, c.dist_ca, self.eMatrix, self.sMatrix)
+        Etot, nNa, Ena, nNN, Enn = chisurf.structure.potential.cPotentials.go(
+            c.residue_lookup_r, c.dist_ca, self.eMatrix, self.sMatrix
+        )
         #Etot = go(c., c.dist_ca, self.eMatrix, self.sMatrix)
         self.E = Etot
         return Etot
@@ -455,13 +467,13 @@ class MJPotential(object):
 
     def __init__(
             self,
-            structure: mfm.structure.structure.Structure,
+            structure: chisurf.structure.Structure,
             filename: str = None,
             ca_cutcoff: float = 6.5
     ):
         if filename is None:
             filename = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), '.database/mj.csv'
+                os.path.dirname(os.path.abspath(__file__)), '.database/mj.npy'
             )
         self.filename = filename
         self.structure = structure
@@ -474,11 +486,13 @@ class MJPotential(object):
 
     @potential.setter
     def potential(self, v):
-        self.mjPot = np.loadtxt(v)
+        self.mjPot = np.load(v)
 
     def getEnergy(self):
         c = self.structure
-        nCont, Emj = mfm.structure.potential.cPotentials.mj(c.l_res, c.residue_types, c.dist_ca, c.xyz, self.mjPot, cutoff=self.ca_cutoff)
+        nCont, Emj = chisurf.structure.potential.cPotentials.mj(
+            c.l_res, c.residue_types, c.dist_ca, c.xyz, self.mjPot, cutoff=self.ca_cutoff
+        )
         self.E = Emj
         self.nCont = nCont
         return Emj
@@ -505,7 +519,7 @@ class CEPotential(object):
 
     def __init__(
             self,
-            structure: mfm.structure.structure.Structure,
+            structure: chisurf.structure.Structure,
             potential: str = None,
             **kwargs
     ):
@@ -519,7 +533,7 @@ class CEPotential(object):
 
         if potential is None:
             potential = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), '.database/unres.npy'
+                os.path.dirname(os.path.abspath(__file__)), 'database/unres.npy'
             )
 
         self.potential = potential
@@ -557,11 +571,13 @@ class CEPotential(object):
         centroid_pos = kwargs.get('centroid_number', self.centroid_number)
         repulsion = kwargs.get('repulsion', self.repulsion)
         min_dist = kwargs.get('min_dist', self.min_dist)
-        nCont, E = centroid2(l_res, residue_types, dist_ca, coord,
-                             self.potential, cutoff=cutoff,
-                             centroid_pos=centroid_pos, min_dist=min_dist,
-                             max_dist=self._max_dist, bin_width=self._bin_width,
-                             repulsion=repulsion)
+        nCont, E = centroid2(
+            l_res, residue_types, dist_ca, coord,
+            self.potential, cutoff=cutoff,
+            centroid_pos=centroid_pos, min_dist=min_dist,
+            max_dist=self._max_dist, bin_width=self._bin_width,
+            repulsion=repulsion
+        )
 
         self.nCont = nCont
         return float(E * self.scaling_factor)
@@ -576,7 +592,7 @@ class ASA(object):
 
     def __init__(
             self,
-            structure: mfm.structure.structure.Structure,
+            structure: chisurf.structure.Structure,
             probe: float = 1.0,
             n_sphere_point: int = 590,
             radius: float = 2.5
@@ -585,7 +601,7 @@ class ASA(object):
         self.structure = structure
         self.probe = probe
         self.n_sphere_point = n_sphere_point
-        self.sphere_points = mfm.structure.potential.cPotentials.spherePoints(
+        self.sphere_points = chisurf.structure.potential.cPotentials.spherePoints(
             n_sphere_point
         )
         self.radius = radius
@@ -594,7 +610,7 @@ class ASA(object):
         c = self.structure
         #def asa(double[:, :] xyz, int[:, :] resLookUp, double[:, :] caDist, double[:, :] sphere_points,
         #double probe=1.0, double radius = 2.5, char sum=1)
-        asa = mfm.structure.potential.cPotentials.asa(
+        asa = chisurf.structure.potential.cPotentials.asa(
             c.xyz,
             c.l_res,
             c.dist_ca,
@@ -611,7 +627,7 @@ class ClashPotential(object):
 
     def __init__(
             self,
-            structure: mfm.structure.structure.Structure = None,
+            structure: chisurf.structure.Structure = None,
             clash_tolerance: float = 2.0,
             covalent_radius: float = 1.5,
             **kwargs
@@ -637,7 +653,7 @@ class ClashPotential(object):
 
     def getEnergy(self) -> float:
         c = self.structure
-        return mfm.structure.potential.cPotentials.clash_potential(
+        return chisurf.structure.potential.cPotentials.clash_potential(
             c.xyz,
             c.vdw,
             self.clash_tolerance,
@@ -670,7 +686,7 @@ class AvPotential(object):
     def __init__(
             self,
             labeling_file: str = None,
-            structure: mfm.structure.structure.Structure = None,
+            structure: chisurf.structure.Structure = None,
             verbose: bool = False,
             rda_axis: np.array = None,
             av_samples: int = None,
@@ -707,7 +723,9 @@ class AvPotential(object):
         self.positions = p["Positions"]
 
     @property
-    def structure(self) -> mfm.structure.structure.Structure:
+    def structure(
+            self
+    ) -> chisurf.structure.Structure:
         """
         The Structure object used for the calculation of the accessible volumes
         """
@@ -716,7 +734,7 @@ class AvPotential(object):
     @structure.setter
     def structure(
             self,
-            structure: mfm.structure.structure.Structure
+            structure: chisurf.structure.Structure
     ):
         self._structure = structure
         self.calc_avs()
@@ -752,7 +770,7 @@ class AvPotential(object):
 
     def calc_distances(
             self,
-            structure: mfm.structure.structure.Structure = None,
+            structure: chisurf.structure.Structure = None,
             verbose: bool = False
     ):
         """
@@ -766,7 +784,7 @@ class AvPotential(object):
         verbose = verbose or self.verbose
         if isinstance(
                 structure,
-                mfm.structure.structure.Structure
+                chisurf.structure.Structure
         ):
             self.structure = structure
         for distance_key in self.distances:
@@ -800,7 +818,7 @@ class AvPotential(object):
 
     def getChi2(
             self,
-            structure: mfm.structure.structure.Structure = None,
+            structure: chisurf.structure.Structure = None,
             reduced: bool = False,
             verbose: bool = False
     ):
@@ -818,7 +836,7 @@ class AvPotential(object):
         verbose = self.verbose or verbose
         if isinstance(
                 structure,
-                mfm.structure.structure.Structure
+                chisurf.structure.Structure
         ):
             self.structure = structure
 
@@ -843,10 +861,10 @@ class AvPotential(object):
 
     def getEnergy(
             self,
-            structure: mfm.structure.structure.Structure = None,
+            structure: chisurf.structure.Structure = None,
             gauss_bond: bool = True
     ):
-        if isinstance(structure, mfm.structure.structure.Structure):
+        if isinstance(structure, chisurf.structure.Structure):
             self.structure = structure
         if gauss_bond:
             energy = 0.0
@@ -860,5 +878,7 @@ class AvPotential(object):
                 energy -= scipy.stats.norm.pdf(de, dm, err)
             return energy
         else:
-            return self.getChi2(self, self.structure)
+            return self.getChi2(
+                structure=self.structure
+            )
 
