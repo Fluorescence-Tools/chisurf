@@ -10,5 +10,3 @@ potentialDict['Go-Potential'] = widgets.GoPotentialWidget
 potentialDict['ASA-Calpha'] = widgets.AsaWidget
 potentialDict['Radius of Gyration'] = widgets.RadiusGyrationWidget
 potentialDict['Clash potential'] = widgets.ClashPotentialWidget
-
-

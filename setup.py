@@ -113,8 +113,7 @@ setup(
             '*.png',
             '*.svg',
             '*.css', '*.qss'
-            '*.csv',
-            '*.npy',
+            '*.csv', '*.npy', '*.dat'
             '*.dll',
             '*.so'
         ]
