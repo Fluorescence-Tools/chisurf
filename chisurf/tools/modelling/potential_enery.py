@@ -7,8 +7,8 @@ import qdarkstyle
 
 import mdtraj
 
+import chisurf.fio
 import chisurf.widgets
-import chisurf.settings as mfm
 import chisurf.decorators
 from chisurf.structure.potential import potentialDict
 from chisurf.structure.trajectory import TrajectoryFile, Universe
@@ -18,13 +18,13 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
 
     name = "Potential-Energy calculator"
 
-    @chisurf.decorators.init_with_ui(ui_filename="calculate_potential.ui")
+    @chisurf.decorators.init_with_ui(
+        ui_filename="calculate_potential.ui"
+    )
     def __init__(
             self,
             verbose: bool = False,
-            structure: mfm.structure.structure.Structure = None,
-            *args,
-            **kwargs
+            structure: chisurf.structure.Structure = None
     ):
         self._trajectory_file = ''
         self.potential_weight = 1.0
@@ -43,11 +43,15 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         self.comboBox_2.addItems(list(potentialDict))
 
     @property
-    def potential_number(self) -> int:
+    def potential_number(
+            self
+    ) -> int:
         return int(self.comboBox_2.currentIndex())
 
     @property
-    def potential_name(self) -> str:
+    def potential_name(
+            self
+    ) -> str:
         return list(potentialDict)[self.potential_number]
 
     def onProcessTrajectory(self):

@@ -103,10 +103,9 @@ setup(
     package_dir={
         name: name
     },
+    include_package_data=True,
     package_data={
-        # If any package contains the listed file types and include them:
         '': [
-            'py',
             '*.json',
             '*.yaml',
             '*.ui',
@@ -127,7 +126,6 @@ setup(
         'numba',
         'scipy',
         'pyqtgraph',
-        #'sympy',
         'PyYAML',
         'tables',
         'numexpr',

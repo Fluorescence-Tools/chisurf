@@ -57,6 +57,8 @@ script:
       coverage xml
       python-codacy-coverage -r coverage.xml
     fi
+  - conda install chisurf --use-local
+  - chisurf
 
 after_success:
   - OS=$TRAVIS_OS_NAME-64
