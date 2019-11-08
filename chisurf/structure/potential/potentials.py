@@ -295,7 +295,7 @@ class Ramachandran(object):
         """
         if filename is None:
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), 'database/rama_ala_pro_gly.npy'
+                os.path.dirname(os.path.abspath(__file__)), './database/rama_ala_pro_gly.npy'
             )
         self.structure = structure
         self.name = 'rama'
@@ -360,17 +360,20 @@ class HPotential(object):
             structure: chisurf.structure.Structure,
             cutoff_ca: float = 8.0,
             cutoff_hbond: float = 3.0,
+            potential: str = None,
             **kwargs
     ):
+        if potential is None:
+            potential = os.path.join(
+                os.path.dirname(
+                    os.path.abspath(__file__)),
+                './database/hb.npy'
+            )
+        print(potential)
         self.structure = structure
         self.cutoffH = cutoff_hbond
         self.cutoffCA = cutoff_ca
-        self.potential = kwargs.get(
-            'potential',
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), 'database/hb.npy'
-            )
-        )
+        self.potential = potential
         self.oh = kwargs.get('oh', 1.0)
         self.on = kwargs.get('on', 1.0)
         self.cn = kwargs.get('cn', 1.0)
@@ -473,7 +476,7 @@ class MJPotential(object):
     ):
         if filename is None:
             filename = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), '.database/mj.npy'
+                os.path.dirname(os.path.abspath(__file__)), './database/mj.npy'
             )
         self.filename = filename
         self.structure = structure
@@ -508,9 +511,8 @@ class CEPotential(object):
 
     >>> import chisurf.structure
     >>> import chisurf.structure.potential
-
-    >>> s = mfm..structure.structure.Structure('./test/data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
-    >>> pce = mfm.structure.potential.potentials.CEPotential(s, ca_cutoff=64.0)
+    >>> s = chisurf.structure.Structure('./test/data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
+    >>> pce = chisurf.structure.potential.potentials.CEPotential(s, ca_cutoff=64.0)
     >>> pce.getEnergy()
     -0.15896629131635745
     """
@@ -533,7 +535,7 @@ class CEPotential(object):
 
         if potential is None:
             potential = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), 'database/unres.npy'
+                os.path.dirname(os.path.abspath(__file__)), './database/unres.npy'
             )
 
         self.potential = potential

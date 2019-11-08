@@ -9,7 +9,6 @@ import mdtraj as md
 import numpy as np
 import tables
 
-import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.widgets
 from chisurf.tools.modelling.trajectory import below_min_distance
