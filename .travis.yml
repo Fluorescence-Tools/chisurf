@@ -58,7 +58,7 @@ script:
       python-codacy-coverage -r coverage.xml
     fi
   - conda install chisurf --use-local
-  - chisurf
+  - chisurf&
   - sleep 120
   - pgrep -f chisurf | awk '{print "kill -9 " $1}' | sh
 
