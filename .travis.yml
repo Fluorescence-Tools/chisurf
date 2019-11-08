@@ -48,7 +48,7 @@ install:
   - conda install chisurf
 
 script:
-  - | # osx does not have xvfb server for testing gui
+  - | # osx does not have xvfb server for unit tests of gui
     if [[ "$TRAVIS_OS_NAME" == "linux" ]];
     then
       python setup.py build_ext --inplace --force
@@ -59,6 +59,7 @@ script:
     fi
   - conda install chisurf --use-local
   - chisurf
+  - sleep 120
   - pgrep -f chisurf | awk '{print "kill -9 " $1}' | sh
 
 after_success:
