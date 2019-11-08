@@ -90,7 +90,7 @@ class Model(
         for k in keylist:
             p = pd[k]
             if isinstance(p, chisurf.fitting.parameter.FittingParameter):
-                s += "%s\t%.4e\t%s\t%s\t%s\n" % (p[k].name, p[k].value, p[k].bounds, p[k].fixed, p[k].is_linked)
+                s += "%s\t%.4e\t%s\t%s\t%s\n" % (p.name, p.value, p.bounds, p.fixed, p.is_linked)
             else:
                 chisurf.logging.warning(
                     "The object is of type %s and is not a FittingParameter" % p.__class__.__name__
