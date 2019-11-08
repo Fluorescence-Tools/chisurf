@@ -59,6 +59,7 @@ script:
     fi
   - conda install chisurf --use-local
   - chisurf
+  - pgrep -f chisurf | awk '{print "kill -9 " $1}' | sh
 
 after_success:
   - OS=$TRAVIS_OS_NAME-64
