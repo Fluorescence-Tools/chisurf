@@ -567,8 +567,8 @@ class Main(QtWidgets.QMainWindow):
         self.trajectory_rot_trans = chisurf.tools.modelling.trajectory.RotateTranslateTrajectoryWidget()
         self.actionRotate_Translate_trajectory.triggered.connect(self.trajectory_rot_trans.show)
 
-        self.calculate_potential = chisurf.tools.modelling.potential_enery.PotentialEnergyWidget()
-        self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
+        # self.calculate_potential = chisurf.tools.modelling.potential_energy.PotentialEnergyWidget()
+        # self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
 
         self.pdb2label = chisurf.tools.fps_json.label_structure.LabelStructure()
         self.actionPDB2Label.triggered.connect(self.pdb2label.show)

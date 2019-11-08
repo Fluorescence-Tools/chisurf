@@ -56,11 +56,12 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
 
     @potential.setter
     def potential(self, v):
-        self._hPot = np.loadtxt(
-            v,
-            skiprows=1,
-            dtype=np.float64
-        ).T[1:, :]
+        self._hPot = np.load(v)
+        # self._hPot = np.load(
+        #     v,
+        #     skiprows=1,
+        #     dtype=np.float64
+        # ).T[1:, :]
         self.hPot = self._hPot
         self.lineEdit_3.setText(str(v))
 

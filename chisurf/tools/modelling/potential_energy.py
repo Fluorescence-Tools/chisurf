@@ -10,8 +10,8 @@ import mdtraj
 import chisurf.fio
 import chisurf.widgets
 import chisurf.decorators
-from chisurf.structure.potential import potentialDict
-from chisurf.structure.trajectory import TrajectoryFile, Universe
+import chisurf.structure.potential
+import chisurf.structure.trajectory
 
 
 class PotentialEnergyWidget(QtWidgets.QWidget):
@@ -32,7 +32,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
 
         self.verbose = verbose
         self.structure = structure
-        self.universe = Universe()
+        self.universe = chisurf.structure.Universe()
 
         self.actionOpen_trajectory.triggered.connect(self.onLoadTrajectory)
         self.actionProcess_trajectory.triggered.connect(self.onProcessTrajectory)
@@ -40,7 +40,9 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         self.tableWidget.cellDoubleClicked [int, int].connect(self.onRemovePotential)
         self.actionCurrent_potential_changed.triggered.connect(self.onSelectedPotentialChanged)
 
-        self.comboBox_2.addItems(list(potentialDict))
+        self.comboBox_2.addItems(
+            list(chisurf.structure.potential.potentialDict)
+        )
 
     @property
     def potential_number(
@@ -52,13 +54,15 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
     def potential_name(
             self
     ) -> str:
-        return list(potentialDict)[self.potential_number]
+        return list(
+            chisurf.structure.potential.potentialDict
+        )[self.potential_number]
 
     def onProcessTrajectory(self):
         print("onProcessTrajectory")
         energy_file = chisurf.widgets.save_file(
-            'Save energies',
-            'CSV-name file (*.txt)'
+            description='Save energies',
+            file_type='CSV-name file (*.txt)'
         )
 
         s = 'FrameNbr\t'
@@ -70,11 +74,10 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
             mode='w'
         ).write(s)
 
-        self.structure = TrajectoryFile(
+        self.structure = chisurf.structure.TrajectoryFile(
             mdtraj.load_frame(
                 self.trajectory_file, 0
-            ),
-            make_coarse=True
+            )
         )[0]
         i = 0
         for chunk in mdtraj.iterload(self.trajectory_file):
@@ -92,8 +95,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
     def onSelectedPotentialChanged(self) -> None:
         layout = self.verticalLayout_2
         chisurf.widgets.hide_items_in_layout(layout)
-
-        self.potential = potentialDict[self.potential_name](
+        self.potential = chisurf.structure.potential.potentialDict[self.potential_name](
             structure=self.structure,
             parent=self
         )
