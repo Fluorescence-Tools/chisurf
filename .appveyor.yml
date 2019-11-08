@@ -5,8 +5,6 @@ image: Visual Studio 2017
 environment:
   matrix:
     - PYTHON: "C:\\Miniconda3-x64"
-    # SET PYTHON=C:\Miniconda3-x64
-    #SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
 
 ## For debugging uncomment the lines below
 #init:
@@ -27,24 +25,19 @@ environment:
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - conda config --set always_yes yes --set changeps1 no
-  - conda env create -f environment.yaml
-  - activate chisurf
-  - python.exe setup.py build_ext --inplace
-#  - python setup.py install
+  - conda config --set channel_priority strict
+  - conda config --add channels conda-forge
+  - conda config --add channels tpeulen
+  - conda update -q conda
+  - conda info -a
+  - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git nose coverage
+  - activate build-environment
+  - git fetch --unshallow --tags --force
+  - conda build conda-recipe
 
-## use conda build
-#test_script:
-#  - conda install --use-local chisurf
-#  - conda install nose coverage
-#  - python setup.py build_ext --inplace --force
-#  - cmd: echo %CD%
-#  - cmd: cd C:\projects\chisurf\test\
-#  - cmd: echo %CD%
-#  - nosetests
-#  - cd ..
-
+# use conda build
 test_script:
-  - conda install nose coverage
+  - conda install --use-local chisurf
   - nosetests .\test\
 
 #### scripts to run after tests

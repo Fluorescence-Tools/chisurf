@@ -4,12 +4,13 @@
 package:
   name: {{ name|lower }}
   version: {{ version|lower }}
+  # version: {{ GIT_DESCRIBE_TAG }}
 
 source:
   git_url: ..
 
 build:
-  number: 0
+  number: {{ GIT_DESCRIBE_NUMBER|int }}
   string: np{{ CONDA_NPY }}py{{ CONDA_PY }}_{{ GIT_BUILD_STR }}
   entry_points:
     - chisurf=chisurf.gui:gui
