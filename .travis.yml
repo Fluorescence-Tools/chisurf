@@ -1,18 +1,15 @@
-language: python
+language: generic
 sudo: required
+
+os:
+  - osx
+  - linux
 
 env:
   # Build and test package on all supported python versions
   - BUILD_TARGET=3.7 MINICONDA_VERSION=latest
   # To make sure it's still working with conda 4.6
   # - BUILD_TARGET=3.7 MINICONDA_VERSION=4.6.14
-
-matrix:
-  include:
-    - os: osx
-      language: generic
-    - os: linux
-      language: generic
 
 addons:
   apt:
@@ -41,7 +38,7 @@ before_install:
   - conda config --add channels tpeulen
   - conda update -q conda
   - conda info -a
-  - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git
+  - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git  nose coverage
   - source activate build-environment
   - git fetch --unshallow --tags --force
   - conda build conda-recipe --output-folder bld-dir
@@ -51,19 +48,22 @@ install:
   - conda install chisurf
 
 script:
-  - | # osx does not have xvfb server for testing gui
+  - | # osx does not have xvfb server for unit tests of gui
     if [[ "$TRAVIS_OS_NAME" == "linux" ]];
     then
-      conda install nose coverage
       python setup.py build_ext --inplace --force
       xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test/test_*.py;
+      pip install codacy-coverage
+      coverage xml
+      python-codacy-coverage -r coverage.xml
     fi
+  - conda install chisurf --use-local
+  - chisurf&
+  - sleep 120
+  - pgrep -f chisurf | awk '{print "kill -9 " $1}' | sh
 
 after_success:
   - OS=$TRAVIS_OS_NAME-64
-  - pip install codacy-coverage
-  - coverage xml
-  - python-codacy-coverage -r coverage.xml
   - |
     if [[ "$TRAVIS_BRANCH" == "master" ]];
     then

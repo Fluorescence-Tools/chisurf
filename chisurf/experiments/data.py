@@ -152,33 +152,39 @@ class DataCurve(
             s += "length  : %s\n" % len(self)
             s += "x\ty\terror-x\terror-y\n"
 
-            lx = self.x[:3]
-            ly = self.y[:3]
-            lex = self.ex[:3]
-            ley = self.ey[:3]
-
-            ux = self.x[-3:]
-            uy = self.y[-3:]
-            uex = self.ex[-3:]
-            uey = self.ey[-3:]
-
-            for i in range(2):
-                x, y, ex, ey = lx[i], ly[i], lex[i], ley[i]
-                s += "{0:<12.3e}\t".format(x)
-                s += "{0:<12.3e}\t".format(y)
-                s += "{0:<12.3e}\t".format(ex)
-                s += "{0:<12.3e}\t".format(ey)
-                s += "\n"
-            s += "....\n"
-            for i in range(1):
-                x, y, ex, ey = ux[i], uy[i], uex[i], uey[i]
-                s += "{0:<12.3e}\t".format(x)
-                s += "{0:<12.3e}\t".format(y)
-                s += "{0:<12.3e}\t".format(ex)
-                s += "{0:<12.3e}\t".format(ey)
-                s += "\n"
+            if len(self.x) > 10:
+                lx = self.x[:4]
+                ly = self.y[:4]
+                lex = self.ex[:4]
+                ley = self.ey[:4]
+                for i in range(3):
+                    x, y, ex, ey = lx[i], ly[i], lex[i], ley[i]
+                    s += "{0:<12.3e}\t".format(x)
+                    s += "{0:<12.3e}\t".format(y)
+                    s += "{0:<12.3e}\t".format(ex)
+                    s += "{0:<12.3e}\t".format(ey)
+                    s += "\n"
+                s += "....\n"
+                ux = self.x[-4:]
+                uy = self.y[-4:]
+                uex = self.ex[-4:]
+                uey = self.ey[-4:]
+                for i in range(2):
+                    x, y, ex, ey = ux[i], uy[i], uex[i], uey[i]
+                    s += "{0:<12.3e}\t".format(x)
+                    s += "{0:<12.3e}\t".format(y)
+                    s += "{0:<12.3e}\t".format(ex)
+                    s += "{0:<12.3e}\t".format(ey)
+                    s += "\n"
+            else:
+                for i in range(len(self.x)):
+                    x, y, ex, ey = self.x[i], self.y[i], self.ex[i], self.ey[i]
+                    s += "{0:<12.3e}\t".format(x)
+                    s += "{0:<12.3e}\t".format(y)
+                    s += "{0:<12.3e}\t".format(ex)
+                    s += "{0:<12.3e}\t".format(ey)
         except (AttributeError, KeyError):
-            s += "This curve does not 'own' data..."
+            s += "This curve does not data..."
         return s
 
     def to_dict(

@@ -5,7 +5,7 @@ import os
 import numpy as np
 from qtpy import QtWidgets, uic
 
-#import chisurf.widgets
+import chisurf.widgets
 import chisurf.decorators
 import chisurf.structure
 from chisurf.structure.potential.potentials import HPotential, GoPotential, \
@@ -46,7 +46,7 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
     def onOpenFile(self):
         filename = chisurf.widgets.get_filename(
             'Open File',
-            'CSV data files (*.csv)'
+            'NumPy data files (*.npy)'
         )
         self.potential = filename
 
@@ -56,11 +56,12 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
 
     @potential.setter
     def potential(self, v):
-        self._hPot = np.loadtxt(
-            v,
-            skiprows=1,
-            dtype=np.float64
-        ).T[1:, :]
+        self._hPot = np.load(v)
+        # self._hPot = np.load(
+        #     v,
+        #     skiprows=1,
+        #     dtype=np.float64
+        # ).T[1:, :]
         self.hPot = self._hPot
         self.lineEdit_3.setText(str(v))
 
@@ -115,19 +116,14 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
 
 class GoPotentialWidget(GoPotential, QtWidgets.QWidget):
 
-    @chisurf.decorators.init_with_ui(ui_filename="Potential-CaLJ.ui")
+    @chisurf.decorators.init_with_ui(
+        ui_filename="Potential-CaLJ.ui"
+    )
     def __init__(
             self,
-            structure
+            structure: chisurf.structure.Structure = None,
+            **kwargs
     ):
-        super(GoPotentialWidget, self).__init__(structure)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                ".ui"
-            ),
-            self
-        )
         self.lineEdit.textChanged['QString'].connect(self.setGo)
         self.lineEdit_2.textChanged['QString'].connect(self.setGo)
         self.lineEdit_3.textChanged['QString'].connect(self.setGo)
@@ -158,7 +154,7 @@ class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
     def __init__(
             self,
             structure: chisurf.structure.Structure,
-            filename: str = './mfm/structure/potential/database/mj.csv',
+            filename: str = './mfm/structure/potential/database/mj.npy',
             ca_cutoff: float =6.5
     ):
         super(MJPotentialWidget, self).__init__(structure, filename, ca_cutoff)
@@ -176,7 +172,7 @@ class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
     def onOpenFile(self):
         filename = chisurf.widgets.get_filename(
             'Open MJ-Potential',
-            'CSV data files (*.csv)'
+            'CSV data files (*.npy)'
         )
         self.potential = filename
 
@@ -308,7 +304,10 @@ class AvPotentialWidget(AvPotential, QtWidgets.QWidget):
         self.actionOpenLabeling.triggered.connect(self.onLoadAvJSON)
 
     def onLoadAvJSON(self):
-        self.labeling_file = chisurf.widgets.get_filename('Open FPS-JSON', 'FPS-file (*.fps.json)')
+        self.labeling_file = chisurf.widgets.get_filename(
+            description='Open FPS-JSON',
+            file_type='FPS-file (*.fps.json)'
+        )
 
     @property
     def labeling_file(self):

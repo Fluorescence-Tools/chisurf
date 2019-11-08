@@ -103,18 +103,16 @@ setup(
     package_dir={
         name: name
     },
+    include_package_data=True,
     package_data={
-        # If any package contains the listed file types and include them:
         '': [
-            'py',
             '*.json',
             '*.yaml',
             '*.ui',
             '*.png',
             '*.svg',
             '*.css', '*.qss'
-            '*.csv',
-            '*.npy',
+            '*.csv', '*.npy', '*.dat'
             '*.dll',
             '*.so'
         ]
@@ -128,7 +126,6 @@ setup(
         'numba',
         'scipy',
         'pyqtgraph',
-        #'sympy',
         'PyYAML',
         'tables',
         'numexpr',
@@ -141,7 +138,8 @@ setup(
         'mrcfile',
         'qtconsole',
         'ipython',
-        'docx'
+        'docx',
+        'mdtraj'
     ],
     setup_requires=[
         "cython",

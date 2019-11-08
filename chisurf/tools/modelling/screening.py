@@ -9,8 +9,8 @@ from scipy.stats import f
 
 import chisurf.decorators
 import chisurf.structure.cluster
+import chisurf.plots
 from chisurf.structure.potential import potentials
-import chisurf.structure as slib
 from chisurf.structure.trajectory import TrajectoryFile
 import chisurf.widgets
 
@@ -137,11 +137,11 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
 
     @property
     def pymolPlot(self):
-        return [p for p in self.fit if isinstance(p, experiments.plots.MolView)][0]
+        return [p for p in self.fit if isinstance(p, chisurf.plots.MolView)][0]
 
     @property
     def plot(self):
-        return [p for p in self.fit if isinstance(p, experiments.plots.ProteinMCPlot)][0]
+        return [p for p in self.fit if isinstance(p, chisurf.plots.ProteinMCPlot)][0]
 
     def onStructureTableClicked(self):
         row = int(self.tableWidget.currentRow())
@@ -162,7 +162,7 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
             table_row[5].set_data(0, float(cluster[i]))
 
     def initWidgets(self):
-        self.comboBox.addItems(slib.clusterCriteria)
+        self.comboBox.addItems(chisurf.structure.clusterCriteria)
         # structure-table
         nStructures = len(self)
         table = self.tableWidget
