@@ -12,7 +12,7 @@ from qtpy import QtWidgets, uic
 import chisurf.fio.coordinates
 from chisurf.fluorescence.av.dynamic import DiffusionSimulation, Dye, Sticking, \
     ProteinQuenching
-from chisurf.fluorescence.av.widgets import ProteinQuenchingWidget, DyeWidget, StickingWidget
+from chisurf.widgets.fluorescence.av import ProteinQuenchingWidget, DyeWidget, StickingWidget
 
 import chisurf.settings
 import chisurf.fitting.fit

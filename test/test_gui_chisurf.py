@@ -8,10 +8,10 @@ from qtpy.QtCore import Qt
 import chisurf
 import chisurf.widgets
 import chisurf.macros
-import chisurf.gui
+import chisurf.main_gui
 
 app = QApplication(sys.argv)
-cs_app = chisurf.gui.qt_app()
+cs_app = chisurf.main_gui.qt_app()
 
 
 class Tests(unittest.TestCase):

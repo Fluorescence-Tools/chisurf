@@ -12,7 +12,8 @@ from guiqwt.plot import CurveDialog
 
 import chisurf.math
 import chisurf.fio.coordinates
-import chisurf.fluorescence.av.widgets
+import chisurf.widgets.fluorescence.av
+
 from chisurf.fluorescence.simulation.dye_diffusion import DyeDecay
 from chisurf.plots.molview.MolView import MolQtWidget
 from chisurf.structure import Structure
@@ -235,7 +236,7 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
         self._settings_file = None
         self.settings_file = dye_diffusion_settings_file
 
-        self.protein_quenching = chisurf.fluorescence.av.widgets.ProteinQuenchingWidget(
+        self.protein_quenching = chisurf.widgets.fluorescence.av.ProteinQuenchingWidget(
             k_quench_protein=kwargs.get('k_quench_protein', 5.0),
         )
         self.verticalLayout_11.addWidget(self.protein_quenching)

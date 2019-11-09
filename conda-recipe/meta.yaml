@@ -13,7 +13,7 @@ build:
   number: {{ GIT_DESCRIBE_NUMBER|int }}
   string: np{{ CONDA_NPY }}py{{ CONDA_PY }}_{{ GIT_BUILD_STR }}
   entry_points:
-    - chisurf=chisurf.gui:main
+    - chisurf=chisurf.main_gui:main
 
 requirements:
   build:
