@@ -88,12 +88,6 @@ class TCSPCReaderControlWidget(
             working_path=None
         )
 
-    @property
-    def filename(
-            self
-    ) -> str:
-        return self.get_filename()
-
     def __init__(
             self,
             *args,
@@ -125,7 +119,7 @@ class TCSPCSetupDummyWidget(
             *args,
             **kwargs
     ):
-        self.selector = chisurf.widgets.experiments.widgets.ExperimentalDataSelector(
+        self.selector = chisurf.widgets.experiments.ExperimentalDataSelector(
             click_close=False,
             parent=self,
             context_menu_enabled=False
@@ -146,8 +140,7 @@ class TCSPCSetupDummyWidget(
                 [
                     "cs.current_setup.sample_name = '%s'" % sample_name,
                     "cs.current_setup.dt = %s" % dt,
-                    "cs.current_setup.lifetime_spectrum = [1.0, %s]" %
-                    lifetime,
+                    "cs.current_setup.lifetime_spectrum = [1.0, %s]" % lifetime,
                     "cs.current_setup.n_tac = %s" % n_tac,
                     "cs.current_setup.p0 = %s" % p0
                 ]

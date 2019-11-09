@@ -517,12 +517,11 @@ def load_ui(
         ui_filename: str,
         path: str
 ):
-    filename = os.path.join(
-        path,
-        ui_filename
-    )
     uic.loadUi(
-        filename,
+        os.path.join(
+            path,
+            ui_filename
+        ),
         target
     )
 

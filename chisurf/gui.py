@@ -10,6 +10,7 @@ import chisurf
 import chisurf.decorators
 import chisurf.base
 import chisurf.experiments
+import chisurf.experiments.tcspc
 import chisurf.macros
 import chisurf.tools
 import chisurf.widgets
@@ -290,10 +291,7 @@ class Main(QtWidgets.QMainWindow):
         chisurf.fit_windows.clear()
 
     def onAddDataset(self):
-        try:
-            filename = self.current_setup.controller.filename
-        except AttributeError:
-            filename = None
+        filename = self.current_setup.controller.get_filename()
         chisurf.run(
             'chisurf.macros.add_dataset(filename="%s")' % filename
         )
@@ -339,10 +337,10 @@ class Main(QtWidgets.QMainWindow):
         structure.add_readers(
             [
                 (
-                    chisurf.experiments.modelling.LoadStructure(
+                    chisurf.experiments.modelling.StructureReader(
                         experiment=structure
                     ),
-                    None
+                    chisurf.experiments.modelling.StructureReaderController()
                 )
             ]
         )
@@ -375,7 +373,7 @@ class Main(QtWidgets.QMainWindow):
                     None
                 ),
                 (
-                    chisurf.experiments.tcspc.dummy.TCSPCSetupDummy(
+                    chisurf.experiments.tcspc.TCSPCSetupDummy(
                         experiment=tcspc
                     ),
                     chisurf.widgets.experiments.tcspc.controller.TCSPCSetupDummyWidget()

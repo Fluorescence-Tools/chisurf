@@ -38,7 +38,7 @@ class ExperimentReader(
             data: chisurf.base.Data,
             **kwargs
     ) -> typing.Tuple[int, int]:
-        return 0, len(data.y) - 1
+        return 0, 0
 
     @abc.abstractmethod
     def read(

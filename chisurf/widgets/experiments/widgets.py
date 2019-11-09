@@ -136,9 +136,7 @@ class ExperimentalDataSelector(
             menu.exec_(event.globalPos())
 
     def update(
-            self,
-            *args,
-            **kwargs
+            self, *args, **kwargs
     ):
         super().update(*args, **kwargs)
         try:
@@ -149,7 +147,6 @@ class ExperimentalDataSelector(
         self.clear()
 
         for d in self.datasets:
-            # If normal Curve
             fn = d.name
             widget_name = os.path.basename(fn)
             item = QtWidgets.QTreeWidgetItem(self, [widget_name])
@@ -157,10 +154,7 @@ class ExperimentalDataSelector(
             item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 
             # If group of curves
-            if isinstance(
-                    d,
-                    chisurf.experiments.data.ExperimentDataGroup
-            ):
+            if isinstance(d, chisurf.experiments.data.ExperimentDataGroup):
                 for di in d:
                     fn = di.name
                     widget_name = os.path.basename(fn)
@@ -297,12 +291,6 @@ class FCSController(
     reader.ExperimentReaderController,
     QtWidgets.QWidget
 ):
-
-    @property
-    def filename(
-            self
-    ) -> str:
-        return self.get_filename()
 
     def get_filename(
             self
