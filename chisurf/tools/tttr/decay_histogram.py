@@ -5,7 +5,7 @@ import re
 
 import numpy as np
 import pyqtgraph as pg
-from PyQt5 import QtWidgets
+from qtpy import QtWidgets
 
 import chisurf.decorators
 import chisurf.experiments.data

@@ -35,7 +35,7 @@ class LabelStructure(
         self.av_properties = chisurf.widgets.fluorescence.av.AVProperties()
         self.verticalLayout_4.addWidget(self.av_properties)
 
-        self.textEdit_2 = chisurf.tools.text_editor.SimpleCodeEditor(
+        self.textEdit_2 = chisurf.tools.code_editor.SimpleCodeEditor(
             language='JSON'
         )
         self.tab_2.layout().addWidget(self.textEdit_2)

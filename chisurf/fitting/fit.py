@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-from typing import List, Tuple, Dict, Type
+import typing
 
 import os
 import numpy as np
@@ -30,11 +30,11 @@ class Fit(
 
     def __init__(
             self,
-            model_class: Type[chisurf.models.Model] = type,
+            model_class: typing.Type[chisurf.models.Model] = type,
             data: chisurf.experiments.data.DataCurve = None,
             xmin: int = 0,
             xmax: int = 0,
-            model_kw: Dict = None,
+            model_kw: typing.Dict = None,
             **kwargs
     ):
         """
@@ -125,7 +125,7 @@ class Fit(
     @model.setter
     def model(
             self,
-            model_class: Type[
+            model_class: typing.Type[
                 chisurf.models.model.ModelCurve
             ]
     ):
@@ -189,13 +189,13 @@ class Fit(
     @property
     def fit_range(
             self
-    ) -> Tuple[int, int]:
+    ) -> typing.Tuple[int, int]:
         return self.xmin, self.xmax
 
     @fit_range.setter
     def fit_range(
             self,
-            v: Tuple[int, int]
+            v: typing.Tuple[int, int]
     ):
         self.xmin, self.xmax = v
 
@@ -216,7 +216,7 @@ class Fit(
     @property
     def covariance_matrix(
             self
-    ) -> Tuple[np.array, List[int]]:
+    ) -> typing.Tuple[np.array, typing.List[int]]:
         """Returns the covariance matrix of the fit given the current
         models parameter values and returns a list of the 'relevant' used
         parameters.
@@ -235,7 +235,7 @@ class Fit(
 
     def get_curves(
             self
-    ) -> Dict[str, chisurf.curve.Curve]:
+    ) -> typing.Dict[str, chisurf.curve.Curve]:
         """Returns a dictionary containing the current data and the
         model as chisurf.curve.Curve objects.
 
@@ -350,9 +350,9 @@ class Fit(
             self,
             parameter_name: str,
             rel_range: float = None,
-            scan_range: Tuple[float, float] = (None, None),
+            scan_range: typing.Tuple[float, float] = (None, None),
             n_steps: int = 30
-    ) -> Tuple[np.array, np.array]:
+    ) -> typing.Tuple[np.array, np.array]:
         """Perform a chi2-scan on a parameter of the fit.
 
         :param parameter_name: the parameter name
@@ -424,7 +424,7 @@ class FitGroup(
     @model.setter
     def model(
             self,
-            v: Type[chisurf.models.Model]
+            v: typing.Type[chisurf.models.Model]
     ):
         self.selected_fit.model = v
 
@@ -451,13 +451,13 @@ class FitGroup(
     @property
     def fit_range(
             self
-    ) -> Tuple[int, int]:
+    ) -> typing.Tuple[int, int]:
         return self.xmin, self.xmax
 
     @fit_range.setter
     def fit_range(
             self,
-            v: Tuple[int, int]
+            v: typing.Tuple[int, int]
     ):
         for f in self:
             f.xmin, f.xmax = v
@@ -561,8 +561,8 @@ class FitGroup(
     def __init__(
             self,
             data: chisurf.experiments.data.DataGroup,
-            model_class: Type[chisurf.models.Model] = type,
-            model_kw: Dict = None,
+            model_class: typing.Type[chisurf.models.Model] = type,
+            model_kw: typing.Dict = None,
             **kwargs
     ):
         """
@@ -592,7 +592,7 @@ class FitGroup(
             fits=self.grouped_fits
         )
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> typing.Dict:
         d = super().to_dict()
         d['grouped_fits'] = [f.to_dict() for f in self.grouped_fits]
         return d
@@ -614,7 +614,7 @@ class FitGroup(
     def __getitem__(
             self,
             key
-    ) -> List[Fit]:
+    ) -> typing.List[Fit]:
         if isinstance(key, int):
             return self.grouped_fits.__getitem__(key)
         else:
@@ -702,7 +702,7 @@ def approx_grad(
         epsilon: float,
         args=(),
         f0=None
-) -> Tuple[float, np.array]:
+) -> typing.Tuple[float, np.array]:
     """Approximate the derivative of a fit with respect to the parameters
     xk. The return value of the function is an array.
 
@@ -737,7 +737,7 @@ def covariance_matrix(
         fit: chisurf.fitting.fit.Fit,
         epsilon: float = chisurf.settings.eps,
         **kwargs
-) -> Tuple[np.array, List[int]]:
+) -> typing.Tuple[np.array, typing.List[int]]:
     """Calculate the covariance matrix
 
     :param fit:
@@ -780,7 +780,7 @@ def covariance_matrix(
 
 
 def get_wres(
-        parameter: List[float],
+        parameter: typing.List[float],
         model: chisurf.models.Model
 ) -> np.array:
     """Returns the weighted residuals for a list of parameters of a models
@@ -798,7 +798,7 @@ def get_wres(
 
 
 def get_chi2(
-        parameter: List[float],
+        parameter: typing.List[float],
         model: chisurf.models.model.ModelCurve,
         reduced: bool = True
 ) -> float:
@@ -822,10 +822,10 @@ def get_chi2(
 
 
 def lnprior(
-        parameter_values: List[float],
+        parameter_values: typing.List[float],
         fit: chisurf.fitting.fit.Fit,
-        bounds: List[
-            Tuple[float, float]
+        bounds: typing.List[
+            typing.Tuple[float, float]
         ] = None
 ) -> float:
     """The probability determined by the prior which is given by the bounds
@@ -846,11 +846,11 @@ def lnprior(
 
 
 def lnprob(
-        parameter_values: List[float],
+        parameter_values: typing.List[float],
         fit: Fit,
         chi2max: float = float("inf"),
-        bounds: List[
-            Tuple[float, float]
+        bounds: typing.List[
+            typing.Tuple[float, float]
         ] = None
 ) -> float:
     """

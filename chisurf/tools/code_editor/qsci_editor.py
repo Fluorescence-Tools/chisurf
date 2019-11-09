@@ -71,6 +71,7 @@ class SimpleCodeEditor(QsciScintilla):
 
         self.setFont(font)
         self.setMarginsFont(font)
+        self.setFolding(QsciScintilla.BoxedTreeFoldStyle)
 
         # Margin 0 is used for line numbers
         fontmetrics = QFontMetrics(font)

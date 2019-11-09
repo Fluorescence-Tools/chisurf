@@ -4,8 +4,7 @@ import os
 import sys
 import urllib
 
-from PyQt5 import QtCore, QtWidgets, uic
-
+from qtpy import QtCore, QtWidgets, uic
 
 
 class UpdateDialog(QtWidgets.QWidget):

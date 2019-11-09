@@ -17,7 +17,7 @@ import chisurf.widgets
 import chisurf.widgets.experiments
 import chisurf.models
 import chisurf.fitting
-import chisurf.settings.ui.resource
+import chisurf.widgets.ui.resource
 import chisurf.widgets.experiments.modelling
 
 
@@ -593,7 +593,7 @@ class Main(QtWidgets.QMainWindow):
         self.f_test = chisurf.tools.f_test.f_calculator.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
 
-        self.configuration = chisurf.tools.text_editor.CodeEditor(
+        self.configuration = chisurf.tools.code_editor.CodeEditor(
             filename=chisurf.settings.chisurf_settings_file,
             language='YAML',
             can_load=False
@@ -639,7 +639,7 @@ class Main(QtWidgets.QMainWindow):
         self.tabifyDockWidget(self.dockWidgetAnalysis, self.dockWidgetPlot)
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
-        self.editor = chisurf.tools.text_editor.CodeEditor()
+        self.editor = chisurf.tools.code_editor.CodeEditor()
         self.verticalLayout_10.addWidget(self.editor)
 
         self.modelLayout.setAlignment(QtCore.Qt.AlignTop)

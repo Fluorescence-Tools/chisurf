@@ -7,7 +7,10 @@ from qtpy import QtWidgets, uic
 from chisurf.fluorescence.tcspc.phasor import Phasor
 
 
-class PhasorWidget(Phasor, QtWidgets.QWidget):
+class PhasorWidget(
+    Phasor,
+    QtWidgets.QWidget
+):
 
     @property
     def phasor_omega(
