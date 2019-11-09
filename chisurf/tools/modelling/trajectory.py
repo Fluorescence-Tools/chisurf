@@ -12,7 +12,7 @@ import tables
 import mdtraj.scripts.mdconvert as mdconvert
 
 import chisurf.decorators
-import chisurf.widgets.widgets
+import chisurf.widgets.general
 
 
 @nb.jit
@@ -494,7 +494,7 @@ class MDConverter(QtWidgets.QWidget):
                 self.filename + self.ending
             )
             mdconvert.main(args)
-        chisurf.widgets.widgets.MyMessageBox('Conversion done!')
+        chisurf.widgets.general.MyMessageBox('Conversion done!')
 
     @property
     def first_frame(self):

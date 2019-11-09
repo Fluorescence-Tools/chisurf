@@ -1,11 +1,11 @@
 from __future__ import annotations
-from typing import List, Tuple
+from typing import Tuple
 
 import numpy as np
 
 import chisurf.parameter
 import chisurf.curve
-import chisurf.fitting.widgets
+import chisurf.widgets.fitting.widgets
 import chisurf.plots
 
 from qtpy import QtWidgets, QtGui
@@ -212,7 +212,7 @@ class ModelWidget(
         for parameter in self.parameters:
             if isinstance(
                     parameter,
-                    chisurf.fitting.widgets.FittingParameterWidget
+                    chisurf.widgets.fitting.widgets.FittingParameterWidget
             ):
                 parameter.update()
 

@@ -2,18 +2,17 @@ from __future__ import annotations
 from typing import List
 
 import os
-
 import yaml
 from numpy import *
 from re import Scanner
 
-from qtpy import QtCore, QtWidgets, QtSvg
+from qtpy import QtCore, QtWidgets
 
 import chisurf.fio
 import chisurf.decorators
 import chisurf.widgets
 import chisurf.parameter
-import chisurf.fitting.widgets
+import chisurf.widgets.fitting.widgets
 from chisurf.models.model import ModelWidget, ModelCurve
 from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
 
@@ -248,7 +247,7 @@ class ParseFormulaWidget(
             )
         ):
             p = self.model.parameters_all_dict[k]
-            pw = chisurf.fitting.widgets.make_fitting_parameter_widget(
+            pw = chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
                 fitting_parameter=p
             )
             column = i % n_columns

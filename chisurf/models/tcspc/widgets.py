@@ -8,13 +8,14 @@ from qtpy import QtWidgets, uic, QtCore, QtGui
 import os
 
 import chisurf
+import chisurf.widgets
 import chisurf.fitting
 import chisurf.decorators
 import chisurf.math
 import chisurf.models
 from chisurf import plots
 from chisurf.fitting.parameter import FittingParameter
-from chisurf.fitting.widgets import FittingControllerWidget
+from chisurf.widgets.fitting.widgets import FittingControllerWidget
 from chisurf.models import parse
 from chisurf.models.model import ModelWidget
 from chisurf.models.tcspc.anisotropy import Anisotropy
@@ -27,7 +28,7 @@ from chisurf.models.tcspc.nusiance import Convolve, Corrections, Generic
 from chisurf.models.parse.tcspc.tcspc_parse import ParseDecayModel
 from chisurf.models.tcspc.pddem import PDDEM, PDDEMModel
 from chisurf.widgets import clear_layout
-from chisurf.experiments.widgets import ExperimentalDataSelector
+from chisurf.widgets.experiments.widgets import ExperimentalDataSelector
 
 
 class ConvolveWidget(Convolve, QtWidgets.QWidget):
@@ -52,12 +53,12 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         if hide_curve_convolution:
             self.radioButton_3.setVisible(not hide_curve_convolution)
         layout = QtWidgets.QHBoxLayout()
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._dt,
             layout=layout,
             hide_bounds=True
         )
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._n0,
             layout=layout,
             hide_bounds=True
@@ -65,28 +66,28 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         self.verticalLayout_2.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._start,
             layout=layout
         )
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._stop,
             layout=layout
         )
         self.verticalLayout_2.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._lb,
             layout=layout
         )
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._ts,
             layout=layout
         )
         self.verticalLayout_2.addLayout(layout)
 
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             fitting_parameter=self._rep,
             layout=self.horizontalLayout_3,
             label_text='r[MHz]'
@@ -176,12 +177,12 @@ class CorrectionsWidget(
         if hide_corrections:
             self.hide()
 
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._dead_time,
             layout=self.horizontalLayout_2,
             label_text='t<sub>dead</sub>[ns]'
         )
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._window_length,
             layout=self.horizontalLayout_2,
             label_text='t<sub>dead</sub>[ns]'
@@ -280,19 +281,19 @@ class GenericWidget(
         self.setTitle("Generic")
 
         # Generic parameters
-        sc_w = chisurf.fitting.widgets.make_fitting_parameter_widget(
+        sc_w = chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._sc,
             label_text='Sc',
         )
-        bg_w = chisurf.fitting.widgets.make_fitting_parameter_widget(
+        bg_w = chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._bg,
             label_text='Bg'
         )
-        tmeas_bg_w = chisurf.fitting.widgets.make_fitting_parameter_widget(
+        tmeas_bg_w = chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_bg,
             label_text='t<sub>Bg</sub>'
         )
-        tmeas_exp_w = chisurf.fitting.widgets.make_fitting_parameter_widget(
+        tmeas_exp_w = chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_exp,
             label_text='t<sub>Meas</sub>'
         )
@@ -430,12 +431,12 @@ class AnisotropyWidget(
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._r0,
             label_text='r0',
             layout=layout
         )
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._g,
             label_text='g',
             layout=layout
@@ -443,13 +444,13 @@ class AnisotropyWidget(
         self.lh.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._l1,
             label_text='l1',
             layout=layout,
             decimals=4
         )
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._l2,
             label_text='l2',
             layout=layout,
@@ -498,14 +499,14 @@ class AnisotropyWidget(
 
         self.lh.addLayout(layout)
         self._rho_widgets.append(
-            chisurf.fitting.widgets.make_fitting_parameter_widget(
+            chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
                 fitting_parameter=self._rhos[-1],
                 decimals=2,
                 layout=layout
             )
         )
         self._b_widgets.append(
-            chisurf.fitting.widgets.make_fitting_parameter_widget(
+            chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
                 fitting_parameter=self._bs[-1],
                 decimals=2,
                 layout=layout
@@ -530,23 +531,53 @@ class PDDEMWidget(QtWidgets.QWidget, PDDEM):
             **kwargs
     ):
         layout = QtWidgets.QHBoxLayout()
-        self._fAB = self._fAB.make_widget(layout=layout, text='A>B')
-        self._fBA = self._fBA.make_widget(layout=layout, text='B>A')
+        chisurf.widgets.fitting.make_fitting_parameter_widget(
+            fitting_parameter=self._fAB,
+            layout=layout,
+            label_text='A>B'
+        )
+        chisurf.widgets.fitting.make_fitting_parameter_widget(
+            fitting_parameter=self._fBA,
+            layout=layout,
+            label_text='B>A'
+        )
         self.verticalLayout_3.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        self._pA = self._pA.make_widget(layout=layout)
-        self._pB = self._pB.make_widget(layout=layout)
+        chisurf.widgets.fitting.make_fitting_parameter_widget(
+            fitting_parameter=self._pA,
+            layout=layout
+        )
+        chisurf.widgets.fitting.make_fitting_parameter_widget(
+            fitting_parameter=self._pB,
+            layout=layout
+        )
         self.verticalLayout_3.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        self._pxA = self._pxA.make_widget(layout=layout, text='Ex<sub>A</sub>')
-        self._pxB = self._pxB.make_widget(layout=layout, text='Ex<sub>B</sub>')
+        chisurf.widgets.fitting.make_fitting_parameter_widget(
+            fitting_parameter=self._pxA,
+            layout=layout,
+            label_text='Ex<sub>A</sub>'
+        )
+        chisurf.widgets.fitting.make_fitting_parameter_widget(
+            fitting_parameter=self._pxB,
+            layout=layout,
+            label_text='Ex<sub>B</sub>'
+        )
         self.verticalLayout_3.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        self._pmA = self._pmA.make_widget(layout=layout, text='Em<sub>A</sub>')
-        self._pmB = self._pmB.make_widget(layout=layout, text='Em<sub>B</sub>')
+        chisurf.widgets.fitting.make_fitting_parameter_widget(
+            fitting_parameter=self._pmA,
+            layout=layout,
+            label_text='Em<sub>A</sub>'
+        )
+        chisurf.widgets.fitting.make_fitting_parameter_widget(
+            fitting_parameter=self._pmB,
+            layout=layout,
+            label_text='Em<sub>B</sub>'
+        )
         self.verticalLayout_3.addLayout(layout)
 
 
@@ -772,14 +803,14 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         #self._amp_widgets.append(amplitude)
 
         self._amp_widgets.append(
-            chisurf.fitting.widgets.make_fitting_parameter_widget(
+            chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
                 self._amplitudes[-1],
                 layout=layout
             )
         )
 
         self._lifetime_widgets.append(
-            chisurf.fitting.widgets.make_fitting_parameter_widget(
+            chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
                 self._lifetimes[-1],
                 layout=layout
             )
@@ -950,19 +981,19 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
         gb.setTitle('G%i' % n_gauss)
         layout = QtWidgets.QVBoxLayout()
 
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianMeans[-1],
             layout=layout
         )
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianSigma[-1],
             layout=layout
         )
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianShape[-1],
             layout=layout
         )
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianAmplitudes[-1],
             layout=layout
         )
@@ -1079,11 +1110,11 @@ for f in cs.current_fit:
             text='x',
             update_function=self.update
         )
-        m = chisurf.fitting.widgets.make_fitting_parameter_widget(
+        m = chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             pm,
             layout=layout
         )
-        x = chisurf.fitting.widgets.make_fitting_parameter_widget(
+        x = chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             px,
             layout=layout
         )
@@ -1143,7 +1174,7 @@ class GaussianModelWidget(
         self.layout_parameter.addWidget(donors)
 
         self.layout_parameter.addWidget(
-            chisurf.fitting.widgets.make_fitting_parameter_group_widget(
+            chisurf.widgets.fitting.widgets.make_fitting_parameter_group_widget(
                 self.fret_parameters
             )
         )
@@ -1189,7 +1220,7 @@ class FRETrateModelWidget(
         self.layout_parameter.addWidget(donors)
         # self.layout_parameter.addWidget(self.fret_parameters.to_widget())
         self.layout_parameter.addWidget(
-            chisurf.fitting.widgets.make_fitting_parameter_group_widget(
+            chisurf.widgets.fitting.widgets.make_fitting_parameter_group_widget(
                 self.fret_parameters
             )
         )
@@ -1245,12 +1276,12 @@ class WormLikeChainModelWidget(
         layout.addWidget(self._use_dye_linker)
 
         #self._sigma_linker = self._sigma_linker.make_widget(layout=layout)
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._sigma_linker,
             layout=layout
         )
 
-        chisurf.fitting.widgets.make_fitting_parameter_group_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_group_widget(
             fitting_parameter_group=self.fret_parameters,
             layout=self.layout_parameter
         )
@@ -1258,12 +1289,12 @@ class WormLikeChainModelWidget(
         self.layout_parameter.addLayout(layout)
 
         #self._chain_length = self._chain_length.make_widget(layout=self.layout_parameter)
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._chain_length,
             layout=layout
         )
         #self._persistence_length = self._persistence_length.make_widget(layout=self.layout_parameter)
-        chisurf.fitting.widgets.make_fitting_parameter_widget(
+        chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._persistence_length,
             layout=layout
         )
@@ -1291,7 +1322,9 @@ class WormLikeChainModelWidget(
             anisotropy=self.anisotropy
         )
 
-        self._donly = self._donly.make_widget()
+        donly = chisurf.widgets.fitting.make_fitting_parameter_widget(
+            fitting_parameter=self._donly,
+        )
 
         uic.loadUi(
             os.path.join(
@@ -1307,7 +1340,7 @@ class WormLikeChainModelWidget(
         self.verticalLayout.addWidget(self.fitting_widget)
         self.verticalLayout.addWidget(self.convolve)
         self.verticalLayout.addWidget(self.generic)
-        self.verticalLayout.addWidget(self._donly)
+        self.verticalLayout.addWidget(donly)
         self.verticalLayout.addWidget(self.donors)
         self.verticalLayout.addWidget(self.anisotropy)
         self.verticalLayout.addWidget(self.corrections)
@@ -1418,7 +1451,7 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
             item = layout.itemAt(i)
             if isinstance(
                     item,
-                    chisurf.fitting.widgets.FittingParameterWidget
+                    chisurf.widgets.fitting.widgets.FittingParameterWidget
             ):
                 re.append(item)
         return re
@@ -1472,7 +1505,7 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
             model = fit.model
 
         fraction_name = "x(%s)" % (len(self) + 1)
-        fraction = chisurf.fitting.widgets.FittingParameterWidget(
+        fraction = chisurf.widgets.fitting.widgets.FittingParameterWidget(
             name=fraction_name,
             value=1.0,
             model=self,

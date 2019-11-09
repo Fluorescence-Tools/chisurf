@@ -13,7 +13,6 @@ import chisurf.curve
 import chisurf.experiments
 import chisurf.fitting.fit
 import chisurf.fitting.sample
-#import chisurf.fitting.widgets
 import chisurf.fitting.support_plane
 
 

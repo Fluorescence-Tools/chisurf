@@ -8,8 +8,8 @@ import chisurf.base
 import chisurf.structure
 import chisurf.widgets
 
-from . import photons
-from . import tttr
+from chisurf.fio import photons
+from chisurf.fio import tttr
 
 
 class SpcFileWidget(

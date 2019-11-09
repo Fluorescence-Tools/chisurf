@@ -17,4 +17,4 @@ import chisurf.fio.tttr
 import chisurf.fio.photons
 import chisurf.fio.sdtfile
 import chisurf.fio.zipped
-#import chisurf.fio.widgets
+#import chisurf.widgets.fio

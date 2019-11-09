@@ -7,9 +7,10 @@ import os
 import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 
+import chisurf.fitting
 import chisurf.decorators
 import chisurf.settings
-import chisurf.experiments.widgets
+import chisurf.widgets.experiments.widgets
 import chisurf.widgets
 
 parameter_settings = chisurf.settings.parameter
@@ -68,7 +69,7 @@ class FittingControllerWidget(
         )
 
         self.fit = fit
-        self.curve_select = chisurf.experiments.widgets.ExperimentalDataSelector(
+        self.curve_select = chisurf.widgets.experiments.widgets.ExperimentalDataSelector(
             parent=None,
             fit=fit,
             change_event=self.change_dataset,
@@ -161,7 +162,7 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             fit: chisurf.fitting.fit.FitGroup,
             control_layout: QtWidgets.QLayout,
             close_confirm: bool = None,
-            fit_widget: chisurf.fitting.widgets.FittingControllerWidget = None,
+            fit_widget: chisurf.widgets.fitting.widgets.FittingControllerWidget = None,
             *args,
             **kwargs
     ):
@@ -529,7 +530,10 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
 
         self.setLayout(layout)
         for i, p in enumerate(parameter_group.parameters_all):
-            pw = p.make_widget()
+            pw = chisurf.widgets.fitting.make_fitting_parameter_widget(
+                fitting_parameter=p,
+                label_text='Em<sub>B</sub>'
+            )
             col = i % self.n_col
             row = i // self.n_col
             layout.addWidget(pw, row, col)

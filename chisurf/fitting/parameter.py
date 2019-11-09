@@ -3,9 +3,6 @@
 """
 from __future__ import annotations
 import typing
-import deprecation
-
-from qtpy import QtWidgets
 
 import numpy as np
 
@@ -105,41 +102,10 @@ class FittingParameter(
             s += "link-value: %s\n" % self.value
         return s
 
-    @deprecation.deprecated(
-        deprecated_in="19.08.23",
-        removed_in="20.01.01",
-        current_version="19.08.23",
-        details="use the fitting.widget.make_fitting_widget function instead"
-    )
-    def make_widget(
-            self,
-            text: str = None,
-            layout: QtWidgets.QLayout = None,
-            decimals: int = 4,
-            **kwargs
-    ) -> chisurf.fitting.widgets.FittingParameterWidget:
-        if text is None:
-            text = self.name
-        update_widget = kwargs.get('update_widget', lambda x: x)
-        kw = {
-            'name': text,
-            'decimals': decimals,
-            'layout': layout
-        }
-        widget = chisurf.fitting.widgets.FittingParameterWidget(
-            self,
-            **kw
-        )
-        self.controller = widget
-        return widget
-
 
 class GlobalFittingParameter(
     FittingParameter
 ):
-    """
-
-    """
 
     @property
     def value(self) -> float:

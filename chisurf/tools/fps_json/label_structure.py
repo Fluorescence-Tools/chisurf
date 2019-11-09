@@ -72,7 +72,7 @@ class LabelStructure(
             self.onUpdateJSON()
             self.onUpdateInterface()
         except json.decoder.JSONDecodeError:
-            chisurf.widgets.widgets.MyMessageBox(
+            chisurf.widgets.general.MyMessageBox(
                 info="There is a problem parsing the JSON file.\n",
                 details=traceback.format_exc()
             )
@@ -95,7 +95,7 @@ class LabelStructure(
             self.onUpdateJSON()
             self.onUpdateInterface()
         except (FileExistsError, FileNotFoundError):
-            chisurf.widgets.widgets.MyMessageBox(
+            chisurf.widgets.general.MyMessageBox(
                 info="There is a problem opening the JSON file.\n",
                 details=traceback.format_exc()
             )
@@ -223,7 +223,7 @@ class LabelStructure(
                 self.onUpdateInterface()
                 self.onUpdateJSON()
         except (ValueError, TypeError):
-            chisurf.widgets.widgets.MyMessageBox(
+            chisurf.widgets.general.MyMessageBox(
                 info="Could not add labeling position.\n",
                 details=traceback.format_exc()
             )
@@ -274,7 +274,7 @@ class LabelStructure(
                 )
             self.json_file = filename
         except (FileNotFoundError, FileExistsError):
-            chisurf.widgets.widgets.MyMessageBox(
+            chisurf.widgets.general.MyMessageBox(
                 info="There is a problem saving the JSON file.\n",
                 details=traceback.format_exc()
             )
@@ -292,7 +292,7 @@ class LabelStructure(
         self.textEdit_2.setText(s)
 
     def onClear(self):
-        reply = chisurf.widgets.widgets.MyMessageBox.question(
+        reply = chisurf.widgets.general.MyMessageBox.question(
             self,
             'Message',
             "Are you sure you want to clear all fields?",
