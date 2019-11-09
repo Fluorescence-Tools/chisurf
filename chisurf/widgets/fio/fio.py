@@ -174,48 +174,6 @@ class SpcFileWidget(
         return self._photons
 
 
-class PDBLoad(QtWidgets.QWidget):
-
-    @chisurf.decorators.init_with_ui(ui_filename="proteinMCLoad.ui")
-    def __init__(self, *args, **kwargs):
-        self._data = None
-        self._filename = ''
-
-    def load(self, filename=None):
-        if filename is None:
-            filename = chisurf.widgets.get_filename(
-                'Open PDB-Structure',
-                'PDB-file (*.pdb)'
-            )
-        self.filename = filename
-        self.structure = self.filename
-        self.lineEdit.setText(str(self.structure.n_atoms))
-        self.lineEdit_2.setText(str(self.structure.n_residues))
-
-    @property
-    def filename(self):
-        return str(self.lineEdit_7.text())
-
-    @filename.setter
-    def filename(self, v):
-        self.lineEdit_7.setText(v)
-
-    @property
-    def calcLookUp(self):
-        return self.checkBox.isChecked()
-
-    @property
-    def structure(self):
-        return self._data
-
-    @structure.setter
-    def structure(self, v):
-        self._data = chisurf.structure.Structure(
-            v,
-            make_coarse=self.calcLookUp
-        )
-
-
 class CsvWidget(
     chisurf.base.Base,
     QtWidgets.QWidget
