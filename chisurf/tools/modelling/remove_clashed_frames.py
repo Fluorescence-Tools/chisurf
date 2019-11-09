@@ -3,7 +3,6 @@ from __future__ import annotations
 import sys
 
 from qtpy import QtWidgets
-import qdarkstyle
 
 import mdtraj as md
 import numpy as np
@@ -86,6 +85,5 @@ class RemoveClashedFrames(QtWidgets.QWidget):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = RemoveClashedFrames()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win.show()
     sys.exit(app.exec_())

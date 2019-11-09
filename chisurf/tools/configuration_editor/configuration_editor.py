@@ -6,7 +6,6 @@ import sys
 from qtpy import QtGui, QtWidgets
 import pyqtgraph as pg
 import pyqtgraph.parametertree
-import qdarkstyle
 
 import json
 import re
@@ -191,6 +190,5 @@ class ParameterEditor(QtWidgets.QWidget):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = ParameterEditor()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win.show()
     sys.exit(app.exec_())

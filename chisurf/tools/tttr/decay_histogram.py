@@ -6,7 +6,6 @@ import re
 import numpy as np
 import pyqtgraph as pg
 from PyQt5 import QtWidgets
-import qdarkstyle
 
 import chisurf.decorators
 import chisurf.experiments.data
@@ -242,6 +241,5 @@ class TcspcTTTRWidget(
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = HistogramTTTR()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win.show()
     sys.exit(app.exec_())

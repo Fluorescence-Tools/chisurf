@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import sys
 import numpy as np
-from qtpy import QtWidgets, uic
+from qtpy import QtWidgets
 import pyqtgraph as pg
 import pyqtgraph.dockarea
-import qdarkstyle
 
 import chisurf.decorators
 import chisurf.fluorescence.anisotropy.kappa2
@@ -177,6 +176,5 @@ class Kappa2Dist(QtWidgets.QWidget):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = Kappa2Dist()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win.show()
     sys.exit(app.exec_())

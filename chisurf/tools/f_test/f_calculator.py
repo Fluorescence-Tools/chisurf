@@ -3,7 +3,6 @@ from __future__ import annotations
 import sys
 
 from qtpy import QtWidgets
-import qdarkstyle
 
 from scipy.stats import f as fdist
 
@@ -281,6 +280,5 @@ class FTestWidget(QtWidgets.QWidget):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = FTestWidget()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win.show()
     sys.exit(app.exec_())

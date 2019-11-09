@@ -9,7 +9,6 @@ from PyQt5.Qsci import QsciScintilla
 from PyQt5.Qsci import QsciLexerPython, QsciLexerJSON, QsciLexerYAML
 from qtpy.QtGui import *
 from qtpy.QtWidgets import *
-import qdarkstyle
 
 import chisurf
 import chisurf.fio
@@ -225,7 +224,6 @@ class CodeEditor(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     editor = CodeEditor()
     editor.show()
     app.exec_()

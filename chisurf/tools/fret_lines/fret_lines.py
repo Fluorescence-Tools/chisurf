@@ -6,7 +6,6 @@ import sys
 from qtpy import QtWidgets
 from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
-import qdarkstyle
 
 import numpy as np
 
@@ -793,6 +792,5 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = FRETLineGeneratorWidget()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win.show()
     sys.exit(app.exec_())

@@ -133,7 +133,6 @@ setup(
         'python-docx',
         'deprecation',
         'pyopencl',
-        'qdarkstyle',
         'qtpy',
         'mrcfile',
         'qtconsole',

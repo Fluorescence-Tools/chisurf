@@ -6,7 +6,6 @@ import sys
 import numpy as np
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets
-import qdarkstyle
 
 import tttrlib
 
@@ -566,6 +565,5 @@ class CorrelateTTTR(
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = CorrelateTTTR()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win.show()
     sys.exit(app.exec_())

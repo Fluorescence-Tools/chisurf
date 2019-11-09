@@ -18,6 +18,7 @@ import chisurf.widgets.experiments
 import chisurf.models
 import chisurf.fitting
 import chisurf.settings.ui.resource
+import chisurf.widgets.experiments.modelling
 
 
 class Main(QtWidgets.QMainWindow):
@@ -340,7 +341,7 @@ class Main(QtWidgets.QMainWindow):
                     chisurf.experiments.modelling.StructureReader(
                         experiment=structure
                     ),
-                    chisurf.experiments.modelling.StructureReaderController()
+                    chisurf.widgets.experiments.modelling.StructureReaderController()
                 )
             ]
         )
