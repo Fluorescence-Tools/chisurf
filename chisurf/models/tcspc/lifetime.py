@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Tuple
+import typing
 
 import math
 
@@ -15,9 +15,6 @@ from chisurf.fluorescence.general import species_averaged_lifetime, fluorescence
 
 
 class Lifetime(FittingParameterGroup):
-    """
-
-    """
 
     @property
     def absolute_amplitudes(self) -> bool:
@@ -69,7 +66,7 @@ class Lifetime(FittingParameterGroup):
     @amplitudes.setter
     def amplitudes(
             self,
-            vs: List[float]
+            vs: typing.List[float]
     ):
         for i, v in enumerate(vs):
             self._amplitudes[i].value = v
@@ -84,7 +81,7 @@ class Lifetime(FittingParameterGroup):
     @lifetimes.setter
     def lifetimes(
             self,
-            vs: List[float]
+            vs: typing.List[float]
     ):
         for i, v in enumerate(vs):
             self._lifetimes[i].value = v
@@ -173,7 +170,7 @@ class Lifetime(FittingParameterGroup):
         self._amplitudes.append(amplitude)
         self._lifetimes.append(lifetime)
 
-    def pop(self) -> Tuple[
+    def pop(self) -> typing.Tuple[
         chisurf.fitting.parameter.FittingParameter,
         chisurf.fitting.parameter.FittingParameter
     ]:
@@ -186,8 +183,8 @@ class Lifetime(FittingParameterGroup):
             short: str = 'L',
             absolute_amplitudes: bool = True,
             normalize_amplitudes: bool = True,
-            amplitudes: List[chisurf.fitting.parameter.FittingParameter] = None,
-            lifetimes: List[chisurf.fitting.parameter.FittingParameter] = None,
+            amplitudes: typing.List[chisurf.fitting.parameter.FittingParameter] = None,
+            lifetimes: typing.List[chisurf.fitting.parameter.FittingParameter] = None,
             name: str = 'lifetimes',
             link: FittingParameter = None,
             **kwargs
@@ -293,7 +290,9 @@ class LifetimeModel(ModelCurve):
     ) -> np.array:
         return self.lifetimes.lifetime_spectrum
 
-    def get_curves(self):
+    def get_curves(
+            self
+    ) -> typing.Dict[str, chisurf.curve.Curve]:
         d = super().get_curves()
         d['IRF'] = self.convolve.irf
         return d
