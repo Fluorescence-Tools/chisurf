@@ -3,7 +3,6 @@ from __future__ import annotations
 import sys
 
 from qtpy import QtCore, QtWidgets
-import qdarkstyle
 
 import mdtraj
 
@@ -148,6 +147,5 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = PotentialEnergyWidget()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win.show()
     sys.exit(app.exec_())

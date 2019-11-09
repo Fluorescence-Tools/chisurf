@@ -3,7 +3,6 @@ from __future__ import annotations
 import sys
 
 from qtpy import QtWidgets
-import qdarkstyle
 
 import chisurf.decorators
 from chisurf.fluorescence.general import \
@@ -194,6 +193,5 @@ class FRETCalculator(QtWidgets.QWidget):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = FRETCalculator()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win.show()
     sys.exit(app.exec_())

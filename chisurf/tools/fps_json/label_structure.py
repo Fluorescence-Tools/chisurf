@@ -8,12 +8,11 @@ import json
 import traceback
 
 from qtpy import QtWidgets, QtCore
-import qdarkstyle
 
 import chisurf.fio
 import chisurf.widgets
 import chisurf.widgets.pdb
-import chisurf.widgets.accessible_volume
+import chisurf.widgets.fluorescence.av
 import chisurf.decorators
 import chisurf.structure
 import chisurf.structure
@@ -33,7 +32,7 @@ class LabelStructure(
     ):
         self.atom_select = chisurf.widgets.pdb.PDBSelector()
         self.verticalLayout_3.addWidget(self.atom_select)
-        self.av_properties = chisurf.widgets.accessible_volume.AVProperties()
+        self.av_properties = chisurf.widgets.fluorescence.av.AVProperties()
         self.verticalLayout_4.addWidget(self.av_properties)
 
         self.textEdit_2 = chisurf.tools.text_editor.SimpleCodeEditor(
@@ -309,6 +308,5 @@ class LabelStructure(
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = LabelStructure()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win.show()
     sys.exit(app.exec_())

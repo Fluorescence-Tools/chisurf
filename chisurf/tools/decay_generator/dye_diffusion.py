@@ -9,7 +9,6 @@ import numpy as np
 from qtpy import QtWidgets, uic
 from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
-import qdarkstyle
 
 import chisurf.math
 import chisurf.fio.coordinates
@@ -422,6 +421,5 @@ class TransientDecayGenerator(DyeDecay, QtWidgets.QWidget):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = TransientDecayGenerator()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win.show()
     sys.exit(app.exec_())

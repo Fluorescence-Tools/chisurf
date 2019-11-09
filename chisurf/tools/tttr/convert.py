@@ -4,7 +4,6 @@ import sys
 import copy
 
 from qtpy import QtWidgets
-import qdarkstyle
 
 import chisurf.decorators
 import chisurf.fio.tttr
@@ -74,6 +73,5 @@ class TTTRConvert(QtWidgets.QWidget):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     win = TTTRConvert()
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win.show()
     sys.exit(app.exec_())
