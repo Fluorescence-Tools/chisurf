@@ -246,6 +246,13 @@ class Tests(unittest.TestCase):
             ),
             True
         )
+        atoms = chisurf.fio.coordinates.read(
+            filename="None"
+        )
+        self.assertEqual(
+            len(atoms),
+            0
+        )
 
     def test_spc2hdf(self):
         import chisurf.fio.tttr

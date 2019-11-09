@@ -3,12 +3,11 @@ from __future__ import annotations
 import numpy as np
 from qtpy import QtCore, QtGui, QtWidgets
 
-import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.fluorescence
 import chisurf.fluorescence.general
 import chisurf.math
-from mfm import plots
+from chisurf import plots
 from chisurf.fluorescence.tcspc.phasor import Phasor
 from chisurf.fluorescence.tcspc.widgets import PhasorWidget
 from chisurf.models.model import Model

@@ -119,8 +119,9 @@ class Correlator(QtCore.QThread):
             n_groups = self.p.split
             for i_group in range(n_groups):
                 print("Correlation Nbr.: %s" % i_group)
-                index_start = i_group * (n_photons_per_groups - 1)
+                index_start = i_group * n_photons_per_groups
                 index_stop = (i_group + 1) * (n_photons_per_groups - 1)
+                print("Photon start/stop: %s/%s" % (index_start, index_stop))
                 p = photons[index_start: index_stop]
                 wi1 = w1[index_start: index_stop]
                 wi2 = w2[index_start: index_stop]

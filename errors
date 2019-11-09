@@ -78,4 +78,149 @@ AttributeError: module 'ChiSurf' has no attribute 'fitting'
 
 ---------
 
+Model Structure add dataset
+
+---------------------------------------------------------------------------
+HTTPError                                 Traceback (most recent call last)
+<ipython-input-4-9fb921ec1189> in <module>
+----> 1 chisurf.macros.add_dataset(filename="None")
+
+~/development/fluorescence-tools/chisurf/chisurf/macros/__init__.py in add_dataset(expriment_reader, dataset, **kwargs)
+    246     if dataset is None:
+    247         dataset = expriment_reader.get_data(
+--> 248             **kwargs
+    249         )
+    250     dataset_group = dataset if isinstance(
+
+~/development/fluorescence-tools/chisurf/chisurf/experiments/reader.py in get_data(self, **kwargs)
+     61     ) -> chisurf.experiments.data.ExperimentDataGroup:
+     62         data = self.read(
+---> 63             **kwargs
+     64         )
+     65         if isinstance(
+
+~/development/fluorescence-tools/chisurf/chisurf/experiments/modelling.py in read(self, filename, **kwargs)
+     43             **kwargs
+     44     ):
+---> 45         self.pdbWidget.load(filename=filename)
+     46         s = self.pdbWidget.structure
+     47         s.setup = self
+
+~/development/fluorescence-tools/chisurf/chisurf/fio/widgets.py in load(self, filename)
+    189             )
+    190         self.filename = filename
+--> 191         self.structure = self.filename
+    192         self.lineEdit.setText(str(self.structure.n_atoms))
+    193         self.lineEdit_2.setText(str(self.structure.n_residues))
+
+~/development/fluorescence-tools/chisurf/chisurf/fio/widgets.py in structure(self, v)
+    213         self._data = chisurf.structure.Structure(
+    214             v,
+--> 215             make_coarse=self.calcLookUp
+    216         )
+    217
+
+~/development/fluorescence-tools/chisurf/chisurf/structure/structure.py in __init__(self, p_object, auto_update, filename, verbose, pdb_id, protonate, *args, **kwargs)
+    149                 self.filename = p_object
+    150             elif len(p_object) == 4:
+--> 151                 self._atoms = self.io.fetch_pdb(p_object)
+    152                 self.pdbid = p_object
+    153             else:
+
+~/development/fluorescence-tools/chisurf/chisurf/fio/coordinates.py in fetch_pdb(pdb_id, **kwargs)
+     72         **kwargs
+     73 ):
+---> 74     st = fetch_pdb_string(pdb_id)
+     75     return parse_string_pdb(st, **kwargs)
+     76
+
+~/development/fluorescence-tools/chisurf/chisurf/fio/coordinates.py in fetch_pdb_string(pdb_id)
+     64     """
+     65     url = 'http://www.rcsb.org/pdb/files/%s.pdb' % pdb_id[:4]
+---> 66     binary = urllib.request.urlopen(url).read()
+     67     return binary.decode("utf-8")
+     68
+
+~/miniconda3/lib/python3.7/urllib/request.py in urlopen(url, data, timeout, cafile, capath, cadefault, context)
+    220     else:
+    221         opener = _opener
+--> 222     return opener.open(url, data, timeout)
+    223
+    224 def install_opener(opener):
+
+~/miniconda3/lib/python3.7/urllib/request.py in open(self, fullurl, data, timeout)
+    529         for processor in self.process_response.get(protocol, []):
+    530             meth = getattr(processor, meth_name)
+--> 531             response = meth(req, response)
+    532
+    533         return response
+
+~/miniconda3/lib/python3.7/urllib/request.py in http_response(self, request, response)
+    639         if not (200 <= code < 300):
+    640             response = self.parent.error(
+--> 641                 'http', request, response, code, msg, hdrs)
+    642
+    643         return response
+
+~/miniconda3/lib/python3.7/urllib/request.py in error(self, proto, *args)
+    561             http_err = 0
+    562         args = (dict, proto, meth_name) + args
+--> 563         result = self._call_chain(*args)
+    564         if result:
+    565             return result
+
+~/miniconda3/lib/python3.7/urllib/request.py in _call_chain(self, chain, kind, meth_name, *args)
+    501         for handler in handlers:
+    502             func = getattr(handler, meth_name)
+--> 503             result = func(*args)
+    504             if result is not None:
+    505                 return result
+
+~/miniconda3/lib/python3.7/urllib/request.py in http_error_302(self, req, fp, code, msg, headers)
+    753         fp.close()
+    754
+--> 755         return self.parent.open(new, timeout=req.timeout)
+    756
+    757     http_error_301 = http_error_303 = http_error_307 = http_error_302
+
+~/miniconda3/lib/python3.7/urllib/request.py in open(self, fullurl, data, timeout)
+    529         for processor in self.process_response.get(protocol, []):
+    530             meth = getattr(processor, meth_name)
+--> 531             response = meth(req, response)
+    532
+    533         return response
+
+~/miniconda3/lib/python3.7/urllib/request.py in http_response(self, request, response)
+    639         if not (200 <= code < 300):
+    640             response = self.parent.error(
+--> 641                 'http', request, response, code, msg, hdrs)
+    642
+    643         return response
+
+~/miniconda3/lib/python3.7/urllib/request.py in error(self, proto, *args)
+    567         if http_err:
+    568             args = (dict, 'default', 'http_error_default') + orig_args
+--> 569             return self._call_chain(*args)
+    570
+    571 # XXX probably also want an abstract factory that knows when it makes
+
+~/miniconda3/lib/python3.7/urllib/request.py in _call_chain(self, chain, kind, meth_name, *args)
+    501         for handler in handlers:
+    502             func = getattr(handler, meth_name)
+--> 503             result = func(*args)
+    504             if result is not None:
+    505                 return result
+
+~/miniconda3/lib/python3.7/urllib/request.py in http_error_default(self, req, fp, code, msg, hdrs)
+    647 class HTTPDefaultErrorHandler(BaseHandler):
+    648     def http_error_default(self, req, fp, code, msg, hdrs):
+--> 649         raise HTTPError(req.full_url, code, msg, hdrs, fp)
+    650
+    651 class HTTPRedirectHandler(BaseHandler):
+
+HTTPError: HTTP Error 404: Not Found
+
+---------
+Correlator crashes when data is split into too many parts
+-----------
 

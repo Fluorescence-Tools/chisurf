@@ -164,7 +164,7 @@ def openFCS_Multiple(path):
                 if corrlength != 0:
                     # For cross correlation or something sometimes
                     # there is no trace information.
-                    if gottrace == False and FoundType[:2] == "AC":
+                    if (gottrace is False) and (FoundType[:2] == "AC"):
                         # We think we know that there is no trace in CC curves
                         traces.append(None)
                     corrdata = Alldata[i + 2: i + corrlength + 2]

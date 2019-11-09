@@ -12,7 +12,9 @@ from qtpy.QtWidgets import *
 import qdarkstyle
 
 import chisurf
-import chisurf.settings as mfm
+import chisurf.fio
+import chisurf.widgets
+import chisurf.settings
 
 
 class SimpleCodeEditor(QsciScintilla):
@@ -158,7 +160,9 @@ class CodeEditor(QWidget):
     def run_macro(self):
         self.save_text()
         print("running macros %s" % self.filename)
-        mfm.console.run_macro(filename=self.filename)
+        chisurf.console.run_macro(
+            filename=self.filename
+        )
 
     def save_text(self):
         print("saving macros")

@@ -17,5 +17,5 @@ import chisurf.models.parse
 import chisurf.models.fcs
 import chisurf.models.tcspc
 import chisurf.models.global_model
-import chisurf.models.stopped_flow
+#import chisurf.models.stopped_flow
 from . model import *

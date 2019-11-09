@@ -4,7 +4,6 @@ from typing import Tuple, Type
 import chisurf.fluorescence
 import chisurf.fluorescence.av.fps
 import chisurf.settings
-import chisurf.settings as mfm
 import numpy as np
 import numba as nb
 from math import exp, sqrt

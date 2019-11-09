@@ -5,7 +5,6 @@ from qtpy import QtCore, QtWidgets
 from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
 
-import chisurf.settings as mfm
 import chisurf.decorators
 from chisurf.math.signal import autocorr
 from chisurf.plots.plotbase import Plot

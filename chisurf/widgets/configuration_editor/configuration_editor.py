@@ -1,12 +1,5 @@
-"""
-This example demonstrates the use of pyqtgraph's parametertree system. This provides
-a simple way to generate user interfaces that control sets of parameters. The example
-demonstrates a variety of different parameter types (int, float, list, etc.)
-as well as some customized parameter types
-
-"""
 from __future__ import annotations
-from typing import Dict, List
+import typing
 
 import sys
 
@@ -25,7 +18,7 @@ import chisurf.widgets
 
 def dict_to_parameter_tree(
         origin
-) -> List:
+) -> typing.List:
     """Creates an array from a dictionary that can be used to initialize a pyqtgraph parameter-tree
     :param origin:
     :return:
@@ -59,7 +52,7 @@ def dict_to_parameter_tree(
 
 def parameter_tree_to_dict(
         parameter_tree
-) -> Dict:
+) -> typing.Dict:
     """Converts a pyqtgraph parameter tree to an ordinary dictionary that could be saved
     as JSON file
 
@@ -96,7 +89,7 @@ class ParameterEditor(QtWidgets.QWidget):
 
     def __init__(
             self,
-            target: Dict = None,
+            target: typing.Dict = None,
             json_file: str = None,
             windows_title: str = None,
     ):
@@ -167,7 +160,7 @@ class ParameterEditor(QtWidgets.QWidget):
             return self._dict
 
     @property
-    def parameter_dict(self) -> List:
+    def parameter_dict(self) -> typing.List:
         od = dict(self.dict)
         params = dict_to_parameter_tree(od)
         params.append(

@@ -186,23 +186,26 @@ def read(
     '), ('element', 'S1'), ('xyz', '<f8', (3,)), ('charge', '<f8'), ('radius', '<f8'), ('bfactor', '<f8'), ('mass', '<f8')
     ])
     """
-    with chisurf.fio.zipped.open_maybe_zipped(
-            filename=filename,
-            mode='r'
-    ) as f:
-        string = f.read()
-        if verbose:
-            path, baseName = os.path.split(filename)
-            print("======================================")
-            print("Filename: %s" % filename)
-            print("Path: %s" % path)
-        fn1, ext1 = os.path.splitext(filename)
-        _, ext2 = os.path.splitext(fn1)
-        if '.pdb' in [ext1, ext2]:
-            atoms = parse_string_pdb(string, assign_charge, **kwargs)
-        else:  # elif filename.endswith('.pqr'):
-            atoms = parse_string_pqr(string, **kwargs)
-        return atoms
+    if os.path.isfile(filename):
+        with chisurf.fio.zipped.open_maybe_zipped(
+                filename=filename,
+                mode='r'
+        ) as f:
+            string = f.read()
+            if verbose:
+                path, baseName = os.path.split(filename)
+                print("======================================")
+                print("Filename: %s" % filename)
+                print("Path: %s" % path)
+            fn1, ext1 = os.path.splitext(filename)
+            _, ext2 = os.path.splitext(fn1)
+            if '.pdb' in [ext1, ext2]:
+                atoms = parse_string_pdb(string, assign_charge, **kwargs)
+            else:  # elif filename.endswith('.pqr'):
+                atoms = parse_string_pqr(string, **kwargs)
+            return atoms
+    else:
+        return np.zeros(0, dtype={'names': keys, 'formats': formats})
 
 
 def write_pdb(

@@ -530,7 +530,11 @@ def super_impose(
     structure_align.xyz = np.dot(al, rot)
 
 
-def find_best(target, reference, atom_indices=None):
+def find_best(
+        target,
+        reference,
+        atom_indices=None
+):
     """
     target and reference are both of type mdtraj.Trajectory
     reference is of length 1, target of arbitrary length

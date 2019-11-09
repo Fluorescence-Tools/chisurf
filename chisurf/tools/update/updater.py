@@ -2,8 +2,10 @@
 
 # https://hackthology.com/how-to-write-self-updating-python-programs-using-pip-and-git.html
 
+import chisurf
 from subprocess import check_call as run
 from getopt import getopt, GetoptError
+
 RELEASE = 'master' # default release
 SRC_DIR = "$HOME/.src" # checkout directory
 UPDATE_CMD = ( # base command
@@ -16,7 +18,7 @@ def update(args):
     try:
         opts, args = getopt(args, 'sr:', ['sudo', 'src=', 'release=', 'commit='])
     except(GetoptError) as err:
-        log(err)
+        chisurf.logging.warning(err)
         usage(error_codes['option'])
 
     sudo = False

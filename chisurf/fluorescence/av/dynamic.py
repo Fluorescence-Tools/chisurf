@@ -24,8 +24,8 @@ ne.set_num_threads(
 
 
 def simulate_trajectory(
-        d: np.array,
-        ds: np.array,
+        d: np.ndarray,
+        ds: np.ndarray,
         dg: float,
         t_max: float,
         t_step: float,
