@@ -9,7 +9,7 @@ import chisurf.base
 import chisurf.experiments
 import chisurf.models
 import chisurf.fitting
-import chisurf.fitting.widgets
+import chisurf.widgets.fitting.widgets
 import chisurf.widgets
 import chisurf.macros.tcspc
 
@@ -60,14 +60,14 @@ def add_fit(
             )
             chisurf.fits.append(fit_group)
 
-            fit_control_widget = chisurf.fitting.widgets.FittingControllerWidget(
+            fit_control_widget = chisurf.widgets.fitting.widgets.FittingControllerWidget(
                 fit_group
             )
             cs.modelLayout.addWidget(fit_control_widget)
             for fit in fit_group:
                 cs.modelLayout.addWidget(fit.model)
 
-            fit_window = chisurf.fitting.widgets.FitSubWindow(
+            fit_window = chisurf.widgets.fitting.widgets.FitSubWindow(
                 fit=fit_group,
                 control_layout=cs.plotOptionsLayout,
                 fit_widget=fit_control_widget

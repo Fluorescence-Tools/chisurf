@@ -7,7 +7,7 @@ import chisurf.fitting
 import chisurf.structure
 
 from chisurf.fluorescence.av.dynamic import ProteinQuenching, Dye, Sticking
-from chisurf.fitting.widgets import FittingParameterWidget
+from chisurf.widgets.fitting.widgets import FittingParameterWidget
 
 
 class ProteinQuenchingWidget(ProteinQuenching, QtWidgets.QGroupBox):
@@ -119,28 +119,28 @@ class DyeWidget(Dye, QtWidgets.QGroupBox):
         gl.addWidget(self.dye_select, 0, 0, 1, 2)
 
         gl.addWidget(
-            chisurf.fitting.widgets.make_fitting_parameter_widget(self._critical_distance),
+            chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(self._critical_distance),
             1, 0
         )
         gl.addWidget(
-            chisurf.fitting.widgets.make_fitting_parameter_widget(self._diffusion_coefficient),
+            chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(self._diffusion_coefficient),
             2, 0
         )
         gl.addWidget(
-            chisurf.fitting.widgets.make_fitting_parameter_widget(self._tau0),
+            chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(self._tau0),
             3, 0
         )
 
         gl.addWidget(
-            chisurf.fitting.widgets.make_fitting_parameter_widget(self._av_length),
+            chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(self._av_length),
             1, 1
         )
         gl.addWidget(
-            chisurf.fitting.widgets.make_fitting_parameter_widget(self._av_width),
+            chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(self._av_width),
             2, 1
         )
         gl.addWidget(
-            chisurf.fitting.widgets.make_fitting_parameter_widget(self._av_radius),
+            chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(self._av_radius),
             3, 1
         )
         self.dye_select.currentIndexChanged[int].connect(self.update_parameter)
@@ -180,14 +180,14 @@ class StickingWidget(Sticking, QtWidgets.QGroupBox):
         self.radioButton_2 = QtWidgets.QRadioButton('Quencher')
 
         layout.addWidget(
-            chisurf.fitting.widgets.make_fitting_parameter_widget(
+            chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
                 self._slow_radius
             ),
             0,
             1
         )
         layout.addWidget(
-            chisurf.fitting.widgets.make_fitting_parameter_widget(
+            chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
                 self._slow_fact
             ),
             1,

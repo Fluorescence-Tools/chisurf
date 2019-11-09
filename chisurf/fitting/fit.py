@@ -27,9 +27,6 @@ from chisurf.math.optimization.leastsqbound import leastsqbound
 class Fit(
     chisurf.base.Base
 ):
-    """
-
-    """
 
     def __init__(
             self,

@@ -8,11 +8,11 @@ from qtpy import QtWidgets, uic
 from chisurf.models.parse import ParseModelWidget
 
 import chisurf.settings
-import chisurf.fitting.widgets
+import chisurf.widgets.fitting.widgets
 from chisurf import plots
 from chisurf.models.model import Model
 from chisurf.math.reaction.continuous import ReactionSystem
-from chisurf.fitting.widgets import FittingParameterWidget
+from chisurf.widgets.fitting.widgets import FittingParameterWidget
 
 
 class ParseStoppedFlowWidget(ParseModelWidget):
@@ -128,7 +128,7 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
         self.actionSave_reaction.triggered.connect(self.onSaveLabelingFile)
         Model.__init__(self, **kwargs)
         self.setParameter(parameter)
-        self.fitting_widget = chisurf.fitting.widgets.FittingControllerWidget(
+        self.fitting_widget = chisurf.widgets.fitting.widgets.FittingControllerWidget(
             fit=self.fit
         )
         self.verticalLayout_4.addWidget(self.fitting_widget)

@@ -17,7 +17,7 @@ from chisurf.fluorescence.av.widgets import ProteinQuenchingWidget, DyeWidget, S
 import chisurf.settings
 import chisurf.fitting.fit
 import chisurf.models.tcspc.nusiance
-import chisurf.fitting.widgets
+import chisurf.widgets.fitting.widgets
 import chisurf.fluorescence.av as fps
 import chisurf.fluorescence.tcspc.convolve
 import chisurf.fio
@@ -788,7 +788,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         )
 
         if not kwargs.get('disable_fit', False):
-            fitting_widget = chisurf.fitting.widgets.FittingControllerWidget(fit, **kwargs)
+            fitting_widget = chisurf.widgets.fitting.widgets.FittingControllerWidget(fit, **kwargs)
         else:
             fitting_widget = QtWidgets.QLabel()
 
@@ -840,7 +840,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.diff_file = None
         self.av_slow_file = None
         self.av_fast_file = None
-        self.fitting_widget = chisurf.fitting.widgets.FittingWidget(fit=self.fit)
+        self.fitting_widget = chisurf.widgets.fitting.widgets.FittingWidget(fit=self.fit)
 
         self.hide()
 

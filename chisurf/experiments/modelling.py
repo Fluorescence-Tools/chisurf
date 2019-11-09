@@ -7,7 +7,7 @@ from qtpy import QtWidgets
 
 import chisurf.base
 import chisurf.fio
-import chisurf.fio.widgets
+import chisurf.widgets.fio
 import chisurf.widgets.pdb
 from . reader import ExperimentReader
 
@@ -34,7 +34,7 @@ class LoadStructure(
 
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
-        self.pdbWidget = chisurf.fio.widgets.PDBLoad(self)
+        self.pdbWidget = chisurf.widgets.fio.PDBLoad(self)
         self.layout.addWidget(self.pdbWidget)
 
     def read(
@@ -87,7 +87,7 @@ class LoadStructureFolder(
     def get_data(
             self,
             **kwargs
-    ) -> experiments.data.ExperimentDataGroup:
+    ) -> chisurf.experiments.data.ExperimentDataGroup:
         return [self.pdbWidget.trajectory]
 
     @staticmethod

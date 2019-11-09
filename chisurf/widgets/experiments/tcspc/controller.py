@@ -1,13 +1,11 @@
-import os
-
 from qtpy import QtWidgets
 
 import chisurf.decorators
 import chisurf.widgets
 from chisurf.experiments import reader
 import chisurf.experiments.data
-import chisurf.fio.widgets
-import chisurf.experiments.widgets
+import chisurf.widgets.fio
+import chisurf.widgets.experiments.widgets
 
 
 class CsvTCSPCWidget(
@@ -110,7 +108,7 @@ class TCSPCReaderControlWidget(
         layout.setSpacing(0)
         self.layout = layout
         self.layout.addWidget(
-            chisurf.fio.widgets.CsvWidget()
+            chisurf.widgets.fio.CsvWidget()
         )
         self.layout.addWidget(
             CsvTCSPCWidget()
@@ -127,7 +125,7 @@ class TCSPCSetupDummyWidget(
             *args,
             **kwargs
     ):
-        self.selector = chisurf.experiments.widgets.ExperimentalDataSelector(
+        self.selector = chisurf.widgets.experiments.widgets.ExperimentalDataSelector(
             click_close=False,
             parent=self,
             context_menu_enabled=False

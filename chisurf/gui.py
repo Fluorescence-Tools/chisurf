@@ -9,11 +9,11 @@ import numpy as np
 import chisurf
 import chisurf.decorators
 import chisurf.base
+import chisurf.experiments
 import chisurf.macros
 import chisurf.tools
-import chisurf.experiments.widgets
-import chisurf.experiments.tcspc.controller
 import chisurf.widgets
+import chisurf.widgets.experiments
 import chisurf.models
 import chisurf.fitting
 import chisurf.settings.ui.resource
@@ -121,7 +121,7 @@ class Main(QtWidgets.QMainWindow):
             return self.current_setup
         elif isinstance(
                 self.current_setup,
-                experiments.reader.ExperimentReaderController
+                chisurf.experiments.reader.ExperimentReaderController
         ):
             return self.current_setup.experiment_reader
 
@@ -166,7 +166,7 @@ class Main(QtWidgets.QMainWindow):
             event: QtGui.QCloseEvent
     ):
         if chisurf.settings.gui['confirm_close_program']:
-            reply = chisurf.widgets.widgets.MyMessageBox.question(
+            reply = chisurf.widgets.general.MyMessageBox.question(
                 self,
                 'Message',
                 "Are you sure to quit?",
@@ -363,13 +363,13 @@ class Main(QtWidgets.QMainWindow):
                     chisurf.experiments.tcspc.TCSPCReader(
                         experiment=tcspc
                     ),
-                    chisurf.experiments.tcspc.controller.TCSPCReaderControlWidget(
+                    chisurf.widgets.experiments.tcspc.controller.TCSPCReaderControlWidget(
                         name='CSV/PQ/IBH',
                         **chisurf.settings.cs_settings['tcspc_csv'],
                     )
                 ),
                 (
-                    chisurf.experiments.tcspc.bh_sdt.TCSPCSetupSDTWidget(
+                    chisurf.widgets.experiments.tcspc.bh_sdt.TCSPCSetupSDTWidget(
                         experiment=tcspc
                     ),
                     None
@@ -378,7 +378,7 @@ class Main(QtWidgets.QMainWindow):
                     chisurf.experiments.tcspc.dummy.TCSPCSetupDummy(
                         experiment=tcspc
                     ),
-                    chisurf.experiments.tcspc.controller.TCSPCSetupDummyWidget()
+                    chisurf.widgets.experiments.tcspc.controller.TCSPCSetupDummyWidget()
                 )
             ]
         )
@@ -405,7 +405,7 @@ class Main(QtWidgets.QMainWindow):
                         experiment=fcs,
                         experiment_reader='csv'
                     ),
-                    chisurf.experiments.widgets.FCSController(
+                    chisurf.widgets.experiments.widgets.FCSController(
                         file_type='All files (*.*)'
                     )
                 ),
@@ -415,7 +415,7 @@ class Main(QtWidgets.QMainWindow):
                         experiment=fcs,
                         experiment_reader='kristine'
                     ),
-                    chisurf.experiments.widgets.FCSController(
+                    chisurf.widgets.experiments.widgets.FCSController(
                         file_type='Kristine files (*.cor)'
                     )
                 ),
@@ -425,7 +425,7 @@ class Main(QtWidgets.QMainWindow):
                         experiment=fcs,
                         experiment_reader='china-mat'
                     ),
-                    chisurf.experiments.widgets.FCSController(
+                    chisurf.widgets.experiments.widgets.FCSController(
                         file_type='Kristine files (*.mat)'
                     )
                 ),
@@ -435,7 +435,7 @@ class Main(QtWidgets.QMainWindow):
                         experiment=fcs,
                         experiment_reader='confocor3'
                     ),
-                    chisurf.experiments.widgets.FCSController(
+                    chisurf.widgets.experiments.widgets.FCSController(
                         file_type='Confocor3 files (*.fcs)'
                     )
                 ),
@@ -445,7 +445,7 @@ class Main(QtWidgets.QMainWindow):
                         experiment=fcs,
                         experiment_reader='pycorrfit'
                     ),
-                    chisurf.experiments.widgets.FCSController(
+                    chisurf.widgets.experiments.widgets.FCSController(
                         file_type='PyCorrFit csv files (*.csv)'
                     )
                 ),
@@ -455,7 +455,7 @@ class Main(QtWidgets.QMainWindow):
                         experiment=fcs,
                         experiment_reader='alv'
                     ),
-                    chisurf.experiments.widgets.FCSController(
+                    chisurf.widgets.experiments.widgets.FCSController(
                         file_type='Kristine files (*.asc)'
                     )
                 )
@@ -667,7 +667,7 @@ class Main(QtWidgets.QMainWindow):
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
-        self.dataset_selector = chisurf.experiments.widgets.ExperimentalDataSelector(
+        self.dataset_selector = chisurf.widgets.experiments.widgets.ExperimentalDataSelector(
             click_close=False,
             curve_types='all',
             change_event=self.onCurrentDatasetChanged,

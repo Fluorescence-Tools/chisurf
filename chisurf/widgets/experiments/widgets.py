@@ -6,7 +6,7 @@ from typing import List, Callable
 from qtpy import QtWidgets, QtCore, QtGui
 
 import chisurf.fio
-import chisurf.fio.widgets
+import chisurf.widgets.fio
 import chisurf.experiments.data
 import chisurf.fitting
 import chisurf.widgets
@@ -325,5 +325,5 @@ class FCSController(
         layout.setSpacing(0)
         self.layout = layout
         self.layout.addWidget(
-            chisurf.fio.widgets.CsvWidget()
+            chisurf.widgets.fio.CsvWidget()
         )

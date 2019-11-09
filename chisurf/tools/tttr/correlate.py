@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import List
 
-import copy
 import sys
 
 import numpy as np
@@ -12,14 +11,14 @@ import qdarkstyle
 import tttrlib
 
 import chisurf.decorators
-import chisurf.experiments.widgets
+import chisurf.widgets.experiments.widgets
 import chisurf.tools
 import chisurf.fluorescence
 import chisurf.experiments.data
 import chisurf.settings
 import chisurf.widgets
 import chisurf.fluorescence.fcs
-import chisurf.fio.widgets
+import chisurf.widgets.fio
 
 
 settings = chisurf.settings.cs_settings['correlator']
@@ -535,7 +534,7 @@ class CorrelateTTTR(
     def __init__(self):
         self._curves = list()
 
-        self.fileWidget = chisurf.fio.widgets.SpcFileWidget()
+        self.fileWidget = chisurf.widgets.fio.SpcFileWidget()
         self.verticalLayout.addWidget(self.fileWidget)
 
         self.countrateFilterWidget = CrFilterWidget(
@@ -548,7 +547,7 @@ class CorrelateTTTR(
         )
         self.verticalLayout.addWidget(self.correlator)
 
-        self.cs = chisurf.experiments.widgets.ExperimentalDataSelector(
+        self.cs = chisurf.widgets.experiments.widgets.ExperimentalDataSelector(
             get_data_sets=self.get_data_curves,
             click_close=False
         )

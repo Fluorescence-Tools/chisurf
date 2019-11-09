@@ -10,9 +10,9 @@ import qdarkstyle
 
 import chisurf.decorators
 import chisurf.experiments.data
-import chisurf.experiments.widgets
+import chisurf.widgets.experiments.widgets
 import chisurf.fluorescence.tcspc
-import chisurf.fio.widgets
+import chisurf.widgets.fio
 
 plot_settings = chisurf.settings.gui['plot']
 lw = plot_settings['line_width']
@@ -30,7 +30,7 @@ class HistogramTTTR(
         self.verticalLayout.addWidget(
             self.tcspc_setup_widget
         )
-        self.curve_selector = chisurf.experiments.widgets.ExperimentalDataSelector(
+        self.curve_selector = chisurf.widgets.experiments.widgets.ExperimentalDataSelector(
             get_data_sets=self.get_data_curves,
             click_close=False
         )
@@ -109,7 +109,7 @@ class TcspcTTTRWidget(
             *args,
             **kwargs,
     ):
-        self.spcFileWidget = chisurf.fio.widgets.SpcFileWidget(self)
+        self.spcFileWidget = chisurf.widgets.fio.SpcFileWidget(self)
         self.layout().insertWidget(0, self.spcFileWidget)
 
         # Actions
