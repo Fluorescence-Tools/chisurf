@@ -1,11 +1,16 @@
-from math import exp
+from __future__ import annotations
+import typing
 
+import math
 import numpy as np
-from numba import jit
+import numba as nb
 
 
-@jit(nopython=True, nogil=True)
-def poisson_0toN(lam, N):
+@nb.jit(nopython=True, nogil=True)
+def poisson_0toN(
+        lam: float,
+        N: int
+):
     """Poisson-distribution for the parameter lambda up to N
 
     :param lam: float
@@ -23,14 +28,19 @@ def poisson_0toN(lam, N):
 
     """
     p = np.empty(N, dtype=np.float64)
-    p[0] = exp(-lam)
+    p[0] = math.exp(-lam)
     for i in range(1, N):
         p[i] = p[i-1] * lam / i
     return p
 
 
-@jit(nopython=True, nogil=True)
-def normal_distribution(x, loc=0.0, scale=1.0, norm=True):
+@nb.jit(nopython=True, nogil=True)
+def normal_distribution(
+        x: np.ndarray,
+        loc: float = 0.0,
+        scale: float = 1.0,
+        norm: bool = True
+):
     """Probability density function of a generalized normal distribution
 
     :param x:
@@ -45,8 +55,14 @@ def normal_distribution(x, loc=0.0, scale=1.0, norm=True):
     return y
 
 
-@jit(nopython=True, nogil=True)
-def generalized_normal_distribution(x, loc=0.0, scale=1.0, shape=0.0, norm=True):
+@nb.jit(nopython=True, nogil=True)
+def generalized_normal_distribution(
+        x: np.ndarray,
+        loc: float = 0.0,
+        scale: float = 1.0,
+        shape: float = 0.0,
+        norm: bool = True
+):
     """ Probability density function of a generalized normal distribution in which a shape parameter
     introduces a skew. If the shape parameter is zero, the normal distribution
     results. Positive values of the shape parameter yield left-skewed distributions bounded to the right,
@@ -76,7 +92,7 @@ def generalized_normal_distribution(x, loc=0.0, scale=1.0, shape=0.0, norm=True)
     return y
 
 
-@jit(nopython=True, nogil=True)
+@nb.jit(nopython=True, nogil=True)
 def linear_dist(x, px, py, normalize=True):
     """ Creates a distribution for a number of points and linearly interpolates between the points.
 
@@ -114,7 +130,14 @@ def linear_dist(x, px, py, normalize=True):
     return y
 
 
-def sum_distribution(x_axis, dist_function, dist_args, weights=None, accumulate=True, normalize=False):
+def sum_distribution(
+        x_axis,
+        dist_function,
+        dist_args,
+        weights: typing.List[float] = None,
+        accumulate: bool = True,
+        normalize: bool = False
+):
     """Generates a sum of distribution functions, e.g. the sum of two normal distributions
     evaluated for a given x_axis. The arguments dist_args should be a list of lists, which
     is passed to the dist_function. 
@@ -127,7 +150,7 @@ def sum_distribution(x_axis, dist_function, dist_args, weights=None, accumulate=
     
     Example
     -------
-    >>> import chisurf.settings as mfm
+    >>> import chisurf.math
     >>> import pylab as p
     >>> pdf = chisurf.math.functions.distributions.normal_distribution
     >>> x_axis = np.linspace(0, 10, 100)

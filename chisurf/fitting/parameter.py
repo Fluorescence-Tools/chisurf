@@ -155,9 +155,6 @@ class GlobalFittingParameter(
 class FittingParameterGroup(
     chisurf.parameter.ParameterGroup
 ):
-    """
-
-    """
 
     @property
     def parameter_bounds(
@@ -188,7 +185,7 @@ class FittingParameterGroup(
     @property
     def parameters_all_dict(
             self
-    ) -> typing.Dict:
+    ) -> typing.Dict[str, chisurf.fitting.parameter.FittingParameter]:
         return dict([(p.name, p) for p in self.parameters_all])
 
     @property
@@ -206,7 +203,7 @@ class FittingParameterGroup(
     @property
     def parameter_dict(
             self
-    ) -> dict:
+    ) -> typing.Dict[str, chisurf.fitting.parameter.FittingParameter]:
         re = dict()
         for p in self.parameters:
             re[p.name] = p
@@ -235,7 +232,7 @@ class FittingParameterGroup(
 
     def to_dict(
             self
-    ) -> dict:
+    ) -> typing.Dict:
         s = dict()
         parameters = dict()
         s['parameter'] = parameters

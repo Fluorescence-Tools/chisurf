@@ -176,7 +176,7 @@ class GlobalFitModel(
     @property
     def parameter_dict(
             self
-    ) -> Dict:
+    ) -> Dict[str, chisurf.fitting.parameter.FittingParameter]:
         re = dict()
         for i, f in enumerate(self.fits):
             d = f.model.parameter_dict
