@@ -37,7 +37,7 @@ class Header(tables.IsDescription):
     )
 @nb.jit(nopython=True)
 def pq_photons(
-        b: np.array,
+        b: np.ndarray,
         invert_tac: bool = True
 ) -> Tuple[
     np.array,

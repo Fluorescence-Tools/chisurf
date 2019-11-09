@@ -10,7 +10,6 @@ import traceback
 from qtpy import QtWidgets, QtCore
 import qdarkstyle
 
-import chisurf.settings as mfm
 import chisurf.fio
 import chisurf.widgets
 import chisurf.widgets.pdb

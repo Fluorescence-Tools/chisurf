@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from itertools import tee
-from typing import Tuple
+import typing
 
 import copy
 from math import floor
@@ -11,9 +11,9 @@ import numpy as np
 
 
 def histogram_rebin(
-        bin_edges: np.array,
-        counts: np.array,
-        new_bin_edges: np.array
+        bin_edges: np.ndarray,
+        counts: np.ndarray,
+        new_bin_edges: np.ndarray
 ):
     """
     Interpolates a histogram to a new x-axis. Here the parameter x can be any
@@ -147,12 +147,12 @@ def overlapping_region(
 
 
 def align_x_spacing(
-        dataset1: Tuple[np.array, np.array],
-        dataset2: Tuple[np.array, np.array],
+        dataset1: typing.Tuple[np.ndarray, np.ndarray],
+        dataset2: typing.Tuple[np.ndarray, np.ndarray],
         method: str = 'linear-close'
-) -> Tuple[
-    Tuple[np.array, np.array],
-    Tuple[np.array, np.array]
+) -> typing.Tuple[
+    typing.Tuple[np.ndarray, np.ndarray],
+    typing.Tuple[np.ndarray, np.ndarray]
 ]:
     """
 
@@ -218,7 +218,7 @@ def align_x_spacing(
 
 
 def bin_count(
-        data,
+        data: np.ndarray,
         bin_width: int = 16,
         bin_min: int = 0,
         bin_max: int = 4095
@@ -248,7 +248,7 @@ def bin_count(
 
 @nb.jit(nopython=True, nogil=True)
 def minmax(
-        x,
+        x: np.ndarray,
         ignore_zero: bool = False
 ):
     """Minimum and maximum value of an array
@@ -305,7 +305,11 @@ def histogram1D(
 
 
 @nb.jit(nopython=True, nogil=True)
-def discriminate(values, weights, discriminator):
+def discriminate(
+        values: np.ndarray,
+        weights: np.ndarray,
+        discriminator: float
+):
     """Discriminates values where the weights are below a certain threshold
 
     :param values: array
@@ -376,9 +380,9 @@ def smooth(x, l, m):
 
 
 def interleaved_to_two_columns(
-        ls: np.array,
+        ls: np.ndarray,
         sort: bool = False
-) -> Tuple[np.array, np.array]:
+) -> typing.Tuple[np.ndarray, np.ndarray]:
     """
     Converts an interleaved spectrum to two column-data
     :param ls: numpy array

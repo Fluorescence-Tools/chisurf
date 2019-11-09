@@ -9,7 +9,6 @@ import os
 
 import chisurf
 import chisurf.fitting
-import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.math
 import chisurf.models
@@ -1362,7 +1361,9 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
             **kwargs
         )
 
-        fn = os.path.join(mfm.package_directory, 'settings/tcspc.models.json')
+        fn = os.path.join(
+            chisurf.settings.package_directory, 'settings/tcspc.models.json'
+        )
         pw = parse.ParseFormulaWidget(
             fit=fit,
             model=self,

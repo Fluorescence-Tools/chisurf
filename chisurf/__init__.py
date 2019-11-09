@@ -1,9 +1,11 @@
 from typing import List, Iterable
+
 import chisurf.settings as settings
 import logging
 
 __version__ = settings.cs_settings['version']
 __name__ = settings.cs_settings['name']
+
 
 def c(
         t,

@@ -6,7 +6,6 @@ import urllib
 
 from PyQt5 import QtCore, QtWidgets, uic
 
-import chisurf.settings as mfm
 
 
 class UpdateDialog(QtWidgets.QWidget):

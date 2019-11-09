@@ -9,7 +9,6 @@ import chisurf.decorators
 import chisurf.math
 import chisurf.fitting
 import chisurf.settings
-import chisurf.settings as mfm
 import chisurf.math.statistics
 from chisurf.plots import plotbase
 from pyqtgraph.dockarea import *

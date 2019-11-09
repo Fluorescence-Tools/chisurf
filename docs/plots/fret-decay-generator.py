@@ -1,10 +1,10 @@
 import matplotlib.pyplot as p
 
-import chisurf.settings as mfm
-from mfm.fluorescence.simulation.dye_diffusion import DyeDecay, FRETDecay
+import chisurf.structure
+from chisurf.fluorescence.simulation.dye_diffusion import DyeDecay, FRETDecay
 
 pdb_filename = 'y:/Documents/ChiSurf/data/models/hgbp1/hGBP1_closed.pdb'
-structure = mfm.structure.structure.Structure(pdb_filename)
+structure = chisurf.structure.Structure(pdb_filename)
 
 f_d0 = DyeDecay(tau0=4.0)
 f_d0.structure = pdb_filename

@@ -4,7 +4,6 @@ import pyqtgraph as pg
 from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
-import chisurf.settings as mfm
 import chisurf.fitting
 import chisurf.fluorescence
 import chisurf.math.datatools

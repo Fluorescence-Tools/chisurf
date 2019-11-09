@@ -10,10 +10,11 @@ import qdarkstyle
 
 import numpy as np
 
-import chisurf.settings as mfm
+import chisurf.settings
+import chisurf.widgets
 import chisurf.decorators
-import experiments
-import experiments.data
+import chisurf.experiments
+import chisurf.experiments.data
 import chisurf.models.tcspc
 import chisurf.models.tcspc as fret_models
 import chisurf.models.tcspc.lifetime
@@ -745,7 +746,7 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget, FRETLineGenerator):
         self.fret_line_plot = plot
 
         FRETLineGenerator.__init__(self, **kwargs)
-        self.fit = mfm.FitQtThread()  # the fit has to be a QtThread
+        self.fit = chisurf.widgets.FitQtThread()  # the fit has to be a QtThread
         self.fit.data = self._data_points
 
         self.verbose = kwargs.get('verbose', chisurf.verbose)

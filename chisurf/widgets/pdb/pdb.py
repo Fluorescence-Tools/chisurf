@@ -123,7 +123,7 @@ class PDBSelector(
         return w
 
     def onChainChanged(self):
-        print("PDBSelector:onChainChanged")
+        chisurf.logging.info("PDBSelector:onChainChanged")
         self.comboBox_2.clear()
         pdb = self._pdb
         chain = str(self.comboBox.currentText())
@@ -137,7 +137,7 @@ class PDBSelector(
         pdb = self.atoms
         chain = self.chain_id
         residue = self.residue_id
-        print("onResidueChanged: %s" % residue)
+        chisurf.logging.info("onResidueChanged: %s" % residue)
         atom_ids = np.where((pdb['res_id'] == residue) & (pdb['chain'] == chain))[0]
         atom_names = [atom['atom_name'] for atom in pdb[atom_ids]]
         self.comboBox_3.addItems(atom_names)

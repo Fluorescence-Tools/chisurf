@@ -5,7 +5,6 @@ from math import sqrt
 import numba as nb
 import numpy as np
 
-import chisurf.settings as mfm
 import chisurf.math
 import chisurf.math.datatools
 

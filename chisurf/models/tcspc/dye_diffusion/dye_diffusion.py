@@ -14,7 +14,7 @@ from chisurf.fluorescence.av.dynamic import DiffusionSimulation, Dye, Sticking, 
     ProteinQuenching
 from chisurf.fluorescence.av.widgets import ProteinQuenchingWidget, DyeWidget, StickingWidget
 
-import chisurf.settings as mfm
+import chisurf.settings
 import chisurf.fitting.fit
 import chisurf.models.tcspc.nusiance
 import chisurf.fitting.widgets
@@ -773,7 +773,9 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
             **kwargs
         )
 
-        fn = os.path.join(mfm.package_directory, 'settings/sample.json')
+        fn = os.path.join(
+            chisurf.settings.package_directory, 'settings/sample.json'
+        )
         settings_file = kwargs.get('dye_diffusion_settings_file', fn)
         settings = json.load(open(settings_file))
         DyeDecay.__init__(

@@ -1,9 +1,7 @@
 from __future__ import annotations
 from typing import Callable
 
-# # import warnings
 import weakref
-
 import os
 import inspect
 from qtpy import QtWidgets

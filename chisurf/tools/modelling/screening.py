@@ -7,6 +7,7 @@ from qtpy import QtCore, QtWidgets
 import numpy as np
 from scipy.stats import f
 
+import chisurf
 import chisurf.decorators
 import chisurf.structure.cluster
 import chisurf.plots
@@ -227,7 +228,7 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
         print("onClusterClicked")
         threshold = self.threshold
         idx = self.comboBox.currentIndex()
-        criterion = str(slib.clusterCriteria[idx])
+        criterion = str(chisurf.structure.clusterCriteria[idx])
 
         print("Clustering of the structures...")
         Z = self.clZ
@@ -264,7 +265,7 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
                 table2.setItem(r, 1, tmp)
                 if len(self.structures) > 0:
                     # SN of rep
-                    idxOfRepresentativeStructure = slib.findRepresentative(self.structures, cl)
+                    idxOfRepresentativeStructure = chisurf.structure.findRepresentative(self.structures, cl)
                     tmp = QtWidgets.QTableWidgetItem()
                     tmp.setData(0, idxOfRepresentativeStructure)
                     table2.setItem(r, 2, tmp)
@@ -441,7 +442,7 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
                     filenames.append(s[4])
 
     def onSelectionChanged(self):
-        print("onSelectionChanged")
+        chisurf.logging("onSelectionChanged")
         print(self.fit.surface)
         self.fit.surface.setChis([self.chi2s])
         self.fit.surface.setParameter(np.vstack([self.chi2s, self.rmsds]))

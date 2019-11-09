@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Tuple
 
 import numpy as np
-import chisurf.settings as mfm
 import chisurf.curve
 
 window_function_types = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
