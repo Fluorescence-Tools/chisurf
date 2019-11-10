@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple
+import typing
 
 import numpy as np
 
@@ -110,14 +110,11 @@ class ModelCurve(
         return self.fit.xmax - self.fit.xmin
 
     @property
-    def x(self) -> np.array:
+    def x(self) -> np.ndarray:
         return self.__dict__['_x']
 
     @x.setter
-    def x(
-            self,
-            v: np.array
-    ):
+    def x(self,v: np.ndarray):
         self.__dict__['_x'] = v
 
     @property
@@ -125,10 +122,7 @@ class ModelCurve(
         return self.__dict__['_y']
 
     @y.setter
-    def y(
-            self,
-            v: np.array
-    ):
+    def y(self, v: np.ndarray):
         self.__dict__['_y'] = v
 
     def __init__(
@@ -149,7 +143,9 @@ class ModelCurve(
             **kwargs
         )
 
-    def get_curves(self):
+    def get_curves(
+            self
+    ) -> typing.Dict[str, chisurf.curve.Curve]:
         xmin = self.fit.xmin
         xmax = self.fit.xmax
         return {
@@ -162,7 +158,7 @@ class ModelCurve(
     def __getitem__(
             self,
             key
-    ) -> Tuple[
+    ) -> typing.Tuple[
         np.ndarray,
         np.ndarray
     ]:

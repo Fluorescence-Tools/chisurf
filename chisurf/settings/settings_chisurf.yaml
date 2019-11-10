@@ -90,9 +90,9 @@ fret:
   forster_radius: 52
   tau0: 4
   kappa2: 0.667
-  rda_resolution: 256
+  rda_resolution: 512
   rda_min: 1
-  rda_max: 256
+  rda_max: 512
   lifetime_bins: 101
   bin_lifetime: false
   discriminate: true

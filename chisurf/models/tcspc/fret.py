@@ -10,10 +10,11 @@ from chisurf.models.tcspc.lifetime import Lifetime, LifetimeModel
 from chisurf.fluorescence.general import distribution2rates, rates2lifetimes
 from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
 
-rda_axis = np.linspace(
-    chisurf.settings.fret['rda_min'],
-    chisurf.settings.fret['rda_max'],
-    chisurf.settings.fret['rda_resolution'],
+
+rda_axis = np.logspace(
+    start=np.log(chisurf.settings.fret['rda_min']),
+    stop=np.log(chisurf.settings.fret['rda_max']),
+    num=chisurf.settings.fret['rda_resolution'],
     dtype=np.float64
 )
 

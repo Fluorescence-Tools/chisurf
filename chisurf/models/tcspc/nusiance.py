@@ -248,7 +248,10 @@ class Corrections(FittingParameterGroup):
     def measurement_time(
             self
     ) -> float:
-        return self.fit.model.generic.t_exp
+        try:
+            return self.fit.model.generic.t_exp
+        except (AttributeError, KeyError):
+            return 1.0
 
     @measurement_time.setter
     def measurement_time(
@@ -259,7 +262,10 @@ class Corrections(FittingParameterGroup):
 
     @property
     def rep_rate(self) -> float:
-        return self.fit.model.convolve.rep_rate
+        try:
+            return self.fit.model.convolve.rep_rate
+        except (AttributeError, KeyError):
+            return 1.0
 
     @rep_rate.setter
     def rep_rate(
