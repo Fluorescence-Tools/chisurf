@@ -199,7 +199,7 @@ class FRETLineGenerator(object):
         c = self.polynom_coefficients
         s = ""
         for i, c in enumerate(c[::-1]):
-            s += "%s*x^%i+" % (c, i)
+            s += "%.6f*x^%i+" % (c, i)
         return s[:-1]
 
     @property
@@ -207,7 +207,7 @@ class FRETLineGenerator(object):
         """
         Used for instance for plotting in origin
         """
-        return "1.0-(%s)/(%s)" % (self.conversion_function_string, self.donor_species_averaged_lifetime)
+        return "1.0-(%s)/(%.6f)" % (self.conversion_function_string, self.donor_species_averaged_lifetime)
 
     @property
     def fdfa_string(self) -> str:
