@@ -76,7 +76,7 @@ class Parameter(
             self.link.value = value
 
     @property
-    def link(self):
+    def link(self) -> chisurf.parameter.Parameter:
         return self._link
 
     @link.setter

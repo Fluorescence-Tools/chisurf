@@ -20,8 +20,7 @@ import chisurf.fitting.sample
 import chisurf.fitting.support_plane
 import chisurf.models
 import chisurf.math.statistics
-
-from chisurf.math.optimization.leastsqbound import leastsqbound
+import chisurf.math.optimization
 
 
 class Fit(
@@ -322,7 +321,7 @@ class Fit(
         self.model.find_parameters(
             parameter_type=chisurf.fitting.parameter.FittingParameter
         )
-        self.results = leastsqbound(
+        self.results = chisurf.math.optimization.leastsqbound(
             get_wres,
             self.model.parameter_values,
             args=(self.model,),
@@ -546,7 +545,7 @@ class FitGroup(
         fitting_options = chisurf.settings.fitting['leastsq']
         bounds = [pi.bounds for pi in fit._model.parameters]
 
-        results = leastsqbound(
+        results = chisurf.math.optimization.leastsqbound(
             get_wres,
             fit._model.parameter_values,
             args=(
@@ -562,8 +561,7 @@ class FitGroup(
             self,
             data: chisurf.experiments.data.DataGroup,
             model_class: typing.Type[chisurf.models.Model] = type,
-            model_kw: typing.Dict = None,
-            **kwargs
+            model_kw: typing.Dict = None
     ):
         """
 

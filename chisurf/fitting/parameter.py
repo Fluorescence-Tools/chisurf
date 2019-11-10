@@ -13,7 +13,7 @@ import chisurf.parameter
 import chisurf.decorators
 import chisurf.models.model
 
-parameter_settings = chisurf.settings.parameter
+#parameter_settings = chisurf.settings.parameter
 
 
 class FittingParameter(

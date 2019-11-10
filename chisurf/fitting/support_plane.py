@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-from typing import Dict
+import typing
 
 import numpy as np
 
@@ -15,7 +15,7 @@ def scan_parameter(
         scan_range=(None, None),
         rel_range: float = 0.2,
         n_steps: int = 30
-) -> Dict:
+) -> typing.Dict:
     """Performs a chi2-scan for the parameter
 
     :param fit: the fit of type 'fitting.Fit'

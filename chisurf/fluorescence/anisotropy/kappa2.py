@@ -2,7 +2,7 @@
 
 """
 from math import sqrt
-from typing import Tuple
+import typing
 
 import numba as nb
 import numpy as np
@@ -15,7 +15,7 @@ def kappasqAllDelta(
         sA2: float,
         step: float = 0.25,
         n_bins: int = 31
-):
+) -> typing.Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
 
     :param delta:
@@ -56,11 +56,7 @@ def kappasq_all(
         sA2: float,
         n: int = 100,
         m: int = 100
-) -> Tuple[
-    np.array,
-    np.array,
-    np.array
-]:
+) -> typing.Tuple[np.array, np.array, np.array]:
     """
 
     :param sD2:
@@ -91,7 +87,7 @@ def kappa_distance(
         d2: np.array,
         a1: np.array,
         a2: np.array
-) -> Tuple[float, float]:
+) -> typing.Tuple[float, float]:
     """Calculates the orientation-factor kappa
 
     Calculates for the vectors d1 and d2 pointing to the donors and the vecotrs
@@ -176,7 +172,7 @@ def kappa_distance(
 def kappa(
         donor_dipole: np.array,
         acceptor_dipole: np.array
-) -> Tuple[float, float]:
+) -> typing.Tuple[float, float]:
     """Calculates the orientation-factor kappa
 
     :param donor_dipole: 2x3 vector of the donor-dipole
@@ -238,7 +234,7 @@ def calculate_kappa_distance(
         aid2: int,
         aia1: int,
         aia2: int
-):
+) -> typing.Tuple[np.ndarray, np.ndarray]:
     """Calculates the orientation factor kappa2 and the distance of a
     trajectory given the atom-indices of the donor and the acceptor.
 
@@ -304,7 +300,7 @@ def kappasq(
 def p_isotropic_orientation_factor(
         k2,
         normalize: bool = True
-):
+) -> np.ndarray:
     """Calculates an the probability of a given kappa2 according to
     an isotropic orientation factor distribution
     http://www.fretresearch.org/kappasquaredchapter.pdf
