@@ -2,8 +2,8 @@
 
 """
 from chisurf.fluorescence.intensity import nusiance
-from . import kappa2
-from . import decay
+import chisurf.fluorescence.anisotropy.kappa2
+import chisurf.fluorescence.anisotropy.decay
 
 
 @nusiance

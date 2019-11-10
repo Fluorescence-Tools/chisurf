@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable
+import typing
 
 import weakref
 import os
@@ -36,7 +36,7 @@ class init_with_ui(object):
 
     def __call__(
             self,
-            f: Callable
+            f: typing.Callable
     ):
         def wrapped(
                 cls: QtWidgets.QWidget,

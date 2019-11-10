@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TypeVar, Tuple, Type
+import typing
 
 import numpy as np
 import os
@@ -9,7 +9,7 @@ import chisurf.base
 import chisurf.decorators
 import chisurf.math
 
-T = TypeVar('T', bound='Curve')
+T = typing.TypeVar('T', bound='Curve')
 
 
 class Curve(
@@ -28,7 +28,7 @@ class Curve(
     @property
     def cdf(
             self
-    ) -> Type[Curve]:
+    ) -> typing.Type[Curve]:
         """Cumulative sum of function
         """
         return self.__class__(
@@ -136,7 +136,7 @@ class Curve(
     def __add__(
             self,
             c: T
-    ) -> Type[Curve]:
+    ) -> typing.Type[Curve]:
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -149,7 +149,7 @@ class Curve(
     def __sub__(
             self,
             c: T
-    ) -> Type[Curve]:
+    ) -> typing.Type[Curve]:
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -162,7 +162,7 @@ class Curve(
     def __mul__(
             self,
             c: T
-    ) -> Type[Curve]:
+    ) -> typing.Type[Curve]:
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -175,7 +175,7 @@ class Curve(
     def __truediv__(
             self,
             c: T
-    ) -> Type[Curve]:
+    ) -> typing.Type[Curve]:
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -188,7 +188,7 @@ class Curve(
     def __lshift__(
             self,
             shift: float
-    ) -> Type[Curve]:
+    ) -> typing.Type[Curve]:
         return self.__class__(
             x=self.x,
             y=chisurf.math.signal.shift_array(
@@ -205,7 +205,7 @@ class Curve(
     def __getitem__(
             self,
             key
-    ) -> Tuple[
+    ) -> typing.Tuple[
         np.ndarray,
         np.ndarray
     ]:

@@ -7,11 +7,11 @@ import json
 import os.path
 import zlib
 import copy
-from collections.abc import Iterable
-
 import yaml
-from slugify import slugify
 import numpy as np
+
+from slugify import slugify
+from collections.abc import Iterable
 
 import chisurf
 import chisurf.fio

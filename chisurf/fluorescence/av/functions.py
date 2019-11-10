@@ -6,7 +6,7 @@ import chisurf.fluorescence.av.fps
 import chisurf.settings
 import numpy as np
 import numba as nb
-from math import exp, sqrt
+import math
 import pyopencl as cl
 from pyopencl import array as cl_array
 fps_settings = chisurf.settings.cs_settings['fps']
@@ -262,9 +262,9 @@ def assign_diffusion_to_grid_2(
                         x_a = atoms_coord[ia][0]
                         y_a = atoms_coord[ia][1]
                         z_a = atoms_coord[ia][2]
-                        d = sqrt((x_a - x_d) ** 2 + (y_a - y_d) ** 2 + (z_a - z_d) ** 2)
+                        d = math.sqrt((x_a - x_d) ** 2 + (y_a - y_d) ** 2 + (z_a - z_d) ** 2)
                         alpha = d / radius
-                        slow_factor = 1. - atomic_slow_factor * exp(-alpha)
+                        slow_factor = 1. - atomic_slow_factor * math.exp(-alpha)
                         v *= slow_factor
                     r[ix + npm, iy + npm, iz + npm] = v
     return r
@@ -299,7 +299,7 @@ def assign_diffusion_to_grid_3(
             y_d = grid_axis[iy + npm]
             for iz in range(-npm, npm + 1):
                 z_d = grid_axis[iz + npm]
-                d = sqrt(x_d ** 2 + y_d ** 2 + z_d ** 2)
+                d = math.sqrt(x_d ** 2 + y_d ** 2 + z_d ** 2)
                 r[ix + npm, iy + npm, iz + npm] = f(d)
     return r
 
@@ -559,8 +559,8 @@ def create_quenching_map(
                         x_a = atoms_coord[ia][0]
                         y_a = atoms_coord[ia][1]
                         z_a = atoms_coord[ia][2]
-                        d = sqrt((x_a - x_d) ** 2 + (y_a - y_d) ** 2 + (z_a - z_d) ** 2) - dye_radius
-                        v += kQ[ia] * exp(-d / rC[ia])
+                        d = math.sqrt((x_a - x_d) ** 2 + (y_a - y_d) ** 2 + (z_a - z_d) ** 2) - dye_radius
+                        v += kQ[ia] * math.exp(-d / rC[ia])
                     r[ix + npm, iy + npm, iz + npm] = v
     return r
 
@@ -611,7 +611,7 @@ def random_distances(p1, p2, n_samples):
     for i in range(n_samples):
         i1 = np.random.randint(0, n_p1)
         i2 = np.random.randint(0, n_p2)
-        distances[i, 0] = sqrt(
+        distances[i, 0] = math.sqrt(
             (p1[i1, 0] - p2[i2, 0]) ** 2.0 +
             (p1[i1, 1] - p2[i2, 1]) ** 2.0 +
             (p1[i1, 2] - p2[i2, 2]) ** 2.0

@@ -1,13 +1,7 @@
-import utils
 import os
 import unittest
 import numpy as np
 import glob
-
-TOPDIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')
-)
-utils.set_search_paths(TOPDIR)
 
 import chisurf.fio
 import chisurf.fluorescence
@@ -213,3 +207,24 @@ class Tests(unittest.TestCase):
                 eff,
                 target_value
             )
+
+    def calculate_fcs_filter(self):
+        lifetime_1 = 1.0
+        lifetime_2 = 3.0
+        times = np.linspace(0, 20, num=10)
+        d1 = np.exp(-times / lifetime_1)
+        d2 = np.exp(-times / lifetime_2)
+        decays = [d1, d2]
+        w1 = 0.8  # weight of first component
+        experimental_decay = w1 * d1 + (1.0 - w1) * d2
+        filters = chisurf.fluorescence.fcs.filtered.calc_lifetime_filter(decays, experimental_decay)
+        self.assertEqual(
+            np.allclose(
+                np.array([[1.19397553, -0.42328685, -1.94651679, -2.57788423, -2.74922322,
+                           -2.78989942, -2.79923872, -2.80136643, -2.80185031, -2.80196031],
+                          [-0.19397553, 1.42328685, 2.94651679, 3.57788423, 3.74922322,
+                           3.78989942, 3.79923872, 3.80136643, 3.80185031, 3.80196031]]),
+                filters
+            ),
+            True
+        )

@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from . import correlate
-from . import filtered
+import chisurf.fluorescence.fcs.correlate
+import chisurf.fluorescence.fcs.filtered
 
 weightCalculations = ['Koppel', 'none']
 correlationMethods = ['tp']
@@ -49,3 +49,4 @@ def weights(
         return 1. / np.sqrt(S)
     elif weight_type == 'uniform':
         return np.ones_like(correlation)
+

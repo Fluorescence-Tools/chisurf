@@ -6,10 +6,16 @@ import LabelLib as ll
 
 
 def calculate_1_radius(
-        l,
-        w,
-        r,
-        atom_i, x, y, z, vdw, **kwargs):
+        l: float,
+        w: float,
+        r: float,
+        atom_i: int,
+        x: np.ndarray,
+        y: np.ndarray,
+        z: np.ndarray,
+        vdw: np.ndarray,
+        **kwargs
+):
     """
     :param l: float
         linker length
@@ -177,7 +183,19 @@ def calculate_1_radius(
     return av1.grid, av1.grid.shape[0], dye_attachment_point
 
 
-def calculate_3_radius(l, w, r1, r2, r3, atom_i, x, y, z, vdw, **kwargs):
+def calculate_3_radius(
+        l: float,
+        w: float,
+        r1: float,
+        r2: float,
+        r3: float,
+        atom_i: int,
+        x: np.ndarray,
+        y: np.ndarray,
+        z: np.ndarray,
+        vdw: np.ndarray,
+        **kwargs
+):
     """
     :param l: float
         linker length
