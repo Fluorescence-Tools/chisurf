@@ -39,11 +39,14 @@ class GlobalFitModel(
     @property
     def weighted_residuals(
             self
-    ) -> np.array:
-        re = list()
-        for f in self.fits:
-            re.append(f.model.weighted_residuals.flatten())
-        return np.concatenate(re)
+    ) -> np.ndarray:
+        if len(self.fits) > 0:
+            re = list()
+            for f in self.fits:
+                re.append(f.model.weighted_residuals.flatten())
+            return np.concatenate(re)
+        else:
+            return np.array([], dtype=np.float)
 
     @property
     def fit_names(

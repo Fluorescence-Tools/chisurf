@@ -666,7 +666,7 @@ class Main(QtWidgets.QMainWindow):
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
-        self.dataset_selector = chisurf.widgets.experiments.widgets.ExperimentalDataSelector(
+        self.dataset_selector = chisurf.widgets.experiments.ExperimentalDataSelector(
             click_close=False,
             curve_types='all',
             change_event=self.onCurrentDatasetChanged,

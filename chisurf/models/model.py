@@ -40,7 +40,7 @@ class Model(
     @property
     def weighted_residuals(
             self
-    ) -> np.array:
+    ) -> np.ndarray:
         return self.get_wres(
             self.fit,
             xmin=self.fit.xmin,
@@ -53,7 +53,7 @@ class Model(
             xmin: int = None,
             xmax: int = None,
             **kwargs
-    ) -> np.array:
+    ) -> np.ndarray:
         if xmin is None:
             xmin = fit.xmin
         if xmax is None:
@@ -196,11 +196,7 @@ class ModelWidget(
             **kwargs
     ) -> None:
         for p in self.fit.plots:
-            p.update_all(
-                *args,
-                **kwargs
-            )
-            p.update()
+            p.update(*args, **kwargs)
 
     def update_widgets(
             self

@@ -144,9 +144,15 @@ class FittingControllerWidget(
                 )
 
     def onAutoFitRange(self):
-        self.fit.fit_range = self.fit.data.data_reader.autofitrange(
-            self.fit.data
-        )
+        try:
+            self.fit.fit_range = self.fit.data.data_reader.autofitrange(
+                self.fit.data
+            )
+        except AttributeError:
+            chisurf.logging.warning(
+                "Fit %s with model %s does not have an attribute data.data_reader" %
+                (self.__class__.__name__, self.fit.model.__class__.__name__)
+            )
         self.fit.update()
 
 

@@ -36,7 +36,7 @@ def calculate_weighted_residuals(
         model: chisurf.curve.Curve,
         xmin: int,
         xmax: int,
-) -> np.array:
+) -> np.ndarray:
     """Calculates the weighted residuals for a DataCurve and a
     model curve given the range as provided by xmin and xmax. The
     weighted residuals are given by (data - model) / weights. Here,

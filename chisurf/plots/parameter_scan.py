@@ -146,11 +146,8 @@ class ParameterScanPlot(
             name='Data'
         )
 
-    def update_all(
-            self,
-            *args,
-            **kwargs
-    ) -> None:
+    def update(self, *args, **kwargs) -> None:
+        super().update(*args, **kwargs)
         try:
             p = self.pltControl.parameter
             x, y = p.parameter_scan

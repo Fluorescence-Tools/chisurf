@@ -22,18 +22,8 @@ class Plot(
         self.pltControl = QtWidgets.QWidget()
         self.widgets = list()
 
-    def update_widget(
-            self
-    ) -> None:
-        for w in self.widgets:
-            w.update()
-
-    def update_all(
-            self,
-            *args,
-            **kwargs
-    ) -> None:
-        pass
+    def update(self, *args, **kwargs) -> None:
+        super().update(*args, **kwargs)
 
     def close(self):
         QtWidgets.QWidget.close(self)

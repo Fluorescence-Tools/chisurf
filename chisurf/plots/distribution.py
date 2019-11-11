@@ -94,7 +94,8 @@ class DistributionPlot(plotbase.Plot):
             name='Data'
         )
 
-    def update_all(self, *args, **kwargs):
+    def update(self, *args, **kwargs) -> None:
+        super().update(*args, **kwargs)
         if self.pltControl.distribution_type == 'Distance':
             d = self.fit.model.distance_distribution
             y = d[0][0]

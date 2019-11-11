@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 import pyqtgraph as pg
+import pyqtgraph.dockarea
+import matplotlib.colors
 from qtpy import QtWidgets
-import matplotlib.colors as mpl_colors
 
 import chisurf.decorators
 import chisurf.math
@@ -11,9 +12,6 @@ import chisurf.fitting
 import chisurf.settings
 import chisurf.math.statistics
 from chisurf.plots import plotbase
-from pyqtgraph.dockarea import *
-
-color_scheme = chisurf.settings.colors
 
 
 class LinePlotControl(
@@ -42,7 +40,7 @@ class LinePlotControl(
         self.xmin = xmin
         self.ymin = ymin
 
-        self.actionUpdate_Plot.triggered.connect(parent.update_all)
+        self.actionUpdate_Plot.triggered.connect(parent.update)
         self.checkBox.stateChanged.connect(self.SetLog)
         self.checkBox_2.stateChanged.connect(self.SetLog)
         self.checkBox_4.stateChanged.connect(self.SetLog)
@@ -230,13 +228,13 @@ class LinePlotControl(
             self.checkBox_3.setCheckState(0)
 
     def SetReference(self):
-        self.parent.update_all()
+        self.parent.update()
 
     def SetLog(self):
-        self.parent.update_all()
+        self.parent.update()
 
     def SetDensity(self):
-        self.parent.update_all()
+        self.parent.update()
 
 
 class LinePlot(plotbase.Plot):
@@ -292,12 +290,12 @@ class LinePlot(plotbase.Plot):
         self.data_y = data_y
         self.plot_irf = plot_irf
 
-        area = DockArea()
+        area = pyqtgraph.dockarea.DockArea()
         self.layout.addWidget(area)
         hide_title = chisurf.settings.gui['plot']['hideTitle']
-        d1 = Dock("residuals", size=(250, 80), hideTitle=hide_title)
-        d2 = Dock("a.corr.", size=(250, 80), hideTitle=hide_title)
-        d3 = Dock("Fit", size=(250, 250), hideTitle=hide_title)
+        d1 = pyqtgraph.dockarea.Dock("residuals", size=(250, 80), hideTitle=hide_title)
+        d2 = pyqtgraph.dockarea.Dock("a.corr.", size=(250, 80), hideTitle=hide_title)
+        d3 = pyqtgraph.dockarea.Dock("Fit", size=(250, 250), hideTitle=hide_title)
 
         p1 = pg.PlotWidget()
         p2 = pg.PlotWidget()
@@ -338,7 +336,7 @@ class LinePlot(plotbase.Plot):
 
         # Fitting-region selector
         if chisurf.settings.gui['plot']['enable_region_selector']:
-            ca = list(mpl_colors.hex2color(colors["region_selector"]))
+            ca = list(matplotlib.colors.hex2color(colors["region_selector"]))
             co = [ca[0] * 255, ca[1] * 255, ca[2] * 255, colors["region_selector_alpha"]]
             region = pg.LinearRegionItem(brush=co)
             data_plot.addItem(region)
@@ -355,7 +353,7 @@ class LinePlot(plotbase.Plot):
                 lb_i = np.searchsorted(data_x, lb, side='right')
                 ub_i = np.searchsorted(data_x, ub, side='left')
                 chisurf.run("cs.current_fit.fit_range = (%s, %s)" % (lb_i - 1, ub_i))
-                self.update_all(only_fit_range=True)
+                self.update(only_fit_range=True)
 
             region.sigRegionChangeFinished.connect(update_region)
 
@@ -406,12 +404,13 @@ class LinePlot(plotbase.Plot):
         p1.setXLink(p3)
         p2.setXLink(p3)
 
-    def update_all(
+    def update(
             self,
             only_fit_range: bool = False,
             *args,
             **kwargs
-    ):
+    ) -> None:
+        super().update(*args, **kwargs)
         # Get parameters from plot-control
         plt_ctrl = self.pltControl
         data_log_y = plt_ctrl.data_is_log_y

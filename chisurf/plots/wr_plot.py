@@ -61,7 +61,8 @@ class ResidualPlot(plotbase.Plot):
             curves.append(c)
         self.curves = curves
 
-    def update_all(self, *args, **kwargs):
+    def update(self, *args, **kwargs) -> None:
+        super().update(*args, **kwargs)
         # Get parameters from plot-control
         fits = self.fit
         for ci, fi in zip(self.curves, fits):
