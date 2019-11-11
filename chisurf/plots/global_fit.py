@@ -20,7 +20,8 @@ class GlobalFitPlot(Plot):
         self.pltControl = QtWidgets.QWidget()
         self.fit = fit
 
-    def update_all(self, **kwargs):
+    def update(self, *args, **kwargs) -> None:
+        super().update(*args, **kwargs)
         fit = self.fit
         layout = self.layout
         for i in reversed(list(range(layout.count()))):

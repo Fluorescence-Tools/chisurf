@@ -606,6 +606,9 @@ class View(
     ):
         super().__init__()
 
+    def update(self, *args, **kwargs) -> None:
+        super().update()
+
     def to_dict(
             self
     ):

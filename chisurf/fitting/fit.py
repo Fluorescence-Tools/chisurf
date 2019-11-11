@@ -514,8 +514,6 @@ class FitGroup(
             self
     ) -> None:
         self._model.update()
-        for p in self.plots:
-            p.update_all()
         for f in self.grouped_fits:
             f.model.update()
 

@@ -29,11 +29,8 @@ class FitInfo(plotbase.Plot):
         self.textedit = QtWidgets.QPlainTextEdit()
         self.layout.addWidget(self.textedit)
 
-    def update_all(
-            self,
-            *args,
-            **kwargs
-    ):
+    def update(self, *args, **kwargs) -> None:
+        super().update(*args, **kwargs)
         fit = self.fit
         self.textedit.setPlainText(str(fit))
 

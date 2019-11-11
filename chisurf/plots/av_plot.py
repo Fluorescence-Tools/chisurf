@@ -78,12 +78,13 @@ class AvPlot(
 
         d1.addWidget(self.quenching_widget)
 
-    def update_all(
+    def update(
             self,
             only_fit_range: bool = False,
             *args,
             **kwargs
     ):
+        super().update(*args, **kwargs)
         fit = self.fit
 
         pdb_filename = './test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb'

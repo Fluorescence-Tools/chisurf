@@ -1,6 +1,3 @@
-"""
-
-"""
 from __future__ import annotations
 
 from qtpy import QtWidgets, uic, QtCore, QtGui
@@ -8,33 +5,29 @@ from qtpy import QtWidgets, uic, QtCore, QtGui
 import os
 
 import chisurf
-import chisurf.widgets
-import chisurf.fitting
-import chisurf.decorators
 import chisurf.math
+import chisurf.fitting
+import chisurf.fitting.parameter
+import chisurf.decorators
+import chisurf.experiments
 import chisurf.models
-from chisurf import plots
-from chisurf.fitting.parameter import FittingParameter
-from chisurf.widgets.fitting.widgets import FittingControllerWidget
-from chisurf.models import parse
+from chisurf.models.tcspc import fret
+import chisurf.models.tcspc.fret
+import chisurf.widgets
+import chisurf.widgets.fitting
+import chisurf.widgets.experiments
+import chisurf.plots
+
 from chisurf.models.model import ModelWidget
 from chisurf.models.tcspc.anisotropy import Anisotropy
-from chisurf.models.tcspc.fret import Gaussians, DiscreteDistance, \
-    GaussianModel, FRETrateModel, \
-    WormLikeChainModel, SingleDistanceModel
 from chisurf.models.tcspc.lifetime import Lifetime, LifetimeModel
 from chisurf.models.tcspc.mix_model import LifetimeMixModel
 from chisurf.models.tcspc.nusiance import Convolve, Corrections, Generic
 from chisurf.models.parse.tcspc.tcspc_parse import ParseDecayModel
 from chisurf.models.tcspc.pddem import PDDEM, PDDEMModel
-from chisurf.widgets import clear_layout
-from chisurf.widgets.experiments.widgets import ExperimentalDataSelector
 
 
 class ConvolveWidget(Convolve, QtWidgets.QWidget):
-    """
-
-    """
 
     @chisurf.decorators.init_with_ui(ui_filename="convolveWidget.ui")
     def __init__(
@@ -44,12 +37,6 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             *args,
             **kwargs
     ):
-        """
-
-        :param fit:
-        :param hide_curve_convolution:
-        :param kwargs:
-        """
         if hide_curve_convolution:
             self.radioButton_3.setVisible(not hide_curve_convolution)
         layout = QtWidgets.QHBoxLayout()
@@ -93,7 +80,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             label_text='r[MHz]'
         )
 
-        self.irf_select = ExperimentalDataSelector(
+        self.irf_select = chisurf.widgets.experiments.ExperimentalDataSelector(
             parent=None,
             change_event=self.change_irf,
             fit=self.fit,
@@ -188,11 +175,11 @@ class CorrectionsWidget(
             label_text='t<sub>dead</sub>[ns]'
         )
 
-        self.lin_select = ExperimentalDataSelector(
+        self.lin_select = chisurf.widgets.experiments.ExperimentalDataSelector(
             parent=None,
             change_event=self.onChangeLin,
             fit=fit,
-            setup=chisurf.experiments.tcspc.tcspc.TCSPCReader
+            setup=chisurf.experiments.tcspc.TCSPCReader
         )
 
         self.actionSelect_lintable.triggered.connect(self.lin_select.show)
@@ -263,11 +250,6 @@ class GenericWidget(
             *args,
             **kwargs
     ):
-        """
-
-        :param hide_generic:
-        :param kwargs:
-        """
         super().__init__(
             *args,
             **kwargs
@@ -298,17 +280,17 @@ class GenericWidget(
             label_text='t<sub>Meas</sub>'
         )
 
-        l = QtWidgets.QGridLayout()
-        l.setContentsMargins(0, 0, 0, 0)
-        l.setSpacing(0)
-        l.addWidget(sc_w, 1, 0)
-        l.addWidget(bg_w, 1, 1)
-        l.addWidget(tmeas_bg_w, 2, 0)
-        l.addWidget(tmeas_exp_w, 2, 1)
-        self.layout.addLayout(l)
+        layout = QtWidgets.QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(sc_w, 1, 0)
+        layout.addWidget(bg_w, 1, 1)
+        layout.addWidget(tmeas_bg_w, 2, 0)
+        layout.addWidget(tmeas_exp_w, 2, 1)
+        self.layout.addLayout(layout)
 
         ly = QtWidgets.QHBoxLayout()
-        l.addLayout(ly, 0, 0, 1, 2)
+        layout.addLayout(ly, 0, 0, 1, 2)
         ly.addWidget(QtWidgets.QLabel('Background file:'))
         self.lineEdit = QtWidgets.QLineEdit()
         ly.addWidget(self.lineEdit)
@@ -317,7 +299,7 @@ class GenericWidget(
         open_bg.setText('...')
         ly.addWidget(open_bg)
 
-        self.background_select = ExperimentalDataSelector(
+        self.background_select = chisurf.widgets.experiments.ExperimentalDataSelector(
             parent=None,
             change_event=self.change_bg_curve,
             fit=self.fit
@@ -328,13 +310,13 @@ class GenericWidget(
         a.addWidget(QtWidgets.QLabel('nPh(Bg)'))
         self.lineedit_nphBg = QtWidgets.QLineEdit()
         a.addWidget(self.lineedit_nphBg)
-        l.addLayout(a, 3, 0, 1, 1)
+        layout.addLayout(a, 3, 0, 1, 1)
 
         a = QtWidgets.QHBoxLayout()
         a.addWidget(QtWidgets.QLabel('nPh(Fl)'))
         self.lineedit_nphFl = QtWidgets.QLineEdit()
         a.addWidget(self.lineedit_nphFl)
-        l.addLayout(a, 3, 1, 1, 1)
+        layout.addLayout(a, 3, 1, 1, 1)
 
 
 class AnisotropyWidget(
@@ -584,7 +566,7 @@ class PDDEMWidget(QtWidgets.QWidget, PDDEM):
 class PDDEMModelWidget(ModelWidget, PDDEMModel):
 
     plot_classes = [
-        (plots.LinePlot, {
+        (chisurf.plots.LinePlot, {
             'd_scalex': 'lin',
             'd_scaley': 'log',
             'r_scalex': 'lin',
@@ -593,9 +575,9 @@ class PDDEMModelWidget(ModelWidget, PDDEMModel):
             'y_label': 'y',
             'plot_irf': True}
          ),
-        (plots.FitInfo, {}),
-        (plots.DistributionPlot, {}),
-        (plots.ParameterScanPlot, {})
+        (chisurf.plots.FitInfo, {}),
+        (chisurf.plots.DistributionPlot, {}),
+        (chisurf.plots.ParameterScanPlot, {})
     ]
 
     def __init__(self, fit, **kwargs):
@@ -911,7 +893,10 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
         self.layout.addWidget(anisotropy)
 
 
-class GaussianWidget(Gaussians, QtWidgets.QWidget):
+class GaussianWidget(
+    fret.Gaussians,
+    QtWidgets.QWidget
+):
 
     def __init__(
             self,
@@ -1017,7 +1002,7 @@ class GaussianWidget(Gaussians, QtWidgets.QWidget):
 
 
 class DiscreteDistanceWidget(
-    DiscreteDistance,
+    fret.DiscreteDistance,
     QtWidgets.QWidget
 ):
 
@@ -1090,7 +1075,7 @@ for f in cs.current_fit:
         n_rates = len(self)
         gb.setTitle('G%i' % (n_rates + 1))
         layout = QtWidgets.QVBoxLayout()
-        pm = FittingParameter(
+        pm = chisurf.fitting.parameter.FittingParameter(
             name='R(%s,%i)' % (self.short, n_rates + 1),
             value=m,
             model=self.model,
@@ -1101,7 +1086,7 @@ for f in cs.current_fit:
             text='R',
             update_function=self.update
         )
-        px = FittingParameter(
+        px = chisurf.fitting.parameter.FittingParameter(
             name='x(%s,%i)' % (self.short, n_rates + 1),
             value=x,
             model=self.model,
@@ -1136,7 +1121,7 @@ for f in cs.current_fit:
 
 
 class GaussianModelWidget(
-    GaussianModel,
+    fret.GaussianModel,
     LifetimeModelWidgetBase
 ):
 
@@ -1157,7 +1142,7 @@ class GaussianModelWidget(
             short='G',
             **kwargs
         )
-        GaussianModel.__init__(
+        fret.GaussianModel.__init__(
             self,
             fit=fit,
             lifetimes=donors,
@@ -1183,7 +1168,7 @@ class GaussianModelWidget(
 
 
 class FRETrateModelWidget(
-    FRETrateModel,
+    fret.FRETrateModel,
     LifetimeModelWidgetBase
 ):
 
@@ -1204,7 +1189,7 @@ class FRETrateModelWidget(
             short='G',
             **kwargs
         )
-        FRETrateModel.__init__(
+        fret.FRETrateModel.__init__(
             self,
             fit=fit,
             lifetimes=donors,
@@ -1228,7 +1213,7 @@ class FRETrateModelWidget(
 
 
 class WormLikeChainModelWidget(
-    WormLikeChainModel,
+    fret.WormLikeChainModel,
     LifetimeModelWidgetBase
 ):
 
@@ -1256,7 +1241,7 @@ class WormLikeChainModelWidget(
             title='Donor(0)',
             name='donors'
         )
-        WormLikeChainModel.__init__(
+        fret.WormLikeChainModel.__init__(
             self,
             fit=fit,
             lifetimes=donors,
@@ -1302,7 +1287,7 @@ class WormLikeChainModelWidget(
         self.convolve = ConvolveWidget(fit=fit, model=self, **kwargs)
         self.donors = LifetimeWidget(parent=self, model=self, title='Donor(0)')
         self.generic = GenericWidget(fit=fit, model=self, parent=self, **kwargs)
-        self.fitting_widget = QtWidgets.QLabel() if kwargs.get('disable_fit', False) else FittingControllerWidget(fit=fit, **kwargs)
+        self.fitting_widget = QtWidgets.QLabel() if kwargs.get('disable_fit', False) else chisurf.widgets.fitting.FittingControllerWidget(fit=fit, **kwargs)
         self.corrections = CorrectionsWidget(fit, model=self, **kwargs)
 
         ModelWidget.__init__(
@@ -1312,7 +1297,7 @@ class WormLikeChainModelWidget(
             **kwargs
         )
 
-        SingleDistanceModel.__init__(
+        fret.SingleDistanceModel.__init__(
             self,
             fit=fit,
             convolve=self.convolve,
@@ -1397,7 +1382,7 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
         fn = os.path.join(
             chisurf.settings.package_directory, 'settings/tcspc.models.json'
         )
-        pw = parse.ParseFormulaWidget(
+        pw = chisurf.models.parse.ParseFormulaWidget(
             fit=fit,
             model=self,
             model_file=fn
@@ -1407,7 +1392,7 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
         self.fit = fit
         ParseDecayModel.__init__(self, fit=fit, parse=pw, convolve=self.convolve,
                                  generic=generic, corrections=corrections)
-        fitting_widget = FittingControllerWidget(fit=fit, **kwargs)
+        fitting_widget = chisurf.widgets.fitting.FittingControllerWidget(fit=fit, **kwargs)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setAlignment(QtCore.Qt.AlignTop)
@@ -1422,7 +1407,7 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
 class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
 
     plot_classes = [
-        (plots.LinePlot, {
+        (chisurf.plots.LinePlot, {
             'd_scalex': 'lin',
             'd_scaley': 'log',
             'r_scalex': 'lin',
@@ -1432,7 +1417,7 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
             'plot_irf': True
         }
          )
-        , (plots.FitInfo, {})
+        , (chisurf.plots.FitInfo, {})
     ]
 
     @property
@@ -1522,4 +1507,4 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
 
     def clear_models(self):
         LifetimeMixModel.clear_models(self)
-        clear_layout(self.model_layout)
+        chisurf.widgets.clear_layout(self.model_layout)
