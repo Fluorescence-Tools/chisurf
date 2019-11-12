@@ -807,7 +807,10 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         self._lifetime_widgets.pop().close()
 
 
-class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
+class LifetimeModelWidgetBase(
+    ModelWidget,
+    LifetimeModel
+):
 
     def __init__(
             self,
@@ -838,10 +841,8 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
             hide_curve_convolution=False,
             **kwargs
         )
-
-        LifetimeModel.__init__(
-            self,
-            fit
+        super().__init__(
+            fit=fit
         )
         layout = QtWidgets.QVBoxLayout(self)
         layout.setAlignment(QtCore.Qt.AlignTop)
@@ -1155,16 +1156,13 @@ class GaussianModelWidget(
             **kwargs
         )
         self.lifetimes = donors
-
-        self.layout_parameter.addWidget(donors)
-
-        self.layout_parameter.addWidget(
+        self.layout.addWidget(donors)
+        self.layout.addWidget(
             chisurf.widgets.fitting.widgets.make_fitting_parameter_group_widget(
                 self.fret_parameters
             )
         )
-
-        self.layout_parameter.addWidget(gaussians)
+        self.layout.addWidget(gaussians)
 
 
 class FRETrateModelWidget(

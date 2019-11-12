@@ -102,7 +102,9 @@ class TcspcTTTRWidget(
     QtWidgets.QWidget
 ):
 
-    @chisurf.decorators.init_with_ui(ui_filename="tcspcTTTRWidget.ui")
+    @chisurf.decorators.init_with_ui(
+        ui_filename="tcspcTTTRWidget.ui"
+    )
     def __init__(
             self,
             *args,

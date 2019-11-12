@@ -32,7 +32,7 @@
    <string>ChiSurf</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="settings/ui/resource.qrc">
+   <iconset resource="widgets/ui/resource.qrc">
     <normaloff>:/icons/icons/cs_logo.png</normaloff>:/icons/icons/cs_logo.png</iconset>
   </property>
   <property name="windowOpacity">
@@ -403,7 +403,7 @@
       <string>FRET</string>
      </property>
      <property name="icon">
-      <iconset resource="settings/ui/resource.qrc">
+      <iconset resource="widgets/ui/resource.qrc">
        <normaloff>:/icons/icons/FRET.png</normaloff>:/icons/icons/FRET.png</iconset>
      </property>
      <addaction name="actionCalculator"/>
@@ -413,7 +413,7 @@
       <string>Anisotropy</string>
      </property>
      <property name="icon">
-      <iconset resource="settings/ui/resource.qrc">
+      <iconset resource="widgets/ui/resource.qrc">
        <normaloff>:/icons/icons/Cone.png</normaloff>:/icons/icons/Cone.png</iconset>
      </property>
      <addaction name="actionAnisotropy_Lines"/>
@@ -424,7 +424,7 @@
       <string>Modelling</string>
      </property>
      <property name="icon">
-      <iconset resource="settings/ui/resource.qrc">
+      <iconset resource="widgets/ui/resource.qrc">
        <normaloff>:/icons/icons/Peptide_FRET.png</normaloff>:/icons/icons/Peptide_FRET.png</iconset>
      </property>
      <widget class="QMenu" name="menuTrajectory_tools">
@@ -432,7 +432,7 @@
        <string>Trajectory tools</string>
       </property>
       <property name="icon">
-       <iconset resource="settings/ui/resource.qrc">
+       <iconset resource="widgets/ui/resource.qrc">
         <normaloff>:/icons/icons/Peptide_FRET.png</normaloff>:/icons/icons/Peptide_FRET.png</iconset>
       </property>
       <addaction name="actionTrajectory_converter"/>
@@ -457,7 +457,7 @@
       <string>TTTR</string>
      </property>
      <property name="icon">
-      <iconset resource="settings/ui/resource.qrc">
+      <iconset resource="widgets/ui/resource.qrc">
        <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
      </property>
      <addaction name="actionConvert"/>
@@ -611,7 +611,7 @@
     </size>
    </property>
    <property name="windowIcon">
-    <iconset resource="settings/ui/resource.qrc">
+    <iconset resource="widgets/ui/resource.qrc">
      <normaloff>:/icons/icons/kitesurf.svg</normaloff>:/icons/icons/kitesurf.svg</iconset>
    </property>
    <property name="floating">
@@ -1021,7 +1021,7 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset resource="settings/ui/resource.qrc">
+    <iconset resource="widgets/ui/resource.qrc">
      <normaloff>:/icons/icons/cs_logo.png</normaloff>:/icons/icons/cs_logo.png</iconset>
    </property>
    <property name="text">
@@ -1054,7 +1054,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="settings/ui/resource.qrc">
+    <iconset resource="widgets/ui/resource.qrc">
      <normaloff>:/icons/icons/Document-print.svg</normaloff>:/icons/icons/Document-print.svg</iconset>
    </property>
    <property name="text">
@@ -1141,7 +1141,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="settings/ui/resource.qrc">
+    <iconset resource="widgets/ui/resource.qrc">
      <normaloff>:/icons/icons/FCS-Filter.png</normaloff>:/icons/icons/FCS-Filter.png</iconset>
    </property>
    <property name="text">
@@ -1150,7 +1150,7 @@
   </action>
   <action name="actionCalculator">
    <property name="icon">
-    <iconset resource="settings/ui/resource.qrc">
+    <iconset resource="widgets/ui/resource.qrc">
      <normaloff>:/icons/icons/accessories-calculator.png</normaloff>:/icons/icons/accessories-calculator.png</iconset>
    </property>
    <property name="text">
@@ -1159,7 +1159,7 @@
   </action>
   <action name="actionKappa2_Distribution">
    <property name="icon">
-    <iconset resource="settings/ui/resource.qrc">
+    <iconset resource="widgets/ui/resource.qrc">
      <normaloff>:/icons/icons/Cone.png</normaloff>:/icons/icons/Cone.png</iconset>
    </property>
    <property name="text">
@@ -1181,7 +1181,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="settings/ui/resource.qrc">
+    <iconset resource="widgets/ui/resource.qrc">
      <normaloff>:/icons/icons/Anisotropy-Lines.png</normaloff>:/icons/icons/Anisotropy-Lines.png</iconset>
    </property>
    <property name="text">
@@ -1214,7 +1214,7 @@
   </action>
   <action name="actionDye_Diffusion">
    <property name="icon">
-    <iconset resource="settings/ui/resource.qrc">
+    <iconset resource="widgets/ui/resource.qrc">
      <normaloff>:/icons/icons/dye-diffusion.png</normaloff>:/icons/icons/dye-diffusion.png</iconset>
    </property>
    <property name="text">
@@ -1241,7 +1241,7 @@
   </action>
   <action name="actionTrajectory_converter">
    <property name="icon">
-    <iconset resource="settings/ui/resource.qrc">
+    <iconset resource="widgets/ui/resource.qrc">
      <normaloff>:/icons/icons/hdf2pdb.png</normaloff>:/icons/icons/hdf2pdb.png</iconset>
    </property>
    <property name="text">
@@ -1250,7 +1250,7 @@
   </action>
   <action name="actionPDB2Label">
    <property name="icon">
-    <iconset resource="settings/ui/resource.qrc">
+    <iconset resource="widgets/ui/resource.qrc">
      <normaloff>:/icons/icons/pdb2label.png</normaloff>:/icons/icons/pdb2label.png</iconset>
    </property>
    <property name="text">
@@ -1259,7 +1259,7 @@
   </action>
   <action name="actionCalculate_Potential">
    <property name="icon">
-    <iconset resource="settings/ui/resource.qrc">
+    <iconset resource="widgets/ui/resource.qrc">
      <normaloff>:/icons/icons/potential.png</normaloff>:/icons/icons/potential.png</iconset>
    </property>
    <property name="text">
@@ -1388,7 +1388,7 @@
   </action>
   <action name="actionConvert">
    <property name="icon">
-    <iconset resource="settings/ui/resource.qrc">
+    <iconset resource="widgets/ui/resource.qrc">
      <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
    </property>
    <property name="text">
@@ -1397,7 +1397,7 @@
   </action>
   <action name="actionGenerate_decay">
    <property name="icon">
-    <iconset resource="settings/ui/resource.qrc">
+    <iconset resource="widgets/ui/resource.qrc">
      <normaloff>:/icons/icons/TCSPC.png</normaloff>:/icons/icons/TCSPC.png</iconset>
    </property>
    <property name="text">
@@ -1406,7 +1406,7 @@
   </action>
   <action name="actionCorrelate">
    <property name="icon">
-    <iconset resource="settings/ui/resource.qrc">
+    <iconset resource="widgets/ui/resource.qrc">
      <normaloff>:/icons/icons/FCS.png</normaloff>:/icons/icons/FCS.png</iconset>
    </property>
    <property name="text">
@@ -1444,7 +1444,7 @@
   </action>
   <action name="actionF_Test">
    <property name="icon">
-    <iconset resource="settings/ui/resource.qrc">
+    <iconset resource="widgets/ui/resource.qrc">
      <normaloff>:/icons/icons/1462894045_chart02_64.png</normaloff>:/icons/icons/1462894045_chart02_64.png</iconset>
    </property>
    <property name="text">
@@ -1497,7 +1497,7 @@
   <zorder>dockWidgetReadData</zorder>
  </widget>
  <resources>
-  <include location="settings/ui/resource.qrc"/>
+  <include location="widgets/ui/resource.qrc"/>
  </resources>
  <connections>
   <connection>

@@ -51,8 +51,7 @@ class Model(
             self,
             fit: chisurf.fitting.fit.Fit,
             xmin: int = None,
-            xmax: int = None,
-            **kwargs
+            xmax: int = None
     ) -> np.ndarray:
         if xmin is None:
             xmin = fit.xmin

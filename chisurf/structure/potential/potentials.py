@@ -643,9 +643,8 @@ class ClashPotential(object):
 
         >>> import chisurf.structure
         >>> import chisurf.structure.potential
-
-        >>> s = mfm.structure.structure.Structure('./test/data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
-        >>> pce = mfm.structure.potential.potentials.ClashPotential(structure=s, clash_tolerance=6.0)
+        >>> s = chisurf.structure.Structure('./test/data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
+        >>> pce = chisurf.structure.potential.ClashPotential(structure=s, clash_tolerance=6.0)
         >>> pce.getEnergy()
 
         """

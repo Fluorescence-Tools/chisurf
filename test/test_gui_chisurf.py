@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import sys
 import unittest
@@ -12,9 +14,6 @@ import chisurf.widgets
 import chisurf.macros
 import chisurf.main_gui
 import chisurf.widgets.experiments
-
-app = QApplication(sys.argv)
-cs_app = chisurf.main_gui.qt_app()
 
 
 def add_fit(
@@ -60,6 +59,8 @@ class Tests(unittest.TestCase):
     """
     Test the kappa2 distribution GUI
     """
+    app = QApplication(sys.argv)
+    cs_app = chisurf.main_gui.qt_app()
 
     def test_tcspc(self):
         """

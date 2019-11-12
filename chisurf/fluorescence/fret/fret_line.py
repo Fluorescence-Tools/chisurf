@@ -5,6 +5,7 @@ import numpy as np
 import chisurf.experiments
 import chisurf.fitting
 import chisurf.models
+import chisurf.models.tcspc.fret
 
 
 class FRETLineGenerator(object):
@@ -284,3 +285,265 @@ class FRETLineGenerator(object):
         self.fret_efficiencies = transfer_efficiencies
         self.species_averaged_lifetimes = species_averaged_lifetimes
         self.fluorescence_averaged_lifetimes = fluorescence_averaged_lifetimes
+
+
+class StaticFRETLine(
+    FRETLineGenerator
+):
+    """
+    This class is used to calculate static-FRET lines of Gaussian distributed states.
+
+
+    Examples
+    --------
+
+    >>> import chisurf.tools.fret_lines as fret_lines
+    >>> s = fret_lines.StaticFRETLine()
+    >>> s.calc()
+
+    Now lets look at the conversion function in comparison to a 1:1 relation
+
+    >>> import pylab as p
+    >>> x, y = s.conversion_function
+    >>> p.plot(x, y)
+    >>> p.plot(x, x)
+    >>> p.show()
+
+    This class has basically only one relevant attribute that is the width of the DA-distance distirbution
+    within a state.
+
+    A conversion polynomial for plotting purposes can be obtained
+
+    >>> s.polynomial_string
+
+    """
+
+    @property
+    def sigma(self):
+        """
+        Width of the DA-distance distribution within the state
+        """
+        return self.model.parameter_dict['s(G,1)'].value
+
+    @sigma.setter
+    def sigma(self, v):
+        self.model.parameter_dict['s(G,1)'].value = v
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.model = chisurf.models.tcspc.fret.GaussianModel
+        self.model.gaussians.append(55.0, 10, 1.0)
+        self.model.find_parameters()
+        self.model.parameter_dict['xDOnly'].value = 0.0
+
+    def update(
+            self,
+            parameter_name: str = 'R(G,1)',
+            parameter_range: typing.Tuple[float, float] = None,
+            verbose: bool = None,
+            n_points: int = None
+    ):
+        self.model.parameter_dict['x(G,1)'].value = 1.0
+        super().update(
+            parameter_name=parameter_name,
+            parameter_range=parameter_range,
+            verbose=verbose,
+            n_points=n_points
+        )
+
+
+class DynamicFRETLine(FRETLineGenerator):
+    """
+    This is a `convenience` class for a simple two-state Gaussian distance distribution
+    dynamic FRET-model. Two Gaussian distance distributions are considered as limiting
+    states and the dynamic-FRET line is calculated
+
+
+    Examples
+    --------
+
+    >>> import chisurf.tools.fret_lines as fret_lines
+    >>> d = fret_lines.DynamicFRETLine()
+    >>> print d.model
+    Model: Gaussian-Donor
+    Parameter       Value   Bounds  Fixed   Linke
+    bg      0.0000  (None, None)    False   False
+    sc      0.0000  (None, None)    False   False
+    t(L,1)  4.0000  (None, None)    False   False
+    x(L,1)  1.0000  (None, None)    False   False
+    t0      4.1000  (None, None)    True    False
+    R0      52.0000 (None, None)    True    False
+    k2      0.6670  (None, None)    True    False
+    DOnly   0.0000  (0.0, 1.0)      False   False
+    x(G,1)  1.0000  (None, None)    False   False
+    x(G,2)  1.0000  (None, None)    False   False
+    s(G,1)  10.0000 (None, None)    False   False
+    s(G,2)  10.0000 (None, None)    False   False
+    R(G,1)  40.0000 (None, None)    False   False
+    R(G,2)  80.0000 (None, None)    False   False
+    dt      0.1000  (None, None)    True    False
+    start   0.0000  (None, None)    True    False
+    stop    20.0000 (None, None)    True    False
+    rep     10.0000 (None, None)    True    False
+    lb      0.0000  (None, None)    False   False
+    ts      0.0000  (None, None)    False   False
+    p0      1.0000  (None, None)    True    False
+    r0      0.3800  (None, None)    False   False
+    l1      0.0308  (None, None)    False   False
+    l2      0.0368  (None, None)    False   False
+    g       1.0000  (None, None)    False   False
+
+    Set a new sigma
+
+    >>> d.sigma = 3.0
+    >>> print d.model
+    Model: Gaussian-Donor
+    Parameter       Value   Bounds  Fixed   Linke
+    bg      0.0000  (None, None)    False   False
+    sc      0.0000  (None, None)    False   False
+    t(L,1)  4.0000  (None, None)    False   False
+    x(L,1)  1.0000  (None, None)    False   False
+    t0      4.1000  (None, None)    True    False
+    R0      52.0000 (None, None)    True    False
+    k2      0.6670  (None, None)    True    False
+    DOnly   0.0000  (0.0, 1.0)      False   False
+    x(G,1)  1.0000  (None, None)    False   False
+    x(G,2)  1.0000  (None, None)    False   False
+    s(G,1)  3.0000  (None, None)    False   False
+    s(G,2)  3.0000  (None, None)    False   False
+    R(G,1)  40.0000 (None, None)    False   False
+    R(G,2)  80.0000 (None, None)    False   False
+    dt      0.1000  (None, None)    True    False
+    start   0.0000  (None, None)    True    False
+    stop    20.0000 (None, None)    True    False
+    rep     10.0000 (None, None)    True    False
+    lb      0.0000  (None, None)    False   False
+    ts      0.0000  (None, None)    False   False
+    p0      1.0000  (None, None)    True    False
+    r0      0.3800  (None, None)    False   False
+    l1      0.0308  (None, None)    False   False
+    l2      0.0368  (None, None)    False   False
+    g       1.0000  (None, None)    False   False
+
+    Calculate the FRET-line
+
+    >>> d.calc()
+    Calculating FRET-Line
+    Using parameter: x(G,2)
+    In a range: 0.1 .. 100.0
+
+    Plot the conversion function
+
+    >>> import pylab as p
+    >>> tauf, taux = d.conversion_function
+    >>> p.plot(tauf, taux)
+    >>> p.show()
+    """
+
+    def __init__(
+            self,
+            distance_1: float = 40.0,
+            distance_2: float = 80.0,
+            sigma_1: float = 6.0,
+            sigma_2: float = 6.0,
+            *args,
+            **kwargs
+    ):
+        """
+            model: typing.Type[chisurf.models.tcspc.lifetime.LifetimeModel] = None,
+            polynomial_degree: int = 4,
+            quantum_yield_donor: float = 0.8,
+            quantum_yield_acceptor: float = 0.32,
+            parameter_name: str = None,
+            n_points: int = 100,
+            parameter_range: typing.Tuple[float, float] = (0.1, 100.0),
+            fluorescence_decay_range: typing.Tuple[float, float] = (0, 500.0),
+            verbose: bool = chisurf.verbose,
+            **kwargs
+
+        :param args:
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self.model = chisurf.models.tcspc.fret.GaussianModel
+        self.model.gaussians.append(distance_1, sigma_1, 1.0)
+        self.model.gaussians.append(distance_2, sigma_2, 1.0)
+        self.model.find_parameters()
+        self.model.parameter_dict['xDOnly'].value = 0.0
+
+    @property
+    def mean_distance_1(self):
+        """
+        Mean distance of first limiting state 1
+       """
+        return self.model.parameter_dict['R(G,1)'].value
+
+    @mean_distance_1.setter
+    def mean_distance_1(self, v):
+        self.model.parameter_dict['R(G,1)'].value = v
+
+    @property
+    def mean_distance_2(self):
+        """
+        Mean distance of first limiting state 2
+       """
+        return self.model.parameter_dict['R(G,2)'].value
+
+    @mean_distance_2.setter
+    def mean_distance_2(self, v):
+        self.model.parameter_dict['R(G,2)'].value = v
+
+    @property
+    def sigma_1(self):
+        """
+        Width of first limiting state
+       """
+        return self.model.parameter_dict['s(G,1)'].value
+
+    @sigma_1.setter
+    def sigma_1(self, v):
+        self.model.parameter_dict['s(G,1)'].value = v
+
+    @property
+    def sigma_2(self):
+        """
+        Width of second limiting state
+       """
+        return self.model.parameter_dict['s(G,2)'].value
+
+    @sigma_2.setter
+    def sigma_2(self, v):
+        self.model.parameter_dict['s(G,2)'].value = v
+
+    @property
+    def sigma(self):
+        """
+        The width of both sigmas
+       """
+        return self.model.parameter_dict['s(G,1)'].value, self.model.parameter_dict['s(G,2)'].value
+
+    @sigma.setter
+    def sigma(self, v):
+        try:
+            self.model.parameter_dict['s(G,1)'].value = v[0]
+            self.model.parameter_dict['s(G,2)'].value = v[1]
+        except TypeError:
+            self.model.parameter_dict['s(G,1)'].value = v
+            self.model.parameter_dict['s(G,2)'].value = v
+
+    def update(
+            self,
+            parameter_name: str = None,
+            parameter_range: typing.Tuple[float, float] = None,
+            verbose: bool = None,
+            n_points: int = None
+    ):
+        self.model.parameter_dict['x(G,1)'].value = 1.0
+        self.model.parameter_dict['x(G,2)'].value = 0.0
+        FRETLineGenerator.update(
+            self,
+            parameter_name='x(G,2)',
+            parameter_range=(0, 10),
+            n_points=n_points,
+            verbose=verbose
+        )
