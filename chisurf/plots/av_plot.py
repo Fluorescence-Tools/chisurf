@@ -5,7 +5,7 @@ import pyqtgraph.opengl as gl
 from matplotlib import cm
 
 import chisurf.math
-import chisurf.fitting.fit
+import chisurf.fitting
 import chisurf.fluorescence
 import chisurf.fluorescence.av
 from chisurf.plots import plotbase

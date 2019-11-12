@@ -3,15 +3,13 @@
 """
 from __future__ import annotations
 
-from typing import List
-
 import numpy as np
 
-import chisurf.fitting.parameter
-import chisurf.models
 import chisurf.curve
 import chisurf.experiments
+
 import chisurf.fitting.fit
+import chisurf.fitting.parameter
 import chisurf.fitting.sample
 import chisurf.fitting.support_plane
 

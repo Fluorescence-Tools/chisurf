@@ -211,8 +211,7 @@ class GlobalFitModel(
             self,
             fit: chisurf.fitting.fit.Fit,
             xmin: int = None,
-            xmax: int = None,
-            **kwargs
+            xmax: int = None
     ) -> np.array:
         try:
             f = fit

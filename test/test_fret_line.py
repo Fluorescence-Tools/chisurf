@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
 
+import chisurf.fluorescence.fret.fret_line
 from chisurf.fluorescence.fret.fret_line import FRETLineGenerator
 import chisurf.models
 
@@ -8,7 +9,6 @@ import chisurf.models
 class Tests(unittest.TestCase):
 
     def test_fret_line_1(self):
-
         # set rda-axis in chisurf.model.tcspc to avoid dependencies on
         # specific settings
         chisurf.models.tcspc.fret.rda_axis = np.logspace(
@@ -134,3 +134,42 @@ class Tests(unittest.TestCase):
         )
         fl.model.find_parameters()
         fl.update()
+
+    def test_static_fret_line(self):
+        import chisurf.fluorescence.fret.fret_line
+        chisurf.models.tcspc.fret.rda_axis = np.logspace(
+            start=np.log(1),
+            stop=np.log(500)
+        )
+        fl = chisurf.fluorescence.fret.fret_line.StaticFRETLine()
+        fl.update()
+        self.assertEqual(
+            '0.007988*x^0+-0.068925*x^1+0.437420*x^2+-0.009930*x^3+-0.008274*x^4',
+            fl.conversion_function_string
+        )
+
+    def test_dynamic_fret_line(self):
+        import chisurf.tools.fret_lines.fret_lines
+        chisurf.models.tcspc.fret.rda_axis = np.logspace(
+            start=np.log(1),
+            stop=np.log(500)
+        )
+        fl = chisurf.fluorescence.fret.fret_line.DynamicFRETLine(
+            n_points=10
+        )
+        fl.update()
+        x, f = fl.conversion_function
+        self.assertEqual(
+            np.allclose(
+                np.array([1.74621269, 3.64847205, 3.68138151, 3.69260583, 3.69826697,
+                          3.70167948, 3.70396113, 3.70559414, 3.70682068, 3.70777573]),
+                x
+            ), True
+        )
+        self.assertEqual(
+            np.allclose(
+                np.array([1.02892012, 3.41195223, 3.55436922, 3.60570122, 3.63215778,
+                          3.6482941, 3.65916325, 3.66698232, 3.67287719, 3.67748034]),
+                f
+            ), True
+        )

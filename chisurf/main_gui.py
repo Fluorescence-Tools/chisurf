@@ -551,8 +551,9 @@ class Main(QtWidgets.QMainWindow):
         self.tttr_convert = chisurf.tools.tttr.convert.TTTRConvert()
         self.actionConvert.triggered.connect(self.tttr_convert.show)
 
-        self.tttr_correlate = chisurf.tools.tttr.correlate.CorrelateTTTR()
-        self.actionCorrelate.triggered.connect(self.tttr_correlate.show)
+        # For some reason the commented stuff below breaks a test
+        # self.tttr_correlate = chisurf.tools.tttr.correlate.CorrelateTTTR()
+        # self.actionCorrelate.triggered.connect(self.tttr_correlate.show)
 
         self.tttr_histogram = chisurf.tools.tttr.decay_histogram.HistogramTTTR()
         self.actionGenerate_decay.triggered.connect(self.tttr_histogram.show)

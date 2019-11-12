@@ -42,14 +42,8 @@ def get_data(
         return [
             d for d in data_set if (
                     (
-                            isinstance(
-                                d,
-                                chisurf.experiments.data.ExperimentalData
-                            ) or
-                            isinstance(
-                                d,
-                                chisurf.experiments.data.ExperimentDataGroup
-                            )
+                        isinstance(d, chisurf.experiments.data.ExperimentalData) or
+                        isinstance(d, chisurf.experiments.data.ExperimentDataGroup)
                     ) and
                     d.name != "Global-fit"
             )
@@ -57,11 +51,6 @@ def get_data(
     else: #elif curve_type == 'all':
         return [
             d for d in data_set if
-            isinstance(
-                d,
-                data.ExperimentalData
-            ) or isinstance(
-                d,
-                chisurf.experiments.data.ExperimentDataGroup
-            )
+            isinstance(d, data.ExperimentalData) or
+            isinstance(d, chisurf.experiments.data.ExperimentDataGroup)
         ]

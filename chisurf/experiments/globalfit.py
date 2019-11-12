@@ -2,9 +2,7 @@
 
 """
 from __future__ import annotations
-from typing import Tuple
-
-from qtpy import QtWidgets
+import typing
 
 import chisurf.experiments
 import chisurf.experiments.data
@@ -12,8 +10,7 @@ from . reader import ExperimentReader
 
 
 class GlobalFitSetup(
-    ExperimentReader,
-    QtWidgets.QWidget
+    ExperimentReader
 ):
     """
 
@@ -28,14 +25,11 @@ class GlobalFitSetup(
             *args,
             **kwargs
         )
-        self.hide()
-        self.parameterWidgets = list()
-        self.parameters = dict([])
 
     @staticmethod
     def autofitrange(
             *args, **kwargs
-    ) -> Tuple[int, int]:
+    ) -> typing.Tuple[int, int]:
         return 0, 0
 
     def read(

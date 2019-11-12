@@ -526,7 +526,11 @@ def load_ui(
     )
 
 
-def tex2svg(formula, fontsize=12, dpi=300):
+def tex2svg(
+        formula: str,
+        fontsize: int = 12,
+        dpi: int = 300
+):
     """Render TeX formula to SVG.
     Args:
         formula (str): TeX formula.
