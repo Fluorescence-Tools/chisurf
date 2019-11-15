@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple
+import typing
 
 import numpy as np
 import pyqtgraph as pg
@@ -83,7 +83,7 @@ class ParameterScanWidget(
     @property
     def selected_parameter(
             self
-    ) -> Tuple[int, str]:
+    ) -> typing.Tuple[int, str]:
         idx = self.comboBox.currentIndex()
         name = self.comboBox.currentText()
         return idx, str(name)

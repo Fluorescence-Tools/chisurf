@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple
+import typing
 
 import os
 import numpy as np
@@ -16,9 +16,9 @@ from chisurf.fio.ascii import Csv
 def read_tcspc_csv(
         filename: str = None,
         skiprows: int = None,
-        rebin: Tuple[int, int] = (1, 1),
+        rebin: typing.Tuple[int, int] = (1, 1),
         dt: float = 1.0,
-        matrix_columns: Tuple[int, int] = (0, 1),
+        matrix_columns: typing.Tuple[int, int] = (0, 1),
         use_header: bool = False,
         is_jordi: bool = False,
         polarization: str = "vm",

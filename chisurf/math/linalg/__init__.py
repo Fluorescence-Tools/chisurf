@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List
+import typing
 
 from math import sin, cos, sqrt
 
@@ -8,7 +8,7 @@ import numpy as np
 
 
 def cartesian(
-        arrays: List[np.array],
+        arrays: typing.List[np.array],
         out=None
 ):
     """Generate a cartesian product of input arrays.

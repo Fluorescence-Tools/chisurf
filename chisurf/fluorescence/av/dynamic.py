@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple
+import typing
 
 import time
 import json
@@ -31,7 +31,7 @@ def simulate_trajectory(
         t_step: float,
         diffusion_coefficient: float,
         slow_fact: float
-) -> Tuple[
+) -> typing.Tuple[
     np.array,
     np.array,
     int,

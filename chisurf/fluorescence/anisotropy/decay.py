@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-from typing import Tuple
+import typing
 
 import numpy as np
 import numba as nb
@@ -16,7 +16,7 @@ def vm_rt_to_vv_vh(
         g_factor: float = 1.0,
         l1: float = 0.0,
         l2: float = 0.0
-) -> Tuple[
+) -> typing.Tuple[
     np.array,
     np.array
 ]:

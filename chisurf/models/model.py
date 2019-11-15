@@ -214,8 +214,11 @@ class ModelWidget(
         self.update_widgets()
         self.update_plots()
 
-    def __getattr__(self, item):
-        pass
+    # def __getattr__(self, item):
+    #     try:
+    #         return super().__getattr__(item)
+    #     except KeyError:
+    #         return self.model.__getattr__(item)
 
     def __init__(
             self,
@@ -224,11 +227,7 @@ class ModelWidget(
             *args,
             **kwargs
     ):
-        super().__init__(
-            fit,
-            *args,
-            **kwargs
-        )
+        super().__init__(fit, *args, **kwargs)
         self.plots = list()
         if icon is None:
             icon = QtGui.QIcon(":/icons/document-open.png")

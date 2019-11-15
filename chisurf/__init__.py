@@ -1,4 +1,4 @@
-from typing import List, Iterable
+import typing
 
 import chisurf.settings as settings
 import logging
@@ -10,7 +10,7 @@ __name__ = settings.cs_settings['name']
 def c(
         t,
         st: str,
-        parameters: List
+        parameters: typing.List
 ):
     """This function facilitates the connection of qt-events to the mfm-command
     line. Whenever the qt-event is called the string passed as argument is
@@ -27,7 +27,7 @@ def c(
     :param st: The string passed to the mfm-commandline
     :param parameters: the parameters passed to the commandline string
     """
-    if isinstance(parameters, Iterable):
+    if isinstance(parameters, typing.Iterable):
         t.connect(
             lambda: run(
                 st % [p if isinstance(p, str) else p() for p in parameters]

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List
+import typing
 
 import numpy as np
 import pylab as p
@@ -378,7 +378,7 @@ class ReactionSystem(object):
     @initial_concentrations.setter
     def initial_concentrations(self, v):
         self._initial_concentrations = [
-            fitting.parameter.FittingParameter(value=vi) for vi in v
+            chisurf.fitting.parameter.FittingParameter(value=vi) for vi in v
         ]
 
     @property
@@ -453,7 +453,7 @@ class ReactionSystem(object):
     @property
     def species_brightness(
             self
-    ) -> List[float]:
+    ) -> typing.List[float]:
         if isinstance(self._species_brightness, np.ndarray):
             return self._species_brightness
         else:

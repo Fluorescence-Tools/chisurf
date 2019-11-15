@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple
+import typing
 
 import numpy as np
 import chisurf.curve
@@ -180,7 +180,10 @@ def calculate_fwhm(
         curve: chisurf.curve.Curve,
         background: float = 0.0,
         verbose: bool = False
-) -> Tuple[float, Tuple[int, int], Tuple[float, float]]:
+) -> typing.Tuple[
+    float, typing.Tuple[int, int],
+    typing.Tuple[float, float]
+]:
     """Calculates the full-width-half-maximum (FWHM) using a linear-search from
     both sides of the curve
 

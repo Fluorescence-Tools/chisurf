@@ -215,7 +215,7 @@ class Fit(
     @property
     def covariance_matrix(
             self
-    ) -> typing.Tuple[np.array, typing.List[int]]:
+    ) -> typing.Tuple[np.array, typing.typing.List[int]]:
         """Returns the covariance matrix of the fit given the current
         models parameter values and returns a list of the 'relevant' used
         parameters.
@@ -235,11 +235,6 @@ class Fit(
     def get_curves(
             self
     ) -> typing.Dict[str, chisurf.curve.Curve]:
-        """Returns a dictionary containing the current data and the
-        model as chisurf.curve.Curve objects.
-
-        :return:
-        """
         d = self.model.get_curves()
         d.update(
             {
@@ -490,6 +485,17 @@ class FitGroup(
         for f in self:
             f.xmax = v
 
+    def get_curves(
+            self
+    ) -> typing.Dict[str, chisurf.curve.Curve]:
+        all_curves = super().get_curves()
+        for i, f in enumerate(self.grouped_fits):
+            fit_curves = f.get_curves()
+            for curve_key in fit_curves:
+                new_curve_key = curve_key + "_%02d" % i
+                all_curves[new_curve_key] = fit_curves[curve_key]
+        return all_curves
+
     def save(
             self,
             filename: str,
@@ -544,11 +550,9 @@ class FitGroup(
         bounds = [pi.bounds for pi in fit._model.parameters]
 
         results = chisurf.math.optimization.leastsqbound(
-            get_wres,
-            fit._model.parameter_values,
-            args=(
-                fit._model,
-            ),
+            func=get_wres,
+            x0=fit._model.parameter_values,
+            args=(fit._model,),
             bounds=bounds,
             **fitting_options
         )
@@ -776,25 +780,25 @@ def covariance_matrix(
 
 
 def get_wres(
-        parameter: typing.List[float],
+        parameter_values: typing.List[float],
         model: chisurf.models.Model
 ) -> np.array:
     """Returns the weighted residuals for a list of parameters of a models
 
-    :param parameter: a list of the parameter values / or None. If None
+    :param parameter_values: a list of the parameter values / or None. If None
     the models is not updated.
 
     :param model:
     :return:
     """
-    if len(parameter) > 0:
-        model.parameter_values = parameter
+    if len(parameter_values) > 0:
+        model.parameter_values = parameter_values
         model.update_model()
     return model.weighted_residuals
 
 
 def get_chi2(
-        parameter: typing.List[float],
+        parameter_values: typing.List[float],
         model: chisurf.models.model.ModelCurve,
         reduced: bool = True
 ) -> float:
@@ -808,7 +812,7 @@ def get_chi2(
     and n_free is the number of model parameters
     :return:
     """
-    chi2 = (get_wres(parameter, model)**2.0).sum()
+    chi2 = (get_wres(parameter_values, model)**2.0).sum()
     chi2 = np.inf if np.isnan(chi2) else chi2
     chi2r = chi2 / float(model.n_points - model.n_free - 1.0)
     if reduced:

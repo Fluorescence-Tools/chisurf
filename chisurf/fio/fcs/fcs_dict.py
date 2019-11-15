@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import List, Dict
+import typing
+
 import pathlib
 import numpy as np
 import scipy.io
@@ -69,7 +70,7 @@ def write_kristine(
 
 def write_dict_to_kristine(
         filename: str,
-        ds: List[Dict],
+        ds: typing.List[typing.Dict],
         verbose: bool = True
 ) -> None:
     for i, d in enumerate(ds):
@@ -91,7 +92,7 @@ def write_dict_to_kristine(
 def read_kristine(
         filename: str,
         verbose: bool = False
-) -> List[Dict]:
+) -> typing.List[typing.Dict]:
     """
 
     :param filename:
@@ -134,7 +135,7 @@ def read_kristine(
 
 def write_china_mat(
         filename: str,
-        d: List[Dict],
+        d: typing.List[typing.Dict],
         verbose: bool = False
 ) -> None:
     if verbose:
@@ -151,7 +152,7 @@ def read_china_mat(
         filename: str,
         skip_points: int = 4,
         verbose: bool = False
-) -> List[Dict]:
+) -> typing.List[typing.Dict]:
     m = scipy.io.loadmat(filename)
     n_measurements = m['AA'].shape[1]
     # save intensity traces
@@ -220,7 +221,7 @@ def read_china_mat(
 def read_zeiss_fcs(
         filename: str,
         verbose: bool = False
-) -> List[Dict]:
+) -> typing.List[typing.Dict]:
     if verbose:
         print("Reading ALV .asc from file: ", filename)
     d = openFCS(filename)
@@ -361,7 +362,7 @@ def read_asc_header(
 def read_asc(
         filename: str,
         verbose: bool = False
-) -> List[Dict]:
+) -> typing.List[typing.Dict]:
     if verbose:
         print("Reading ALV .asc from file: ", filename)
     d = openASC(filename)
@@ -402,7 +403,7 @@ def read_asc(
 def read_pycorrfit(
         filename: str,
         verbose: bool = False
-) -> List[Dict]:
+) -> typing.List[typing.Dict]:
     if verbose:
         print("Reading PyCorrFit from file: ", filename)
     d = openCSV(filename)

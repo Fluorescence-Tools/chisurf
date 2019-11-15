@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-from typing import Tuple
+import typing
 
 import numpy as np
 
@@ -17,7 +17,7 @@ def weights(
         mean_count_rate: float,
         weight_type: str = 'starchev',
         skip_points: int = 0,
-        correlation_amplitude_range: Tuple[int, int] = (0, 8),
+        correlation_amplitude_range: typing.Tuple[int, int] = (0, 8),
         time_upper: float = 10,
         z0_w0: float = 3.5,
         starchev_a1: float = 2.e-3,
