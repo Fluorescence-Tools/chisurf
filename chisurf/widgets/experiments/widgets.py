@@ -1,7 +1,6 @@
 from __future__ import annotations
-
+import typing
 import os
-from typing import List, Callable
 
 from qtpy import QtWidgets, QtCore, QtGui
 
@@ -34,7 +33,7 @@ class ExperimentalDataSelector(
     @property
     def datasets(
             self
-    ) -> List[
+    ) -> typing.List[
         chisurf.experiments.data.ExperimentalData
     ]:
         data_curves = self.get_data_sets(
@@ -75,7 +74,7 @@ class ExperimentalDataSelector(
     @property
     def selected_datasets(
             self
-    ) -> List[
+    ) -> typing.List[
         chisurf.experiments.data.ExperimentalData
     ]:
         data_sets_idx = self.selected_dataset_idx
@@ -84,7 +83,7 @@ class ExperimentalDataSelector(
     @property
     def selected_dataset_idx(
             self
-    ) -> List[int]:
+    ) -> typing.List[int]:
         return [r.row() for r in self.selectedIndexes()]
 
     def onCurveChanged(self):
@@ -162,28 +161,28 @@ class ExperimentalDataSelector(
                     i2.setToolTip(0, fn)
                     i2.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 
-    def dragMoveEvent(
-            self,
-            event
-    ):
-        super().dragMoveEvent(event)
-
-    def dragEnterEvent(
-            self,
-            event
-    ):
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
-            super().dragEnterEvent(event)
-
-    def startDrag(
-            self,
-            supportedActions
-    ):
-        #self.drag_item = self.currentItem()
-        #self.drag_row = self.row(self.drag_item)
-        super().startDrag(supportedActions)
+    # def dragMoveEvent(
+    #         self,
+    #         event
+    # ):
+    #     super().dragMoveEvent(event)
+    #
+    # def dragEnterEvent(
+    #         self,
+    #         event
+    # ):
+    #     if event.mimeData().hasUrls():
+    #         event.acceptProposedAction()
+    #     else:
+    #         super().dragEnterEvent(event)
+    #
+    # def startDrag(
+    #         self,
+    #         supportedActions
+    # ):
+    #     # self.drag_item = self.currentItem()
+    #     # self.drag_row = self.row(self.drag_item)
+    #     super().startDrag(supportedActions)
 
     def dropEvent(
             self,
@@ -222,9 +221,9 @@ class ExperimentalDataSelector(
             setup=None,
             drag_enabled: bool = False,
             click_close: bool = True,
-            change_event: Callable = None,
+            change_event: typing.Callable = None,
             curve_types: str = 'experiment',
-            get_data_sets: Callable = None,
+            get_data_sets: typing.Callable = None,
             parent: QtWidgets.QWidget = None,
             icon: QtGui.QIcon = None,
             context_menu_enabled: bool = True
@@ -243,13 +242,11 @@ class ExperimentalDataSelector(
         :param context_menu_enabled: if True there is a context menu
         """
         if get_data_sets is None:
-
             def get_data_sets(**kwargs):
                 return chisurf.experiments.get_data(
                     data_set=chisurf.imported_datasets,
                     **kwargs
                 )
-
             self.get_data_sets = get_data_sets
         else:
             self.get_data_sets = get_data_sets

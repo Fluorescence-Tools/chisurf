@@ -2,7 +2,7 @@
 Stochastic reaction simulation
 """
 from __future__ import annotations
-from typing import List, Tuple
+import typing
 
 import numpy as np
 from numpy.random import multinomial
@@ -12,9 +12,9 @@ class Model(object):
 
     def __init__(
             self,
-            variable_names: List[str],
-            rate_constants: List[float],
-            inits: List[float],
+            variable_names: typing.List[str],
+            rate_constants: typing.List[float],
+            inits: typing.List[float],
             transition_matrix: np.ndarray,
             propensity
     ):
@@ -62,7 +62,7 @@ class Model(object):
 
     def getStats(
             self
-    ) -> Tuple[
+    ) -> typing.Tuple[
         np.ndarray,
         np.ndarray,
         np.ndarray

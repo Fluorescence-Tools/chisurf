@@ -1,8 +1,7 @@
 from __future__ import annotations
-from typing import List, Tuple, Dict
+import typing
 
 import threading
-
 import numpy as np
 
 import chisurf.decorators
@@ -21,7 +20,7 @@ class GlobalFitModel(
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit,
-            fits: List[chisurf.fitting.fit.Fit] = None,
+            fits: typing.List[chisurf.fitting.fit.Fit] = None,
             **kwargs
     ):
         if fits is None:
@@ -51,19 +50,19 @@ class GlobalFitModel(
     @property
     def fit_names(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         return [f.name for f in self.fits]
 
     @property
     def links(
             self
-    ) -> List[chisurf.fitting.parameter.FittingParameter]:
+    ) -> typing.List[chisurf.fitting.parameter.FittingParameter]:
         return self._links
 
     @links.setter
     def links(
             self,
-            v: List[chisurf.fitting.parameter.FittingParameter]
+            v: typing.List[chisurf.fitting.parameter.FittingParameter]
     ):
         self._links = v if isinstance(v, list) else list()
 
@@ -77,45 +76,45 @@ class GlobalFitModel(
     @property
     def global_parameters_all(
             self
-    ) -> List[chisurf.fitting.parameter.FittingParameter]:
+    ) -> typing.List[chisurf.fitting.parameter.FittingParameter]:
         return list(self._global_parameters.values())
 
     @property
     def global_parameters_all_names(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         return [p.name for p in self.global_parameters_all]
 
     @property
     def global_parameters(
             self
-    ) -> List[chisurf.fitting.parameter.FittingParameter]:
+    ) -> typing.List[chisurf.fitting.parameter.FittingParameter]:
         return [p for p in self.global_parameters_all if not p.fixed]
 
     @property
     def global_parameters_names(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         return [p.name for p in self.global_parameters]
 
     @property
     def global_parameters_bound_all(
             self
-    ) -> List[
-        Tuple[float, float]
+    ) -> typing.List[
+        typing.Tuple[float, float]
     ]:
         return [pi.bounds for pi in self.global_parameters_all]
 
     @property
     def global_parameter_linked_all(
             self
-    ) -> List[bool]:
+    ) -> typing.List[bool]:
         return [p.is_linked for p in self.global_parameters_all]
 
     @property
     def parameters(
             self
-    ) -> List[chisurf.fitting.parameter.FittingParameter]:
+    ) -> typing.List[chisurf.fitting.parameter.FittingParameter]:
         p = list()
         for f in self.fits:
             p += f.model.parameters
@@ -125,7 +124,7 @@ class GlobalFitModel(
     @property
     def parameter_names(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         try:
             re = list()
             for i, f in enumerate(self.fits):
@@ -139,7 +138,7 @@ class GlobalFitModel(
     @property
     def parameters_all(
             self
-    ) -> List[chisurf.fitting.parameter.FittingParameter]:
+    ) -> typing.List[chisurf.fitting.parameter.FittingParameter]:
         try:
             re = list()
             for f in self.fits:
@@ -153,19 +152,19 @@ class GlobalFitModel(
     @property
     def global_parameters_values_all(
             self
-    ) -> List[float]:
+    ) -> typing.List[float]:
         return [g.value for g in self.global_parameters_all]
 
     @property
     def global_parameters_fixed_all(
             self
-    ) -> List[bool]:
+    ) -> typing.List[bool]:
         return [p.fixed for p in self.global_parameters_all]
 
     @property
     def parameter_names_all(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         try:
             re = list()
             for i, f in enumerate(self.fits):
@@ -179,7 +178,7 @@ class GlobalFitModel(
     @property
     def parameter_dict(
             self
-    ) -> Dict[str, chisurf.fitting.parameter.FittingParameter]:
+    ) -> typing.Dict[str, chisurf.fitting.parameter.FittingParameter]:
         re = dict()
         for i, f in enumerate(self.fits):
             d = f.model.parameter_dict
@@ -191,7 +190,7 @@ class GlobalFitModel(
     @property
     def data(
             self
-    ) -> Tuple[
+    ) -> typing.Tuple[
         np.array,
         np.array,
         np.array

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List
+import typing
 
 import os
 import docx
@@ -15,7 +15,7 @@ import chisurf.macros.tcspc
 
 
 def add_fit(
-        dataset_indices: List[int] = None,
+        dataset_indices: typing.List[int] = None,
         model_name: str = None
 ):
     cs = chisurf.cs
@@ -179,7 +179,7 @@ def load_fit_result(
 
 
 def group_datasets(
-        dataset_indices: List[int]
+        dataset_indices: typing.List[int]
 ) -> None:
     selected_data = [
         chisurf.imported_datasets[i] for i in dataset_indices
@@ -207,7 +207,7 @@ def group_datasets(
 
 
 def remove_datasets(
-        dataset_indices: List[int]
+        dataset_indices: typing.List[int]
 ) -> None:
     if not isinstance(
             dataset_indices,

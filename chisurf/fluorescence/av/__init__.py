@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple, Type
+import typing
 
 import json
 import os
@@ -205,7 +205,7 @@ class BasicAV(object):
 
     def dRmp(
             self,
-            av: Type[BasicAV],
+            av: typing.Type[BasicAV],
     ):
         """
         Calculate the distance between the mean positions with respect to the accessible volume `av`
@@ -226,7 +226,7 @@ class BasicAV(object):
 
     def dRDA(
             self,
-            av: Type[BasicAV],
+            av: typing.Type[BasicAV],
             **kwargs
     ):
         """Calculate the mean distance to the second accessible volume
@@ -268,7 +268,7 @@ class BasicAV(object):
 
     def dRDAE(
             self,
-            av: Type[BasicAV],
+            av: typing.Type[BasicAV],
             forster_radius: float
     ):
         """Calculate the FRET-averaged mean distance to the second accessible volume
@@ -289,9 +289,9 @@ class BasicAV(object):
 
     def pRDA(
             self,
-            av: Type[BasicAV],
+            av: typing.Type[BasicAV],
             **kwargs
-    ) -> Tuple[
+    ) -> typing.Tuple[
         np.ndarray,
         np.ndarray
     ]:
@@ -338,6 +338,7 @@ class ACV(BasicAV):
     -------
 
     >>> import chisurf
+    >>> import chisurf.structure
     >>> structure = chisurf.structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
     >>> trapped_fraction = 0.5
     >>> av1 = chisurf.fluorescence.av.ACV(structure, residue_seq_number=18, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)

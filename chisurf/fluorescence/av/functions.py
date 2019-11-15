@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple, Type
+import typing
 
 import chisurf.fluorescence
 import chisurf.fluorescence.av.fps
@@ -13,10 +13,10 @@ fps_settings = chisurf.settings.cs_settings['fps']
 
 
 def histogram_rda(
-        av1: Type[chisurf.fluorescence.av.BasicAV],
-        av2: Type[chisurf.fluorescence.av.BasicAV],
+        av1: typing.Type[chisurf.fluorescence.av.BasicAV],
+        av2: typing.Type[chisurf.fluorescence.av.BasicAV],
         **kwargs
-) -> Tuple[
+) -> typing.Tuple[
     np.ndarray,
     np.ndarray
 ]:
@@ -32,8 +32,9 @@ def histogram_rda(
     Examples
     --------
 
-    >>> import chisurf
-    >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+    >>> import chisurf.structure
+    >>> import chisurf.fluorescence.av
+    >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
     >>> av1 = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
     >>> av2 = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=577, atom_name='CB')
     >>> y, x = av1.pRDA(av2)

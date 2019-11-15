@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple, List
+import typing
 
 import numpy as np
 
@@ -25,8 +25,8 @@ class TCSPCReader(
             is_jordi: bool = False,
             mode: str = 'vm',
             g_factor: float = None,
-            rebin: Tuple[int, int] = (1, 1),
-            matrix_columns: Tuple[int, int] = (0, 1),
+            rebin: typing.Tuple[int, int] = (1, 1),
+            matrix_columns: typing.Tuple[int, int] = (0, 1),
             skiprows: int = 8,
             polarization: str = 'vm',
             use_header: bool = True,
@@ -96,7 +96,7 @@ class TCSPCReader(
             self,
             data,
             **kwargs
-    ) -> Tuple[int, int]:
+    ) -> typing.Tuple[int, int]:
         return chisurf.fluorescence.tcspc.fitrange(
             data.y,
             self.fit_count_threshold,
@@ -139,7 +139,7 @@ class TCSPCSetupDummy(
             dt: float = 0.0141,
             p0: float = 10000.0,
             rep_rate: float = 10.0,
-            lifetime_spectrum: List[float] = None,
+            lifetime_spectrum: typing.List[float] = None,
             instrument_response_function: chisurf.experiments.data.DataCurve = None,
             sample_name: str = 'TCSPC-Dummy',
             **kwargs

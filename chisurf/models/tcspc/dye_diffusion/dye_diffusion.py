@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple
+import typing
 
 import gc
 import json
@@ -423,7 +423,7 @@ class DyeDecay(Model, Curve):
             irf = None,
             decay_mode: str = None,
             **kwargs
-    ) -> Tuple[
+    ) -> typing.Tuple[
         np.array,
         np.array
     ]:
@@ -459,7 +459,7 @@ class DyeDecay(Model, Curve):
             filename: str = 'hist.txt',
             verbose: bool = False,
             nbins:int = 4096,
-            tac_range: Tuple[int, int] = (0, 50)
+            tac_range: typing.Tuple[int, int] = (0, 50)
     ):
         """
         Used to save the current histogram to a file.

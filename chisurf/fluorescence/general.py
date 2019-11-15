@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Tuple
+import typing
 
 import numba as nb
 import numpy as np
@@ -593,7 +593,7 @@ def calculate_fluorescence_decay(
         lifetime_spectrum: np.ndarray,
         time_axis: np.ndarray,
         normalize: bool = True
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> typing.Tuple[np.ndarray, np.ndarray]:
     """Converts a interleaved lifetime spectrum into a intensity decay
 
     :param lifetime_spectrum: interleaved lifetime spectrum
@@ -604,9 +604,9 @@ def calculate_fluorescence_decay(
     Examples
     --------
 
-    >>> import chisurf.mfm.structure.structure
+    >>> import chisurf.structure.structure
     >>> time_axis = np.linspace(0, 20, num=100)
-    >>> structure = mfm.structure.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
+    >>> structure = chisurf.structure.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
     >>> donor_description = {'residue_seq_number': 344, 'atom_name': 'CB'}
     >>> acceptor_description = {'residue_seq_number': 496, 'atom_name': 'CB'}
     >>> donor_lifetime_spectrum = np.array([1., 4.])

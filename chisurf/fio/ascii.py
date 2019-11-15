@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Tuple
+import typing
 
 import csv
 import os
@@ -42,10 +42,10 @@ def save_xy(
 def load_xy(
         filename: str,
         verbose: bool = chisurf.verbose,
-        usecols: Tuple[int, int] = None,
+        usecols: typing.Tuple[int, int] = None,
         skiprows: int = 0,
         delimiter: str = "\t"
-) -> Tuple[
+) -> typing.Tuple[
     np.array,
     np.array
 ]:
@@ -104,7 +104,7 @@ class Csv(object):
             self,
             *args,
             filename: str = None,
-            colspecs: List[int] = None,
+            colspecs: typing.List[int] = None,
             use_header: bool = False,
             x_on: bool = True,
             y_on: bool = True,
@@ -185,7 +185,7 @@ class Csv(object):
             delimiter: str = None,
             file_type: str = None,
             infer_delimiter: bool = True,
-            usecols: List[int] = None,
+            usecols: typing.List[int] = None,
             **kwargs
     ) -> None:
         """
@@ -336,7 +336,7 @@ class Csv(object):
     @property
     def header(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         """
         A list of the column headers
         """

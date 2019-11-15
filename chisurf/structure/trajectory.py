@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List
+import typing
 
 import copy
 import os
@@ -167,7 +167,7 @@ class TrajectoryFile(
             inverse_trajectory: bool = False,
             center: bool = False,
             verbose: bool = False,
-            atom_indices: List[int] = None,
+            atom_indices: typing.List[int] = None,
             mode: str = 'r'
     ):
         """

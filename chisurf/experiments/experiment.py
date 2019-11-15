@@ -1,8 +1,5 @@
-"""
-
-"""
 from __future__ import annotations
-from typing import List, Type, Tuple
+import typing
 
 import chisurf.base
 import chisurf.models
@@ -22,7 +19,7 @@ class Experiment(
     @property
     def readers(
             self
-    ) -> List[
+    ) -> typing.List[
         chisurf.experiments.reader.ExperimentReader
     ]:
         return self.get_readers()
@@ -30,32 +27,32 @@ class Experiment(
     @property
     def reader_names(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         return self.get_reader_names()
 
     @property
     def model_classes(
             self
-    ) -> List[Type[chisurf.models.Model]]:
+    ) -> typing.List[typing.Type[chisurf.models.Model]]:
         return list(self._model_classes)
 
     @property
     def model_names(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         return self.get_model_names()
 
     def add_model_class(
             self,
-            model: Type[chisurf.models.Model]
+            model: typing.Type[chisurf.models.Model]
     ):
         if model not in self.model_classes:
             self._model_classes.append(model)
 
     def add_model_classes(
             self,
-            models: List[
-                Type[chisurf.models.Model]
+            models: typing.List[
+                typing.Type[chisurf.models.Model]
             ]
     ):
         for model in models:
@@ -72,8 +69,8 @@ class Experiment(
 
     def add_readers(
             self,
-            readers: List[
-                Tuple[
+            readers: typing.List[
+                typing.Tuple[
                     chisurf.experiments.reader.ExperimentReader,
                     chisurf.experiments.reader.ExperimentReaderController
                 ]
@@ -87,7 +84,7 @@ class Experiment(
 
     def get_readers(
             self
-    ) -> List[
+    ) -> typing.List[
         chisurf.experiments.reader.ExperimentReader
     ]:
         readers = list()
@@ -106,7 +103,7 @@ class Experiment(
 
     def get_reader_names(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         names = list()
         for s in self.readers:
             names.append(s.name)
@@ -114,7 +111,7 @@ class Experiment(
 
     def get_model_names(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         names = list()
         for s in self.model_classes:
             names.append(str(s.name))
@@ -126,12 +123,6 @@ class Experiment(
             *args,
             **kwargs
     ):
-        """
-
-        :param name:
-        :param args:
-        :param kwargs:
-        """
         super().__init__(
             name=name,
             *args,

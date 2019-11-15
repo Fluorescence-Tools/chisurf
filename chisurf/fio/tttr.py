@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple, List, Dict
+import typing
 import deprecation
 
 import fnmatch
@@ -39,7 +39,7 @@ class Header(tables.IsDescription):
 def pq_photons(
         b: np.ndarray,
         invert_tac: bool = True
-) -> Tuple[
+) -> typing.Tuple[
     np.array,
     np.array,
     np.array,
@@ -84,7 +84,7 @@ def pq_photons(
 @nb.jit(nopython=True)
 def bh132_photons(
         b: np.array
-) -> Tuple[
+) -> typing.Tuple[
     np.array,
     np.array,
     np.array,
@@ -143,7 +143,7 @@ def bh132_photons(
 @nb.jit()
 def ht3_photons(
         b: np.array
-) -> Tuple[
+) -> typing.Tuple[
     np.array,
     np.array,
     np.array,
@@ -192,7 +192,7 @@ def ht3_photons(
 def ht3_sf(
         b: np.array,
         stage: int = 0
-) -> Tuple[
+) -> typing.Tuple[
     np.array,
     np.array,
     np.array,
@@ -353,7 +353,7 @@ def iss_32(
 def iss_photons(
         data,
         verbose: bool = chisurf.verbose
-) -> Tuple[
+) -> typing.Tuple[
     np.array,
     np.array,
     np.array,
@@ -414,7 +414,7 @@ def iss_photons(
     )
 def bh123_header(
         b: np.array
-) -> Tuple[float, bool]:
+) -> typing.Tuple[float, bool]:
     bHeader = np.unpackbits(b[0:4])
     conv8le = np.array([128, 64, 32, 16, 8, 4, 2, 1])
     conv24be = np.array([1, 256, 65536])
@@ -429,7 +429,7 @@ def bh123_header(
 
 def iss_header(
         b: np.ndarray
-) -> Tuple[float, bool]:
+) -> typing.Tuple[float, bool]:
     # acquisition frequency in Hz
     frequency = b[2:6].view(dtype=np.uint32)[0]
     MTclock = 1. / float(frequency) * 1.e9
@@ -443,7 +443,7 @@ def iss_header(
     )
 def ht3_header(
         b: np.ndarray
-) -> Tuple[float, int]:
+) -> typing.Tuple[float, int]:
     # TODO doesnt read header properly!!!!!
     frequency = b[2:6].view(dtype=np.uint32)[0]
     MTclock = 1. / float(frequency) * 1.e9
@@ -503,7 +503,7 @@ def make_spc_dict(
         macro_time_resolution: float,
         number_of_events: int,
         filename: str
-) -> Dict:
+) -> typing.Dict:
     spc = {
         'filename': filename,
         'header': {
@@ -574,7 +574,7 @@ def make_tp_photon_hdf(
         details="Reading of TTTR files should be done using tttrlib"
     )
 def spc2hdf(
-        spc_files: List[str],
+        spc_files: typing.List[str],
         routine_name: str = "bh132",
         title: str = "spc",
         verbose: bool = chisurf.verbose,
@@ -981,7 +981,7 @@ pq_hardware = {
     )
 def read_ptu(
         filename: str
-) -> Dict:
+) -> typing.Dict:
     """Reads a PicoQuant PTU-file
     
     :param filename:

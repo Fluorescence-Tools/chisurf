@@ -7,7 +7,7 @@ different experimental setups. Furthermore, it contains a set of plotting librar
 
 """
 from __future__ import annotations
-from typing import List
+import typing
 
 import chisurf.experiments.experiment
 import chisurf.experiments.data
@@ -21,10 +21,10 @@ from chisurf.experiments.experiment import Experiment
 
 def get_data(
         curve_type: str = 'experiment',
-        data_set: List[
+        data_set: typing.List[
             chisurf.experiments.data.ExperimentalData
         ] = None
-) -> List[
+) -> typing.List[
     chisurf.experiments.data.ExperimentalData
 ]:
     """Returns all curves `chisurf.curve.DataCurve` except if the

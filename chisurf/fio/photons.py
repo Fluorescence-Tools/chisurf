@@ -26,7 +26,7 @@ Examples
 
 
 from __future__ import annotations
-from typing import List, Tuple
+import typing
 
 import tempfile
 import numpy as np
@@ -38,7 +38,7 @@ from . import tttr
 
 
 def read_burst_ids(
-        filenames: List[str],
+        filenames: typing.List[str],
         stack_files: bool = True
 ) -> np.array:
     """
@@ -264,7 +264,7 @@ class Photons(object):
     @property
     def filenames(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         """
         Original filename of the data
         """
@@ -291,7 +291,7 @@ class Photons(object):
     @property
     def shape(
             self
-    ) -> Tuple[int]:
+    ) -> typing.Tuple[int]:
         return self.routing_channels.shape
 
     @property
