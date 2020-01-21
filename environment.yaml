@@ -36,7 +36,8 @@ dependencies:
     - pymol-open-source
     - mrcfile
     - guiqwt
-    - tttrlib
+    - tttrlib >=0.11
+    - opencv
 #    - sympy
 #    - sphinx_bootstrap_theme
 #    - sphinx-autodoc-typehints
