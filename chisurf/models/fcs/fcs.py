@@ -12,9 +12,6 @@ from chisurf.models.parse import ParseModelWidget
 class ParseFCSWidget(
     ParseModelWidget
 ):
-    """
-    fcs
-    """
 
     plot_classes = [
         (

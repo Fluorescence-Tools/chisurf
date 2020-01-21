@@ -503,7 +503,7 @@ class FittingParameterWidget(
             )
             self.lineEdit.setText("%.0f%%" % rel_error)
 
-        #link
+        # link
         if self.fitting_parameter.link is not None:
             tooltip = " linked to " + self.fitting_parameter.link.name
             self.widget_link.setToolTip(tooltip)
@@ -538,7 +538,7 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
         for i, p in enumerate(parameter_group.parameters_all):
             pw = chisurf.widgets.fitting.make_fitting_parameter_widget(
                 fitting_parameter=p,
-                label_text='Em<sub>B</sub>'
+                label_text=p.name
             )
             col = i % self.n_col
             row = i // self.n_col

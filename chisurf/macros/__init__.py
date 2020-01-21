@@ -12,6 +12,7 @@ import chisurf.fitting
 import chisurf.widgets.fitting.widgets
 import chisurf.widgets
 import chisurf.macros.tcspc
+import chisurf.macros.parse
 
 
 def add_fit(

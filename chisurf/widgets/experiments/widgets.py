@@ -103,8 +103,20 @@ class ExperimentalDataSelector(
         self.update()
 
     def onSaveDataset(self):
-        filename = chisurf.widgets.save_file(file_type="*.csv")
-        self.selected_dataset.save(filename)
+        print("onSaveDataset")
+        filename = chisurf.widgets.save_file(file_type="*.*")
+        base_name, extension = os.path.splitext(filename)
+        if extension.lower() == '.csv':
+            self.selected_dataset.save(
+                filename,
+                file_type='csv'
+            )
+        else:
+            filename = base_name + '.yaml'
+            self.selected_dataset.save(
+                filename,
+                file_type='yaml'
+            )
 
     def onGroupDatasets(self):
         dg = self.selected_dataset_idx

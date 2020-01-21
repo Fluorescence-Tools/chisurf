@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-from typing import List
+import typing
 from io import BytesIO
 
 import inspect
@@ -282,7 +282,7 @@ class MyMessageBox(
 class FileList(QtWidgets.QListWidget):
 
     @property
-    def filenames(self) -> List[str]:
+    def filenames(self) -> typing.List[str]:
         fn = list()
         for row in range(self.count()):
             item = self.item(row)

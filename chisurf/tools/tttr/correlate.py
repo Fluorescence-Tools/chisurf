@@ -1,31 +1,34 @@
 from __future__ import annotations
-from typing import List
+import typing
 
 import sys
+import os
 
-import numpy as np
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets
 
+import numpy as np
 import tttrlib
 
+import chisurf.curve
 import chisurf.decorators
-import chisurf.widgets.experiments.widgets
 import chisurf.tools
+import chisurf.fio
 import chisurf.fluorescence
 import chisurf.experiments.data
 import chisurf.settings
-import chisurf.widgets
 import chisurf.fluorescence.fcs
+import chisurf.widgets
+import chisurf.widgets.experiments
 import chisurf.widgets.fio
 
-
-settings = chisurf.settings.cs_settings['correlator']
+correlator_settings = chisurf.settings.cs_settings['correlator']
 plot_settings = chisurf.settings.gui['plot']
-lw = plot_settings['line_width']
 
 
-class Correlator(QtCore.QThread):
+class Correlator(
+    QtCore.QThread
+):
 
     procDone = QtCore.pyqtSignal(bool)
     partDone = QtCore.pyqtSignal(int)
@@ -34,10 +37,7 @@ class Correlator(QtCore.QThread):
     def data(
             self
     ) -> chisurf.experiments.data.DataCurve:
-        if isinstance(
-                self._data_curve,
-                chisurf.experiments.data.DataCurve
-        ):
+        if isinstance(self._data_curve, chisurf.experiments.data.DataCurve):
             return self._data_curve
         else:
             return chisurf.experiments.data.DataCurve(
@@ -78,7 +78,7 @@ class Correlator(QtCore.QThread):
         """
         chisurf.logging.info("Correlator:getWeightStream")
         photons = self.p.photon_source.photons
-        if type(tacWeighting) is list:
+        if isinstance(tacWeighting, list):
             print("channel-wise selection")
             #print("Max-Rout: %s" % photons.n_rout)
             wt = np.zeros(
@@ -86,14 +86,14 @@ class Correlator(QtCore.QThread):
                 dtype=np.float32
             )
             wt[tacWeighting] = 1.0
-        elif type(tacWeighting) is np.ndarray:
+        elif isinstance(tacWeighting, np.ndarray):
             print("TAC-weighted")
             wt = tacWeighting
         w = chisurf.fluorescence.fcs.correlate.get_weights(
-            photons.routing_channels,
-            photons.micro_times,
-            wt,
-            photons.nPh
+            routing_channels=photons.routing_channels,
+            micro_times=photons.micro_times,
+            weights=wt,
+            number_of_photons=photons.nPh
         )
         return w
 
@@ -204,8 +204,8 @@ class Correlator(QtCore.QThread):
             y=cor.mean(axis=0)[1:],
             ey=1. / w.mean(axis=0)[1:]
         )
+        chisurf.logging.info("correlation done")
 
-        print("correlation done")
         self._data_curve = data_curve
         self.procDone.emit(True)
         self.exiting = True
@@ -243,11 +243,11 @@ class CorrelatorWidget(QtWidgets.QWidget):
             photon_source,
             ch1: int = '0',
             ch2: int = '8',
-            number_of_cascades: int = settings['number_of_cascades'],
-            B: int = settings['B'],
-            split: int = settings['split'],
-            weighting: str = settings['weighting'],
-            fine: bool = settings['fine']
+            number_of_cascades: int = correlator_settings['number_of_cascades'],
+            B: int = correlator_settings['B'],
+            split: int = correlator_settings['split'],
+            weighting: str = correlator_settings['weighting'],
+            fine: bool = correlator_settings['fine']
     ):
         self.number_of_cascades = number_of_cascades
         self.B = B
@@ -306,7 +306,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
     @property
     def ch1(
             self
-    ) -> List[int]:
+    ) -> typing.List[int]:
         return [int(x) for x in str(self.lineEdit_4.text()).split()]
 
     @ch1.setter
@@ -319,7 +319,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
     @property
     def ch2(
             self
-    ) -> List[int]:
+    ) -> typing.List[int]:
         return [int(x) for x in str(self.lineEdit_5.text()).split()]
 
     @ch2.setter
@@ -366,7 +366,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
             self,
             v: int
     ):
-        return self.spinBox_2.setValue(v)
+        self.spinBox_2.setValue(v)
 
     @property
     def method(
@@ -390,16 +390,19 @@ class CorrelatorWidget(QtWidgets.QWidget):
 
 class CrFilterWidget(QtWidgets.QWidget):
 
-    @chisurf.decorators.init_with_ui(
-        ui_filename='fcs-cr-filter.ui'
-    )
     def __init__(
             self,
             photon_source,
             verbose: bool = chisurf.verbose,
-            time_window = settings['time_window'],
-            max_count_rate = settings['max_count_rate'],
+            time_window = correlator_settings['time_window'],
+            max_count_rate = correlator_settings['max_count_rate']
     ):
+        super().__init__()
+        chisurf.widgets.load_ui(
+            target=self,
+            path=os.path.dirname(os.path.abspath(__file__)),
+            ui_filename='cr_filter.ui'
+        )
         self.photon_source = photon_source
         self.verbose = verbose
         self.time_window = time_window
@@ -496,7 +499,11 @@ class CorrelateTTTR(
         plot = self.plot.getPlotItem()
         plot.clear()
 
-    def get_data_curves(self, **kwargs):
+    def get_data_curves(
+            self,
+            *args,
+            **kwargs
+    ) -> typing.List[chisurf.curve.Curve]:
         return self._curves
 
     def plot_curves(self):
@@ -509,20 +516,19 @@ class CorrelateTTTR(
         plot.showGrid(True, True, 1.0)
 
         current_curve = self.cs.selected_curve_index
+        lw = plot_settings['line_width']
         for i, curve in enumerate(self._curves):
-            l = lw * 0.5 if i != current_curve else 1.5 * lw
+            w = lw * 0.5 if i != current_curve else 1.5 * lw
             plot.plot(
                 x=curve.x, y=curve.y,
                 pen=pg.mkPen(
                     chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex'],
-                    width=l
+                    width=w
                 ),
                 name=curve.name
             )
 
     def add_curve(self):
-        #d.data_reader = self
-        #d.name = self.corr.fileWidget.sample_name
         self._curves.append(self.correlator.data)
         self.cs.update()
         self.plot_curves()
@@ -536,13 +542,16 @@ class CorrelateTTTR(
         self.fileWidget = chisurf.widgets.fio.SpcFileWidget()
         self.verticalLayout.addWidget(self.fileWidget)
 
-        self.countrateFilterWidget = CrFilterWidget(
-            photon_source=self.fileWidget
-        )
-        self.verticalLayout_4.addWidget(self.countrateFilterWidget)
+        #self.countrateFilterWidget = CrFilterWidget(
+        #    photon_source=self.fileWidget
+        #)
+        #self.verticalLayout_4.addWidget(self.countrateFilterWidget)
+        #self.correlator = CorrelatorWidget(
+        #    photon_source=self.countrateFilterWidget
+        #)
 
         self.correlator = CorrelatorWidget(
-            photon_source=self.countrateFilterWidget
+            photon_source=self.fileWidget
         )
         self.verticalLayout.addWidget(self.correlator)
 
@@ -553,7 +562,7 @@ class CorrelateTTTR(
         self.verticalLayout_6.addWidget(self.cs)
 
         self.correlator.correlator_thread.finished.connect(self.add_curve)
-        #self.curve_selector.itemClicked[QListWidgetItem].connect(self.plot_curves)
+        # self.curve_selector.itemClicked.connect(self.plot_curves)
 
         self.plot = pg.PlotWidget()
         plot = self.plot.getPlotItem()

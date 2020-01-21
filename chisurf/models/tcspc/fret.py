@@ -19,7 +19,9 @@ rda_axis = np.logspace(
 )
 
 
-class FRETParameters(FittingParameterGroup):
+class FRETParameters(
+    FittingParameterGroup
+):
     """
 
     """
@@ -75,17 +77,16 @@ class FRETParameters(FittingParameterGroup):
             self,
             forster_radius: float = chisurf.settings.fret['forster_radius'],
             tau0: float = chisurf.settings.fret['tau0'],
+            xDOnly: float = 0.0,
+            kappa2: float = 0.66667,
             **kwargs
     ):
-        #kappa2 = kwargs.pop('kappa2', chisurf.settings.cs_settings['fret']['kappa2'])
-        t0 = tau0
-        xDOnly = kwargs.pop('x(D0)', 0.0)
         model = kwargs.get('models', None)
 
         self._tauD0 = FittingParameter(
             name='t0',
             label='&tau;<sub>0</sub>',
-            value=t0,
+            value=tau0,
             fixed=True,
             model=model
         )
@@ -96,11 +97,13 @@ class FRETParameters(FittingParameterGroup):
             fixed=True,
             model=model
         )
-        #self._kappa2 = FittingParameter(name='k2', label='&kappa;<sup>2</sup>',
-        #                                value=kappa2, fixed=True,
-        #                                lb=0.0, ub=4.0,
-        #                                bounds_on=False,
-        #                                models=models)
+        self._kappa2 = FittingParameter(
+            name='k2', label='&kappa;<sup>2</sup>',
+            value=kappa2, fixed=True,
+            lb=0.0, ub=4.0,
+            bounds_on=False,
+            models=model
+        )
         self._xDonly = FittingParameter(
             name='xDOnly',
             label='x<sup>(D,0)</sup>',
@@ -126,7 +129,7 @@ class FRETParameters(FittingParameterGroup):
         parameters = [
             self._tauD0,
             self._forster_radius,
-            #self._kappa2,
+            self._kappa2,
             self._xDonly,
             self._fret_efficiency
         ]
