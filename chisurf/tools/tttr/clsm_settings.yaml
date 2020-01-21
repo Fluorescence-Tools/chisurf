@@ -1,0 +1,21 @@
+Leica SP5:
+  tttr_type: PTU
+  routine: SP5
+  frame_marker: 4, 6
+  line_start_marker: 1
+  line_stop_marker: 2
+  event_type_marker: 1
+Leica SP8:
+  tttr_type: PTU
+  routine: SP8
+  frame_marker: 4, 6
+  line_start_marker: 1
+  line_stop_marker: 2
+  event_type_marker: 15
+MFIS Olympus (Seidel):
+  tttr_type: HT3
+  routine: default
+  frame_marker: 4
+  line_start_marker: 1
+  line_stop_marker: 2
+  event_type_marker: 1

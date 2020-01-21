@@ -253,7 +253,7 @@ x	y	error-x	error-y
             use_header=False
         )
         _, filename = tempfile.mkstemp(
-            suffix='.txt'
+            suffix='.csv'
         )
         csv_io.save(
             data=data,
@@ -285,12 +285,12 @@ x	y	error-x	error-y
         )
 
         _, filename = tempfile.mkstemp(
-            suffix='.txt'
+            suffix='.csv'
         )
 
         d.save(
             filename=filename,
-            file_type='txt'
+            file_type='csv'
         )
         self.assertEqual(
             d.filename,

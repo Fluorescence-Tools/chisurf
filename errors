@@ -1,3 +1,46 @@
+Saving from ExperimentalDataSelector menu (right click save) causes
+a recursion
+
+---------
+Create global fit with two FCS curves
+
+/Users/tpeulen/miniconda3/envs/chisurf/bin/python /Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/main_gui.py
+loading filename:  /Users/tpeulen/.chisurf/settings_chisurf.yaml
+objc[10944]: Class FIFinderSyncExtensionHost is implemented in both /System/Library/PrivateFrameworks/FinderKit.framework/Versions/A/FinderKit (0x7fff996023d8) and /System/Library/PrivateFrameworks/FileProvider.framework/OverrideBundles/FinderSyncCollaborationFileProviderOverride.bundle/Contents/MacOS/FinderSyncCollaborationFileProviderOverride (0x13a135f50). One of the two will be used. Which one is undefined.
+Uncaught exception:
+   File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/main_gui.py", line 201, in subWindowActivated
+    self.current_fit.model.update()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/global_model/globalfit.py", line 347, in update
+    super().update()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/model.py", line 215, in update
+    self.update_plots()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/model.py", line 198, in update_plots
+    p.update(*args, **kwargs)
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/plots/wr_plot.py", line 69, in update
+    w_res = fi.weighted_residuals
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/fitting/fit.py", line 145, in weighted_residuals
+    y=wres_y
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/curve.py", line 93, in __init__
+    "length of x (%s) and y (%s) differ" % (len(x), len(y))
+
+ValueError: length of x (0) and y (234) differ
+Traceback (most recent call last):
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/main_gui.py", line 201, in subWindowActivated
+    self.current_fit.model.update()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/global_model/globalfit.py", line 347, in update
+    super().update()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/model.py", line 215, in update
+    self.update_plots()
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/models/model.py", line 198, in update_plots
+    p.update(*args, **kwargs)
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/plots/wr_plot.py", line 69, in update
+    w_res = fi.weighted_residuals
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/fitting/fit.py", line 145, in weighted_residuals
+    y=wres_y
+  File "/Users/tpeulen/development/fluorescence-tools/chisurf/chisurf/curve.py", line 93, in __init__
+    "length of x (%s) and y (%s) differ" % (len(x), len(y))
+ValueError: length of x (0) and y (234) differ
+
 
 ---------------
 
