@@ -2,6 +2,8 @@ from __future__ import annotations
 import typing
 
 import numpy as np
+import scipy.stats as st
+
 import chisurf.curve
 
 window_function_types = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
@@ -210,3 +212,21 @@ def calculate_fwhm(
         print("lb, ub    : (%s, %s)" % (x_left, x_right))
         print("fwhm: %s" % fwhm)
     return fwhm, (lb_i, ub_i), (x_left, x_right)
+
+
+def gaussian_kernel(
+        kernel_size: int = 21,
+        nsig: float = 3
+):
+    """Returns a 2D Gaussian kernel array.
+
+    :param kernel_size: the size of the 2D array
+    :param nsig: the width of the gaussian in the 2D array.
+    :return:
+    """
+    interval = (2.0 * nsig + 1.) / kernel_size
+    x = np.linspace(-nsig-interval/2., nsig+interval/2., kernel_size+1)
+    kern1d = np.diff(st.norm.cdf(x))
+    kernel_raw = np.sqrt(np.outer(kern1d, kern1d))
+    kernel = kernel_raw/kernel_raw.sum()
+    return kernel
