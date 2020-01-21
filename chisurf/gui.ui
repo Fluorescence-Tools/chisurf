@@ -463,6 +463,7 @@
      <addaction name="actionConvert"/>
      <addaction name="actionGenerate_decay"/>
      <addaction name="actionCorrelate"/>
+     <addaction name="actionTTTR_CLSM"/>
     </widget>
     <addaction name="menuFRET"/>
     <addaction name="menuAnisotropy"/>
@@ -1486,6 +1487,15 @@
   <action name="actionCascade">
    <property name="text">
     <string>Cascade</string>
+   </property>
+  </action>
+  <action name="actionTTTR_CLSM">
+   <property name="icon">
+    <iconset resource="widgets/ui/resource.qrc">
+     <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
+   </property>
+   <property name="text">
+    <string>TTTR CLSM</string>
    </property>
   </action>
   <zorder>dockWidgetDatasets</zorder>

@@ -781,8 +781,6 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        #amplitude = self._amplitudes[-1].make_widget(layout=layout)
-        #self._amp_widgets.append(amplitude)
 
         self._amp_widgets.append(
             chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
@@ -1187,27 +1185,20 @@ class FRETrateModelWidget(
             short='G',
             **kwargs
         )
-        fret.FRETrateModel.__init__(
-            self,
+        super().__init__(
             fit=fit,
-            lifetimes=donors,
-            fret_rates=fret_rates
+            fret_rates=fret_rates,
+            lifetimes=donors
         )
-        LifetimeModelWidgetBase.__init__(
-            self,
-            fit=fit,
-            **kwargs
-        )
-        self.lifetimes = donors
 
-        self.layout_parameter.addWidget(donors)
+        self.layout.addWidget(donors)
         # self.layout_parameter.addWidget(self.fret_parameters.to_widget())
-        self.layout_parameter.addWidget(
+        self.layout.addWidget(
             chisurf.widgets.fitting.widgets.make_fitting_parameter_group_widget(
                 self.fret_parameters
             )
         )
-        self.layout_parameter.addWidget(fret_rates)
+        self.layout.addWidget(fret_rates)
 
 
 class WormLikeChainModelWidget(

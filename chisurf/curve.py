@@ -15,9 +15,6 @@ T = typing.TypeVar('T', bound='Curve')
 class Curve(
     chisurf.base.Base
 ):
-    """
-
-    """
 
     @property
     def fwhm(self) -> float:
@@ -29,7 +26,7 @@ class Curve(
     def cdf(
             self
     ) -> typing.Type[Curve]:
-        """Cumulative sum of function
+        """Cumulative distribution function
         """
         return self.__class__(
             x=self.x,
@@ -56,17 +53,39 @@ class Curve(
             file_type=file_type,
             verbose=verbose
         )
-        # check for filename extension
-        root, ext = os.path.splitext(filename)
-        filename = root + "." + file_type
-
-        if file_type == "txt":
+        if file_type == "csv":
             csv = chisurf.fio.ascii.Csv()
             x, y = self[xmin:xmax]
             csv.save(
                 data=np.vstack([x, y]),
                 filename=filename
             )
+
+    def load(
+            self,
+            filename: str,
+            skiprows: int = 0,
+            file_type: str = 'csv',
+            **kwargs
+    ) -> None:
+        super().load(
+            filename=filename,
+            file_type=file_type
+        )
+        if file_type == 'csv':
+            csv = chisurf.fio.ascii.Csv()
+            csv.load(
+                filename=filename,
+                skiprows=skiprows,
+                file_type=file_type,
+                **kwargs
+            )
+            try:
+                self.x = csv.data[0]
+                self.y = csv.data[1]
+            except IndexError:
+                self.x = csv.data[0]
+                self.y = csv.data[1]
 
     def from_dict(
             self,

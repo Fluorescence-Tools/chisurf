@@ -70,7 +70,7 @@ class Base(object):
     def load(
             self,
             filename: str,
-            file_type: str = 'json',
+            file_type: str = 'yaml',
             verbose: bool = False
     ) -> None:
         if file_type == "json":
@@ -353,6 +353,13 @@ class Data(Base):
             return self.__dict__['name']
         except KeyError:
             return self.filename
+
+    @name.setter
+    def name(
+            self,
+            v: str
+    ):
+        self.__dict__['name'] = v
 
     @property
     def filename(self) -> str:
