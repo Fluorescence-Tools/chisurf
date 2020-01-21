@@ -204,28 +204,6 @@ class DataCurve(
         self.ex = np.array(v['ex'], dtype=np.float64)
         self.ey = np.array(v['ey'], dtype=np.float64)
 
-    def save(
-            self,
-            filename: str = None,
-            file_type: str = 'json',
-            **kwargs
-    ) -> None:
-        if filename is None:
-            filename = os.path.join(
-                self.name,
-                '_data.txt'
-            )
-        self.filename = filename
-        if file_type == 'txt':
-            chisurf.fio.ascii.Csv().save(
-                np.array(self[:]),
-                filename=filename,
-                **kwargs
-            )
-        else:
-            with chisurf.fio.zipped.open_maybe_zipped(filename, 'w') as fp:
-                fp.write(self.to_json())
-
     def load(
             self,
             filename: str,
@@ -241,8 +219,6 @@ class DataCurve(
                 file_type=file_type,
                 **kwargs
             )
-            # First assume four columns
-            # if this fails use three columns
             try:
                 self.x = csv.data[0]
                 self.y = csv.data[1]
@@ -253,6 +229,34 @@ class DataCurve(
                 self.y = csv.data[1]
                 self.ey = csv.data[2]
                 self.ex = np.ones_like(self.ey)
+        else:
+            super().load(
+                filename=filename,
+                file_type=file_type,
+                **kwargs
+            )
+
+    def save(
+            self,
+            filename: str,
+            file_type: str = 'yaml',
+            verbose: bool = False,
+            xmin: int = None,
+            xmax: int = None
+    ) -> None:
+        if file_type == "csv":
+            csv = chisurf.fio.ascii.Csv()
+            x, y, ex, ey = self[xmin:xmax]
+            csv.save(
+                data=np.vstack([x, y]),
+                filename=filename
+            )
+        else:
+            super().save(
+                filename=filename,
+                file_type=file_type,
+                verbose=verbose
+            )
 
     def set_data(
             self,

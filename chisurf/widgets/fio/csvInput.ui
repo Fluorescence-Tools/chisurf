@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>428</width>
-    <height>156</height>
+    <height>170</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -50,14 +50,14 @@
       <property name="spacing">
        <number>0</number>
       </property>
-      <item row="3" column="2">
-       <widget class="QLabel" name="label">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>skiprows</string>
+         <string>Filename</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1" colspan="3">
+      <item row="0" column="1" colspan="2">
        <widget class="QLineEdit" name="lineEdit_8">
         <property name="enabled">
          <bool>true</bool>
@@ -76,27 +76,43 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="1" column="0">
        <widget class="QRadioButton" name="radioButton_2">
         <property name="toolTip">
          <string>Select this if the file that is being opened is a comma separated value file.</string>
         </property>
         <property name="text">
-         <string>csv</string>
+         <string>CSV</string>
         </property>
         <property name="checked">
          <bool>true</bool>
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_2">
+      <item row="1" column="1">
+       <widget class="QRadioButton" name="radioButton_3">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Use this option to open a YAML file exported by ChiSurf or associated tools.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="text">
-         <string>Filename</string>
+         <string>YAML</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
+      <item row="1" column="2">
+       <widget class="QRadioButton" name="radioButton">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Use this option of open fixed column width files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>Fixed width</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
        <widget class="QCheckBox" name="checkBox_2">
         <property name="enabled">
          <bool>true</bool>
@@ -112,10 +128,17 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="3">
+      <item row="2" column="1">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Skiprows</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
        <widget class="QSpinBox" name="spinBox">
         <property name="toolTip">
-         <string>This corresponds to the number of lines that are being skipped before the header of the columns</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This corresponds to the number of lines that are being skipped before the header of the columns. THis option is only used when reading CSV files or fixed width column width files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="maximum">
          <number>9999</number>
@@ -125,31 +148,14 @@
         </property>
        </widget>
       </item>
-      <item row="7" column="0">
-       <widget class="QRadioButton" name="radioButton">
-        <property name="text">
-         <string>fixed width</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="0" colspan="4">
+      <item row="4" column="0" colspan="3">
        <widget class="Line" name="line_2">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
-      <item row="7" column="1" colspan="3">
-       <widget class="QLineEdit" name="lineEdit">
-        <property name="text">
-         <string>(16,33), (34,51)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="9" column="0" colspan="4">
+      <item row="5" column="0" colspan="3">
        <widget class="QWidget" name="widget" native="true">
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <property name="spacing">
@@ -282,6 +288,13 @@
           </layout>
          </item>
         </layout>
+       </widget>
+      </item>
+      <item row="3" column="0" colspan="3">
+       <widget class="QLineEdit" name="lineEdit">
+        <property name="text">
+         <string>(16,33), (34,51)</string>
+        </property>
        </widget>
       </item>
      </layout>
@@ -511,6 +524,54 @@
     <hint type="sourcelabel">
      <x>299</x>
      <y>135</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionCsvType</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>353</x>
+     <y>51</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_2</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionCsvType</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>73</x>
+     <y>51</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_3</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionCsvType</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>213</x>
+     <y>51</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
