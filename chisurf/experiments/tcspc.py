@@ -32,6 +32,7 @@ class TCSPCReader(
             use_header: bool = True,
             fit_area: float = None,
             fit_count_threshold: float = None,
+            reading_routine: str = 'csv',
             *args,
             **kwargs
     ):
@@ -49,17 +50,23 @@ class TCSPCReader(
         :param use_header:
         :param fit_area:
         :param fit_count_threshold:
+        :param reading_routine:
         :param args:
         :param kwargs:
 
         Example
         -------
 
+        >>> import pylab as p
         >>> import chisurf.experiments
-        >>> filename = "./test/data/tcspc/ibh_sample/Decay_577D.txt"
+        >>> filename = "../test/data/tcspc/ibh_sample/Decay_577D.txt"
         >>> ex = chisurf.experiments.experiment.Experiment('TCSPC')
         >>> dt = 0.0141
         >>> g1 = chisurf.experiments.tcspc.TCSPCReader(experiment=ex, skiprows=8, rebin=(1, 8), dt=dt)
+        >>> data = g1.read(filename=filename)
+        >>> x = data.x
+        >>> y = data.y
+        >>> p.plot(x, y)
 
         """
         super().__init__(
@@ -91,6 +98,7 @@ class TCSPCReader(
         self.matrix_columns = matrix_columns
         self.fit_area = fit_area
         self.fit_count_threshold = fit_count_threshold
+        self.reading_routine = reading_routine
 
     def autofitrange(
             self,
@@ -109,19 +117,38 @@ class TCSPCReader(
             *args,
             **kwargs
     ) -> chisurf.experiments.data.DataCurveGroup:
-        data_group = chisurf.fio.fluorescence.read_tcspc_csv(
-            filename=filename,
-            skiprows=self.skiprows,
-            rebin=self.rebin,
-            dt=self.dt,
-            matrix_columns=self.matrix_columns,
-            use_header=self.use_header,
-            is_jordi=self.is_jordi,
-            polarization=self.polarization,
-            g_factor=self.g_factor,
-            experiment=self.experiment,
-            data_reader=self
-        )
+        if self.reading_routine == 'csv':
+            data_group = chisurf.fio.fluorescence.read_tcspc_csv(
+                filename=filename,
+                skiprows=self.skiprows,
+                rebin=self.rebin,
+                dt=self.dt,
+                matrix_columns=self.matrix_columns,
+                use_header=self.use_header,
+                is_jordi=self.is_jordi,
+                polarization=self.polarization,
+                g_factor=self.g_factor,
+                experiment=self.experiment,
+                data_reader=self
+            )
+        else:
+            if self.reading_routine == 'yaml':
+                file_type = 'yaml'
+                data_set = chisurf.experiments.data.DataCurve()
+                data_set.load(
+                    file_type=file_type,
+                    filename=filename
+                )
+                data_set.experiment = self.experiment
+                data_group = chisurf.experiments.data.DataGroup(
+                    [data_set]
+                )
+            else:
+                chisurf.logging.warning(
+                    "Reading routine '%s' not supported. "
+                    "Created empty DataGroup" % self.reading_routine
+                )
+                data_group = chisurf.experiments.data.DataGroup([])
         data_group.data_reader = self
         return data_group
 

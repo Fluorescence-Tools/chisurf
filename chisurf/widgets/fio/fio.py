@@ -201,7 +201,12 @@ class CsvWidget(
         colspecs = str(self.lineEdit.text())
         use_header = bool(self.checkBox_2.isChecked())
         n_skip = int(self.spinBox.value())
-        mode = 'csv' if self.radioButton_2.isChecked() else 'fwf'
+        if self.radioButton_2.isChecked():
+            mode = 'csv'
+        elif self.radioButton.isChecked():
+            mode = 'fwf'
+        else:
+            mode = 'yaml'
         chisurf.run(
             "\n".join(
                 [
