@@ -170,7 +170,7 @@ gui:
     show_data_grid: true
     show_residual_grid: true
     show_acorr_grid: true
-    line_width: 2.0
+    line_width: 0.5
     hideTitle: true
     enable_region_selector: true
     show_legend: false
@@ -179,14 +179,8 @@ gui:
       region_selector: "#26a298"
       region_selector_alpha: 100
       data: "#ffa629"
-      data_inactive: "#ffa629"
-      irf: "#0040ff"
-      irf_inactive: "#0040ff"
       model: "#d400cd"
-      model_inactive: "#d400cd"
       residuals: "#df0101"
-      residuals_inactive: "#df0101"
       auto_corr: "#ff00ff"
-      auto_corr_inactive: "#ff00ff"
       inactive_transparency: 0.2
       active_transparency: 1
