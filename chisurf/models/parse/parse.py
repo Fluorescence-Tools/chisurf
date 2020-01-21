@@ -56,6 +56,12 @@ class ParseFormula(
                 scanner,
                 name: str
         ):
+            if 'scipy' in name:
+                return name
+            if 'numpy' in name:
+                return name
+            if 'np' in name:
+                return name
             if name in ['caller', 'e', 'pi']:
                 return name
             if name not in self._keys:
@@ -208,14 +214,7 @@ class ParseFormulaWidget(
 
     def onUpdateFunc(self):
         function_str = str(self.plainTextEdit.toPlainText())
-        chisurf.run(
-            "\n".join(
-                [
-                    "cs.current_fit.model.parse.func = '%s'" % function_str,
-                ]
-            )
-        )
-        self.model.fit.update()
+        chisurf.run("chisurf.macros.parse.change_model('%s')" % function_str)
         try:
             ivs = self.models[self.model_name]['initial']
             for key in ivs.keys():
