@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-from typing import Tuple
+import typing
 
 from .tcspc import *
 
@@ -46,7 +46,7 @@ def fitrange(
         y,
         threshold: float = 10.0,
         area: float = 0.999
-) -> Tuple[int, int]:
+) -> typing.Tuple[int, int]:
     """
     Determines the fitting range based on the total number of photons to be
     fitted (fitting area).
