@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple
+import typing
 
 import os
 import glob
@@ -46,7 +46,7 @@ def rotate(xyz, rm):
     Examples
     --------
 
-    >>> from mfm.structure.trajectory import TrajectoryFile
+    >>> from chisurf.structure.trajectory import TrajectoryFile
     >>> import numpy as np
     >>> traj = TrajectoryFile('stride_100.h5')
     >>> xyz = traj.xyz
@@ -351,7 +351,7 @@ class RotateTranslateTrajectoryWidget(QtWidgets.QWidget):
     @translation_vector.setter
     def translation_vector(
             self,
-            v: Tuple[float, float, float]
+            v: typing.Tuple[float, float, float]
     ):
         self.lineEdit_12.setText(str(v[0]))
         self.lineEdit_13.setText(str(v[1]))

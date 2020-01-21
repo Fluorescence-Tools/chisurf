@@ -13,7 +13,9 @@ import chisurf.models.tcspc.widgets
 from chisurf.fluorescence.fret.fret_line import FRETLineGenerator
 
 
-class FRETLineGeneratorWidget(QtWidgets.QWidget):
+class FRETLineGeneratorWidget(
+    QtWidgets.QWidget
+):
 
     name = "FRET-Line Generator"
 
@@ -48,17 +50,20 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget):
         return self._model
 
     @model.setter
-    def model(self, model_index):
+    def model(
+            self,
+            model_index: int
+    ):
         self.comboBox.setCurrentIndex(model_index)
         model, parameter = self.models[model_index]
         self.fret_line_generator.model = model
 
     @property
-    def current_model_index(self):
+    def current_model_index(self) -> int:
         return int(self.comboBox.currentIndex())
 
     @property
-    def n_points(self):
+    def n_points(self) -> int:
         return int(self.spinBox.value())
 
     @property
@@ -101,18 +106,22 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget):
 
     def onCalculate(self):
         print("onCalculate")
-        self.calc()
+        self.fret_line_generator.model.find_parameters()
+        self.fret_line_generator.update(
+            parameter_name=self.parameter_name,
+            parameter_range=self.parameter_range
+        )
         fret_line = make.curve(
-            self.fluorescence_averaged_lifetimes,
-            self.fret_efficiencies,
+            self.fret_line_generator.fluorescence_averaged_lifetimes,
+            self.fret_line_generator.fret_efficiencies,
             color="r",
             linewidth=2
         )
         self.fret_line_plot.add_item(fret_line)
         self.fret_line_plot.do_autoscale()
-        self.lineEdit.setText(self.transfer_efficency_string)
-        self.lineEdit_2.setText(self.fdfa_string)
-        self.lineEdit_3.setText("%s" % list(self.polynom_coefficients))
+        self.lineEdit.setText(self.fret_line_generator.transfer_efficency_string)
+        self.lineEdit_2.setText(self.fret_line_generator.fdfa_string)
+        self.lineEdit_3.setText("%s" % list(self.fret_line_generator.polynom_coefficients))
 
     def onParameterChanged(self):
         print("onParameterChanged")
@@ -121,12 +130,14 @@ class FRETLineGeneratorWidget(QtWidgets.QWidget):
     def update_parameter(self):
         print("update_parameter")
         self.comboBox_2.clear()
+        print(self.fret_line_generator.model.parameter_names)
         self.comboBox_2.addItems(self.fret_line_generator.model.parameter_names)
 
     def onModelChanged(self):
         print("onModelChanged")
         self.fret_line_generator.model.close()
         self.model = self.current_model_index
+        self.fret_line_generator.model.find_parameters()
         self.verticalLayout.addWidget(self.fret_line_generator.model)
 
 
