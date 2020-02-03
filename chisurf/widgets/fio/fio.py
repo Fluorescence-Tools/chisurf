@@ -135,7 +135,6 @@ class SpcFileWidget(
             filenames: str = None,
             file_type: str = None
     ) -> None:
-
         if file_type is None:
             file_type = self.file_type
         if filenames is None:

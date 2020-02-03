@@ -507,6 +507,7 @@ class Main(QtWidgets.QMainWindow):
             *args,
             **kwargs
         )
+
         uic.loadUi(
             os.path.join(
                 os.path.dirname(

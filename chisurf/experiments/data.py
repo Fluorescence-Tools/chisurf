@@ -115,10 +115,10 @@ class DataCurve(
 
     def __init__(
             self,
-            x: np.array = None,
-            y: np.array = None,
-            ex: np.array = None,
-            ey: np.array = None,
+            x: np.ndarray = None,
+            y: np.ndarray = None,
+            ex: np.ndarray = None,
+            ey: np.ndarray = None,
             filename: str = '',
             data_reader: chisurf.experiments.reader.ExperimentReader = None,
             experiment: chisurf.experiments.experiment.Experiment = None,
@@ -189,7 +189,7 @@ class DataCurve(
 
     def to_dict(
             self
-    ) -> dict:
+    ) -> typing.Dict:
         d = super().to_dict()
         d.update(ExperimentalData.to_dict(self))
         d['ex'] = list(self.ex)
@@ -198,7 +198,7 @@ class DataCurve(
 
     def from_dict(
             self,
-            v: dict
+            v: typing.Dict
     ) -> None:
         super().from_dict(v)
         self.ex = np.array(v['ex'], dtype=np.float64)

@@ -2,11 +2,15 @@ name: chisurf
 
 channels:
   - tpeulen
+  - pytorch
   - conda-forge
-  - defaults
 
 dependencies:
-    - python=3.7
+    # the version 5.12.3 has an issue in combination with
+    # python>=3.7.3. This is supossably resolved in 5.13.1
+    # (see: https://github.com/GNS3/gns3-gui/issues/2819)
+    - python=3.7.3
+    - pyqt
     - cython
     - pyyaml
     - python-slugify
@@ -16,28 +20,27 @@ dependencies:
     - emcee
     - numexpr
     - pytables
-    - hdf5
     - mdtraj
     - ipython
     - matplotlib
-    - pyqt
+    - qtpy
     - pyqtgraph
     - qscintilla2
     - pyopengl
     - qtconsole
+    - guiqwt
     - python-docx
-    - labellib
     - deprecation
     - pyopencl
     - progressbar2
-    - qtpy
     - sphinx
     - htmd-pdb2pqr
     - pymol-open-source
     - mrcfile
-    - guiqwt
-    - tttrlib >=0.11
+    - tttrlib
+    - labellib
     - opencv
+#    - pytorch
 #    - sympy
 #    - sphinx_bootstrap_theme
 #    - sphinx-autodoc-typehints

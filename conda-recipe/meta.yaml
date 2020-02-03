@@ -39,7 +39,6 @@ requirements:
     - emcee
     - numexpr
     - pytables
-    - hdf5
     - mdtraj
     - ipython
     - matplotlib
