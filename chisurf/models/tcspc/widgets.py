@@ -11,6 +11,7 @@ import chisurf.fitting.parameter
 import chisurf.decorators
 import chisurf.experiments
 import chisurf.models
+import chisurf.models.parse.widget
 from chisurf.models.tcspc import fret
 import chisurf.models.tcspc.fret
 import chisurf.widgets
@@ -1371,7 +1372,7 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
         fn = os.path.join(
             chisurf.settings.package_directory, 'settings/tcspc.models.json'
         )
-        pw = chisurf.models.parse.ParseFormulaWidget(
+        pw = chisurf.models.parse.widget.ParseFormulaWidget(
             fit=fit,
             model=self,
             model_file=fn
