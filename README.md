@@ -86,7 +86,7 @@ of charge to both academic and commercial users.
 
 *  [19.07.08](https://github.com/Fluorescence-Tools/ChiSurf/releases/download/Stable/chisurf_19.07.09-windows.exe)
 *  [17.03.24](https://github.com/Fluorescence-Tools/ChiSurf/releases/download/17.03.24/windows_17.03.24.exe)
-*  [Legacy](https://drive.google.com/open?id=1GT8i_ZVnUXCIf_GBhk3TaS-T3DRhWHD2)
+*  [Legacy](http://fret.at/downloads/)
 
 ### MacOS
 
