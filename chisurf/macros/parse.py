@@ -7,5 +7,5 @@ def change_model(
 ) -> None:
     cs = chisurf.cs
     for f in cs.current_fit:
-        eval("cs.current_fit.model.parse.func = '%s'" % function_str)
-        f.model.update()
+        f.model.parse.func = "%s" % function_str
+        f.model.parse.onEquationChanged()

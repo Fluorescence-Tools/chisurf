@@ -5,7 +5,7 @@ import os
 
 import numpy as np
 from qtpy import QtWidgets, uic
-from chisurf.models.parse import ParseModelWidget
+from chisurf.models.parse.widget import ParseModelWidget
 
 import chisurf.settings
 import chisurf.widgets.fitting.widgets

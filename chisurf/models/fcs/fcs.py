@@ -6,7 +6,7 @@ from qtpy import QtGui
 import chisurf
 import chisurf.fitting
 from chisurf import plots
-from chisurf.models.parse import ParseModelWidget
+from chisurf.models.parse.widget import ParseModelWidget
 
 
 class ParseFCSWidget(
