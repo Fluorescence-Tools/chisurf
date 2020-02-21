@@ -2,6 +2,7 @@ from __future__ import annotations
 import typing
 
 import numpy as np
+import chinet
 
 import chisurf.base
 import chisurf.decorators
@@ -24,8 +25,8 @@ class Parameter(
         """A tuple containing the values for the lower (first value) and
         the upper (second value) of the bound.
         """
-        if self.bounds_on:
-            return self.lb, self.ub
+        if self._value.bounded:
+            return self._value.bounds
         else:
             return float("-inf"), float("inf")
 
@@ -34,7 +35,7 @@ class Parameter(
             self,
             b: typing.Tuple[float, float]
     ):
-        self.lb, self.ub = b
+        self._value.bounds = np.array(b, dtype=np.float64)
 
     @property
     def value(
@@ -49,31 +50,14 @@ class Parameter(
 
         :return:
         """
-        v = self._value
-        if callable(v):
-            return v()
-        else:
-            if self.is_linked:
-                return self.link.value
-            else:
-                if self.bounds_on:
-                    lb, ub = self.bounds
-                    if lb is not None:
-                        v = max(lb, v)
-                    if ub is not None:
-                        v = min(ub, v)
-                    return v
-                else:
-                    return v
+        return self._value.value.item(0)
 
     @value.setter
     def value(
             self,
             value: float
     ):
-        self._value = value
-        if self.is_linked:
-            self.link.value = value
+        self._value.value = np.array([value])
 
     @property
     def link(self) -> chisurf.parameter.Parameter:
@@ -90,12 +74,10 @@ class Parameter(
                 self.controller.set_linked(
                     link is not None
                 )
+            self._value.link = self._link.value
         elif link is None:
-            try:
-                self._value = self._link.value
-            except AttributeError:
-                pass
             self._link = None
+            self._value.unlink()
 
     @property
     def is_linked(
@@ -106,7 +88,7 @@ class Parameter(
     def __add__(
             self,
             other: T
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -116,7 +98,7 @@ class Parameter(
     def __mul__(
             self,
             other: T
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -126,7 +108,7 @@ class Parameter(
     def __truediv__(
             self,
             other: T
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -136,7 +118,7 @@ class Parameter(
     def __floordiv__(
             self,
             other: T
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -146,7 +128,7 @@ class Parameter(
     def __sub__(
             self,
             other: T
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -156,7 +138,7 @@ class Parameter(
     def __mod__(
             self,
             other: T
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -166,7 +148,7 @@ class Parameter(
     def __pow__(
             self,
             other: T
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -175,7 +157,7 @@ class Parameter(
 
     def __invert__(
             self
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         return self.__class__(
             value=(1./a)
@@ -264,7 +246,7 @@ class Parameter(
             **kwargs
         )
         self._link = link
-        self._value = value
+        self._value = chinet.Port(value)
         self.bounds_on = bounds_on
         self.lb = lb
         self.ub = ub
