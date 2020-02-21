@@ -25,7 +25,7 @@ class Curve(
     @property
     def cdf(
             self
-    ) -> typing.Type[Curve]:
+    ) -> Curve:
         """Cumulative distribution function
         """
         return self.__class__(
@@ -34,7 +34,7 @@ class Curve(
         )
 
     @property
-    def dx(self) -> np.array:
+    def dx(self) -> np.ndarray:
         """
         The derivative of the x-axis
         """
@@ -155,7 +155,7 @@ class Curve(
     def __add__(
             self,
             c: T
-    ) -> typing.Type[Curve]:
+    ) -> Curve:
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -168,7 +168,7 @@ class Curve(
     def __sub__(
             self,
             c: T
-    ) -> typing.Type[Curve]:
+    ) -> Curve:
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -181,7 +181,7 @@ class Curve(
     def __mul__(
             self,
             c: T
-    ) -> typing.Type[Curve]:
+    ) -> Curve:
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -194,7 +194,7 @@ class Curve(
     def __truediv__(
             self,
             c: T
-    ) -> typing.Type[Curve]:
+    ) -> Curve:
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -207,7 +207,7 @@ class Curve(
     def __lshift__(
             self,
             shift: float
-    ) -> typing.Type[Curve]:
+    ) -> Curve:
         return self.__class__(
             x=self.x,
             y=chisurf.math.signal.shift_array(
