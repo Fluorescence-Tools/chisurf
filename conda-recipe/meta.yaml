@@ -39,7 +39,7 @@ requirements:
     - mdtraj
     - ipython
     - matplotlib
-    - pyqt >=5.12.4|<=5.12.1|5.9.2
+    - pyqt >=5.13.1|<=5.12.1|5.9.2
     - pyqtgraph
     - qscintilla2
     - pyopengl
