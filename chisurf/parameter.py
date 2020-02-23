@@ -66,7 +66,10 @@ class Parameter(
 
         :return:
         """
-        return self._port.value.item(0)
+        if self._callable:
+            return self._callable()
+        else:
+            return self._port.value.item(0)
 
     @value.setter
     def value(
@@ -261,13 +264,24 @@ class Parameter(
         )
         name = kwargs.pop('name', '')
         self._link = link
-        self._port = chinet.Port(
-            value=value,
-            name=name,
-            lb=lb,
-            ub=ub,
-            is_bounded=bounds_on
-        )
+        if callable(value):
+            self._callable = value
+            self._port = chinet.Port(
+                value=np.array([0.0], dtype=np.double),  # the value is not actually used
+                name=name,
+                lb=lb,
+                ub=ub,
+                is_bounded=bounds_on
+            )
+        else:
+            self._callable = None
+            self._port = chinet.Port(
+                value=np.atleast_1d(value),
+                name=name,
+                lb=lb,
+                ub=ub,
+                is_bounded=bounds_on
+            )
         self.controller = None
 
 

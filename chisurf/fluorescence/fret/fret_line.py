@@ -464,7 +464,10 @@ class DynamicFRETLine(FRETLineGenerator):
         :param args:
         :param kwargs:
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args,
+            **kwargs
+        )
         self.model = chisurf.models.tcspc.fret.GaussianModel
         self.model.gaussians.append(distance_1, sigma_1, 1.0)
         self.model.gaussians.append(distance_2, sigma_2, 1.0)

@@ -6,6 +6,7 @@ from __future__ import annotations
 import numpy as np
 from qtpy import QtWidgets
 
+import chisurf.settings
 from chisurf import plots
 from chisurf.models.tcspc.lifetime import _membrane, Lifetime
 from chisurf.models.tcspc.fret import FRETModel
@@ -161,12 +162,22 @@ class GridModel(FRETModel):
         self._pu = FittingParameter(kwargs.get('pu', 0.0), name='pu', fixed=True)
 
         # FRET-rate parameter
-        self._forster_radius = FittingParameter(kwargs.get('forster_radius',
-                                                           chisurf.settings.cs_settings['fret']['forster_radius']),
-                                                name='R0', fixed=True)
-        self._tau0 = FittingParameter(kwargs.get('tau0',
-                                                 chisurf.settings.cs_settings['fret']['tau0']),
-                                      name='tau0', fixed=True)
+        self._forster_radius = FittingParameter(
+            value=kwargs.get(
+                'forster_radius',
+                chisurf.settings.cs_settings['fret']['forster_radius']
+            ),
+            name='R0',
+            fixed=True
+        )
+        self._tau0 = FittingParameter(
+            value=kwargs.get(
+                'tau0',
+                chisurf.settings.cs_settings['fret']['tau0']
+            ),
+            name='tau0',
+            fixed=True
+        )
         self._donors = kwargs.get('donors', Lifetime('D'))
 
         # Hidden internal parameters
