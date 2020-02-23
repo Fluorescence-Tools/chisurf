@@ -5,7 +5,8 @@ import sys
 import os
 import yaml
 
-import pyqtgraph as pg
+import pyqtgraph
+import pyqtgraph.dockarea
 import pyqtgraph.graphicsItems.GradientEditorItem
 from PyQt5 import QtCore, QtWidgets, QtGui
 
@@ -38,14 +39,15 @@ class CLSMPixelSelect(
 
     name: str = "pixel-decay"
     tttr_data: tttrlib.TTTR = None
-    clsm_image_object: tttrlib.CLSMImage = None
+    clsm_images: typing.Dict[str, tttrlib.CLSMImage] = dict()
     brush_kernel: np.ndarray = None
     brush_size: int = 7
     brush_width: float = 3
     img_plot: pyqtgraph.PlotWindow = None
     current_decay: chisurf.curve.Curve = None
     current_setup: str = None
-    images = dict()
+    images: typing.Dict[str, np.ndarray] = dict()
+    masks: typing.Dict[str, np.ndarray] = dict()
 
     @property
     def curve_name(
@@ -88,10 +90,6 @@ class CLSMPixelSelect(
         curve = self.current_decay
         plot.plot(
             x=curve.x, y=curve.y,
-            pen=pg.mkPen(
-                "#CB4154",
-                width=2
-            ),
             name="Current selection"
         )
 
@@ -105,7 +103,7 @@ class CLSMPixelSelect(
             w = lw * 0.5 if i != current_curve else 2.5 * lw
             plot.plot(
                 x=curve.x, y=curve.y,
-                pen=pg.mkPen(
+                pen=pyqtgraph.mkPen(
                     chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex'],
                     width=w
                 ),
@@ -114,7 +112,13 @@ class CLSMPixelSelect(
         plot.autoRange()
 
     def add_curve(self):
-        self._curves.append(self.current_decay)
+        decay = self.current_decay
+        try:
+            name = self.listWidget.currentItem().text()
+        except AttributeError:
+            name = self.lineEdit_5.text()
+        decay.name = name
+        self._curves.append(decay)
         self.cs.update()
         self.plot_curves()
 
@@ -136,41 +140,32 @@ class CLSMPixelSelect(
             filename,
             tttr_type
         )
-        frame_marker = [int(i) for i in str(self.lineEdit_2.text()).split(",")]
-        line_start_marker = int(self.spinBox_4.value())
-        line_stop_marker = int(self.spinBox_5.value())
-        event_type_marker = int(self.spinBox_6.value())
-        pixel_per_line = int(self.spinBox_7.value())
-        reading_routine = str(self.comboBox.currentText())
-        self.clsm_image_object = tttrlib.CLSMImage(
-            self.tttr_data,
-            frame_marker,
-            line_start_marker,
-            line_stop_marker,
-            event_type_marker,
-            pixel_per_line,
-            reading_routine
-        )
 
     def add_image(self):
-        channels = [int(i) for i in str(self.lineEdit_3.text()).split(",")]
-        self.clsm_image_object.clear_pixels()
-        self.clsm_image_object.fill_pixels(
-            tttr_data=self.tttr_data,
-            channels=channels
-        )
+        clsm_name = str(self.comboBox_9.currentText())
+        clsm_image = self.clsm_images[clsm_name]
 
         image_type = str(self.comboBox_3.currentText())
         if image_type == "Mean micro time":
             n_ph_min = int(self.spinBox.value())
-            mean_micro_time = self.clsm_image_object.get_mean_tac_image(
+            mean_micro_time = clsm_image.get_mean_tac_image(
                 self.tttr_data,
-                n_ph_min
+                n_ph_min,
+                False
             )
             data = mean_micro_time.astype(np.float64)
-        else: # image_type == "Intensity":
-            intensity_image = self.clsm_image_object.get_intensity_image()
+        elif image_type == "Intensity":
+            intensity_image = clsm_image.get_intensity_image()
             data = intensity_image.astype(np.float64)
+        else:
+            n_ph_min = int(self.spinBox.value())
+            mean_micro_time = clsm_image.get_mean_tac_image(
+                self.tttr_data,
+                n_ph_min,
+                False
+            )
+            intensity_image = clsm_image.get_intensity_image()
+            data = mean_micro_time * intensity_image
 
         image_name = str(self.lineEdit_4.text())
         self.images[image_name] = data
@@ -178,47 +173,109 @@ class CLSMPixelSelect(
         self.comboBox_7.addItems(
             list(self.images.keys())
         )
-
         self.image_changed()
+
+    def add_mask(self):
+        mask_name = self.lineEdit_5.text()
+        self.masks[mask_name] = self.img_drawn.image
+        self.listWidget.clear()
+        for mn in self.masks.keys():
+            self.listWidget.addItem(mn)
+
+    def mask_changed(self):
+        mask_name = self.listWidget.currentItem().text()
+        d = self.masks[mask_name]
+        d *= np.max(self.img.image.flatten())
+        self.img_drawn.setImage(d)
+        self.img_drawn.updateImage()
+        self.update_plot()
+
+    def remove_current_mask(self):
+        listItems = self.listWidget.selectedItems()
+        if not listItems:
+            return
+        for item in listItems:
+            lw = self.listWidget.takeItem(self.listWidget.row(item))
+            mask_name = lw.text()
+            self.masks.pop(mask_name, None)
+
+    def save_pixel_mask(self):
+        filename = chisurf.widgets.save_file(
+            description='Image file',
+            file_type='All files (*.png)'
+        )
+        image = self.img_drawn.image
+        image[image > 0] = 255
+        cv2.imwrite(
+            filename,
+            image
+        )
+
+    def clear_pixel_mask(self):
+        self.img_drawn.setImage(
+            np.zeros_like(
+                self.img_drawn.image
+            )
+        )
+
+    def load_pixel_mask(self):
+        filename = chisurf.widgets.get_filename(
+            description='Image file',
+            file_type='All files (*.png)'
+        )
+        image = cv2.imread(
+            filename
+        )
+        self.img_drawn.setImage(
+            image=cv2.cvtColor(
+                image, cv2.COLOR_BGR2GRAY
+            ).astype(np.float64)
+        )
 
     def image_changed(self):
         # update image
         if self.checkBox_5.isChecked():
             image_name = self.comboBox_7.currentText()
             if image_name in self.images.keys():
-                image = self.images[image_name]
-                self.spinBox_8.setMinimum(0)
-                self.spinBox_8.setMaximum(image.shape[0])
-
-                self.hist.gradient.loadPreset(
-                    self.comboBox_2.currentText()
-                )
+                image = self.images.get(image_name, None)
                 if image is not None:
-                    if self.checkBox_2.isChecked():
-                        data = image.sum(axis=0)
-                    else:
-                        frame_idx = self.spinBox_8.value()
-                        data = image[frame_idx]
-                    # transpose image (row, column) -> (column, row)
-                    # pyqtgraph is column major by default
-                    self.img.setImage(data.T)
-                    # self.img_drawn.setImage(np.zeros_like(data))
-                    self.hist.setLevels(data.min(), data.max())
-                    self.brush_kernel *= max(data.flatten()) / max(self.brush_kernel.flatten())
-                    # zoom to fit image
-                    self.img_plot.autoRange()
-                    if self.img_drawn.image is None:
-                        self.img_drawn.setImage(np.zeros_like(data))
-                    elif self.img_drawn.image.shape != self.img.image.shape:
-                        self.img_drawn.setImage(np.zeros_like(data))
+                    self.spinBox_8.setMinimum(0)
+                    self.spinBox_8.setMaximum(image.shape[0] - 1)
 
+                    self.hist.gradient.loadPreset(
+                        self.comboBox_2.currentText()
+                    )
+                    if image is not None:
+                        if self.radioButton_4.isChecked():
+                            data = image.sum(axis=0)
+                        elif self.radioButton_5.isChecked():
+                            data = image.mean(axis=0)
+                        else:
+                            frame_idx = self.spinBox_8.value()
+                            data = image[frame_idx]
+                        # transpose image (row, column) -> (column, row)
+                        # pyqtgraph is column major by default
+                        self.img.setImage(data.T)
+                        # self.img_drawn.setImage(np.zeros_like(data))
+                        self.hist.setLevels(data.min(), data.max())
+                        self.brush_kernel *= max(data.flatten()) / max(self.brush_kernel.flatten())
+                        # zoom to fit image
+                        self.img_plot.autoRange()
+
+                        # Get template for mask
+                        if self.img_drawn.image is None:
+                            self.img_drawn.setImage(np.zeros_like(data))
+                        elif self.img_drawn.image.shape != self.img.image.shape:
+                            self.img_drawn.setImage(np.zeros_like(data))
         else:
-            self.img.setImage(np.zeros((512, 512)))
-
+            self.img.setImage(
+                np.zeros((512, 512))
+            )
         # update mask
         if not self.checkBox_6.isChecked():
             w = self.img_drawn.getPixmap()
             w.hide()
+        self.update_plot()
 
     def save_current_image(self):
         image_name = self.comboBox_7.currentText()
@@ -227,7 +284,7 @@ class CLSMPixelSelect(
                 description='Image file',
                 file_type='All files (*.png)'
             )
-            image = self.images[image_name]
+            image = self.images.get(image_name, None)
             if image is not None:
                 if self.checkBox_2.isChecked():
                     data = image.sum(axis=0)
@@ -245,45 +302,54 @@ class CLSMPixelSelect(
         sel = np.copy(self.img_drawn.image).T
         sel[sel > 0] = 1
         sel[sel < 0] = 0
-        sel = sel.astype(dtype=np.short)
+        sel = sel.astype(dtype=np.uint8)
+        clsm_name = self.comboBox_9.currentText()
+        clsm_image_object = self.clsm_images.get(clsm_name, None)
+        if clsm_image_object:
+            selection = np.ascontiguousarray(
+                np.broadcast_to(
+                    sel,
+                    (
+                        clsm_image_object.n_frames,
+                        clsm_image_object.n_lines,
+                        clsm_image_object.n_pixel
+                    )
+                )
+            )
+            tac_coarsening = int(self.comboBox_6.currentText())
+            stack_frames = self.radioButton_4.isChecked() or self.radioButton_5.isChecked()
+            decay = clsm_image_object.get_decays(
+                tttr_data=self.tttr_data,
+                selection=selection,
+                tac_coarsening=tac_coarsening,
+                stack_frames=stack_frames
+            )
+            header = self.tttr_data.get_header()
+            x = np.arange(decay.shape[1])
+            t = x * header.micro_time_resolution * tac_coarsening
+            if stack_frames:
+                y = decay.sum(axis=0)
+            else:
+                y = decay[self.spinBox_8.value()]
 
-        tac_coarsening = int(self.comboBox_6.currentText())
-        n_lines = self.clsm_image_object.n_lines
-        n_pixel = self.clsm_image_object.n_pixel
-        n_frames = self.clsm_image_object.n_frames
-        selection = np.broadcast_to(sel, (n_frames, n_lines, n_pixel))
-        stack_frames = self.checkBox_2.isChecked()
-        decay = self.clsm_image_object.get_decays(
-            tttr_data=self.tttr_data,
-            selection=selection,
-            tac_coarsening=tac_coarsening,
-            stack_frames=stack_frames
-        )
-        header = self.tttr_data.get_header()
-        x = np.arange(decay.shape[1])
-        t = x * header.micro_time_resolution / tac_coarsening
-        if stack_frames:
-            y = decay.sum(axis=0)
-        else:
-            y = decay[self.spinBox_8.value()]
+            y_pos = np.where(y > 0)[0]
+            if len(y_pos) > 0:
+                i_y_max = y_pos[-1]
+                y = y[:i_y_max]
+                t = t[:i_y_max]
 
-        y_pos = np.where(y > 0)[0]
-        if len(y_pos) > 0:
-            i_y_max = y_pos[-1]
-            y = y[:i_y_max]
-            t = t[:i_y_max]
-
-        ey = chisurf.fluorescence.tcspc.weights(y)
-        self.current_decay = chisurf.experiments.data.DataCurve(
-            x=t, y=y, ey=ey
-        )
-        self.plot_curves()
+            ey = chisurf.fluorescence.tcspc.weights(y)
+            self.current_decay = chisurf.experiments.data.DataCurve(
+                x=t, y=y, ey=ey,
+                copy_array=False
+            )
+            self.plot_curves()
 
     def setup_image_plot(
             self,
             decay_plot: pyqtgraph.PlotWindow
     ):
-        win = pg.GraphicsLayoutWidget()
+        win = pyqtgraph.GraphicsLayoutWidget()
         # A plot area (ViewBox + axes) for displaying the image
         self.img_plot = win.addPlot(title="")
         p1 = self.img_plot
@@ -323,7 +389,7 @@ class CLSMPixelSelect(
             val = self.img.image[i, j]
             ppos = self.img.mapToParent(pos)
             x, y = ppos.x(), ppos.y()
-            p1.setTitle("pos: (%0.1f, %0.1f)  pixel: (%d, %d)  value: %g" % (x, y, i, j, val))
+            #p1.setTitle("pos: (%0.1f, %0.1f)  pixel: (%d, %d)  value: %g" % (x, y, i, j, val))
 
         self.img_drawn.hoverEvent = imagehoverEvent
 
@@ -344,49 +410,13 @@ class CLSMPixelSelect(
         self.img_drawn.mouseDragEvent = imageMouseDragEvent
         return win
 
-    def mouseReleaseEvent(self, a0: QtGui.QMouseEvent) -> None:
-        pass
-
-    def save_pixel_mask(self):
-        filename = chisurf.widgets.save_file(
-            description='Image file',
-            file_type='All files (*.png)'
-        )
-        image = self.img_drawn.image
-        image[image > 0] = 255
-        cv2.imwrite(
-            filename,
-            image
-        )
-
-    def clear_pixel_mask(self):
-        self.img_drawn.setImage(
-            np.zeros_like(
-                self.img_drawn.image
-            )
-        )
-
-    def load_pixel_mask(self):
-        filename = chisurf.widgets.get_filename(
-            description='Image file',
-            file_type='All files (*.png)'
-        )
-        image = cv2.imread(
-            filename
-        )
-        self.img_drawn.setImage(
-            image=cv2.cvtColor(
-                image, cv2.COLOR_BGR2GRAY
-            ).astype(np.float64)
-        )
-
     def update_brush(self):
         self.brush_size = int(self.spinBox_2.value())
         self.brush_width = float(self.doubleSpinBox.value())
         self.brush_kernel = chisurf.math.signal.gaussian_kernel(
-            self.brush_size,
-            self.brush_width
-        )
+                    self.brush_size,
+                    self.brush_width
+                )
 
         self.img_drawn.setDrawKernel(
             self.brush_kernel,
@@ -433,16 +463,75 @@ class CLSMPixelSelect(
             clsm_settings[current_setup]['event_type_marker']
         )
 
+    def clear_images(self):
+        self.images.clear()
+        self.comboBox_7.clear()
+        self.image_changed()
+
+    def remove_image(self):
+        image_name = self.comboBox_7.currentText()
+        self.images.pop(image_name, None)
+        self.comboBox_7.currentText()
+        self.comboBox_7.removeItem(
+            self.comboBox_7.currentIndex()
+        )
+
+    def add_clsm(self):
+        print("add_clsm")
+        frame_marker = [int(i) for i in str(self.lineEdit_2.text()).split(",")]
+        line_start_marker = int(self.spinBox_4.value())
+        line_stop_marker = int(self.spinBox_5.value())
+        event_type_marker = int(self.spinBox_6.value())
+        pixel_per_line = int(self.spinBox_7.value())
+        reading_routine = str(self.comboBox.currentText())
+        clsm_name = str(self.lineEdit_6.text())
+        print("clsm_name: ", clsm_name)
+        print("frame_marker: ", frame_marker)
+        print("line_start_marker: ", line_start_marker)
+        print("line_stop_marker: ", line_stop_marker)
+        print("event_type_marker: ", event_type_marker)
+        print("pixel_per_line: ", pixel_per_line)
+        print("reading_routine: ", reading_routine)
+        channels = [int(i) for i in str(self.lineEdit_3.text()).split(",")]
+        clsm_image = tttrlib.CLSMImage(
+            self.tttr_data,
+            frame_marker,
+            line_start_marker,
+            line_stop_marker,
+            event_type_marker,
+            pixel_per_line,
+            reading_routine
+        )
+        clsm_image.fill_pixels(
+            tttr_data=self.tttr_data,
+            channels=channels
+        )
+        self.clsm_images[clsm_name] = clsm_image
+        self.comboBox_9.clear()
+        self.comboBox_9.addItems(
+            list(self.clsm_images.keys())
+        )
+
+    def remove_clsm(self):
+        print("remove_clsm")
+        clsm_name = self.comboBox_9.currentText()
+        self.clsm_images.pop(clsm_name, None)
+        self.comboBox_9.clear()
+        self.comboBox_9.addItems(
+            list(self.clsm_images.keys())
+        )
+
     @chisurf.decorators.init_with_ui(
         ui_filename="clsm_pixel_select.ui"
     )
     def __init__(self):
+        # initilize GUI
 
+        # Used reading routines
         self.current_setup = list(clsm_settings.keys())[0]
         self.comboBox_5.addItems(
             list(clsm_settings.keys())
         )
-
         routines = list()
         for k in clsm_settings:
             routines.append(clsm_settings[k]['routine'])
@@ -450,14 +539,55 @@ class CLSMPixelSelect(
             list(set(routines))
         )
 
-        self.img = pg.ImageItem()
-        self.img_drawn = pg.ImageItem()
-        self.hist = pg.HistogramLUTItem()
+        # image and pixel selection
+        self.img = pyqtgraph.ImageItem()
+        self.img_drawn = pyqtgraph.ImageItem()
+        self.hist = pyqtgraph.HistogramLUTItem()
         self.comboBox_2.addItems(
             list(pyqtgraph.graphicsItems.GradientEditorItem.Gradients.keys())
         )
 
-        self._curves = list()
+        # Histogram of selected pixels
+        area = pyqtgraph.dockarea.DockArea()
+        d1 = pyqtgraph.dockarea.Dock("axis 1 / axis 2", size=(80, 80))
+        d2 = pyqtgraph.dockarea.Dock("axis 1", size=(80, 30))
+        d3 = pyqtgraph.dockarea.Dock("axis 2", size=(80, 30))
+
+        p1 = pyqtgraph.PlotWidget()
+        p2 = pyqtgraph.PlotWidget()
+        p3 = pyqtgraph.PlotWidget()
+
+        d1.addWidget(p1)
+        d2.addWidget(p2)
+        d3.addWidget(p3)
+
+        area.addDock(d1, 'top')
+        area.addDock(d2, 'top', d1)
+        area.addDock(d3, 'top', d2)
+        self.verticalLayout_5.addWidget(area)
+
+        # win = pg.GraphicsWindow()
+        # plt1 = win.addPlot()
+        # plt2 = win.addPlot()
+        #
+        # ## make interesting distribution of values
+        # vals = np.hstack([np.random.normal(size=500), np.random.normal(size=260, loc=4)])
+        #
+        # ## compute standard histogram
+        # y, x = np.histogram(vals, bins=np.linspace(-3, 8, 40))
+        #
+        # ## Using stepMode=True causes the plot to draw two lines for each sample.
+        # ## notice that len(x) == len(y)+1
+        # plt1.plot(x, y, stepMode=True, fillLevel=0, brush=(0, 0, 255, 150))
+        #
+        # ## Now draw all points as a nicely-spaced scatter plot
+        # y = pg.pseudoScatter(vals, spacing=0.15)
+        # # plt2.plot(vals, y, pen=None, symbol='o', symbolSize=5)
+        # plt2.plot(vals, y, pen=None, symbol='o', symbolSize=5, symbolPen=(255, 255, 255, 200),
+        #           symbolBrush=(0, 0, 255, 150))
+        # self.verticalLayout_5.addWidget(win)
+
+        self._curves = chisurf.imported_datasets
         self.update_brush()
 
         # Add curve experiment curve selector
@@ -468,7 +598,7 @@ class CLSMPixelSelect(
         self.verticalLayout_9.addWidget(self.cs)
 
         # Add plot of image
-        self.plot = pg.PlotWidget()
+        self.plot = pyqtgraph.PlotWidget()
         plot = self.plot.getPlotItem()
         self.verticalLayout.addWidget(self.plot)
         self.legend = plot.addLegend()
@@ -498,9 +628,17 @@ class CLSMPixelSelect(
         self.actionImage_changed.triggered.connect(self.image_changed)
         self.actionUpdate_plot.triggered.connect(self.update_plot)
         self.actionSave_image.triggered.connect(self.save_current_image)
+        self.actionClear_images.triggered.connect(self.clear_images)
+        self.actionAdd_mask.triggered.connect(self.add_mask)
+        self.actionMask_changed.triggered.connect(self.mask_changed)
+        self.actionRemove_image.triggered.connect(self.remove_image)
+        self.actionRemove_current_mask.triggered.connect(self.remove_current_mask)
+        self.actionAdd_CLSM.triggered.connect(self.add_clsm)
+        self.actionRemove_CLSM.triggered.connect(self.remove_clsm)
 
         # update the UI
         self.setup_changed()
+        self.groupBox_2.setChecked(False)
 
 
 if __name__ == "__main__":

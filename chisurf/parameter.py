@@ -19,23 +19,39 @@ class Parameter(
     """
 
     @property
+    def name(self) -> str:
+        return self._port.name
+
+    @name.setter
+    def name(
+            self,
+            v: str
+    ):
+        self._port.name = v
+
+    @property
     def bounds(
             self
     ) -> typing.Tuple[float, float]:
         """A tuple containing the values for the lower (first value) and
         the upper (second value) of the bound.
         """
-        if self._value.bounded:
-            return self._value.bounds
-        else:
-            return float("-inf"), float("inf")
+        return self._port.bounds
 
     @bounds.setter
     def bounds(
             self,
             b: typing.Tuple[float, float]
     ):
-        self._value.bounds = np.array(b, dtype=np.float64)
+        self._port.bounds = np.array(b, dtype=np.float)
+
+    @property
+    def bounds_on(self):
+        return self._port.bounded
+
+    @bounds_on.setter
+    def bounds_on(self, v):
+        self._port.bounded = bool(v)
 
     @property
     def value(
@@ -50,14 +66,14 @@ class Parameter(
 
         :return:
         """
-        return self._value.value.item(0)
+        return self._port.value.item(0)
 
     @value.setter
     def value(
             self,
             value: float
     ):
-        self._value.value = np.array([value])
+        self._port.value = np.array([value])
 
     @property
     def link(self) -> chisurf.parameter.Parameter:
@@ -71,19 +87,17 @@ class Parameter(
         if isinstance(link, Parameter):
             self._link = link
             if self.controller is not None:
-                self.controller.set_linked(
-                    link is not None
-                )
-            self._value.link = self._link.value
+                self.controller.set_linked(link is not None)
+            self._port.link = self._link.value
         elif link is None:
             self._link = None
-            self._value.unlink()
+            self._port.unlink()
 
     @property
     def is_linked(
             self
     ) -> bool:
-        return isinstance(self._link, Parameter)
+        return self._port.is_linked()
 
     def __add__(
             self,
@@ -235,7 +249,7 @@ class Parameter(
         :param value: the value of the parameter (default 1.0)
         :param link: the (optional) parameter to which the new instance is linked to
         :param lb: the lower bound of the parameter value
-        :param ub: the upper bound of the paramter value
+        :param ub: the upper bound of the parameter value
         :param bounds_on: if this is True the parameter value is bounded between
         the upper and the lower bound as specified by ub and lb.
         :param args:
@@ -245,11 +259,15 @@ class Parameter(
             *args,
             **kwargs
         )
+        name = kwargs.pop('name', '')
         self._link = link
-        self._value = chinet.Port(value)
-        self.bounds_on = bounds_on
-        self.lb = lb
-        self.ub = ub
+        self._port = chinet.Port(
+            value=value,
+            name=name,
+            lb=lb,
+            ub=ub,
+            is_bounded=bounds_on
+        )
         self.controller = None
 
 

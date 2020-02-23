@@ -4,9 +4,13 @@ import numpy
 import yaml
 import os
 import platform
-
-from Cython.Distutils import build_ext
 from setuptools import setup, find_packages, Extension
+
+try:
+    from Cython.Distutils import build_ext
+except ImportError:
+    build_ext = None
+    print("WARNING: could not import cython. Will not build cython extenstions.")
 
 
 name = 'chisurf'
@@ -20,7 +24,6 @@ settings_file = os.path.join(
 )
 with open(settings_file) as fp:
     settings.update(yaml.safe_load(fp))
-
 
 args = sys.argv[1:]
 # Always use build_ext --inplace

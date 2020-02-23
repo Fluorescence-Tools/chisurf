@@ -29,8 +29,6 @@ class Base(object):
             return name() if callable(name) else name
         except KeyError or AttributeError:
             return self.__class__.__name__
-        # name = self.__dict__['name']
-        # return name() if callable(name) else name
 
     @name.setter
     def name(

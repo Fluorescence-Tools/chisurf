@@ -1,3 +1,10 @@
+import chisurf.settings
+import pyqtgraph as pg
+
+pg.setConfigOptions(
+    **chisurf.settings.cs_settings['gui']['plot']['pyqtgraph_config']
+)
+
 import chisurf.plots.global_fit
 import chisurf.plots.global_tcspc
 #import chisurf.plots.av_plot

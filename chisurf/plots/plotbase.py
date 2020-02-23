@@ -12,7 +12,7 @@ class Plot(
 
     def __init__(
             self,
-            fit: chisurf.fitting.fit,
+            fit: chisurf.fitting.fit.Fit,
             parent=None,
             **kwargs
     ):

@@ -45,7 +45,7 @@ class ParameterScanWidget(
         self.update()
 
     def onParameterChanged(self):
-        self.parent.update_all()
+        self.parent.update()
 
     def update(
             self
@@ -78,7 +78,7 @@ class ParameterScanWidget(
                 n_steps
             )
         )
-        self.parent.update_all()
+        self.parent.update()
 
     @property
     def selected_parameter(

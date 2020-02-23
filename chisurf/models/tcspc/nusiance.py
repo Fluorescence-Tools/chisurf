@@ -548,7 +548,7 @@ class Convolve(FittingParameterGroup):
 
         if autoscale:
             weights = 1.0 / data.ey
-            self.n0 = float(chisurf.fluorescence.tcspc.rescale_w_bg(decay, data.y, weights, bg, start, stop))
+            self.n0 = chisurf.fluorescence.tcspc.rescale_w_bg(decay, data.y, weights, bg, start, stop)
         else:
             decay *= self.n0
 

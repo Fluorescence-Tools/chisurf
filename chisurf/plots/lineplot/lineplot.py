@@ -267,9 +267,7 @@ class LinePlot(plotbase.Plot):
             reference_curve: bool = False,
             x_label: str = 'x',
             y_label: str = 'y',
-            plot_irf: bool = False,
-            data_x: np.array = None,
-            data_y: np.array = None
+            plot_irf: bool = False
     ):
         super().__init__(fit)
 
@@ -286,8 +284,6 @@ class LinePlot(plotbase.Plot):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
 
-        self.data_x = data_x
-        self.data_y = data_y
         self.plot_irf = plot_irf
 
         area = pyqtgraph.dockarea.DockArea()
@@ -324,8 +320,7 @@ class LinePlot(plotbase.Plot):
             fill=(0, 0, 255, 100),
             anchor=(0, 1)
         )
-        # curves = self.fit.get_curves()
-        # data = curves['data']
+
         # self.text.setPos(
         #     min(data.x * 0.5),
         #     max(data.y * 0.5)
@@ -376,29 +371,36 @@ class LinePlot(plotbase.Plot):
             data_plot.setLabel('left', y_label)
             data_plot.setLabel('bottom', x_label)
 
-        lw = chisurf.settings.gui['plot']['line_width']
         curves = self.fit.get_curves()
-        lines = dict()
-        for i, curve_key in enumerate(curves.keys()):
-            if curve_key in ['weighted residuals', 'autocorrelation']:
-                continue
-            color = chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex']
-            lines[curve_key] = data_plot.plot(
-                x=[0.0], y=[0.0],
-                pen=pg.mkPen(color, width=lw),
-                name=curve_key
-            )
 
-        lines['weighted residuals'] = residuals_plot.plot(
-            x=[0.0], y=[0.0],
-            pen=pg.mkPen(colors['residuals'], width=lw),
-            name='residues'
-        )
-        lines['autocorrelation'] = self.auto_corr_plot.plot(
-            x=[0.0], y=[0.0],
-            pen=pg.mkPen(colors['auto_corr'], width=lw),
-            name='residues'
-        )
+        data_string = 'data'
+        wres_string = 'weighted residuals'
+        acorr_string = 'autocorrelation'
+
+        lines = dict()
+        for i, curve_key in enumerate(curves):
+            color = chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex']
+            lw = chisurf.settings.gui['plot']['line_width']
+            if wres_string == curve_key:
+                lw = 2 * lw
+            if wres_string in curve_key:
+                lines[curve_key] = residuals_plot.plot(
+                    x=[0.0], y=[0.0],
+                    pen=pg.mkPen(colors['residuals'], width=lw),
+                    name='w.res.'
+                )
+            elif acorr_string in curve_key:
+                lines[curve_key] = auto_corr_plot.plot(
+                    x=[0.0], y=[0.0],
+                    pen=pg.mkPen(colors['auto_corr'], width=lw),
+                    name='a.corr.'
+                )
+            else:
+                lines[curve_key] = data_plot.plot(
+                    x=[0.0], y=[0.0],
+                    pen=pg.mkPen(color, width=lw),
+                    name=curve_key
+                )
 
         self.lines = lines
         p1.setXLink(p3)
@@ -432,15 +434,16 @@ class LinePlot(plotbase.Plot):
         x_shift = plt_ctrl.x_shift
 
         curves = self.fit.get_curves()
-        for curve_key in curves.keys():
+        for curve_key in curves:
             curve = curves[curve_key]
-            y = curve.y
+            y = curve.y + y_shift
+            x = curve.x + x_shift
             if self.pltControl.is_density:
                 y = curve.y / np.diff(curve.x)
             self.lines[curve_key].setData(
-                    x=curve.x + x_shift,
-                    y=y
-                )
+                x=x,
+                y=y
+            )
 
         #
         # model_y = np.copy(model.y) + y_shift
