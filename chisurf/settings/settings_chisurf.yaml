@@ -1,6 +1,6 @@
 ---
 name: ChiSurf
-version: 19.9.22
+version: 20.2.22
 n_threads: 4
 verbose: false
 fitting_message: true
@@ -175,6 +175,12 @@ gui:
     enable_region_selector: true
     show_legend: false
     label_axis: false
+    pyqtgraph_config:
+      background: k
+      foreground: d
+      antialias: false
+      useWeave: true
+      leftButtonPan: true
     colors:
       region_selector: "#26a298"
       region_selector_alpha: 100

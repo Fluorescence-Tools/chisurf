@@ -52,7 +52,10 @@ class ParseFormulaWidget(
         self.actionFormulaChanged.triggered.connect(self.onEquationChanged)
         self.actionModelChanged.triggered.connect(self.onModelChanged)
 
-    def load_model_file(self, filename):
+    def load_model_file(
+            self,
+            filename: str
+    ):
         with chisurf.fio.zipped.open_maybe_zipped(
                 filename=filename,
                 mode='r'
@@ -61,11 +64,16 @@ class ParseFormulaWidget(
             self.models = yaml.safe_load(fp)
 
     @property
-    def models(self):
+    def models(
+            self
+    ) -> typing.Dict:
         return self._models
 
     @models.setter
-    def models(self, v):
+    def models(
+            self,
+            v: typing.Dict
+    ):
         self._models = v
         self.comboBox.clear()
         self.comboBox.addItems(list(v.keys()))
@@ -83,11 +91,14 @@ class ParseFormulaWidget(
         self.comboBox.setCurrentIndex(idx)
 
     @property
-    def model_file(self):
+    def model_file(self) -> str:
         return self._model_file
 
     @model_file.setter
-    def model_file(self, v):
+    def model_file(
+            self,
+            v: str
+    ):
         self._model_file = v
         self.load_model_file(v)
 
@@ -142,7 +153,9 @@ class ParseFormulaWidget(
                 'Open models-file',
                 'link file (*.yaml)'
             )
-        self.load_model_file(filename)
+        self.load_model_file(
+            filename=filename
+        )
 
 
 class ParseModelWidget(
@@ -174,6 +187,9 @@ class ParseModelWidget(
         self.setLayout(
             layout
         )
+        self.parse = parse
 
     def update_model(self, **kwargs):
-        ParseModel.update_model(self, **kwargs)
+        super().update_model(
+            **kwargs
+        )

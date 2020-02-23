@@ -1,38 +1,35 @@
 {% set name = "chisurf" %}
-{% set version = "latest" %}
+#{% set version = "0.0.3" %}
+{% set data = load_setup_py_data(setup_file='../setup.py', from_recipe_dir=True) %}
 
 package:
   name: {{ name|lower }}
-  #version: {{ version|lower }}
-  version: {{ GIT_DESCRIBE_TAG }}
+#  version: {{ version|lower }}
+  version: {{ data.get('version')|lower }}
 
 source:
-  git_url: ..
+  path: ..
 
 build:
-  number: {{ GIT_DESCRIBE_NUMBER|int }}
-  string: np{{ CONDA_NPY }}py{{ CONDA_PY }}_{{ GIT_BUILD_STR }}
+  number: 0
+#  number: {{ GIT_DESCRIBE_NUMBER|int }}
+#  string: np{{ CONDA_NPY }}py{{ CONDA_PY }}_{{ GIT_BUILD_STR }}
   entry_points:
-    - chisurf=chisurf.main_gui:main
+    - chisurf=chisurf.__main__:main
 
 requirements:
-  build:
+  host:
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
-    - python {{ python }}
-    - setuptools
-    - cmake
-    - git
-  host:
-    - python {{ python }}
-    - setuptools
-    - cython
+    - python=3.7.3
     - numpy
     - pyyaml
+    - setuptools
+    - cython
   run:
-    - python {{ python }}
-    - python-slugify
+    - python=3.7.3
     - pyyaml
+    - python-slugify
     - numpy
     - numba
     - scipy
@@ -42,7 +39,7 @@ requirements:
     - mdtraj
     - ipython
     - matplotlib
-    - pyqt>=5.6.0
+    - pyqt
     - pyqtgraph
     - qscintilla2
     - pyopengl
@@ -54,11 +51,15 @@ requirements:
     - guiqwt
     - progressbar2
     - qtpy
-    - qdarkstyle
     - mrcfile
     - htmd-pdb2pqr
     - pymol-open-source
+    - opencv
+    - labellib
     - tttrlib
+    - chinet>=0.0.3
+    - librttr
+    - libmongoc
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
@@ -66,7 +67,7 @@ about:
   license_file: LICENSE
   summary: |
     ChiSurf is an interactive global analysis software for time-resolved
-    fluorescence data
+    fluorescence data.
   description: |
     ChiSurf is an interactive analysis software for time-resolved
     fluorescence data.

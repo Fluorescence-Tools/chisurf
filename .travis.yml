@@ -38,7 +38,7 @@ before_install:
   - conda config --add channels tpeulen
   - conda update -q conda
   - conda info -a
-  - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git  nose coverage
+  - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git nose coverage numpy
   - source activate build-environment
   - git fetch --unshallow --tags --force
   - conda build conda-recipe --output-folder bld-dir

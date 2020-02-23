@@ -51,11 +51,6 @@ Make a lambda function which converts a single internal (uncontrained)
 parameter to a external (constrained) parameter.
 """
     lower, upper = bound
-    if lower == float("-inf"):
-        lower = None
-    if upper == float("inf"):
-        upper = None
-
     if lower is None and upper is None:  # no constraints
         return lambda x: x
     elif upper is None:  # only lower bound
@@ -87,11 +82,6 @@ Make a lambda function which converts an single external (constrained)
 parameter to a internal (unconstrained) parameter.
 """
     lower, upper = bound
-    if lower == float("-inf"):
-        lower = None
-    if upper == float("inf"):
-        upper = None
-
     if lower is None and upper is None:  # no constraints
         return lambda x: x
     elif upper is None:  # only lower bound

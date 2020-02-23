@@ -117,7 +117,7 @@ def convolve_lifetime_spectrum_periodic(
     start = max(start, 0)
 
     n_exp = lifetime_spectrum.shape[0] // 2
-    period_n = ceil(period/dt-0.5)
+    period_n = ceil(period / dt - 0.5)
 
     for i in range(start, stop):
         decay[i] = 0

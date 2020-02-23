@@ -149,7 +149,7 @@ Right-click to link, uncheck to un-link</string>
    <item row="0" column="2">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <property name="spacing">
-      <number>0</number>
+      <number>-1</number>
      </property>
      <property name="sizeConstraint">
       <enum>QLayout::SetDefaultConstraint</enum>

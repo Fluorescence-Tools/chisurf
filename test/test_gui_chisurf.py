@@ -12,7 +12,7 @@ from qtpy import QtWidgets
 import chisurf
 import chisurf.widgets
 import chisurf.macros
-import chisurf.main_gui
+import chisurf.__main__
 import chisurf.widgets.experiments
 
 
@@ -60,7 +60,7 @@ class Tests(unittest.TestCase):
     Test the kappa2 distribution GUI
     """
     app = QApplication(sys.argv)
-    cs_app = chisurf.main_gui.qt_app()
+    cs_app = chisurf.__main__.qt_app()
 
     def test_tcspc(self):
         """

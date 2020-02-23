@@ -12,32 +12,15 @@ from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
 from chisurf.models.model import ModelWidget, ModelCurve
 
 
-class ParseFormula(
+class ParseModel(
+    ModelCurve,
     FittingParameterGroup
 ):
 
-    def __init__(
-            self,
-            fit: chisurf.fitting.fit.Fit = None,
-            model: chisurf.models.Model = None,
-            short: str = '',
-            **kwargs
-    ):
-        super().__init__(
-            fit=fit,
-            model=model,
-            short=short,
-            **kwargs
-        )
-
-        self._keys = list()
-        self._models = dict()
-        self._count = 0
-        self._func = "x*0"
-        self.code = self._func
+    name = "Parse-Model"
 
     @property
-    def func(self):
+    def func(self) -> str:
         return self._func
 
     @func.setter
@@ -93,40 +76,34 @@ class ParseFormula(
             p = FittingParameter(name=key, value=1.0)
             self._parameters.append(p)
 
-    def find_parameters(
-            self,
-            parameter_type=chisurf.parameter.Parameter
-    ):
-        # do nothing
-        pass
-
-
-class ParseModel(
-    ModelCurve
-):
-
-    name = "Parse-Model"
+    # def find_parameters(
+    #         self,
+    #         parameter_type=chisurf.parameter.Parameter
+    # ):
+    #     # do nothing
+    #     pass
 
     def __init__(
             self,
-            fit: chisurf.fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.Fit = None,
             *args,
-            **kwargs
+            **kwargs,
     ):
         super().__init__(
             fit,
             *args,
             **kwargs
         )
-        self.parse = ParseFormula()
+        self._keys = list()
+        self._models = dict()
+        self._count = 0
+        self._func = "x*0"
+        self.code = self._func
 
     def update_model(self, **kwargs):
-        a = [p.value for p in self.parse.parameters_all]
+        a = [p.value for p in self.parameters_all]
         x = self.fit.data.x
-        try:
-            y = eval(self.parse.code)
-        except:
-            y = zeros_like(x) + 1.0
-        self._y = y
-
+        # TODO: better evaluate when the func is set
+        y = eval(self.parse.code)
+        self.y = y
 

@@ -10,8 +10,6 @@ dependencies:
     # python>=3.7.3. This is supossably resolved in 5.13.1
     # (see: https://github.com/GNS3/gns3-gui/issues/2819)
     - python=3.7.3
-    - pyqt
-    - cython
     - pyyaml
     - python-slugify
     - numpy
@@ -23,25 +21,26 @@ dependencies:
     - mdtraj
     - ipython
     - matplotlib
-    - qtpy
+    - pyqt
     - pyqtgraph
     - qscintilla2
     - pyopengl
     - qtconsole
-    - guiqwt
     - python-docx
+    - labellib
     - deprecation
     - pyopencl
+    - guiqwt
     - progressbar2
-    - sphinx
+    - qtpy
+    - mrcfile
     - htmd-pdb2pqr
     - pymol-open-source
-    - mrcfile
     - tttrlib
-    - labellib
+    - chinet
+    - librttr
+    - libmongoc
     - opencv
-#    - pytorch
-#    - sympy
-#    - sphinx_bootstrap_theme
-#    - sphinx-autodoc-typehints
-#    - numpydoc
+    - labellib
+    - cython
+    - nose

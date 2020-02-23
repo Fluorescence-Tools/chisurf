@@ -94,7 +94,7 @@ class FittingParameter(
     def __str__(self):
         s = "\nVariable\n"
         s += "name: %s\n" % self.name
-        s += "internal-value: %s\n" % self._value
+        s += "internal-value: %s\n" % self._port
         if self.bounds_on:
             s += "bounds: %s\n" % self.bounds
         if self.is_linked:
