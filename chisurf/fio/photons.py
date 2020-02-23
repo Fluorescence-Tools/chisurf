@@ -215,16 +215,17 @@ class Photons(object):
                                 filename=filename
                             )
                         )
-                    self._tttrs = spcs
-                    self._h5 = chisurf.fio.tttr.make_tp_photon_hdf(
-                        title=self._sample_name_hdf_tp,
-                        filename=self._h5_tempfile,
-                        verbose=verbose,
-                        routine_name=reading_routine,
-                        number_of_tac_channels=number_of_tac_channels,
-                        number_of_routing_channels=255,
-                        spcs=spcs
-                    )
+                    if len(self._filenames) > 0:
+                        self._tttrs = spcs
+                        self._h5 = chisurf.fio.tttr.make_tp_photon_hdf(
+                            title=self._sample_name_hdf_tp,
+                            filename=self._h5_tempfile,
+                            verbose=verbose,
+                            routine_name=reading_routine,
+                            number_of_tac_channels=number_of_tac_channels,
+                            number_of_routing_channels=255,
+                            spcs=spcs
+                        )
 
         self.verbose = verbose
         self._photon_array = None
