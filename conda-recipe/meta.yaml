@@ -13,7 +13,7 @@ source:
 build:
   number: 0
 #  number: {{ GIT_DESCRIBE_NUMBER|int }}
-#  string: np{{ CONDA_NPY }}py{{ CONDA_PY }}_{{ GIT_BUILD_STR }}
+  string: np{{ CONDA_NPY }}py{{ CONDA_PY }}_{{ GIT_BUILD_STR }}
   entry_points:
     - chisurf=chisurf.__main__:main
 
@@ -56,7 +56,7 @@ requirements:
     - pymol-open-source
     - opencv
     - labellib
-    - tttrlib
+    - tttrlib >=0.0.11
     - chinet>=0.0.3
     - librttr
     - libmongoc
