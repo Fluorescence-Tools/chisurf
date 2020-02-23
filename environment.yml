@@ -5,7 +5,7 @@ channels:
   - tpeulen
 
 dependencies:
-    - python=3.7.3
+    - python
     - pyyaml
     - python-slugify
     - numpy
