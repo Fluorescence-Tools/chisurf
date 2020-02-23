@@ -143,10 +143,24 @@ class Generic(FittingParameterGroup):
             **kwargs
         )
         self._background_curve = background_curve
-        self._sc = FittingParameter(value=0.0, name='sc', model=self.model)
-        self._bg = FittingParameter(value=0.0, name='bg', model=self.model)
-        self._tmeas_bg = FittingParameter(value=1.0, name='tBg', lb=0.001, ub=10000000, fixed=True)
-        self._tmeas_exp = FittingParameter(value=1.0, name='tMeas', lb=0.001, ub=10000000, fixed=True)
+        self._sc = FittingParameter(
+            value=0.0,
+            name='sc'
+        )
+        self._bg = FittingParameter(
+            value=0.0,
+            name='bg'
+        )
+        self._tmeas_bg = FittingParameter(
+            value=1.0,
+            name='tBg',
+            fixed=True
+        )
+        self._tmeas_exp = FittingParameter(
+            value=1.0,
+            name='tMeas',
+            fixed=True
+        )
 
 
 class Corrections(FittingParameterGroup):

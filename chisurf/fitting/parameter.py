@@ -22,7 +22,6 @@ class FittingParameter(
 
     def __init__(
             self,
-            model: chisurf.models.Model = None,
             fixed: bool = False,
             *args,
             **kwargs
@@ -38,7 +37,6 @@ class FittingParameter(
             *args,
             **kwargs
         )
-        self.model = model
         self.fixed = fixed
         self._error_estimate = None
         self._chi2s = None

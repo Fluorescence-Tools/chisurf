@@ -134,7 +134,10 @@ def register(cls):
             #     print(member)
             #     if not getattr(member, '__doc__'):
             #         self.__class__.__doc__ = getattr(cls, name).__doc__
-            super().__init__(*args, **kwargs)
+            super().__init__(
+                *args,
+                **kwargs
+            )
 
     return RegisteredClass
 

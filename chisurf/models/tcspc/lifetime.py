@@ -142,12 +142,12 @@ class Lifetime(FittingParameterGroup):
             self,
             amplitude: float = 1.0,
             lifetime: float = 4.0,
-            lower_bound_amplitude: float = None,
-            upper_bound_amplitude: float = None,
+            lower_bound_amplitude: float = 0.0,
+            upper_bound_amplitude: float = 1.0,
             fixed: bool = False,
             bound_on: bool = False,
-            lower_bound_lifetime: float = None,
-            upper_bound_lifetime: float = None,
+            lower_bound_lifetime: float = 0.001,
+            upper_bound_lifetime: float = 100.0,
             **kwargs
     ):
         n = len(self)

@@ -172,11 +172,11 @@ class OrientationParameter(FittingParameterGroup):
 
         # slow isotropic
         k2s = np.linspace(0.01, 4, 50)
-        p = chisurf.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(
+        pk2 = chisurf.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(
             k2s
         )
         self._k2_slow_iso = chisurf.math.datatools.two_column_to_interleaved(
-            p, k2s
+            pk2, k2s
         )
 
         FittingParameterGroup.__init__(self, *args, **kwargs)
@@ -474,7 +474,8 @@ class FRETModel(LifetimeModel):
             forster_radius
         )
         #rs = distribution2rates(self.distance_distribution, tauD0, 2./3., forster_radius)
-        r = np.hstack(rs).ravel([-1])
+        r = np.hstack(rs).reshape(-1, order='F')
+        #r = np.hstack(rs).ravel([-1])
         return r
 
     @property
@@ -607,19 +608,19 @@ class FRETModel(LifetimeModel):
             lifetimes: Lifetime = None,
             **kwargs
     ):
-        super().__init__(
-            fit,
-            **kwargs
-        )
-        self.orientation_parameter = OrientationParameter(
-            orientation_mode=chisurf.settings.cs_settings['fret']['orientation_mode']
-        )
-        self.fret_parameters = kwargs.get(
+        self.fret_parameters = kwargs.pop(
             'fret_parameters',
             FRETParameters(
                 func_calc_fret=self.calc_fret_efficiency,
                 **kwargs
             )
+        )
+        self.orientation_parameter = OrientationParameter(
+            orientation_mode=chisurf.settings.cs_settings['fret']['orientation_mode']
+        )
+        super().__init__(
+            fit,
+            **kwargs
         )
 
         self.lifetimes.append()

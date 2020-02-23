@@ -410,15 +410,14 @@ def interleaved_to_two_columns(
 
 
 def two_column_to_interleaved(
-        x: np.array,
-        t: np.array
-) -> np.array:
-    """
-    Converts two column lifetime spectra to interleaved lifetime spectra
+        x: np.ndarray,
+        t: np.ndarray
+) -> np.ndarray:
+    """Converts two column lifetime spectra to interleaved lifetime spectra
     :param ls: The
     :return:
     """
-    c = np.vstack((x, t)).ravel([-1])
+    c = np.vstack((x, t)).reshape(-1, order='F')
     return c
 
 

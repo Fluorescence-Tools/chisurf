@@ -219,16 +219,32 @@ class DataCurve(
                 file_type=file_type,
                 **kwargs
             )
-            try:
+            n_col, n_row, = csv.data.shape
+            if n_col == 1:
+                self.x = csv.data[0]
+                self.y = np.ones_like(self.x)
+                self.ex = np.zeros_like(self.x)
+                self.ey = np.ones_like(self.y)
+            elif n_col == 2:
+                self.x = csv.data[0]
+                self.y = csv.data[1]
+                self.ex = np.zeros_like(self.x)
+                self.ey = np.ones_like(self.y)
+            elif n_col == 3:
+                self.x = csv.data[0]
+                self.y = csv.data[1]
+                self.ex = np.zeros_like(self.x)
+                self.ey = csv.data[2]
+            elif n_col == 4:
                 self.x = csv.data[0]
                 self.y = csv.data[1]
                 self.ex = csv.data[2]
                 self.ey = csv.data[3]
-            except IndexError:
-                self.x = csv.data[0]
-                self.y = csv.data[1]
-                self.ey = csv.data[2]
-                self.ex = np.ones_like(self.ey)
+            else:
+                self.x = np.ones(1)
+                self.y = np.ones(1)
+                self.ex = np.ones(1)
+                self.ey = np.ones(1)
         else:
             super().load(
                 filename=filename,
@@ -244,6 +260,7 @@ class DataCurve(
             xmin: int = None,
             xmax: int = None
     ) -> None:
+        self.filename = filename
         if file_type == "csv":
             csv = chisurf.fio.ascii.Csv()
             x, y, ex, ey = self[xmin:xmax]
