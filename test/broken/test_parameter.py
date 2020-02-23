@@ -116,9 +116,6 @@ class Tests(unittest.TestCase):
         p1.value = 5.0
         self.assertEqual(p1.value, 2.5)
 
-        p1.bounds_on = False
-        self.assertEqual(p1.value, 5.0)
-
     def test_rep_str(self):
         p1 = chisurf.parameter.Parameter(22)
         self.assertEqual(
@@ -142,7 +139,7 @@ class Tests(unittest.TestCase):
             'bounds_on': True,
             'controller': None,
             '_link': None,
-            '_value': 2.0,
+            '_port': 2.0,
             'lb': 1.0,
             'ub': 2.5
         }
