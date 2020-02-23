@@ -20,7 +20,7 @@ dependencies:
     # the version 5.12.3 has an issue in combination with
     # python>=3.7.3. This is supossably resolved in 5.13.1
     # (see: https://github.com/GNS3/gns3-gui/issues/2819)
-    - pyqt >=5.13.1|5.9.2
+    - pyqt >=5.12.4|5.9.2
     - pyqtgraph
     - qscintilla2
     - pyopengl
@@ -39,3 +39,4 @@ dependencies:
     - pymol-open-source
     - chinet
     - labellib
+    - tttrlib >=0.0.12
