@@ -549,6 +549,11 @@ class FitGroup(
         fitting_options = chisurf.settings.fitting['leastsq']
         bounds = [pi.bounds for pi in fit._model.parameters]
 
+        print(get_wres(*(fit._model.parameter_values, fit._model,)))
+        print(fit._model.parameter_values)
+        print((fit._model,))
+        print(bounds)
+        print(fitting_options)
         results = chisurf.math.optimization.leastsqbound(
             func=get_wres,
             x0=fit._model.parameter_values,
