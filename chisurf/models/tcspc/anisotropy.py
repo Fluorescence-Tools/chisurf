@@ -129,8 +129,8 @@ class Anisotropy(
             self,
             b: float = 0.2,
             rho: float = 1.0,
-            lb: float = None,
-            ub: float = None,
+            lb: float = 0.0,
+            ub: float = 10000.0,
             fixed: bool = False,
             bound_on: bool = False,
             **kwargs
@@ -139,17 +139,20 @@ class Anisotropy(
         rho_value = rho
 
         b = chisurf.fitting.parameter.FittingParameter(
-            lb=lb, ub=ub,
             value=b_value,
+            lb=lb,
+            ub=ub,
             name='b(%i)' % (len(self) + 1),
             fixed=fixed,
             bounds_on=bound_on
         )
         rho = chisurf.fitting.parameter.FittingParameter(
-            lb=lb, ub=ub,
             value=rho_value,
+            lb=lb,
+            ub=ub,
             name='rho(%i)' % (len(self) + 1),
-            fixed=fixed, bounds_on=bound_on
+            fixed=fixed,
+            bounds_on=bound_on
         )
         self._rhos.append(rho)
         self._bs.append(b)

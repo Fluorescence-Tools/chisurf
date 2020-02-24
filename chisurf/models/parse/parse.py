@@ -76,12 +76,14 @@ class ParseModel(
             p = FittingParameter(name=key, value=1.0)
             self._parameters.append(p)
 
-    # def find_parameters(
-    #         self,
-    #         parameter_type=chisurf.parameter.Parameter
-    # ):
-    #     # do nothing
-    #     pass
+    def find_parameters(
+            self,
+            parameter_type=chisurf.parameter.Parameter
+    ):
+        # do nothing finding parameters of the
+        # model is handeled when the model function
+        # is set.
+        pass
 
     def __init__(
             self,
@@ -101,9 +103,12 @@ class ParseModel(
         self.code = self._func
 
     def update_model(self, **kwargs):
+        super().update_model(
+            **kwargs
+        )
         a = [p.value for p in self.parameters_all]
         x = self.fit.data.x
         # TODO: better evaluate when the func is set
-        y = eval(self.parse.code)
+        y = eval(self.code)
         self.y = y
 
