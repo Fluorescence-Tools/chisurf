@@ -6,6 +6,8 @@ import os
 
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets
+# Does not work with qtpy so far (needs refactoring)
+# AttributeError: module 'qtpy.QtCore' has no attribute 'pyqtSignal'
 
 import numpy as np
 import tttrlib

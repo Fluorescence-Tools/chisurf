@@ -108,7 +108,9 @@ def register(cls):
         _instances = set()
 
         @classmethod
-        def get_instances(cls):
+        def get_instances(
+                cls
+        ) -> weakref.ReferenceType:
             """Returns all instances of the class as an generator
             """
             dead = set()

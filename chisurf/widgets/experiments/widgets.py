@@ -102,20 +102,22 @@ class ExperimentalDataSelector(
         chisurf.run(
             'chisurf.macros.remove_datasets(%s)' % dataset_idx
         )
-        self.update()
+        self.update(update_others=True)
 
     def onSaveDataset(self):
-        filename = chisurf.widgets.save_file(file_type="*.*")
+        filename = chisurf.widgets.save_file(
+            file_type="*.*"
+        )
         base_name, extension = os.path.splitext(filename)
         if extension.lower() == '.csv':
             self.selected_dataset.save(
-                filename,
+                filename=filename,
                 file_type='csv'
             )
         else:
             filename = base_name + '.yaml'
             self.selected_dataset.save(
-                filename,
+                filename=filename,
                 file_type='yaml'
             )
 
@@ -148,7 +150,7 @@ class ExperimentalDataSelector(
             menu.addAction("Refresh").triggered.connect(self.update)
             menu.exec_(event.globalPos())
 
-    def update(self, *args, **kwargs):
+    def update(self, *args, update_others=True, **kwargs):
         super().update()
         try:
             window_title = self.fit.name
@@ -172,6 +174,11 @@ class ExperimentalDataSelector(
                     i2 = QtWidgets.QTreeWidgetItem(item, [widget_name])
                     i2.setToolTip(0, fn)
                     i2.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+        # update other instances
+        if update_others:
+            for i in self.get_instances():
+                if i is not self:
+                    i.update(update_others=False)
 
     # def dragMoveEvent(
     #         self,
@@ -219,6 +226,7 @@ class ExperimentalDataSelector(
         if self.selected_datasets:
             ds = self.selected_datasets[0]
             ds.name = str(self.currentItem().text(0))
+            self.update(update_others=True)
 
     def change_event(self):
         pass

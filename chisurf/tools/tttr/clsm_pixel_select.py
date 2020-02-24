@@ -4,11 +4,12 @@ import typing
 import sys
 import os
 import yaml
+import copy
 
 import pyqtgraph
 import pyqtgraph.dockarea
 import pyqtgraph.graphicsItems.GradientEditorItem
-from PyQt5 import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtGui, QtWidgets, uic
 
 import numpy as np
 import cv2
@@ -34,6 +35,7 @@ clsm_settings = yaml.safe_load(
 
 
 class CLSMPixelSelect(
+    #QtWidgets.QMainWindow
     QtWidgets.QWidget
 ):
 
@@ -112,7 +114,7 @@ class CLSMPixelSelect(
         plot.autoRange()
 
     def add_curve(self):
-        decay = self.current_decay
+        decay = copy.copy(self.current_decay)
         try:
             name = self.listWidget.currentItem().text()
         except AttributeError:
@@ -338,11 +340,15 @@ class CLSMPixelSelect(
                 y = y[:i_y_max]
                 t = t[:i_y_max]
 
-            ey = chisurf.fluorescence.tcspc.weights(y)
+            experiment = chisurf.experiment.get('TCSPC', None)
             self.current_decay = chisurf.experiments.data.DataCurve(
-                x=t, y=y, ey=ey,
-                copy_array=False
+                x=t,
+                y=y,
+                ey=1./chisurf.fluorescence.tcspc.weights(y),
+                copy_array=False,
+                experiment=experiment
             )
+
             self.plot_curves()
 
     def setup_image_plot(
@@ -521,11 +527,31 @@ class CLSMPixelSelect(
             list(self.clsm_images.keys())
         )
 
-    @chisurf.decorators.init_with_ui(
-        ui_filename="clsm_pixel_select.ui"
-    )
-    def __init__(self):
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
         # initilize GUI
+        super().__init__(
+            *args,
+            **kwargs
+        )
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(
+                    os.path.abspath(__file__)
+                ),
+                "clsm_pixel_select.ui"
+            ),
+            self
+        )
+        ##########################################################
+        #      Arrange Docks and window positions                #
+        #      Window-controls tile, stack etc.                  #
+        ##########################################################
+        # self.tabifyDockWidget(self.dockWidget, self.dockWidget_4)
+        # self.tabifyDockWidget(self.dockWidget_3, self.dockWidget_4)
 
         # Used reading routines
         self.current_setup = list(clsm_settings.keys())[0]
