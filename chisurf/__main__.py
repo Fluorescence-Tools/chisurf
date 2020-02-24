@@ -69,7 +69,7 @@ class Main(QtWidgets.QMainWindow):
     def current_experiment(
             self
     ) -> chisurf.experiments.Experiment:
-        return chisurf.experiment[
+        return list(chisurf.experiment.values())[
             self.current_experiment_idx
         ]
 
@@ -80,7 +80,7 @@ class Main(QtWidgets.QMainWindow):
     ) -> None:
         p = self.comboBox_experimentSelect.currentIndex()
         n = p
-        for n, e in enumerate(chisurf.experiment):
+        for n, e in enumerate(list(chisurf.experiment.values())):
             if e.name == name:
                 break
         if p != n:
@@ -350,7 +350,7 @@ class Main(QtWidgets.QMainWindow):
                 chisurf.models.tcspc.widgets.LifetimeModelWidget
             ]
         )
-        chisurf.experiment.append(structure)
+        chisurf.experiment[structure.name] = structure
 
         ##########################################################
         #       TCSPC                                            #
@@ -390,7 +390,7 @@ class Main(QtWidgets.QMainWindow):
                 chisurf.models.tcspc.widgets.WormLikeChainModelWidget
             ]
         )
-        chisurf.experiment.append(tcspc)
+        chisurf.experiment[tcspc.name] = tcspc
 
         ##########################################################
         #       FCS                                              #
@@ -465,7 +465,7 @@ class Main(QtWidgets.QMainWindow):
                 chisurf.models.fcs.fcs.ParseFCSWidget
             ]
         )
-        chisurf.experiment.append(fcs)
+        chisurf.experiment[fcs.name] = fcs
 
         ##########################################################
         #       Global datasets                                  #
@@ -481,7 +481,7 @@ class Main(QtWidgets.QMainWindow):
             ]
         )
         global_fit.add_reader(global_setup)
-        chisurf.experiment.append(global_fit)
+        chisurf.experiment[global_fit.name] = global_fit
 
         chisurf.macros.add_dataset(
             setup=global_setup,
@@ -492,7 +492,7 @@ class Main(QtWidgets.QMainWindow):
         #       Update UI                                        #
         ##########################################################
         self.experiment_names = [
-            b.name for b in chisurf.experiment if b.name is not 'Global'
+            b.name for b in list(chisurf.experiment.values()) if b.name is not 'Global'
         ]
         self.comboBox_experimentSelect.addItems(
             self.experiment_names
