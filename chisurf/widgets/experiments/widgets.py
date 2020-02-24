@@ -99,11 +99,12 @@ class ExperimentalDataSelector(
         dataset_idx = [
             selected_index.row() for selected_index in self.selectedIndexes()
         ]
-        chisurf.run('chisurf.macros.remove_datasets(%s)' % dataset_idx)
+        chisurf.run(
+            'chisurf.macros.remove_datasets(%s)' % dataset_idx
+        )
         self.update()
 
     def onSaveDataset(self):
-        print("onSaveDataset")
         filename = chisurf.widgets.save_file(file_type="*.*")
         base_name, extension = os.path.splitext(filename)
         if extension.lower() == '.csv':
@@ -144,12 +145,11 @@ class ExperimentalDataSelector(
             menu.addAction("Remove").triggered.connect(self.onRemoveDataset)
             menu.addAction("Group").triggered.connect(self.onGroupDatasets)
             menu.addAction("Ungroup").triggered.connect(self.onUnGroupDatasets)
+            menu.addAction("Refresh").triggered.connect(self.update)
             menu.exec_(event.globalPos())
 
-    def update(
-            self, *args, **kwargs
-    ):
-        super().update(*args, **kwargs)
+    def update(self, *args, **kwargs):
+        super().update()
         try:
             window_title = self.fit.name
             self.setWindowTitle(window_title)
