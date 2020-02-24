@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1127</width>
-    <height>710</height>
+    <height>810</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -88,8 +88,8 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>0</width>
-           <height>0</height>
+           <width>495</width>
+           <height>327</height>
           </size>
          </property>
          <property name="floating">
@@ -579,7 +579,7 @@
               <item row="0" column="3">
                <widget class="QLabel" name="label_12">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -597,31 +597,6 @@
                 <property name="value">
                  <number>2</number>
                 </property>
-               </widget>
-              </item>
-              <item row="0" column="5" colspan="2">
-               <widget class="QComboBox" name="comboBox_3">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <item>
-                 <property name="text">
-                  <string>Intensity</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Mean micro time</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Intensity, Mean micro time</string>
-                 </property>
-                </item>
                </widget>
               </item>
               <item row="1" column="3">
@@ -697,7 +672,7 @@
                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add a representation of the data conatined in the CLSM image.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
-                 <string>add representation</string>
+                 <string>add</string>
                 </property>
                </widget>
               </item>
@@ -718,6 +693,31 @@
                 <property name="placeholderText">
                  <string>Image name</string>
                 </property>
+               </widget>
+              </item>
+              <item row="0" column="4" colspan="3">
+               <widget class="QComboBox" name="comboBox_3">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>Intensity</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Mean micro time</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Intensity, Mean micro time</string>
+                 </property>
+                </item>
                </widget>
               </item>
              </layout>
@@ -750,8 +750,8 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>0</width>
-           <height>0</height>
+           <width>422</width>
+           <height>262</height>
           </size>
          </property>
          <property name="floating">
@@ -1113,8 +1113,8 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>0</width>
-           <height>100</height>
+           <width>136</width>
+           <height>200</height>
           </size>
          </property>
          <property name="features">
@@ -1220,7 +1220,7 @@
          <property name="minimumSize">
           <size>
            <width>625</width>
-           <height>70</height>
+           <height>300</height>
           </size>
          </property>
          <property name="features">
@@ -1444,6 +1444,9 @@
            <width>106</width>
            <height>69</height>
           </size>
+         </property>
+         <property name="floating">
+          <bool>false</bool>
          </property>
          <property name="features">
           <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
