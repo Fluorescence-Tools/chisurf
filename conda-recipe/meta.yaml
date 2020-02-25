@@ -44,6 +44,7 @@ requirements:
     - qscintilla2
     - pyopengl
     - qtconsole
+    - jupyter_client <6.0.0|>6.0.0
     - python-docx
     - labellib
     - deprecation

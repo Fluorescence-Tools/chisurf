@@ -25,6 +25,11 @@ dependencies:
     - qscintilla2
     - pyopengl
     - qtconsole
+    # jupyter_client 6.0.0 causes an error
+    # File "C:\Miniconda3\envs\chisurf\lib\site-packages\jupyter_client\client.py", line 200, in control_channel
+    # socket, self.session, self.ioloop
+    # TypeError: ChannelABC() takes no arguments
+    - jupyter_client <6.0.0|>6.0.0
     - python-docx
     - deprecation
     - pyopencl
