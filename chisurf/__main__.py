@@ -201,7 +201,7 @@ class Main(QtWidgets.QMainWindow):
             self.current_fit.model.update()
             self.current_fit.model.show()
             self.current_fit_widget.show()
-            sub_window.current_plot_controller.show()
+            sub_window.current_plt_ctrl.show()
 
     def onRunMacro(self):
         filename = chisurf.widgets.get_filename(

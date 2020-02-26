@@ -311,7 +311,7 @@ class MolView(Plot):
         self.name = kwargs.get('name', 'MolView')
         self.fit = fit
         self.mode = mode
-        self.plot_controller = ControlWidget(self)
+        self.pltControl = ControlWidget(self)
         self.layout = QtWidgets.QVBoxLayout(self)
 
         self.pymolWidget = MolQtWidget(self, play=False, sequence=sequence, enableUi=enableUi)
@@ -358,7 +358,7 @@ class MolView(Plot):
         #cmd.ramp_new("count", obj, [min(bfacts), max(bfacts)], "rainbow")
         #cmd.recolor()
 
-        self.plot_controller.n_states = self.pymol.cmd.count_states(selection="(all)")
+        self.pltControl.n_states = self.pymol.cmd.count_states(selection="(all)")
 
     def open_structure(self, structure, bfact=None, mode=None):
         mode = mode if mode is not None else self.mode
