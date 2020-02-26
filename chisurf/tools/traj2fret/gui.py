@@ -22,7 +22,7 @@ class Structure2Transfer(
     @chisurf.decorators.init_with_ui(ui_filename="structure2transfer.ui")
     def __init__(
             self,
-            verbose=True,
+            verbose: bool = True,
             *args,
             **kwargs
     ):

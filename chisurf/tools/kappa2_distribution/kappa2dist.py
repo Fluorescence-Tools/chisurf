@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing
 
 import sys
 import numpy as np
@@ -16,14 +17,16 @@ class Kappa2Dist(QtWidgets.QWidget):
 
     name = "Kappa2Dist"
 
-    @chisurf.decorators.init_with_ui(ui_filename="kappa2_dist.ui")
+    @chisurf.decorators.init_with_ui(
+        ui_filename="kappa2_dist.ui"
+    )
     def __init__(
             self,
-            kappa2=0.667,
+            kappa2: float = 0.667,
             *args,
             **kwargs
     ):
-        self.k2 = list()
+        self.k2 = np.array([], dtype=np.double)
         self.kappa2 = kappa2
 
         ## pyqtgraph
@@ -48,7 +51,9 @@ class Kappa2Dist(QtWidgets.QWidget):
         self.doubleSpinBox_4.valueChanged.connect(self.onUpdateRapp)
         self.hide()
 
-    def onUpdateHist(self):
+    def onUpdateHist(
+            self
+    ) -> None:
         if self.model == "cone":
             if self.rAD_known:
                 x, k2hist, self.k2 = kappasqAllDelta(
@@ -66,7 +71,9 @@ class Kappa2Dist(QtWidgets.QWidget):
 
         self.onUpdateRapp()
 
-    def onUpdateRapp(self):
+    def onUpdateRapp(
+            self
+    ) -> None:
         k2 = self.k2_true
         k2scale = self.k2scale[1:]
         k2hist = self.k2hist
@@ -81,55 +88,61 @@ class Kappa2Dist(QtWidgets.QWidget):
         self.k2_sd = np.sqrt(np.dot(k2hist, (k2scale-self.k2_mean)**2) / sum(k2hist))
 
     @property
-    def model(self):
+    def model(
+            self
+    ) -> str:
         if self.radioButton_2.isChecked():
             return "cone"
         elif self.radioButton.isChecked():
             return "diffusion"
 
     @property
-    def rAD_known(self):
+    def rAD_known(self) -> bool:
         return self.checkBox.isChecked()
 
     @property
-    def k2_mean(self):
+    def k2_mean(self) -> float:
         return float(self.doubleSpinBox_10.value())
 
     @k2_mean.setter
-    def k2_mean(self, v):
+    def k2_mean(self, v: float):
         self.doubleSpinBox_10.setValue(v)
 
     @property
-    def k2_sd(self):
+    def k2_sd(self) -> float:
         return float(self.doubleSpinBox_9.value())
 
     @k2_sd.setter
-    def k2_sd(self, v):
+    def k2_sd(self, v: float):
         self.doubleSpinBox_9.setValue(v)
 
     @property
-    def min_max(self):
+    def min_max(self) -> typing.Tuple[float, float]:
         k2 = self.k2.flatten()
         return min(k2), max(k2)
 
     @property
     def k2_est(self):
-        return chisurf.fluorescence.anisotropy.kappa2.kappasq(self.delta, self.SA2, self.SD2)
+        return chisurf.fluorescence.anisotropy.kappa2.kappasq(
+            delta=self.delta,
+            sA2=self.SA2,
+            sD2=self.SD2
+        )
 
     @property
-    def n_bins(self):
+    def n_bins(self) -> int:
         return int(self.spinBox.value())
 
     @property
-    def r_0(self):
+    def r_0(self) -> float:
         return float(self.doubleSpinBox_2.value())
 
     @property
-    def r_Dinf(self):
+    def r_Dinf(self) -> float:
         return float(self.doubleSpinBox.value())
 
     @property
-    def r_ADinf(self):
+    def r_ADinf(self) -> float:
         return float(self.doubleSpinBox_7.value())
 
     @property
@@ -141,35 +154,35 @@ class Kappa2Dist(QtWidgets.QWidget):
         return float(self.doubleSpinBox_3.value())
 
     @property
-    def SD2(self):
+    def SD2(self) -> float:
         return -np.sqrt(self.r_Dinf/self.r_0)
 
     @property
-    def SA2(self):
+    def SA2(self) -> float:
         return np.sqrt(self.r_Ainf/self.r_0)
 
     @property
-    def delta(self):
+    def delta(self) -> float:
         return s2delta(self.r_0, self.SD2, self.SA2, self.r_ADinf)
 
     @property
-    def k2_true(self):
+    def k2_true(self) -> float:
         return float(self.doubleSpinBox_4.value())
 
     @property
-    def Rapp_mean(self):
+    def Rapp_mean(self) -> float:
         return float(self.doubleSpinBox_6.value())
 
     @Rapp_mean.setter
-    def Rapp_mean(self, v):
+    def Rapp_mean(self, v: float):
         self.doubleSpinBox_6.setValue(v)
 
     @property
-    def RappSD(self):
+    def RappSD(self) -> float:
         return float(self.doubleSpinBox_8.value())
 
     @RappSD.setter
-    def RappSD(self, v):
+    def RappSD(self, v: float):
         self.doubleSpinBox_8.setValue(v)
 
 

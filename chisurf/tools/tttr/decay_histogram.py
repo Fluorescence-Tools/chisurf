@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing
 
 import sys
 import re
@@ -8,6 +9,7 @@ import pyqtgraph as pg
 from qtpy import QtWidgets
 
 import chisurf.decorators
+import chisurf.curve
 import chisurf.experiments.data
 import chisurf.widgets.experiments.widgets
 import chisurf.fluorescence.tcspc
@@ -18,10 +20,13 @@ lw = plot_settings['line_width']
 
 
 class HistogramTTTR(
-    QtWidgets.QWidget
+    QtWidgets.QWidget,
+    chisurf.curve.CurveGroup
 ):
 
-    @chisurf.decorators.init_with_ui(ui_filename="tttr_histogram.ui")
+    @chisurf.decorators.init_with_ui(
+        ui_filename="tttr_histogram.ui"
+    )
     def __init__(self):
         self.setContentsMargins(0, 0, 0, 0)
         self._curves = list()
@@ -38,10 +43,12 @@ class HistogramTTTR(
         plot = self.plot.getPlotItem()
         self.verticalLayout_9.addWidget(self.plot)
         self.legend = plot.addLegend()
-        self.curve_selector.onRemoveDataset = self.onRemoveDataset
+        self.curve_selector.onRemoveDataset = self.remove_curve
 
         # Actions
-        self.tcspc_setup_widget.pushButton.clicked.connect(self.add_curve)
+        self.tcspc_setup_widget.pushButton.clicked.connect(
+            self.add_curve
+        )
 
     @property
     def curve_name(self):
@@ -51,28 +58,22 @@ class HistogramTTTR(
         else:
             return s
 
-    def onRemoveDataset(self):
-        selected_index = [
-            i.row() for i in self.curve_selector.selectedIndexes()
-        ]
-        curve_list = list()
-        for i, c in enumerate(self._curves):
-            if i not in selected_index:
-                curve_list.append(c)
-        self._curves = curve_list
+    def remove_curve(
+            self,
+            selected_index: typing.List[int] = None
+    ):
+        if selected_index is None:
+            selected_index = [
+                i.row() for i in self.curve_selector.selectedIndexes()
+            ]
+        super().remove_curve(selected_index)
         self.curve_selector.update()
         self.plot_curves()
 
     def clear_curves(self):
-        self._curves = list()
+        super().clear_curves()
         plot = self.plot.getPlotItem()
         plot.clear()
-
-    def get_data_curves(
-            self,
-            **kwargs
-    ):
-        return self._curves
 
     def plot_curves(self):
         self.legend.close()
@@ -91,11 +92,15 @@ class HistogramTTTR(
         plot.setLogMode(x=False, y=True)
         plot.showGrid(True, True, 1.0)
 
-    def add_curve(self):
-        d = self.tcspc_setup_widget.load_data()
-        self._curves.append(d)
-        self.curve_selector.update()
-        self.plot_curves()
+    def add_curve(
+            self,
+            v: chisurf.curve.Curve = None
+    ):
+        if v is None:
+            d = self.tcspc_setup_widget.load_data()
+            self.curve_selector.update()
+            self.plot_curves()
+        super().add_curve(v)
 
 
 class TcspcTTTRWidget(

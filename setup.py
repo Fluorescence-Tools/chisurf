@@ -137,7 +137,7 @@ setup(
         'python-docx',
         'deprecation',
         'pyopencl',
-        'opencv'
+        'opencv',
         'mrcfile',
         'qtconsole',
         'ipython',

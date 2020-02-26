@@ -7,6 +7,7 @@ import numba as nb
 import numpy as np
 
 import chisurf.fluorescence
+import chisurf.fio
 
 
 def convert_chain_id_to_numbers(chain_id):
@@ -31,7 +32,7 @@ def mdtraj_selection_string(
 
 
 def traj2anisotropy(
-        traj,
+        traj: md.Trajectory,
         t_step: float,
         d1: int,
         d2: int,
@@ -41,8 +42,8 @@ def traj2anisotropy(
     Biophysical Journal Volume 89 December 2005 3757-3770
     Gunnar F. Schroder, Ulrike Alexiev,y and Helmut Grubmuller
 
-    Time-dependent fluorescence depolarization and Brownian rotational diffusion coefficients of macromolecules
-    Terence Tao, Biopolymers, 1969
+    Time-dependent fluorescence depolarization and Brownian rotational
+    diffusion coefficients of macromolecules Terence Tao, Biopolymers, 1969
 
     :return:
     """
@@ -53,7 +54,6 @@ def traj2anisotropy(
     n = np.sqrt((d**2).sum(axis=1))
     dn = (d.T / n).T
     r = np.zeros(n_t_max, dtype=np.float64)
-
     for i in range(0, len(traj) - n_t_max):
         for j in range(0, n_t_max):
             dp = np.dot(dn[i], dn[i+j])
@@ -65,7 +65,7 @@ def traj2anisotropy(
 
 @nb.jit(nopython=True)
 def integrate_rate_traj(
-        k,
+        k: np.ndarray,
         t_step: float,
         t_max: float
 ):
@@ -87,7 +87,7 @@ def integrate_rate_traj(
 
 
 def traj2decay(
-        k,
+        k: np.ndarray,
         t_step: float,
         t_max: float,
         tau0: float = None
@@ -156,11 +156,11 @@ class CalculateTransfer(object):
         self.__distances = None
 
     @property
-    def stride(self):
+    def stride(self) -> int:
         return self._stride
 
     @stride.setter
-    def stride(self, v):
+    def stride(self, v: int):
         self._stride = v
 
     @property
@@ -180,19 +180,19 @@ class CalculateTransfer(object):
         self._trajectory_file = v
 
     @property
-    def donor(self):
+    def donor(self) -> int:
         return self.__donorAtomID
 
     @donor.setter
-    def donor(self, v):
+    def donor(self, v: int):
         self.__donorAtomID = v
 
     @property
-    def acceptor(self):
+    def acceptor(self) -> int:
         return self.__acceptorAtomID
 
     @acceptor.setter
-    def acceptor(self, v):
+    def acceptor(self, v: int):
         self.__acceptorAtomID = v
 
     @property
@@ -214,19 +214,19 @@ class CalculateTransfer(object):
         return self.__distances
 
     @property
-    def tau0(self):
+    def tau0(self) -> float:
         return self._tau0
 
     @tau0.setter
-    def tau0(self, v):
+    def tau0(self, v: float):
         self._tau0 = float(v)
 
     @property
-    def forster_radius(self):
+    def forster_radius(self) -> float:
         return self.__forster_radius
 
     @forster_radius.setter
-    def forster_radius(self, v):
+    def forster_radius(self, v: float):
         self.__forster_radius = float(v)
 
     def calc(
