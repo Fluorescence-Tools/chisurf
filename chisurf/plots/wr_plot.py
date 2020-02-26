@@ -41,6 +41,10 @@ class ResidualPlot(plotbase.Plot):
             fit=fit,
             **kwargs
         )
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+
         self.data_x, self.data_y = None, None
 
         curves = list()

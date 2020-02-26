@@ -309,12 +309,12 @@ class SurfacePlot(Plot):
         self.selection_y = make.range(.25, .5)
         self.g_yplot.add_item(self.selection_y)
 
-        self.plot_controller = SurfacePlotWidget(self)
-        self.widgets = [self.plot_controller]
+        self.pltControl = SurfacePlotWidget(self)
+        self.widgets = [self.pltControl]
 
     @property
     def mask(self):
-        return self.plot_controller.getMask(self.source.values)
+        return self.pltControl.getMask(self.source.values)
 
     @property
     def maskedValues(self):
@@ -354,13 +354,13 @@ class SurfacePlot(Plot):
             return 0.0
 
     def update_all(self, *args, **kwargs):
-        self.plot_controller.update()
+        self.pltControl.update()
         self.update_plots()
 
     def changeParameter(self):
         paras = self.source.values
-        p1, p1Name = self.plot_controller.p1
-        p2, p2Name = self.plot_controller.p2
+        p1, p1Name = self.pltControl.p1
+        p2, p2Name = self.pltControl.p2
         self.g_yplot.set_titles(ylabel=p2Name)
         self.g_xplot.set_titles(ylabel=p1Name)
         self.g_xyplot.set_titles(ylabel=p2Name, xlabel=p1Name)
@@ -386,8 +386,8 @@ class SurfacePlot(Plot):
 
         # mask by range
         # x
-        xmin = self.plot_controller.xmin.value
-        xmax = self.plot_controller.xmax.value
+        xmin = self.pltControl.xmin.value
+        xmax = self.pltControl.xmax.value
         q1 = d1 > xmin
         q2 = d1 < xmax
         d1 = d1[q1 * q2]
@@ -397,8 +397,8 @@ class SurfacePlot(Plot):
         m1 = m1[q1 * q2]
 
         # y
-        ymin = self.plot_controller.ymin.value
-        ymax = self.plot_controller.ymax.value
+        ymin = self.pltControl.ymin.value
+        ymax = self.pltControl.ymax.value
         q1 = d2 > ymin
         q2 = d2 < ymax
         d2 = d2[q1 * q2]
@@ -410,20 +410,20 @@ class SurfacePlot(Plot):
         self.selection_x.set_range(self.xmin, self.xmax)
         self.selection_y.set_range(self.ymin, self.ymax)
 
-        self.g_xhist_a.set_logscale(self.plot_controller.log_x)
-        self.g_xhist_m.set_logscale(self.plot_controller.log_x)
+        self.g_xhist_a.set_logscale(self.pltControl.log_x)
+        self.g_xhist_m.set_logscale(self.pltControl.log_x)
         self.g_xhist_m.set_hist_data(m1)
         self.g_xhist_a.set_hist_data(d1)
         self.g_xplot.do_autoscale()
 
-        self.g_yhist_a.set_logscale(self.plot_controller.log_y)
-        self.g_yhist_m.set_logscale(self.plot_controller.log_y)
+        self.g_yhist_a.set_logscale(self.pltControl.log_y)
+        self.g_yhist_m.set_logscale(self.pltControl.log_y)
         self.g_yhist_m.set_hist_data(m2)
         self.g_yhist_a.set_hist_data(d2)
         self.g_yplot.do_autoscale()
 
-        self.g_hist2d_m.set_bins(self.plot_controller.bins2X, self.plot_controller.bins2Y)
-        self.plot_controller.bins2Y
+        self.g_hist2d_m.set_bins(self.pltControl.bins2X, self.pltControl.bins2Y)
+        self.pltControl.bins2Y
         try:
             pass
             #self.g_hist2d_m.set_data(m1, m2)

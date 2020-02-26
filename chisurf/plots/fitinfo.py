@@ -21,7 +21,10 @@ class FitInfo(plotbase.Plot):
             parent=parent,
             **kwargs
         )
-        self.plot_controller = QtWidgets.QWidget()
+        self.pltControl = QtWidgets.QWidget()
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
 
         self.textedit = QtWidgets.QPlainTextEdit()
         self.layout.addWidget(self.textedit)
