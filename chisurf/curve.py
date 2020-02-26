@@ -1,5 +1,6 @@
 from __future__ import annotations
 import typing
+import abc
 
 import numpy as np
 
@@ -230,3 +231,46 @@ class Curve(
         x = self.x.__getitem__(key)
         y = self.y.__getitem__(key)
         return x, y
+
+
+class CurveGroup(
+    object
+):
+
+    def __init__(
+            self,
+            seq: typing.List = ()
+    ):
+        self._curves = seq
+
+    def clear_curves(self):
+        self._curves.clear()
+
+    def get_data_curves(
+            self,
+            *args,
+            **kwargs
+    ) -> typing.List[chisurf.curve.Curve]:
+        return self._curves
+
+    @abc.abstractmethod
+    def remove_curve(
+            self,
+            selected_index: typing.List[int] = None
+    ):
+        if selected_index is None:
+            selected_index = list()
+        curve_list = list()
+        for i, c in enumerate(self._curves):
+            if i not in selected_index:
+                curve_list.append(c)
+        self._curves = curve_list
+
+    @abc.abstractmethod
+    def add_curve(
+            self,
+            v: chisurf.curve.Curve = None
+    ):
+        if v is not None:
+            self._curves.append(v)
+

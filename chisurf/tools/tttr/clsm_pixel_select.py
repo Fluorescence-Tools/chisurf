@@ -1,8 +1,8 @@
 """
 CLSM pixel select
-is a program that can be used to display CLSM TTTR images, to select pixels,
-and create and export fluorescence decay histograms. Exported decay histograms
-can be directly used in ChiSurf.
+is a program that can be used to create representations of CLSM TTTR data,
+to select pixels, and create and export fluorescence decay histograms. Exported
+decay histograms can be directly used in ChiSurf.
 """
 from __future__ import annotations
 import typing
@@ -41,8 +41,8 @@ clsm_settings = yaml.safe_load(
 
 
 class CLSMPixelSelect(
-    # QtWidgets.QMainWindow
-    QtWidgets.QWidget
+    QtWidgets.QWidget,
+    chisurf.curve.CurveGroup
 ):
 
     name: str = "pixel-decay"
@@ -54,7 +54,7 @@ class CLSMPixelSelect(
     img_plot: pyqtgraph.PlotWindow = None
     current_decay: chisurf.curve.Curve = None
     current_setup: str = None
-    images: typing.Dict[str, np.ndarray] = dict()
+    clsm_representations: typing.Dict[str, np.ndarray] = dict()
     masks: typing.Dict[str, np.ndarray] = dict()
 
     @property
@@ -70,9 +70,9 @@ class CLSMPixelSelect(
         else:
             return s
 
-    def onRemoveDataset(self) -> None:
-        """Remove the selected datasets
-        """
+    def onRemoveDataset(
+            self
+    ) -> None:
         selected_index = [
             i.row() for i in self.cs.selectedIndexes()
         ]
@@ -84,19 +84,28 @@ class CLSMPixelSelect(
         self.cs.update()
         self.plot_curves()
 
-    def clear_curves(self):
-        self._curves = list()
+    def clear_curves(
+            self
+    ) -> None:
+        super().clear_curves()
+        # Update UI
         plot = self.plot.getPlotItem()
         plot.clear()
         self.cs.update()
 
-    def get_data_curves(
-            self
-    ) -> typing.List[chisurf.curve.Curve]:
-        """
-        :return: Get the entire list of all fluorescence decay curves.
-        """
-        return self._curves
+    def remove_curve(
+            self,
+            selected_index: typing.List[int] = None
+    ) -> None:
+        # Read from UI
+        if selected_index is None:
+            selected_index = [
+                i.row() for i in self.cs.selectedIndexes()
+            ]
+        super().remove_curve(selected_index)
+        # Update UI
+        self.cs.update()
+        self.plot_curves()
 
     def plot_curves(
             self
@@ -129,17 +138,26 @@ class CLSMPixelSelect(
             )
         plot.autoRange()
 
-    def add_curve(self):
-        """Adds the current selected curve to the list
-        of curves.
+    def add_curve(
+            self,
+            v: chisurf.curve.Curve = None
+    ) -> None:
+        """Adds the current selected curve to the list of curves.
+
+        :param v:
+        :return:
         """
-        decay = copy.copy(self.current_decay)
+        decay = copy.copy(self.current_decay) if v is None else v
         try:
             name = self.listWidget.currentItem().text()
         except AttributeError:
             name = self.lineEdit_5.text()
+        if len(name) == 0:
+            name = 'no-name'
         decay.name = name
-        self._curves.append(decay)
+        super().add_curve(decay)
+
+        # Update UI
         self.cs.update()
         self.plot_curves()
 
@@ -147,7 +165,7 @@ class CLSMPixelSelect(
             self,
             filename: str = None,
             tttr_type: str = None
-    ):
+    ) -> None:
         """Opens a tttr file and sets the attribute '.tttr_data'.
         If no filename an file selection window is used to find a tttr file.
         If no tttr_type is specified the values provided by the UI are used.
@@ -156,6 +174,7 @@ class CLSMPixelSelect(
         :param tttr_type: (optional) parameter specifying the tttr type
         :return:
         """
+        # Load from UI
         if not isinstance(filename, str):
             tentative_filename = str(self.lineEdit.text())
             if os.path.isfile(tentative_filename):
@@ -167,16 +186,47 @@ class CLSMPixelSelect(
                 self.lineEdit.setText(filename)
         if tttr_type is None:
             tttr_type = str(self.comboBox_4.currentText())
+
+        # Load TTTR data
         self.tttr_data = tttrlib.TTTR(
             filename,
             tttr_type
         )
 
-    def add_image(self):
-        clsm_name = str(self.comboBox_9.currentText())
-        clsm_image = self.clsm_images[clsm_name]
+    def add_representation(
+            self,
+            clsm_image: tttrlib.CLSMImage = None,
+            image_type: str = None,
+            clsm_name: str = None,
+            n_ph_min: int = None,
+            image_name: str = None
+    ) -> None:
+        """Create a new representation of an CLSM image. If no clsm_image
+        of the type tttrlib.CLSMImage is provided the clsm_image is taken from
+        self.clsm_images using the parameter clsm_name.
 
-        image_type = str(self.comboBox_3.currentText())
+        :param clsm_image:
+        :param image_type:
+        :param clsm_name: the dictionary key of the CLSM image from which
+        a new representation is generated for.
+        :param n_ph_min: the minimum number of photons in a pixel. This
+        value is used for mean micro time representations to discriminate
+        pixels with few photons.
+
+        :return:
+        """
+        # Read from UI
+        if clsm_name is None:
+            clsm_name = str(self.comboBox_9.currentText())
+        if clsm_image is None:
+            clsm_image = self.clsm_images[clsm_name]
+        if image_type is None:
+            image_type = str(self.comboBox_3.currentText())
+        if n_ph_min is None:
+            n_ph_min = int(self.spinBox.value())
+        if image_name is None:
+            image_name = str(self.lineEdit_4.text())
+
         if image_type == "Mean micro time":
             n_ph_min = int(self.spinBox.value())
             mean_micro_time = clsm_image.get_mean_tac_image(
@@ -189,7 +239,6 @@ class CLSMPixelSelect(
             intensity_image = clsm_image.get_intensity_image()
             data = intensity_image.astype(np.float64)
         else:
-            n_ph_min = int(self.spinBox.value())
             mean_micro_time = clsm_image.get_mean_tac_image(
                 self.tttr_data,
                 n_ph_min,
@@ -197,23 +246,31 @@ class CLSMPixelSelect(
             )
             intensity_image = clsm_image.get_intensity_image()
             data = mean_micro_time * intensity_image
+        self.clsm_representations[image_name] = data
 
-        image_name = str(self.lineEdit_4.text())
-        self.images[image_name] = data
+        # update UI
         self.comboBox_7.clear()
         self.comboBox_7.addItems(
-            list(self.images.keys())
+            list(self.clsm_representations.keys())
         )
         self.image_changed()
 
-    def add_mask(self):
-        mask_name = self.lineEdit_5.text()
+    def add_mask(
+            self,
+            mask_name: str = None
+    ) -> None:
+        if mask_name is None:
+            mask_name = self.lineEdit_5.text()
         self.masks[mask_name] = self.img_drawn.image
+
+        # Update UI
         self.listWidget.clear()
         for mn in self.masks.keys():
             self.listWidget.addItem(mn)
 
-    def mask_changed(self):
+    def mask_changed(
+            self
+    ) -> None:
         mask_name = self.listWidget.currentItem().text()
         d = self.masks[mask_name]
         d *= np.max(self.img.image.flatten())
@@ -221,20 +278,46 @@ class CLSMPixelSelect(
         self.img_drawn.updateImage()
         self.update_plot()
 
-    def remove_current_mask(self):
-        listItems = self.listWidget.selectedItems()
-        if not listItems:
-            return
-        for item in listItems:
+    def get_selected_masks(
+            self
+    ) -> typing.List[str]:
+        """Returns a list of mask names that are currently
+        selected in the UI.
+
+        :return: A list of mask names
+        """
+        # Get list of mask_names from UI
+        mask_names = list()
+        list_items = self.listWidget.selectedItems()
+        if not list_items:
+            return list()
+        for item in list_items:
             lw = self.listWidget.takeItem(self.listWidget.row(item))
-            mask_name = lw.text()
+            mask_names.append(lw.text())
+        return mask_names
+
+    def remove_masks(
+            self,
+            mask_names: typing.List[str] = None
+    ) -> None:
+        """ Removes a list of masks
+        """
+        # Read from UI
+        if mask_names is None:
+            mask_names = self.get_selected_masks()
+        # Remove masks
+        for mask_name in mask_names:
             self.masks.pop(mask_name, None)
 
-    def save_pixel_mask(self):
-        filename = chisurf.widgets.save_file(
-            description='Image file',
-            file_type='All files (*.png)'
-        )
+    def save_pixel_mask(
+            self,
+            filename: str = None
+    ) -> None:
+        if filename is None:
+            filename = chisurf.widgets.save_file(
+                description='Image file',
+                file_type='All files (*.png)'
+            )
         image = self.img_drawn.image
         image[image > 0] = 255
         cv2.imwrite(
@@ -242,18 +325,24 @@ class CLSMPixelSelect(
             image
         )
 
-    def clear_pixel_mask(self):
+    def clear_pixel_mask(
+            self
+    ) -> None:
         self.img_drawn.setImage(
             np.zeros_like(
                 self.img_drawn.image
             )
         )
 
-    def load_pixel_mask(self):
-        filename = chisurf.widgets.get_filename(
-            description='Image file',
-            file_type='All files (*.png)'
-        )
+    def load_pixel_mask(
+            self,
+            filename: str = None
+    ) -> None:
+        if filename is None:
+            filename = chisurf.widgets.get_filename(
+                description='Image file',
+                file_type='All files (*.png)'
+            )
         image = cv2.imread(
             filename
         )
@@ -263,12 +352,14 @@ class CLSMPixelSelect(
             ).astype(np.float64)
         )
 
-    def image_changed(self):
+    def image_changed(
+            self
+    ) -> None:
         # update image
         if self.checkBox_5.isChecked():
             image_name = self.comboBox_7.currentText()
-            if image_name in self.images.keys():
-                image = self.images.get(image_name, None)
+            if image_name in self.clsm_representations.keys():
+                image = self.clsm_representations.get(image_name, None)
                 if image is not None:
                     self.spinBox_8.setMinimum(0)
                     self.spinBox_8.setMaximum(image.shape[0] - 1)
@@ -308,14 +399,22 @@ class CLSMPixelSelect(
             w.hide()
         self.update_plot()
 
-    def save_current_image(self):
-        image_name = self.comboBox_7.currentText()
-        if image_name in self.images.keys():
+    def save_image(
+            self,
+            image_name: str = None,
+            filename: str = None
+    ) -> None:
+        # Read from UI
+        if image_name is None:
+            image_name = self.comboBox_7.currentText()
+        if filename is None:
             filename = chisurf.widgets.save_file(
                 description='Image file',
                 file_type='All files (*.png)'
             )
-            image = self.images.get(image_name, None)
+
+        if image_name in self.clsm_representations.keys():
+            image = self.clsm_representations.get(image_name, None)
             if image is not None:
                 if self.checkBox_2.isChecked():
                     data = image.sum(axis=0)
@@ -327,7 +426,9 @@ class CLSMPixelSelect(
                     data.T
                 )
 
-    def update_plot(self):
+    def update_plot(
+            self
+    ) -> None:
         # Transpose sel (pyqtgraph is column major)
         # (column, row) -> (row , column)
         sel = np.copy(self.img_drawn.image).T
@@ -383,7 +484,7 @@ class CLSMPixelSelect(
     def setup_image_plot(
             self,
             decay_plot: pyqtgraph.PlotWindow
-    ):
+    ) -> pyqtgraph.GraphicsLayoutWidget:
         win = pyqtgraph.GraphicsLayoutWidget()
         # A plot area (ViewBox + axes) for displaying the image
         self.img_plot = win.addPlot(title="")
@@ -411,7 +512,9 @@ class CLSMPixelSelect(
         # Monkey-patch the image to use our custom hover function.
         # This is generally discouraged (you should subclass ImageItem instead),
         # but it works for a very simple use like this.
-        def imagehoverEvent(event):
+        def imagehoverEvent(
+                event
+        ) -> None:
             """Show the position, pixel, and value under the mouse cursor.
             """
             if event.isExit():
@@ -431,7 +534,9 @@ class CLSMPixelSelect(
         # Monkey-patch the image to use our custom hover function.
         # This is generally discouraged (you should subclass ImageItem instead),
         # but it works for a very simple use like this.
-        def imageMouseDragEvent(event):
+        def imageMouseDragEvent(
+                event
+        ) -> None:
             """Show the position, pixel, and value under the mouse cursor.
             """
             if event.button() != QtCore.Qt.LeftButton:
@@ -445,7 +550,9 @@ class CLSMPixelSelect(
         self.img_drawn.mouseDragEvent = imageMouseDragEvent
         return win
 
-    def update_brush(self):
+    def update_brush(
+            self
+    ) -> None:
         self.brush_size = int(self.spinBox_2.value())
         self.brush_width = float(self.doubleSpinBox.value())
         self.brush_kernel = chisurf.math.signal.gaussian_kernel(
@@ -467,7 +574,9 @@ class CLSMPixelSelect(
         if not select:
             self.brush_kernel *= -1
 
-    def setup_changed(self):
+    def setup_changed(
+            self
+    ) -> None:
         current_setup = self.comboBox_5.currentText()
 
         tttr_type = clsm_settings[current_setup]['tttr_type']
@@ -498,36 +607,69 @@ class CLSMPixelSelect(
             clsm_settings[current_setup]['event_type_marker']
         )
 
-    def clear_images(self):
-        self.images.clear()
+    def clear_images(
+            self
+    ) -> None:
+        self.clsm_representations.clear()
         self.comboBox_7.clear()
         self.image_changed()
 
-    def remove_image(self):
-        image_name = self.comboBox_7.currentText()
-        self.images.pop(image_name, None)
+    def remove_image(
+            self,
+            image_name: str = None
+    ) -> None:
+        # Read from UI
+        if image_name is None:
+            image_name = self.comboBox_7.currentText()
+
+        self.clsm_representations.pop(image_name, None)
+
+        # Update UI
         self.comboBox_7.currentText()
         self.comboBox_7.removeItem(
             self.comboBox_7.currentIndex()
         )
 
-    def add_clsm(self):
-        print("add_clsm")
-        frame_marker = [int(i) for i in str(self.lineEdit_2.text()).split(",")]
-        line_start_marker = int(self.spinBox_4.value())
-        line_stop_marker = int(self.spinBox_5.value())
-        event_type_marker = int(self.spinBox_6.value())
-        pixel_per_line = int(self.spinBox_7.value())
-        reading_routine = str(self.comboBox.currentText())
-        clsm_name = str(self.lineEdit_6.text())
-        print("clsm_name: ", clsm_name)
-        print("frame_marker: ", frame_marker)
-        print("line_start_marker: ", line_start_marker)
-        print("line_stop_marker: ", line_stop_marker)
-        print("event_type_marker: ", event_type_marker)
-        print("pixel_per_line: ", pixel_per_line)
-        print("reading_routine: ", reading_routine)
-        channels = [int(i) for i in str(self.lineEdit_3.text()).split(",")]
+    def add_clsm(
+            self,
+            frame_marker: typing.List[int] = None,
+            line_start_marker: int = None,
+            line_stop_marker: int = None,
+            event_type_marker: int = None,
+            pixel_per_line: int = None,
+            reading_routine: str = None,
+            clsm_name: str = None,
+            channels: typing.List[int] = None
+    ) -> None:
+        chisurf.logging.info("CLSMPixelSelect::add_clsm")
+        # Read from UI
+        if frame_marker is None:
+            frame_marker = [
+                int(i) for i in str(self.lineEdit_2.text()).split(",")
+            ]
+        if line_start_marker is None:
+            line_start_marker = int(self.spinBox_4.value())
+        if line_stop_marker is None:
+            line_stop_marker = int(self.spinBox_5.value())
+        if event_type_marker is None:
+            event_type_marker = int(self.spinBox_6.value())
+        if pixel_per_line is None:
+            pixel_per_line = int(self.spinBox_7.value())
+        if reading_routine is None:
+            reading_routine = str(self.comboBox.currentText())
+        if clsm_name is None:
+            clsm_name = str(self.lineEdit_6.text())
+        if channels is None:
+            channels = [int(i) for i in str(self.lineEdit_3.text()).split(",")]
+
+        chisurf.logging.info("clsm_name: %s" % clsm_name)
+        chisurf.logging.info("frame_marker: %s" % frame_marker)
+        chisurf.logging.info("line_start_marker: %s" % line_start_marker)
+        chisurf.logging.info("line_stop_marker: %s" % line_stop_marker)
+        chisurf.logging.info("event_type_marker: %s" % event_type_marker)
+        chisurf.logging.info("pixel_per_line: %s" % pixel_per_line)
+        chisurf.logging.info("reading_routine: %s" % reading_routine)
+
         clsm_image = tttrlib.CLSMImage(
             self.tttr_data,
             frame_marker,
@@ -541,16 +683,26 @@ class CLSMPixelSelect(
             tttr_data=self.tttr_data,
             channels=channels
         )
+
+        # Update UI
         self.clsm_images[clsm_name] = clsm_image
         self.comboBox_9.clear()
         self.comboBox_9.addItems(
             list(self.clsm_images.keys())
         )
 
-    def remove_clsm(self):
-        print("remove_clsm")
-        clsm_name = self.comboBox_9.currentText()
+    def remove_clsm(
+            self,
+            clsm_name: str = None
+    ) -> None:
+        chisurf.logging.info("CLSMPixelSelect::remove_clsm")
+        # Read from UI
+        if clsm_name is None:
+            clsm_name = self.comboBox_9.currentText()
+
         self.clsm_images.pop(clsm_name, None)
+
+        # Update UI
         self.comboBox_9.clear()
         self.comboBox_9.addItems(
             list(self.clsm_images.keys())
@@ -560,8 +712,8 @@ class CLSMPixelSelect(
             self,
             *args,
             **kwargs
-    ):
-        # initilize GUI
+    ) -> None:
+        # initilize UI
         super().__init__(
             *args,
             **kwargs
@@ -575,6 +727,7 @@ class CLSMPixelSelect(
             ),
             self
         )
+
         ##########################################################
         #      Arrange Docks and window positions                #
         #      Window-controls tile, stack etc.                  #
@@ -679,15 +832,15 @@ class CLSMPixelSelect(
         self.actionAdd_decay.triggered.connect(self.add_curve)
         self.actionClear_decay_curves.triggered.connect(self.clear_curves)
         self.actionSetup_changed.triggered.connect(self.setup_changed)
-        self.actionAdd_image.triggered.connect(self.add_image)
+        self.actionAdd_image.triggered.connect(self.add_representation)
         self.actionImage_changed.triggered.connect(self.image_changed)
         self.actionUpdate_plot.triggered.connect(self.update_plot)
-        self.actionSave_image.triggered.connect(self.save_current_image)
+        self.actionSave_image.triggered.connect(self.save_image)
         self.actionClear_images.triggered.connect(self.clear_images)
         self.actionAdd_mask.triggered.connect(self.add_mask)
         self.actionMask_changed.triggered.connect(self.mask_changed)
         self.actionRemove_image.triggered.connect(self.remove_image)
-        self.actionRemove_current_mask.triggered.connect(self.remove_current_mask)
+        self.actionRemove_current_mask.triggered.connect(self.remove_masks)
         self.actionAdd_CLSM.triggered.connect(self.add_clsm)
         self.actionRemove_CLSM.triggered.connect(self.remove_clsm)
 

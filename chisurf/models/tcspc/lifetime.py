@@ -291,9 +291,12 @@ class LifetimeModel(ModelCurve):
         return self.lifetimes.lifetime_spectrum
 
     def get_curves(
-            self
+            self,
+            copy_curves: bool = False
     ) -> typing.Dict[str, chisurf.curve.Curve]:
-        d = super().get_curves()
+        d = super().get_curves(
+            copy_curves=copy_curves
+        )
         d['IRF'] = self.convolve.irf
         return d
 

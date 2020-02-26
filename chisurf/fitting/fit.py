@@ -490,11 +490,14 @@ class FitGroup(
             f.xmax = v
 
     def get_curves(
-            self
+            self,
+            copy_curves: bool = False
     ) -> typing.Dict[str, chisurf.curve.Curve]:
         all_curves = super().get_curves()
         for i, f in enumerate(self.grouped_fits):
-            fit_curves = f.get_curves()
+            fit_curves = f.get_curves(
+                copy_curves=copy_curves
+            )
             for curve_key in fit_curves:
                 new_curve_key = curve_key + "_%02d" % i
                 all_curves[new_curve_key] = fit_curves[curve_key]

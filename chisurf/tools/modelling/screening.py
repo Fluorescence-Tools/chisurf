@@ -4,16 +4,19 @@ import os
 import pickle
 
 from qtpy import QtCore, QtWidgets
+
 import numpy as np
-from scipy.stats import f
 
 import chisurf
 import chisurf.decorators
 import chisurf.structure.cluster
 import chisurf.plots
+import chisurf.fio
+import chisurf.widgets
+
 from chisurf.structure.potential import potentials
 from chisurf.structure.trajectory import TrajectoryFile
-import chisurf.widgets
+from scipy.stats import f
 
 
 class FPSScreenTrajectory(QtWidgets.QWidget):
