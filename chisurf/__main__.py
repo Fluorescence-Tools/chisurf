@@ -46,6 +46,10 @@ class Main(QtWidgets.QMainWindow):
     def fit_idx(
             self
     ) -> int:
+        """
+        :return: index in the list of all fits of the fit that
+        corresponds to the currently selected fit window
+        """
         subwindow = self.mdiarea.currentSubWindow()
         if subwindow is not None:
             for fit_idx, f in enumerate(chisurf.fits):
@@ -56,6 +60,11 @@ class Main(QtWidgets.QMainWindow):
     def current_experiment_idx(
             self
     ) -> int:
+        """
+        :return: index of the currently selected experiment
+        out of all supported experiments. This corresponds to
+        the index of the UI combo box used to select the experiment.
+        """
         return self.comboBox_experimentSelect.currentIndex()
 
     @current_experiment_idx.setter

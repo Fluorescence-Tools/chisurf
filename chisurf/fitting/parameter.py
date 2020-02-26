@@ -22,6 +22,11 @@ class FittingParameter(
 
     def __init__(
             self,
+            value: float = 1.0,
+            link: chisurf.parameter.Parameter = None,
+            lb: float = float("-inf"),
+            ub: float = float("inf"),
+            bounds_on: bool = False,
             fixed: bool = False,
             *args,
             **kwargs
@@ -35,6 +40,11 @@ class FittingParameter(
         """
         super().__init__(
             *args,
+            value=value,
+            link=link,
+            ub=ub,
+            lb=lb,
+            bounds_on=bounds_on,
             **kwargs
         )
         self.fixed = fixed

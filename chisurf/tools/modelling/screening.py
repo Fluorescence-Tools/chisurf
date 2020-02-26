@@ -412,7 +412,9 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
         self.lineEdit_7.setText(str(idxiMin))
 
     def onLoadTableOnStructures(self):
-        print("onLoadTableOnStructures")
+        chisurf.logging.info(
+            "onLoadTableOnStructures"
+        )
         #filename = str(QtGui.QFileDialog.getOpenFileName(None, 'Save cluster table', '', 'CSV data files (*.csv)'))
         filename = chisurf.widgets.get_filename('Save cluster table', 'CSV data files (*.csv)')
 
@@ -442,7 +444,9 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
                     filenames.append(s[4])
 
     def onSelectionChanged(self):
-        chisurf.logging("onSelectionChanged")
+        chisurf.logging.info(
+            "onSelectionChanged"
+        )
         print(self.fit.surface)
         self.fit.surface.setChis([self.chi2s])
         self.fit.surface.setParameter(np.vstack([self.chi2s, self.rmsds]))
