@@ -143,14 +143,16 @@ class ModelCurve(
         )
 
     def get_curves(
-            self
+            self,
+            copy_curves: bool = False
     ) -> typing.Dict[str, chisurf.curve.Curve]:
         xmin = self.fit.xmin
         xmax = self.fit.xmax
         return {
             'model': chisurf.curve.Curve(
                 x=self.x[xmin:xmax],
-                y=self.y[xmin:xmax]
+                y=self.y[xmin:xmax],
+                copy_array=copy_curves
             )
         }
 

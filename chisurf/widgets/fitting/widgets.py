@@ -188,8 +188,8 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         self.plot_tab_widget = QtWidgets.QTabWidget()
         layout.addWidget(self.plot_tab_widget)
 
-        self.current_plt_ctrl = QtWidgets.QWidget(self)
-        self.current_plt_ctrl.hide()
+        self.current_plot_controller = QtWidgets.QWidget(self)
+        self.current_plot_controller.hide()
 
         plots = list()
         for plot_class, kwargs in fit.model.plot_classes:
@@ -197,10 +197,12 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
                 fit,
                 **kwargs
             )
-            plot.pltControl.hide()
+            plot.plot_controller.hide()
             plots.append(plot)
             self.plot_tab_widget.addTab(plot, plot_class.name)
-            control_layout.addWidget(plot.pltControl)
+            control_layout.addWidget(
+                plot.plot_controller
+            )
 
         fit.plots = plots
         for f in fit:
@@ -213,9 +215,9 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
 
     def on_change_plot(self):
         idx = self.plot_tab_widget.currentIndex()
-        self.current_plt_ctrl.hide()
-        self.current_plt_ctrl = self.fit.plots[idx].pltControl
-        self.current_plt_ctrl.show()
+        self.current_plot_controller.hide()
+        self.current_plot_controller = self.fit.plots[idx].plot_controller
+        self.current_plot_controller.show()
 
     def updateStatusBar(
             self,

@@ -60,7 +60,7 @@ class AvPlot(
             **kwargs
         )
         # plot control dialog
-        self.pltControl = AvPlotControl(self, **kwargs)
+        self.plot_controller = AvPlotControl(self, **kwargs)
         self.layout = QtWidgets.QVBoxLayout(self)
 
         area = DockArea()

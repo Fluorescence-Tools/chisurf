@@ -20,6 +20,9 @@ def add_fit(
         model_name: str = None
 ):
     cs = chisurf.cs
+    # Process inputs of macro and replace None
+    # with more sensible values that are read
+    # from the GUI
     if dataset_indices is None:
         dataset_indices = [
             cs.dataset_selector.selected_curve_index
@@ -27,27 +30,23 @@ def add_fit(
     if model_name is None:
         model_name = cs.current_model_name
 
+    # create a list of data sets to which a fit with
+    # a particular model is added
     data_sets = [
         cs.dataset_selector.datasets[i] for i in dataset_indices
     ]
-    model_names = data_sets[0].experiment.model_names
 
+    model_names = data_sets[0].experiment.model_names
     model_class = data_sets[0].experiment.model_classes[0]
-    for model_idx, mn in enumerate(
-            model_names
-    ):
+    for model_idx, mn in enumerate(model_names):
         if mn == model_name:
             model_class = data_sets[0].experiment.model_classes[model_idx]
             break
 
     for data_set in data_sets:
         if data_set.experiment is data_sets[0].experiment:
-
             # Make sure the data set is a DataGroup
-            if not isinstance(
-                    data_set,
-                    chisurf.experiments.data.DataGroup
-            ):
+            if not isinstance(data_set, chisurf.experiments.data.DataGroup):
                 data_group = chisurf.experiments.data.ExperimentDataCurveGroup(
                     [data_set]
                 )
@@ -61,14 +60,14 @@ def add_fit(
             )
             chisurf.fits.append(fit_group)
 
-            fit_control_widget = chisurf.widgets.fitting.widgets.FittingControllerWidget(
-                fit_group
+            fit_control_widget = chisurf.widgets.fitting.FittingControllerWidget(
+                fit=fit_group
             )
             cs.modelLayout.addWidget(fit_control_widget)
             for fit in fit_group:
                 cs.modelLayout.addWidget(fit.model)
 
-            fit_window = chisurf.widgets.fitting.widgets.FitSubWindow(
+            fit_window = chisurf.widgets.fitting.FitSubWindow(
                 fit=fit_group,
                 control_layout=cs.plotOptionsLayout,
                 fit_widget=fit_control_widget
