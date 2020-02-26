@@ -41,18 +41,12 @@ explicitly demand these functions.
 
 *  Analysis of multiple data sets by joint model function freely defined by
    the user
-   
 *  Freely definable models for FCS analysis & adaptable models for
    fluorescence decays analysis
-   
 *  Fluorescence decay analysis
-
 *  Global analysis of multiple fluorescence decays
-
 *  Generation of fluorescence decay histograms based on TTTR data
-
 *  Analysis of time-resolved anisotropy decays
-
 *  Analysis of FRET quenched fluorescence decays by physical model functions
  
 [![DOI for citing FPS](https://img.shields.io/badge/DOI-10.1021/acs.jpcb.7b03441.2222-blue.svg)](http://pubs.acs.org/doi/abs/10.1021/acs.jpcb.7b03441)

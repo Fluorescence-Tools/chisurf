@@ -17,7 +17,7 @@ class GlobalFitPlot(Plot):
     ):
         super(GlobalFitPlot, self).__init__(fit)
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.pltControl = QtWidgets.QWidget()
+        self.plot_controller = QtWidgets.QWidget()
         self.fit = fit
 
     def update(self, *args, **kwargs) -> None:

@@ -14,18 +14,29 @@ class Plot(
             self,
             fit: chisurf.fitting.fit.Fit,
             parent=None,
+            plot_controller: QtWidgets.QWidget = None,
             **kwargs
     ):
         super().__init__()
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
         self.parent = parent
         self.fit = fit
-        self.pltControl = QtWidgets.QWidget()
+        if plot_controller is None:
+            self.plot_controller = QtWidgets.QWidget()
+        else:
+            self.plot_controller = plot_controller
         self.widgets = list()
 
-    def update(self, *args, **kwargs) -> None:
+    def update(
+            self,
+            *args,
+            **kwargs
+    ) -> None:
         super().update(*args, **kwargs)
 
     def close(self):
         QtWidgets.QWidget.close(self)
-        if isinstance(self.pltControl, QtWidgets.QWidget):
-            self.pltControl.close()
+        if isinstance(self.plot_controller, QtWidgets.QWidget):
+            self.plot_controller.close()

@@ -113,13 +113,9 @@ class ParameterScanPlot(
     ):
         super(ParameterScanPlot, self).__init__(fit)
 
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(0)
-
         self.data_x, self.data_y = None, None
 
-        self.pltControl = ParameterScanWidget(
+        self.plot_controller = ParameterScanWidget(
            model=fit.model,
            parent=self
         )
@@ -149,7 +145,7 @@ class ParameterScanPlot(
     def update(self, *args, **kwargs) -> None:
         super().update(*args, **kwargs)
         try:
-            p = self.pltControl.parameter
+            p = self.plot_controller.parameter
             x, y = p.parameter_scan
             if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
                 self.distribution_curve.setData(x=x, y=y)
