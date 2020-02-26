@@ -51,7 +51,6 @@ class Fit(
                 x=np.arange(10),
                 y=np.arange(10)
             )
-
         self._data = data
         self.plots = list()
         self._xmin, self._xmax = xmin, xmax
@@ -142,7 +141,8 @@ class Fit(
         wres_y = self.model.weighted_residuals
         return chisurf.curve.Curve(
             x=wres_x,
-            y=wres_y
+            y=wres_y,
+            copy_array=False
         )
 
     @property
@@ -150,7 +150,8 @@ class Fit(
         wres = self.weighted_residuals
         return chisurf.curve.Curve(
             x=wres.x[1:],
-            y=chisurf.math.signal.autocorr(wres.y)[1:]
+            y=chisurf.math.signal.autocorr(wres.y)[1:],
+            copy_array=False
         )
 
     @property
@@ -233,9 +234,12 @@ class Fit(
         return self.model.n_free
 
     def get_curves(
-            self
+            self,
+            copy_curves: bool = False
     ) -> typing.Dict[str, chisurf.curve.Curve]:
-        d = self.model.get_curves()
+        d = self.model.get_curves(
+            copy_curves=copy_curves
+        )
         d.update(
             {
                 'data': self.data,
@@ -548,12 +552,6 @@ class FitGroup(
         fit._model.find_parameters()
         fitting_options = chisurf.settings.fitting['leastsq']
         bounds = [pi.bounds for pi in fit._model.parameters]
-
-        print(get_wres(*(fit._model.parameter_values, fit._model,)))
-        print(fit._model.parameter_values)
-        print((fit._model,))
-        print(bounds)
-        print(fitting_options)
         results = chisurf.math.optimization.leastsqbound(
             func=get_wres,
             x0=fit._model.parameter_values,

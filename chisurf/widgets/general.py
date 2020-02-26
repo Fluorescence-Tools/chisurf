@@ -130,19 +130,19 @@ class QIPythonWidget(
         :param args:
         :param kwargs:
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args,
+            **kwargs
+        )
         self.history_widget = history_widget
-
-        self.kernel_manager = kernel_manager = qtconsole.inprocess.QtInProcessKernelManager()
-        kernel_manager.start_kernel()
-        self.kernel_client = kernel_client = kernel_manager.client()
-        kernel_client.start_channels()
+        self.kernel_manager = qtconsole.inprocess.QtInProcessKernelManager()
+        self.kernel_manager.start_kernel()
+        self.kernel_client = self.kernel_manager.client()
+        self.kernel_client.start_channels()
 
         def stop():
-            kernel_client.stop_channels()
-            kernel_manager.shutdown_kernel()
-            IPython.lib.guisupport.get_app_qt4().exit()
-
+            self.kernel_client.stop_channels()
+            self.kernel_manager.shutdown_kernel()
         self.exit_requested.connect(stop)
         self.width = kwargs.get(
             'width',
@@ -153,9 +153,9 @@ class QIPythonWidget(
 
         # save nevertheless every inputs into a session file
         self.session_file = chisurf.settings.session_file
-        #self.set_default_style(
-        #    chisurf.settings.gui['console']['style']
-        #)
+        self.set_default_style(
+            chisurf.settings.gui['console']['style']
+        )
         self.style_sheet = qtconsole.styles.default_light_style_sheet
 
     def pushVariables(self, variableDict):

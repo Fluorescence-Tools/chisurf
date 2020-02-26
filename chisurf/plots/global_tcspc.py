@@ -177,7 +177,7 @@ class GlobalAnisotropy(Plot):
         self.autoCorrPlot = plot
         splitter1.addWidget(plot)
 
-        self.pltControl = LinePlotWidget(
+        self.plot_controller = LinePlotWidget(
             self,
             d_scalex,
             d_scaley,
@@ -192,19 +192,19 @@ class GlobalAnisotropy(Plot):
         self.chi2_label.set_text("<b>&Chi;<sup>2</sup>=%.4f</b>" % fit.chi2r)
         try:
             data_x, data_y = fit.vv.data.data_x, fit.vv.data.data_y
-            idx = np.where(data_y > 0.0)[0] if self.pltControl.data_logy else list(range(len(data_x)))
+            idx = np.where(data_y > 0.0)[0] if self.plot_controller.data_logy else list(range(len(data_x)))
             self.data_curve_vv.set_data(data_x[idx],  data_y[idx])
 
             try:
                 irf = fit.vv.model.convolve.irf
                 irf_y = irf.data_y
-                idx = np.where(irf_y > 0.0)[0] if self.pltControl.data_logy else list(range(len(data_x)))
+                idx = np.where(irf_y > 0.0)[0] if self.plot_controller.data_logy else list(range(len(data_x)))
                 self.irf_curve_vv.set_data(irf.data_x[idx],  irf_y[idx])
             except AttributeError:
                 print("No instrument response to plot.")
             try:
                 model_x, model_y = fit.vv[:]
-                idx = np.where(model_y > 0.0)[0] if self.pltControl.data_logy else list(range(len(data_x)))
+                idx = np.where(model_y > 0.0)[0] if self.plot_controller.data_logy else list(range(len(data_x)))
                 if len(idx) > 0:
                     self.model_curve_vv.set_data(model_x[idx],  model_y[idx])
             except ValueError:
@@ -222,19 +222,19 @@ class GlobalAnisotropy(Plot):
             self.autoCorrPlot.do_autoscale()
 
             data_x, data_y = fit.vh.data.data_x, fit.vh.data.data_y
-            idx = np.where(data_y > 0.0)[0] if self.pltControl.data_logy else list(range(len(data_x)))
+            idx = np.where(data_y > 0.0)[0] if self.plot_controller.data_logy else list(range(len(data_x)))
             self.data_curve_vh.set_data(data_x[idx],  data_y[idx])
 
             try:
                 irf = fit.vh.model.convolve.irf
                 irf_y = irf.data_y
-                idx = np.where(irf_y > 0.0)[0] if self.pltControl.data_logy else list(range(len(data_x)))
+                idx = np.where(irf_y > 0.0)[0] if self.plot_controller.data_logy else list(range(len(data_x)))
                 self.irf_curve_vh.set_data(irf.data_x[idx],  irf_y[idx])
             except AttributeError:
                 print("No instrument response to plot.")
             try:
                 model_x, model_y = fit.vh[:]
-                idx = np.where(model_y > 0.0)[0] if self.pltControl.data_logy else list(range(len(data_x)))
+                idx = np.where(model_y > 0.0)[0] if self.plot_controller.data_logy else list(range(len(data_x)))
                 if len(idx) > 0:
                     self.model_curve_vh.set_data(model_x[idx],  model_y[idx])
             except ValueError:
