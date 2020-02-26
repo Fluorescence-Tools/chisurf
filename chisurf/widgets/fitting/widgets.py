@@ -334,6 +334,7 @@ class FittingParameterWidget(
             self,
             fitting_parameter: chisurf.fitting.parameter.FittingParameter = None,
             layout: QtWidgets.QLayout = None,
+            value: float = None,
             decimals: int = None,
             hide_label: bool = None,
             hide_error: bool = None,
@@ -364,7 +365,7 @@ class FittingParameterWidget(
         if fitting_parameter is None:
             fitting_parameter = chisurf.fitting.parameter.FittingParameter(
                 name=name,
-                value=1.0
+                value=value
             )
         self.fitting_parameter = fitting_parameter
 

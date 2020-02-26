@@ -761,21 +761,27 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
     def onNormalizeAmplitudes(self):
         chisurf.run(
-            "chisurf.macros.tcspc.normalize_lifetime_amplitudes(%s)",
+            "chisurf.macros.tcspc.normalize_lifetime_amplitudes(%s)" %
             self.normalize_amplitude.isChecked()
         )
 
     def onAbsoluteAmplitudes(self):
         chisurf.run(
-            "chisurf.macros.tcspc.absolute_amplitudes(%s)",
+            "chisurf.macros.tcspc.absolute_amplitudes(%s)" %
             self.absolute_amplitude.isChecked()
         )
 
     def onAddLifetime(self):
-        chisurf.run("chisurf.macros.tcspc.add_lifetime('%s')" % self.name)
+        chisurf.run(
+            "chisurf.macros.tcspc.add_lifetime('%s')" %
+            self.name
+        )
 
     def onRemoveLifetime(self):
-        chisurf.run("chisurf.macros.tcspc.remove_lifetime('%s')" % self.name)
+        chisurf.run(
+            "chisurf.macros.tcspc.remove_lifetime('%s')" %
+            self.name
+        )
 
     def append(self, *args, **kwargs):
         Lifetime.append(self, *args, **kwargs)

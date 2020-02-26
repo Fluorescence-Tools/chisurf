@@ -107,9 +107,18 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
         chisurf.widgets.clear_layout(self.verticalLayout_7)
 
     def __init__(self, **kwargs):
-        self.scaleing = FittingParameterWidget(name='scaling', value=1.0)
-        self.background = FittingParameterWidget(name='background', value=0.0)
-        self.timeshift = FittingParameterWidget(name='timeshift', value=0.0)
+        self.scaleing = FittingParameterWidget(
+            name='scaling',
+            value=1.0
+        )
+        self.background = FittingParameterWidget(
+            name='background',
+            value=0.0
+        )
+        self.timeshift = FittingParameterWidget(
+            name='timeshift',
+            value=0.0
+        )
 
         ReactionSystem.__init__(self, **kwargs)
         parameter = kwargs.get('parameter', None)

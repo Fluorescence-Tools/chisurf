@@ -151,7 +151,7 @@ def internal_potential_calpha(
 
 @nb.jit(nopython=True)
 def lj_calpha(
-        ca_coordinates: np.array,
+        ca_coordinates: np.arra: np.ndarray,
         rm: float = 3.8208650279
 ) -> float:
     """Truncated Lennard Jones
@@ -193,7 +193,7 @@ def lennard_jones_calpha(
 
 @nb.njit
 def gb(
-        xyz: np.array,
+        xyz: np.ndarray,
         epsilon: float = 4.0,
         epsilon0: float = 80.1,
         cutoff: float = 12.0
@@ -247,9 +247,9 @@ def gb(
 
 @nb.jit
 def go(
-        ca_dist: np.array,
-        energy_matrix: np.array,
-        rm_matrix: np.array
+        ca_dist: np.ndarray,
+        energy_matrix: np.ndarray,
+        rm_matrix: np.ndarray
 ):
     """
     If cutoff is True the LJ-Potential is cutoff and shifted at 2.5 sigma
@@ -689,7 +689,7 @@ class AvPotential(object):
             labeling_file: str = None,
             structure: chisurf.structure.Structure = None,
             verbose: bool = False,
-            rda_axis: np.array = None,
+            rda_axis: np.ndarray = None,
             av_samples: int = None,
             min_av: int = 150,
             **kwargs
