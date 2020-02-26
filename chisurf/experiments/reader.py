@@ -43,13 +43,13 @@ class ExperimentReader(
     @abc.abstractmethod
     def read(
             self,
-            name: str = None,
+            filename: str = None,
             *args,
             **kwargs
     ) -> chisurf.base.Data:
         """
 
-        :param name: A name that will be associated to the data set that is read.
+        :param filename:
         :param kwargs:
         :return:
         """

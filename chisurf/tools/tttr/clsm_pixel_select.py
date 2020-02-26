@@ -1,3 +1,9 @@
+"""
+CLSM pixel select
+is a program that can be used to display CLSM TTTR images, to select pixels,
+and create and export fluorescence decay histograms. Exported decay histograms
+can be directly used in ChiSurf.
+"""
 from __future__ import annotations
 import typing
 
@@ -35,7 +41,7 @@ clsm_settings = yaml.safe_load(
 
 
 class CLSMPixelSelect(
-    #QtWidgets.QMainWindow
+    # QtWidgets.QMainWindow
     QtWidgets.QWidget
 ):
 
@@ -55,13 +61,18 @@ class CLSMPixelSelect(
     def curve_name(
             self
     ) -> str:
+        """
+        :return: The name of the currently selected curve
+        """
         s = str(self.lineEdit.text())
         if len(s) == 0:
             return "no-name"
         else:
             return s
 
-    def onRemoveDataset(self):
+    def onRemoveDataset(self) -> None:
+        """Remove the selected datasets
+        """
         selected_index = [
             i.row() for i in self.cs.selectedIndexes()
         ]
@@ -80,13 +91,18 @@ class CLSMPixelSelect(
         self.cs.update()
 
     def get_data_curves(
-            self,
-            *args,
-            **kwargs
+            self
     ) -> typing.List[chisurf.curve.Curve]:
+        """
+        :return: Get the entire list of all fluorescence decay curves.
+        """
         return self._curves
 
-    def plot_curves(self):
+    def plot_curves(
+            self
+    ) -> None:
+        """Plots and updates the curves
+        """
         plot = self.plot.getPlotItem()
         plot.clear()
         curve = self.current_decay
@@ -114,6 +130,9 @@ class CLSMPixelSelect(
         plot.autoRange()
 
     def add_curve(self):
+        """Adds the current selected curve to the list
+        of curves.
+        """
         decay = copy.copy(self.current_decay)
         try:
             name = self.listWidget.currentItem().text()
@@ -124,10 +143,19 @@ class CLSMPixelSelect(
         self.cs.update()
         self.plot_curves()
 
-    def open_file(
+    def open_tttr_file(
             self,
-            filename: str = None
+            filename: str = None,
+            tttr_type: str = None
     ):
+        """Opens a tttr file and sets the attribute '.tttr_data'.
+        If no filename an file selection window is used to find a tttr file.
+        If no tttr_type is specified the values provided by the UI are used.
+
+        :param filename: (optional) parameter specifying the filename
+        :param tttr_type: (optional) parameter specifying the tttr type
+        :return:
+        """
         if not isinstance(filename, str):
             tentative_filename = str(self.lineEdit.text())
             if os.path.isfile(tentative_filename):
@@ -137,7 +165,8 @@ class CLSMPixelSelect(
                     description='TTTR file'
                 )
                 self.lineEdit.setText(filename)
-        tttr_type = str(self.comboBox_4.currentText())
+        if tttr_type is None:
+            tttr_type = str(self.comboBox_4.currentText())
         self.tttr_data = tttrlib.TTTR(
             filename,
             tttr_type
@@ -430,7 +459,7 @@ class CLSMPixelSelect(
             center=(1, 1), mode='add'
         )
         if isinstance(self.img.image, np.ndarray):
-            data = self.img.image
+            # data = self.img.image
             self.brush_kernel *= 255.0 / max(self.brush_kernel.flatten())
 
         # The brush is set to selection mode
@@ -642,7 +671,7 @@ class CLSMPixelSelect(
         self.verticalLayout_4.addWidget(image_widget)
 
         # Signal slots
-        self.actionLoad_file.triggered.connect(self.open_file)
+        self.actionLoad_file.triggered.connect(self.open_tttr_file)
         self.actionchange_brush_size.triggered.connect(self.update_brush)
         self.actionSave_pixel_mask.triggered.connect(self.save_pixel_mask)
         self.actionClear_pixel_mask.triggered.connect(self.clear_pixel_mask)

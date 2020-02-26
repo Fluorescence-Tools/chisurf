@@ -9,7 +9,7 @@ import chisurf.widgets
 import chisurf.parameter
 import chisurf.widgets.fitting.widgets
 from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
-from chisurf.models.model import ModelWidget, ModelCurve
+from chisurf.models.model import ModelCurve
 
 
 class ParseModel(
