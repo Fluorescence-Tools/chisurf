@@ -27,7 +27,7 @@ class Base(object):
         try:
             name = self.__dict__['name']
             return name() if callable(name) else name
-        except KeyError or AttributeError:
+        except (KeyError, AttributeError):
             return self.__class__.__name__
 
     @name.setter

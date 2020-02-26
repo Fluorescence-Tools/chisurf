@@ -219,7 +219,7 @@ class DataCurve(
                 file_type=file_type,
                 **kwargs
             )
-            n_col, n_row, = csv.data.shape
+            n_col, _ = csv.data.shape
             if n_col == 1:
                 self.x = csv.data[0]
                 self.y = np.ones_like(self.x)
@@ -265,7 +265,7 @@ class DataCurve(
             csv = chisurf.fio.ascii.Csv()
             x, y, ex, ey = self[xmin:xmax]
             csv.save(
-                data=np.vstack([x, y]),
+                data=np.vstack([x, y, ex, ey]),
                 filename=filename
             )
         else:

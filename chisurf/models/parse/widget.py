@@ -1,3 +1,6 @@
+"""
+
+"""
 from __future__ import annotations
 
 import os
@@ -79,7 +82,13 @@ class ParseFormulaWidget(
         self.comboBox.addItems(list(v.keys()))
 
     @property
-    def model_name(self) -> typing.List[str]:
+    def model_name(
+            self
+    ) -> typing.List[str]:
+        """
+
+        :return:
+        """
         return list(self.models.keys())[self.comboBox.currentIndex()]
 
     @model_name.setter

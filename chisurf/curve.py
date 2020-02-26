@@ -2,7 +2,6 @@ from __future__ import annotations
 import typing
 
 import numpy as np
-import os
 
 import chisurf.fio
 import chisurf.base
@@ -64,8 +63,8 @@ class Curve(
     def load(
             self,
             filename: str,
-            skiprows: int = 0,
             file_type: str = 'csv',
+            skiprows: int = 0,
             **kwargs
     ) -> None:
         super().load(

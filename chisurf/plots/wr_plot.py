@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 import pyqtgraph as pg
-from qtpy import QtWidgets
 
 import chisurf.fitting
 from chisurf.plots import plotbase
