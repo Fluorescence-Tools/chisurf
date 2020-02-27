@@ -69,8 +69,9 @@ class Base(object):
             self,
             filename: str,
             file_type: str = 'yaml',
-            verbose: bool = False
+            **kwargs
     ) -> None:
+        verbose = kwargs.get('verbose', False)
         if file_type == "json":
             self.from_json(
                 filename=filename,

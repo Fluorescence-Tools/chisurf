@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing
 
 from qtpy import QtWidgets, uic, QtCore, QtGui
 
@@ -1352,7 +1353,10 @@ class WormLikeChainModelWidget(
         self.update_model()
 
 
-class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
+class ParseDecayModelWidget(
+    ParseDecayModel,
+    ModelWidget
+):
 
     def __init__(
             self,
@@ -1379,16 +1383,27 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
             chisurf.settings.package_directory, 'settings/tcspc.models.json'
         )
         pw = chisurf.models.parse.widget.ParseFormulaWidget(
-            fit=fit,
             model=self,
             model_file=fn
         )
-        corrections = chisurf.models.tcspc.widgets.CorrectionsWidget(fit, model=self, **kwargs)
+        corrections = chisurf.models.tcspc.widgets.CorrectionsWidget(
+            fit=fit,
+            model=self,
+            **kwargs
+        )
 
         self.fit = fit
-        ParseDecayModel.__init__(self, fit=fit, parse=pw, convolve=self.convolve,
-                                 generic=generic, corrections=corrections)
-        fitting_widget = chisurf.widgets.fitting.FittingControllerWidget(fit=fit, **kwargs)
+        super().__init__(
+            fit=fit,
+            parse=pw,
+            convolve=self.convolve,
+            generic=generic,
+            corrections=corrections
+        )
+        fitting_widget = chisurf.widgets.fitting.FittingControllerWidget(
+            fit=fit,
+            **kwargs
+        )
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setAlignment(QtCore.Qt.AlignTop)
@@ -1417,15 +1432,18 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
     ]
 
     @property
-    def current_model_idx(self):
+    def current_model_idx(self) -> int:
         return int(self._current_model.value())
 
     @current_model_idx.setter
-    def current_model_idx(self, v):
+    def current_model_idx(
+            self,
+            v: int
+    ):
         self._current_model.setValue(v)
 
     @property
-    def amplitude(self):
+    def amplitude(self) -> typing.List[float]:
         layout = self.model_layout
         re = list()
         for i in range(layout.count()):
@@ -1438,12 +1456,17 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
         return re
 
     @property
-    def selected_fit(self):
+    def selected_fit(
+            self
+    ):
         i = self.model_selector.currentIndex()
-
         return self.model_types[i]
 
-    def __init__(self, fit, **kwargs):
+    def __init__(
+            self,
+            fit,
+            **kwargs
+    ):
         LifetimeModelWidgetBase.__init__(self, fit, **kwargs)
         LifetimeMixModel.__init__(self, fit, **kwargs)
 

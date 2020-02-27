@@ -46,9 +46,11 @@ class Main(QtWidgets.QMainWindow):
     def fit_idx(
             self
     ) -> int:
-        """
-        :return: index in the list of all fits of the fit that
-        corresponds to the currently selected fit window
+        """Returns the index of the currently fit. The current fit index
+        corresponds to the currently selected fit window in the list of all
+        fits of the fit.
+
+        :return: index of the fit
         """
         subwindow = self.mdiarea.currentSubWindow()
         if subwindow is not None:
