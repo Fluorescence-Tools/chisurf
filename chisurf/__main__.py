@@ -60,7 +60,8 @@ class Main(QtWidgets.QMainWindow):
     def current_experiment_idx(
             self
     ) -> int:
-        """
+        """ The index of the experiment type currently selected in the UI.
+
         :return: index of the currently selected experiment
         out of all supported experiments. This corresponds to
         the index of the UI combo box used to select the experiment.
