@@ -359,7 +359,7 @@ class LabeledStructure(Structure):
             *args,
             **kwargs
     ):
-        super(LabeledStructure, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._donor_description = kwargs.get('donor_av_parameter', None)
         self._acceptor_description = kwargs.get('acceptor_av_parameter', None)
         self._ds = np.array([1.0, 4.0], dtype=np.float64)

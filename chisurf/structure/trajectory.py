@@ -27,14 +27,14 @@ class Universe(object):
             self,
             potential,
             scale: float = 1.0
-    ):
+    ) -> None:
         self.potentials.append(potential)
         self.scaling.append(scale)
 
     def removePotential(
             self,
             potentialNbr: int = None
-    ):
+    ) -> None:
         if potentialNbr == -1:
             self.potentials.pop()
             self.scaling.pop()
@@ -42,7 +42,7 @@ class Universe(object):
             self.potentials.pop(potentialNbr)
             self.scaling.pop(potentialNbr)
 
-    def clearPotentials(self):
+    def clearPotentials(self) -> None:
         self.potentials = list()
         self.scaling = list()
 
@@ -59,7 +59,7 @@ class Universe(object):
     def getEnergies(
             self,
             structure: chisurf.structure.Structure = None
-    ):
+    ) -> np.ndarray:
         for p in self.potentials:
             p.structure = structure
         scales = np.array(self.scaling)

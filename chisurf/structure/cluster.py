@@ -1,10 +1,10 @@
 from __future__ import annotations
-
+import typing
 import numpy as np
+
 from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import fcluster
-
-from chisurf.structure import rmsd, average, find_best
+from chisurf.structure import rmsd, average, find_best, Structure
 
 
 def findSmallestCluster(clusters):
@@ -17,7 +17,7 @@ def findSmallestCluster(clusters):
 
 
 def cluster(
-        structures,
+        structures: typing.List[Structure],
         threshold: int = 5000,
         criterion: str = 'maxclust',
         Z=None,
