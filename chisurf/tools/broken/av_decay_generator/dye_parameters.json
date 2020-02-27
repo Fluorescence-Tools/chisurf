@@ -19,5 +19,5 @@
     "t_step": 0.016,
     "tau0": 4.2,
     "D": 7.0,
-    "verbose": false
+    "diffusion_simulation":
 }

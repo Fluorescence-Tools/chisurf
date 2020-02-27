@@ -27,8 +27,7 @@ def get_data(
 ) -> typing.List[
     chisurf.experiments.data.ExperimentalData
 ]:
-    """Returns all curves `chisurf.curve.DataCurve` except if the
-    curve is names "Global-fit"
+    """Returns all curves `chisurf.curve.DataCurve` except if the curve is names "Global-fit".
 
     :param curve_type: if this value is set to `experiment` only curves
     that are experimental curves, i.e., curves that inherit from

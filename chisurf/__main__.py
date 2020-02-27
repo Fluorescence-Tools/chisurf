@@ -13,6 +13,11 @@ import chisurf.experiments
 import chisurf.experiments.tcspc
 import chisurf.macros
 import chisurf.tools
+import chisurf.tools.structure.align_trajectory
+import chisurf.tools.structure.convert_trajectories
+import chisurf.tools.structure.join_trajectories
+import chisurf.tools.structure.rotate_translate_trajectory
+import chisurf.tools.structure.save_topology
 import chisurf.widgets
 import chisurf.widgets.experiments
 import chisurf.models
@@ -46,9 +51,10 @@ class Main(QtWidgets.QMainWindow):
     def fit_idx(
             self
     ) -> int:
-        """Returns the index of the currently fit. The current fit index
-        corresponds to the currently selected fit window in the list of all
-        fits of the fit.
+        """Returns the index of the currently fit.
+
+        The current fit index corresponds to the currently selected fit window
+        in the list of all fits of the fit.
 
         :return: index of the fit
         """
@@ -552,7 +558,7 @@ class Main(QtWidgets.QMainWindow):
         #      Fluorescence widgets                              #
         #      (Commented widgets don't work at the moment       #
         ##########################################################
-        self.lifetime_calc = chisurf.tools.fret_calculator.tau2r.FRETCalculator()
+        self.lifetime_calc = chisurf.tools.fret.calculator.tau2r.FRETCalculator()
         self.actionCalculator.triggered.connect(self.lifetime_calc.show)
 
         self.kappa2_dist = chisurf.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
@@ -567,7 +573,7 @@ class Main(QtWidgets.QMainWindow):
         self.tttr_correlate = chisurf.tools.tttr.correlate.CorrelateTTTR()
         self.actionCorrelate.triggered.connect(self.tttr_correlate.show)
 
-        self.tttr_histogram = chisurf.tools.tttr.decay_histogram.HistogramTTTR()
+        self.tttr_histogram = chisurf.tools.tttr.decay.HistogramTTTR()
         self.actionGenerate_decay.triggered.connect(self.tttr_histogram.show)
 
         self.clsm_pixel_select = chisurf.tools.tttr.clsm_pixel_select.CLSMPixelSelect()
@@ -576,37 +582,37 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #      TTTR-widgets                                      #
         ##########################################################
-        self.hdf2pdb = chisurf.tools.modelling.trajectory.MDConverter()
+        self.hdf2pdb = chisurf.tools.structure.convert_trajectories.MDConverter()
         self.actionTrajectory_converter.triggered.connect(self.hdf2pdb.show)
 
-        self.trajectory_rot_trans = chisurf.tools.modelling.trajectory.RotateTranslateTrajectoryWidget()
+        self.trajectory_rot_trans = chisurf.tools.structure.rotate_translate_trajectory.RotateTranslateTrajectoryWidget()
         self.actionRotate_Translate_trajectory.triggered.connect(self.trajectory_rot_trans.show)
 
         # self.calculate_potential = chisurf.tools.modelling.potential_energy.PotentialEnergyWidget()
         # self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
 
-        self.pdb2label = chisurf.tools.fps_json.label_structure.LabelStructure()
+        self.pdb2label = chisurf.tools.structure.create_av_json.LabelStructure()
         self.actionPDB2Label.triggered.connect(self.pdb2label.show)
 
-        self.structure2transfer = chisurf.tools.traj2fret.gui.Structure2Transfer()
+        self.structure2transfer = chisurf.tools.structure.fret_trajectory.Structure2Transfer()
         self.actionStructure2Transfer.triggered.connect(self.structure2transfer.show)
 
-        self.join_trajectories = chisurf.tools.modelling.trajectory.JoinTrajectoriesWidget()
+        self.join_trajectories = chisurf.tools.structure.join_trajectories.JoinTrajectoriesWidget()
         self.actionJoin_trajectories.triggered.connect(self.join_trajectories.show)
 
-        self.traj_save_topol = chisurf.tools.modelling.trajectory.SaveTopology()
+        self.traj_save_topol = chisurf.tools.structure.save_topology.SaveTopology()
         self.actionSave_topology.triggered.connect(self.traj_save_topol.show)
 
-        self.remove_clashes = chisurf.tools.modelling.remove_clashed_frames.RemoveClashedFrames()
+        self.remove_clashes = chisurf.tools.structure.remove_clashed_frames.RemoveClashedFrames()
         self.actionRemove_clashes.triggered.connect(self.remove_clashes.show)
 
-        self.align_trajectory = chisurf.tools.modelling.trajectory.AlignTrajectoryWidget()
+        self.align_trajectory = chisurf.tools.structure.align_trajectory.AlignTrajectoryWidget()
         self.actionAlign_trajectory.triggered.connect(self.align_trajectory.show)
 
         #self.update_widget = chisurf.widgets.downloader.UpdateDialog()
         #self.connect(self.actionUpdate, QtCore.SIGNAL('triggered()'), self.update_widget.show)
 
-        self.f_test = chisurf.tools.f_test.f_calculator.FTestWidget()
+        self.f_test = chisurf.tools.f_test.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
 
         self.configuration = chisurf.tools.code_editor.CodeEditor(
