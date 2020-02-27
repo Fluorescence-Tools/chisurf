@@ -217,19 +217,17 @@ class Tests(unittest.TestCase):
         name = 'Name_P1'
         verbose = True
         unique_identifier = None
-        model = None
         fixed = True
         p2 = chisurf.fitting.parameter.FittingParameter(
-            model,
-            fixed,
-            value,
-            link,
-            lower_bound,
-            upper_bound,
-            bounds_on,
-            name,
-            verbose,
-            unique_identifier
+            fixed=fixed,
+            value=value,
+            link=link,
+            lb=lower_bound,
+            ub=upper_bound,
+            bounds_on=bounds_on,
+            name=name,
+            verbose=verbose,
+            unique_identifier=unique_identifier
         )
 
         self.assertEqual(
@@ -261,23 +259,23 @@ class Tests(unittest.TestCase):
             chisurf.fitting.parameter.FittingParameter
         )
 
-    def test_numpy(self):
-        import numpy as np
-        value = 22
-        p1 = chisurf.fitting.parameter.FittingParameter(value=value)
-        x = np.linspace(0, 2, 100)
-        p2 = p1 + x
-        self.assertEqual(
-            type(p2),
-            chisurf.fitting.parameter.FittingParameter
-        )
-        self.assertEqual(
-            np.allclose(
-                p2.value,
-                x + value
-            ),
-            True
-        )
+    # def test_numpy(self):
+    #     import numpy as np
+    #     value = 22
+    #     p1 = chisurf.fitting.parameter.FittingParameter(value=value)
+    #     x = np.linspace(0, 2, 100)
+    #     p2 = p1 + x
+    #     self.assertEqual(
+    #         type(p2),
+    #         chisurf.fitting.parameter.FittingParameter
+    #     )
+    #     self.assertEqual(
+    #         np.allclose(
+    #             p2.value,
+    #             x + value
+    #         ),
+    #         True
+    #     )
 
     def test_abs(self):
         value = -11

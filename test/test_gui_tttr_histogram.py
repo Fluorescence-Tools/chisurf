@@ -26,7 +26,7 @@ class Tests(unittest.TestCase):
         """
         Create the GUI
         """
-        self.form = chisurf.tools.tttr.decay_histogram.HistogramTTTR()
+        self.form = chisurf.tools.tttr.decay.HistogramTTTR()
 
     def test_load_data(self):
         import glob

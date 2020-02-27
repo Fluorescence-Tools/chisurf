@@ -91,7 +91,7 @@ class Parameter(
             self._link = link
             if self.controller is not None:
                 self.controller.set_linked(link is not None)
-            self._port.link = self._link.value
+            self._port.link = link._port
         elif link is None:
             self._link = None
             self._port.unlink()

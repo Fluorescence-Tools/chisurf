@@ -1,4 +1,4 @@
 """
 
 """
-from .qsci_editor import CodeEditor, SimpleCodeEditor
+from chisurf.tools.code_editor.qsci_editor import CodeEditor, SimpleCodeEditor
