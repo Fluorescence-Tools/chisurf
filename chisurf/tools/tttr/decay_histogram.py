@@ -97,7 +97,7 @@ class HistogramTTTR(
             v: chisurf.curve.Curve = None
     ):
         if v is None:
-            d = self.tcspc_setup_widget.load_data()
+            v = self.tcspc_setup_widget.load_data()
             self.curve_selector.update()
             self.plot_curves()
         super().add_curve(v)

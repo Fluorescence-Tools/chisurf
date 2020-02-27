@@ -1,5 +1,4 @@
-"""
-
+"""Collection of macros / functions that control parsed models.
 """
 import chisurf
 import chisurf.experiments

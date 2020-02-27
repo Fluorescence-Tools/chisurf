@@ -191,6 +191,7 @@ class TCSPCSetupDummy(
     def read(
             self,
             filename: str = None,
+            *args,
             **kwargs
     ) -> chisurf.experiments.data.DataCurveGroup:
         if filename is None:
@@ -201,12 +202,14 @@ class TCSPCSetupDummy(
             lifetime_spectrum=self.lifetime_spectrum,
             time_axis=x
         )
-        d = chisurf.experiments.data.DataCurve(
+        data_set = chisurf.experiments.data.DataCurve(
             x=time_axis,
             y=y,
             ey=1./chisurf.fluorescence.tcspc.weights(y),
             setup=self,
             name=filename
         )
-        d.setup = self
-        return d
+        data_set.setup = self
+        return chisurf.experiments.data.DataCurveGroup(
+            [data_set]
+        )

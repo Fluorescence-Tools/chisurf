@@ -335,6 +335,8 @@ class FittingParameterWidget(
             fitting_parameter: chisurf.fitting.parameter.FittingParameter = None,
             layout: QtWidgets.QLayout = None,
             value: float = None,
+            ub: float = float("inf"),
+            lb: float = float("-inf"),
             decimals: int = None,
             hide_label: bool = None,
             hide_error: bool = None,
@@ -363,11 +365,11 @@ class FittingParameterWidget(
             decimals = parameter_settings['decimals']
 
         if fitting_parameter is None:
-            fitting_parameter = chisurf.fitting.parameter.FittingParameter(
-                name=name,
-                value=value
-            )
+            fitting_parameter = chisurf.fitting.parameter.FittingParameter()
         self.fitting_parameter = fitting_parameter
+        self.fitting_parameter.bounds = lb, ub
+        self.fitting_parameter.value = value
+        self.fitting_parameter.name = name
 
         self.widget_value = pg.SpinBox(
             dec=True,
