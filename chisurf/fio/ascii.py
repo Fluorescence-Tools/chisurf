@@ -10,8 +10,8 @@ import chisurf
 
 def save_xy(
         filename: str,
-        x: np.array,
-        y: np.array,
+        x: np.ndarray,
+        y: np.ndarray,
         verbose: bool = chisurf.verbose,
         fmt: str = "%.3f\t%.3f",
         header_string: str = None

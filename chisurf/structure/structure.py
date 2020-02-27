@@ -1,13 +1,11 @@
 from __future__ import annotations
-from typing import Dict
+import typing
 
 import copy
 import os
 import tempfile
-from copy import deepcopy
-from typing import List
 
-import mdtraj as md
+import mdtraj
 import pdb2pqr.main
 import numpy as np
 
@@ -156,7 +154,7 @@ class Structure(chisurf.base.Base):
             self.protonate()
 
     @property
-    def sequence(self) -> Dict:
+    def sequence(self) -> typing.Dict:
         if self._sequence is None:
             self._sequence = chisurf.structure.sequence(self)
         return self._sequence
@@ -228,7 +226,7 @@ class Structure(chisurf.base.Base):
     @property
     def residue_names(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         res_name = list(set(self.atoms['res_name']))
         res_name.sort()
         return res_name
@@ -261,7 +259,7 @@ class Structure(chisurf.base.Base):
     @property
     def residue_ids(
             self
-    ) -> List[int]:
+    ) -> typing.List[int]:
         residue_ids = list(set(self.atoms['res_id']))
         return residue_ids
 
@@ -305,7 +303,7 @@ class Structure(chisurf.base.Base):
     def append_potential(
             self,
             function,
-            kwargs: Dict = None
+            kwargs: typing.Dict = None
     ):
         """
 
@@ -421,7 +419,7 @@ class Structure(chisurf.base.Base):
 
 def onRMSF(
         structures,
-        selectedNbrs: List[int],
+        selectedNbrs: typing.List[int],
         atomName: str = None,
         **kwargs):
     """Calculates the root mean square deviation with respect to the average structure
@@ -436,7 +434,7 @@ def onRMSF(
     weights = kwargs.get('weights', np.ones(len(selectedNbrs), dtype=np.float32))
     weights /= sum(weights)
 
-    candidateStructures = [deepcopy(structures[i]) for i in selectedNbrs]
+    candidateStructures = [copy.deepcopy(structures[i]) for i in selectedNbrs]
     print("calculating average structure as a reference")
     reference = average(candidateStructures, weights=weights)
     print("aligning selected structures with respect to reference")
@@ -549,7 +547,7 @@ def find_best(
     >>> find_best(times.mdtraj, times.mdtraj[2])
     (2, <mdtraj.Trajectory with 1 frames, 2495 atoms, 164 residues, without unitcells at 0x13570b30>)
     """
-    rmsds = md.rmsd(target, reference, atom_indices=atom_indices)
+    rmsds = mdtraj.rmsd(target, reference, atom_indices=atom_indices)
     iMin = np.argmin(rmsds)
     return iMin, target[iMin]
 
@@ -700,7 +698,7 @@ def get_atom_index_by_name(
 
 def sequence(
         structure_obj
-) -> Dict:
+) -> typing.Dict:
     """Return dictionary of sequences keyed to chain and type of sequence used.
 
     :param structure_obj: Structure
@@ -730,8 +728,8 @@ def count_atoms(topology_dict):
 
 
 def average(
-        structures: List[chisurf.structure.Structure],
-        weights: List[float] = None,
+        structures: typing.List[chisurf.structure.Structure],
+        weights: typing.List[float] = None,
         write: bool = True,
         filename: str = None,
         verbose: bool = True
