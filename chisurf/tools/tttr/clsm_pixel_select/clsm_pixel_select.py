@@ -11,6 +11,7 @@ import sys
 import os
 import yaml
 import copy
+import pathlib
 
 import pyqtgraph
 import pyqtgraph.dockarea
@@ -30,12 +31,10 @@ import chisurf.widgets
 import chisurf.widgets.experiments
 
 plot_settings = chisurf.settings.gui['plot']
+
 clsm_settings = yaml.safe_load(
     open(
-        os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "clsm_settings.yaml"
-        )
+        pathlib.Path(__file__).parent / pathlib.Path("clsm_settings.yaml")
     )
 )
 

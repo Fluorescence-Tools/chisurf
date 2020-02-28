@@ -8,7 +8,7 @@ import numba as nb
 import chisurf
 import chisurf.fio
 import chisurf.math.linalg
-import chisurf.structure
+from chisurf.structure.structure import Structure
 
 
 internal_formats = ['i4', 'i4', 'i4', 'i4', 'f8', 'f8', 'f8']
@@ -114,7 +114,7 @@ def atom_dist(
 
 
 def move_center_of_mass(
-        structure: chisurf.structure.Structure,
+        structure: Structure,
         all_atoms
 ):
     """
@@ -140,7 +140,7 @@ def move_center_of_mass(
 
 
 def make_residue_lookup_table(
-        structure: chisurf.structure.Structure
+        structure: Structure
 ):
     """
 
@@ -240,7 +240,7 @@ def internal_to_cartesian(
 
 
 def calc_internal_coordinates_bb(
-        structure: chisurf.structure.Structure,
+        structure: Structure,
         verbose: bool = None,
         **kwargs
 ):
@@ -296,7 +296,7 @@ def calc_internal_coordinates_bb(
 
 
 class ProteinCentroid(
-    chisurf.structure.Structure
+    Structure
 ):
     """
     A coarse grained representation for proteins, where the backbone
