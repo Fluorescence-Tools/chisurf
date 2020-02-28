@@ -263,7 +263,6 @@ class Parameter(
             **kwargs
         )
         name = kwargs.pop('name', '')
-        self._link = link
         if callable(value):
             self._callable = value
             self._port = chinet.Port(
@@ -282,6 +281,9 @@ class Parameter(
                 ub=ub,
                 is_bounded=bounds_on
             )
+        self._link = link
+        if isinstance(link, Parameter):
+            self._port.link = link._port
         self.controller = None
 
 
