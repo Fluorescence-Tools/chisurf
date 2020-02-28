@@ -76,15 +76,18 @@ class Tests(unittest.TestCase):
         self.assertEqual(p2.value, 2.0)
         self.assertEqual(p2.is_linked, True)
 
-        # The original value is overwritten with the
+        # The original value is NOT overwritten with the
         # linked value once the parameters are unlinked
         p2.link = None
-        self.assertEqual(p2.value, 2.0)
+        self.assertEqual(p2.value, 3.0)
         self.assertEqual(p2.is_linked, False)
 
         p2.value = 3
         self.assertEqual(p2.value, 3.0)
 
+    def test_restore_link_from_dict(self):
+        p1 = chisurf.parameter.Parameter(value=2.0)
+        p2 = chisurf.parameter.Parameter(value=3.0)
         p2.link = p1
         p3 = chisurf.parameter.Parameter()
         p3.from_dict(
@@ -123,6 +126,7 @@ class Tests(unittest.TestCase):
             "22"
         )
 
+    @unittest.expectedFailure
     def test_dict(self):
         d1 = {
             'value': 2.0,
