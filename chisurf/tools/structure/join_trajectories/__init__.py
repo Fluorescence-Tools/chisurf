@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import mdtraj as md
 import numpy as np
 import tables
@@ -7,48 +9,52 @@ import chisurf.decorators
 import chisurf.widgets
 
 
-class JoinTrajectoriesWidget(QtWidgets.QWidget):
+class JoinTrajectoriesWidget(
+    QtWidgets.QWidget
+):
 
     @property
-    def stride(self):
+    def stride(self) -> int:
         return
 
     @property
-    def chunk_size(self):
+    def chunk_size(self) -> int:
         return int(self.spinBox.value())
 
     @property
-    def reverse_traj_1(self):
+    def reverse_traj_1(self) -> bool:
         return bool(self.checkBox_2.isChecked())
 
     @property
-    def reverse_traj_2(self):
+    def reverse_traj_2(self) -> bool:
         return bool(self.checkBox.isChecked())
 
     @property
-    def trajectory_filename_1(self):
+    def trajectory_filename_1(self) -> str:
         return str(self.lineEdit.text())
 
     @trajectory_filename_1.setter
-    def trajectory_filename_1(self, v):
+    def trajectory_filename_1(self, v: str):
         self.lineEdit.setText(str(v))
 
     @property
-    def trajectory_filename_2(self):
+    def trajectory_filename_2(self) -> str:
         return str(self.lineEdit_2.text())
 
     @trajectory_filename_2.setter
-    def trajectory_filename_2(self, v):
+    def trajectory_filename_2(self, v:str):
         self.lineEdit_2.setText(str(v))
 
     @property
-    def join_mode(self):
+    def join_mode(self) -> str:
         if self.radioButton_2.isChecked():
             return 'time'
         else:
             return 'atoms'
 
-    @chisurf.decorators.init_with_ui(ui_filename="join_traj.ui")
+    @chisurf.decorators.init_with_ui(
+        ui_filename="join_traj.ui"
+    )
     def __init__(
             self,
             *args,
@@ -58,8 +64,16 @@ class JoinTrajectoriesWidget(QtWidgets.QWidget):
         self.actionOpen_second_trajectory.triggered.connect(self.onOpenTrajectory_2)
         self.actionSave_joined_trajectory.triggered.connect(self.onJoinTrajectories)
 
-    def onJoinTrajectories(self):
-        target_filename = str(QtWidgets.QFileDialog.getSaveFileName(None, 'Save H5-Model file', '', 'H5-files (*.h5)'))[0]
+    def onJoinTrajectories(
+            self,
+            target_filename: str = None
+    ) -> None:
+        if target_filename is None:
+            target_filename = str(
+                QtWidgets.QFileDialog.getSaveFileName(
+                    None, 'Save H5-Model file', '', 'H5-files (*.h5)'
+                )
+            )[0]
 
         fn1 = self.trajectory_filename_1
         fn2 = self.trajectory_filename_2
@@ -93,14 +107,24 @@ class JoinTrajectoriesWidget(QtWidgets.QWidget):
 
         table.close()
 
-    def onOpenTrajectory_1(self, filename=None):
+    def onOpenTrajectory_1(
+            self,
+            filename: str = None
+    ):
         if filename is None:
             #self.trajectory_filename_1 = str(QtGui.QFileDialog.getOpenFileName(None, 'Open H5-Model file', '', 'H5-files (*.h5)'))
-            filename = chisurf.widgets.get_filename('Open H5-Model file', 'H5-files (*.h5)')
+            filename = chisurf.widgets.get_filename(
+                'Open H5-Model file', 'H5-files (*.h5)'
+            )
             self.trajectory_filename_1 = filename
 
-    def onOpenTrajectory_2(self, filename=None):
+    def onOpenTrajectory_2(
+            self,
+            filename: str = None
+    ):
         if filename is None:
             #self.trajectory_filename_2 = str(QtGui.QFileDialog.getOpenFileName(None, 'Open H5-Model file', '', 'H5-files (*.h5)'))
-            filename = chisurf.widgets.get_filename('Open H5-Model file', 'H5-files (*.h5)')
+            filename = chisurf.widgets.get_filename(
+                'Open H5-Model file', 'H5-files (*.h5)'
+            )
             self.trajectory_filename_2 = filename

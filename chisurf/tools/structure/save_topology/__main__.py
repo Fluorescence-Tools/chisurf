@@ -1,10 +1,10 @@
 import sys
-from chisurf.tools.fret.calculator import FRETCalculator
+from chisurf.tools.structure.save_topology import SaveTopology
 from qtpy import QtWidgets
 
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    win = FRETCalculator()
+    win = SaveTopology()
     win.show()
     sys.exit(app.exec_())

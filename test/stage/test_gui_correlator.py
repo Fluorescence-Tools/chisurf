@@ -26,7 +26,7 @@ class Tests(unittest.TestCase):
         """
         Create the GUI
         """
-        self.form = chisurf.tools.tttr.tttr_correlate.correlate.CorrelateTTTR()
+        self.form = chisurf.tools.broken.correlate.correlate.CorrelateTTTR()
 
     def test_defaults(self):
         self.assertEqual(self.form.doubleSpinBox_2.value(), 0.380)

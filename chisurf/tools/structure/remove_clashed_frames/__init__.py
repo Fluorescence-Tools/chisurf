@@ -5,7 +5,7 @@ import sys
 import numba as nb
 from qtpy import QtWidgets
 
-import mdtraj as md
+import mdtraj
 import numpy as np
 import tables
 
@@ -13,84 +13,12 @@ import chisurf.decorators
 import chisurf.widgets
 
 
-class RemoveClashedFrames(QtWidgets.QWidget):
-
-    @property
-    def stride(self):
-        return int(self.spinBox.value())
-
-    @property
-    def atom_list(self):
-        txt = str(self.plainTextEdit.toPlainText())
-        return txt
-        #atom_list = np.fromstring(txt, dtype=np.int32, sep=",")
-        #return atom_list
-
-    @property
-    def trajectory_filename(self):
-        return str(self.lineEdit.text())
-
-    @trajectory_filename.setter
-    def trajectory_filename(self, v):
-        self.lineEdit.setText(str(v))
-
-    @property
-    def min_distance(self):
-        return float(self.doubleSpinBox.value()) / 10.0
-
-    def onRemoveClashes(self):
-        target_filename = chisurf.widgets.save_file('H5-Trajectory file', 'H5-File (*.h5)')
-        # target_filename = 'clash_dimer.h5'
-        filename = self.trajectory_filename
-        stride = self.stride
-        min_distance = self.min_distance
-
-        # Make empty trajectory
-        frame_0 = md.load_frame(filename, 0)
-        target_traj = md.Trajectory(xyz=np.empty((0, frame_0.n_atoms, 3)), topology=frame_0.topology)
-        #atom_indices = np.array(self.atom_list)
-        atom_selection = self.atom_list
-        atom_list = target_traj.top.select(atom_selection)
-        target_traj.save(target_filename)
-
-        chunk_size = 1000
-        for i, chunk in enumerate(md.iterload(filename, chunk=chunk_size, stride=stride)):
-            xyz = chunk.xyz.copy()
-            frames_below = below_min_distance(xyz, min_distance, atom_list=atom_list)
-            selection = np.where(frames_below < 1)[0]
-            xyz_clash_free = np.take(xyz, selection, axis=0)
-            with tables.open_file(target_filename, 'a') as table:
-                table.root.coordinates.append(xyz_clash_free)
-                times = np.arange(table.root.time.shape[0],
-                                  table.root.time.shape[0] + xyz_clash_free.shape[0], dtype=np.float32)
-                table.root.time.append(times)
-
-    def onOpenTrajectory(self, filename=None):
-        if filename is None:
-            filename = chisurf.widgets.get_filename(
-                'Open H5-Model file', 'H5-files (*.h5)'
-            )
-            self.trajectory_filename = filename
-
-    @chisurf.decorators.init_with_ui(ui_filename="remove_clashes.ui")
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
-        self.actionOpen_trajectory.triggered.connect(self.onOpenTrajectory)
-        self.actionSave_clash_free_trajectory.triggered.connect(self.onRemoveClashes)
-
-
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    win = RemoveClashedFrames()
-    win.show()
-    sys.exit(app.exec_())
-
-
 @nb.jit
-def below_min_distance(xyz, min_distance, atom_list=np.empty(0, dtype=np.int32)):
+def below_min_distance(
+        xyz: np.ndarray,
+        min_distance: float,
+        atom_list: np.ndarray = np.empty(0, dtype=np.int32)
+) -> np.ndarray:
     """Takes the xyz-coordinates (frame, atom, xyz) of a trajectory as an argument an returns a vector of booleans
     of length of the number of frames. The bool is False if the frame contains a atomic distance smaller than the
     min distance.
@@ -140,3 +68,104 @@ def below_min_distance(xyz, min_distance, atom_list=np.empty(0, dtype=np.int32))
             if re[i_frame] > 0:
                 break
     return re
+
+
+class RemoveClashedFrames(
+    QtWidgets.QWidget
+):
+
+    @property
+    def stride(self) -> int:
+        return int(self.spinBox.value())
+
+    @property
+    def atom_list(self) -> str:
+        txt = str(self.plainTextEdit.toPlainText())
+        return txt
+        #atom_list = np.fromstring(txt, dtype=np.int32, sep=",")
+        #return atom_list
+
+    @property
+    def trajectory_filename(self) -> str:
+        return str(self.lineEdit.text())
+
+    @trajectory_filename.setter
+    def trajectory_filename(self, v: str):
+        self.lineEdit.setText(str(v))
+
+    @property
+    def min_distance(self) -> float:
+        return float(self.doubleSpinBox.value()) / 10.0
+
+    def onRemoveClashes(
+            self,
+            target_filename: str = None
+    ):
+        if target_filename is None:
+            target_filename = chisurf.widgets.save_file(
+                'H5-Trajectory file', 'H5-File (*.h5)'
+            )
+        # target_filename = 'clash_dimer.h5'
+        filename = self.trajectory_filename
+        stride = self.stride
+        min_distance = self.min_distance
+
+        # Make empty trajectory
+        frame_0 = mdtraj.load_frame(filename, 0)
+        target_traj = mdtraj.Trajectory(
+            xyz=np.empty((0, frame_0.n_atoms, 3)), topology=frame_0.topology
+        )
+        #atom_indices = np.array(self.atom_list)
+        atom_selection = self.atom_list
+        atom_list = target_traj.top.select(atom_selection)
+        target_traj.save(target_filename)
+
+        chunk_size = 1000
+        for i, chunk in enumerate(
+                mdtraj.iterload(
+                    filename,
+                    chunk=chunk_size,
+                    stride=stride
+                )
+        ):
+            xyz = chunk.xyz.copy()
+            frames_below = below_min_distance(
+                xyz=xyz,
+                min_distance=min_distance,
+                atom_list=atom_list
+            )
+            selection = np.where(frames_below < 1)[0]
+            xyz_clash_free = np.take(xyz, selection, axis=0)
+            with tables.open_file(target_filename, 'a') as table:
+                table.root.coordinates.append(xyz_clash_free)
+                times = np.arange(table.root.time.shape[0],
+                                  table.root.time.shape[0] + xyz_clash_free.shape[0], dtype=np.float32)
+                table.root.time.append(times)
+
+    def onOpenTrajectory(
+            self,
+            filename: str = None
+    ):
+        if filename is None:
+            filename = chisurf.widgets.get_filename(
+                'Open H5-Model file', 'H5-files (*.h5)'
+            )
+            self.trajectory_filename = filename
+
+    @chisurf.decorators.init_with_ui(
+        ui_filename="remove_clashes.ui"
+    )
+    def __init__(
+            self,
+            *args,
+            **kwargs
+    ):
+        self.actionOpen_trajectory.triggered.connect(self.onOpenTrajectory)
+        self.actionSave_clash_free_trajectory.triggered.connect(self.onRemoveClashes)
+
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    win = RemoveClashedFrames()
+    win.show()
+    sys.exit(app.exec_())

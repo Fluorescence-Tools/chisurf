@@ -3,8 +3,7 @@
 """
 from __future__ import annotations
 import typing
-
-from .tcspc import *
+import numpy as np
 
 
 def weights(

@@ -1,6 +1,9 @@
 language: generic
 sudo: required
 
+dist: bionic
+osx_image: xcode9.4
+
 os:
   - osx
   - linux
@@ -33,9 +36,10 @@ before_install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
-  - conda config --set channel_priority strict
+  - conda config --set channel_priority flexible
   - conda config --add channels conda-forge
   - conda config --add channels tpeulen
+  - conda config --add channels salilab
   - conda update -q conda
   - conda info -a
   - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git nose coverage numpy

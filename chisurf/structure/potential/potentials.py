@@ -30,38 +30,48 @@ def centroid2(
         repulsion: float = 100.0
 ):
     """
-    Calculate the potential energy given the UNRES GBV-Sidechain potential and isotropic conditions.
+    Calculate the potential energy given the UNRES GBV-Sidechain potential and
+    isotropic conditions.
 
     Parameters
     ----------
     atom_lookup : integer array
-            A two dimensional lookup array to find for each residue and atom-type the corresponding
-            position within the coordinate array `r`.
+            A two dimensional lookup array to find for each residue and
+            atom-type the corresponding position within the coordinate array `r`.
     centroid_pos : integer
-            This variable specifies which position in the atom_lookup contains the number of the C-beta
-            atom.
+            This variable specifies which position in the atom_lookup
+            contains the number of the C-beta atom.
     res_types : integer array
-            An array containing the residue types of the residues as a one dimensional array. The residue types
-            are in the order as in :py:const:mfm.structure.residue_atoms_internal:
+            An array containing the residue types of the residues as a one
+            dimensional array. The residue types are in the order as in
+            :py:const:mfm.structure.residue_atoms_internal:
     ca_dist : double array
-            The array `ca_dist` should contain the pair-wise distances of all C-alpha atoms of the protein
+            The array `ca_dist` should contain the pair-wise distances of all
+            C-alpha atoms of the protein
     r : double array
-            The two-dimensional array `r` contains all Cartesian coordinates of all atoms.
+            The two-dimensional array `r` contains all Cartesian coordinates
+            of all atoms.
     potential : double array
-            This 3-dimensional array contains pre-calculated potentials of all possible combinations of amino-
-            acids. potential[1,2,10] has to contain the potential of the amino-acid (1) and (2) at a distance
-            of 10 whereas the actual distance is dependent on the range in which the potential was actually
-            calculated. The potential can be calculated with the small program located in:
+            This 3-dimensional array contains pre-calculated potentials of all
+            possible combinations of amino-acids. potential[1,2,10] has to
+            contain the potential of the amino-acid (1) and (2) at a distance
+            of 10 whereas the actual distance is dependent on the range in
+            which the potential was actually calculated. The potential can be
+            calculated with the small program located in:
             mfm.structure.potential.database.make_unres_lookup.py
     min_dist : double
-            The minimum distance for which the parameter `potential` was calculated. This parameter has to be
-            supplied and depends on the provided pre-calculated potential file.
+            The minimum distance for which the parameter `potential` was
+            calculated. This parameter has to be supplied and depends on the
+            provided pre-calculated potential file.
     max_dist :double
-            The minimum distance for which the parameter `potential` was calculated (see min_dist)
+            The minimum distance for which the parameter `potential` was
+            calculated (see min_dist)
     bin_width : double
-            The spacing between the bin of the distance points in the pre-calculated potential
+            The spacing between the bin of the distance points in the
+            pre-calculated potential
     cutoff : double
-            Distances between the centroids bigger than the cut-off distance will be neglected
+            Distances between the centroids bigger than the cut-off distance
+            will be neglected
 
     Citation
     --------
@@ -151,7 +161,7 @@ def internal_potential_calpha(
 
 @nb.jit(nopython=True)
 def lj_calpha(
-        ca_coordinates: np.arra: np.ndarray,
+        ca_coordinates: np.ndarray,
         rm: float = 3.8208650279
 ) -> float:
     """Truncated Lennard Jones
