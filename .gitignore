@@ -1,11 +1,17 @@
-build
+/build
+/dist
+cmake-build-*
 *.pro.user
 *.pro.user.*
 CMakeLists.txt.user
 CMakeLists.txt.user.*
-cmake-build-*
-_*-darwin.so
 playground
+*.pyc
+*.pyo
+*~
+\.#*
+*.egg-info
+*.so
 
 # JetBrains
 # User-specific stuff
