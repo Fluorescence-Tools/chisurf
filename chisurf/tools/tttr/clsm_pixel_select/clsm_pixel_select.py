@@ -497,7 +497,9 @@ class CLSMPixelSelect(
         # Contrast/color control
         hist = self.hist
         hist.setImageItem(self.img)
-        hist.gradient.loadPreset('inferno')
+        hist.gradient.loadPreset(
+            pyqtgraph.graphicsItems.GradientEditorItem.Gradients.keys()[0]
+        )
         win.addItem(hist)
 
         win.setSizePolicy(
