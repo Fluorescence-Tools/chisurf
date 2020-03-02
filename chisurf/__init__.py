@@ -2,10 +2,7 @@ import typing
 
 import chisurf.settings as settings
 import logging
-
-__version__ = settings.cs_settings['version']
-__name__ = settings.cs_settings['name']
-
+from chisurf.version import __version__
 
 def c(
         t,

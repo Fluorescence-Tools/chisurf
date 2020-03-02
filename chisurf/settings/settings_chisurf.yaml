@@ -1,10 +1,7 @@
 ---
-name: ChiSurf
-version: 20.2.22
 n_threads: 4
 verbose: false
 fitting_message: true
-email-contact: thomas.otavio.peulen@gmail.com
 experimental_models: false
 updates:
   check_version_url: http://fret.at/downloads/CURRENT.txt
