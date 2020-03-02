@@ -81,7 +81,7 @@ class CLSMPixelSelect(
                 l.append(c)
         self._curves = l
         self.cs.update()
-        self.plot_curves()
+        self.plot_all_curves()
 
     def clear_curves(
             self
@@ -104,27 +104,37 @@ class CLSMPixelSelect(
         super().remove_curve(selected_index)
         # Update UI
         self.cs.update()
-        self.plot_curves()
+        self.plot_all_curves()
 
-    def plot_curves(
+    def update_selection_plot(
+            self
+    ):
+        plot = self.plot.getPlotItem()
+        curve = plot.curves[0]
+        curve.setData(
+            x=self.current_decay.x,
+            y=self.current_decay.y
+        )
+
+    def plot_all_curves(
             self
     ) -> None:
         """Plots and updates the curves
         """
+        lw = plot_settings['line_width']
+
         plot = self.plot.getPlotItem()
         plot.clear()
-        curve = self.current_decay
+
         plot.plot(
-            x=curve.x, y=curve.y,
-            name="Current selection"
+            x=self.current_decay.x, y=self.current_decay.y,
+            pen=pyqtgraph.mkPen(
+                width=lw
+            ),
+            name="Current selection",
         )
 
-        self.legend = plot.addLegend()
-        plot.setLogMode(x=False, y=True)
-        plot.showGrid(True, True, 1.0)
-
         current_curve = self.cs.selected_curve_index
-        lw = plot_settings['line_width']
         for i, curve in enumerate(self._curves):
             w = lw * 0.5 if i != current_curve else 2.5 * lw
             plot.plot(
@@ -135,7 +145,10 @@ class CLSMPixelSelect(
                 ),
                 name=curve.name
             )
+        plot.setLogMode(x=False, y=True)
+        plot.showGrid(True, True, 1.0)
         plot.autoRange()
+        self.legend = plot.addLegend()
 
     def add_curve(
             self,
@@ -158,7 +171,7 @@ class CLSMPixelSelect(
 
         # Update UI
         self.cs.update()
-        self.plot_curves()
+        self.plot_all_curves()
 
     def open_tttr_file(
             self,
@@ -215,15 +228,15 @@ class CLSMPixelSelect(
         :return:
         """
         # Read from UI
-        if clsm_name is None:
+        if not isinstance(clsm_name, str):
             clsm_name = str(self.comboBox_9.currentText())
-        if clsm_image is None:
+        if not isinstance(clsm_name, np.ndarray):
             clsm_image = self.clsm_images[clsm_name]
-        if image_type is None:
+        if not isinstance(image_type, str):
             image_type = str(self.comboBox_3.currentText())
-        if n_ph_min is None:
+        if not isinstance(n_ph_min, int):
             n_ph_min = int(self.spinBox.value())
-        if image_name is None:
+        if not isinstance(image_name, str):
             image_name = str(self.lineEdit_4.text())
 
         if image_type == "Mean micro time":
@@ -260,7 +273,7 @@ class CLSMPixelSelect(
     ) -> None:
         if mask_name is None:
             mask_name = self.lineEdit_5.text()
-        self.masks[mask_name] = self.img_drawn.image
+        self.masks[mask_name] = self.pixel_selection.image
 
         # Update UI
         self.listWidget.clear()
@@ -273,8 +286,8 @@ class CLSMPixelSelect(
         mask_name = self.listWidget.currentItem().text()
         d = self.masks[mask_name]
         d *= np.max(self.img.image.flatten())
-        self.img_drawn.setImage(d)
-        self.img_drawn.updateImage()
+        self.pixel_selection.setImage(d)
+        self.pixel_selection.updateImage()
         self.update_plot()
 
     def get_selected_masks(
@@ -317,7 +330,7 @@ class CLSMPixelSelect(
                 description='Image file',
                 file_type='All files (*.png)'
             )
-        image = self.img_drawn.image
+        image = self.pixel_selection.image
         image[image > 0] = 255
         cv2.imwrite(
             filename,
@@ -327,9 +340,9 @@ class CLSMPixelSelect(
     def clear_pixel_mask(
             self
     ) -> None:
-        self.img_drawn.setImage(
+        self.pixel_selection.setImage(
             np.zeros_like(
-                self.img_drawn.image
+                self.pixel_selection.image
             )
         )
 
@@ -345,7 +358,7 @@ class CLSMPixelSelect(
         image = cv2.imread(
             filename
         )
-        self.img_drawn.setImage(
+        self.pixel_selection.setImage(
             image=cv2.cvtColor(
                 image, cv2.COLOR_BGR2GRAY
             ).astype(np.float64)
@@ -354,47 +367,55 @@ class CLSMPixelSelect(
     def image_changed(
             self
     ) -> None:
-        # update image
+        # checkbox used to decide if the image should be plotted
         if self.checkBox_5.isChecked():
             image_name = self.comboBox_7.currentText()
             if image_name in self.clsm_representations.keys():
                 image = self.clsm_representations.get(image_name, None)
                 if image is not None:
+                    # update spinBox that is used to select the
+                    # current frame
                     self.spinBox_8.setMinimum(0)
                     self.spinBox_8.setMaximum(image.shape[0] - 1)
 
+                    # select a gradient preset
                     self.hist.gradient.loadPreset(
                         self.comboBox_2.currentText()
                     )
-                    if image is not None:
+
+                    if isinstance(image, np.ndarray):
+                        # plot the sum of all frames
                         if self.radioButton_4.isChecked():
                             data = image.sum(axis=0)
+                        # plot the mean of all frames
                         elif self.radioButton_5.isChecked():
                             data = image.mean(axis=0)
+                        # plot only the currently selected frame
                         else:
                             frame_idx = self.spinBox_8.value()
                             data = image[frame_idx]
-                        # transpose image (row, column) -> (column, row)
+
                         # pyqtgraph is column major by default
+                        # transpose image (row, column) -> (column, row)
                         self.img.setImage(data.T)
-                        # self.img_drawn.setImage(np.zeros_like(data))
-                        self.hist.setLevels(data.min(), data.max())
+                        # self.pixel_selection.setImage(np.zeros_like(data))
+                        self.hist.setLevels(data.min() + 1e-9, data.max())
                         self.brush_kernel *= max(data.flatten()) / max(self.brush_kernel.flatten())
                         # zoom to fit image
                         self.img_plot.autoRange()
 
                         # Get template for mask
-                        if self.img_drawn.image is None:
-                            self.img_drawn.setImage(np.zeros_like(data))
-                        elif self.img_drawn.image.shape != self.img.image.shape:
-                            self.img_drawn.setImage(np.zeros_like(data))
+                        if not isinstance(self.pixel_selection.image, np.ndarray):
+                            self.pixel_selection.setImage(np.zeros_like(data))
+                        elif self.pixel_selection.image.shape != self.img.image.shape:
+                            self.pixel_selection.setImage(np.zeros_like(data))
         else:
             self.img.setImage(
                 np.zeros((512, 512))
             )
         # update mask
         if not self.checkBox_6.isChecked():
-            w = self.img_drawn.getPixmap()
+            w = self.pixel_selection.getPixmap()
             w.hide()
         self.update_plot()
 
@@ -404,9 +425,9 @@ class CLSMPixelSelect(
             filename: str = None
     ) -> None:
         # Read from UI
-        if image_name is None:
+        if not isinstance(image_name, str):
             image_name = self.comboBox_7.currentText()
-        if filename is None:
+        if not isinstance(filename, str):
             filename = chisurf.widgets.save_file(
                 description='Image file',
                 file_type='All files (*.png)'
@@ -428,9 +449,11 @@ class CLSMPixelSelect(
     def update_plot(
             self
     ) -> None:
+        if not isinstance(self.pixel_selection.image, np.ndarray):
+            return
         # Transpose sel (pyqtgraph is column major)
         # (column, row) -> (row , column)
-        sel = np.copy(self.img_drawn.image).T
+        sel = np.copy(self.pixel_selection.image).T
         sel[sel > 0] = 1
         sel[sel < 0] = 0
         sel = sel.astype(dtype=np.uint8)
@@ -462,23 +485,19 @@ class CLSMPixelSelect(
                 y = decay.sum(axis=0)
             else:
                 y = decay[self.spinBox_8.value()]
-
             y_pos = np.where(y > 0)[0]
             if len(y_pos) > 0:
                 i_y_max = y_pos[-1]
                 y = y[:i_y_max]
                 t = t[:i_y_max]
-
             experiment = chisurf.experiment.get('TCSPC', None)
             self.current_decay = chisurf.experiments.data.DataCurve(
-                x=t,
-                y=y,
+                x=t, y=y,
                 ey=1./chisurf.fluorescence.tcspc.weights(y),
                 copy_array=False,
                 experiment=experiment
             )
-
-            self.plot_curves()
+            self.plot_all_curves()
 
     def setup_image_plot(
             self,
@@ -491,14 +510,14 @@ class CLSMPixelSelect(
 
         # Item for displaying image data
         p1.addItem(self.img)
-        p1.addItem(self.img_drawn)
-        self.img_drawn.setCompositionMode(QtGui.QPainter.CompositionMode_Plus)
+        p1.addItem(self.pixel_selection)
+        self.pixel_selection.setCompositionMode(QtGui.QPainter.CompositionMode_Plus)
 
         # Contrast/color control
         hist = self.hist
         hist.setImageItem(self.img)
         hist.gradient.loadPreset(
-            pyqtgraph.graphicsItems.GradientEditorItem.Gradients.keys()[0]
+            next(iter(pyqtgraph.graphicsItems.GradientEditorItem.Gradients))
         )
         win.addItem(hist)
 
@@ -528,9 +547,9 @@ class CLSMPixelSelect(
             val = self.img.image[i, j]
             ppos = self.img.mapToParent(pos)
             x, y = ppos.x(), ppos.y()
-            #p1.setTitle("pos: (%0.1f, %0.1f)  pixel: (%d, %d)  value: %g" % (x, y, i, j, val))
+            p1.setTitle("pos: (%0.1f, %0.1f)  pixel: (%d, %d)  value: %g" % (x, y, i, j, val))
 
-        self.img_drawn.hoverEvent = imagehoverEvent
+        self.pixel_selection.hoverEvent = imagehoverEvent
 
         # Monkey-patch the image to use our custom hover function.
         # This is generally discouraged (you should subclass ImageItem instead),
@@ -542,13 +561,13 @@ class CLSMPixelSelect(
             """
             if event.button() != QtCore.Qt.LeftButton:
                 return
-            elif self.img_drawn.drawKernel is not None:
+            elif self.pixel_selection.drawKernel is not None:
                 # draw on the image
                 event.accept()
-                self.img_drawn.drawAt(event.pos(), event)
+                self.pixel_selection.drawAt(event.pos(), event)
             if self.checkBox_4.isChecked():
-                self.update_plot()
-        self.img_drawn.mouseDragEvent = imageMouseDragEvent
+                self.update_selection_plot()
+        self.pixel_selection.mouseDragEvent = imageMouseDragEvent
         return win
 
     def update_brush(
@@ -561,7 +580,7 @@ class CLSMPixelSelect(
                     self.brush_width
                 )
 
-        self.img_drawn.setDrawKernel(
+        self.pixel_selection.setDrawKernel(
             self.brush_kernel,
             mask=self.brush_kernel,
             center=(1, 1), mode='add'
@@ -644,7 +663,7 @@ class CLSMPixelSelect(
     ) -> None:
         chisurf.logging.info("CLSMPixelSelect::add_clsm")
         # Read from UI
-        if frame_marker is None:
+        if not isinstance(frame_marker, list):
             frame_marker = [
                 int(i) for i in str(self.lineEdit_2.text()).split(",")
             ]
@@ -750,7 +769,7 @@ class CLSMPixelSelect(
 
         # image and pixel selection
         self.img = pyqtgraph.ImageItem()
-        self.img_drawn = pyqtgraph.ImageItem()
+        self.pixel_selection = pyqtgraph.ImageItem()
         self.hist = pyqtgraph.HistogramLUTItem()
         self.comboBox_2.addItems(
             list(pyqtgraph.graphicsItems.GradientEditorItem.Gradients.keys())

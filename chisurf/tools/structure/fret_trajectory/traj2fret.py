@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-
 import mdtraj as md
 import numba as nb
 import numpy as np

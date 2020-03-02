@@ -1,9 +1,10 @@
+from __future__ import annotations
 import typing
 
-import mdtraj as md
 import numpy as np
 import tables
 from qtpy import QtWidgets
+import mdtraj
 
 import chisurf.decorators
 import chisurf.widgets
@@ -19,10 +20,14 @@ class RotateTranslateTrajectoryWidget(QtWidgets.QWidget):
 
     @property
     def rotation_matrix(self):
-        r = np.array([[float(self.lineEdit_3.text()), float(self.lineEdit_6.text()), float(self.lineEdit_9.text())],
-                      [float(self.lineEdit_4.text()), float(self.lineEdit_7.text()), float(self.lineEdit_10.text())],
-                      [float(self.lineEdit_5.text()), float(self.lineEdit_8.text()), float(self.lineEdit_11.text())]],
-                     dtype=np.float32)
+        r = np.array(
+            [
+                [float(self.lineEdit_3.text()), float(self.lineEdit_6.text()), float(self.lineEdit_9.text())],
+                [float(self.lineEdit_4.text()), float(self.lineEdit_7.text()), float(self.lineEdit_10.text())],
+                [float(self.lineEdit_5.text()), float(self.lineEdit_8.text()), float(self.lineEdit_11.text())]
+            ],
+            dtype=np.float32
+        )
         return r
 
     @rotation_matrix.setter
@@ -96,13 +101,19 @@ class RotateTranslateTrajectoryWidget(QtWidgets.QWidget):
             print("\nTranslation vector")
             print(translation_vector)
 
-        first_frame = md.load_frame(self.trajectory_filename, 0)
-        traj_new = md.Trajectory(xyz=np.empty((1, first_frame.n_atoms, 3)), topology=first_frame.topology)
+        first_frame = mdtraj.load_frame(self.trajectory_filename, 0)
+        traj_new = mdtraj.Trajectory(xyz=np.empty((1, first_frame.n_atoms, 3)), topology=first_frame.topology)
         traj_new.save(target_filename)
 
         chunk_size = 1000
         table = tables.open_file(target_filename, 'a')
-        for i, chunk in enumerate(md.iterload(self.trajectory_filename, chunk=chunk_size, stride=stride)):
+        for i, chunk in enumerate(
+                mdtraj.iterload(
+                    self.trajectory_filename,
+                    chunk=chunk_size,
+                    stride=stride
+                )
+        ):
             xyz = chunk.xyz.copy()
             rotate(xyz, rotation_matrix)
             translate(xyz, translation_vector)

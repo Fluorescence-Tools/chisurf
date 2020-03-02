@@ -97,8 +97,8 @@ class Curve(
 
     def __init__(
             self,
-            x: np.array = None,
-            y: np.array = None,
+            x: np.ndarray = None,
+            y: np.ndarray = None,
             copy_array: bool = True,
             *args,
             **kwargs
@@ -112,11 +112,11 @@ class Curve(
                 "length of x (%s) and y (%s) differ" % (len(x), len(y))
             )
         if copy_array:
-            self.x = np.copy(x)
-            self.y = np.copy(y)
+            self.x = np.atleast_1d(np.copy(x))
+            self.y = np.atleast_1d(np.copy(y))
         else:
-            self.x = x
-            self.y = y
+            self.x = np.atleast_1d(x)
+            self.y = np.atleast_1d(y)
         super().__init__(
             *args,
             **kwargs

@@ -119,6 +119,7 @@ class DataCurve(
             y: np.ndarray = None,
             ex: np.ndarray = None,
             ey: np.ndarray = None,
+            copy_array: bool = True,
             filename: str = '',
             data_reader: chisurf.experiments.reader.ExperimentReader = None,
             experiment: chisurf.experiments.experiment.Experiment = None,
@@ -128,6 +129,7 @@ class DataCurve(
         super().__init__(
             x=x,
             y=y,
+            copy_array=copy_array,
             data_reader=data_reader,
             experiment=experiment,
             *args,
@@ -138,12 +140,12 @@ class DataCurve(
                 filename,
                 **kwargs
             )
-        if ex is None:
+        if not isinstance(ex, np.ndarray):
             ex = np.ones_like(self.x)
-        if ey is None:
+        if not isinstance(ey, np.ndarray):
             ey = np.ones_like(self.y)
-        self.ex = ex
-        self.ey = ey
+        self.ex = np.copy(ex) if copy_array else ex
+        self.ey = np.copy(ey) if copy_array else ey
 
     def __str__(self):
         s = "Dataset:\n"

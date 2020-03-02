@@ -13,11 +13,6 @@ import chisurf.experiments
 import chisurf.experiments.tcspc
 import chisurf.macros
 import chisurf.tools
-import chisurf.tools.structure.align_trajectory
-import chisurf.tools.structure.convert_trajectories
-import chisurf.tools.structure.join_trajectories
-import chisurf.tools.structure.rotate_translate_trajectory
-import chisurf.tools.structure.save_topology
 import chisurf.widgets
 import chisurf.widgets.experiments
 import chisurf.models
@@ -570,7 +565,7 @@ class Main(QtWidgets.QMainWindow):
         self.tttr_convert = chisurf.tools.tttr.convert.TTTRConvert()
         self.actionConvert.triggered.connect(self.tttr_convert.show)
 
-        self.tttr_correlate = chisurf.tools.tttr.correlate.CorrelateTTTR()
+        self.tttr_correlate = chisurf.tools.broken.correlate.CorrelateTTTR()
         self.actionCorrelate.triggered.connect(self.tttr_correlate.show)
 
         self.tttr_histogram = chisurf.tools.tttr.decay.HistogramTTTR()
@@ -582,7 +577,7 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #      TTTR-widgets                                      #
         ##########################################################
-        self.hdf2pdb = chisurf.tools.structure.convert_trajectories.MDConverter()
+        self.hdf2pdb = chisurf.tools.structure.convert_trajectory.MDConverter()
         self.actionTrajectory_converter.triggered.connect(self.hdf2pdb.show)
 
         self.trajectory_rot_trans = chisurf.tools.structure.rotate_translate_trajectory.RotateTranslateTrajectoryWidget()
