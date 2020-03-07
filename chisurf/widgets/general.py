@@ -106,25 +106,25 @@ class QIPythonWidget(
 
     def execute_function(
             self,
-            function,
-            *args,
-            **kwargs
-    ):
+            function: typing.Callable,
+    ) -> None:
         """ Gets the function string executes the function on the command line
 
-        :param args:
-        :param kwargs:
+        :param function: A callable function that will executed in the ipython
+        environment.
+
         :return:
         """
-        t = inspect.getsource(function)
-        self.execute(t)
+        self.execute(
+            inspect.getsource(function)
+        )
 
     def __init__(
             self,
             history_widget: QtWidgets.QPlainTextEdit = None,
             *args,
             **kwargs
-    ):
+    ) -> None:
         """
 
         :param args:
@@ -158,7 +158,10 @@ class QIPythonWidget(
         )
         self.style_sheet = qtconsole.styles.default_light_style_sheet
 
-    def pushVariables(self, variableDict):
+    def pushVariables(
+            self,
+            variableDict: typing.Dict[str, object]
+    ) -> None:
         """ Given a dictionary containing name / value pairs, push those
         variables to the IPython console widget """
         self.kernel_manager.kernel.shell.push(variableDict)
@@ -167,13 +170,22 @@ class QIPythonWidget(
         """ Clears the terminal """
         self._control.clear()
 
-    def printText(self, text):
+    def printText(
+            self,
+            text: str
+    ):
         """ Prints some plain name to the console """
         self._append_plain_text(text)
 
-    def executeCommand(self, command):
+    def executeCommand(
+            self,
+            command: str
+    ):
         """ Execute a command in the frame of the console widget """
-        self._execute(command, chisurf.settings.cs_settings['show_commands'])
+        self._execute(
+            source=command,
+            hidden=chisurf.settings.cs_settings['show_commands']
+        )
 
 
 def get_widgets_in_layout(
@@ -255,7 +267,7 @@ class MyMessageBox(
         else:
             self.close()
 
-    def event(self, e):
+    def event(self, e) -> bool:
         result = QtWidgets.QMessageBox.event(self, e)
 
         self.setMinimumHeight(0)
