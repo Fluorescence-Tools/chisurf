@@ -1,10 +1,7 @@
-{% set name = "chisurf" %}
-#{% set version = "0.0.3" %}
 {% set data = load_setup_py_data(setup_file='../setup.py', from_recipe_dir=True) %}
 
 package:
-  name: {{ name|lower }}
-#  version: {{ version|lower }}
+  name: {{ data.get('name')|lower }}
   version: {{ data.get('version')|lower }}
 
 source:
@@ -31,27 +28,25 @@ requirements:
     - {{ pin_compatible('numpy') }}
     - pyyaml
     - python-slugify
-    - numba
     - scipy
     - emcee
-    - numexpr
-    - pytables
+    - numba >=0.46.0
+    - numexpr 2.7.*
     - mdtraj
     - ipython
-    - matplotlib
-    - pyqt >=5.13.1|<=5.12.1|5.9.2
-    - pyqtgraph
-    - qscintilla2
-    - pyopengl
     - qtconsole
     - jupyter_client <6.0.0|>6.0.0
+    - qtpy
+    - pyqt >=5.13.1|<=5.12.1|5.9.2
+    - qscintilla2
+    - pyqtgraph
+    - matplotlib
+    - guiqwt
+    - pyopengl
     - python-docx
-    - labellib
     - deprecation
     - pyopencl
-    - guiqwt
     - progressbar2
-    - qtpy
     - mrcfile
     - htmd-pdb2pqr
     - pymol-open-source
