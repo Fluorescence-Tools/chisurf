@@ -13,7 +13,6 @@ import chisurf.decorators
 import chisurf.experiments
 import chisurf.models
 import chisurf.models.parse.widget
-from chisurf.models.tcspc import fret
 import chisurf.models.tcspc.fret
 import chisurf.widgets
 import chisurf.widgets.fitting
@@ -901,7 +900,7 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
 
 
 class GaussianWidget(
-    fret.Gaussians,
+    chisurf.models.tcspc.fret.Gaussians,
     QtWidgets.QWidget
 ):
 
@@ -1009,7 +1008,7 @@ class GaussianWidget(
 
 
 class DiscreteDistanceWidget(
-    fret.DiscreteDistance,
+    chisurf.models.tcspc.fret.DiscreteDistance,
     QtWidgets.QWidget
 ):
 
@@ -1128,7 +1127,7 @@ for f in cs.current_fit:
 
 
 class GaussianModelWidget(
-    fret.GaussianModel,
+    chisurf.models.tcspc.fret.GaussianModel,
     LifetimeModelWidgetBase
 ):
 
@@ -1149,7 +1148,7 @@ class GaussianModelWidget(
             short='G',
             **kwargs
         )
-        fret.GaussianModel.__init__(
+        chisurf.models.tcspc.fret.GaussianModel.__init__(
             self,
             fit=fit,
             lifetimes=donors,
@@ -1172,7 +1171,7 @@ class GaussianModelWidget(
 
 
 class FRETrateModelWidget(
-    fret.FRETrateModel,
+    chisurf.models.tcspc.fret.FRETrateModel,
     LifetimeModelWidgetBase
 ):
 
@@ -1210,7 +1209,7 @@ class FRETrateModelWidget(
 
 
 class WormLikeChainModelWidget(
-    fret.WormLikeChainModel,
+    chisurf.models.tcspc.fret.WormLikeChainModel,
     LifetimeModelWidgetBase
 ):
 
@@ -1238,7 +1237,7 @@ class WormLikeChainModelWidget(
             title='Donor(0)',
             name='donors'
         )
-        fret.WormLikeChainModel.__init__(
+        chisurf.models.tcspc.fret.WormLikeChainModel.__init__(
             self,
             fit=fit,
             lifetimes=donors,
@@ -1294,7 +1293,7 @@ class WormLikeChainModelWidget(
             **kwargs
         )
 
-        fret.SingleDistanceModel.__init__(
+        chisurf.models.tcspc.fret.SingleDistanceModel.__init__(
             self,
             fit=fit,
             convolve=self.convolve,

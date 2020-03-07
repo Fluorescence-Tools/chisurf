@@ -1,3 +1,4 @@
+#! /usr/bin/env bash
 
 # broken
 python -m chisurf.tools.structure.fret_screening

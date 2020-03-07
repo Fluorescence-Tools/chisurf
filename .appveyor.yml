@@ -18,8 +18,6 @@ environment:
 #  - conda config --set always_yes yes --set changeps1 no
 #  - conda update -q conda
 #  - conda config --set channel_priority strict
-#  - conda config --add channels conda-forge
-#  - conda config --add channels tpeulen
 #  - conda install git conda-build anaconda-client
 #  - activate base
 #  - conda build conda-recipe
@@ -27,6 +25,12 @@ environment:
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - conda config --set always_yes yes --set changeps1 no
+  - conda config --set channel_priority flexible
+  - conda config --add channels conda-forge
+  - conda config --add channels tpeulen
+  - conda config --add channels salilab
+  - conda update -q conda
+  - conda info -a
   - conda env create -f environment.yml
   - activate chisurf
   - python.exe setup.py build_ext --inplace
