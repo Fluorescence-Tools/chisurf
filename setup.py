@@ -13,17 +13,9 @@ except ImportError:
     print("WARNING: could not import cython. Will not build cython extenstions.")
 
 
-name = 'chisurf'
-settings = {
-    'version': 'NA'
-}
 
-settings_file = os.path.join(
-    './chisurf/settings/',
-    'settings_chisurf.yaml'
-)
-with open(settings_file) as fp:
-    settings.update(yaml.safe_load(fp))
+__name__ = 'chisurf'
+__version__ = '20.2.22'
 
 args = sys.argv[1:]
 # Always use build_ext --inplace
@@ -80,8 +72,8 @@ extensions = [make_extension(extension) for extension in eList]
 
 
 setup(
-    name=name,
-    version=settings['version'],
+    name=__name__,
+    version=__version__,
     description="Fluorescence-Fitting",
     author="Thomas-Otavio Peulen",
     author_email='thomas.otavio.peulen@gmail.com',
@@ -101,10 +93,10 @@ setup(
     ],
     keywords='fluorescence single-molecule spectroscopy',
     packages=find_packages(
-        include=(name + "*",)
+        include=(__name__ + "*",)
     ),
     package_dir={
-        name: name
+        __name__: __name__
     },
     include_package_data=True,
     package_data={
