@@ -32,7 +32,7 @@ install:
   - conda update -q conda
   - conda info -a
   - conda env create -f environment.yml
-  - activate chisurf
+  - conda activate chisurf
   - python.exe setup.py build_ext --inplace --force
 #  - python setup.py install
 
@@ -48,7 +48,7 @@ install:
 #  - cd ..
 
 test_script:
-  - activate chisurf
+  - conda activate chisurf
   - conda install nose coverage
   - nosetests .\test\
 

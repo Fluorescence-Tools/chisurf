@@ -25,7 +25,7 @@ dependencies:
     # (see: https://github.com/GNS3/gns3-gui/issues/2819)
     - pyqt >=5.13.1|<=5.12.1|>=5.9.0
     - pyqtgraph >0.0.10
-    - qscintilla2
+    - qscintilla2 >= 2.11.2
     - pyopengl
     - qtconsole
     # jupyter_client 6.0.0 causes an error
