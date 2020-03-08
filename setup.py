@@ -101,8 +101,7 @@ setup(
             '*.svg',
             '*.css', '*.qss'
             '*.csv', '*.npy', '*.dat'
-            '*.dll',
-            '*.so'
+            '*.dll', '*.so', '*.pyd'
         ]
     },
     install_requires=[
