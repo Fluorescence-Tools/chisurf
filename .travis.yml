@@ -58,7 +58,7 @@ install:
 script:
   # osx does not have xvfb server for unit tests of gui
   # therefore run unitests on linux and on osx the conda
-  # installation and startup
+  # installation and startup.
   - |
     if [[ "$TRAVIS_OS_NAME" == "linux" ]];
     then
