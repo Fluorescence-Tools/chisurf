@@ -13,7 +13,7 @@ import chisurf.decorators
 import chisurf.experiments
 import chisurf.models
 import chisurf.models.parse.widget
-import chisurf.models.tcspc.fret
+import chisurf.models.tcspc.fret as fret
 import chisurf.widgets
 import chisurf.widgets.fitting
 import chisurf.widgets.experiments
@@ -900,7 +900,7 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
 
 
 class GaussianWidget(
-    chisurf.models.tcspc.fret.Gaussians,
+    fret.Gaussians,
     QtWidgets.QWidget
 ):
 
@@ -1008,7 +1008,7 @@ class GaussianWidget(
 
 
 class DiscreteDistanceWidget(
-    chisurf.models.tcspc.fret.DiscreteDistance,
+    fret.DiscreteDistance,
     QtWidgets.QWidget
 ):
 
@@ -1127,7 +1127,7 @@ for f in cs.current_fit:
 
 
 class GaussianModelWidget(
-    chisurf.models.tcspc.fret.GaussianModel,
+    fret.GaussianModel,
     LifetimeModelWidgetBase
 ):
 
@@ -1148,7 +1148,7 @@ class GaussianModelWidget(
             short='G',
             **kwargs
         )
-        chisurf.models.tcspc.fret.GaussianModel.__init__(
+        fret.GaussianModel.__init__(
             self,
             fit=fit,
             lifetimes=donors,
@@ -1171,7 +1171,7 @@ class GaussianModelWidget(
 
 
 class FRETrateModelWidget(
-    chisurf.models.tcspc.fret.FRETrateModel,
+    fret.FRETrateModel,
     LifetimeModelWidgetBase
 ):
 
@@ -1209,7 +1209,7 @@ class FRETrateModelWidget(
 
 
 class WormLikeChainModelWidget(
-    chisurf.models.tcspc.fret.WormLikeChainModel,
+    fret.WormLikeChainModel,
     LifetimeModelWidgetBase
 ):
 
@@ -1237,7 +1237,7 @@ class WormLikeChainModelWidget(
             title='Donor(0)',
             name='donors'
         )
-        chisurf.models.tcspc.fret.WormLikeChainModel.__init__(
+        fret.WormLikeChainModel.__init__(
             self,
             fit=fit,
             lifetimes=donors,
@@ -1293,7 +1293,7 @@ class WormLikeChainModelWidget(
             **kwargs
         )
 
-        chisurf.models.tcspc.fret.SingleDistanceModel.__init__(
+        fret.SingleDistanceModel.__init__(
             self,
             fit=fit,
             convolve=self.convolve,

@@ -4,6 +4,7 @@
 from __future__ import annotations
 import typing
 import numpy as np
+from .tcspc import rescale_w_bg
 
 
 def weights(

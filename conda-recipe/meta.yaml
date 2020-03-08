@@ -37,7 +37,7 @@ requirements:
     - qtconsole
     - jupyter_client <6.0.0|>6.0.0
     - qtpy
-    - pyqt >=5.13.1|<=5.12.1|5.9.2
+    - pyqt >=5.13.1|<=5.12.1|>=5.9.0
     - qscintilla2
     - pyqtgraph
     - matplotlib
