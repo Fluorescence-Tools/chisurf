@@ -5,9 +5,10 @@ cmake-build-*
 *.pro.user.*
 CMakeLists.txt.user
 CMakeLists.txt.user.*
-playground
+../../../Library/Preferences/PyCharm2019.3/scratches/playground
 *.pyc
 *.pyo
+*.pyd
 *~
 \.#*
 *.egg-info

@@ -121,20 +121,20 @@ class CLSMPixelSelect(
     ) -> None:
         """Plots and updates the curves
         """
-        lw = plot_settings['line_width']
-
         plot = self.plot.getPlotItem()
         plot.clear()
-
+        curve = self.current_decay
         plot.plot(
-            x=self.current_decay.x, y=self.current_decay.y,
-            pen=pyqtgraph.mkPen(
-                width=lw
-            ),
-            name="Current selection",
+            x=curve.x, y=curve.y,
+            name="Current selection"
         )
 
+        self.legend = plot.addLegend()
+        plot.setLogMode(x=False, y=True)
+        plot.showGrid(True, True, 1.0)
+
         current_curve = self.cs.selected_curve_index
+        lw = plot_settings['line_width']
         for i, curve in enumerate(self._curves):
             w = lw * 0.5 if i != current_curve else 2.5 * lw
             plot.plot(
@@ -145,10 +145,7 @@ class CLSMPixelSelect(
                 ),
                 name=curve.name
             )
-        plot.setLogMode(x=False, y=True)
-        plot.showGrid(True, True, 1.0)
         plot.autoRange()
-        self.legend = plot.addLegend()
 
     def add_curve(
             self,
@@ -159,7 +156,7 @@ class CLSMPixelSelect(
         :param v:
         :return:
         """
-        decay = copy.copy(self.current_decay) if v is None else v
+        decay = v if isinstance(v, chisurf.curve.Curve) else copy.copy(self.current_decay)
         try:
             name = self.listWidget.currentItem().text()
         except AttributeError:
@@ -511,7 +508,9 @@ class CLSMPixelSelect(
         # Item for displaying image data
         p1.addItem(self.img)
         p1.addItem(self.pixel_selection)
-        self.pixel_selection.setCompositionMode(QtGui.QPainter.CompositionMode_Plus)
+        self.pixel_selection.setCompositionMode(
+            QtGui.QPainter.CompositionMode_Plus
+        )
 
         # Contrast/color control
         hist = self.hist
@@ -566,7 +565,7 @@ class CLSMPixelSelect(
                 event.accept()
                 self.pixel_selection.drawAt(event.pos(), event)
             if self.checkBox_4.isChecked():
-                self.update_selection_plot()
+                self.plot_all_curves()
         self.pixel_selection.mouseDragEvent = imageMouseDragEvent
         return win
 
@@ -598,11 +597,9 @@ class CLSMPixelSelect(
             self
     ) -> None:
         current_setup = self.comboBox_5.currentText()
-
         tttr_type = clsm_settings[current_setup]['tttr_type']
         tttr_type_idx = self.comboBox_4.findText(tttr_type)
         self.comboBox_4.setCurrentIndex(tttr_type_idx)
-
         clsm_routine = clsm_settings[current_setup]['routine']
         clsm_routine_idx = self.comboBox.findText(clsm_routine)
         self.comboBox.setCurrentIndex(clsm_routine_idx)
@@ -793,27 +790,6 @@ class CLSMPixelSelect(
         area.addDock(d2, 'top', d1)
         area.addDock(d3, 'top', d2)
         self.verticalLayout_5.addWidget(area)
-
-        # win = pg.GraphicsWindow()
-        # plt1 = win.addPlot()
-        # plt2 = win.addPlot()
-        #
-        # ## make interesting distribution of values
-        # vals = np.hstack([np.random.normal(size=500), np.random.normal(size=260, loc=4)])
-        #
-        # ## compute standard histogram
-        # y, x = np.histogram(vals, bins=np.linspace(-3, 8, 40))
-        #
-        # ## Using stepMode=True causes the plot to draw two lines for each sample.
-        # ## notice that len(x) == len(y)+1
-        # plt1.plot(x, y, stepMode=True, fillLevel=0, brush=(0, 0, 255, 150))
-        #
-        # ## Now draw all points as a nicely-spaced scatter plot
-        # y = pg.pseudoScatter(vals, spacing=0.15)
-        # # plt2.plot(vals, y, pen=None, symbol='o', symbolSize=5)
-        # plt2.plot(vals, y, pen=None, symbol='o', symbolSize=5, symbolPen=(255, 255, 255, 200),
-        #           symbolBrush=(0, 0, 255, 150))
-        # self.verticalLayout_5.addWidget(win)
 
         self._curves = chisurf.imported_datasets
         self.update_brush()
