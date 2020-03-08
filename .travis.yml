@@ -1,7 +1,6 @@
 language: generic
 sudo: required
 
-
 os:
   - osx
   - linux
@@ -60,13 +59,13 @@ script:
   - | # osx does not have xvfb server for unit tests of gui
     if [[ "$TRAVIS_OS_NAME" == "linux" ]];
     then
+      conda install python=3.7.3
       python setup.py build_ext --inplace --force
       xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test/test_*.py;
       pip install codacy-coverage
       coverage xml
       python-codacy-coverage -r coverage.xml
     fi
-  - conda install python=3.7.3
   - conda install chisurf --use-local
   - chisurf&
   - sleep 120
