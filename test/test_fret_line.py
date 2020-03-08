@@ -149,7 +149,6 @@ class Tests(unittest.TestCase):
         )
 
     def test_dynamic_fret_line(self):
-        import chisurf.tools.broken.fret_lines.fret_lines
         chisurf.models.tcspc.fret.rda_axis = np.logspace(
             start=np.log(1),
             stop=np.log(500)
