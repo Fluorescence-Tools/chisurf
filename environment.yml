@@ -18,8 +18,8 @@ dependencies:
     - scipy
     - emcee
     - mdtraj
-    - ipython 7.12.0.*
-    - qtconsole 4.6.0.*
+    - ipython
+    - qtconsole
     # jupyter_client 6.0.0 causes an error
     # File "C:\Miniconda3\envs\chisurf\lib\site-packages\jupyter_client\client.py", line 200, in control_channel
     # socket, self.session, self.ioloop
@@ -36,14 +36,14 @@ dependencies:
     - python-docx
     - deprecation
     - pyopencl
-    - guiqwt >=3.0.3
+    - guiqwt >=3.0.0
     - progressbar2
     - qtpy
     - mrcfile
-    - htmd-pdb2pqr
+    - htmd-pdb2pqr 0.0.2.*
     - opencv 3.4.1.*
-    - cython
-    - pymol-open-source
+    - cython 0.29.15.*
+    - pymol-open-source 2.3.0.*
     - labellib
     - tttrlib >=0.0.12
     - chinet >=0.0.5
