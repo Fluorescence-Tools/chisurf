@@ -16,6 +16,10 @@ import chisurf.__main__
 import chisurf.widgets.experiments
 
 
+app = QApplication(sys.argv)
+cs_app = chisurf.__main__.qt_app()
+
+
 def add_fit(
         data_set_name: str,
         dataset_selector: chisurf.widgets.experiments.ExperimentalDataSelector,
@@ -59,8 +63,6 @@ class Tests(unittest.TestCase):
     """
     Test the kappa2 distribution GUI
     """
-    app = QApplication(sys.argv)
-    cs_app = chisurf.__main__.qt_app()
 
     def test_tcspc(self):
         """
