@@ -9,23 +9,26 @@ source:
 
 build:
   number: 0
-#  number: {{ GIT_DESCRIBE_NUMBER|int }}
   string: np{{ CONDA_NPY }}py{{ CONDA_PY }}_{{ GIT_BUILD_STR }}
   entry_points:
     - chisurf=chisurf.__main__:main
 
 requirements:
   host:
-    - {{ compiler('c') }}
-    - {{ compiler('cxx') }}
     - python {{ python }}
     - {{ pin_compatible('numpy') }}
     - pyyaml
     - setuptools
     - cython
+  build:
+    - python {{ python }}
+    - setuptools
+    - cython
+    - {{ pin_compatible('numpy') }}
   run:
     - python {{ python }}
     - {{ pin_compatible('numpy') }}
+    - cython
     - pyyaml
     - python-slugify
     - scipy
@@ -59,7 +62,7 @@ requirements:
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
-  license: GPL2.1
+  license: {{ data.get('license') }}
   license_file: LICENSE
   summary: |
     ChiSurf is an interactive global analysis software for time-resolved

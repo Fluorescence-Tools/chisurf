@@ -1,8 +1,6 @@
 #!/usr/bin/python
 import sys
 import numpy
-import yaml
-import os
 import platform
 from setuptools import setup, find_packages, Extension
 
@@ -13,9 +11,10 @@ except ImportError:
     print("WARNING: could not import cython. Will not build cython extenstions.")
 
 
-
 __name__ = 'chisurf'
 __version__ = '20.2.22'
+__license__ = 'GPL2.1'
+
 
 args = sys.argv[1:]
 # Always use build_ext --inplace
@@ -74,6 +73,7 @@ extensions = [make_extension(extension) for extension in eList]
 setup(
     name=__name__,
     version=__version__,
+    license=__license__,
     description="Fluorescence-Fitting",
     author="Thomas-Otavio Peulen",
     author_email='thomas.otavio.peulen@gmail.com',
@@ -83,7 +83,6 @@ setup(
         'Environment :: Win64 (MS Windows)',
         'Environment :: X11 Applications :: Qt',
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: MacOS :: MacOS X',
