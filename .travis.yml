@@ -56,20 +56,24 @@ install:
   - conda install chisurf
 
 script:
-  - | # osx does not have xvfb server for unit tests of gui
+  # osx does not have xvfb server for unit tests of gui
+  # therefore run unitests on linux and on osx the conda
+  # installation and startup
+  - |
     if [[ "$TRAVIS_OS_NAME" == "linux" ]];
     then
       conda install python=3.7.3
+      pip install codacy-coverage
       python setup.py build_ext --inplace --force
       xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test/test_*.py;
-      pip install codacy-coverage
       coverage xml
       python-codacy-coverage -r coverage.xml
+    else
+      conda install chisurf --use-local
+      chisurf&
+      sleep 120
+      pgrep -f chisurf | awk '{print "kill -9 " $1}' | sh
     fi
-  - conda install chisurf --use-local
-  - chisurf&
-  - sleep 120
-  - pgrep -f chisurf | awk '{print "kill -9 " $1}' | sh
 
 after_success:
   - OS=$TRAVIS_OS_NAME-64
