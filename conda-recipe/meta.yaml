@@ -34,29 +34,29 @@ requirements:
     - scipy
     - emcee
     - numba >=0.46.0
-    - numexpr >=2.7.0
+    - numexpr
     - mdtraj
-    - ipython 7.12.0.*
-    - qtconsole 4.6.0.*
+    - ipython
+    - qtconsole
     - jupyter_client <6.0.0|>6.0.0
     - qtpy
     - pyqt >=5.13.1|<=5.12.1|>=5.9.0
     - qscintilla2 >=2.10.8
     - pyqtgraph >=0.10.0
     - matplotlib >=3.1.3
-    - guiqwt >=3.0.3
+    - guiqwt >=3.0.0
     - pyopengl
     - python-docx
     - deprecation
     - pyopencl
     - progressbar2
     - mrcfile
-    - htmd-pdb2pqr
+    - htmd-pdb2pqr 0.0.2.*
     - pymol-open-source
-    - opencv 3.4.1.*
+    - opencv
     - labellib
     - tttrlib >=0.0.12
-    - chinet >=0.0.3
+    - chinet >=0.0.5
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf

@@ -21,7 +21,7 @@ install:
   - conda config --add channels tpeulen
   - conda config --add channels salilab
   - conda update -q conda
-  - conda install git conda-build anaconda-client
+  - conda install git conda-build anaconda-client numpy
   - activate base
   - conda build conda-recipe
 
