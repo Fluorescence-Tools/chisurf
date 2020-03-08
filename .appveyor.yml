@@ -33,7 +33,7 @@ install:
   - conda info -a
   - conda env create -f environment.yml
   - activate chisurf
-  - python.exe setup.py build_ext --inplace
+  - python.exe setup.py build_ext --inplace --force
 #  - python setup.py install
 
 ## use conda build
@@ -48,6 +48,7 @@ install:
 #  - cd ..
 
 test_script:
+  - activate chisurf
   - conda install nose coverage
   - nosetests .\test\
 
@@ -68,4 +69,4 @@ notifications:
       - thomas.otavio.peulen@gmail.com
     on_build_success: false
     on_build_failure: true
-    on_build_status_changed: truep
+    on_build_status_changed: true

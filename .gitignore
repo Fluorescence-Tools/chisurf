@@ -13,6 +13,7 @@ CMakeLists.txt.user.*
 \.#*
 *.egg-info
 *.so
+.eggs
 
 # JetBrains
 # User-specific stuff
