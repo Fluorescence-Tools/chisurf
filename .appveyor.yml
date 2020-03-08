@@ -13,15 +13,6 @@ environment:
 #  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 ##  Use conda-build
-#install:
-#  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-#  - conda config --set always_yes yes --set changeps1 no
-#  - conda update -q conda
-#  - conda config --set channel_priority strict
-#  - conda install git conda-build anaconda-client
-#  - activate base
-#  - conda build conda-recipe
-
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - conda config --set always_yes yes --set changeps1 no
@@ -30,32 +21,38 @@ install:
   - conda config --add channels tpeulen
   - conda config --add channels salilab
   - conda update -q conda
-  - conda info -a
-  - conda env create -f environment.yml
-  - conda activate chisurf
-  - python.exe setup.py build_ext --inplace --force
-#  - python setup.py install
+  - conda install git conda-build anaconda-client
+  - activate base
+  - conda build conda-recipe
 
-## use conda build
-#test_script:
-#  - conda install --use-local chisurf
-#  - conda install nose coverage
-#  - python setup.py build_ext --inplace --force
-#  - cmd: echo %CD%
-#  - cmd: cd C:\projects\chisurf\test\
-#  - cmd: echo %CD%
-#  - nosetests
-#  - cd ..
+#install:
+#  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+#  - conda config --set always_yes yes --set changeps1 no
+#  - conda config --set channel_priority flexible
+#  - conda config --add channels conda-forge
+#  - conda config --add channels tpeulen
+#  - conda config --add channels salilab
+#  - conda update -q conda
+#  - conda info -a
+#  - conda env create -f environment.yml
+#  - activate chisurf
+#  - python.exe setup.py build_ext --inplace --force
+##  - python setup.py install
 
+# use conda build
 test_script:
-  - conda activate chisurf
-  - conda install nose coverage
+  - conda install nose coverage chisurf -c local
   - nosetests .\test\
 
-#### scripts to run after tests
-#deploy_script:
-#  - if not "%APPVEYOR_REPO_BRANCH%" == "master" exit 0
-#  - anaconda upload C:\Miniconda3-x64\envs\build\conda-bld\win-64\chisurf-*.tar.bz2
+#test_script:
+#  - activate chisurf
+#  - conda install nose coverage
+#  - nosetests .\test\
+
+### scripts to run after tests
+deploy_script:
+  - if not "%APPVEYOR_REPO_BRANCH%" == "master" exit 0
+  - anaconda upload C:\Miniconda3-x64\envs\build\conda-bld\win-64\chisurf-*.tar.bz2
 
 build: off
 
