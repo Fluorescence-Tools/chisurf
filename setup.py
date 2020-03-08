@@ -16,10 +16,10 @@ __version__ = '20.2.22'
 __license__ = 'GPL2.1'
 
 
-args = sys.argv[1:]
-# Always use build_ext --inplace
-if args.count("build_ext") > 0 and args.count("--inplace") == 0:
-    sys.argv.insert(sys.argv.index("build_ext")+1, "--inplace")
+# args = sys.argv[1:]
+# # Always use build_ext --inplace
+# if args.count("build_ext") > 0 and args.count("--inplace") == 0:
+#     sys.argv.insert(sys.argv.index("build_ext")+1, "--inplace")
 
 
 def make_extension(ext):
