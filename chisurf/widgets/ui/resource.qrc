@@ -66,4 +66,7 @@
     <file>icons/kitesurf.png</file>
     <file>icons/kitesurf.svg</file>
   </qresource>
+  <qresource prefix="images">
+    <file>icons/cs_logo.png</file>
+  </qresource>
 </RCC>

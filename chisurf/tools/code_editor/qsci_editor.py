@@ -6,7 +6,16 @@ from __future__ import annotations
 import sys
 
 from PyQt5.Qsci import QsciScintilla
-from PyQt5.Qsci import QsciLexerPython, QsciLexerJSON, QsciLexerYAML
+# For <=2.10.0 QScintilla versions not all Lexer are available
+try:
+    from PyQt5.Qsci import QsciLexerPython, QsciLexerJSON, QsciLexerYAML
+    lexers_available = True
+except ImportError:
+    QsciLexerJSON = None
+    QsciLexerYAML = None
+    QsciLexerPython = None
+    lexers_available = False
+
 from qtpy.QtGui import *
 from qtpy.QtWidgets import *
 
@@ -108,14 +117,15 @@ class SimpleCodeEditor(QsciScintilla):
         # Set Python lexer
         # Set style for Python comments (style number 1) to a fixed-width
         # courier.
-        if language.lower() == "python":
-            lexer = QsciLexerPython()
-        elif language.lower() == "json":
-            lexer = QsciLexerJSON()
-        else:
-            lexer = QsciLexerYAML()
-        lexer.setDefaultFont(font)
-        self.setLexer(lexer)
+        if lexers_available:
+            if language.lower() == "python":
+                lexer = QsciLexerPython()
+            elif language.lower() == "json":
+                lexer = QsciLexerJSON()
+            else:
+                lexer = QsciLexerYAML()
+            self.setLexer(lexer)
+            lexer.setDefaultFont(font)
 
         text = bytearray(str.encode("Arial"))
         # 32, "Courier New"

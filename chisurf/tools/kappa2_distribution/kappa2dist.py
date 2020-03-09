@@ -29,7 +29,7 @@ class Kappa2Dist(QtWidgets.QWidget):
         self.k2 = np.array([], dtype=np.double)
         self.kappa2 = kappa2
 
-        ## pyqtgraph
+        # pyqtgraph
         area = pyqtgraph.dockarea.DockArea()
         self.verticalLayout.addWidget(area)
         d1 = pyqtgraph.dockarea.Dock(
