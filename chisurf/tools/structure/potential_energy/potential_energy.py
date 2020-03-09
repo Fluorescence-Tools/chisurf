@@ -40,7 +40,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         self.actionCurrent_potential_changed.triggered.connect(self.onSelectedPotentialChanged)
 
         self.comboBox_2.addItems(
-            list(chisurf.structure.potential.potentialDict)
+            list(chisurf.widgets.structure.potentialDict)
         )
 
     @property
@@ -54,7 +54,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
             self
     ) -> str:
         return list(
-            chisurf.structure.potential.potentialDict
+            chisurf.widgets.structure.potentialDict
         )[self.potential_number]
 
     def onProcessTrajectory(self):
@@ -94,7 +94,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
     def onSelectedPotentialChanged(self) -> None:
         layout = self.verticalLayout_2
         chisurf.widgets.hide_items_in_layout(layout)
-        self.potential = chisurf.structure.potential.potentialDict[self.potential_name](
+        self.potential = chisurf.widgets.structure.potentialDict[self.potential_name](
             structure=self.structure,
             parent=self
         )

@@ -1,5 +1,5 @@
 import sys
-from chisurf.tools.broken.potential_energy import PotentialEnergyWidget
+from chisurf.tools.structure.potential_energy import PotentialEnergyWidget
 from qtpy import QtWidgets
 
 
