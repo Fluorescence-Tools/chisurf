@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import chisurf.fio.ascii
-import chisurf.widgets
 import chisurf.fluorescence.fcs
 import chisurf.experiments.data
 import chisurf.fio.fluorescence

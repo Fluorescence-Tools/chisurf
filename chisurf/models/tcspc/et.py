@@ -9,7 +9,7 @@ import chisurf.fluorescence.general
 import chisurf.math
 from chisurf import plots
 from chisurf.fluorescence.tcspc.phasor import Phasor
-from chisurf.widgets.fluorescence.tcspc import PhasorWidget
+from chisurf.gui.widgets.fluorescence import PhasorWidget
 from chisurf.models.model import Model
 from chisurf.math.optimization import solve_richardson_lucy, maxent
 from chisurf.math.optimization.nnls import solve_nnls

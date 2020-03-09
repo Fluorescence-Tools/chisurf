@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import sys
 import unittest
 
@@ -10,25 +9,26 @@ from qtpy.QtCore import Qt
 from qtpy import QtWidgets
 
 import chisurf
-import chisurf.widgets
+import chisurf.gui
+import chisurf.gui.widgets
 import chisurf.macros
 import chisurf.__main__
-import chisurf.widgets.experiments
+import chisurf.gui.widgets.experiments
 
 
 app = QApplication(sys.argv)
-cs_app = chisurf.__main__.qt_app()
+cs_app = chisurf.gui.qt_app()
 
 
 def add_fit(
         data_set_name: str,
-        dataset_selector: chisurf.widgets.experiments.ExperimentalDataSelector,
+        dataset_selector: chisurf.gui.widgets.experiments.ExperimentalDataSelector,
         push_button: QtWidgets.QPushButton,
         model_selector: QtWidgets.QComboBox,
         model_name: str
 ):
     # select data_set
-    for i in chisurf.widgets.get_all_items(dataset_selector):
+    for i in chisurf.gui.widgets.get_all_items(dataset_selector):
         if i.text(0) == data_set_name:
             rect = dataset_selector.visualItemRect(i)
             QTest.mouseClick(

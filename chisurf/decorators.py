@@ -7,7 +7,6 @@ import inspect
 from qtpy import QtWidgets, uic
 
 
-
 class init_with_ui(object):
     """
     This is a decorator for __init__ methods of QtWidget objects.

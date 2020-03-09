@@ -148,7 +148,7 @@ gui:
     font_size: 9
     font_family: Courier
     language: Python
-  style_sheet: ./settings/gui_styles/dark.css
+  style_sheet: dark.css
   show_console: true
   show_macro_edit: true
   confirm_close_fit: true

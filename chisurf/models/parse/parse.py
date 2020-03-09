@@ -5,9 +5,9 @@ from re import Scanner
 
 import chisurf.fio
 import chisurf.decorators
-import chisurf.widgets
+import chisurf.gui.widgets
 import chisurf.parameter
-import chisurf.widgets.fitting.widgets
+import chisurf.gui.widgets.fitting.widgets
 from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
 from chisurf.models.model import ModelCurve
 

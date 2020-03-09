@@ -1,9 +1,25 @@
 import typing
 
 import chisurf.settings as settings
+import chisurf.decorators
 import logging
 
-from chisurf.version import __version__
+fits = list()
+imported_datasets = list()
+run = lambda x: x   # This is replaced during initialization to execute commands via a command line interface
+cs = object         # The current instance of ChiSurf
+console = object
+experiment = dict()
+fit_windows = list()
+working_path = ''
+verbose = settings.cs_settings['verbose']
+
+logging.basicConfig(
+    filename=settings.session_log,
+    level=logging.DEBUG
+)
+__version__ = "200307"
+
 
 def c(
         t,
@@ -35,18 +51,3 @@ def c(
         t.connect(lambda: run(st % parameters()))
 
 
-fits = list()
-imported_datasets = list()
-run = lambda x: x   # This is replaced during initialization to execute commands via a command line interface
-cs = object         # The current instance of ChiSurf
-console = object
-experiment = dict()
-fit_windows = list()
-working_path = ''
-verbose = settings.cs_settings['verbose']
-
-logging.basicConfig(
-    filename=settings.session_log,
-    level=logging.DEBUG
-)
-import chisurf.decorators

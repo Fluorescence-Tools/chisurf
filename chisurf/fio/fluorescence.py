@@ -8,6 +8,7 @@ import chisurf.fluorescence
 import chisurf.fluorescence.fcs
 import chisurf.fluorescence.tcspc
 import chisurf.experiments
+import chisurf.experiments.data
 import chisurf.fio.fcs
 from chisurf.fio.ascii import Csv
 
