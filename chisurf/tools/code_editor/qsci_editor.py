@@ -6,8 +6,8 @@ from __future__ import annotations
 import sys
 
 from PyQt5.Qsci import QsciScintilla
-# For <=2.10.0 QScintilla versions not all Lexer are available
 try:
+    # For <=2.10.0 QScintilla versions not all Lexer are available
     from PyQt5.Qsci import QsciLexerPython, QsciLexerJSON, QsciLexerYAML
     lexers_available = True
 except ImportError:
@@ -16,8 +16,8 @@ except ImportError:
     QsciLexerPython = None
     lexers_available = False
 
-from qtpy.QtGui import *
-from qtpy.QtWidgets import *
+from qtpy import QtGui
+from qtpy import QtWidgets
 
 import chisurf
 import chisurf.fio
@@ -73,7 +73,7 @@ class SimpleCodeEditor(QsciScintilla):
             ]['caret_line_background_color']
 
         # Set the default font
-        font = QFont()
+        font = QtGui.QFont()
         font.setFamily(font_family)
         font.setFixedPitch(True)
         font.setPointSize(font_point_size)
@@ -83,12 +83,12 @@ class SimpleCodeEditor(QsciScintilla):
         self.setFolding(QsciScintilla.BoxedTreeFoldStyle)
 
         # Margin 0 is used for line numbers
-        fontmetrics = QFontMetrics(font)
+        fontmetrics = QtGui.QFontMetrics(font)
         self.setMarginsFont(font)
         self.setMarginWidth(0, fontmetrics.width("0000") + 6)
         self.setMarginLineNumbers(0, True)
         self.setMarginsBackgroundColor(
-            QColor(margins_background_color)
+            QtGui.QColor(margins_background_color)
         )
 
         # Clickable margin 1 for showing markers
@@ -99,7 +99,7 @@ class SimpleCodeEditor(QsciScintilla):
         self.markerDefine(QsciScintilla.RightArrow, self.ARROW_MARKER_NUM)
 
         self.setMarkerBackgroundColor(
-            QColor(marker_background_color),
+            QtGui.QColor(marker_background_color),
             self.ARROW_MARKER_NUM
         )
 
@@ -111,7 +111,7 @@ class SimpleCodeEditor(QsciScintilla):
         # Current line visible with special background color
         self.setCaretLineVisible(caret_line_visible)
         self.setCaretLineBackgroundColor(
-            QColor(caret_line_background_color)
+            QtGui.QColor(caret_line_background_color)
         )
 
         # Set Python lexer
@@ -147,7 +147,7 @@ class SimpleCodeEditor(QsciScintilla):
             self.markerAdd(nline, self.ARROW_MARKER_NUM)
 
 
-class CodeEditor(QWidget):
+class CodeEditor(QtWidgets.QWidget):
 
     def load_file(
             self,
@@ -196,23 +196,23 @@ class CodeEditor(QWidget):
     ):
         super(CodeEditor, self).__init__(*args, **kwargs)
 
-        layout = QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
         self.filename = None
         self.setLayout(layout)
-        self.line_edit = QLineEdit()
+        self.line_edit = QtWidgets.QLineEdit()
         self.editor = SimpleCodeEditor(
             parent=self,
             language=language
         )
         layout.addWidget(self.editor)
-        h_layout = QHBoxLayout()
+        h_layout = QtWidgets.QHBoxLayout()
 
-        load_button = QPushButton('load')
-        save_button = QPushButton('save')
-        run_button = QPushButton('run')
+        load_button = QtWidgets.QPushButton('load')
+        save_button = QtWidgets.QPushButton('save')
+        run_button = QtWidgets.QPushButton('run')
 
         h_layout.addWidget(self.line_edit)
         h_layout.addWidget(load_button)
@@ -234,7 +234,7 @@ class CodeEditor(QWidget):
 
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     editor = CodeEditor()
     editor.show()
     app.exec_()

@@ -9,8 +9,8 @@ import numexpr as ne
 
 import chisurf.fio
 import chisurf.fio.coordinates
-import chisurf.models
-import chisurf.fitting
+#import chisurf.models
+#import chisurf.fitting
 import chisurf.parameter
 import chisurf.structure
 
