@@ -112,11 +112,11 @@ def save_fit(
                 ['screenshot_fit.png', 'screenshot_model.png'],
                 [current_fit_window, model]
             ):
-                png_filename = os.path.join(target_dir, png_name)
+                png_filename = os.path.join(target_path, png_name)
                 source.grab().save(png_filename)
                 document.add_picture(
                     os.path.join(
-                        target_dir,
+                        target_path,
                         png_filename
                     ),
                     width=Inches(2.0)

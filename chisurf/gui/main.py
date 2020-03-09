@@ -23,11 +23,13 @@ import chisurf.gui.resources
 
 class Main(QtWidgets.QMainWindow):
 
+    _current_dataset: chisurf.base.Data = None
+
     @property
     def current_dataset(
             self
     ) -> chisurf.base.Data:
-        return self.dataset_selector.selected_dataset
+        return self._current_dataset
 
     @current_dataset.setter
     def current_dataset(
@@ -235,6 +237,7 @@ class Main(QtWidgets.QMainWindow):
         self.mdiarea.cascadeSubWindows()
 
     def onCurrentDatasetChanged(self):
+        self._current_dataset = self.dataset_selector.selected_dataset
         self.comboBox_Model.clear()
         ds = self.current_dataset
         if chisurf.imported_datasets:

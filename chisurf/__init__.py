@@ -1,8 +1,9 @@
 import typing
 
-import chisurf.settings as settings
+import chisurf.settings
 import chisurf.decorators
 import logging
+import pathlib
 
 fits = list()
 imported_datasets = list()
@@ -11,8 +12,8 @@ cs = object         # The current instance of ChiSurf
 console = object
 experiment = dict()
 fit_windows = list()
-working_path = ''
-verbose = settings.cs_settings['verbose']
+working_path = pathlib.Path().home()
+verbose = chisurf.settings.verbose
 
 logging.basicConfig(
     filename=settings.session_log,

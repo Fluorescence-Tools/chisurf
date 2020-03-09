@@ -1,4 +1,8 @@
+from __future__ import annotations
+
 from qtpy import QtWidgets
+
+import pathlib
 
 import chisurf.decorators
 import chisurf.gui.widgets
@@ -81,7 +85,7 @@ class TCSPCReaderControlWidget(
 
     def get_filename(
             self
-    ) -> str:
+    ) -> pathlib.Path:
         return chisurf.gui.widgets.get_filename(
             description='CSV-TCSPC file',
             file_type='All files (*.*)',

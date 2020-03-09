@@ -76,7 +76,7 @@ class Parameter(
             self,
             value: float
     ):
-        self._port.value = np.array([value])
+        self._port.value = np.array([value], dtype=np.double)
 
     @property
     def link(self) -> chisurf.parameter.Parameter:
