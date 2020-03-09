@@ -24,7 +24,8 @@ install:
   - conda update -q conda
   - conda install git conda-build anaconda-client numpy conda-verify python=3.7.3
   - activate base
-  - conda build conda-recipe
+  - conda build conda-recipe --output-folder bld-dir
+  - conda config --add channels "file://%CD%/bld-dir"
 
 # use conda build
 test_script:
