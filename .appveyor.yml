@@ -5,8 +5,6 @@ image: Visual Studio 2017
 environment:
   matrix:
     - PYTHON: "C:\\Miniconda3-x64"
-    # SET PYTHON=C:\Miniconda3-x64
-    #SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
 
 ## For debugging uncomment the lines below
 #init:
@@ -22,33 +20,14 @@ install:
   - conda config --add channels salilab
   - conda config --add channels defaults
   - conda update -q conda
-  - conda install git conda-build anaconda-client numpy
+  - conda install git conda-build anaconda-client numpy conda-verify
   - activate base
   - conda build conda-recipe
-
-#install:
-#  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-#  - conda config --set always_yes yes --set changeps1 no
-#  - conda config --set channel_priority flexible
-#  - conda config --add channels conda-forge
-#  - conda config --add channels tpeulen
-#  - conda config --add channels salilab
-#  - conda update -q conda
-#  - conda info -a
-#  - conda env create -f environment.yml
-#  - activate chisurf
-#  - python.exe setup.py build_ext --inplace --force
-##  - python setup.py install
 
 # use conda build
 test_script:
   - conda install nose coverage chisurf -c local
   - nosetests .\test\
-
-#test_script:
-#  - activate chisurf
-#  - conda install nose coverage
-#  - nosetests .\test\
 
 ### scripts to run after tests
 deploy_script:

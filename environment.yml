@@ -3,21 +3,24 @@ name: chisurf
 channels:
   - tpeulen
   - salilab
-  - conda-forge
   - defaults
+  - conda-forge
 
 dependencies:
     - python =3.7.3
     - nose
+    - pyyaml >=5.0
+    - deprecation
+    - progressbar2
     - imp >=2.12.0
-    - pyyaml
     - python-slugify
-    - numpy
-    - numba
-    - numexpr 2.7.*
-    - scipy
-    - emcee
-    - mdtraj
+    - numpy >=1.11.0
+    - cython >=0.25.0
+    - numexpr >=2.6.0
+    - numba >=0.48.0
+    - scipy >=1.4.0
+    - emcee >=2.2.1
+    - mdtraj >=1.9.0
     - ipython
     - qtconsole
     # jupyter_client 6.0.0 causes an error
@@ -25,25 +28,22 @@ dependencies:
     # socket, self.session, self.ioloop
     # TypeError: ChannelABC() takes no arguments
     - jupyter_client <6.0.0|>6.0.0
-    - matplotlib >=3.1.3
+    - matplotlib >=3.0.0
     # the version 5.12.3 has an issue in combination with
     # python>=3.7.3. This is probably resolved in 5.13.1
     # (see: https://github.com/GNS3/gns3-gui/issues/2819)
-    - pyqt >=5.13.1|<=5.12.1|>=5.9.0
-    - pyqtgraph >0.0.10
-    - qscintilla2 >=2.10.8
-    - pyopengl
-    - python-docx
-    - deprecation
-    - pyopencl
+    - qtpy >=1.8.0
+    - pyqt >=5.13.0|5.9.2.*|5.6.0.*
+    - qscintilla2 >=2.9.3
+    - pyqtgraph >=0.9.10
     - guiqwt >=3.0.0
-    - progressbar2
-    - qtpy
-    - mrcfile
+    - pymol-open-source >=2.3.0
+    - pyopengl
+    - pyopencl
+    - python-docx 0.8.10.*
     - htmd-pdb2pqr 0.0.2.*
-    - opencv 3.4.1.*
-    - cython 0.29.15.*
-    - pymol-open-source 2.3.0.*
+    - opencv >=3.4.0
+    - mrcfile >=1.1.2
     - labellib
     - tttrlib >=0.0.12
     - chinet >=0.0.5

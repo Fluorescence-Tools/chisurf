@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import sys
 import webbrowser
 from qtpy import QtCore, QtGui, QtWidgets, uic
@@ -520,7 +521,6 @@ class Main(QtWidgets.QMainWindow):
             *args,
             **kwargs
         )
-
         uic.loadUi(
             os.path.join(
                 os.path.dirname(
@@ -693,31 +693,34 @@ class Main(QtWidgets.QMainWindow):
 
 
 def qt_app():
+
     app = QtWidgets.QApplication(sys.argv)
+    app.processEvents()
+
+    pixmap = QtGui.QPixmap(":/icons/icons/cs_logo.png")
+    splash = QtWidgets.QSplashScreen(pixmap)
+    splash.show()
+
     chisurf.console = chisurf.widgets.QIPythonWidget()
-    win = Main()
-    chisurf.console.history_widget = win.plainTextEditHistory
-    chisurf.cs = win
-    win.init_setups()
+    window = Main()
+    chisurf.console.history_widget = window.plainTextEditHistory
+    chisurf.cs = window
+    window.init_setups()
     app.setStyleSheet(
       open(
-          os.path.join(
-              os.path.dirname(
-                  __file__
-              ),
-              chisurf.settings.cs_settings['gui']['style_sheet']
-          ),
+          pathlib.Path(__file__).parent / chisurf.settings.cs_settings['gui']['style_sheet'],
           mode='r'
       ).read()
     )
 
-    win.show()
+    window.show()
+    splash.finish(window)
     return app
 
 
 def main():
-    app = qt_app()
-    sys.exit(app.exec_())
+     app = qt_app()
+     sys.exit(app.exec_())
 
 
 if __name__ == "__main__":
