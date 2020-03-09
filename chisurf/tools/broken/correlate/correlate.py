@@ -392,6 +392,9 @@ class CorrelatorWidget(QtWidgets.QWidget):
 
 class CrFilterWidget(QtWidgets.QWidget):
 
+    @chisurf.decorators.init_with_ui(
+        ui_filename='cr_filter.ui'
+    )
     def __init__(
             self,
             photon_source,
@@ -399,12 +402,6 @@ class CrFilterWidget(QtWidgets.QWidget):
             time_window = correlator_settings['time_window'],
             max_count_rate = correlator_settings['max_count_rate']
     ):
-        super().__init__()
-        chisurf.widgets.load_ui(
-            target=self,
-            path=os.path.dirname(os.path.abspath(__file__)),
-            ui_filename='cr_filter.ui'
-        )
         self.photon_source = photon_source
         self.verbose = verbose
         self.time_window = time_window

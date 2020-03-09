@@ -2,8 +2,8 @@ import typing
 
 import chisurf.settings as settings
 import logging
-from chisurf.version import __version__
 
+from chisurf.version import __version__
 
 def c(
         t,
@@ -49,4 +49,4 @@ logging.basicConfig(
     filename=settings.session_log,
     level=logging.DEBUG
 )
-
+import chisurf.decorators

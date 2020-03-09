@@ -4,9 +4,8 @@ import typing
 import weakref
 import os
 import inspect
-from qtpy import QtWidgets
+from qtpy import QtWidgets, uic
 
-import chisurf.widgets
 
 
 class init_with_ui(object):
@@ -38,6 +37,20 @@ class init_with_ui(object):
             self,
             f: typing.Callable
     ):
+
+        def load_ui(
+                target: QtWidgets.QWidget,
+                ui_filename: str,
+                path: str
+        ):
+            uic.loadUi(
+                os.path.join(
+                    path,
+                    ui_filename
+                ),
+                target
+            )
+
         def wrapped(
                 cls: QtWidgets.QWidget,
                 *args,
@@ -60,7 +73,7 @@ class init_with_ui(object):
                 super(cls.__class__, cls).__init__()
 
             target = cls
-            chisurf.widgets.load_ui(
+            load_ui(
                 target=target,
                 path=path,
                 ui_filename=self.ui_filename
