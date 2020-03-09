@@ -12,12 +12,11 @@ import chisurf
 import chisurf.gui
 import chisurf.gui.widgets
 import chisurf.macros
-import chisurf.__main__
 import chisurf.gui.widgets.experiments
 
 
 app = QApplication(sys.argv)
-cs_app = chisurf.gui.qt_app()
+cs_app = chisurf.gui.get_app()
 
 
 def add_fit(
