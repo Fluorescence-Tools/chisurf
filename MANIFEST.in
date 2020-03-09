@@ -3,4 +3,4 @@ include chisurf/structure/potential/database/*.npy
 include chisurf/models/fcs/*.yaml
 include chisurf/models/parse/*.yaml
 include chisurf/settings/*.yaml
-include chisurf/settings/gui_styles/*.css
+include chisurf/gui/styles/*.css

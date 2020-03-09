@@ -12,8 +12,8 @@ import chisurf.base
 import chisurf.experiments
 import chisurf.models
 import chisurf.fitting
-import chisurf.widgets.fitting.widgets
-import chisurf.widgets
+import chisurf.gui.widgets.fitting.widgets
+import chisurf.gui.widgets
 import chisurf.macros.tcspc
 import chisurf.macros.parse
 
@@ -63,14 +63,14 @@ def add_fit(
             )
             chisurf.fits.append(fit_group)
 
-            fit_control_widget = chisurf.widgets.fitting.FittingControllerWidget(
+            fit_control_widget = chisurf.gui.widgets.fitting.FittingControllerWidget(
                 fit=fit_group
             )
             cs.modelLayout.addWidget(fit_control_widget)
             for fit in fit_group:
                 cs.modelLayout.addWidget(fit.model)
 
-            fit_window = chisurf.widgets.fitting.FitSubWindow(
+            fit_window = chisurf.gui.widgets.fitting.FitSubWindow(
                 fit=fit_group,
                 control_layout=cs.plotOptionsLayout,
                 fit_widget=fit_control_widget
@@ -293,8 +293,8 @@ def close_fit(
     chisurf.fits.pop(idx)
     sub_window = chisurf.fit_windows.pop(idx)
     sub_window.close_confirm = False
-    chisurf.widgets.hide_items_in_layout(cs.modelLayout)
-    chisurf.widgets.hide_items_in_layout(cs.plotOptionsLayout)
+    chisurf.gui.widgets.hide_items_in_layout(cs.modelLayout)
+    chisurf.gui.widgets.hide_items_in_layout(cs.plotOptionsLayout)
     sub_window.close()
 
 

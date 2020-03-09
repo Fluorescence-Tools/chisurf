@@ -8,11 +8,11 @@ from qtpy import QtWidgets, uic
 from chisurf.models.parse.widget import ParseModelWidget
 
 import chisurf.settings
-import chisurf.widgets.fitting.widgets
+import chisurf.gui.widgets.fitting.widgets
 from chisurf import plots
 from chisurf.models.model import Model
 from chisurf.math.reaction.continuous import ReactionSystem
-from chisurf.widgets.fitting.widgets import FittingParameterWidget
+from chisurf.gui.widgets.fitting.widgets import FittingParameterWidget
 
 
 class ParseStoppedFlowWidget(ParseModelWidget):
@@ -103,8 +103,8 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
 
     def clear(self):
         ReactionSystem.clear(self)
-        chisurf.widgets.clear_layout(self.verticalLayout_10)
-        chisurf.widgets.clear_layout(self.verticalLayout_7)
+        chisurf.gui.widgets.clear_layout(self.verticalLayout_10)
+        chisurf.gui.widgets.clear_layout(self.verticalLayout_7)
 
     def __init__(self, **kwargs):
         self.scaleing = FittingParameterWidget(
@@ -137,7 +137,7 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
         self.actionSave_reaction.triggered.connect(self.onSaveLabelingFile)
         Model.__init__(self, **kwargs)
         self.setParameter(parameter)
-        self.fitting_widget = chisurf.widgets.fitting.widgets.FittingControllerWidget(
+        self.fitting_widget = chisurf.gui.widgets.fitting.widgets.FittingControllerWidget(
             fit=self.fit
         )
         self.verticalLayout_4.addWidget(self.fitting_widget)
@@ -162,7 +162,7 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
     def onLoadReaction(self):
         self.clear()
         #filename = str(QtGui.QFileDialog.getOpenFileName(self, 'Open Reaction-File', '.rc.json', 'Reaction-Files (*.rc.json)'))
-        filename = chisurf.widgets.get_filename('Open Reaction-File', 'Reaction-Files (*.rc.json)')
+        filename = chisurf.gui.widgets.get_filename('Open Reaction-File', 'Reaction-Files (*.rc.json)')
         j = json.load(open(filename))
         self.setParameter(j)
         self.lineEdit_6.setText(filename)

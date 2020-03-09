@@ -12,12 +12,12 @@ from qtpy import QtWidgets, uic
 import chisurf.fio.coordinates
 from chisurf.fluorescence.av.dynamic import DiffusionSimulation, Dye, Sticking, \
     ProteinQuenching
-from chisurf.widgets.fluorescence.av import ProteinQuenchingWidget, DyeWidget, StickingWidget
+from chisurf.gui.widgets.fluorescence import ProteinQuenchingWidget, DyeWidget, StickingWidget
 
 import chisurf.settings
 import chisurf.fitting.fit
 import chisurf.models.tcspc.nusiance
-import chisurf.widgets.fitting.widgets
+import chisurf.gui.widgets.fitting.widgets
 import chisurf.fluorescence.av as fps
 import chisurf.fluorescence.tcspc.convolve
 import chisurf.fio
@@ -30,7 +30,7 @@ from chisurf.models.model import Model
 from chisurf.fluorescence.av import ACV
 from chisurf.fluorescence.simulation import photon
 from chisurf.structure import Structure, get_coordinates_of_residues
-from chisurf.widgets.pdb import PDBSelector
+from chisurf.gui.widgets.pdb import PDBSelector
 
 
 class DyeDecay(Model, Curve):
@@ -788,7 +788,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         )
 
         if not kwargs.get('disable_fit', False):
-            fitting_widget = chisurf.widgets.fitting.widgets.FittingControllerWidget(fit, **kwargs)
+            fitting_widget = chisurf.gui.widgets.fitting.widgets.FittingControllerWidget(fit, **kwargs)
         else:
             fitting_widget = QtWidgets.QLabel()
 
@@ -840,7 +840,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.diff_file = None
         self.av_slow_file = None
         self.av_fast_file = None
-        self.fitting_widget = chisurf.widgets.fitting.widgets.FittingWidget(fit=self.fit)
+        self.fitting_widget = chisurf.gui.widgets.fitting.widgets.FittingWidget(fit=self.fit)
 
         self.hide()
 
@@ -930,7 +930,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
 
     def onLoadPDB(self):
         #pdb_filename = str(QtGui.QFileDialog.getOpenFileName(None, 'Open PDB-File', '', 'PDB-files (*.pdb)'))
-        filename = chisurf.widgets.get_filename('Open PDB-File', 'PDB-files (*.pdb)')
+        filename = chisurf.gui.widgets.get_filename('Open PDB-File', 'PDB-files (*.pdb)')
         self.lineEdit.setText(filename)
         self.structure = filename
         self.pdb_selector.atoms = self.structure.atoms

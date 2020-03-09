@@ -14,7 +14,7 @@ import chisurf.fio
 import chisurf.fitting
 import chisurf.models
 import chisurf.settings
-import chisurf.widgets
+import chisurf.gui.widgets
 from chisurf.models.model import ModelWidget
 from chisurf.models.parse import ParseModel
 
@@ -135,7 +135,7 @@ class ParseFormulaWidget(
     def onEquationChanged(self):
         self.onUpdateFunc()
         layout = self.gridLayout_2
-        chisurf.widgets.clear_layout(layout)
+        chisurf.gui.widgets.clear_layout(layout)
         n_columns = self.n_columns
         row = 1
 
@@ -145,7 +145,7 @@ class ParseFormulaWidget(
             )
         ):
             p = self.model.parameters_all_dict[k]
-            pw = chisurf.widgets.fitting.widgets.make_fitting_parameter_widget(
+            pw = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                 fitting_parameter=p
             )
             column = i % n_columns
@@ -158,7 +158,7 @@ class ParseFormulaWidget(
             filename: str = None
     ):
         if filename is None:
-            filename = chisurf.widgets.get_filename(
+            filename = chisurf.gui.widgets.get_filename(
                 'Open models-file',
                 'link file (*.yaml)'
             )

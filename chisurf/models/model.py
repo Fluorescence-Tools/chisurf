@@ -5,7 +5,7 @@ import numpy as np
 
 import chisurf.parameter
 import chisurf.curve
-import chisurf.widgets.fitting.widgets
+import chisurf.gui.widgets.fitting.widgets
 import chisurf.plots
 
 from qtpy import QtWidgets, QtGui
@@ -205,7 +205,7 @@ class ModelWidget(
         for parameter in self.parameters:
             if isinstance(
                     parameter,
-                    chisurf.widgets.fitting.widgets.FittingParameterWidget
+                    chisurf.gui.widgets.fitting.widgets.FittingParameterWidget
             ):
                 parameter.update()
 

@@ -3,11 +3,14 @@ from __future__ import annotations
 from qtpy import QtWidgets
 
 import chisurf.fitting
-import chisurf.widgets
+import chisurf.gui
+import chisurf.gui.widgets
+
+from chisurf.gui.widgets import View
 
 
 class Plot(
-    chisurf.widgets.View
+    View
 ):
 
     def __init__(

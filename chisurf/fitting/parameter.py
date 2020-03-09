@@ -365,20 +365,3 @@ class FittingParameterGroup(
             if isinstance(p0, FittingParameterGroup):
                 self.__dict__ = p0.__dict__
 
-    # @deprecation.deprecated(
-    #     deprecated_in="19.08.23",
-    #     removed_in="20.01.01",
-    #     current_version="19.08.23",
-    #     details="use the fitting.widget.make_fitting_parameter_group_widget function instead"
-    # )
-    # def to_widget(
-    #         self,
-    #         *args,
-    #         **kwargs
-    # ) -> chisurf.fitting.widgets.FittingParameterGroupWidget:
-    #     return chisurf.fitting.widgets.FittingParameterGroupWidget(
-    #         self, *args,
-    #         **kwargs
-    #     )
-
-

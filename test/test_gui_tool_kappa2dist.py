@@ -11,7 +11,7 @@ TOPDIR = os.path.abspath(
 )
 utils.set_search_paths(TOPDIR)
 import chisurf.fio
-import chisurf.tools
+import chisurf.gui.tools
 
 
 app = QApplication(sys.argv)
@@ -26,7 +26,7 @@ class Tests(unittest.TestCase):
         """
         Create the GUI
         """
-        self.form = chisurf.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
+        self.form = chisurf.gui.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
 
     def test_defaults(self):
         self.assertEqual(self.form.doubleSpinBox_2.value(), 0.380)

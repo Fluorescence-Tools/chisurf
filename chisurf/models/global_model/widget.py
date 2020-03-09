@@ -1,12 +1,12 @@
 from __future__ import annotations
-from typing import List, Tuple, Dict
+from typing import List
 
 import pickle
 
 from qtpy import QtCore, QtWidgets
 
 import chisurf.fitting
-import chisurf.widgets
+import chisurf.gui.widgets
 
 from chisurf import plots
 from .globalfit import GlobalFitModel
@@ -319,14 +319,14 @@ class GlobalFitModelWidget(
         self.comboBox_gfTargetFit.addItems(usedLocalFitNames)
 
     def onSaveTable(self):
-        filename = chisurf.widgets.save_file(
+        filename = chisurf.gui.widgets.save_file(
             description='Save link-table',
             file_type='.p'
         )
         pickle.dump(self.links, open(filename, "wb"))
 
     def onLoadTable(self):
-        filename = chisurf.widgets.get_filename(
+        filename = chisurf.gui.widgets.get_filename(
             description='Open link-table',
             file_type='link file (*.p)'
         )
