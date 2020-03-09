@@ -10,7 +10,7 @@ import fnmatch
 import numbers
 import os
 
-from qtpy import QtGui, QtWidgets, uic
+from qtpy import QtGui, QtWidgets
 import qtconsole
 import qtconsole.styles
 import qtconsole.qtconsoleapp
@@ -522,20 +522,6 @@ def make_widget_from_yaml(
         return g
 
     return make_group(variable_dictionary, name)
-
-
-def load_ui(
-        target: QtWidgets.QWidget,
-        ui_filename: str,
-        path: str
-):
-    uic.loadUi(
-        os.path.join(
-            path,
-            ui_filename
-        ),
-        target
-    )
 
 
 def tex2svg(
