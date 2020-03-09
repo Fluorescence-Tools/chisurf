@@ -25,11 +25,11 @@ install:
   - conda install git conda-build anaconda-client numpy conda-verify python=3.7.3
   - activate base
   - conda build conda-recipe --output-folder bld-dir
-  - conda config --add channels "file://%CD%/bld-dir"
+  - conda config --add channels "%CD%\bld-dir"
 
 # use conda build
 test_script:
-  - conda install nose coverage chisurf -c local
+  - conda install nose coverage chisurf
   # move folder so that the installed chisurf is used
   - mv chisurf _chisurf
   - nosetests .\test\
