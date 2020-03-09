@@ -74,13 +74,13 @@ script:
       pgrep -f chisurf | awk '{print "kill -9 " $1}' | sh
     fi
 
-after_success:
-  - OS=$TRAVIS_OS_NAME-64
-  - |
-    if [[ "$TRAVIS_BRANCH" == "master" ]];
-    then
-      anaconda upload bld-dir/**/chisurf*.tar.bz2
-    fi
+#after_success:
+#  - OS=$TRAVIS_OS_NAME-64
+#  - |
+#    if [[ "$TRAVIS_BRANCH" == "master" ]];
+#    then
+#      anaconda upload bld-dir/**/chisurf*.tar.bz2
+#    fi
 
 notifications:
   email:
