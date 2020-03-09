@@ -28,7 +28,6 @@ def setup_gui(
         import chisurf.plots
         import chisurf.settings
         import chisurf.structure
-        import chisurf.tools
 
     def setup_ipython():
         import chisurf.gui.widgets

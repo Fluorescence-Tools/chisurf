@@ -9,6 +9,7 @@ import inspect
 import fnmatch
 import numbers
 import os
+import pathlib
 
 from qtpy import QtGui, QtWidgets
 import qtconsole
@@ -354,7 +355,7 @@ def get_filename(
         description: str = '',
         file_type: str = 'All files (*.*)',
         working_path: str = None
-) -> str:
+) -> pathlib.Path:
     """Open a file within a working path. If no path is specified the last
     path is used. After using this function the current working path of the
     running program (ChiSurf) is updated according to the folder of the opened
@@ -367,14 +368,14 @@ def get_filename(
     """
     if working_path is None:
         working_path = chisurf.working_path
-    filename = str(
-        QtWidgets.QFileDialog.getOpenFileName(
-            None,
-            description,
-            working_path,
-            file_type
-        )[0])
-    chisurf.working_path = os.path.dirname(filename)
+    filename_str, _ = QtWidgets.QFileDialog.getOpenFileName(
+        None,
+        description,
+        str(working_path.absolute()),
+        file_type
+    )
+    filename = pathlib.Path(filename_str)
+    chisurf.working_path = filename
     return filename
 
 
