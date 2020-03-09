@@ -8,18 +8,20 @@ from qtpy import QtCore, QtGui, QtWidgets, uic
 import numpy as np
 
 import chisurf
-import chisurf.decorators
-import chisurf.base
-import chisurf.experiments
-import chisurf.experiments.tcspc
-import chisurf.macros
-import chisurf.tools
-import chisurf.widgets
-import chisurf.widgets.experiments
-import chisurf.models
-import chisurf.fitting
 import chisurf.widgets.ui.resource
-import chisurf.widgets.experiments.modelling
+
+
+def imports():
+    import chisurf.decorators
+    import chisurf.base
+    import chisurf.experiments
+    import chisurf.experiments.tcspc
+    import chisurf.macros
+    import chisurf.tools
+    import chisurf.widgets
+    import chisurf.widgets.experiments.modelling
+    import chisurf.models
+    import chisurf.fitting
 
 
 class Main(QtWidgets.QMainWindow):
@@ -621,10 +623,7 @@ class Main(QtWidgets.QMainWindow):
         #      Help and About widgets                            #
         ##########################################################
         self.about = uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "about.ui"
-            )
+            pathlib.Path(__file__).parent / "about.ui"
         )
         self.about.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.about.hide()
@@ -670,7 +669,7 @@ class Main(QtWidgets.QMainWindow):
 
         ##########################################################
         #    Connect changes in User-interface to actions like:  #
-        #    Loading dataset, changing setups, models, etc.     #
+        #    Loading dataset, changing setups, models, etc.      #
         ##########################################################
         self.actionSetupChanged.triggered.connect(self.onSetupChanged)
         self.actionExperimentChanged.triggered.connect(self.onExperimentChanged)
@@ -700,6 +699,21 @@ def qt_app():
     pixmap = QtGui.QPixmap(":/icons/icons/cs_logo.png")
     splash = QtWidgets.QSplashScreen(pixmap)
     splash.show()
+    # Loading some items
+    splash.showMessage(
+        "Loading modules",
+        alignment=QtCore.Qt.AlignTop,
+        color=QtCore.Qt.white
+    )
+    app.processEvents()
+    imports()
+
+    splash.showMessage(
+        "Starting interface",
+        alignment=QtCore.Qt.AlignTop,
+        color=QtCore.Qt.white
+    )
+    app.processEvents()
 
     chisurf.console = chisurf.widgets.QIPythonWidget()
     window = Main()

@@ -33,10 +33,10 @@ test_script:
   - mv chisurf _chisurf
   - nosetests .\test\
 
-### scripts to run after tests
-deploy_script:
-  - if not "%APPVEYOR_REPO_BRANCH%" == "master" exit 0
-  - anaconda upload C:\Miniconda3-x64\envs\build\conda-bld\win-64\chisurf-*.tar.bz2
+#### scripts to run after tests
+#deploy_script:
+#  - if not "%APPVEYOR_REPO_BRANCH%" == "master" exit 0
+#  - anaconda upload C:\Miniconda3-x64\envs\build\conda-bld\win-64\chisurf-*.tar.bz2
 
 build: off
 
