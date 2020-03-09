@@ -1,5 +1,5 @@
 *{
-    font: 8pt;
+    font: 0.5em;
 	background: #191919;
 	color: #DDDDDD;
 	border: solid #191919;
@@ -119,7 +119,7 @@ QPushButton
     border-style: solid;
     border-radius: 6;
     padding: 3px;
-    font: bold 8pt;
+    font: bold 0.5em;
     padding-left: 5px;
     padding-right: 5px;
 }
@@ -144,15 +144,15 @@ QComboBox
     border-radius: 2px;
 }
 
-SpinBox{color: #37b158;font: bold 8pt; border: 2px groove gray}
+SpinBox{color: #37b158;font: bold 0.5em; border: 2px groove gray}
 SpinBox::up-button{subcontrol-position: top right; width: 4px; height: 6px; background-color: #b600b6; border: 1px groove gray}
 SpinBox::down-button{subcontrol-position: bottom right; width: 4px; height: 6px; background-color: #B600B6; border: 1px groove gray}
 
-QSpinBox{color: #37b158;font: bold 8pt; border: 2px groove gray}
+QSpinBox{color: #37b158;font: bold 0.5em; border: 2px groove gray}
 QSpinBox::up-button{subcontrol-position: top right; width: 4px; height: 6px; background-color: #b600b6; border: 1px groove gray}
 QSpinBox::down-button{subcontrol-position: bottom right; width: 4px; height: 6px; background-color: #B600B6; border: 1px groove gray}
 
-QDoubleSpinBox{color: #37b158;font: bold 8pt; border: 2px groove gray}
+QDoubleSpinBox{color: #37b158;font: bold 0.5em; border: 2px groove gray}
 QDoubleSpinBox::up-button{subcontrol-position: top right; width: 4px; height: 6px; background-color: #b600b6; border: 1px groove gray}
 QDoubleSpinBox::down-button{subcontrol-position: bottom right; width: 4px; height: 6px; background-color: #B600B6; border: 1px groove gray}
 
