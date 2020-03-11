@@ -11,9 +11,12 @@ except ImportError:
     print("WARNING: could not import cython. Will not build cython extenstions.")
 
 
-__name__ = 'chisurf'
-__version__ = '20.2.22'
-__license__ = 'GPL2.1'
+import chisurf
+__name__ = chisurf.__name__
+__version__ = chisurf.__version__
+__author__ = chisurf.__author__
+__license__ = chisurf.__license__
+__description__ = chisurf.__description__
 
 
 def make_extension(ext):
@@ -68,8 +71,8 @@ setup(
     name=__name__,
     version=__version__,
     license=__license__,
-    description="Fluorescence-Fitting",
-    author="Thomas-Otavio Peulen",
+    description=__description__,
+    author=__author__,
     author_email='thomas.otavio.peulen@gmail.com',
     url='https://fluorescence-tools.github.io/chisurf/',
     classifiers=[
@@ -121,7 +124,7 @@ setup(
         'python-docx',
         'deprecation',
         'pyopencl',
-        'opencv',
+        'opencv-python',
         'mrcfile',
         'qtconsole',
         'ipython',
@@ -140,7 +143,7 @@ setup(
     },
     entry_points={
         "gui_scripts": [
-            "chisurf=chisurf.gui:gui"
+            "chisurf=chisurf.__main__:main"
         ]
     }
 )

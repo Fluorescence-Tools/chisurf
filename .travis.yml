@@ -46,7 +46,7 @@ before_install:
   - conda config --add channels salilab
   - conda update -q conda
   - conda info -a
-  - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git nose coverage numpy
+  - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git nose coverage numpy pyyaml
   - source activate build-environment
   - git fetch --unshallow --tags --force
   - conda build conda-recipe --output-folder bld-dir

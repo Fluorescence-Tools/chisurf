@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from __future__ import annotations
 
 import argparse
@@ -40,7 +42,7 @@ class ProteinMCWorker(object):
             )
             if self.verbose:
                 print("input_pdb: %s" % structure.labeling_file)
-                print("output_file: %s" % new_file)
+                print("plist_output_file: %s" % new_file)
             self.output_traj_file = new_file
 
         self.u1 = Universe()
@@ -160,7 +162,7 @@ class ProteinMCWorker(object):
         if verbose:
             print("n_iter: %s" % n_iter)
             print("n_out: %s" % n_out)
-            #print "output_file: %s" % self.output_traj_file
+            #print "plist_output_file: %s" % self.output_traj_file
             print("nRes: %s" % n_res)
             print("kt: %s" % kt)
             print("move_map: %s" % move_map)
@@ -241,7 +243,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Monte Carlo simulation.')
     parser.add_argument('pdb_file', metavar='file', type=str, help='The starting pdb-filename')
     parser.add_argument('setting_file', metavar='file', type=str, help='Setting file (JSON-file).', default=None)
-    parser.add_argument('output_file', metavar='output_file', type=str, help='The output hdf-file.')
+    parser.add_argument('plist_output_file', metavar='plist_output_file', type=str, help='The output hdf-file.')
     parser.add_argument("-v", "--verbose", type=bool, default=False, help='The program displays more output if True')
     parser.add_argument("-s", "--scale", type=float, help='Scaling factor of ')
 
