@@ -1,9 +1,21 @@
 import typing
 
-import chisurf.settings
-import chisurf.decorators
 import logging
 import pathlib
+
+import chisurf.settings
+
+__name__ = 'chisurf'
+__author__ = "Thomas-Otavio Peulen"
+__version__ = '20.3.9'
+__copyright__ = "Copyright (C) 2020 Thomas-Otavio Peulen"
+__credits__ = ["Thomas-Otavio Peulen"]
+__maintainer__ = "Thomas-Otavio Peulen"
+__email__ = "thomas.otavio.peulen@gmail.com"
+__license__ = 'GPL2.1'
+__status__ = "Dev"
+__description__ = "ChiSurf is an interactive global analysis platform for " \
+                  "time-resolved fluorescence data."
 
 fits = list()
 imported_datasets = list()
@@ -15,11 +27,11 @@ fit_windows = list()
 working_path = pathlib.Path().home()
 verbose = chisurf.settings.verbose
 
+
 logging.basicConfig(
     filename=settings.session_log,
     level=logging.DEBUG
 )
-__version__ = "200307"
 
 
 def c(
