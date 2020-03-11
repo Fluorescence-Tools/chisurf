@@ -15,7 +15,6 @@ import chisurf.macros
 import chisurf.gui.widgets.experiments
 
 
-app = QApplication(sys.argv)
 cs_app = chisurf.gui.get_app()
 
 
