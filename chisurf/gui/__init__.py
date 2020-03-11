@@ -188,6 +188,5 @@ def get_app() -> QtWidgets.QApplication:
     )
     window.show()
     splash.finish(window)
-    app.exec()
     return app
 

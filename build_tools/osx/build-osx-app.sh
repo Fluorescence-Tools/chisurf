@@ -16,6 +16,10 @@ export CONDA_ENVIRONMENT_YAML=environment.yml
 export SCRIPT_DIR="."
 SCRIPT_DIR=$("pwd")
 
+get_abs_filename() {
+  # $1 : relative filename
+  echo "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+}
 
 function print_usage() {
     echo "build-osx-app.sh [-i] [--template] $APP_NAME.app
@@ -36,11 +40,12 @@ Options:
     -i --icon              Path to the icon file (default: icon.png)
     -n --name              Name of .app file
     -m --module            Python module
-    -p --module_path       Location of the python module
+    -p --module_path       Path to the parent of the python module
     -h --help              Display help
+    -o --output_path       The path to which the .app is written
 
 Example:
-  ./build-osx-app.sh -f=../environment.yml -i=../chisurf/gui/resources/icons/cs_logo.png -n=ChiSurf -m=chisurf -p=..
+  ./build-osx-app.sh -f=../environment.yml -i=../chisurf/gui/resources/icons/cs_logo.png -n=ChiSurf -m=chisurf -p=.. -o=../dist
     "
     exit
 }
@@ -53,7 +58,7 @@ case $i in
     shift # past argument=value
     ;;
     -i=*|--icon=*)
-    ICON_FILE="${i#*=}"
+    ICON_FILE=$(get_abs_filename "${i#*=}")
     shift # past argument=value
     ;;
     -m=*|--module=*)
@@ -64,8 +69,12 @@ case $i in
     APP_NAME="${i#*=}"
     shift # past argument=value
     ;;
+    -o=*|--output_path=*)
+    OUTPUT_PATH=$(get_abs_filename "${i#*=}")
+    shift # past argument=value
+    ;;
     -p=*|--module_path=*)
-    PYTHON_MODULE_PATH="${i#*=}"
+    PYTHON_MODULE_PATH=$(get_abs_filename "${i#*=}")
     shift # past argument=value
     ;;
     -h|--help)
@@ -80,7 +89,8 @@ case $i in
 done
 
 # The target directory of the .app
-export APP_FOLDER=${1:-$APP_NAME.app}
+export APP_FOLDER=${1:-$OUTPUT_PATH/$APP_NAME.app}
+mkdir "$OUTPUT_PATH"
 # Create a MacOS app folder structure
 mkdir "$APP_FOLDER"
 # convert to absolute path
@@ -93,20 +103,29 @@ conda env create -f $CONDA_ENVIRONMENT_YAML --prefix "$APP_FOLDER/Contents" --fo
 #
 export PATH="$APP_FOLDER/Contents/bin:$PATH"
 # install possibility to hook into osx GUI event loop
-conda install python.app --prefix "$APP_FOLDER/Contents"
 cd $PYTHON_MODULE_PATH
 export PYTHON_MODULE_PATH=$PYTHON_MODULE
 export PYTHON_MODULE_PATH=$(python -c "import $PYTHON_MODULE; import pathlib; print(pathlib.Path($PYTHON_MODULE.__file__).parent.absolute())")
-export SITE_PACKAGE_LOCATION=$APP_FOLDER/Contents/lib/python3.7/site-packages
+export SITE_PACKAGE_LOCATION=$APP_FOLDER/Contents #/lib/python3.7/site-packages
 # update SITE_PACKAGE_LOCATION
-SITE_PACKAGE_LOCATION=$(python -c 'import site; print(site.getsitepackages()[0])')
+#SITE_PACKAGE_LOCATION=$(python -c 'import site; print(site.getsitepackages()[0])')
 cp -R $PYTHON_MODULE_PATH $SITE_PACKAGE_LOCATION
 cd $SCRIPT_DIR
 
 # update the Info.plist file and create a entry point
+echo "Creating MacOS and Resources folder"
 mkdir "$APP_FOLDER/Contents/MacOS"
 mkdir "$APP_FOLDER/Contents/Resources"
-./create_app_plist.py --module $PYTHON_MODULE --output "$APP_FOLDER"/Contents/Info.plist -e "$APP_NAME"
+echo "Install nuitka and compiling module"
+conda install -y nuitka
+nuitka --exe $PYTHON_MODULE_PATH -o "$APP_FOLDER/Contents/$PYTHON_MODULE.bin" --remove-output
 
-# Update the icons
-./fileicon set "$APP_FOLDER" "$ICON_FILE"
+cd $SCRIPT_DIR
+# generate icns file
+python generate-iconset.py $SCRIPT_DIR/resources/AppIcon.png
+
+cd $PYTHON_MODULE_PATH/../
+$SCRIPT_DIR/create_app_plist.py --module $PYTHON_MODULE --output "$APP_FOLDER"/Contents/Info.plist -e "$APP_NAME" -i $SCRIPT_DIR/resources/AppIcon.icns
+# also update the icon with fileicon
+$SCRIPT_DIR/fileicon set "$APP_FOLDER" "$SCRIPT_DIR/resources/AppIcon.icns"
+
