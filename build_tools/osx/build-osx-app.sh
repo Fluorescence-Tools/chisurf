@@ -124,8 +124,16 @@ cd $SCRIPT_DIR
 # generate icns file
 python generate-iconset.py $SCRIPT_DIR/resources/AppIcon.png
 
-cd $PYTHON_MODULE_PATH/../
-$SCRIPT_DIR/create_app_plist.py --module $PYTHON_MODULE --output "$APP_FOLDER"/Contents/Info.plist -e "$APP_NAME" -i $SCRIPT_DIR/resources/AppIcon.icns
+cd "$PYTHON_MODULE_PATH/../"
+export CONTENT_FOLDER=""
+CONTENT_FOLDER="$APP_FOLDER"/Contents
+
+$SCRIPT_DIR/create_app_plist.py --module $PYTHON_MODULE --output $CONTENT_FOLDER/Info.plist -e "$APP_NAME" -i $SCRIPT_DIR/resources/AppIcon.icns
 # also update the icon with fileicon
 $SCRIPT_DIR/fileicon set "$APP_FOLDER" "$SCRIPT_DIR/resources/AppIcon.icns"
 
+echo Remove files and folders from content folder: "$CONTENT_FOLDER"
+while read p; do
+  echo "removing: $CONTENT_FOLDER$p"
+  rm -rf $CONTENT_FOLDER$p
+done <"$SCRIPT_DIR/remove_list.txt"
