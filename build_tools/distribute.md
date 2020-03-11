@@ -134,6 +134,10 @@ in the build_tools/osx folder
 
 ## Windows
 
+see:
+
+http://www.entropyreduction.al/python/distutils/2017/09/21/bundle-python-app-w-inno-setup.html
+
 ## Linux
 
 ### snap store

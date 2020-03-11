@@ -3,7 +3,7 @@
 
 #define MyAppName "ChiSurf"
 #define MyAppVersion "18.12.3dev"
-#define MyAppPublisher "Thomas Peulen"
+#define MyAppPublisher "Thomas-Otavio Peulen"
 #define MyAppURL "https://www.github.com/Fluorescence-Tools/Chisurf"
 #define MyAppExeName "chisurf.exe"
 #define DevDir "C:\Users\thoma\PycharmProjects\ChiSurf\chisurf\"
