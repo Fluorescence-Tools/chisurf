@@ -1,3 +1,3 @@
-from . import special
-from . import rdf
-from . import distributions
+import chisurf.math.functions.special
+import chisurf.math.functions.rdf
+import chisurf.math.functions.distributions
