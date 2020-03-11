@@ -536,8 +536,88 @@ class Main(QtWidgets.QMainWindow):
         self.current_fit_widget = None
         self._current_fit = None
         self.experiment_names = list()
+        self.dataset_selector = chisurf.gui.widgets.experiments.ExperimentalDataSelector(
+            click_close=False,
+            curve_types='all',
+            change_event=self.onCurrentDatasetChanged,
+            drag_enabled=True
+        )
+        self.about = uic.loadUi(
+            pathlib.Path(__file__).parent / "about.ui"
+        )
 
+    def arrange_widgets(self):
         self.setCentralWidget(self.mdiarea)
+
+        ##########################################################
+        #      Help and About widgets                            #
+        ##########################################################
+        self.about.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+        self.about.hide()
+
+        ##########################################################
+        #      IPython console                                   #
+        #      Push variables to console and add it to           #
+        #      user interface                                    #
+        ##########################################################
+        self.dockWidgetScriptEdit.setVisible(chisurf.settings.gui['show_macro_edit'])
+        self.dockWidget_console.setVisible(chisurf.settings.gui['show_console'])
+        self.init_console()
+
+        ##########################################################
+        #      Arrange Docks and window positions                #
+        #      Window-controls tile, stack etc.                  #
+        ##########################################################
+        self.tabifyDockWidget(self.dockWidgetReadData, self.dockWidgetDatasets)
+        self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetAnalysis)
+        self.tabifyDockWidget(self.dockWidgetAnalysis, self.dockWidgetPlot)
+        self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
+        self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
+        self.editor = chisurf.gui.tools.code_editor.CodeEditor()
+        self.verticalLayout_10.addWidget(self.editor)
+        self.verticalLayout_8.addWidget(self.dataset_selector)
+
+        self.modelLayout.setAlignment(QtCore.Qt.AlignTop)
+        self.plotOptionsLayout.setAlignment(QtCore.Qt.AlignTop)
+        self.dockWidgetReadData.raise_()
+
+    def define_actions(self):
+        ##########################################################
+        # ACTIONS
+        ##########################################################
+        self.actionTile_windows.triggered.connect(self.onTileWindows)
+        self.actionTab_windows.triggered.connect(self.onTabWindows)
+        self.actionCascade.triggered.connect(self.onCascadeWindows)
+        self.mdiarea.subWindowActivated.connect(self.subWindowActivated)
+        self.actionAbout.triggered.connect(self.about.show)
+        self.actionHelp_2.triggered.connect(self.onOpenHelp)
+
+        ##########################################################
+        #      Record and run recorded macros                    #
+        ##########################################################
+        self.actionRecord.triggered.connect(chisurf.console.start_recording)
+        self.actionStop.triggered.connect(chisurf.console.save_macro)
+        self.actionRun.triggered.connect(self.onRunMacro)
+
+        ##########################################################
+        #    Connect changes in User-interface to actions like:  #
+        #    Loading dataset, changing setups, models, etc.      #
+        ##########################################################
+        self.actionSetupChanged.triggered.connect(self.onSetupChanged)
+        self.actionExperimentChanged.triggered.connect(self.onExperimentChanged)
+        self.actionChange_current_dataset.triggered.connect(self.onCurrentDatasetChanged)
+        self.actionAdd_fit.triggered.connect(self.onAddFit)
+        self.actionSaveAllFits.triggered.connect(self.onSaveFits)
+        self.actionSaveCurrentFit.triggered.connect(self.onSaveFit)
+        self.actionClose_Fit.triggered.connect(chisurf.macros.close_fit)
+        self.actionClose_all_fits.triggered.connect(self.onCloseAllFits)
+        self.actionLoad_Data.triggered.connect(self.onAddDataset)
+        self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
+
+    def load_tools(self):
+        import chisurf
+        import chisurf.gui
+        import chisurf.gui.tools
 
         ##########################################################
         #      Init widgets                                      #
@@ -618,76 +698,4 @@ class Main(QtWidgets.QMainWindow):
             can_load=False
         )
         self.actionSettings.triggered.connect(self.configuration.show)
-
-        ##########################################################
-        #      Help and About widgets                            #
-        ##########################################################
-        self.about = uic.loadUi(
-            pathlib.Path(__file__).parent / "about.ui"
-        )
-        self.about.setWindowFlags(QtCore.Qt.FramelessWindowHint)
-        self.about.hide()
-        self.actionAbout.triggered.connect(self.about.show)
-        self.actionHelp_2.triggered.connect(self.onOpenHelp)
-
-        ##########################################################
-        #      IPython console                                   #
-        #      Push variables to console and add it to           #
-        #      user interface                                    #
-        ##########################################################
-        self.dockWidgetScriptEdit.setVisible(chisurf.settings.gui['show_macro_edit'])
-        self.dockWidget_console.setVisible(chisurf.settings.gui['show_console'])
-        self.init_console()
-
-        ##########################################################
-        #      Record and run recorded macros                    #
-        ##########################################################
-        self.actionRecord.triggered.connect(chisurf.console.start_recording)
-        self.actionStop.triggered.connect(chisurf.console.save_macro)
-        self.actionRun.triggered.connect(self.onRunMacro)
-
-        ##########################################################
-        #      Arrange Docks and window positions                #
-        #      Window-controls tile, stack etc.                  #
-        ##########################################################
-        self.tabifyDockWidget(self.dockWidgetReadData, self.dockWidgetDatasets)
-        self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetAnalysis)
-        self.tabifyDockWidget(self.dockWidgetAnalysis, self.dockWidgetPlot)
-        self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
-        self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
-        self.editor = chisurf.gui.tools.code_editor.CodeEditor()
-        self.verticalLayout_10.addWidget(self.editor)
-
-        self.modelLayout.setAlignment(QtCore.Qt.AlignTop)
-        self.plotOptionsLayout.setAlignment(QtCore.Qt.AlignTop)
-        self.dockWidgetReadData.raise_()
-
-        self.actionTile_windows.triggered.connect(self.onTileWindows)
-        self.actionTab_windows.triggered.connect(self.onTabWindows)
-        self.actionCascade.triggered.connect(self.onCascadeWindows)
-        self.mdiarea.subWindowActivated.connect(self.subWindowActivated)
-
-        ##########################################################
-        #    Connect changes in User-interface to actions like:  #
-        #    Loading dataset, changing setups, models, etc.      #
-        ##########################################################
-        self.actionSetupChanged.triggered.connect(self.onSetupChanged)
-        self.actionExperimentChanged.triggered.connect(self.onExperimentChanged)
-        self.actionChange_current_dataset.triggered.connect(self.onCurrentDatasetChanged)
-        self.actionAdd_fit.triggered.connect(self.onAddFit)
-        self.actionSaveAllFits.triggered.connect(self.onSaveFits)
-        self.actionSaveCurrentFit.triggered.connect(self.onSaveFit)
-        self.actionClose_Fit.triggered.connect(chisurf.macros.close_fit)
-        self.actionClose_all_fits.triggered.connect(self.onCloseAllFits)
-        self.actionLoad_Data.triggered.connect(self.onAddDataset)
-        self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
-
-        self.dataset_selector = chisurf.gui.widgets.experiments.ExperimentalDataSelector(
-            click_close=False,
-            curve_types='all',
-            change_event=self.onCurrentDatasetChanged,
-            drag_enabled=True
-        )
-        self.verticalLayout_8.addWidget(self.dataset_selector)
-
 

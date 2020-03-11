@@ -4,13 +4,14 @@ import sys
 
 from qtpy import QtWidgets, QtGui, QtCore
 
+
 def setup_gui(
         app: QtWidgets.QApplication,
+        window: chisurf.gui.main.Main = None,
         stage: str = None
 ) -> chisurf.gui.main.Main:
 
     def gui_imports():
-        import pyqtgraph
         import chisurf.base
         import chisurf.common
         import chisurf.curve
@@ -39,7 +40,6 @@ def setup_gui(
         window = Main()
         chisurf.console.history_widget = window.plainTextEditHistory
         chisurf.cs = window
-        window.init_setups()
         return window
 
     def setup_style(app):
@@ -53,6 +53,7 @@ def setup_gui(
                 mode='r'
             ).read()
         )
+
     if stage is None:
         gui_imports()
         setup_ipython()
@@ -70,9 +71,20 @@ def setup_gui(
         )
     elif stage == "startup_interface":
         return startup_interface()
+    elif stage == "define_actions":
+        window.define_actions()
+    elif stage == "arrange_widgets":
+        window.arrange_widgets()
+    elif stage == "init_setups":
+        window.init_setups()
+    elif stage == "load_tools":
+        window.load_tools()
 
 
 def get_app() -> QtWidgets.QApplication:
+    # import pyqtgraph at this stage to fix
+    # Warning: QApplication was created before pyqtgraph was imported;
+    import pyqtgraph
     import chisurf.gui.resources
 
     app = QtWidgets.QApplication(sys.argv)
@@ -117,7 +129,55 @@ def get_app() -> QtWidgets.QApplication:
     )
 
     splash.showMessage(
-        "Setup style",
+        "Initialize setups",
+        alignment=QtCore.Qt.AlignTop,
+        color=QtCore.Qt.white
+    )
+    app.processEvents()
+    setup_gui(
+        app=app,
+        window=window,
+        stage="init_setups"
+    )
+
+    splash.showMessage(
+        "Defining actions",
+        alignment=QtCore.Qt.AlignTop,
+        color=QtCore.Qt.white
+    )
+    app.processEvents()
+    setup_gui(
+        app=app,
+        window=window,
+        stage="define_actions"
+    )
+
+    splash.showMessage(
+        "Arrange widgets",
+        alignment=QtCore.Qt.AlignTop,
+        color=QtCore.Qt.white
+    )
+    app.processEvents()
+    setup_gui(
+        app=app,
+        window=window,
+        stage="arrange_widgets"
+    )
+
+    splash.showMessage(
+        "Loading tools",
+        alignment=QtCore.Qt.AlignTop,
+        color=QtCore.Qt.white
+    )
+    app.processEvents()
+    setup_gui(
+        app=app,
+        window=window,
+        stage="load_tools"
+    )
+
+    splash.showMessage(
+        "Styling up",
         alignment=QtCore.Qt.AlignTop,
         color=QtCore.Qt.white
     )
@@ -128,5 +188,6 @@ def get_app() -> QtWidgets.QApplication:
     )
     window.show()
     splash.finish(window)
+    app.exec()
     return app
 
