@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import argparse
 import os
 import numpy as np
@@ -7,7 +8,9 @@ import tttrlib
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Compute a decay histogram.')
+    parser = argparse.ArgumentParser(
+        description='Compute a decay histogram.'
+    )
 
     parser.add_argument(
         'channel',

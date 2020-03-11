@@ -24,6 +24,7 @@ requirements:
     - python {{ python }}
     - setuptools
     - cython
+    - pyyaml
     - {{ pin_compatible('numpy') }}
   run:
     - python {{ python }}
@@ -68,8 +69,7 @@ about:
     ChiSurf is an interactive global analysis software for time-resolved
     fluorescence data.
   description: |
-    ChiSurf is an interactive analysis software for time-resolved
-    fluorescence data.
+    {{ data.get('description') }}
 
 extra:
   recipe-maintainers:

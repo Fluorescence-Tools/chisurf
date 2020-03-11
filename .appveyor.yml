@@ -8,9 +8,9 @@ environment:
     # SET PYTHON=C:\Miniconda3-x64
     # SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
 
-# For debugging uncomment the lines below
-init:
-  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+## For debugging uncomment the lines below
+#init:
+#  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 ##  Use conda-build
 install:
@@ -22,7 +22,7 @@ install:
   - conda config --add channels salilab
   - conda config --add channels defaults
   - conda update -q conda
-  - conda install git conda-build anaconda-client numpy conda-verify python=3.7.3
+  - conda install git conda-build anaconda-client numpy conda-verify python=3.7.3 pyyaml
   - activate base
   - conda build conda-recipe --output-folder bld-dir
   - conda config --add channels "%CD%\bld-dir"
@@ -41,9 +41,9 @@ test_script:
 
 build: off
 
-# For debugging uncomment the lines below
-on_finish:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+## For debugging uncomment the lines below
+#on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 notifications:
   - provider: Email
