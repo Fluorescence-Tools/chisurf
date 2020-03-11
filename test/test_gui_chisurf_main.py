@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import sys
 import unittest
 
-from qtpy.QtWidgets import QApplication
 from qtpy.QtTest import QTest
 from qtpy.QtCore import Qt
 from qtpy import QtWidgets
@@ -13,7 +11,6 @@ import chisurf.gui
 import chisurf.gui.widgets
 import chisurf.macros
 import chisurf.gui.widgets.experiments
-
 
 cs_app = chisurf.gui.get_app()
 

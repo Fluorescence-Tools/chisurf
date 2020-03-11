@@ -124,6 +124,14 @@ be started from a terminal windows
 open -a ChiSurf.app
 ```
 
+An distributable dmg file (including the .app) can be build using 
+
+```
+create-dist-dmg
+```
+in the build_tools/osx folder
+
+
 ## Windows
 
 ## Linux

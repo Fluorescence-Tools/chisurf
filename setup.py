@@ -1,4 +1,5 @@
 #!/usr/bin/python
+
 import sys
 import numpy
 import platform
@@ -128,7 +129,7 @@ setup(
         'mrcfile',
         'qtconsole',
         'ipython',
-        'docx',
+        'python-docx',
         'mdtraj'
     ],
     setup_requires=[

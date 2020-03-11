@@ -7,15 +7,13 @@ import sys
 import pathlib
 import os
 import stat
+import shutil
 
 # append the local path and one above to be able to
 # able to work with the modules in the current directory
 # (and one above).
 sys.path.append(
-    str(pathlib.Path(__file__).parent.absolute())
-)
-sys.path.append(
-    str((pathlib.Path(__file__).parent / "..").absolute())
+    os.getcwd()
 )
 
 template = """<?xml version="1.0" encoding="UTF-8"?>
@@ -57,6 +55,8 @@ template = """<?xml version="1.0" encoding="UTF-8"?>
     <string>MainMenu</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
+    <key>CFBundleIconFile</key>
+    <string></string>
 </dict>
 </plist>
 """.encode('utf-8')
@@ -125,6 +125,14 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        '-i',
+        '--icon',
+        type=str,
+        default=None,
+        help='The .icns file.'
+    )
+
+    parser.add_argument(
         '-c',
         '--copyright',
         type=str,
@@ -154,7 +162,7 @@ if __name__ == "__main__":
 
     if args.system_minimum is None:
         print("No minimum system version provided using 10.11.0.")
-        system_minimum = "10.11.0"
+        system_minimum = "10.9.0"
     else:
         system_minimum = args.system_minimum
 
@@ -195,6 +203,12 @@ if __name__ == "__main__":
     d = plistlib.loads(template_bytes)
     target.update(d)
 
+    plist_path = pathlib.Path(plist_output_file).parent
+    icns_file_path = ""
+    if isinstance(args.icon, str):
+        shutil.copy(args.icon, plist_path)
+        icns_file_path = os.path.basename(args.icon)
+
     info = {
         'CFBundleDisplayName': display_name,
         'CFBundleExecutable': executable,
@@ -203,7 +217,8 @@ if __name__ == "__main__":
         'CFBundleVersion': version,
         'CFBundleInfoDictionaryVersion': version,
         'LSMinimumSystemVersion': system_minimum,
-        'NSHumanReadableCopyright': copyright_info
+        'NSHumanReadableCopyright': copyright_info,
+        'CFBundleIconFile': icns_file_path
     }
     target.update(info)
 
@@ -214,18 +229,8 @@ if __name__ == "__main__":
         )
     script = """#!/usr/bin/env bash
 script_dir=$(dirname "$(dirname "$0")")
-$script_dir/bin/python -m %s $@""" % module_string
-#     script = """#!/usr/bin/env bash
-# export script_dir=$(dirname "$(dirname "$0")")
-# export PATH="$script_dir/Resources/bin:$PATH"
-# echo $PATH
-# export PYTHON_MODULE_PATH
-# PYTHON_MODULE_PATH=$(python -c "import %s; import pathlib; print(pathlib.Path(%s.__file__).parent.absolute())")
-# echo $PYTHON_MODULE_PATH
-# python $PYTHON_MODULE_PATH/__main__.py
-#     """ % (module_string, module_string)
+$script_dir/%s.bin $@""" % module_string
 
-    plist_path = pathlib.Path(plist_output_file).parent
     executable_file = plist_path / "MacOS" / executable
     with open(executable_file, 'w') as fp:
         fp.write(script)
