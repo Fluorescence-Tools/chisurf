@@ -4,6 +4,9 @@ import sys
 
 from qtpy import QtWidgets, QtGui, QtCore
 
+import chisurf.gui.exception_hook
+import chisurf.gui.widgets.ipython
+
 
 def setup_gui(
         app: QtWidgets.QApplication,
@@ -32,7 +35,7 @@ def setup_gui(
 
     def setup_ipython():
         import chisurf.gui.widgets
-        chisurf.console = chisurf.gui.widgets.QIPythonWidget()
+        chisurf.console = chisurf.gui.widgets.ipython.QIPythonWidget()
 
     def startup_interface():
         from chisurf.gui.main import Main
@@ -81,14 +84,13 @@ def setup_gui(
         window.load_tools()
 
 
-def get_app() -> QtWidgets.QApplication:
+def get_win(
+        app: QtWidgets.QApplication
+) -> chisurf.gui.main.Main:
     # import pyqtgraph at this stage to fix
     # Warning: QApplication was created before pyqtgraph was imported;
     import pyqtgraph
     import chisurf.gui.resources
-
-    app = QtWidgets.QApplication(sys.argv)
-    app.processEvents()
 
     pixmap = QtGui.QPixmap(":/icons/icons/cs_logo.png")
     splash = QtWidgets.QSplashScreen(pixmap)
@@ -187,6 +189,16 @@ def get_app() -> QtWidgets.QApplication:
         stage="setup_style"
     )
     window.show()
+    splash.hide()
     splash.finish(window)
+    return window
+
+
+def get_app():
+    app = QtWidgets.QApplication(sys.argv)
+    app.processEvents()
+    get_win(
+        app=app
+    )
     return app
 
