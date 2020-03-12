@@ -9,6 +9,13 @@ handler = logging.StreamHandler(stream=sys.stdout)
 log.addHandler(handler)
 
 
+if QtCore.QT_VERSION >= 0x50501:
+    def excepthook(type_, value, traceback_):
+        traceback.print_exception(type_, value, traceback_)
+        QtCore.qFatal('')
+    sys.excepthook = excepthook
+
+
 def show_exception_box(log_msg):
     """Checks if a QApplication instance is available and shows a messagebox with the exception message.
     If unavailable (non-console application), log an additional notice.
