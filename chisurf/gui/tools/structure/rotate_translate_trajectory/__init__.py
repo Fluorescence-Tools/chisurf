@@ -1,5 +1,5 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import numpy as np
 import tables
@@ -7,6 +7,7 @@ from qtpy import QtWidgets
 import mdtraj
 
 import chisurf.decorators
+import chisurf.gui.decorators
 import chisurf.gui.widgets
 from chisurf.structure import translate, rotate
 
@@ -73,7 +74,7 @@ class RotateTranslateTrajectoryWidget(QtWidgets.QWidget):
     ):
         self.lineEdit.setText(str(v))
 
-    @chisurf.decorators.init_with_ui(ui_filename="rotate_translate_traj.ui")
+    @chisurf.gui.decorators.init_with_ui(ui_filename="rotate_translate_traj.ui")
     def __init__(self, **kwargs):
         self.trajectory = None
         self.verbose = kwargs.get('verbose', chisurf.verbose)

@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import os
 import docx
@@ -49,8 +49,8 @@ def add_fit(
     for data_set in data_sets:
         if data_set.experiment is data_sets[0].experiment:
             # Make sure the data set is a DataGroup
-            if not isinstance(data_set, chisurf.experiments.data.DataGroup):
-                data_group = chisurf.experiments.data.ExperimentDataCurveGroup(
+            if not isinstance(data_set, chisurf.data.DataGroup):
+                data_group = chisurf.data.ExperimentDataCurveGroup(
                     [data_set]
                 )
             else:
@@ -189,15 +189,15 @@ def group_datasets(
     ]
     if isinstance(
             selected_data[0],
-            chisurf.experiments.data.DataCurve
+            chisurf.data.DataCurve
     ):
         # TODO: check for double names!!!
-        dg = chisurf.experiments.data.ExperimentDataCurveGroup(
+        dg = chisurf.data.ExperimentDataCurveGroup(
             selected_data,
             name="Data-Group"
         )
     else:
-        dg = chisurf.experiments.data.ExperimentDataGroup(
+        dg = chisurf.data.ExperimentDataGroup(
             selected_data,
             name="Data-Group"
         )
@@ -252,8 +252,8 @@ def add_dataset(
         )
     dataset_group = dataset if isinstance(
         dataset,
-        chisurf.experiments.data.ExperimentDataGroup
-    ) else chisurf.experiments.data.ExperimentDataCurveGroup(
+        chisurf.data.ExperimentDataGroup
+    ) else chisurf.data.ExperimentDataCurveGroup(
         dataset
     )
     if len(dataset_group) == 1:

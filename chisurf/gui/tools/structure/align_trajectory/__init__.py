@@ -4,6 +4,7 @@ import tables
 from qtpy import QtWidgets
 
 import chisurf.decorators
+import chisurf.gui.decorators
 import chisurf.gui.widgets
 
 
@@ -27,7 +28,9 @@ class AlignTrajectoryWidget(QtWidgets.QWidget):
     def trajectory_filename(self, v):
         self.lineEdit.setText(str(v))
 
-    @chisurf.decorators.init_with_ui(ui_filename="align_trajectory.ui")
+    @chisurf.gui.decorators.init_with_ui(
+        ui_filename="align_trajectory.ui"
+    )
     def __init__(self, **kwargs):
         self.trajectory = None
         self.actionOpen_trajectory.triggered.connect(self.onOpenTrajectory)

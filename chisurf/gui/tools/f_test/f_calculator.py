@@ -7,6 +7,7 @@ from qtpy import QtWidgets
 from scipy.stats import f as fdist
 
 import chisurf.decorators
+import chisurf.gui.decorators
 import chisurf.models
 import chisurf.fitting.fit
 import chisurf.math.statistics
@@ -67,7 +68,9 @@ class FTestWidget(QtWidgets.QWidget):
                 )
         self.toolButton_2.setMenu(menu)
 
-    @chisurf.decorators.init_with_ui(ui_filename="F-Calculator.ui")
+    @chisurf.gui.decorators.init_with_ui(
+        ui_filename="F-Calculator.ui"
+    )
     def __init__(
             self,
             *args,

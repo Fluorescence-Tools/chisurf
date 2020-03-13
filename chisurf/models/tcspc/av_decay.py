@@ -18,15 +18,16 @@ class AVDecayModel(LifetimeModel):
         """
         Example
         -------
-        >>> import chisurf.settings as mfm
-        >>> data_set = chisurf.curve.DataCurve(filename='./test/data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)
-        >>> lin = chisurf.curve.DataCurve(filename='./test/data/tcspc/ibh_sample/whitelight.txt', skiprows=9)
-        >>> data_set.weights = chisurf.fluorescence.tcspc.weights(data_set.y)
-        >>> irf = chisurf.curve.DataCurve(filename='./test/data/tcspc/ibh_sample/Prompt.txt', skiprows=9)
+        >>> import chisurf.curve
+        >>> import chisurf.fitting
+        >>> data_set = chisurf.data.DataCurve(filename='./test/data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)
+        >>> lin = chisurf.data.DataCurve(filename='./test/data/tcspc/ibh_sample/whitelight.txt', skiprows=9)
+        >>> data_set.ey = chisurf.fluorescence.tcspc.counting_noise(data_set.y)
+        >>> irf = chisurf.data.DataCurve(filename='./test/data/tcspc/ibh_sample/Prompt.txt', skiprows=9)
         >>> data_set.x *= 0.0141
         >>> irf.x *= 0.0141
         >>> data_set = chisurf.curve.ExperimentDataCurveGroup(data_set)
-        >>> structure = mfm.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+        >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
         >>> from chisurf.fitting.model.tcspc.av_decay import AVDecayModel
         >>> model_kw={'structure': structure, 'residue_seq_number': 577, 'atom_name': 'CB'}
         >>> fit = fitting.FitGroup(data=data_set, model_class=AVDecayModel, model_kw=model_kw)

@@ -6,13 +6,16 @@ from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
 
 import chisurf.decorators
+import chisurf.gui.decorators
 from chisurf.math.signal import autocorr
 from chisurf.plots.plotbase import Plot
 
 
 class LinePlotWidget(QtWidgets.QWidget):
 
-    @chisurf.decorators.init_with_ui(ui_filename="linePlotWidget.ui")
+    @chisurf.gui.decorators.init_with_ui(
+        ui_filename="linePlotWidget.ui"
+    )
     def __init__(
             self,
             d_scalex='lin',
@@ -23,10 +26,10 @@ class LinePlotWidget(QtWidgets.QWidget):
             **kwargs
     ):
         self.verbose = kwargs.get('verbose', chisurf.verbose)
-        self.checkBox.stateChanged [int].connect(self.SetLog)
-        self.checkBox_2.stateChanged [int].connect(self.SetLog)
-        self.checkBox_3.stateChanged [int].connect(self.SetLog)
-        self.checkBox_4.stateChanged [int].connect(self.SetLog)
+        self.checkBox.stateChanged[int].connect(self.SetLog)
+        self.checkBox_2.stateChanged[int].connect(self.SetLog)
+        self.checkBox_3.stateChanged[int].connect(self.SetLog)
+        self.checkBox_4.stateChanged[int].connect(self.SetLog)
 
         self.data_logy = d_scaley
         self.data_logx = d_scalex
@@ -90,7 +93,7 @@ class GlobalAnisotropy(Plot):
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             d_scalex: str = 'lin',
             d_scaley: str = 'lin',
             r_scalex: str = 'lin',
@@ -259,7 +262,7 @@ class GlobalEt(Plot):
 
     name = "GlobalEt"
 
-    @chisurf.decorators.init_with_ui(ui_filename="et_plot_layout.ui")
+    @chisurf.gui.decorators.init_with_ui(ui_filename="et_plot_layout.ui")
     def __init__(
             self,
             fit: fitting.fit.FitGroup,

@@ -35,7 +35,7 @@ class FitTests(unittest.TestCase):
             a_value=a_value,
             c_value=c_value
         )
-        data = chisurf.experiments.data.DataCurve(
+        data = chisurf.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
@@ -66,13 +66,13 @@ class FitTests(unittest.TestCase):
             a_value=a_value,
             c_value=c_value
         )
-        data = chisurf.experiments.data.DataCurve(
+        data = chisurf.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
         )
         fit = chisurf.fitting.fit.FitGroup(
-            data=chisurf.experiments.data.DataGroup(
+            data=chisurf.data.DataGroup(
                 [data]
             ),
             model_class=chisurf.models.parse.ParseModel
@@ -180,13 +180,13 @@ class FitTests(unittest.TestCase):
             c_value=c_value
         )
 
-        data = chisurf.experiments.data.DataCurve(
+        data = chisurf.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
         )
         fit = chisurf.fitting.fit.FitGroup(
-            data=chisurf.experiments.data.DataGroup(
+            data=chisurf.data.DataGroup(
                 [data]
             ),
             model_class=chisurf.models.parse.ParseModel
@@ -197,7 +197,7 @@ class FitTests(unittest.TestCase):
             data
         )
 
-        data_2 = chisurf.experiments.data.DataCurve(
+        data_2 = chisurf.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
@@ -215,7 +215,6 @@ class FitTests(unittest.TestCase):
         )
 
     def test_fit_sample(self):
-        import chisurf.experiments
         import chisurf.models
         import chisurf.fitting
 
@@ -226,13 +225,13 @@ class FitTests(unittest.TestCase):
             c_value=c_value
         )
 
-        data = chisurf.experiments.data.DataCurve(
+        data = chisurf.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
         )
         fit = chisurf.fitting.fit.FitGroup(
-            data=chisurf.experiments.data.DataGroup(
+            data=chisurf.data.DataGroup(
                 [data]
             ),
             model_class=chisurf.models.parse.ParseModel

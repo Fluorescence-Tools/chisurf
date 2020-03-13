@@ -1,5 +1,5 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import sys
 import numpy as np
@@ -9,6 +9,7 @@ import pyqtgraph.dockarea
 
 import chisurf.decorators
 import chisurf.fluorescence.anisotropy.kappa2
+import chisurf.gui.decorators
 from chisurf.fluorescence.anisotropy.kappa2 import s2delta
 from chisurf.fluorescence.anisotropy.kappa2 import kappasqAllDelta, kappasq_all
 
@@ -17,7 +18,7 @@ class Kappa2Dist(QtWidgets.QWidget):
 
     name = "Kappa2Dist"
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="kappa2_dist.ui"
     )
     def __init__(

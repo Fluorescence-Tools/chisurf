@@ -1,5 +1,5 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 import os
 
 from qtpy import QtWidgets, QtCore, QtGui
@@ -7,7 +7,7 @@ from qtpy import QtWidgets, QtCore, QtGui
 import chisurf.fio
 import chisurf.gui.widgets
 import chisurf.gui.widgets.fio
-import chisurf.experiments.data
+import chisurf.data
 import chisurf.fitting
 import chisurf.decorators
 from chisurf.experiments import reader
@@ -34,7 +34,7 @@ class ExperimentalDataSelector(
     def datasets(
             self
     ) -> typing.List[
-        chisurf.experiments.data.ExperimentalData
+        chisurf.data.ExperimentalData
     ]:
         data_curves = self.get_data_sets(
             curve_type=self.curve_type
@@ -68,14 +68,14 @@ class ExperimentalDataSelector(
     @property
     def selected_dataset(
             self
-    ) -> chisurf.experiments.data.ExperimentalData:
+    ) -> chisurf.data.ExperimentalData:
         return self.datasets[self.selected_curve_index]
 
     @property
     def selected_datasets(
             self
     ) -> typing.List[
-        chisurf.experiments.data.ExperimentalData
+        chisurf.data.ExperimentalData
     ]:
         data_sets_idx = self.selected_dataset_idx
         return [self.datasets[i] for i in data_sets_idx]
@@ -127,7 +127,7 @@ class ExperimentalDataSelector(
         self.update()
 
     def onUnGroupDatasets(self):
-        dg = chisurf.experiments.data.ExperimentDataGroup(
+        dg = chisurf.data.ExperimentDataGroup(
             self.selected_datasets
         )[0]
         dn = list()
@@ -167,7 +167,7 @@ class ExperimentalDataSelector(
             item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 
             # If group of curves
-            if isinstance(d, chisurf.experiments.data.ExperimentDataGroup):
+            if isinstance(d, chisurf.data.ExperimentDataGroup):
                 for di in d:
                     fn = di.name
                     widget_name = os.path.basename(fn)
@@ -263,7 +263,7 @@ class ExperimentalDataSelector(
         """
         if get_data_sets is None:
             def get_data_sets(**kwargs):
-                return chisurf.experiments.get_data(
+                return chisurf.data.get_data(
                     data_set=chisurf.imported_datasets,
                     **kwargs
                 )

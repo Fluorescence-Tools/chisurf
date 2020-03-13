@@ -4,8 +4,10 @@ import numpy as np
 from qtpy import QtWidgets
 
 import chisurf.fluorescence
+import chisurf.fluorescence.tcspc
 import chisurf.decorators
-import chisurf.experiments.data
+import chisurf.data
+import chisurf.gui.decorators
 from chisurf.experiments.tcspc import TCSPCReader
 from chisurf.fio import sdtfile
 
@@ -102,14 +104,16 @@ class TcspcSDTWidget(
     @property
     def curve(
             self
-    ) -> chisurf.experiments.data.DataCurve:
+    ) -> chisurf.data.DataCurve:
         y = self.ph_counts
-        w = chisurf.fluorescence.tcspc.weights(y)
-        d = chisurf.experiments.data.DataCurve(
+        ey = chisurf.fluorescence.tcspc.counting_noise(
+            decay=y
+        )
+        d = chisurf.data.DataCurve(
             setup=self,
             x=self.times,
             y=y,
-            ey=1. / w,
+            ey=ey,
             name=self.name
         )
         return d
@@ -131,7 +135,7 @@ class TcspcSDTWidget(
         self.curve_number = curve_nbr
         self.textBrowser.setPlainText(str(self.sdt.info))
 
-    @chisurf.decorators.init_with_ui(ui_filename="sdtfile.ui")
+    @chisurf.gui.decorators.init_with_ui(ui_filename="sdtfile.ui")
     def __init__(
             self,
             *args,

@@ -1,16 +1,17 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import os
 import numpy as np
 
 import chisurf.fluorescence
-import chisurf.fluorescence.fcs
-import chisurf.fluorescence.tcspc
-import chisurf.experiments
-import chisurf.experiments.data
 import chisurf.fio.fcs
-from chisurf.fio.ascii import Csv
+import chisurf.fio.ascii
+
+# the following imports are only for the type annotations
+# and currently (20.03.13) cause conflicts
+# chisurf.experiments.Experiment
+# import chisurf.data
 
 
 def read_tcspc_csv(
@@ -26,7 +27,7 @@ def read_tcspc_csv(
         experiment: chisurf.experiments.Experiment = None,
         *args,
         **kwargs
-) -> chisurf.experiments.data.DataCurveGroup:
+) -> chisurf.data.DataCurveGroup:
     """
 
     :param filename:
@@ -54,7 +55,7 @@ def read_tcspc_csv(
         mc = matrix_columns
         infer_delimiter = True
 
-    csvSetup = Csv(
+    csvSetup =  chisurf.fio.ascii.Csv(
         *args,
         **kwargs
     )
@@ -83,20 +84,30 @@ def read_tcspc_csv(
 
         if polarization == 'vv':
             y = c1
-            ey = chisurf.fluorescence.tcspc.weights(c1)
+            ey = chisurf.fluorescence.tcspc.counting_noise(
+                decay=c1
+            )
         elif polarization == 'vh':
             y = c2
-            ey = chisurf.fluorescence.tcspc.weights(c2)
+            ey = chisurf.fluorescence.tcspc.counting_noise(
+                decay=c2
+            )
         elif polarization == 'vv/vh':
-            e1 = chisurf.fluorescence.tcspc.weights(c1)
-            e2 = chisurf.fluorescence.tcspc.weights(c2)
+            e1 = chisurf.fluorescence.tcspc.counting_noise(
+                decay=c1
+            )
+            e2 = chisurf.fluorescence.tcspc.counting_noise(
+                decay=c2
+            )
             y = np.vstack([c1, c2])
             ey = np.vstack([e1, e2])
         else:
             f2 = 2.0 * g_factor
             y = c1 + f2 * c2
-            ey = chisurf.fluorescence.tcspc.weights_ps(
-                c1, c2, f2
+            ey = chisurf.fluorescence.tcspc.counting_noise_combined_parallel_perpendicular(
+                parallel=c1,
+                perpendicular=c2,
+                g_factor=g_factor
             )
         x = np.arange(
             n_data_points,
@@ -112,7 +123,7 @@ def read_tcspc_csv(
             y = y.reshape(
                 [n_datasets, n_data_points, rebin_y]
             ).sum(axis=2)
-            ey = chisurf.fluorescence.tcspc.weights(y)
+            ey = chisurf.fluorescence.tcspc.counting_noise(y)
             x = np.average(
                 x.reshape([n_data_points, rebin_y]), axis=1
             ) / rebin_y
@@ -148,18 +159,18 @@ def read_tcspc_csv(
             name = '{} {:d}_{:d}'.format(fn, i, n_data_sets)
         else:
             name = filename
-        data = chisurf.experiments.data.DataCurve(
+        data = chisurf.data.DataCurve(
             x=x,
             y=yi,
             ex=ex,
-            ey=1. / eyi,
+            ey=eyi,
             experiment=experiment,
             name=name,
             **kwargs
         )
         data.filename = filename
         data_curves.append(data)
-    data_group = chisurf.experiments.data.DataCurveGroup(
+    data_group = chisurf.data.DataCurveGroup(
         data_curves,
         filename,
     )
@@ -173,7 +184,7 @@ def read_fcs(
         verbose: bool = False,
         experiment: chisurf.experiments.Experiment = None,
         **kwargs
-) -> chisurf.experiments.data.ExperimentDataCurveGroup:
+) -> chisurf.data.ExperimentDataCurveGroup:
     """
 
     Option Kristine:
@@ -226,7 +237,7 @@ def read_fcs(
             ex = np.ones_like(x)
         name = root
         data_sets.append(
-            chisurf.experiments.data.DataCurve(
+            chisurf.data.DataCurve(
                 data_reader=data_reader,
                 name=name,
                 x=x, y=y, ey=ey, ex=ex,
@@ -256,10 +267,10 @@ def read_fcs(
             ey = 1. / np.array(r['weights'])
             ex = np.ones_like(x)
             data_sets.append(
-                chisurf.experiments.data.DataCurve(
+                chisurf.data.DataCurve(
                     name=name,
                     data_reader=data_reader,
                     x=x, y=y, ey=ey, ex=ex
                 )
             )
-    return chisurf.experiments.data.ExperimentDataCurveGroup(data_sets)
+    return chisurf.data.ExperimentDataCurveGroup(data_sets)

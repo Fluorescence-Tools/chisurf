@@ -2,6 +2,7 @@ import mdtraj as md
 from qtpy import QtWidgets
 
 import chisurf.decorators
+import chisurf.gui.decorators
 import chisurf.gui.widgets
 
 
@@ -15,7 +16,7 @@ class SaveTopology(QtWidgets.QWidget):
     def trajectory_filename(self, v):
         self.lineEdit.setText(str(v))
 
-    @chisurf.decorators.init_with_ui(ui_filename="save_topology.ui")
+    @chisurf.gui.decorators.init_with_ui(ui_filename="save_topology.ui")
     def __init__(
             self,
             *args,

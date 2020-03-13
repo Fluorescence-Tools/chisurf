@@ -4,9 +4,6 @@ import sys
 
 from qtpy import QtWidgets, QtGui, QtCore
 
-import chisurf.gui.exception_hook
-import chisurf.gui.widgets.ipython
-
 
 def setup_gui(
         app: QtWidgets.QApplication,
@@ -15,6 +12,9 @@ def setup_gui(
 ) -> chisurf.gui.main.Main:
 
     def gui_imports():
+        import chisurf.settings
+        import chisurf.gui.widgets.ipython
+        import chisurf.gui.decorators
         import chisurf.base
         import chisurf.common
         import chisurf.curve
@@ -30,8 +30,9 @@ def setup_gui(
         import chisurf.math
         import chisurf.models
         import chisurf.plots
-        import chisurf.settings
         import chisurf.structure
+        if chisurf.settings.exceptions_on_gui:
+            import chisurf.gui.exception_hook
 
     def setup_ipython():
         import chisurf.gui.widgets

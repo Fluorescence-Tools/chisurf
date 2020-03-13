@@ -1,5 +1,5 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import numpy as np
 
@@ -8,7 +8,7 @@ import chisurf.fluorescence.tcspc
 import chisurf.experiments
 import chisurf.base
 import chisurf.fluorescence
-import chisurf.experiments.data
+import chisurf.data
 import chisurf.fio.fluorescence
 
 from chisurf.experiments import reader
@@ -116,7 +116,7 @@ class TCSPCReader(
             filename: str = None,
             *args,
             **kwargs
-    ) -> chisurf.experiments.data.DataCurveGroup:
+    ) -> chisurf.data.DataCurveGroup:
         if self.reading_routine == 'csv':
             data_group = chisurf.fio.fluorescence.read_tcspc_csv(
                 filename=filename,
@@ -134,13 +134,13 @@ class TCSPCReader(
         else:
             if self.reading_routine == 'yaml':
                 file_type = 'yaml'
-                data_set = chisurf.experiments.data.DataCurve()
+                data_set = chisurf.data.DataCurve()
                 data_set.load(
                     file_type=file_type,
                     filename=filename
                 )
                 data_set.experiment = self.experiment
-                data_group = chisurf.experiments.data.DataGroup(
+                data_group = chisurf.data.DataGroup(
                     [data_set]
                 )
             else:
@@ -148,7 +148,7 @@ class TCSPCReader(
                     "Reading routine '%s' not supported. "
                     "Created empty DataGroup" % self.reading_routine
                 )
-                data_group = chisurf.experiments.data.DataGroup([])
+                data_group = chisurf.data.DataGroup([])
         data_group.data_reader = self
         return data_group
 
@@ -167,7 +167,7 @@ class TCSPCSetupDummy(
             p0: float = 10000.0,
             rep_rate: float = 10.0,
             lifetime_spectrum: typing.List[float] = None,
-            instrument_response_function: chisurf.experiments.data.DataCurve = None,
+            instrument_response_function: chisurf.data.DataCurve = None,
             sample_name: str = 'TCSPC-Dummy',
             **kwargs
     ):
@@ -193,7 +193,7 @@ class TCSPCSetupDummy(
             filename: str = None,
             *args,
             **kwargs
-    ) -> chisurf.experiments.data.DataCurveGroup:
+    ) -> chisurf.data.DataCurveGroup:
         if filename is None:
             filename = self.sample_name
 
@@ -202,14 +202,16 @@ class TCSPCSetupDummy(
             lifetime_spectrum=self.lifetime_spectrum,
             time_axis=x
         )
-        data_set = chisurf.experiments.data.DataCurve(
+        data_set = chisurf.data.DataCurve(
             x=time_axis,
             y=y,
-            ey=1./chisurf.fluorescence.tcspc.weights(y),
+            ey=chisurf.fluorescence.tcspc.counting_noise(
+                decay=y
+            ),
             setup=self,
             name=filename
         )
         data_set.setup = self
-        return chisurf.experiments.data.DataCurveGroup(
+        return chisurf.data.DataCurveGroup(
             [data_set]
         )

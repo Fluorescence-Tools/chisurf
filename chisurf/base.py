@@ -1,5 +1,5 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import os
 import uuid
@@ -21,6 +21,8 @@ class Base(object):
     """
 
     """
+
+    supported_save_file_types: typing.List[str] = ["yaml", "json"]
 
     @property
     def name(self) -> str:
@@ -44,11 +46,14 @@ class Base(object):
             verbose: bool = False
     ) -> None:
         chisurf.logging.info(
-            "%s is saving filename %s as file type %s" % (
-                self.__class__.__name__, filename, file_type
+            "%s of type %s is saving filename %s as file type %s" % (
+                self.name,
+                self.__class__.__name__,
+                filename,
+                file_type
             )
         )
-        if file_type in ["yaml", "json"]:
+        if file_type in self.supported_save_file_types:
             txt = ""
             # check for filename extension
             root, ext = os.path.splitext(filename)
@@ -69,9 +74,9 @@ class Base(object):
             self,
             filename: str,
             file_type: str = 'yaml',
+            verbose: bool = False,
             **kwargs
     ) -> None:
-        verbose = kwargs.get('verbose', False)
         if file_type == "json":
             self.from_json(
                 filename=filename,
@@ -121,12 +126,17 @@ class Base(object):
             filename: str = None,
             verbose: bool = False
     ) -> None:
-        """
+        """Restore the object's state from a YAML file
 
-        :param yaml_string:
-        :param filename:
-        :param verbose:
-        :return:
+        Parameters
+        ----------
+        yaml_string : str
+        filename : str
+        verbose : bool
+
+        Returns
+        -------
+
         """
         j = dict()
         if isinstance(filename, str):
@@ -147,16 +157,10 @@ class Base(object):
             filename: str = None,
             verbose: bool = False
     ) -> None:
-        """Reads the content of a JSON file into the object.
+        """Restore the object's state from a JSON file
 
-        Example
-        -------
-
-        >>> import chisurf.experiments
-        >>> dc = chisurf.experiments.data.DataCurve()
-        >>> dc.from_json(filename='./test/data/internal_types/datacurve.json')
-
-
+        Parameters
+        ----------
         Parameters
         ----------
         json_string : str
@@ -166,6 +170,14 @@ class Base(object):
         verbose: bool
             If True additional output is printed to stdout
 
+        Returns
+        -------
+
+        Examples
+        --------
+        >>> import chisurf.experiments
+        >>> dc = chisurf.experiments.data.DataCurve()
+        >>> dc.from_json(filename='./test/data/internal_types/datacurve.json')
         """
         j = dict()
         if isinstance(filename, str):
@@ -180,23 +192,26 @@ class Base(object):
 
     def __setattr__(
             self,
-            k: str,
-            v: object
+            key: str,
+            value: object
     ):
-        self.__dict__[k] = v
-        # Set the attributes normally
-        propobj = getattr(self.__class__, k, None)
+        propobj = getattr(self.__class__, key, None)
         if isinstance(propobj, property):
             if propobj.fset is None:
                 raise AttributeError("can't set attribute")
-            propobj.fset(self, v)
+            propobj.fset(self, value)
         else:
-            super().__setattr__(k, v)
+            super().__setattr__(key, value)
 
     def __getattr__(
             self,
             key: str
     ):
+        propobj = getattr(self.__class__, key, None)
+        if isinstance(propobj, property):
+            if propobj.fget is None:
+                raise AttributeError("can't get attribute")
+            return propobj.fget(self)
         return self.__dict__[key]
 
     def __getstate__(self):
@@ -207,7 +222,7 @@ class Base(object):
         self.__dict__.update(state)
 
     def __str__(self):
-        s = 'class: %s\n' % self.__class__.__name__
+        s = 'Class: %s\n' % self.__class__.__name__
         return s
 
     def __init__(
@@ -309,9 +324,9 @@ class Data(Base):
         self._filename = None
 
         if embed_data is None:
-            embed_data = chisurf.settings.cs_settings['database']['embed_data']
+            embed_data = chisurf.settings.database['embed_data']
         if read_file_size_limit is None:
-            read_file_size_limit = chisurf.settings.cs_settings['database']['read_file_size_limit']
+            read_file_size_limit = chisurf.settings.database['read_file_size_limit']
 
         self._embed_data = embed_data
         self._max_file_size = read_file_size_limit
@@ -379,9 +394,9 @@ class Data(Base):
             if file_size < self._max_file_size and self._embed_data:
                 with open(self._filename, "rb") as fp:
                     data = fp.read()
-                    if len(data) > chisurf.settings.cs_settings['database']['compression_data_limit']:
+                    if len(data) > chisurf.settings.database['compression_data_limit']:
                         data = zlib.compress(data)
-                    if len(data) < chisurf.settings.cs_settings['database']['embed_data_limit']:
+                    if len(data) < chisurf.settings.database['embed_data_limit']:
                         self._data = data
             if self.verbose:
                 print("Filename: %s" % self._filename)
@@ -397,15 +412,34 @@ class Data(Base):
 
 
 def clean_string(
-        s: str
+        s: str,
+        regex_pattern: str = r'[^-a-z0-9_]+'
 ) -> str:
-    """ Remove special characters to clean up string and make it compatible
-    with a Python variable names
+    """Get a slugified a string.
 
-    :param s:
-    :return:
+    Special characters to clean up string. The slugified string can be used
+    as a Python variable name.
+
+    Parameters
+    ----------
+    s : str
+        The string that is slugified
+    regex_pattern : str
+        The regex pattern that is used to
+
+    Returns
+    -------
+    str
+        A slugified string
+
+    Examples
+    --------
+
+    >>> import chisurf.base
+    >>> chisurf.base.clean_string("kkl ss ##")
+    kkl_ss
+
     """
-    regex_pattern = r'[^-a-z0-9_]+'
     r = slugify(s, separator='_', regex_pattern=regex_pattern)
     return r
 
@@ -438,12 +472,24 @@ def find_objects(
 def to_elementary(
     obj: typing.Dict
 ) -> typing.Dict:
-    """
+    """Creates a dictionary containing only elements of (basic) elementary types.
 
-    :param d:
-    :return:
-    """
+    The function recurse into the passed dictionary and creates returns a
+    new dictionary where all elements are represented by stings, floats, int,
+    and booleans. Numpy arrays ware converted into lists. Iterable types are
+    converted into lists containing elementary types.
 
+    Parameters
+    ----------
+    obj : dict
+        The dictonary that is converted
+
+    Returns
+    -------
+    dict
+        Dictionary that only contains objects of the type stings,
+        floats, int, or boolean.
+    """
     if isinstance(obj, dict):
         re = dict()
         for k in obj:
@@ -454,10 +500,11 @@ def to_elementary(
             return obj
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
-        elif isinstance(obj, list):
+        elif isinstance(obj, Iterable):
             return [to_elementary(e) for e in obj]
         elif isinstance(obj, chisurf.base.Base):
-            print(obj.name)
             return to_elementary(obj.to_dict())
         else:
-            return None
+            print("WARNING object was not converted to basic type")
+            return str(obj)
+

@@ -187,3 +187,4 @@ gui:
       auto_corr: "#ff00ff"
       inactive_transparency: 0.2
       active_transparency: 1
+exceptions_on_gui: true # if True exceptions are displayed on the GUI a MessageBox

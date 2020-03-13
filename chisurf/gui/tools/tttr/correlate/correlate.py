@@ -1,5 +1,5 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import sys
 
@@ -16,7 +16,8 @@ import chisurf.decorators
 #import chisurf.gui.tools
 import chisurf.fio
 import chisurf.fluorescence
-import chisurf.experiments.data
+import chisurf.data
+import chisurf.gui.decorators
 import chisurf.settings
 import chisurf.fluorescence.fcs
 import chisurf.gui.widgets
@@ -37,11 +38,11 @@ class Correlator(
     @property
     def data(
             self
-    ) -> chisurf.experiments.data.DataCurve:
-        if isinstance(self._data_curve, chisurf.experiments.data.DataCurve):
+    ) -> chisurf.data.DataCurve:
+        if isinstance(self._data_curve, chisurf.data.DataCurve):
             return self._data_curve
         else:
-            return chisurf.experiments.data.DataCurve(
+            return chisurf.data.DataCurve(
                 setup=self
             )
 
@@ -200,7 +201,7 @@ class Correlator(
         cor = np.array(cors)
         w = np.array(weights)
 
-        data_curve = chisurf.experiments.data.DataCurve(
+        data_curve = chisurf.data.DataCurve(
             x=np.array(taus).mean(axis=0)[1:],
             y=cor.mean(axis=0)[1:],
             ey=1. / w.mean(axis=0)[1:]
@@ -236,7 +237,7 @@ class Correlator(
 
 class CorrelatorWidget(QtWidgets.QWidget):
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="correlatorWidget.ui"
     )
     def __init__(
@@ -281,7 +282,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
     @property
     def data(
             self
-    ) -> chisurf.experiments.data.DataCurve:
+    ) -> chisurf.data.DataCurve:
         return self.correlator_thread.data
 
     @property
@@ -391,7 +392,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
 
 class CrFilterWidget(QtWidgets.QWidget):
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename='cr_filter.ui'
     )
     def __init__(
@@ -531,7 +532,7 @@ class CorrelateTTTR(
         self.cs.update()
         self.plot_curves()
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="tttr_correlate.ui"
     )
     def __init__(self):

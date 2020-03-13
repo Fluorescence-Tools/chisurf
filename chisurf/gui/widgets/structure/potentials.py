@@ -5,6 +5,7 @@ import os
 import numpy as np
 from qtpy import QtWidgets, uic
 
+import chisurf.gui.decorators
 import chisurf.gui.widgets
 import chisurf.decorators
 import chisurf.structure
@@ -116,7 +117,7 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
 
 class GoPotentialWidget(GoPotential, QtWidgets.QWidget):
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="Potential-CaLJ.ui"
     )
     def __init__(

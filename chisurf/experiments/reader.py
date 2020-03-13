@@ -4,16 +4,19 @@
 from __future__ import annotations
 
 import abc
-import typing
+from chisurf import typing
 
 import chisurf.base
 import chisurf.curve
+import chisurf.data
 import chisurf.experiments
 
 
 class ExperimentReader(
     chisurf.base.Base
 ):
+
+    controller: ExperimentReaderController = None
 
     def __init__(
             self,
@@ -58,18 +61,18 @@ class ExperimentReader(
     def get_data(
             self,
             **kwargs
-    ) -> chisurf.experiments.data.ExperimentDataGroup:
+    ) -> chisurf.data.ExperimentDataGroup:
         data = self.read(
             **kwargs
         )
         if isinstance(
                 data,
-                chisurf.experiments.data.ExperimentalData
+                chisurf.data.ExperimentalData
         ):
-            data = chisurf.experiments.data.ExperimentDataGroup([data])
+            data = chisurf.data.ExperimentDataGroup([data])
         if isinstance(
                 data,
-                chisurf.experiments.data.ExperimentDataGroup
+                chisurf.data.ExperimentDataGroup
         ):
             for d in data:
                 d.experiment = self.experiment
@@ -80,6 +83,7 @@ class ExperimentReader(
 class ExperimentReaderController(
     chisurf.base.Base
 ):
+    experiment_reader: ExperimentReader = None
 
     def __init__(
             self,
@@ -98,33 +102,6 @@ class ExperimentReaderController(
                 ExperimentReader
         ):
             experiment_reader.controller = self
-
-    def add_call(
-            self,
-            call_name: str,
-            call_function: typing.Callable,
-            call_parameters: typing.Dict
-    ):
-        self._call_dict[call_name] = {
-            'call_function': call_function,
-            'call_parameters': call_parameters
-        }
-
-    def remove_call(
-            self,
-            call_name: str
-    ):
-        self._call_dict.pop(
-            call_name
-        )
-
-    def call(
-            self,
-            call_name: str
-    ) -> None:
-        call_function = self._call_dict[call_name]['call_function']
-        call_parameters = self._call_dict[call_name]['call_parameters']
-        call_function(**call_parameters)
 
     def __getattr__(
             self,

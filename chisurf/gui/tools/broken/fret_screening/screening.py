@@ -9,6 +9,7 @@ import numpy as np
 
 import chisurf
 import chisurf.decorators
+import chisurf.gui.decorators
 import chisurf.structure.cluster
 import chisurf.plots
 import chisurf.fio
@@ -24,7 +25,7 @@ class FPSScreenTrajectory(QtWidgets.QWidget):
     name = "Screening"
     modelID = 0
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="filterStructures.ui"
     )
     def __init__(

@@ -3,7 +3,7 @@
 """
 from __future__ import annotations
 
-import typing
+from chisurf import typing
 import os.path
 import numpy as np
 
@@ -468,3 +468,59 @@ class ExperimentDataCurveGroup(
         super().__init__(
             *args, **kwargs
         )
+
+
+def get_data(
+        curve_type: str = 'experiment',
+        data_set: typing.List[
+            chisurf.data.ExperimentalData
+        ] = None,
+        excludes_names: typing.List[str] = None
+) -> typing.List[
+    chisurf.data.ExperimentalData
+]:
+    """Returns all curves `chisurf.curve.DataCurve` except curve that are
+    excluded by their name
+
+    Parameters
+    ----------
+    curve_type : str
+        if this value is set to `experiment` only curves
+        that are experimental curves, i.e., curves that inherit from
+        `experiments.data.ExperimentalData` are returned.
+    data_set : list
+        A list containing the
+    excludes_names : list
+        A list containing names that should be excluded (default:
+        ["Global-fit"]).
+
+    Returns
+    -------
+    list
+        A list containing curves. If `curve_type` is 'experiment' only
+        curves that inherit from `experiments.data.ExperimentalData` or
+        groups inheriting from ExperimentDataGroup are returned.
+
+    Examples
+    --------
+
+
+    """
+    if excludes_names is None:
+        excludes_names = ["Global-fit"]
+    if curve_type == 'experiment':
+        return [
+            d for d in data_set if (
+                    (
+                            isinstance(d, ExperimentalData) or
+                            isinstance(d, ExperimentDataGroup)
+                    ) and
+                    d.name not in excludes_names
+            )
+        ]
+    else: #elif curve_type == 'all':
+        return [
+            d for d in data_set if
+            isinstance(d, ExperimentalData) or
+            isinstance(d, ExperimentDataGroup)
+        ]

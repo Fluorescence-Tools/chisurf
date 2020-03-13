@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import inspect
-import typing
+from chisurf import typing
 
 from qtpy import QtWidgets
 

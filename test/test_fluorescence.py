@@ -1,12 +1,13 @@
-import os
 import unittest
 import numpy as np
 import glob
+import scipy.stats
 
 import chisurf.fio
 import chisurf.fluorescence
 import chisurf.fluorescence.fret
 import chisurf.fluorescence.fcs
+import chisurf.fluorescence.tcspc
 import chisurf.fluorescence.general
 import chisurf.fluorescence.anisotropy
 
@@ -225,6 +226,42 @@ class Tests(unittest.TestCase):
                           [-0.19397553, 1.42328685, 2.94651679, 3.57788423, 3.74922322,
                            3.78989942, 3.79923872, 3.80136643, 3.80185031, 3.80196031]]),
                 filters
+            ),
+            True
+        )
+
+    def convolve_lifetime_spectrum(self):
+        reference_decay = np.array(
+            [0.00000000e+00, 4.52643742e-06, 4.30136935e-05, 3.02142457e-04,
+             1.65108038e-03, 7.06796476e-03, 2.38186826e-02, 6.35639959e-02,
+             1.35361393e-01, 2.32352532e-01, 3.25883836e-01, 3.80450045e-01,
+             3.79182520e-01, 3.33586262e-01, 2.69710789e-01, 2.08975297e-01,
+             1.60624297e-01, 1.25068007e-01, 9.94465318e-02, 8.07767559e-02,
+             6.68428191e-02, 5.61578412e-02, 4.77471111e-02, 4.09691949e-02,
+             3.53963836e-02, 3.07383493e-02, 2.67937209e-02, 2.34193202e-02,
+             2.05105461e-02, 1.79888012e-02, 1.57933761e-02, 1.38761613e-02,
+             1.21981607e-02, 1.07271560e-02, 9.43611289e-03, 8.30206791e-03,
+             7.30533192e-03, 6.42890327e-03, 5.65802363e-03, 4.97983239e-03,
+             4.38309103e-03, 3.85795841e-03, 3.39580432e-03, 2.98905244e-03,
+             2.63104654e-03, 2.31593553e-03, 2.03857411e-03, 1.79443629e-03,
+             1.57954010e-03, 1.39038167e-03]
+        )
+        time_axis = np.linspace(0, 25, 50)
+        irf_position = 5.0
+        irf_width = 1.0
+        irf = scipy.stats.norm.pdf(time_axis, loc=irf_position, scale=irf_width)
+        lifetime_spectrum = np.array([0.8, 1.1, 0.2, 4.0])
+        model_decay = np.zeros_like(time_axis)
+        chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(
+            model_decay,
+            lifetime_spectrum=lifetime_spectrum,
+            instrument_response_function=irf,
+            time_axis=time_axis
+        )
+        self.assertEqual(
+            np.allclose(
+                model_decay,
+                reference_decay
             ),
             True
         )

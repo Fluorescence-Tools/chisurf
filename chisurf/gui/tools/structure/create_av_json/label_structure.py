@@ -10,6 +10,7 @@ import traceback
 from qtpy import QtWidgets, QtCore
 
 import chisurf.fio
+import chisurf.gui.decorators
 import chisurf.gui.widgets
 import chisurf.gui.widgets.pdb
 import chisurf.gui.widgets.fluorescence.av
@@ -24,7 +25,7 @@ class LabelStructure(
 
     name = "LabelStructure"
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="fps_json_edit.ui"
     )
     def __init__(

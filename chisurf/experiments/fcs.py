@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import chisurf.fio.ascii
 import chisurf.fluorescence.fcs
-import chisurf.experiments.data
+import chisurf.data
 import chisurf.fio.fluorescence
 from . import reader
 
@@ -10,6 +10,10 @@ from . import reader
 class FCS(
     reader.ExperimentReader
 ):
+
+    name: str = "FCS"
+    skiprows: int = 0
+    use_header: bool = False
 
     def __init__(
             self,
@@ -34,7 +38,7 @@ class FCS(
             filename: str = None,
             verbose: bool = None,
             **kwargs
-    ) -> chisurf.experiments.data.ExperimentDataCurveGroup:
+    ) -> chisurf.data.ExperimentDataCurveGroup:
         r = chisurf.fio.fluorescence.read_fcs(
             filename=filename,
             data_reader=self,

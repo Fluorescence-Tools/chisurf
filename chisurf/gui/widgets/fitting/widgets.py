@@ -9,6 +9,7 @@ from qtpy import QtWidgets, uic, QtCore, QtGui
 
 import chisurf.fitting
 import chisurf.decorators
+import chisurf.gui.decorators
 import chisurf.settings
 import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
@@ -328,16 +329,13 @@ class FittingParameterWidget(
     def __str__(self):
         return ""
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="variable_widget.ui"
     )
     def __init__(
             self,
-            fitting_parameter: chisurf.fitting.parameter.FittingParameter = None,
+            fitting_parameter: chisurf.fitting.parameter.FittingParameter,
             layout: QtWidgets.QLayout = None,
-            value: float = None,
-            ub: float = float("inf"),
-            lb: float = float("-inf"),
             decimals: int = None,
             hide_label: bool = None,
             hide_error: bool = None,
@@ -365,12 +363,8 @@ class FittingParameterWidget(
         if decimals is None:
             decimals = parameter_settings['decimals']
 
-        if fitting_parameter is None:
-            fitting_parameter = chisurf.fitting.parameter.FittingParameter()
+        self.name = fitting_parameter.name
         self.fitting_parameter = fitting_parameter
-        self.fitting_parameter.bounds = lb, ub
-        self.fitting_parameter.value = value
-        self.fitting_parameter.name = name
 
         self.widget_value = pg.SpinBox(
             dec=True,
@@ -399,17 +393,17 @@ class FittingParameterWidget(
         self.widget_link.setDisabled(hide_link)
 
         # Display of values
-        self.widget_value.setValue(float(self.fitting_parameter.value))
+        self.widget_value.setValue(float(fitting_parameter.value))
         self.label.setText(label_text.ljust(5))
 
         # variable bounds
-        if not self.fitting_parameter.bounds_on:
+        if not fitting_parameter.bounds_on:
             self.widget_bounds_on.setCheckState(QtCore.Qt.Unchecked)
         else:
             self.widget_bounds_on.setCheckState(QtCore.Qt.Checked)
 
         # variable fixed
-        if self.fitting_parameter.fixed:
+        if fitting_parameter.fixed:
             self.widget_fix.setCheckState(QtCore.Qt.Checked)
         else:
             self.widget_fix.setCheckState(QtCore.Qt.Unchecked)
@@ -419,25 +413,25 @@ class FittingParameterWidget(
         self.widget_value.editingFinished.connect(lambda: chisurf.run(
             "cs.current_fit.model.parameters_all_dict['%s'].value = %s\n"
             "cs.current_fit.update()" %
-            (self.fitting_parameter.name, self.widget_value.value()))
+            (fitting_parameter.name, self.widget_value.value()))
         )
 
         self.widget_fix.toggled.connect(lambda: chisurf.run(
             "cs.current_fit.model.parameters_all_dict['%s'].fixed = %s" %
-            (self.fitting_parameter.name, self.widget_fix.isChecked()))
+            (fitting_parameter.name, self.widget_fix.isChecked()))
         )
 
         # Variable is bounded
         self.widget_bounds_on.toggled.connect(lambda: chisurf.run(
             "cs.current_fit.model.parameters_all_dict['%s'].bounds_on = %s" %
-            (self.fitting_parameter.name, self.widget_bounds_on.isChecked()))
+            (fitting_parameter.name, self.widget_bounds_on.isChecked()))
         )
 
         self.widget_lower_bound.editingFinished.connect(
             lambda: chisurf.run(
                 "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
                 (
-                    self.fitting_parameter.name,
+                    fitting_parameter.name,
                     self.widget_lower_bound.value(),
                     self.widget_upper_bound.value()
                 )
@@ -448,7 +442,7 @@ class FittingParameterWidget(
             lambda: chisurf.run(
                 "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
                 (
-                    self.fitting_parameter.name,
+                    fitting_parameter.name,
                     self.widget_lower_bound.value(),
                     self.widget_upper_bound.value()
                 )
@@ -494,7 +488,11 @@ class FittingParameterWidget(
             self.widget_fix.setCheckState(QtCore.Qt.Unchecked)
 
         # Tooltip
-        s = "bound: (%s,%s)\n" % self.fitting_parameter.bounds if self.fitting_parameter.bounds_on else "bounds: off\n"
+        if self.fitting_parameter.bounds_on:
+            lower, upper = self.fitting_parameter.bounds
+            s = "bound: (%s,%s)\n" % (lower, upper)
+        else:
+            s = "bounds: off\n"
         if self.fitting_parameter.is_linked:
             s += "linked to: %s" % self.fitting_parameter.link.name
         self.widget_value.setToolTip(s)

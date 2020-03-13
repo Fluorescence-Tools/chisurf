@@ -95,7 +95,7 @@ class Tests(unittest.TestCase):
             data_reader
         )
         a = np.arange(100)
-        experimental_data = chisurf.experiments.data.ExperimentalData(
+        experimental_data = chisurf.data.ExperimentalData(
             experiment=experiment,
             data_reader=data_reader,
             embed_data=True,
@@ -134,25 +134,6 @@ class Tests(unittest.TestCase):
             filename
         )
         # TODO: test to_dict and to_json
-
-    def test_ExperimentReaderController(self):
-        experiment = chisurf.experiments.experiment.Experiment(
-            name="TestExperiment"
-        )
-        experiment_reader = chisurf.experiments.reader.ExperimentReader(
-            experiment=experiment
-        )
-        ec = chisurf.experiments.reader.ExperimentReaderController(
-            experiment_reader=experiment_reader
-        )
-        ec.add_call(
-            'read',
-            experiment_reader.read,  # this calls chisurf.base.load
-            {
-                'filename': None
-            }
-        )
-        ec.call('read')
 
     def test_TCSPCReader(self):
         filename = "./test/data/tcspc/ibh_sample/Decay_577D.txt"
@@ -259,7 +240,7 @@ x	y	error-x	error-y
             data=data,
             filename=filename
         )
-        d = chisurf.experiments.data.DataCurve(*data)
+        d = chisurf.data.DataCurve(*data)
         d_copy = copy.copy(d)
         self.assertEqual(
             np.allclose(
@@ -297,7 +278,7 @@ x	y	error-x	error-y
             filename
         )
 
-        d2 = chisurf.experiments.data.DataCurve()
+        d2 = chisurf.data.DataCurve()
         d2.load(
             filename=filename,
             skiprows=0
@@ -310,7 +291,7 @@ x	y	error-x	error-y
             True
         )
 
-        d3 = chisurf.experiments.data.DataCurve()
+        d3 = chisurf.data.DataCurve()
         d3.set_data(*d2.data)
         self.assertEqual(
             np.allclose(
@@ -320,7 +301,7 @@ x	y	error-x	error-y
             True
         )
 
-        d4 = chisurf.experiments.data.DataCurve()
+        d4 = chisurf.data.DataCurve()
         d4.data = d3.data
         self.assertEqual(
             np.allclose(

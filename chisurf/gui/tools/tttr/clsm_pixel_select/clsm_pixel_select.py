@@ -5,7 +5,7 @@ to select pixels, and create and export fluorescence decay histograms. Exported
 decay histograms can be directly used in ChiSurf.
 """
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import sys
 import os
@@ -44,7 +44,7 @@ class CLSMPixelSelect(
     chisurf.curve.CurveGroup
 ):
 
-    name: str = "pixel-decay"
+    name: str = "pixel-model_decay"
     tttr_data: tttrlib.TTTR = None
     clsm_images: typing.Dict[str, tttrlib.CLSMImage] = dict()
     brush_kernel: np.ndarray = None
@@ -488,9 +488,11 @@ class CLSMPixelSelect(
                 y = y[:i_y_max]
                 t = t[:i_y_max]
             experiment = chisurf.experiment.get('TCSPC', None)
-            self.current_decay = chisurf.experiments.data.DataCurve(
+            self.current_decay = chisurf.data.DataCurve(
                 x=t, y=y,
-                ey=1./chisurf.fluorescence.tcspc.weights(y),
+                ey=chisurf.fluorescence.tcspc.counting_noise(
+                    decay=y
+                ),
                 copy_array=False,
                 experiment=experiment
             )

@@ -5,9 +5,10 @@ from qtpy import QtWidgets
 import pathlib
 
 import chisurf.decorators
+import chisurf.gui.decorators
 import chisurf.gui.widgets
 from chisurf.experiments import reader
-import chisurf.experiments.data
+import chisurf.data
 import chisurf.gui.widgets.fio
 import chisurf.gui.widgets.experiments.widgets
 
@@ -16,7 +17,7 @@ class CsvTCSPCWidget(
     QtWidgets.QWidget,
 ):
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="csvTCSPCWidget.ui"
     )
     def __init__(
@@ -117,7 +118,9 @@ class TCSPCSetupDummyWidget(
     QtWidgets.QWidget
 ):
 
-    @chisurf.decorators.init_with_ui(ui_filename="tcspcDummy.ui")
+    @chisurf.gui.decorators.init_with_ui(
+        ui_filename="tcspcDummy.ui"
+    )
     def __init__(
             self,
             *args,

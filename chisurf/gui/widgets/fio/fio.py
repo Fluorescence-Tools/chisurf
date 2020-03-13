@@ -5,6 +5,7 @@ from qtpy import QtWidgets
 
 import chisurf.decorators
 import chisurf.base
+import chisurf.gui.decorators
 import chisurf.structure
 import chisurf.gui.widgets
 
@@ -16,7 +17,7 @@ class SpcFileWidget(
     QtWidgets.QWidget
 ):
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="spcSampleSelectWidget.ui"
     )
     def __init__(
@@ -178,7 +179,9 @@ class CsvWidget(
     QtWidgets.QWidget
 ):
 
-    @chisurf.decorators.init_with_ui(ui_filename="csvInput.ui")
+    @chisurf.gui.decorators.init_with_ui(
+        ui_filename="csvInput.ui"
+    )
     def __init__(
             self,
             *args,

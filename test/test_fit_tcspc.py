@@ -29,11 +29,11 @@ class FitTests(unittest.TestCase):
             filename='./test/data/tcspc/ibh_sample/Prompt.txt'
         )
 
-        # decay of the donor in the absence of FRET
+        # model_decay of the donor in the absence of FRET
         decay_dd_d0 = tcspc_reader.read(
             filename='./test/data/tcspc/ibh_sample/Decay_577D.txt'
         )
-        # decay of the donor in the presence of FRET
+        # model_decay of the donor in the presence of FRET
         decay_dd_da = tcspc_reader.read(
             filename='./test/data/tcspc/ibh_sample/Decay_577D+577A+GTPgS.txt'
         )

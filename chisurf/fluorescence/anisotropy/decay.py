@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import numpy as np
 import numba as nb

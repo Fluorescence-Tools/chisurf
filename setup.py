@@ -130,7 +130,8 @@ setup(
         'qtconsole',
         'ipython',
         'python-docx',
-        'mdtraj'
+        'mdtraj',
+        'typing-extensions'
     ],
     setup_requires=[
         "cython",

@@ -6,6 +6,7 @@ import tables
 from qtpy import QtWidgets
 
 import chisurf.decorators
+import chisurf.gui.decorators
 import chisurf.gui.widgets
 
 
@@ -52,7 +53,7 @@ class JoinTrajectoriesWidget(
         else:
             return 'atoms'
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="join_traj.ui"
     )
     def __init__(

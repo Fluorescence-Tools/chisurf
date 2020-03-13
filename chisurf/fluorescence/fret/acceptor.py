@@ -45,7 +45,7 @@ def da_a0_to_ad(
 
     dt = times[1] - times[0]
     decay_ad = chisurf.fluorescence.tcspc.convolve.convolve_decay(
-        decay=a0,
+        decay_curve=a0,
         irf=decay_da,
         start=0,
         stop=decay_da.shape[0],

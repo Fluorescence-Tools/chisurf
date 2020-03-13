@@ -6,6 +6,7 @@ from mdtraj.scripts import mdconvert as mdconvert
 from qtpy import QtWidgets
 
 import chisurf.decorators
+import chisurf.gui.decorators
 import chisurf.gui.widgets
 
 
@@ -13,7 +14,7 @@ class MDConverter(QtWidgets.QWidget):
 
     name = "MC-Converter"
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="convert_structures.ui"
     )
     def __init__(

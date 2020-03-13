@@ -128,7 +128,7 @@ class Generic(FittingParameterGroup):
 
     def __init__(
             self,
-            background_curve: chisurf.experiments.data.DataCurve = None,
+            background_curve: chisurf.data.DataCurve = None,
             name: str = 'Nuisance',
             **kwargs
     ):
@@ -487,7 +487,10 @@ class Convolve(FittingParameterGroup):
             x = np.copy(self.data.x)
             y = np.zeros_like(self.data.y)
             y[0] = 1.0
-            curve = chisurf.curve.Curve(x=x, y=y)
+            curve = chisurf.curve.Curve(
+                x=x,
+                y=y
+            )
             return curve
 
     @property
@@ -526,7 +529,7 @@ class Convolve(FittingParameterGroup):
     @property
     def data(
             self
-    ) -> chisurf.experiments.data.DataCurve:
+    ) -> chisurf.data.DataCurve:
         if self._data is None:
             try:
                 return self.fit.data
@@ -538,19 +541,19 @@ class Convolve(FittingParameterGroup):
     @data.setter
     def data(
             self,
-            v: chisurf.experiments.data.DataCurve
+            v: chisurf.data.DataCurve
     ):
         self._data = v
 
     def scale(
             self,
-            decay: chisurf.experiments.data.DataCurve,
+            decay: chisurf.data.DataCurve,
             start: int = None,
             stop: int = None,
             bg: float = 0.0,
-            data: np.array = None,
+            data: np.ndarray = None,
             autoscale: bool = None
-    ) -> np.array:
+    ) -> np.ndarray:
         if start is None:
             start = min(0, self.start)
         if stop is None:
@@ -562,7 +565,14 @@ class Convolve(FittingParameterGroup):
 
         if autoscale:
             weights = 1.0 / data.ey
-            self.n0 = chisurf.fluorescence.tcspc.rescale_w_bg(decay, data.y, weights, bg, start, stop)
+            self.n0 = chisurf.fluorescence.tcspc.rescale_w_bg(
+                model_decay=decay,
+                experimental_decay=data.y,
+                experimental_weights=weights,
+                experimental_background=bg,
+                start=start,
+                stop=stop
+            )
         else:
             decay *= self.n0
 
@@ -570,8 +580,8 @@ class Convolve(FittingParameterGroup):
 
     def convolve(
             self,
-            data: chisurf.experiments.data.DataCurve,
-            verbose: bool = None,
+            data: chisurf.data.DataCurve,
+            verbose: bool = False,
             mode: str = None,
             dt: float = None,
             rep_rate: float = None,
@@ -613,15 +623,16 @@ class Convolve(FittingParameterGroup):
             )
             # TODO: in future non linear time-axis (better suited for exponentially decaying data)
             # time = fit.data._x
-            # chisurf.fluorescence.tcspc.fconv_per_dt(decay, lifetime_spectrum, irf_y, start, stop, n_points, period, time)
+            # chisurf.fluorescence.tcspc.fconv_per_dt(model_decay, lifetime_spectrum, irf_y, start, stop, n_points, period,
+            # time)
         elif mode == "exp":
             t = self.data.x
             chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(
-                decay,
-                data,
-                irf_y,
-                stop,
-                t
+                output_decay=decay,
+                lifetime_spectrum=data,
+                instrument_response_function=irf_y,
+                convolution_stop=stop,
+                time_axis=t
             )
         elif mode == "full":
             decay = np.convolve(
@@ -629,7 +640,6 @@ class Convolve(FittingParameterGroup):
                 irf_y,
                 mode="full"
             )[:n_points]
-
         if verbose:
             print("------------")
             print("Convolution:")
@@ -712,5 +722,4 @@ class Convolve(FittingParameterGroup):
         self.__irf = irf
         if self.__irf is not None:
             self._irf = self.__irf
-
 

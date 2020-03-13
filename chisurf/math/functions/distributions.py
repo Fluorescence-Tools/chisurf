@@ -1,5 +1,5 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import math
 import numpy as np
@@ -93,8 +93,14 @@ def generalized_normal_distribution(
 
 
 @nb.jit(nopython=True, nogil=True)
-def linear_dist(x, px, py, normalize=True):
-    """ Creates a distribution for a number of points and linearly interpolates between the points.
+def linear_dist(
+        x: np.ndarray,
+        px: np.ndarray,
+        py: np.ndarray,
+        normalize: bool = True
+):
+    """ Creates a distribution for a number of points and linearly interpolates
+    between the points.
 
     :param x: linear x-axis
     :param px: x-coordinates of points

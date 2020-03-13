@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import os
-import typing
+from chisurf import typing
 
 import yaml
 from qtpy import QtWidgets, QtCore
@@ -12,6 +12,7 @@ from qtpy import QtWidgets, QtCore
 import chisurf.decorators
 import chisurf.fio
 import chisurf.fitting
+import chisurf.gui.decorators
 import chisurf.models
 import chisurf.settings
 import chisurf.gui.widgets
@@ -23,7 +24,7 @@ class ParseFormulaWidget(
     QtWidgets.QWidget
 ):
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="parseWidget.ui"
     )
     def __init__(

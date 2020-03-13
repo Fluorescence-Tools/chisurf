@@ -7,6 +7,7 @@ from qtpy import QtCore, QtWidgets
 
 import chisurf.fitting
 import chisurf.gui.widgets
+import chisurf.gui.decorators
 
 from chisurf import plots
 from .globalfit import GlobalFitModel
@@ -23,7 +24,7 @@ class GlobalFitModelWidget(
                     (plots.ResidualPlot, {})
     ]
 
-    @chisurf.decorators.init_with_ui(ui_filename="globalfit_2.ui")
+    @chisurf.gui.decorators.init_with_ui(ui_filename="globalfit_2.ui")
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit

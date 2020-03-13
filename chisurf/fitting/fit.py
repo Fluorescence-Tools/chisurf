@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import os
 import numpy as np
@@ -14,7 +14,7 @@ import chisurf.base
 import chisurf.fio
 import chisurf.curve
 import chisurf.experiments
-import chisurf.experiments.data
+import chisurf.data
 import chisurf.fitting.parameter
 import chisurf.fitting.sample
 import chisurf.fitting.support_plane
@@ -30,7 +30,7 @@ class Fit(
     def __init__(
             self,
             model_class: typing.Type[chisurf.models.Model] = type,
-            data: chisurf.experiments.data.DataCurve = None,
+            data: chisurf.data.DataCurve = None,
             xmin: int = 0,
             xmax: int = 0,
             model_kw: typing.Dict = None,
@@ -47,7 +47,7 @@ class Fit(
         self._model = None
         self.results = None
         if data is None:
-            data = chisurf.experiments.data.DataCurve(
+            data = chisurf.data.DataCurve(
                 x=np.arange(10),
                 y=np.arange(10)
             )
@@ -104,13 +104,13 @@ class Fit(
     @property
     def data(
             self
-    ) -> chisurf.experiments.data.DataCurve:
+    ) -> chisurf.data.DataCurve:
         return self._data
 
     @data.setter
     def data(
             self,
-            v: chisurf.experiments.data.DataCurve
+            v: chisurf.data.DataCurve
     ):
         self._data = v
 
@@ -403,7 +403,7 @@ class FitGroup(
     @property
     def data(
             self
-    ) -> chisurf.experiments.data.DataCurve:
+    ) -> chisurf.data.DataCurve:
         return self.selected_fit.data
 
     @data.setter
@@ -567,7 +567,7 @@ class FitGroup(
 
     def __init__(
             self,
-            data: chisurf.experiments.data.DataGroup,
+            data: chisurf.data.DataGroup,
             model_class: typing.Type[chisurf.models.Model] = type,
             model_kw: typing.Dict = None
     ):

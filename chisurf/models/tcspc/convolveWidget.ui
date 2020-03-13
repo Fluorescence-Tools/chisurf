@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>279</width>
-    <height>74</height>
+    <width>321</width>
+    <height>75</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -132,6 +132,22 @@
              </property>
              <property name="text">
               <string>periodic</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="checkBox">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string/>
              </property>
              <property name="checked">
               <bool>true</bool>
