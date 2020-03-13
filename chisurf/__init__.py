@@ -4,10 +4,14 @@ import sys
 import logging
 import pathlib
 
-if sys.version_info >= (3, 8):
-    import typing
-else:
-    import typing_extensions as typing
+try:
+    if sys.version_info >= (3, 8):
+        import typing
+    else:
+        import typing_extensions as typing
+except ModuleNotFoundError:
+    print("WARNING typing_extensions not found")
+    typing = None
 
 import chisurf.settings
 
