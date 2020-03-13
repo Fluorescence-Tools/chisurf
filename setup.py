@@ -9,7 +9,11 @@ try:
     from Cython.Distutils import build_ext
 except ImportError:
     build_ext = None
-    print("WARNING: could not import cython. Will not build cython extenstions.")
+    print(
+        "WARNING: could not import cython. "
+        "Will not build cython extenstions.",
+        file=sys.stderr
+    )
 
 
 import chisurf
