@@ -1,5 +1,5 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import sys
 
@@ -8,6 +8,7 @@ from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
 
 import chisurf.decorators
+import chisurf.gui.decorators
 import chisurf.models.tcspc
 import chisurf.models.tcspc.widgets
 from chisurf.fluorescence.fret.fret_line import FRETLineGenerator
@@ -70,7 +71,7 @@ class FRETLineGeneratorWidget(
     def parameter_range(self) -> typing.Tuple[float, float]:
         return float(self.doubleSpinBox.value()), float(self.doubleSpinBox_2.value())
 
-    @chisurf.decorators.init_with_ui(ui_filename="fret_line.ui")
+    @chisurf.gui.decorators.init_with_ui(ui_filename="fret_line.ui")
     def __init__(
             self,
             verbose: bool = chisurf.verbose,

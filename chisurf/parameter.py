@@ -1,5 +1,5 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import numpy as np
 import chinet
@@ -66,10 +66,7 @@ class Parameter(
 
         :return:
         """
-        if self._callable:
-            return self._callable()
-        else:
-            return self._port.value.item(0)
+        return self._port.value.item(0)
 
     @value.setter
     def value(
@@ -217,26 +214,26 @@ class Parameter(
             value=self.value.__round__()
         )
 
-    def to_dict(self) -> typing.Dict:
-        d = super().to_dict()
-        if self.link is not None:
-            d['_link'] = self.link.unique_identifier
-        return d
-
-    def from_dict(
-            self,
-            v: dict
-    ) -> None:
-        if v['_link'] is not None:
-            unique_identifier = v['_link']
-            for o in self.get_instances():
-                if unique_identifier == o.unique_identifier:
-                    v['_link'] = o
-            super().from_dict(v)
-            if isinstance(v['_link'], str):
-                raise ValueError(
-                    "The linked parameter %s is not instantiated." % unique_identifier
-                )
+    # def to_dict(self) -> typing.Dict:
+    #     d = super().to_dict()
+    #     if self.link is not None:
+    #         d['_link'] = self.link.unique_identifier
+    #     return d
+    #
+    # def from_dict(
+    #         self,
+    #         v: dict
+    # ) -> None:
+    #     if v['_link'] is not None:
+    #         unique_identifier = v['_link']
+    #         for o in self.get_instances():
+    #             if unique_identifier == o.unique_identifier:
+    #                 v['_link'] = o
+    #         super().from_dict(v)
+    #         if isinstance(v['_link'], str):
+    #             raise ValueError(
+    #                 "The linked parameter %s is not instantiated." % unique_identifier
+    #             )
 
     def __init__(
             self,
@@ -290,9 +287,6 @@ class Parameter(
 class ParameterGroup(
     chisurf.base.Base
 ):
-    """
-
-    """
 
     def __init__(
             self,
@@ -335,7 +329,7 @@ class ParameterGroup(
             self,
             key: str
     ):
-        v = self.__dict__[key]
+        v = super().__getattr__(key=key)
         if isinstance(v, chisurf.parameter.Parameter):
             return v.value
         return v

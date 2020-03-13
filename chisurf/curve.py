@@ -1,5 +1,5 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 import abc
 
 import numpy as np
@@ -45,8 +45,8 @@ class Curve(
             filename: str,
             file_type: str = 'yaml',
             verbose: bool = False,
-            xmin: int = None,
-            xmax: int = None
+            x_min: int = None,
+            x_max: int = None
     ) -> None:
         super().save(
             filename=filename,
@@ -55,7 +55,7 @@ class Curve(
         )
         if file_type == "csv":
             csv = chisurf.fio.ascii.Csv()
-            x, y = self[xmin:xmax]
+            x, y = self[x_min:x_max]
             csv.save(
                 data=np.vstack([x, y]),
                 filename=filename
@@ -213,7 +213,8 @@ class Curve(
             y=chisurf.math.signal.shift_array(
                 self.y,
                 shift
-            )
+            ),
+            copy_array=False
         )
 
     def __len__(

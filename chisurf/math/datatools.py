@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from itertools import tee
-import typing
+from chisurf import typing
 
 import copy
 from math import floor
@@ -15,8 +15,7 @@ def histogram_rebin(
         counts: np.ndarray,
         new_bin_edges: np.ndarray
 ):
-    """
-    Interpolates a histogram to a new x-axis. Here the parameter x can be any
+    """Interpolates a histogram to a new x-axis. Here the parameter x can be any
     numpy array as return value another array is obtained containing the values
     of the histogram at the given x-values. This function may be useful if the spacing
     of a histogram has to be changed.

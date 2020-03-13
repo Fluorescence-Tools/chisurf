@@ -1,5 +1,5 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import numba as nb
 import numpy as np
@@ -224,7 +224,7 @@ def calc_transfer_matrix(
         **kwargs
 ):
     """
-    Calculates a matrix converting a distance distribution to an E(t)-decay
+    Calculates a matrix converting a distance distribution to an E(t)-model_decay
 
     :param times:
     :param rDA_min:
@@ -283,7 +283,7 @@ def calc_decay_matrix(
         space: str = 'lin'
 ):
     """
-    Calculates a fluorescence decay matrix converting probabilities of lifetimes to a time-resolved
+    Calculates a fluorescence model_decay matrix converting probabilities of lifetimes to a time-resolved
     fluorescence intensity
 
     :param t:
@@ -298,7 +298,7 @@ def calc_decay_matrix(
     >>> times = np.arange(0, 20, 0.0141)
     >>> m, r_da = calc_decay_matrix(times)
 
-    Now plot the decay matrix
+    Now plot the model_decay matrix
 
     >>> import pylab as p
     >>> p.imshow(m)
@@ -323,7 +323,7 @@ def et2pRDA(
         r_DA=None,
         **kwargs
 ):
-    """Calculates the distance distribution given an E(t) decay
+    """Calculates the distance distribution given an E(t) model_decay
     Here the amplitudes of E(t) are passed as well as the time-axis. If no transfer-matrix is provided it will
     be calculated in a range from 5 Ang to 200 Ang assuming a lifetime of 4 ns with a Forster-radius of 52 Ang.
     These parameters can be provided by *kwargs*
@@ -338,7 +338,7 @@ def et2pRDA(
     Examples
     --------
 
-    First calculate an E(t)-decay
+    First calculate an E(t)-model_decay
 
     >>> rda_mean = [45.1, 65.0]
     >>> rda_sigma = [8.0, 8.0]
@@ -594,7 +594,7 @@ def calculate_fluorescence_decay(
         time_axis: np.ndarray,
         normalize: bool = True
 ) -> typing.Tuple[np.ndarray, np.ndarray]:
-    """Converts a interleaved lifetime spectrum into a intensity decay
+    """Converts a interleaved lifetime spectrum into a intensity model_decay
 
     :param lifetime_spectrum: interleaved lifetime spectrum
     :param time_axis: time-axis
@@ -611,7 +611,7 @@ def calculate_fluorescence_decay(
     >>> acceptor_description = {'residue_seq_number': 496, 'atom_name': 'CB'}
     >>> donor_lifetime_spectrum = np.array([1., 4.])
     >>> lifetime_spectrum = structure.av_lifetime_spectrum(donor_lifetime_spectrum, donor_description, acceptor_description)
-    >>> time_axis, decay = calculate_fluorescence_decay(lifetime_spectrum, time_axis)
+    >>> time_axis, model_decay = calculate_fluorescence_decay(lifetime_spectrum, time_axis)
     """
     decay = np.zeros_like(time_axis)
     am = lifetime_spectrum[0::2]

@@ -1,4 +1,4 @@
-import typing
+from chisurf import typing
 
 import numpy as np
 
@@ -129,7 +129,7 @@ class FRETLineGenerator(object):
                 num=n_points
             )
         y = np.zeros_like(x)
-        self.fit.data = chisurf.experiments.data.DataCurve(
+        self.fit.data = chisurf.data.DataCurve(
             x=x, y=y
         )
         if model is not None:

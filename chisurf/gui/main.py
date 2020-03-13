@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import pathlib
 import webbrowser
+from chisurf import typing
 
 import numpy as np
 from qtpy import QtWidgets, QtGui, QtCore, uic
@@ -10,8 +11,8 @@ from qtpy import QtWidgets, QtGui, QtCore, uic
 import chisurf
 import chisurf.decorators
 import chisurf.base
+import chisurf.fio
 import chisurf.experiments
-import chisurf.experiments.tcspc
 import chisurf.macros
 import chisurf.gui.tools
 import chisurf.gui.widgets
@@ -22,8 +23,40 @@ import chisurf.gui.resources
 
 
 class Main(QtWidgets.QMainWindow):
+    """
+
+    Attributes
+    ----------
+    current_dataset : chisurf.base.Data
+        The dataset that is currently selected in the ChiSurf GUI. This
+        dataset corresponds to the analysis window selected by the user in
+        the UI.
+    current_model_class : chisurf.model.Model
+        The model used in the analysis (fit) of the currently selected analysis
+        windows.
+    fit_idx : int
+        The index of the currently selected fit in the fit list chisurf.fits
+        The current fit index corresponds to the currently selected fit window
+        in the list of all fits of the fit.
+    current_experiment_idx : int
+        The index of the experiment type currently selected in the UI out of
+        the list all supported experiments. This corresponds to the index of
+        the UI combo box used to select the experiment.
+    current_experiment : chisurf.experiments.Experiment
+        The experiment currently selected in the GUI.
+    current_setup_idx : int
+        The index of the setup currently selected in the GUI.
+    current_setup_name : str
+        The name of the setup currently selected in the GUI.
+    current_setup : chisurf.experiments.reader.ExperimentReader
+        The current experiment setup / experiment reader selecetd in the GUI
+    experiment_names : list
+        A list containing the names of the experiments.
+
+    """
 
     _current_dataset: chisurf.base.Data = None
+    experiment_names: typing.List[str] = list()
 
     @property
     def current_dataset(
@@ -40,45 +73,26 @@ class Main(QtWidgets.QMainWindow):
 
     @property
     def current_model_class(self):
-        return self.current_dataset.experiment.model_classes[
-            self.comboBox_Model.currentIndex()
-        ]
+        return self._current_model_class
 
     @property
     def fit_idx(
             self
     ) -> int:
-        """Returns the index of the currently fit.
-
-        The current fit index corresponds to the currently selected fit window
-        in the list of all fits of the fit.
-
-        :return: index of the fit
-        """
-        subwindow = self.mdiarea.currentSubWindow()
-        if subwindow is not None:
-            for fit_idx, f in enumerate(chisurf.fits):
-                if f == subwindow.fit:
-                    return fit_idx
+        return self._fit_idx
 
     @property
     def current_experiment_idx(
             self
     ) -> int:
-        """ The index of the experiment type currently selected in the UI.
-
-        :return: index of the currently selected experiment
-        out of all supported experiments. This corresponds to
-        the index of the UI combo box used to select the experiment.
-        """
-        return self.comboBox_experimentSelect.currentIndex()
+        return self._current_experiment_idx
 
     @current_experiment_idx.setter
     def current_experiment_idx(
             self,
             v: int
     ):
-        self.comboBox_experimentSelect.setCurrentIndex(v)
+        self.set_current_experiment_idx(v)
 
     @property
     def current_experiment(
@@ -93,7 +107,7 @@ class Main(QtWidgets.QMainWindow):
             self,
             name: str
     ) -> None:
-        p = self.comboBox_experimentSelect.currentIndex()
+        p = self._current_experiment_idx
         n = p
         for n, e in enumerate(list(chisurf.experiment.values())):
             if e.name == name:
@@ -105,20 +119,18 @@ class Main(QtWidgets.QMainWindow):
     def current_setup_idx(
             self
     ) -> int:
-        return self.comboBox_setupSelect.currentIndex()
+        return self._current_setup_idx
 
     @current_setup_idx.setter
     def current_setup_idx(
             self,
             v: int
     ):
-        self.comboBox_setupSelect.setCurrentIndex(v)
+        self.set_current_experiment_idx(v)
 
     @property
     def current_setup_name(self):
-        return str(
-            self.comboBox_setupSelect.currentText()
-        )
+        return self.current_setup.name
 
     @property
     def current_setup(
@@ -128,19 +140,6 @@ class Main(QtWidgets.QMainWindow):
             self.current_setup_idx
         ]
         return current_setup
-
-    @property
-    def current_experiment_reader(self):
-        if isinstance(
-            self.current_setup,
-            chisurf.experiments.reader.ExperimentReader
-        ):
-            return self.current_setup
-        elif isinstance(
-                self.current_setup,
-                chisurf.experiments.reader.ExperimentReaderController
-        ):
-            return self.current_setup.experiment_reader
 
     @current_setup.setter
     def current_setup(
@@ -158,12 +157,23 @@ class Main(QtWidgets.QMainWindow):
             self.current_setup_idx = j
 
     @property
+    def current_experiment_reader(self):
+        if isinstance(
+            self.current_setup,
+            chisurf.experiments.reader.ExperimentReader
+        ):
+            return self.current_setup
+        elif isinstance(
+                self.current_setup,
+                chisurf.experiments.reader.ExperimentReaderController
+        ):
+            return self.current_setup.experiment_reader
+
+    @property
     def current_model_name(
             self
     ) -> str:
-        return str(
-            self.comboBox_Model.currentText()
-        )
+        return self.current_model_class.name
 
     @property
     def current_fit(
@@ -177,6 +187,9 @@ class Main(QtWidgets.QMainWindow):
             v: chisurf.fitting.fit.FitGroup
     ) -> None:
         self._current_fit = v
+
+    def set_current_experiment_idx(self, v):
+        self.comboBox_experimentSelect.setCurrentIndex(v)
 
     def closeEvent(
             self,
@@ -203,7 +216,9 @@ class Main(QtWidgets.QMainWindow):
             for f in chisurf.fits:
                 if f == sub_window.fit:
                     if self.current_fit is not chisurf.fits[self.fit_idx]:
-                        chisurf.run("cs.current_fit = chisurf.fits[%s]" % self.fit_idx)
+                        chisurf.run(
+                            "cs.current_fit = chisurf.fits[%s]" % self.fit_idx
+                        )
                         break
 
             self.current_fit_widget = sub_window.fit_widget
@@ -217,6 +232,12 @@ class Main(QtWidgets.QMainWindow):
             self.current_fit.model.show()
             self.current_fit_widget.show()
             sub_window.current_plot_controller.show()
+        # update fit_idx
+        if sub_window is not None:
+            for fit_idx, f in enumerate(chisurf.fits):
+                if f == sub_window.fit:
+                    self._fit_idx = fit_idx
+                    break
 
     def onRunMacro(self):
         filename = chisurf.gui.widgets.get_filename(
@@ -244,6 +265,12 @@ class Main(QtWidgets.QMainWindow):
             model_names = ds.experiment.get_model_names()
             self.comboBox_Model.addItems(model_names)
 
+    def onCurrentModelChanged(self):
+        model_idx = self.comboBox_Model.currentIndex()
+        self._current_model_class = self.current_dataset.experiment.model_classes[
+            model_idx
+        ]
+
     def onAddFit(self):
         chisurf.run(
             "chisurf.macros.add_fit(model_name='%s', dataset_indices=%s)" %
@@ -263,6 +290,7 @@ class Main(QtWidgets.QMainWindow):
             self.current_experiment.reader_names
         )
         self.comboBox_setupSelect.blockSignals(False)
+        self._current_experiment_idx = self.comboBox_experimentSelect.currentIndex()
         self.onSetupChanged()
 
     def onLoadFitResults(
@@ -281,6 +309,10 @@ class Main(QtWidgets.QMainWindow):
             )
         )
 
+    def set_current_setup_idx(self, v: int):
+        self.comboBox_setupSelect.setCurrentIndex(v)
+        self._current_setup_idx = v
+
     def onSetupChanged(self):
         chisurf.gui.widgets.hide_items_in_layout(
             self.layout_experiment_reader
@@ -298,6 +330,7 @@ class Main(QtWidgets.QMainWindow):
                 self.current_setup.controller
             )
             self.current_setup.controller.show()
+        self._current_setup_idx = self.comboBox_setupSelect.currentIndex()
 
     def onCloseAllFits(self):
         for sub_window in chisurf.fit_windows:
@@ -535,6 +568,11 @@ class Main(QtWidgets.QMainWindow):
 
         self.current_fit_widget = None
         self._current_fit = None
+        self._current_model_class = None
+        self._current_experiment_idx = 0
+        self._fit_idx = 0
+        self._current_setup_idx = 0
+
         self.experiment_names = list()
         self.dataset_selector = chisurf.gui.widgets.experiments.ExperimentalDataSelector(
             click_close=False,
@@ -606,6 +644,9 @@ class Main(QtWidgets.QMainWindow):
         self.actionSetupChanged.triggered.connect(self.onSetupChanged)
         self.actionExperimentChanged.triggered.connect(self.onExperimentChanged)
         self.actionChange_current_dataset.triggered.connect(self.onCurrentDatasetChanged)
+        self.comboBox_Model.currentIndexChanged.connect(self.onCurrentModelChanged)
+        self.comboBox_experimentSelect.currentIndexChanged.connect(self.onExperimentChanged)
+        self.comboBox_setupSelect.currentIndexChanged.connect(self.onSetupChanged)
         self.actionAdd_fit.triggered.connect(self.onAddFit)
         self.actionSaveAllFits.triggered.connect(self.onSaveFits)
         self.actionSaveCurrentFit.triggered.connect(self.onSaveFit)

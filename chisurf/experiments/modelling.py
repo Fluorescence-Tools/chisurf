@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import chisurf.base
 import chisurf.decorators
@@ -39,12 +39,12 @@ class StructureReader(
             filename: str = None,
             *args,
             **kwargs
-    ) -> chisurf.experiments.data.ExperimentDataGroup:
+    ) -> chisurf.data.ExperimentDataGroup:
         structure = chisurf.structure.Structure(
             p_object=filename,
             make_coarse=self.compute_internal_coordinates
         )
-        data_group = chisurf.experiments.data.ExperimentDataGroup(
+        data_group = chisurf.data.ExperimentDataGroup(
             seq=[structure]
         )
         data_group.data_reader = self

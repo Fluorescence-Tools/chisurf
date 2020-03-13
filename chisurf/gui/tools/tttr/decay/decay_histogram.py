@@ -1,5 +1,5 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import sys
 import re
@@ -10,7 +10,8 @@ from qtpy import QtWidgets
 
 import chisurf.decorators
 import chisurf.curve
-import chisurf.experiments.data
+import chisurf.data
+import chisurf.gui.decorators
 import chisurf.gui.widgets.experiments.widgets
 import chisurf.fluorescence.tcspc
 import chisurf.gui.widgets.fio
@@ -24,7 +25,7 @@ class HistogramTTTR(
     chisurf.curve.CurveGroup
 ):
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="tttr_histogram.ui"
     )
     def __init__(self):
@@ -107,7 +108,7 @@ class TcspcTTTRWidget(
     QtWidgets.QWidget
 ):
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="tcspcTTTRWidget.ui"
     )
     def __init__(
@@ -234,12 +235,13 @@ class TcspcTTTRWidget(
         self.make_histogram()
         x = self.x
         y = self.y
-        w = chisurf.fluorescence.tcspc.weights(y)
         name = self.spcFileWidget.sample_name + "_" + str(self.chs)
-        d = chisurf.experiments.data.DataCurve(
+        d = chisurf.data.DataCurve(
             x=x,
             y=y,
-            ey=1./w,
+            ey=chisurf.fluorescence.tcspc.counting_noise(
+                decay=y
+            ),
             name=name
         )
         return d

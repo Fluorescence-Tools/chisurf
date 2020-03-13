@@ -1,7 +1,13 @@
-import typing
+from __future__ import annotations
 
+import sys
 import logging
 import pathlib
+
+if sys.version_info >= (3, 8):
+    import typing
+else:
+    import typing_extensions as typing
 
 import chisurf.settings
 
@@ -16,6 +22,7 @@ __license__ = 'GPL2.1'
 __status__ = "Dev"
 __description__ = "ChiSurf is an interactive global analysis platform for " \
                   "time-resolved fluorescence data."
+
 
 fits = list()
 imported_datasets = list()
@@ -39,7 +46,7 @@ def c(
         st: str,
         parameters: typing.List
 ):
-    """This function facilitates the connection of qt-events to the mfm-command
+    """This function facilitates the connection of events to the mfm-command
     line. Whenever the qt-event is called the string passed as argument is
     executed at the mfm-commandline with the provided parameters.
     Here the parameters are either callable functions of strings.

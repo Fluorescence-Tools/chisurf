@@ -6,7 +6,6 @@ from __future__ import annotations
 import numpy as np
 
 import chisurf.curve
-import chisurf.experiments
 
 import chisurf.fitting.fit
 import chisurf.fitting.parameter
@@ -30,7 +29,7 @@ import chisurf.fitting.support_plane
 
 
 def calculate_weighted_residuals(
-        data: chisurf.experiments.data.DataCurve,
+        data: chisurf.data.DataCurve,
         model: chisurf.curve.Curve,
         xmin: int,
         xmax: int,

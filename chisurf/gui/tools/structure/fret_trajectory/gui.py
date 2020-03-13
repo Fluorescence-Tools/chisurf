@@ -6,6 +6,7 @@ import mdtraj as md
 from qtpy import QtWidgets
 
 import chisurf.decorators
+import chisurf.gui.decorators
 from chisurf.fio import coordinates
 import chisurf.gui.widgets
 from .traj2fret import CalculateTransfer
@@ -19,7 +20,7 @@ class Structure2Transfer(
 
     name = "Structure2Transfer"
 
-    @chisurf.decorators.init_with_ui(ui_filename="structure2transfer.ui")
+    @chisurf.gui.decorators.init_with_ui(ui_filename="structure2transfer.ui")
     def __init__(
             self,
             verbose: bool = True,

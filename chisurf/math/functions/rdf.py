@@ -6,7 +6,7 @@ import numpy as np
 import numba as nb
 
 from chisurf.math.functions.special import i0
-from .distributions import normal_distribution
+from . import distributions
 
 
 @nb.jit(nopython=True)
@@ -14,8 +14,7 @@ def gaussian_chain_ree(
         segment_length: float,
         number_of_segments: int
 ) -> float:
-    """
-    Calculates the root mean square end-to-end distance of a Gaussian chain
+    """Calculates the root mean square end-to-end distance of a Gaussian chain
 
     :param segment_length: float
         The length of a segment
@@ -32,8 +31,7 @@ def gaussian_chain(
         segment_length: float,
         number_of_segments: int
 ) -> float:
-    """
-    Calculates the radial distribution function of a Gaussian chain in three dimensions
+    """Calculates the radial distribution function of a Gaussian chain in three dimensions
 
     :param number_of_segments: int
         The number of segments
@@ -171,10 +169,27 @@ def distance_between_gaussian(
     :return:
     """
     if separation_distance > 0:
-        pr = distances / separation_distance * (normal_distribution(distances, separation_distance, sigma, False) -
-                                                normal_distribution(distances, -separation_distance, sigma, False))
+        pr = distances / separation_distance * (
+                distributions.normal_distribution(
+                    x=distances,
+                    loc=separation_distance,
+                    scale=sigma,
+                    norm=False
+                ) -
+                distributions.normal_distribution(
+                    x=distances,
+                    loc=-separation_distance,
+                    scale=sigma,
+                    norm=False
+                )
+        )
     else:
-        pr = 2. * distances ** 2 / sigma ** 2 * normal_distribution(distances, 0.0, sigma, False)
+        pr = 2. * distances ** 2 / sigma ** 2 * distributions.normal_distribution(
+            x=distances,
+            loc=0.0,
+            scale=sigma,
+            norm=False
+        )
     if normalize:
         pr /= pr.sum()
     return pr
@@ -208,10 +223,18 @@ def worm_like_chain_linker(
        The radial distribution function of worm-like chains.
 
     """
-    pr = worm_like_chain(distances, kappa, chain_length=chain_length)
+    pr = worm_like_chain(
+        distances=distances,
+        kappa=kappa,
+        chain_length=chain_length
+    )
     pn = np.zeros_like(pr)
     for r, p in zip(distances, pr):
-        pn += p * distance_between_gaussian(distances, r, sigma)
+        pn += p * distance_between_gaussian(
+            distances=distances,
+            separation_distance=r,
+            sigma=sigma
+        )
 
     if normalize:
         pn /= pn.sum()

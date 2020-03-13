@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-import typing
+from chisurf import typing
 import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.dockarea
 import matplotlib.colors
 from qtpy import QtWidgets
 
+import chisurf.experiments
 import chisurf.decorators
+import chisurf.gui.decorators
 import chisurf.math
 import chisurf.fitting
 import chisurf.settings
@@ -21,7 +23,7 @@ class LinePlotControl(
     QtWidgets.QWidget
 ):
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="linePlotWidget.ui"
     )
     def __init__(
@@ -398,6 +400,7 @@ class LinePlot(plotbase.Plot):
         curves = self.fit.get_curves()
         for i, curve_key in enumerate(curves):
             lines[curve_key] = self.add_plot(
+                curves=curves,
                 curve_key=curve_key,
                 plot_dict=plots,
                 index=i
@@ -407,10 +410,15 @@ class LinePlot(plotbase.Plot):
 
     def add_plot(
             self,
+            curves: typing.Dict,
             curve_key: str,
             plot_dict: typing.Dict,
             index: int = 1
     ):
+        color_idx = index % len(chisurf.settings.colors)
+        pen_color = chisurf.settings.colors[color_idx]['hex']
+        lw = chisurf.settings.gui['plot']['line_width']
+
         for ik in self.director.keys():
             # if the curve name matches the template
             if ik in curve_key:
@@ -421,15 +429,8 @@ class LinePlot(plotbase.Plot):
                         'main_plot'
                     )
                 ]
-                lw = curve_options.get(
-                    'lw',
-                    chisurf.settings.gui['plot']['line_width']
-                )
-                color_idx = index % len(chisurf.settings.colors)
-                pen_color = curve_options.get(
-                    'color',
-                    chisurf.settings.colors[color_idx]['hex']
-                )
+                lw = curve_options.get('lw', lw)
+                pen_color = curve_options.get('color', pen_color)
                 label = curve_options.get('label', curve_key)
                 if curve_key != ik:
                     # make the line half as wide, and transparent (30%)
@@ -440,6 +441,16 @@ class LinePlot(plotbase.Plot):
                     pen=pg.mkPen(pen_color, width=lw),
                     name=label
                 )
+
+        curve = curves[curve_key]
+        if isinstance(curve, chisurf.data.DataCurve):
+            target_plot = plot_dict['main_plot']
+            return target_plot.plot(
+                x=[0.0], y=[0.0],
+                pen=pg.mkPen(pen_color, width=lw),
+                name=curve_key
+            )
+
         return None
 
     def update(
@@ -476,44 +487,42 @@ class LinePlot(plotbase.Plot):
                 y = curve.y / np.diff(curve.x)
             try:
                 self.lines[curve_key].setData(x=x, y=y)
-            except KeyError:
+            except AttributeError:
                 self.lines[curve_key] = self.add_plot(
+                    curves=curves,
                     curve_key=curve_key,
                     plot_dict=self.plots,
                     index=i
                 )
-        #
-        # model_y = np.copy(model.y) + y_shift
-        # data_y = np.copy(data_y) + y_shift
-        #
-        data_log_y = self.plot_controller.data_is_log_y
-        data_log_x = self.plot_controller.data_is_log_x
-        res_log_y = self.plot_controller.res_is_log_y
 
-        # Set log-scales
-        self.plots['top_left_plot'].setLogMode(
-            x=data_log_x,
-            y=res_log_y
-        )
-        self.plots['top_right_plot'].setLogMode(
-            x=data_log_x,
-            y=res_log_y
-        )
-        self.plots['main_plot'].setLogMode(
-            x=data_log_x,
-            y=data_log_y
-        )
-        # update region selector
-        data = curves['data']
-        lb_min, ub_max = data.x[0], data.x[-1]
-        lb, ub = data.x[self.fit.xmin], data.x[self.fit.xmax]
-        if data_log_x:
-            lb = np.log10(lb)
-            ub = np.log10(ub)
-            lb_min = np.log10(lb_min)
-            ub_max = np.log10(ub_max)
-        self.region.setBounds((lb_min, ub_max))
-        self.region.setRegion((lb, ub))
+        # data_log_y = self.plot_controller.data_is_log_y
+        # data_log_x = self.plot_controller.data_is_log_x
+        # res_log_y = self.plot_controller.res_is_log_y
+        #
+        # # Set log-scales
+        # self.plots['top_left_plot'].setLogMode(
+        #     x=data_log_x,
+        #     y=res_log_y
+        # )
+        # self.plots['top_right_plot'].setLogMode(
+        #     x=data_log_x,
+        #     y=res_log_y
+        # )
+        # self.plots['main_plot'].setLogMode(
+        #     x=data_log_x,
+        #     y=data_log_y
+        # )
+        # # update region selector
+        # data = curves['data']
+        # lb_min, ub_max = data.x[0], data.x[-1]
+        # lb, ub = data.x[self.fit.xmin], data.x[self.fit.xmax]
+        # if data_log_x:
+        #     lb = np.log10(lb)
+        #     ub = np.log10(ub)
+        #     lb_min = np.log10(lb_min)
+        #     ub_max = np.log10(ub_max)
+        # self.region.setBounds((lb_min, ub_max))
+        # self.region.setRegion((lb, ub))
 
         self.text.updateTextPos()
         self.text.setHtml(

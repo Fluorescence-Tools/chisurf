@@ -7,6 +7,7 @@ from qtpy import QtCore, QtWidgets
 import mdtraj
 
 import chisurf.fio
+import chisurf.gui.decorators
 import chisurf.gui.widgets
 import chisurf.decorators
 import chisurf.structure.potential
@@ -18,7 +19,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
 
     name = "Potential-Energy calculator"
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="calculate_potential.ui"
     )
     def __init__(

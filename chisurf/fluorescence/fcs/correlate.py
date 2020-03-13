@@ -21,13 +21,26 @@ def correlate(
 ) -> np.array:
     """
 
-    :param n:
-    :param B:
-    :param t:
-    :param taus:
-    :param corr:
-    :param w:
-    :return:
+    Parameters
+    ----------
+    n : int
+        The number of coarsening steps
+    B : int
+        The number of correlation channels per coarsening step
+    t : numpy-array
+        Arrival times of the photons
+    w : numpy-array
+        Weight of the photons
+    taus : numpy-array
+        Correlation time axis
+    corr : numpy-array
+        Correlation amplitude
+
+    Returns
+    -------
+    numpy-array
+        Correlation amplitude array
+
     """
     for b in range(B):
         j = (n * B + b)

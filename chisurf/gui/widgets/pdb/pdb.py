@@ -5,6 +5,7 @@ from qtpy import  QtWidgets, uic, QtCore
 
 import chisurf.decorators
 import chisurf.fio
+import chisurf.gui.decorators
 from chisurf.structure import Structure
 from chisurf.structure.trajectory import TrajectoryFile
 
@@ -16,7 +17,7 @@ class PDBSelector(
 
     """
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="pdb_widget.ui"
     )
     def __init__(

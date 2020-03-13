@@ -7,6 +7,7 @@ from qtpy import QtWidgets
 
 import chisurf.decorators
 import chisurf.fio.tttr
+import chisurf.gui.decorators
 import chisurf.gui.widgets
 
 filetypes = copy.copy(chisurf.fio.tttr.filetypes)
@@ -33,7 +34,7 @@ class TTTRConvert(QtWidgets.QWidget):
     def filenames(self):
         return self.file_list.filenames
 
-    @chisurf.decorators.init_with_ui(ui_filename="tttr_convert.ui")
+    @chisurf.gui.decorators.init_with_ui(ui_filename="tttr_convert.ui")
     def __init__(
             self,
             *args,

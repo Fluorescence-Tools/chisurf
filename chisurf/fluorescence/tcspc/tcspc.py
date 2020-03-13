@@ -83,25 +83,46 @@ def bin_lifetime_spectrum(
 
 @nb.jit(nopython=True, nogil=True)
 def rescale_w_bg(
-        fit: np.array,
-        decay: np.array,
-        w_res: np.array,
-        bg: float,
+        model_decay: np.array,
+        experimental_decay: np.array,
+        experimental_weights: np.array,
+        experimental_background: float,
         start: int,
         stop: int
 ) -> float:
+    """Computes a scaling factor that scales a model decay to an
+    experimental decay on a defined range.
+
+    Parameters
+    ----------
+    model_decay
+    experimental_decay
+    experimental_weights
+    experimental_background
+    start
+    stop
+
+    Returns
+    -------
+    float:
+        The scaling factor that was used to scale the model function to the
+        experimental decay.
+
+    """
     scale = 0.0
-    sumnom = 0.0
-    sumdenom = 0.0
+    sum_nom = 0.0
+    sum_denom = 0.0
+    w = experimental_weights
+    e = experimental_decay
+    b = experimental_background
+    m = model_decay
     for i in range(start, stop):
-        iwsq = 1.0/(w_res[i]*w_res[i]+1e-12)
-        if decay[i] != 0.0:
-            sumnom += fit[i]*(decay[i]-bg)*iwsq
-            sumdenom += fit[i]*fit[i]*iwsq
-    if sumdenom != 0.0:
-        scale = sumnom / sumdenom
-    for i in range(start, stop):
-        fit[i] *= scale
+        if e[i] > 0.0:
+            iwsq = 1.0 / (w[i] * w[i] + 1e-12)
+            sum_nom += m[i] * (e[i] - b) * iwsq
+            sum_denom += m[i] * m[i] * iwsq
+    if sum_denom != 0.0:
+        scale = sum_nom / sum_denom
     return scale
 
 
@@ -122,8 +143,8 @@ def pddem(decayA, decayB, k, px, pm, pAB):
 
     -> same results as Stas pddem code (pddem_t.c)
 
-    :param decayA: decay A in form of [ampl lifetime, apml, lifetime...]
-    :param decayB: decay B in form of [ampl lifetime, apml, lifetime...]
+    :param decayA: model_decay A in form of [ampl lifetime, apml, lifetime...]
+    :param decayB: model_decay B in form of [ampl lifetime, apml, lifetime...]
     :param k: rates of energy transfer [kAB, kBA]
     :param px: probabilities of excitation (pxA, pxB)
     :param pm: probabilities of emission (pmA, pmB)

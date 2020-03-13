@@ -25,9 +25,9 @@ class Tests(unittest.TestCase):
         lifetime_spectrum = np.array([0.8, 1.1, 0.2, 4.0])
         decay = np.zeros_like(time_axis)
         chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(
-            decay,
+            output_decay=decay,
             lifetime_spectrum=lifetime_spectrum,
-            irf=irf,
+            instrument_response_function=irf,
             time_axis=time_axis
         )
         reference = np.array(

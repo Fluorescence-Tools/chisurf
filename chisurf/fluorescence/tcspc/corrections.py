@@ -7,12 +7,12 @@ import chisurf.math
 
 
 def compute_linearization_table(
-        y: np.array,
+        y: np.ndarray,
         window_length: int,
         window_function_type: str,
         x_min: int,
         x_max: int
-) -> np.array:
+) -> np.ndarray:
     """
     This function calculates a liberalization table for differential
     non-linearities given a measurement of uncorrelated light. The
@@ -35,9 +35,9 @@ def compute_linearization_table(
     mnx /= mnx.mean()
     yn = mnx.filled()
     return chisurf.math.signal.window(
-        yn,
-        window_length,
-        window_function_type
+        data=yn,
+        window_len=window_length,
+        window_function_type=window_function_type
     )
 
 
@@ -61,7 +61,7 @@ def correct_model_for_pile_up(
     :param measurement_time: float
         The measurement time in seconds
     :param data: numpy-array
-        The array containing the experimental decay
+        The array containing the experimental model_decay
     :param model: numpy-array
         The array containing the model function
     :param verbose:

@@ -2,10 +2,10 @@
 
 """
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import chisurf.experiments
-import chisurf.experiments.data
+import chisurf.data
 from . reader import ExperimentReader
 
 
@@ -38,7 +38,7 @@ class GlobalFitSetup(
             *args,
             **kwargs
     ):
-        return chisurf.experiments.data.DataCurve(
+        return chisurf.data.DataCurve(
             setup=self,
             name=name
         )

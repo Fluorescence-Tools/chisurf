@@ -2,7 +2,7 @@
 Stochastic reaction simulation
 """
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import numpy as np
 from numpy.random import multinomial

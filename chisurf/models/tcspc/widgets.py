@@ -1,11 +1,12 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 from qtpy import QtWidgets, uic, QtCore, QtGui
 
 import os
 
 import chisurf
+import chisurf.gui.decorators
 import chisurf.math
 import chisurf.fitting
 import chisurf.fitting.parameter
@@ -28,9 +29,14 @@ from chisurf.models.parse.tcspc.tcspc_parse import ParseDecayModel
 from chisurf.models.tcspc.pddem import PDDEM, PDDEMModel
 
 
-class ConvolveWidget(Convolve, QtWidgets.QWidget):
+class ConvolveWidget(
+    Convolve,
+    QtWidgets.QWidget
+):
 
-    @chisurf.decorators.init_with_ui(ui_filename="convolveWidget.ui")
+    @chisurf.gui.decorators.init_with_ui(
+        ui_filename="convolveWidget.ui"
+    )
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit,
@@ -92,15 +98,15 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         self.radioButton_3.clicked.connect(self.onConvolutionModeChanged)
         self.radioButton_2.clicked.connect(self.onConvolutionModeChanged)
         self.radioButton.clicked.connect(self.onConvolutionModeChanged)
+        self.checkBox.clicked.connect(self.onConvolutionModeChanged)
 
     def onConvolutionModeChanged(self):
         chisurf.run(
             "\n".join(
                 [
-                    "for f in cs.current_fit:\n"
-                    "   f.model.convolve.reading_routine = '%s'\n" % self.gui_mode,
-                    "cs.current_fit.model.convolve.do_convolution = %s" %
-                    self.groupBox.isChecked(),
+                    "for f in cs.current_fit:"
+                    "   f.model.convolve.mode = '%s'" % self.gui_mode,
+                    "cs.current_fit.model.convolve.do_convolution = %s" % self.checkBox.isChecked(),
                     "cs.current_fit.update()"
                 ]
             )
@@ -142,7 +148,7 @@ class CorrectionsWidget(
     QtWidgets.QWidget
 ):
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="tcspcCorrections.ui"
     )
     def __init__(
@@ -505,7 +511,7 @@ class AnisotropyWidget(
 
 class PDDEMWidget(QtWidgets.QWidget, PDDEM):
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="pddem.ui"
     )
     def __init__(
@@ -992,11 +998,7 @@ class GaussianWidget(
         gb.setLayout(layout)
         row = (n_gauss - 1) // 2 + 1
         col = (n_gauss - 1) % 2
-        self.grid_layout.addWidget(
-            gb,
-            row,
-            col
-        )
+        self.grid_layout.addWidget(gb, row, col)
         self._gb.append(gb)
 
     def pop(self) -> None:

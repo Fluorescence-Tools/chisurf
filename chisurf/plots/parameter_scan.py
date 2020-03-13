@@ -1,5 +1,5 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import numpy as np
 import pyqtgraph as pg
@@ -7,6 +7,7 @@ from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
 import chisurf
+import chisurf.gui.decorators
 import chisurf.settings
 import chisurf.fitting
 import chisurf.parameter
@@ -24,7 +25,7 @@ class ParameterScanWidget(
     QtWidgets.QWidget
 ):
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="parameter_scan.ui"
     )
     def __init__(

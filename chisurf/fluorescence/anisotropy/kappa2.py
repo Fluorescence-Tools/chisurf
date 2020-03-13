@@ -2,11 +2,10 @@
 
 """
 from math import sqrt
-import typing
+from chisurf import typing
 
 import numba as nb
 import numpy as np
-from numpy import linalg
 
 
 def kappasqAllDelta(
@@ -72,10 +71,22 @@ def kappasq_all(
         d1 = np.random.random((m, 3))
         d2 = np.random.random((m, 3))
         for j in range(m):
-            delta = np.arccos(np.dot(d1[j, :], d2[j, :]) / linalg.norm(d1[j, :])/linalg.norm(d2[j, :]))
-            beta1 = np.arccos(d1[j, 0]/linalg.norm(d1[j, :]))
-            beta2 = np.arccos(d2[j, 0]/linalg.norm(d2[j, :]))
-            k2[i, j] = kappasq(delta, sD2, sA2, beta1, beta2)
+            delta = np.arccos(
+                np.dot(d1[j, :], d2[j, :]) / np.linalg.norm(d1[j, :])/np.linalg.norm(d2[j, :])
+            )
+            beta1 = np.arccos(
+                d1[j, 0]/np.linalg.norm(d1[j, :])
+            )
+            beta2 = np.arccos(
+                d2[j, 0]/np.linalg.norm(d2[j, :])
+            )
+            k2[i, j] = kappasq(
+                delta=delta,
+                sD2=sD2,
+                sA2=sA2,
+                beta1=beta1,
+                beta2=beta2
+            )
         y, x = np.histogram(k2[i, :], bins=k2scale)
         k2hist += y
     return k2scale, k2hist, k2
@@ -170,8 +181,8 @@ def kappa_distance(
 
 
 def kappa(
-        donor_dipole: np.array,
-        acceptor_dipole: np.array
+        donor_dipole: np.ndarray,
+        acceptor_dipole: np.ndarray
 ) -> typing.Tuple[float, float]:
     """Calculates the orientation-factor kappa
 

@@ -10,6 +10,7 @@ import numpy as np
 import tables
 
 import chisurf.decorators
+import chisurf.gui.decorators
 import chisurf.gui.widgets
 
 
@@ -152,7 +153,7 @@ class RemoveClashedFrames(
             )
             self.trajectory_filename = filename
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="remove_clashes.ui"
     )
     def __init__(

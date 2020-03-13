@@ -4,7 +4,7 @@ import sys
 
 from qtpy import QtWidgets
 
-import chisurf.decorators
+import chisurf.gui.decorators
 from chisurf.fluorescence.general import \
     distance_to_fret_rate_constant, distance_to_fret_efficiency, fret_efficiency_to_lifetime, \
     lifetime_to_fret_efficiency, fretrate_to_distance, fret_efficiency_to_distance
@@ -14,7 +14,9 @@ class FRETCalculator(QtWidgets.QWidget):
 
     name = "FRET-Calculator"
 
-    @chisurf.decorators.init_with_ui(ui_filename="calc_tau2r.ui")
+    @chisurf.gui.decorators.init_with_ui(
+        ui_filename="calc_tau2r.ui"
+    )
     def __init__(
             self,
             kappa2=0.667,

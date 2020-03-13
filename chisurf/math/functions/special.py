@@ -10,8 +10,7 @@ from numba import jit
 def i0(
         x: float
 ):
-    """
-    Modified Bessel-function I0(x) for any real x
+    """Modified Bessel-function I0(x) for any real x
     (according to numerical recipes function - `bessi0`,
     Polynomal approximation Abramowitz and Stegun )
 
@@ -52,8 +51,7 @@ def i0(
 def i0_array(
         x: np.array
 ):
-    """
-    Modified Bessel-function I0(x) for any real x
+    """Modified Bessel-function I0(x) for any real x
     (according to numerical recipes function - `bessi0`,
     Polynomal approximation Abramowitz and Stegun )
 

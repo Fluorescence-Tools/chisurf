@@ -4,6 +4,7 @@ from __future__ import annotations
 import chisurf.base
 import chisurf.decorators
 import chisurf.experiments
+import chisurf.gui.decorators
 import chisurf.gui.widgets
 from chisurf.experiments import reader
 from qtpy import QtWidgets
@@ -38,7 +39,7 @@ class LoadStructureFolder(
     def get_data(
             self,
             **kwargs
-    ) -> chisurf.experiments.data.ExperimentDataGroup:
+    ) -> chisurf.data.ExperimentDataGroup:
         return [self.pdbWidget.trajectory]
 
     @staticmethod
@@ -63,7 +64,7 @@ class StructureReaderController(
             working_path=None
         )
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="proteinMCLoad.ui"
     )
     def __init__(

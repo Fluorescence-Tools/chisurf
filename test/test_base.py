@@ -13,7 +13,7 @@ import numpy as np
 
 import chisurf.base
 import chisurf.experiments
-import chisurf.experiments.data
+import chisurf.data
 
 
 def get_data_values(
@@ -258,7 +258,7 @@ class Tests(unittest.TestCase):
             a_value=a_value,
             c_value=c_value
         )
-        data = chisurf.experiments.data.DataCurve(
+        data = chisurf.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
@@ -278,7 +278,7 @@ class Tests(unittest.TestCase):
             ),
             True
         )
-        data_group = chisurf.experiments.data.DataGroup(
+        data_group = chisurf.data.DataGroup(
             [data, data2]
         )
         data_group.current_dataset = 0
