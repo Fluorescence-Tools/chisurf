@@ -71,26 +71,44 @@ def window(
 
 
 def shift_array(
-        y: np.array,
-        shift: float
+        v: np.ndarray,
+        shift: float,
+        set_outside: bool = True,
+        outside_value: float = 0.0
 ) -> np.array:
     """Calculates an array that is shifted by a float. For non-integer shifts
     the shifted array is interpolated.
 
-    :return:
-    """
-    ts = -shift
-    ts_f = np.floor(ts)
-    if np.isnan(ts_f):
-        ts_f = 0
-    tsi = int(ts_f)
+    Parameters
+    ----------
+    v : 1D numpy-array
+        The input numpy array that is shifted
+    shift : float
+        A floating point number by which the array is shifted
+    set_outside : bool
+        If True (default) the values outside of the array are set
+        to the value defined by the parameter `outside_value`
+    outside_value : float
+        The value assigned to the vector that are outside. The
+        values on the borders are assigned to this value (default
+        set to zero).
 
-    tsf = shift - tsi
-    ysh = np.roll(y, tsi) * (1 - tsf) + np.roll(y, tsi + 1) * tsf
-    if ts > 0:
-        ysh[:tsi] = 0.0
-    elif ts < 0:
-        ysh[tsi:] = 0.0
+    Returns
+    -------
+    numpy-array
+        The shifted numpy array
+
+    """
+    ts = shift
+    ts_i = int(ts)
+    ts_f = ts - np.floor(ts)
+    ysh = np.roll(v, ts_i) * (1.0 - ts_f) + np.roll(v, ts_i + 1) * ts_f
+    if set_outside:
+        b = int(np.ceil(ts))
+        if ts > 0:
+            ysh[:b] = outside_value
+        elif ts < 0:
+            ysh[b:] = outside_value
     return ysh
 
 
