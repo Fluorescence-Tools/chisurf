@@ -17,17 +17,20 @@ requirements:
   host:
     - python {{ python }}
     - {{ pin_compatible('numpy') }}
+    - typing_extensions
     - pyyaml
     - setuptools
     - cython
   build:
     - python {{ python }}
     - setuptools
+    - typing_extensions
     - cython
     - pyyaml
     - {{ pin_compatible('numpy') }}
   run:
     - python {{ python }}
+    - typing_extensions
     - nose
     - pyyaml >=5.0
     - deprecation
@@ -60,7 +63,6 @@ requirements:
     - labellib
     - tttrlib >=0.0.12
     - chinet >=0.0.5
-    - typing_extensions
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
