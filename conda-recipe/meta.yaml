@@ -60,6 +60,7 @@ requirements:
     - labellib
     - tttrlib >=0.0.12
     - chinet >=0.0.5
+    - typing_extensions
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
