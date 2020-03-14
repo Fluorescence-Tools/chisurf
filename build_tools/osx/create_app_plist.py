@@ -228,9 +228,17 @@ if __name__ == "__main__":
             fp=fp
         )
     script = """#!/usr/bin/env bash
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
 script_dir=$(dirname "$(dirname "$0")")
-$script_dir/%s.bin $@""" % module_string
-
+# Disable user site packages
+export PYTHONNOUSERSITE=1
+export PATH="$script_dir:$script_dir/bin:$PATH"
+export QT_PLUGIN_PATH="$script_dir/plugins"
+export PYTHONPATH="$PYTHONPATH:$script_dir"
+cd $script_dir
+python -m %s $@
+    """ % module_string
     executable_file = plist_path / "MacOS" / executable
     with open(executable_file, 'w') as fp:
         fp.write(script)
@@ -239,3 +247,4 @@ $script_dir/%s.bin $@""" % module_string
     os.chmod(
         str(executable_file), st.st_mode | stat.S_IEXEC
     )
+

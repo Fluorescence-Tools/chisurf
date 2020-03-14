@@ -11,10 +11,8 @@ python generate-iconset.py resources/VolumeIcon.png
   --icon "$APP_NAME.app" 200 190 \
   --hide-extension "$APP_NAME.app" \
   --app-drop-link 600 185 \
-  --format UDBZ \
   --volicon resources/VolumeIcon.icns \
   "../../dist/$APP_NAME-Installer.dmg" \
   "../../dist/"
 ./fileicon set "../../dist/$APP_NAME-Installer.dmg" ./resources/VolumeIcon.icns
-rm -rf ../../dist/$APP_NAME.app
-rm rw.*.dmg
+#rm -rf ../../dist/$APP_NAME.app

@@ -6,20 +6,17 @@
 #     $ build-osx-app.sh $HOME/Applications/ChiSurf.app
 #
 
-#export APP_NAME="ChiSurf"
-#export PYTHON_MODULE=chisurf
-#export SOFTWARE_NAME=ChiSurf
+get_abs_filename() {
+  # $1 : relative filename
+  echo "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+}
 
 export ICON_FILE=icon.png
 export CONDA_ENVIRONMENT_YAML=environment.yml
 # The directory of the build-osx-app.sh script
 export SCRIPT_DIR="."
 SCRIPT_DIR=$("pwd")
-
-get_abs_filename() {
-  # $1 : relative filename
-  echo "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
-}
+echo $SCRIPT_DIR
 
 function print_usage() {
     echo "build-osx-app.sh [-i] [--template] $APP_NAME.app
@@ -70,11 +67,11 @@ case $i in
     shift # past argument=value
     ;;
     -o=*|--output_path=*)
-    OUTPUT_PATH=$(get_abs_filename "${i#*=}")
+    OUTPUT_PATH="${i#*=}"
     shift # past argument=value
     ;;
     -p=*|--module_path=*)
-    PYTHON_MODULE_PATH=$(get_abs_filename "${i#*=}")
+    PYTHON_MODULE_PATH="${i#*=}"
     shift # past argument=value
     ;;
     -h|--help)
@@ -89,51 +86,34 @@ case $i in
 done
 
 # The target directory of the .app
-export APP_FOLDER=${1:-$OUTPUT_PATH/$APP_NAME.app}
 mkdir "$OUTPUT_PATH"
-# Create a MacOS app folder structure
-mkdir "$APP_FOLDER"
-# convert to absolute path
+export APP_FOLDER=${1:-$OUTPUT_PATH/$APP_NAME.app}
 APP_FOLDER="$(cd "$(dirname "$APP_FOLDER")" && pwd)/$(basename "$APP_FOLDER")"
+echo "App folder: $APP_FOLDER"
+mkdir "$APP_FOLDER"
 
-# Create a new conda environment in the target Resources
+source ~/miniconda3/etc/profile.d/conda.sh
 conda env create -f $CONDA_ENVIRONMENT_YAML --prefix "$APP_FOLDER/Contents" --force
-# We will simpliy copy over the directory containing the code
-# Hence make sure that all necessary extensions are up to data
-#
-export PATH="$APP_FOLDER/Contents/bin:$PATH"
-# install possibility to hook into osx GUI event loop
-cd $PYTHON_MODULE_PATH
-export PYTHON_MODULE_PATH=$PYTHON_MODULE
-export PYTHON_MODULE_PATH=$(python -c "import $PYTHON_MODULE; import pathlib; print(pathlib.Path($PYTHON_MODULE.__file__).parent.absolute())")
-export SITE_PACKAGE_LOCATION=$APP_FOLDER/Contents #/lib/python3.7/site-packages
-# update SITE_PACKAGE_LOCATION
-#SITE_PACKAGE_LOCATION=$(python -c 'import site; print(site.getsitepackages()[0])')
-cp -R $PYTHON_MODULE_PATH $SITE_PACKAGE_LOCATION
-cd $SCRIPT_DIR
-
-# update the Info.plist file and create a entry point
-echo "Creating MacOS and Resources folder"
+conda activate "$APP_FOLDER/Contents"
 mkdir "$APP_FOLDER/Contents/MacOS"
 mkdir "$APP_FOLDER/Contents/Resources"
-echo "Install nuitka and compiling module"
-conda install -y nuitka
-nuitka --exe $PYTHON_MODULE_PATH -o "$APP_FOLDER/Contents/$PYTHON_MODULE.bin" --remove-output
 
-cd $SCRIPT_DIR
+cd $PYTHON_MODULE_PATH
+cp -R $PYTHON_MODULE "$APP_FOLDER/Contents"
+
 # generate icns file
+cd $SCRIPT_DIR
 python generate-iconset.py $SCRIPT_DIR/resources/AppIcon.png
-
-cd "$PYTHON_MODULE_PATH/../"
-export CONTENT_FOLDER=""
-CONTENT_FOLDER="$APP_FOLDER"/Contents
-
-$SCRIPT_DIR/create_app_plist.py --module $PYTHON_MODULE --output $CONTENT_FOLDER/Info.plist -e "$APP_NAME" -i $SCRIPT_DIR/resources/AppIcon.icns
 # also update the icon with fileicon
 $SCRIPT_DIR/fileicon set "$APP_FOLDER" "$SCRIPT_DIR/resources/AppIcon.icns"
 
+# update the Info.plist file and create a entry point
+cd $PYTHON_MODULE_PATH
+$SCRIPT_DIR/create_app_plist.py --module $PYTHON_MODULE --output $APP_FOLDER/Contents/Info.plist -e "$APP_NAME" -i $SCRIPT_DIR/resources/AppIcon.icns
+cd $SCRIPT_DIR
+
 echo Remove files and folders from content folder: "$CONTENT_FOLDER"
 while read p; do
-  echo "removing: $CONTENT_FOLDER$p"
+  echo "removing: $APP_FOLDER/Contents/$p"
   rm -rf $CONTENT_FOLDER$p
 done <"$SCRIPT_DIR/remove_list.txt"

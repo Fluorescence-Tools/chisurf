@@ -4,6 +4,9 @@ import sys
 
 from qtpy import QtWidgets, QtGui, QtCore
 
+from chisurf import typing
+import chisurf.settings
+
 
 def setup_gui(
         app: QtWidgets.QApplication,
