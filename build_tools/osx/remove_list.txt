@@ -1,15 +1,4 @@
-/include
-/doc
-/share/doc
-/libexec
-/man
-/phrasebooks
-/plugins
 /share/IMP/npctransport
 /share/IMP/benchmark
 /share/IMP/rmf
-/lib/libmkl*
-/lib/libav*
-/conda-meta
-/translations
 /lib/python3.7/site-packages/pandas/tests
