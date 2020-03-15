@@ -71,8 +71,7 @@ eList = [
 
 extensions = [make_extension(extension) for extension in eList]
 
-
-setup(
+metadata = dict(
     name=__name__,
     version=__version__,
     license=__license__,
@@ -148,8 +147,29 @@ setup(
         'build_ext': build_ext
     },
     entry_points={
+        "console_scripts": [
+        ],
         "gui_scripts": [
-            "chisurf=chisurf.__main__:main"
+            "chisurf=chisurf.__main__:main",
+            "kappa2distribution=chisurf.gui.tools.kappa2_distribution.__main__:main",
+            "fps.json_edit=chisurf.gui.tools.structure.create_av_json.__main__:main",
+            "fret_calculator=chisurf.gui.tools.fret.calculator.__main__:main",
+            "f_test=chisurf.gui.tools.f_test.__main__:main",
+            "tttr_clsm_pixel_select=chisurf.gui.tools.tttr.clsm_pixel_select.__main__:main",
+            "tttr_convert=chisurf.gui.tools.tttr.convert.__main__:main",
+            "tttr_correlator=chisurf.gui.tools.tttr.correlate.__main__:main",
+            "tttr_decay_histogram=chisurf.gui.tools.tttr.decay.__main__:main",
+            "traj_align=chisurf.gui.tools.structure.align_trajectory.__main__:main",
+            "traj_convert=chisurf.gui.tools.structure.convert_trajectory.__main__:main",
+            "traj_fret_analysis=chisurf.gui.tools.structure.fret_trajectory.__main__:main",
+            "traj_join=chisurf.gui.tools.structure.join_trajectories.__main__:main",
+            "traj_energy_calculator=chisurf.gui.tools.structure.potential_energy.__main__:main",
+            "traj_remove_clashed_frames=chisurf.gui.tools.structure.remove_clashed_frames.__main__:main",
+            "traj_rotate_translate=chisurf.gui.tools.structure.rotate_translate_trajectory.__main__:main",
+            "traj_save_topology=chisurf.gui.tools.structure.save_topology.__main__:main",
         ]
     }
 )
+
+
+setup(**metadata)

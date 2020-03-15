@@ -12,6 +12,22 @@ ChiSurf supports Windows, Linux and MacOS. Pre-assembled packages are available
 for Windows and MacOS. Currently, ChiSurf is developed for Windows.
 
 
+Installation
+============
+
+conda install
+
+run from bash
+
+chisurf
+
+or run tools directly, e.g,
+
+clsm_pixel_select
+
+
+
+
 User-Documentation
 ==================
 

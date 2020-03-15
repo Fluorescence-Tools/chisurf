@@ -92,23 +92,83 @@ def kappasq_all(
     return k2scale, k2hist, k2
 
 
-@nb.jit()
+@nb.jit(nopython=True)
 def kappa_distance(
         d1: np.array,
         d2: np.array,
         a1: np.array,
         a2: np.array
 ) -> typing.Tuple[float, float]:
-    """Calculates the orientation-factor kappa
+    """Calculates the distance between the center of two dipoles and the
+    orientation-factor kappa of the dipoles
 
-    Calculates for the vectors d1 and d2 pointing to the donors and the vecotrs
-    a1 and a2 pointing to the ends of the acceptor dipole the orientation factor kappa
+    Calculates for the vectors d1 and d2 pointing to the donors and the vectors
+    a1 and a2 pointing to the ends of the acceptor dipole the orientation
+    factor kappa.
 
-    :param d1:
-    :param d2:
-    :param a1:
-    :param a2:
-    :return:
+    Parameters
+    ----------
+    d1 : numpy-array
+        Vector pointing to the first point of the dipole D
+    d2 : numpy-array
+        Vector pointing to the second point of the dipole D
+    a1 : numpy-array
+        Vector pointing to the first point of the dipole A
+    a2 : numpy-array
+        Vector pointing to the second point of the dipole A
+
+    Notes
+    -----
+    The four vectors defining the dipole of the donor :math:`\vec{r}_{D1}` and
+    :math:`\vec{r}_{D2}` specified by the parameters `d1` and `d2` and
+    :math:`\vec{r}_{A1}` and :math:`\vec{r}_{A2}` specified by the parameters
+    `a1` and `a1` are used to compute orientation factor :math:`kappa^2`
+    and the distance between the center of the two dipoles :math:`R_{DA}`.
+
+    The distance :math:`R_{DA}` between the dipole centers and :math:`kappa`
+    is calculated as follows:
+
+    ..math::
+
+        R_{D,21}=|\vec{r}_{D2} - \vec{r}_{D1}| \\
+        R_{A,21}=|\vec{r}_{A2} - \vec{r}_{A1}| \\
+        \hat{\mu}_{D}=1/R_{D,21} \cdot (\vec{r}_{D2}-\vec{r}_{D1}) \\
+        \hat{\mu}_{A}=1/R_{A,21} \cdot (\vec{r}_{A2}-\vec{r}_{A1}) \\
+        \vec{m}_{D}=\vec{r}_{D1}+1/2 \cdot \hat{\mu}_{D} \\
+        \vec{m}_{A}=\vec{r}_{A1}+1/2 \cdot \hat{\mu}_{A} \\
+        \vec{r}_{DA}=\vec{m}_{D}-\vec{m}_{A} \\
+        R_{DA}=|\vec{m}_{D}-\vec{m}_{A}| \\
+        \hat{\mu}_{DA}=\vec{r}_{DA} / R_{DA} \\
+        \kappa=\langle\mu_A,\mu_D\rangle-3\cdot\langle\mu_D,\mu_{DA}\rangle \cdot \langle\mu_A,\mu_{DA}\rangle
+
+
+    Returns
+    -------
+    tuple
+        distance between the center of the dipoles and the orientation factor
+        for the two dipoles kappa
+
+    Examples
+    --------
+    >>> import chisurf.fluorescence.anisotropy.kappa2
+    >>> donor_dipole = np.array(
+    ...      [
+    ...          [0.0, 0.0, 0.0],
+    ...          [1.0, 0.0, 0.0]
+    ...      ], dtype=np.float64
+    ... )
+    >>> acceptor_dipole = np.array(
+    ...     [
+    ...         [0.0, 0.5, 0.0],
+    ...         [0.0, 0.5, 1.0]
+    ...     ], dtype=np.float64
+    ... )
+    >>> chisurf.fluorescence.anisotropy.kappa2.kappa(
+    ...     donor_dipole,
+    ...     acceptor_dipole
+    ... ) 
+    (0.8660254037844386, 1.0000000000000002)
+
     """
     # coordinates of the dipole
     d11 = d1[0]
@@ -120,10 +180,11 @@ def kappa_distance(
     d23 = d2[2]
 
     # distance between the two end points of the donor
-    dD21 = sqrt((d11 - d21) * (d11 - d21) +
-                (d12 - d22) * (d12 - d22) +
-                (d13 - d23) * (d13 - d23)
-                )
+    dD21 = sqrt(
+        (d11 - d21) * (d11 - d21) +
+        (d12 - d22) * (d12 - d22) +
+        (d13 - d23) * (d13 - d23)
+    )
 
     # normal vector of the donor-dipole
     muD1 = (d21 - d11) / dD21
@@ -146,10 +207,11 @@ def kappa_distance(
     a23 = a2[2]
 
     # distance between the two end points of the acceptor
-    dA21 = sqrt((a11 - a21) * (a11 - a21) +
-                (a12 - a22) * (a12 - a22) +
-                (a13 - a23) * (a13 - a23)
-                )
+    dA21 = sqrt(
+        (a11 - a21) * (a11 - a21) +
+        (a12 - a22) * (a12 - a22) +
+        (a13 - a23) * (a13 - a23)
+    )
 
     # normal vector of the acceptor-dipole
     muA1 = (a21 - a11) / dA21
@@ -175,8 +237,11 @@ def kappa_distance(
     nRDA3 = RDA3 / dRDA
 
     # Orientation factor kappa2
-    kappa = muA1 * muD1 + muA2 * muD2 + muA3 * muD3 - 3.0 * (muD1 * nRDA1 + muD2 * nRDA2 + muD3 * nRDA3) * (
-            muA1 * nRDA1 + muA2 * nRDA2 + muA3 * nRDA3)
+    kappa = muA1 * muD1 + \
+            muA2 * muD2 + \
+            muA3 * muD3 - \
+            3.0 * (muD1 * nRDA1 + muD2 * nRDA2 + muD3 * nRDA3) * \
+            (muA1 * nRDA1 + muA2 * nRDA2 + muA3 * nRDA3)
     return dRDA, kappa
 
 
@@ -223,9 +288,8 @@ def s2delta(
 
     http://pubs.acs.org/doi/full/10.1021/ja105725e
 
-    Example
-    -------
-
+    Examples
+    --------
     >>> import numpy as np
     >>> r0 = 0.38
     >>> s2donor = 0.3
@@ -323,19 +387,17 @@ def p_isotropic_orientation_factor(
     Example
     -------
 
-    >>> import chisurf.fluorescence
+    >>> import chisurf.fluorescence.anisotropy
     >>> k2 = np.linspace(0.1, 4, 32)
     >>> p_k2 = chisurf.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(k2=k2)
     >>> p_k2
-    np.array(
-            [0.17922824, 0.11927194, 0.09558154, 0.08202693, 0.07297372,
-               0.06637936, 0.06130055, 0.05723353, 0.04075886, 0.03302977,
-               0.0276794, 0.02359627, 0.02032998, 0.01763876, 0.01537433,
-               0.01343829, 0.01176177, 0.01029467, 0.00899941, 0.00784718,
-               0.00681541, 0.00588615, 0.00504489, 0.0042798, 0.0035811,
-               0.00294063, 0.00235153, 0.001808, 0.00130506, 0.00083845,
-               0.0004045, 0.]
-        )
+    array([0.17922824, 0.11927194, 0.09558154, 0.08202693, 0.07297372,
+           0.06637936, 0.06130055, 0.05723353, 0.04075886, 0.03302977,
+           0.0276794 , 0.02359627, 0.02032998, 0.01763876, 0.01537433,
+           0.01343829, 0.01176177, 0.01029467, 0.00899941, 0.00784718,
+           0.00681541, 0.00588615, 0.00504489, 0.0042798 , 0.0035811 ,
+           0.00294063, 0.00235153, 0.001808  , 0.00130506, 0.00083845,
+           0.0004045 , 0.        ])
     """
     ks = np.sqrt(k2)
     s3 = np.sqrt(3.)
