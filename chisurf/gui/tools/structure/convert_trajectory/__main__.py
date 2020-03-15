@@ -1,11 +1,11 @@
 import sys
-from . import clsm_pixel_select
+from chisurf.gui.tools.structure.convert_trajectory import MDConverter
 from qtpy.QtWidgets import QApplication
 
 
 def main():
     app = QApplication(sys.argv)
-    gui = clsm_pixel_select.CLSMPixelSelect()
+    gui = MDConverter()
     gui.show()
     app.exec_()
 

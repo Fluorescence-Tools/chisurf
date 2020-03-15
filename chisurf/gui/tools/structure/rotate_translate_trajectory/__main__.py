@@ -3,8 +3,13 @@ from chisurf.gui.tools.structure.rotate_translate_trajectory import RotateTransl
 from qtpy import QtWidgets
 
 
-if __name__ == "__main__":
+def main():
     app = QtWidgets.QApplication(sys.argv)
     win = RotateTranslateTrajectoryWidget()
     win.show()
     sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()
+

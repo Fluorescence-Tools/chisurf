@@ -15,4 +15,4 @@ python generate-iconset.py resources/VolumeIcon.png
   "../../dist/$APP_NAME-Installer.dmg" \
   "../../dist/"
 ./fileicon set "../../dist/$APP_NAME-Installer.dmg" ./resources/VolumeIcon.icns
-#rm -rf ../../dist/$APP_NAME.app
+rm -rf ../../dist/$APP_NAME.app

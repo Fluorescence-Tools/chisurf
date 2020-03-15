@@ -10,7 +10,9 @@ import chisurf.gui.decorators
 import chisurf.gui.widgets
 
 
-class MDConverter(QtWidgets.QWidget):
+class MDConverter(
+    QtWidgets.QWidget
+):
 
     name = "MC-Converter"
 

@@ -1,11 +1,14 @@
 import sys
-from chisurf.gui.tools.broken import CorrelatorWidget
+from chisurf.gui.tools.tttr.correlate import CorrelateTTTR
 from qtpy.QtWidgets import QApplication
 
 
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
-    gui = CorrelatorWidget()
+    gui = CorrelateTTTR()
     gui.show()
     app.exec_()
 
+
+if __name__ == "__main__":
+    main()
