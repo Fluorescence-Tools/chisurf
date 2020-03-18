@@ -11,8 +11,11 @@ build:
   number: 0
   string: np{{ CONDA_NPY }}py{{ CONDA_PY }}_{{ GIT_BUILD_STR }}
   entry_points:
-    - chisurf=chisurf.__main__:main
-
+    {% for entry_point_type, entry_points in data.get("entry_points", dict()).items() -%}
+    {% for entry_point in entry_points -%}
+    - {{ entry_point }}
+    {% endfor %}
+    {% endfor %}
 requirements:
   host:
     - python {{ python }}
@@ -31,7 +34,6 @@ requirements:
   run:
     - python {{ python }}
     - typing_extensions
-    - nose
     - pyyaml >=5.0
     - deprecation
     - progressbar2
@@ -44,8 +46,8 @@ requirements:
     - scipy >=1.4.0
     - emcee >=2.2.1
     - mdtraj >=1.9.0
-    - ipython
-    - qtconsole
+    - ipython <=7.12.0
+    - qtconsole <=4.6.0
     - jupyter_client <6.0.0|>6.0.0
     - matplotlib >=3.0.0
     - qtpy >=1.8.0
