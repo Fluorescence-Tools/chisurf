@@ -42,7 +42,7 @@ before_install:
   - conda config --add channels salilab
   - conda update -q conda
   - conda info -a
-  - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git nose coverage numpy pyyaml
+  - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git nose coverage numpy pyyaml pysftp
   - source activate build-environment
   - git fetch --unshallow --tags --force
   - conda build conda-recipe --output-folder bld-dir
@@ -70,9 +70,15 @@ script:
       pgrep -f chisurf | awk '{print "kill -9 " $1}' | sh
     fi
 
-#after_success:
-#  - OS=$TRAVIS_OS_NAME-64
-#  - |
+after_success:
+  - OS=$TRAVIS_OS_NAME-64
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; # macOS
+    then
+      cd build_tools/osx
+      build-dmg
+      cd ..
+      python upload_sftp -f "../dist/*.dmg" -r "./downloads/macOS_daily.dmg"
 #    if [[ "$TRAVIS_BRANCH" == "master" ]];
 #    then
 #      anaconda upload bld-dir/**/chisurf*.tar.bz2
