@@ -22,7 +22,7 @@ install:
   - conda config --add channels salilab
   - conda config --add channels defaults
   - conda update -q conda
-  - conda install git conda-build anaconda-client numpy conda-verify python=3.7.3 pyyaml
+  - conda install git conda-build anaconda-client numpy conda-verify python=3.7.3 pyyaml pysftp
   - activate base
   - conda build conda-recipe --output-folder bld-dir
   - conda config --add channels "%CD%\bld-dir"
@@ -38,6 +38,12 @@ test_script:
 #deploy_script:
 #  - if not "%APPVEYOR_REPO_BRANCH%" == "master" exit 0
 #  - anaconda upload C:\Miniconda3-x64\envs\build\conda-bld\win-64\chisurf-*.tar.bz2
+### scripts to run after tests
+deploy_script:
+  - cd build_tools/win
+  - build-setup.bat
+  - cd ..
+  - python upload_sftp -f "../dist/*.exe" -r "./downloads/setup_daily.exe"
 
 build: off
 
