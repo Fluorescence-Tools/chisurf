@@ -1,6 +1,6 @@
 #!/bin/sh
 export APP_NAME=ChiSurf
-./build-osx-app.sh -f=../../environment.yml -i=../../chisurf/gui/resources/icons/cs_logo.png -n=$APP_NAME -m=chisurf -p=../../ -o=../../dist
+./build-osx-app.sh -f=../../environment.yml -i=../../chisurf/gui/resources/icons/cs_logo.png -n=$APP_NAME -m=chisurf -p=../../ -o=../../dist/osx
 test -f ../dist/$APP_NAME-Installer.dmg && rm ../dist/$APP_NAME-Installer.dmg
 python generate-iconset.py resources/VolumeIcon.png
 ./create-dmg/create-dmg \
@@ -12,7 +12,7 @@ python generate-iconset.py resources/VolumeIcon.png
   --hide-extension "$APP_NAME.app" \
   --app-drop-link 600 185 \
   --volicon resources/VolumeIcon.icns \
-  "../../dist/$APP_NAME-Installer.dmg" \
-  "../../dist/"
+  "../../dist/osx/$APP_NAME-Installer.dmg" \
+  "../../dist/osx/"
 ./fileicon set "../../dist/$APP_NAME-Installer.dmg" ./resources/VolumeIcon.icns
-rm -rf ../../dist/$APP_NAME.app
+rm -rf ../../dist/osx/$APP_NAME.app

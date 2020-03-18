@@ -95,6 +95,7 @@ mkdir "$APP_FOLDER"
 source ~/miniconda3/etc/profile.d/conda.sh
 conda env create -f $CONDA_ENVIRONMENT_YAML --prefix "$APP_FOLDER/Contents" --force
 conda activate "$APP_FOLDER/Contents"
+conda install -y nomkl jinja2
 mkdir "$APP_FOLDER/Contents/MacOS"
 mkdir "$APP_FOLDER/Contents/Resources"
 
@@ -109,7 +110,13 @@ $SCRIPT_DIR/fileicon set "$APP_FOLDER" "$SCRIPT_DIR/resources/AppIcon.icns"
 
 # update the Info.plist file and create a entry point
 cd $PYTHON_MODULE_PATH
-$SCRIPT_DIR/create_app_plist.py --module $PYTHON_MODULE --output $APP_FOLDER/Contents/Info.plist -e "$APP_NAME" -i $SCRIPT_DIR/resources/AppIcon.icns
+$SCRIPT_DIR/create_app_plist.py \
+  --module $PYTHON_MODULE \
+  --output $APP_FOLDER/Contents/Info.plist \
+  --executable $APP_NAME \
+  -i $SCRIPT_DIR/resources/AppIcon.icns \
+  -p $SCRIPT_DIR/plist_template \
+  -t $SCRIPT_DIR/launch_template
 cd $SCRIPT_DIR
 
 echo Remove files and folders from content folder: "$CONTENT_FOLDER"

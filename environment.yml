@@ -20,8 +20,8 @@ dependencies:
     - scipy >=1.4.0
     - emcee >=2.2.1
     - mdtraj >=1.9.0
-    - ipython
-    - qtconsole
+    - ipython <=7.12.0
+    - qtconsole <=4.6.0
     # jupyter_client 6.0.0 causes an error
     # File "C:\Miniconda3\envs\chisurf\lib\site-packages\jupyter_client\client.py", line 200, in control_channel
     # socket, self.session, self.ioloop

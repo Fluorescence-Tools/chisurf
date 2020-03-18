@@ -8,6 +8,7 @@ import pathlib
 import os
 import stat
 import shutil
+import jinja2
 
 # append the local path and one above to be able to
 # able to work with the modules in the current directory
@@ -15,51 +16,6 @@ import shutil
 sys.path.append(
     os.getcwd()
 )
-
-template = """<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
-    <key>CFBundleDisplayName</key>
-    <string></string>
-    <key>CFBundleExecutable</key>
-    <string></string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>181208</string>
-    <key>CFBundleName</key>
-    <string></string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleShortVersionString</key>
-    <string></string>
-    <key>CFBundleSignature</key>
-    <string>????</string>
-    <key>CFBundleVersion</key>
-    <string></string>
-    <key>LSMinimumSystemVersion</key>
-    <string>10.11.0</string>
-    <key>LSUIElement</key>
-    <false/>
-    <key>NSAppTransportSecurity</key>
-    <dict>
-        <key>NSAllowsArbitraryLoads</key>
-        <true/>
-    </dict>
-    <key>NSHighResolutionCapable</key>
-    <true/>
-    <key>NSHumanReadableCopyright</key>
-    <string></string>
-    <key>NSMainNibFile</key>
-    <string>MainMenu</string>
-    <key>NSPrincipalClass</key>
-    <string>NSApplication</string>
-    <key>CFBundleIconFile</key>
-    <string></string>
-</dict>
-</plist>
-""".encode('utf-8')
 
 
 if __name__ == "__main__":
@@ -81,14 +37,21 @@ if __name__ == "__main__":
         '--template',
         metavar='template',
         type=str,
-        required=False,
+        required=True,
+        help='Template launcher file.'
+    )
+
+    parser.add_argument(
+        '-p',
+        '--plist_template',
+        type=str,
+        required=True,
         help='Template .plist file.'
     )
 
     parser.add_argument(
         '-o',
         '--output',
-        metavar='output',
         type=str,
         help='Output .plist file.'
     )
@@ -142,14 +105,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.template is not None:
-        template_file = args.template
-        template_bytes = open(
-            file=template_file, mode='rb'
-        ).read()
-    else:
-        template_file = None
-        template_bytes = template
+    template_file = args.template
+    template_bytes = open(
+        file=args.plist_template, mode='rb'
+    ).read()
 
     module_string = args.module
     module = importlib.import_module(module_string)
@@ -227,21 +186,19 @@ if __name__ == "__main__":
             value=target,
             fp=fp
         )
-    script = """#!/usr/bin/env bash
-export LC_ALL=en_US.UTF-8
-export LANG=en_US.UTF-8
-script_dir=$(dirname "$(dirname "$0")")
-# Disable user site packages
-export PYTHONNOUSERSITE=1
-export PATH="$script_dir:$script_dir/bin:$PATH"
-export QT_PLUGIN_PATH="$script_dir/plugins"
-export PYTHONPATH="$PYTHONPATH:$script_dir"
-cd $script_dir
-python -m %s $@
-    """ % module_string
+    launch_template = ""
+    with open(template_file, 'r') as fp:
+        launch_template += fp.read()
+    t = jinja2.Template(
+        launch_template
+    )
+    launch_script = t.render(app_name=module_string)
     executable_file = plist_path / "MacOS" / executable
+    print("LAUNCH FILE")
+    print("-----------")
+    print(launch_script)
     with open(executable_file, 'w') as fp:
-        fp.write(script)
+        fp.write(launch_script)
 
     st = os.stat(str(executable_file))
     os.chmod(

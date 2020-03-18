@@ -25,10 +25,12 @@ __copyright__ = "Copyright (C) 2020 Thomas-Otavio Peulen"
 __credits__ = ["Thomas-Otavio Peulen"]
 __maintainer__ = "Thomas-Otavio Peulen"
 __email__ = "thomas.otavio.peulen@gmail.com"
+__url__ = 'https://fluorescence-tools.github.io/chisurf/'
 __license__ = 'GPL2.1'
 __status__ = "Dev"
 __description__ = "ChiSurf is an interactive global analysis platform for " \
                   "time-resolved fluorescence data."
+__app_id__ = "F25DCFFA-1234-4643-BC4F-2C3A20495937"
 
 
 fits = list()

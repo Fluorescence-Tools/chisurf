@@ -7,7 +7,7 @@
 An distributable dmg file (including the .app) can be build using 
 
 ```
-create-dist-dmg
+build-dmg
 ```
 
 in the build_tools/osx folder. The command will create a new conda
@@ -23,11 +23,21 @@ in a .dmg image that is placed in the ``dist`` folder.
 
 Windows versions are bundled in setup.exe files created using innosetup. The
 setup files will install a conda environment that is used to run the chisurf
-module.
- 
-see:
+module. A setup file is created by calling
 
-http://www.entropyreduction.al/python/distutils/2017/09/21/bundle-python-app-w-inno-setup.html
+```
+build-setup.bat
+```
+
+The script will create a new conda environment in the `dist/win` for 
+python=3.7.3. Next, a conda package of chisurf is build using the conde-recipe
+located in the folder `conda-recipe` of the project root. The `chisurf` package
+is installed to the conda environemnt in `dist/win`. Next, using jinja2 the 
+file `setup_tample.iss` is written to the file `setup.iss` using
+`make_inno_setup.py`. The script `make_inno_setup.py` will read details from 
+the setup file `setup.py`, i.e., the version number, the entry points, etc. 
+Finnaly, innosetup reads `setup.iss` and writes a installation file
+`setup_version_number.exe` to `dist/`.
 
 ## Linux
 
