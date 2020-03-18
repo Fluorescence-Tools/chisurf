@@ -19,6 +19,4 @@ call conda deactivate
 call conda activate base
 
 REM Create an Installer with Inno Setup
-"C:\Program Files (x86)\Inno Setup 6\Compil32.exe" /cc setup.iss
-cd ..
-python upload_sftp.py -f "../dist/*.exe" -r "./downloads/setup_daily.exe"
+"C:\Program Files (x86)\Inno Setup 5\Compil32.exe" /cc setup.iss

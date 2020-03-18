@@ -73,7 +73,7 @@ script:
 after_success:
   - OS=$TRAVIS_OS_NAME-64
   - |
-    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; # macOS
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]];
     then
       cd build_tools/osx
       build-dmg
