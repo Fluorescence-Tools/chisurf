@@ -22,34 +22,36 @@ install:
   - conda config --add channels salilab
   - conda config --add channels defaults
   - conda update -q conda
+  # conda-build is used to build the package
+  # anaconda-client is needed to upload a conda package to anaconda cloud
+  # numpy is needed by the setup.py script
+  # chisurf (20.03.18) is locked to python 3.7.3 due to a pyqt incompatability
+  # The setup.py script reads information from chisurf that depends on pyyaml.
+  # pysftp is used to upload a distribution to the sftp server
   - conda install git conda-build anaconda-client numpy conda-verify python=3.7.3 pyyaml pysftp
   - activate base
   #- conda build conda-recipe --output-folder C:\projects\chisurf\bld-dir
   - conda build conda-recipe
   #- conda config --add channels C:\projects\chisurf\bld-dir
 
-# use conda build
 test_script:
+  # use conda base to install the conda package as a test
   - conda install nose coverage chisurf python=3.7.3 -c local
-  # move folder so that the installed chisurf is used
+  # move module folder so that the installed conda package is used
   - mv chisurf _chisurf
   - nosetests .\test\
 
-#### scripts to run after tests
-#deploy_script:
-#  - if not "%APPVEYOR_REPO_BRANCH%" == "master" exit 0
-#  - anaconda upload C:\Miniconda3-x64\envs\build\conda-bld\win-64\chisurf-*.tar.bz2
-### scripts to run after tests
 deploy_script:
+  - if not "%APPVEYOR_REPO_BRANCH%" == "master" anaconda upload C:\Miniconda3-x64\envs\build\conda-bld\win-64\chisurf-*.tar.bz2
   - |
-    - if not "%APPVEYOR_SCHEDULED_BUILD%"=="" (
-          echo Schedueled build - creating a daily setup...
-          activate base
-          cd C:\projects\chisurf\build_tools\win
-          build-setup.bat
-          cd C:\projects\chisurf\build_tools
-          python upload_sftp.py -f "../dist/*.exe" -r "./downloads/setup_daily.exe"
-      )
+    if not "%APPVEYOR_SCHEDULED_BUILD%"=="" (
+    echo Schedueled build - creating a daily setup...
+    activate base
+    cd C:\projects\chisurf\build_tools\win
+    build-setup.bat
+    cd C:\projects\chisurf\build_tools
+    python upload_sftp.py -f "../dist/*.exe" -r "./downloads/setup_daily.exe"
+    )
 
 build: off
 
