@@ -41,11 +41,15 @@ test_script:
 #  - anaconda upload C:\Miniconda3-x64\envs\build\conda-bld\win-64\chisurf-*.tar.bz2
 ### scripts to run after tests
 deploy_script:
-  - activate base
-  - cd C:\projects\chisurf\build_tools\win
-  - build-setup.bat
-  - cd C:\projects\chisurf\build_tools\
-  - python upload_sftp -f "../dist/*.exe" -r "./downloads/setup_daily.exe"
+  - |
+    - if not "%APPVEYOR_SCHEDULED_BUILD%"=="" (
+          echo Schedueled build - creating a daily setup...
+          activate base
+          cd C:\projects\chisurf\build_tools\win
+          build-setup.bat
+          cd C:\projects\chisurf\build_tools\
+          python upload_sftp -f "../dist/*.exe" -r "./downloads/setup_daily.exe"
+      )
 
 build: off
 
