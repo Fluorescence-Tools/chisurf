@@ -58,11 +58,16 @@ def kappasq_all(
 ) -> typing.Tuple[np.array, np.array, np.array]:
     """
 
-    :param sD2:
-    :param sA2:
-    :param n:
-    :param m:
-    :return:
+    Parameters
+    ----------
+    sD2
+    sA2
+    n
+    m
+
+    Returns
+    -------
+
     """
     k2 = np.zeros((n, m))
     k2scale = np.arange(0, 4, 0.05)
@@ -117,6 +122,12 @@ def kappa_distance(
     a2 : numpy-array
         Vector pointing to the second point of the dipole A
 
+    Returns
+    -------
+    tuple
+        distance between the center of the dipoles and the orientation factor
+        for the two dipoles kappa
+
     Notes
     -----
     The four vectors defining the dipole of the donor :math:`\vec{r}_{D1}` and
@@ -140,13 +151,6 @@ def kappa_distance(
         R_{DA}=|\vec{m}_{D}-\vec{m}_{A}| \\
         \hat{\mu}_{DA}=\vec{r}_{DA} / R_{DA} \\
         \kappa=\langle\mu_A,\mu_D\rangle-3\cdot\langle\mu_D,\mu_{DA}\rangle \cdot \langle\mu_A,\mu_{DA}\rangle
-
-
-    Returns
-    -------
-    tuple
-        distance between the center of the dipoles and the orientation factor
-        for the two dipoles kappa
 
     Examples
     --------
@@ -271,22 +275,31 @@ def kappa(
 
 
 def s2delta(
-        r_0: float,
-        s2donor: float,
-        s2acceptor: float,
-        r_inf_AD: float
+        s2_donor: float,
+        s2_acceptor: float,
+        r_inf_AD: float,
+        r_0: float = 0.4
 ) -> float:
-    """calculate delta given residual anisotropies
+    """Calculate s2delta from the residual anisotropies of the donor and acceptor
 
-    :param r_0:
-    :param s2donor: -np.sqrt(self.r_Dinf/self.r_0)
-    :param s2acceptor: np.sqrt(self.r_Ainf/self.r_0)
-    :param r_inf_AD:
+    Parameters
+    ----------
+    r_0 : float
+        Fundamental anisotropy, the anisotropy of the dyes at time zero (
+        default value 0.4)
+    s2donor : float
+        The second rank oder parameter of the donor dye. The second rank oder
+        parameter can be computed using the dye's residual anisotropy (see
+        Notes below)
+    s2_acceptor : float
+        The second rank oder parameter of the direct excited acceptor dye.
+    r_inf_AD : float
+        The residual anisotropy on the acceptor excited by the donor dye.
 
-    Accurate Distance Determination of Nucleic Acids via Foerster Resonance
-    Energy Transfer: Implications of Dye Linker Length and Rigidity
-
-    http://pubs.acs.org/doi/full/10.1021/ja105725e
+    Returns
+    -------
+    float
+        s2delta [1]_ eq. 10
 
     Examples
     --------
@@ -298,8 +311,29 @@ def s2delta(
     >>> s2delta(r_0=r0, s2donor=s2donor, s2acceptor=s2acceptor, r_inf_AD=r_inf_AD)
     1.4619883040935675
 
+    Notes
+    -----
+    The parameters `s2_donor` and `s2_acceptor`, which correspond to :math:`S^{(2)}_D`
+    and :math:`S^{(2)}_A` are calculated using the dye's residual anisotropy [1]_
+
+    ..math::
+
+        S^{(2)}_D = - /sqrt{/frac{r_{D,inf}}{r_{0,D}}} \\
+        S^{(2)}_D = /sqrt{/frac{r_{A,inf}}{r_{0,A}}} \\
+
+    References
+    ----------
+
+    .. [1] Simon Sindbert, Stanislav Kalinin, Hien Nguyen, Andrea Kienzler,
+    Lilia Clima, Willi Bannwarth, Bettina Appel, Sabine Mueller, Claus A. M.
+    Seidel, "Accurate Distance Determination of Nucleic Acids via Foerster
+    Resonance Energy Transfer: Implications of Dye Linker Length and Rigidity"
+    vol. 133, pp. 2463-2480, J. Am. Chem. Soc., 2011
+
+    http://pubs.acs.org/doi/full/10.1021/ja105725e
+
     """
-    delta = r_inf_AD/(r_0*s2donor*s2acceptor)
+    delta = r_inf_AD/(r_0*s2_donor*s2_acceptor)
     return delta
 
 
