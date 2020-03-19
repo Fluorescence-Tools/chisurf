@@ -7,7 +7,7 @@ import tables
 import chisurf.settings
 
 from chisurf.curve import Curve
-from chisurf.fluorescence.av.dynamic import DiffusionSimulation
+from chisurf.structure.av.dynamic import DiffusionSimulation
 from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 
 

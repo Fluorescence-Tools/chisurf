@@ -96,12 +96,19 @@ def vm_rt_to_vv_vh(
     is defined by the anisotropy spectrum, :math:`(b_i,\rho_i)_i`.
 
     The returned parallel, :math:`f_{VV,m}`, and perpendicular :math:`f_{VH,m}`
-    decays account for mixing by the factors :math:`l_1` and :math:`l_2`
+    decays account for mixing by the factors :math:`l_1` and :math:`l_2` [1]_
 
     .. math::
 
     f_{VV,m}(t) = (1 - l_1) \cdot f_{VV}(t) + l_1 \cdot f_{VH}(t)
     f_{VH,m}(t) = l_2 \cdot f_{VV}(t) + (1-l_2) \cdot f_{VH}(t)
+
+    References
+    ----------
+
+    .. [1] Masanori Koshioka, Keiji Sasaki, Hiroshi Masuhara, "Time-Dependent
+    Fluorescence Depolarization Analysis in Three-Dimensional
+    Microspectroscopy" vol. 49, pp. 224-228, Applied Spectroscopy, 1995
 
     """
     rt = np.zeros_like(vm)

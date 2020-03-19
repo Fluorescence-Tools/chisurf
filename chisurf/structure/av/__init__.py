@@ -39,7 +39,7 @@ class BasicAV(object):
     >>> import chisurf.structure
     >>> import chisurf.fluorescence
     >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-    >>> av = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
+    >>> av = chisurf.structure.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
 
     """
 
@@ -173,7 +173,7 @@ class BasicAV(object):
 
         >>> import chisurf
         >>> structure = chisurf.structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> av = chisurf.structure.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
         >>> av.save('c:/temp/test', reading_routine='xyz')
         >>> av.save('c:/temp/test', reading_routine='dx')
 
@@ -218,8 +218,8 @@ class BasicAV(object):
 
         >>> import chisurf
         >>> structure = chisurf.structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av1 = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
-        >>> av2 = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=577, atom_name='CB')
+        >>> av1 = chisurf.structure.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> av2 = chisurf.structure.av.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av1.dRmp(av2)
         """
         return functions.dRmp(self, av)
@@ -239,8 +239,8 @@ class BasicAV(object):
 
         >>> import chisurf
         >>> structure = chisurf.structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av1 = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
-        >>> av2 = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=577, atom_name='CB')
+        >>> av1 = chisurf.structure.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> av2 = chisurf.structure.av.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av1.dRDA(av2)
         """
         return functions.RDAMean(self, av, **kwargs)
@@ -259,8 +259,8 @@ class BasicAV(object):
 
         >>> import chisurf
         >>> structure = chisurf.structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av1 = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
-        >>> av2 = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=577, atom_name='CB')
+        >>> av1 = chisurf.structure.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> av2 = chisurf.structure.av.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av1.widthRDA(av2)
 
         """
@@ -281,8 +281,8 @@ class BasicAV(object):
 
         >>> import chisurf
         >>> structure = chisurf.structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av1 = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
-        >>> av2 = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=577, atom_name='CB')
+        >>> av1 = chisurf.structure.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> av2 = chisurf.structure.av.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av1.dRDAE(av2)
         """
         return functions.RDAMeanE(self, av, forster_radius)
@@ -308,8 +308,8 @@ class BasicAV(object):
 
         >>> import chisurf
         >>> structure = chisurf.structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av1 = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
-        >>> av2 = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=577, atom_name='CB')
+        >>> av1 = chisurf.structure.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> av2 = chisurf.structure.av.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> y, x = av1.pRDA(av2)
 
         """
@@ -341,16 +341,16 @@ class ACV(BasicAV):
     >>> import chisurf.structure
     >>> structure = chisurf.structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
     >>> trapped_fraction = 0.5
-    >>> av1 = chisurf.fluorescence.av.ACV(structure, residue_seq_number=18, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
-    >>> av2 = chisurf.fluorescence.av.ACV(structure, residue_seq_number=577, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
+    >>> av1 = chisurf.structure.av.ACV(structure, residue_seq_number=18, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
+    >>> av2 = chisurf.structure.av.ACV(structure, residue_seq_number=577, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
     >>> av1.save('c:/temp/test_05', reading_routine='dx')
     >>> y1, x1 = av1.pRDA(av2)
 
     >>> import chisurf
     >>> structure = chisurf.structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
     >>> trapped_fraction = 0.9
-    >>> av1 = chisurf.fluorescence.av.ACV(structure, residue_seq_number=18, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
-    >>> av2 = chisurf.fluorescence.av.ACV(structure, residue_seq_number=577, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
+    >>> av1 = chisurf.structure.av.ACV(structure, residue_seq_number=18, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
+    >>> av2 = chisurf.structure.av.ACV(structure, residue_seq_number=577, atom_name='CB', contact_volume_trapped_fraction=trapped_fraction)
     >>> av1.save('c:/temp/test_09', reading_routine='dx')
     >>> y2, x2 = av1.pRDA(av2)
 
@@ -518,7 +518,7 @@ class DynamicAV(BasicAV):
         >>> import chisurf.fluorescence
         >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
         >>> free_diffusion = 8.0
-        >>> av = chisurf.fluorescence.av.DynamicAV(structure, residue_seq_number=18, atom_name='CB', slow_factor=0.9, contact_distance=1.5, diffusion_coefficients=free_diffusion)
+        >>> av = chisurf.structure.av.DynamicAV(structure, residue_seq_number=18, atom_name='CB', slow_factor=0.9, contact_distance=1.5, diffusion_coefficients=free_diffusion)
         >>> p.imshow(av.bounds[:,:,20])
         >>> p.show()
         >>> p.imshow(av.diffusion_map[:,:,20])
@@ -573,7 +573,7 @@ class DynamicAV(BasicAV):
         >>> import chisurf.fluorescence
         >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
         >>> free_diffusion = 8.0
-        >>> av = chisurf.fluorescence.av.DynamicAV(structure, residue_seq_number=577, atom_name='CB', slow_factor=0.985, contact_distance=3.5, diffusion_coefficients=free_diffusion, simulation_grid_resolution=2.0)
+        >>> av = chisurf.structure.av.DynamicAV(structure, residue_seq_number=577, atom_name='CB', slow_factor=0.985, contact_distance=3.5, diffusion_coefficients=free_diffusion, simulation_grid_resolution=2.0)
         >>> p.imshow(av.diffusion_map[:,:,20])
         >>> p.show()
         >>> p.imshow(av.density[:,:,20])
@@ -611,7 +611,7 @@ class DynamicAV(BasicAV):
         >>> import chisurf.structure
         >>> import chisurf.fluorescence
         >>> structure = mfm.structure.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av = chisurf.fluorescence.av.DynamicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> av = chisurf.structure.av.DynamicAV(structure, residue_seq_number=18, atom_name='CB')
         >>> p.imshow(av.quenching_rate_map[:,:,20])
         >>> p.show()
         >>> p.hist(av.quenching_rate_map.flatten(), bins=np.arange(0.01, av.fluorescence_lifetime, 0.5))
@@ -651,8 +651,8 @@ class DynamicAV(BasicAV):
         >>> import chisurf.structure
         >>> import chisurf.fluorescence
         >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av_d = chisurf.fluorescence.av.DynamicAV(structure, residue_seq_number=18, atom_name='CB')
-        >>> av_a = chisurf.fluorescence.av.DynamicAV(structure, residue_seq_number=577, atom_name='CB')
+        >>> av_d = chisurf.structure.av.DynamicAV(structure, residue_seq_number=18, atom_name='CB')
+        >>> av_a = chisurf.structure.av.DynamicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av_d.update_fret_map(av_a)
         #
         >>> rda = (av_d._fret_rate_map.flatten() * av_d.fluorescence_lifetime) ** (-1./6.) * 52.
@@ -705,7 +705,7 @@ class DynamicAV(BasicAV):
         >>> import chisurf.fluorescence
         >>> import chisurf.curve
         >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> av = chisurf.fluorescence.av.DynamicAV(structure, residue_seq_number=577, atom_name='CB')
+        >>> av = chisurf.structure.av.DynamicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> p.imshow(av.density[:,:,20])
         >>> p.show()
         >>> t_step = 0.0141

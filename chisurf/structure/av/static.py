@@ -56,7 +56,7 @@ def calculate_1_radius(
     >>> residue_number = 18
     >>> atom_name = 'CB'
     >>> attachment_atom = 1
-    >>> av = chisurf.fluorescence.av.BasicAV(pdb_filename, attachment_atom=1, verbose=True)
+    >>> av = chisurf.structure.av.BasicAV(pdb_filename, attachment_atom=1, verbose=True)
 
     Calculating accessible volume using provided Structure object
 
@@ -64,7 +64,7 @@ def calculate_1_radius(
     >>> import chisurf.structure
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = chisurf.structure.Structure(pdb_filename)
-    >>> av = chisurf.fluorescence.av.BasicAV(structure, attachment_atom=1, verbose=True)
+    >>> av = chisurf.structure.av.BasicAV(structure, attachment_atom=1, verbose=True)
     Calculating accessible volume
     -----------------------------
     Loading PDB
@@ -87,7 +87,7 @@ def calculate_1_radius(
     >>> import chisurf.structure
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = chisurf.structure.Structure(pdb_filename)
-    >>> av = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=11, atom_name='CB', verbose=True)
+    >>> av = chisurf.structure.av.BasicAV(structure, residue_seq_number=11, atom_name='CB', verbose=True)
 
     If save_av is True the calculated accessible volume is save to disk. The filename of the calculated
     accessible volume is determined by output_file
@@ -96,7 +96,7 @@ def calculate_1_radius(
     >>> import chisurf.structure
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> structure = chisurf.structure.Structure(pdb_filename)
-    >>> av = chisurf.fluorescence.av.BasicAV(structure, residue_seq_number=11, atom_name='CB', verbose=True, save_av=True, output_file='test')
+    >>> av = chisurf.structure.av.BasicAV(structure, residue_seq_number=11, atom_name='CB', verbose=True, save_av=True, output_file='test')
     Calculating accessible volume
     -----------------------------
     Loading PDB
@@ -504,7 +504,7 @@ def calc_weights_from_traj(
      >>> import mdtraj as md
      >>> import pylab as p
      >>> import chisurf.fluorescence
-     >>> from chisurf.fluorescence.av.static import calc_av1_py, calc_weights_from_traj
+     >>> from chisurf.structure.av.static import calc_av1_py, calc_weights_from_traj
      >>> traj = md.load('e:/simulations_free_dye/t_join.h5')
 
      >>> res_id = 3  # the chromophore
@@ -567,7 +567,7 @@ def calc_distance_from_traj(traj, res_id, atom_name, chain_id, ng, dg, r0_res, r
      >>> import mdtraj as md
      >>> import pylab as p
      >>> import chisurf.settings as mfm
-     >>> from chisurf.fluorescence.av.static import calc_av1_py, calc_weights_from_traj
+     >>> from chisurf.structure.av.static import calc_av1_py, calc_weights_from_traj
      >>> traj = md.load('e:/simulations_free_dye/t_join.h5')
 
      >>> res_id = 3  # the chromophore

@@ -13,6 +13,8 @@ provides a set of functions and classes to work with structures and trajectories
 from chisurf.structure.structure import *
 from chisurf.structure.trajectory import *
 from chisurf.structure.protein import *
+import chisurf.structure.av
+
 #from . import potential
 #from . import labeled_structure
 

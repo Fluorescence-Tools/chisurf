@@ -246,10 +246,10 @@ class TransientDecayGenerator(
             k_quench_protein=kwargs.get('k_quench_protein', 5.0),
         )
         self.verticalLayout_11.addWidget(self.protein_quenching)
-        self.dye_parameter = chisurf.fluorescence.av.dynamic.DyeParameterWidget(**kwargs)
+        self.dye_parameter = chisurf.structure.av.dynamic.DyeParameterWidget(**kwargs)
         self.verticalLayout_14.addWidget(self.dye_parameter)
 
-        self.sticking = chisurf.fluorescence.av.dynamic.StickingParameterWidget()
+        self.sticking = chisurf.structure.av.dynamic.StickingParameterWidget()
         self.verticalLayout_13.addWidget(self.sticking)
 
         # # User-interface

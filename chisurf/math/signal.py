@@ -4,7 +4,8 @@ from chisurf import typing
 import numpy as np
 import scipy.stats as st
 
-import chisurf.curve
+# import statements that are only for annotation
+# import chisurf.curve
 
 window_function_types = ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
 
