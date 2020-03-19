@@ -64,7 +64,6 @@ script:
       coverage xml
       python-codacy-coverage -r coverage.xml
     else
-      conda install chisurf --use-local
       chisurf&
       sleep 120
       pgrep -f chisurf | awk '{print "kill -9 " $1}' | sh
@@ -76,7 +75,7 @@ after_success:
     if [[ "$TRAVIS_OS_NAME" == "osx" ]];
     then
       cd build_tools/osx
-      build-dmg
+      ./build-dmg
       cd ..
       python upload_sftp -f "../dist/*.dmg" -r "./downloads/macOS_daily.dmg"
 #    if [[ "$TRAVIS_BRANCH" == "master" ]];
