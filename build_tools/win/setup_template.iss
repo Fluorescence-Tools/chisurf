@@ -35,7 +35,9 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: ".\icons\*.ico"; DestDir: "{app}\icons"
 Source: "chisurf.cmd"; DestDir: "{app}"
 Source: "{{ SourceDir }}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{{ vc_runtime_path }}\*"; DestDir: {tmp}; Flags: deleteafterinstall
+
+;uncomment below to add VC Runtimes
+;Source: "{{ vc_runtime_path }}\*"; DestDir: {tmp}; Flags: deleteafterinstall
 Source: "fix_shebangs.py"; DestDir: "{app}";
 
 [Icons]
@@ -47,8 +49,10 @@ Name: "{group}\{cm:UninstallProgram,{{ AppName }}}"; Filename: "{uninstallexe}"
 Type: files; Name: {app}\install.log
 
 [Run]
-{% for vc_runtime in vc_runtimes %}Filename: {tmp}\{{ vc_runtime }}; Parameters: /q
-{% endfor %}
+;uncomment below to add VC Runtimes
+;{% for vc_runtime in vc_runtimes %}Filename: {tmp}\{{ vc_runtime }}; Parameters: /q
+;{% endfor %}
+
 ; We do not want the user to have the option of avoiding this script, so no 'postinstall; flag
 {% for entry_point in gui_entry_points %} Filename:{app}\python.exe; WorkingDir:{app}; Parameters: "fix_shebangs.py {{ entry_point }}"; Flags: runascurrentuser runmaximized
 {% endfor %}
