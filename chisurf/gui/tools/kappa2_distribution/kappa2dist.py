@@ -164,7 +164,12 @@ class Kappa2Dist(QtWidgets.QWidget):
 
     @property
     def delta(self) -> float:
-        return s2delta(self.r_0, self.SD2, self.SA2, self.r_ADinf)
+        return s2delta(
+            s2_donor=self.SD2,
+            s2_acceptor=self.SA2,
+            r_inf_AD=self.r_ADinf,
+            r_0=self.r_0
+        )
 
     @property
     def k2_true(self) -> float:
