@@ -24,12 +24,13 @@ install:
   - conda update -q conda
   - conda install git conda-build anaconda-client numpy conda-verify python=3.7.3 pyyaml pysftp
   - activate base
-  - conda build conda-recipe --output-folder C:\projects\chisurf\bld-dir
-  - conda config --add channels C:\projects\chisurf\bld-dir
+  #- conda build conda-recipe --output-folder C:\projects\chisurf\bld-dir
+  - conda build conda-recipe
+  #- conda config --add channels C:\projects\chisurf\bld-dir
 
 # use conda build
 test_script:
-  - conda install nose coverage chisurf python=3.7.3
+  - conda install nose coverage chisurf python=3.7.3 -c local
   # move folder so that the installed chisurf is used
   - mv chisurf _chisurf
   - nosetests .\test\
@@ -41,7 +42,6 @@ test_script:
 ### scripts to run after tests
 deploy_script:
   - activate base
-  - conda config --add channels C:\projects\chisurf\bld-dir
   - cd C:\projects\chisurf\build_tools\win
   - build-setup.bat
   - cd C:\projects\chisurf\build_tools\
