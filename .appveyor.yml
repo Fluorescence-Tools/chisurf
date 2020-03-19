@@ -24,8 +24,8 @@ install:
   - conda update -q conda
   - conda install git conda-build anaconda-client numpy conda-verify python=3.7.3 pyyaml pysftp
   - activate base
-  - conda build conda-recipe --output-folder bld-dir
-  - conda config --add channels "%CD%\bld-dir"
+  - conda build conda-recipe --output-folder C:\projects\chisurf\bld-dir
+  - conda config --add channels C:\projects\chisurf\bld-dir
 
 # use conda build
 test_script:
@@ -40,9 +40,11 @@ test_script:
 #  - anaconda upload C:\Miniconda3-x64\envs\build\conda-bld\win-64\chisurf-*.tar.bz2
 ### scripts to run after tests
 deploy_script:
-  - cd build_tools/win
+  - activate base
+  - conda config --add channels C:\projects\chisurf\bld-dir
+  - cd C:\projects\chisurf\build_tools\win
   - build-setup.bat
-  - cd ..
+  - cd C:\projects\chisurf\build_tools\
   - python upload_sftp -f "../dist/*.exe" -r "./downloads/setup_daily.exe"
 
 build: off
