@@ -42,7 +42,7 @@ test_script:
   - nosetests .\test\
 
 deploy_script:
-  - if not "%APPVEYOR_REPO_BRANCH%" == "master" anaconda upload C:\Miniconda3-x64\envs\build\conda-bld\win-64\chisurf-*.tar.bz2
+  - if "%APPVEYOR_REPO_BRANCH%" != "master" anaconda -t %ANACONDA_API_TOKEN% -u tpeulen -l nightly upload C:\Miniconda3-x64\conda-bld\win-64\chisurf-*.tar.bz2
   - |
     if not "%APPVEYOR_SCHEDULED_BUILD%"=="" (
     echo Schedueled build - creating a daily setup...
