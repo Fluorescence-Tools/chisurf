@@ -47,8 +47,8 @@ deploy_script:
           activate base
           cd C:\projects\chisurf\build_tools\win
           build-setup.bat
-          cd C:\projects\chisurf\build_tools\
-          python upload_sftp -f "../dist/*.exe" -r "./downloads/setup_daily.exe"
+          cd C:\projects\chisurf\build_tools
+          python upload_sftp.py -f "../dist/*.exe" -r "./downloads/setup_daily.exe"
       )
 
 build: off
