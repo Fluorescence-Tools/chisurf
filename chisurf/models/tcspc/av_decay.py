@@ -3,7 +3,7 @@ from __future__ import annotations
 import chisurf.fitting
 import chisurf.structure
 from chisurf.models.tcspc.lifetime import LifetimeModel
-from chisurf.fluorescence.av import DynamicAV
+from chisurf.structure.av import DynamicAV
 from chisurf.fitting.parameter import FittingParameter
 
 

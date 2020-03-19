@@ -4,7 +4,7 @@ from chisurf import typing
 import os
 import numpy as np
 
-import chisurf.fluorescence
+import chisurf.fluorescence.tcspc
 import chisurf.fio.fcs
 import chisurf.fio.ascii
 

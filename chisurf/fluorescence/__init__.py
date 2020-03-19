@@ -5,7 +5,6 @@ Fluorescence
 import chisurf.fluorescence.general
 import chisurf.fluorescence.intensity
 import chisurf.fluorescence.anisotropy
-import chisurf.fluorescence.av
 import chisurf.fluorescence.fcs
 import chisurf.fluorescence.fret
 import chisurf.fluorescence.pda

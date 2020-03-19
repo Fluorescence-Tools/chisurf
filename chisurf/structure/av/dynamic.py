@@ -374,7 +374,7 @@ class Dye(ParameterGroup):
 
     @property
     def dye_definition(self):
-        return chisurf.fluorescence.av.dye_definition[self.dye_name]
+        return chisurf.structure.av.dye_definition[self.dye_name]
 
     @property
     def dye_name(self):
@@ -395,7 +395,7 @@ class Dye(ParameterGroup):
         structure = kwargs.get('structure', self.structure)
         sticking = kwargs.get('sticking', self.sticking)
 
-        av = chisurf.fluorescence.av.ACV(
+        av = chisurf.structure.av.ACV(
             structure=structure,
             residue_seq_number=self.attachment_residue,
             atom_name=self.attachment_atom,
@@ -474,7 +474,7 @@ class Dye(ParameterGroup):
         )
 
         dye_name = str(kwargs.get('dye_name', None))
-        if dye_name in chisurf.fluorescence.av.dye_names[0]:
+        if dye_name in chisurf.structure.av.dye_names[0]:
             self.dye_name = self._dye_name
 
 
