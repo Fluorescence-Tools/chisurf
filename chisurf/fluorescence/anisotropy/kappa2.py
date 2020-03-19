@@ -278,7 +278,7 @@ def s2delta(
         s2_donor: float,
         s2_acceptor: float,
         r_inf_AD: float,
-        r_0: float = 0.4
+        r_0: float = 0.38
 ) -> float:
     """Calculate s2delta from the residual anisotropies of the donor and acceptor
 
@@ -308,7 +308,12 @@ def s2delta(
     >>> s2donor = 0.3
     >>> s2acceptor = 0.3
     >>> r_inf_AD = 0.05
-    >>> s2delta(r_0=r0, s2donor=s2donor, s2acceptor=s2acceptor, r_inf_AD=r_inf_AD)
+    >>> s2delta(
+    ...     r_0=r0,
+    ...     s2donor=s2donor,
+    ...     s2acceptor=s2acceptor,
+    ...     r_inf_AD=r_inf_AD
+    ... )
     1.4619883040935675
 
     Notes

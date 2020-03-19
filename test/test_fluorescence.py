@@ -16,14 +16,15 @@ class Tests(unittest.TestCase):
 
     def test_s2delta(self):
         r0 = 0.38
-        s2donor = 0.3
-        s2acceptor = 0.3
+        s2_donor = 0.3
+        s2_acceptor = 0.3
         r_inf_AD = 0.05
         v = chisurf.fluorescence.anisotropy.kappa2.s2delta(
-            r_0=r0,
-            s2donor=s2donor,
-            s2acceptor=s2acceptor,
-            r_inf_AD=r_inf_AD)
+            s2_donor=s2_donor,
+            s2_acceptor=s2_acceptor,
+            r_inf_AD=r_inf_AD,
+            r_0 = r0
+        )
         self.assertAlmostEqual(
             v,
             1.4619883040935675
