@@ -8,9 +8,9 @@ environment:
     # SET PYTHON=C:\Miniconda3-x64
     # SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
 
-# For debugging uncomment the lines below
-init:
-  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+## For debugging uncomment the lines below
+#init:
+#  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 ##  Use conda-build
 install:
@@ -45,18 +45,19 @@ deploy_script:
   # The environment variable ANACONDA_API_TOKEN is defined in the AppVeyor web-interface
   # - if not "%APPVEYOR_REPO_BRANCH%" == "master" anaconda -t %ANACONDA_API_TOKEN% -u tpeulen -l nightly upload C:\Miniconda3-x64\conda-bld\win-64\chisurf-*.tar.bz2
   - |
-    echo Schedueled build - creating a nightly setup...
+    if not "%APPVEYOR_SCHEDULED_BUILD%"==""(
     activate base
     cd C:\projects\chisurf\build_tools\win
     build-setup.bat
     cd C:\projects\chisurf\build_tools
-    python upload_sftp.py -f "../dist/*.exe" -r "./downloads/setup_nightly.exe"
+    python upload_sftp.py -f "../dist/*.exe" -r "./downloads/windows_nightly.exe"
+    )
 
 build: off
 
-# For debugging uncomment the lines below
-on_finish:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+## For debugging uncomment the lines below
+#on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 notifications:
   - provider: Email
