@@ -45,14 +45,12 @@ deploy_script:
   # The environment variable ANACONDA_API_TOKEN is defined in the AppVeyor web-interface
   # - if not "%APPVEYOR_REPO_BRANCH%" == "master" anaconda -t %ANACONDA_API_TOKEN% -u tpeulen -l nightly upload C:\Miniconda3-x64\conda-bld\win-64\chisurf-*.tar.bz2
   - |
-    if "%APPVEYOR_SCHEDULED_BUILD%"=="" (
-      echo Schedueled build - creating a daily setup...
-      activate base
-      cd C:\projects\chisurf\build_tools\win
-      build-setup.bat
-      cd C:\projects\chisurf\build_tools
-      python upload_sftp.py -f "../dist/*.exe" -r "./downloads/setup_daily.exe"
-    )
+    echo Schedueled build - creating a nightly setup...
+    activate base
+    cd C:\projects\chisurf\build_tools\win
+    build-setup.bat
+    cd C:\projects\chisurf\build_tools
+    python upload_sftp.py -f "../dist/*.exe" -r "./downloads/setup_nightly.exe"
 
 build: off
 
