@@ -77,7 +77,7 @@ after_success:
       cd build_tools/osx
       ./build-dmg
       cd ..
-      python upload_sftp -f "../dist/*.dmg" -r "./downloads/macOS_nightly.dmg"
+      python upload_sftp -f "../dist/*.dmg" -r "./downloads/macos_nightly.dmg"
     fi
 #    if [[ "$TRAVIS_BRANCH" == "master" ]];
 #    then
