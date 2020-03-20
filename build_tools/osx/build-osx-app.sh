@@ -124,3 +124,19 @@ while read p; do
   echo "removing: $APP_FOLDER/Contents/$p"
   rm -rf $CONTENT_FOLDER$p
 done <"$SCRIPT_DIR/remove_list.txt"
+
+test -f ../dist/$APP_NAME-Installer.dmg && rm ../dist/$APP_NAME-Installer.dmg
+python generate-iconset.py resources/VolumeIcon.png
+./create-dmg/create-dmg \
+  --volname "$APP_NAME Installer" \
+  --window-pos 200 120 \
+  --window-size 800 400 \
+  --icon-size 100 \
+  --icon "$APP_NAME.app" 200 190 \
+  --hide-extension "$APP_NAME.app" \
+  --app-drop-link 600 185 \
+  --volicon resources/VolumeIcon.icns \
+  "$OUTPUT_PATH/$APP_NAME-Installer.dmg" \
+  "$OUTPUT_PATH"
+./fileicon set "$OUTPUT_PATH/$APP_NAME-Installer.dmg" ./resources/VolumeIcon.icns
+rm -rf $OUTPUT_PATH/$APP_NAME.app
