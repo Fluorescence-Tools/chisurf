@@ -138,7 +138,6 @@ def convolve_lifetime_spectrum_periodic(
 
     Examples
     --------
-
     >>> import scipy.stats
     >>> n_points = 2048
     >>> time_axis = np.linspace(0, 16, n_points)
@@ -322,7 +321,6 @@ def convolve_decay(
         
     Examples
     --------
-
     >>> import scipy.stats
     >>> n_points = 2048
     >>> time_axis = np.linspace(0, 16, n_points)

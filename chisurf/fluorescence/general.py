@@ -14,6 +14,17 @@ def rate2lifetime(
         rate: float,
         lifetime: float
 ):
+    """
+
+    Parameters
+    ----------
+    rate : float
+    lifetime : float
+
+    Returns
+    -------
+
+    """
     return 1. / (1. / lifetime + rate)
 
 

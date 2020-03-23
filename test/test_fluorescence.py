@@ -12,6 +12,7 @@ import chisurf.fluorescence.general
 import chisurf.fluorescence.anisotropy
 
 from chisurf.fluorescence.anisotropy.decay import calculcate_spectrum
+from chisurf.fluorescence.tcspc.corrections import compute_linearization_table
 
 
 class Tests(unittest.TestCase):
@@ -383,6 +384,50 @@ class Tests(unittest.TestCase):
             np.allclose(
                 model_decay,
                 reference_decay
+            ),
+            True
+        )
+
+    def test_fluorescence_tcspc_corrections_compute_linearization_table(self):
+        x = np.linspace(0, 40, 128)
+        dnl_fraction = 0.01
+        counts = 10000
+        mean = np.sin(x) * dnl_fraction * counts + (1 - dnl_fraction) * counts
+        np.random.seed(0)
+        data = np.random.poisson(mean).astype(np.float64)
+        lin_table = compute_linearization_table(data, 12, "hanning", 10, 90)
+        ref_lintable = np.array(
+            [1., 1., 1., 1., 1.,
+             1., 0.99980049, 0.99922759, 0.99823618, 0.99681489,
+             0.99518504, 0.99393009, 0.99341097, 0.99356403, 0.99429588,
+             0.99518651, 0.99570281, 0.99588077, 0.99593212, 0.99620644,
+             0.99725223, 0.99907418, 1.00121338, 1.00320785, 1.00486314,
+             1.00613769, 1.00711954, 1.00770543, 1.00739009, 1.00586985,
+             1.00286934, 0.99849134, 0.99377306, 0.98981455, 0.98744986,
+             0.98683355, 0.9874091, 0.98868764, 0.99063644, 0.99339915,
+             0.99669779, 1.00031741, 1.00394849, 1.00699941, 1.00914148,
+             1.01040307, 1.01119998, 1.01183167, 1.01202324, 1.01120659,
+             1.00905205, 1.0055979, 1.0012921, 0.99701193, 0.99370229,
+             0.99214721, 0.99253283, 0.99448162, 0.99720137, 0.99972508,
+             1.001355, 1.00164798, 1.00115969, 1.00083382, 1.00120239,
+             1.0025449, 1.00450071, 1.00633953, 1.00702856, 1.00606332,
+             1.00373424, 1.00058981, 0.99734557, 0.99442657, 0.9925278,
+             0.99219378, 0.99332066, 0.9954457, 0.99805603, 1.00079518,
+             1.00285328, 1.00367601, 1.00341471, 1.00277917, 1.00262715,
+             1.00308127, 1.00383407, 1.00447143, 1.00466959, 1.00415533,
+             1.00289327, 1.00144407, 1.00036365, 0.99984595, 0.99978234,
+             0.99991273, 1., 1., 1., 1.,
+             1., 1., 1., 1., 1.,
+             1., 1., 1., 1., 1.,
+             1., 1., 1., 1., 1.,
+             1., 1., 1., 1., 1.,
+             1., 1., 1., 1., 1.,
+             1., 1., 1.]
+        )
+        self.assertEqual(
+            np.allclose(
+                lin_table,
+                ref_lintable
             ),
             True
         )

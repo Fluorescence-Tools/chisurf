@@ -317,7 +317,7 @@ class Corrections(FittingParameterGroup):
         dead_time = kwargs.get('dead_time', self.dead_time)
         meas_time = kwargs.get('meas_time', self.measurement_time)
         if self.correct_pile_up:
-            chisurf.fluorescence.tcspc.corrections.correct_model_for_pile_up(
+            chisurf.fluorescence.tcspc.corrections.add_pile_up_to_model(
                 data,
                 decay,
                 rep_rate,

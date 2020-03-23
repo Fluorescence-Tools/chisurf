@@ -105,7 +105,7 @@ class TCSPCReader(
             data,
             **kwargs
     ) -> typing.Tuple[int, int]:
-        return chisurf.fluorescence.tcspc.fitrange(
+        return chisurf.fluorescence.tcspc.initial_fit_range(
             data.y,
             self.fit_count_threshold,
             self.fit_area
