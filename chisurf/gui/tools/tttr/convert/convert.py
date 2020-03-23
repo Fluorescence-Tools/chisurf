@@ -6,11 +6,11 @@ import copy
 from qtpy import QtWidgets
 
 import chisurf.decorators
-import chisurf.fio.tttr
+import chisurf.fio.fluorescence.tttr
 import chisurf.gui.decorators
 import chisurf.gui.widgets
 
-filetypes = copy.copy(chisurf.fio.tttr.filetypes)
+filetypes = copy.copy(chisurf.fio.fluorescence.tttr.filetypes)
 filetypes.pop('hdf')
 
 
@@ -63,7 +63,7 @@ class TTTRConvert(QtWidgets.QWidget):
         )
         self.lineEdit.setText(filename)
         spc_files = self.filenames
-        h5 = chisurf.fio.tttr.spc2hdf(
+        h5 = chisurf.fio.fluorescence.tttr.spc2hdf(
             spc_files,
             routine_name=self.filetype,
             filename=filename

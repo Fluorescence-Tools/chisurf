@@ -9,8 +9,8 @@ import chisurf.gui.decorators
 import chisurf.structure
 import chisurf.gui.widgets
 
-from chisurf.fio import photons
-from chisurf.fio import tttr
+from chisurf.fio.fluorescence import photons
+from chisurf.fio.fluorescence import tttr
 
 
 class SpcFileWidget(
@@ -159,7 +159,7 @@ class SpcFileWidget(
 
         self.lineEdit_2.setText(filenames[0])
         self.filenames = filenames
-        self._photons = photons.Photons(
+        self._photons = chisurf.fio.fluorescence.photons.Photons(
             filenames,
             file_type
         )
@@ -170,7 +170,7 @@ class SpcFileWidget(
     @property
     def photons(
             self
-    ) -> photons.Photons:
+    ) -> chisurf.fio.fluorescence.photons.Photons:
         return self._photons
 
 

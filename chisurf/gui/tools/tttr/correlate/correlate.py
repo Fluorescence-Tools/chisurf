@@ -226,11 +226,11 @@ class Correlator(
         count_rate = count-rate in kHz
         """
         if self.p.weighting == 1:
-            return chisurf.fluorescence.fcs.weights(
+            return chisurf.fluorescence.fcs.noise(
                 tau, cor, acquisition_time, count_rate, weight_type='uniform'
             )
         elif self.p.weighting == 0:
-            return chisurf.fluorescence.fcs.weights(
+            return chisurf.fluorescence.fcs.noise(
                 tau, cor, acquisition_time, count_rate, weight_type='suren'
             )
 

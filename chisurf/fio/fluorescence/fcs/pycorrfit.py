@@ -6,6 +6,9 @@ import warnings
 
 import numpy as np
 
+import chisurf
+from chisurf import typing
+
 
 def openCSV(path, filename=None):
     """
@@ -177,3 +180,59 @@ def openCSV(path, filename=None):
         dictionary["Weight"] = [np.array(weights)]
         dictionary["Weight Name"] = [weightname]
     return dictionary
+
+
+def read_pycorrfit(
+        filename: str,
+        verbose: bool = False
+) -> typing.List[typing.Dict]:
+    if verbose:
+        print("Reading PyCorrFit from file: ", filename)
+    d = openCSV(filename)
+    correlations = list()
+
+    for i, correlation in enumerate(d['Correlation']):
+        r = dict()
+        correlation_time = correlation[:, 0]
+        correlation_amplitude = correlation[:, 1]
+        intenstiy_trace_time = (d['Trace'][i][0][:, 0] / 1000.0).tolist()
+        intensity_trace_ch1 = (d['Trace'][i][0][:, 1]).tolist()
+        aquisition_time = float(intenstiy_trace_time[-1])
+        mean_count_rate = float(d['Trace'][i][0][:, 0].sum()) / (aquisition_time * 1000.0)
+        r.update(
+            {
+                'filename': filename,
+                'measurement_id': "%s_%s" % (d['Filename'], i),
+                'correlation_time': correlation_time,
+                'correlation_amplitude': correlation_amplitude,
+                'intensity_trace_time_ch1': intenstiy_trace_time,
+                'intensity_trace_ch1': intensity_trace_ch1,
+                'acquisition_time': aquisition_time,
+                'mean_count_rate': mean_count_rate,
+            }
+        )
+        r.update(
+            {
+                'weights': 1. / chisurf.fluorescence.fcs.noise(
+                    times=correlation_time,
+                    correlation=correlation_amplitude,
+                    measurement_duration=r['acquisition_time'],
+                    mean_count_rate=r['mean_count_rate'],
+                ).tolist()
+            }
+        )
+        try:
+            intenstiy_trace_time = (d['Trace'][i][1][:, 0]).tolist()
+            intensity_trace_ch2 = (d['Trace'][i][1][:, 1]).tolist(),
+            r.update(
+                {
+                    'intensity_trace_time_ch2': intenstiy_trace_time,
+                    'intensity_trace_ch2': intensity_trace_ch2,
+                }
+            )
+        except KeyError:
+            chisurf.logging.warning("PyCorrFit loading no second intensity trace")
+
+        correlations.append(r)
+
+    return correlations
