@@ -47,7 +47,7 @@ class Tests(unittest.TestCase):
              0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00]
         )
         self.assertEqual(
-            np.allclose(reference, k2_hist, rtol=0.3, atol=2.0),
+            np.allclose(reference, k2_hist, rtol=0.35, atol=10.0),
             True
         )
 
@@ -265,7 +265,7 @@ class Tests(unittest.TestCase):
     def test_fcs(self):
         directory = './test/data/tttr/BH/132/'
         spc_files = glob.glob(directory + '/BH_SPC132.spc')
-        photons = chisurf.fio.photons.Photons(spc_files, reading_routine="bh132")
+        photons = chisurf.fio.fluorescence.photons.Photons(spc_files, reading_routine="bh132")
         cr_filter = np.ones_like(photons.macro_times, dtype=np.float)
         w1 = np.ones_like(photons.macro_times, dtype=np.float)
         w2 = np.ones_like(photons.macro_times, dtype=np.float)

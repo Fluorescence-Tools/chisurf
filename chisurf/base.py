@@ -14,7 +14,7 @@ from slugify import slugify
 from collections.abc import Iterable
 
 import chisurf
-import chisurf.fio
+import chisurf.fio.zipped
 
 
 class Base(object):

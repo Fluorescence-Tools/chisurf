@@ -9,6 +9,7 @@ import os
 
 import numpy as np
 
+import chisurf.data
 import chisurf.fio
 import chisurf.fio.fluorescence.fcs
 import chisurf.fio.fluorescence.photons
@@ -58,7 +59,7 @@ def read_fcs(
             x, y = csv.data[0], csv.data[1]
             ey = csv.data[2]
         elif reader_name == 'kristine':
-            r = chisurf.fio.fcs.fcs_kristine.read_kristine(
+            r = chisurf.fio.fluorescence.fcs.kristine.read_kristine(
                 filename=filename,
                 verbose=verbose
             )
@@ -67,7 +68,7 @@ def read_fcs(
             ey = 1. / np.array(r[0]['weights'])
             ex = np.ones_like(x)
         elif reader_name == 'pycorrfit':
-            r = chisurf.fio.fcs.fcs_pycorrfit.read_pycorrfit(
+            r = chisurf.fio.fluorescence.fcs.pycorrfit.read_pycorrfit(
                 filename=filename,
                 verbose=verbose
             )
