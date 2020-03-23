@@ -127,7 +127,14 @@ def rescale_w_bg(
 
 
 @nb.jit(nopython=True, nogil=True)
-def pddem(decayA, decayB, k, px, pm, pAB):
+def pddem(
+        decayA: np.ndarray,
+        decayB: np.ndarray,
+        k: np.ndarray,
+        px: np.ndarray,
+        pm: np.ndarray,
+        pAB: np.ndarray
+):
     """
     Electronic Energy Transfer within Asymmetric
     Pairs of Fluorophores: Partial Donor-Donor

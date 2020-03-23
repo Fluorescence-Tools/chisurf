@@ -52,10 +52,10 @@ class Tests(unittest.TestCase):
         okWidget = self.form.pushButton
         QTest.mouseClick(okWidget, Qt.LeftButton)
 
-        self.assertAlmostEqual(self.form.doubleSpinBox_10.value(), 0.6605, places=2)
-        self.assertAlmostEqual(self.form.doubleSpinBox_9.value(), 0.1398, places=2)
-        self.assertAlmostEqual(self.form.doubleSpinBox_6.value(), 0.9951, places=2)
-        self.assertAlmostEqual(self.form.doubleSpinBox_8.value(), 0.0363, places=2)
+        self.assertAlmostEqual(self.form.doubleSpinBox_10.value(), 0.7216, places=2)
+        self.assertAlmostEqual(self.form.doubleSpinBox_9.value(), 0.2096, places=2)
+        self.assertAlmostEqual(self.form.doubleSpinBox_6.value(), 1.0085, places=2)
+        self.assertAlmostEqual(self.form.doubleSpinBox_8.value(), 0.0493, places=2)
 
     """
     def setFormToZero(self):
