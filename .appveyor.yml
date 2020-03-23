@@ -2,6 +2,9 @@ platform:
   - amd64
 image: Visual Studio 2017
 
+services:
+  - mongodb
+
 environment:
   matrix:
     - PYTHON: "C:\\Miniconda3-x64"
