@@ -13,7 +13,4 @@ In particular three kinds of file-types are handled:
 import chisurf.fio.zipped
 import chisurf.fio.ascii
 import chisurf.fio.coordinates
-import chisurf.fio.tttr
-import chisurf.fio.photons
-import chisurf.fio.sdtfile
 import chisurf.fio.fluorescence

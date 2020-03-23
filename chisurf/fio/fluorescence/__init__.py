@@ -1,17 +1,119 @@
 from __future__ import annotations
-from chisurf import typing
-
-import os
-import numpy as np
-
-import chisurf.fluorescence.tcspc
-import chisurf.fio.fcs
-import chisurf.fio.ascii
 
 # the following imports are only for the type annotations
 # and currently (20.03.13) cause conflicts
 # chisurf.experiments.Experiment
 # import chisurf.data
+
+import os
+
+import numpy as np
+
+import chisurf.fio
+import chisurf.fio.fluorescence.fcs
+import chisurf.fio.fluorescence.photons
+import chisurf.fio.fluorescence.sdtfile
+
+from chisurf import typing
+
+
+def read_fcs(
+        filename: str,
+        data_reader: chisurf.experiments.reader.ExperimentReader = None,
+        reader_name: str = 'csv',
+        verbose: bool = False,
+        experiment: chisurf.experiments.Experiment = None,
+        **kwargs
+) -> chisurf.data.ExperimentDataCurveGroup:
+    """
+
+    Option Kristine:
+
+    Uses either the error provided by the correlator (4. column)
+    or calculates the error based on the correlation curve,
+    the aquisition time and the count-rate.
+
+    :param filename:
+    :param data_reader:
+    :param data_reader:
+    :param verbose:
+    :param args:
+    :param kwargs:
+    :return:
+    """
+    data_sets = list()
+    root, ext = os.path.splitext(
+        os.path.basename(filename)
+    )
+
+    # Files with single curve
+    if reader_name in ['csv', 'kristine', 'pycorrfit']:
+        if reader_name == 'csv':
+            csv = chisurf.fio.ascii.Csv()
+            csv.load(
+                filename=filename,
+                verbose=chisurf.verbose,
+                **kwargs
+            )
+            x, y = csv.data[0], csv.data[1]
+            ey = csv.data[2]
+        elif reader_name == 'kristine':
+            r = chisurf.fio.fcs.fcs_kristine.read_kristine(
+                filename=filename,
+                verbose=verbose
+            )
+            x = np.array(r[0]['correlation_time'])
+            y = np.array(r[0]['correlation_amplitude'])
+            ey = 1. / np.array(r[0]['weights'])
+            ex = np.ones_like(x)
+        elif reader_name == 'pycorrfit':
+            r = chisurf.fio.fcs.fcs_pycorrfit.read_pycorrfit(
+                filename=filename,
+                verbose=verbose
+            )
+            x = np.array(r[0]['correlation_time'])
+            y = np.array(r[0]['correlation_amplitude'])
+            ey = 1. / np.array(r[0]['weights'])
+            ex = np.ones_like(x)
+        name = root
+        data_sets.append(
+            chisurf.data.DataCurve(
+                data_reader=data_reader,
+                name=name,
+                x=x, y=y, ey=ey, ex=ex,
+                experiment=experiment
+            )
+        )
+    # Files with multiple curves per file
+    elif reader_name in ['china-mat', 'confocor3', 'alv']:
+        if reader_name == 'confocor3':
+            ds = chisurf.fio.fcs.fcs_confocor3.read_zeiss_fcs(
+                filename=filename,
+                verbose=verbose
+            )
+        elif reader_name == 'china-mat':
+            ds = chisurf.fio.fcs.fcs_china.read_china_mat(
+                filename=filename,
+                verbose=verbose
+            )
+        elif reader_name == 'alv':
+            ds = chisurf.fio.fcs.fcs_asc_alv.read_asc(
+                filename
+            )
+        for r in ds:
+            name = root + "_" + r['measurement_id']
+            x = np.array(r['correlation_time'])
+            y = np.array(r['correlation_amplitude'])
+            ey = 1. / np.array(r['weights'])
+            ex = np.ones_like(x)
+            data_sets.append(
+                chisurf.data.DataCurve(
+                    name=name,
+                    data_reader=data_reader,
+                    x=x, y=y, ey=ey, ex=ex
+                )
+            )
+    return chisurf.data.ExperimentDataCurveGroup(data_sets)
 
 
 def read_tcspc_csv(
@@ -175,102 +277,3 @@ def read_tcspc_csv(
         filename,
     )
     return data_group
-
-
-def read_fcs(
-        filename: str,
-        data_reader: chisurf.experiments.reader.ExperimentReader = None,
-        reader_name: str = 'csv',
-        verbose: bool = False,
-        experiment: chisurf.experiments.Experiment = None,
-        **kwargs
-) -> chisurf.data.ExperimentDataCurveGroup:
-    """
-
-    Option Kristine:
-
-    Uses either the error provided by the correlator (4. column)
-    or calculates the error based on the correlation curve,
-    the aquisition time and the count-rate.
-
-    :param filename:
-    :param data_reader:
-    :param data_reader:
-    :param verbose:
-    :param args:
-    :param kwargs:
-    :return:
-    """
-    data_sets = list()
-    root, ext = os.path.splitext(
-        os.path.basename(filename)
-    )
-
-    # Files with single curve
-    if reader_name in ['csv', 'kristine', 'pycorrfit']:
-        if reader_name == 'csv':
-            csv = chisurf.fio.ascii.Csv()
-            csv.load(
-                filename=filename,
-                verbose=chisurf.verbose,
-                **kwargs
-            )
-            x, y = csv.data[0], csv.data[1]
-            ey = csv.data[2]
-        elif reader_name == 'kristine':
-            r = chisurf.fio.fcs.read_kristine(
-                filename=filename,
-                verbose=verbose
-            )
-            x = np.array(r[0]['correlation_time'])
-            y = np.array(r[0]['correlation_amplitude'])
-            ey = 1. / np.array(r[0]['weights'])
-            ex = np.ones_like(x)
-        elif reader_name == 'pycorrfit':
-            r = chisurf.fio.fcs.read_pycorrfit(
-                filename=filename,
-                verbose=verbose
-            )
-            x = np.array(r[0]['correlation_time'])
-            y = np.array(r[0]['correlation_amplitude'])
-            ey = 1. / np.array(r[0]['weights'])
-            ex = np.ones_like(x)
-        name = root
-        data_sets.append(
-            chisurf.data.DataCurve(
-                data_reader=data_reader,
-                name=name,
-                x=x, y=y, ey=ey, ex=ex,
-                experiment=experiment
-            )
-        )
-    # Files with multiple curves per file
-    elif reader_name in ['china-mat', 'confocor3', 'alv']:
-        if reader_name == 'confocor3':
-            ds = chisurf.fio.fcs.read_zeiss_fcs(
-                filename=filename,
-                verbose=verbose
-            )
-        elif reader_name == 'china-mat':
-            ds = chisurf.fio.fcs.read_china_mat(
-                filename=filename,
-                verbose=verbose
-            )
-        elif reader_name == 'alv':
-            ds = chisurf.fio.fcs.read_asc(
-                filename
-            )
-        for r in ds:
-            name = root + "_" + r['measurement_id']
-            x = np.array(r['correlation_time'])
-            y = np.array(r['correlation_amplitude'])
-            ey = 1. / np.array(r['weights'])
-            ex = np.ones_like(x)
-            data_sets.append(
-                chisurf.data.DataCurve(
-                    name=name,
-                    data_reader=data_reader,
-                    x=x, y=y, ey=ey, ex=ex
-                )
-            )
-    return chisurf.data.ExperimentDataCurveGroup(data_sets)
