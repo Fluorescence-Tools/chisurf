@@ -255,7 +255,7 @@ class Tests(unittest.TestCase):
         )
 
     def test_spc2hdf(self):
-        import chisurf.fio.tttr
+        import chisurf.fio.fluorescence.tttr
         import glob
         import tempfile
 
@@ -265,7 +265,7 @@ class Tests(unittest.TestCase):
         )
         output = filename
         spc_files = glob.glob("./test/data/tttr/BH/BH_SPC132.spc")
-        h5 = chisurf.fio.tttr.spc2hdf(
+        h5 = chisurf.fio.fluorescence.tttr.spc2hdf(
             spc_files,
             routine_name=filetype,
             filename=output
@@ -297,7 +297,7 @@ class Tests(unittest.TestCase):
             # },
         ]
         for d in test_data:
-            photons = chisurf.fio.photons.Photons(
+            photons = chisurf.fio.fluorescence.photons.Photons(
                 d["files"],
                 reading_routine=d["routine"]
             )
