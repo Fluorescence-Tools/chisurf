@@ -11,6 +11,8 @@ matrix:
 env:
   # Build and test package on all supported python versions
   - BUILD_TARGET=3.7 MINICONDA_VERSION=latest
+  # Disable Numba JIT for correct coverage analysis
+  - NUMBA_DISABLE_JIT=1
   # To make sure it's still working with conda 4.6
   # - BUILD_TARGET=3.7 MINICONDA_VERSION=4.6.14
 
@@ -74,6 +76,7 @@ after_success:
   - |
     if [[ "$TRAVIS_OS_NAME" == "osx" ]];
     then
+      mkdir $TRAVIS_BUILD_DIR/dist
       cd build_tools/osx
         ./build-osx-app.sh \
         -f=$TRAVIS_BUILD_DIR/environment.yml \
