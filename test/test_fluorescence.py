@@ -11,23 +11,59 @@ import chisurf.fluorescence.tcspc
 import chisurf.fluorescence.general
 import chisurf.fluorescence.anisotropy
 
+from chisurf.fluorescence.anisotropy.decay import calculcate_spectrum
+
 
 class Tests(unittest.TestCase):
 
+    def test_kappasq_all(self):
+        k2_scale, k2_hist, k2 = chisurf.fluorescence.anisotropy.kappa2.kappasq_all(
+            sD2=0.3,
+            sA2=0.5,
+            n_bins=31,
+            n_samples=10000
+        )
+        self.assertEqual(
+            np.allclose(
+                k2_scale,
+                np.array(
+                    [0., 0.13333333, 0.26666667, 0.4, 0.53333333,
+                     0.66666667, 0.8, 0.93333333, 1.06666667, 1.2,
+                     1.33333333, 1.46666667, 1.6, 1.73333333, 1.86666667,
+                     2., 2.13333333, 2.26666667, 2.4, 2.53333333,
+                     2.66666667, 2.8, 2.93333333, 3.06666667, 3.2,
+                     3.33333333, 3.46666667, 3.6, 3.73333333, 3.86666667,
+                     4.])
+            ),
+            True
+        )
+
+        reference = np.array(
+            [0.000e+00, 0.000e+00, 0.000e+00, 3.156e+03, 4.381e+03, 1.453e+03,
+             5.770e+02, 2.660e+02, 1.090e+02, 4.300e+01, 1.400e+01, 1.000e+00,
+             0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+             0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00,
+             0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00]
+        )
+        self.assertEqual(
+            np.allclose(reference, k2_hist, rtol=0.3, atol=2.0),
+            True
+        )
+
     def test_s2delta(self):
         r0 = 0.38
-        s2_donor = 0.3
+        s2_donor = 0.2
         s2_acceptor = 0.3
-        r_inf_AD = 0.05
+        r_inf_AD = 0.01
         v = chisurf.fluorescence.anisotropy.kappa2.s2delta(
             s2_donor=s2_donor,
             s2_acceptor=s2_acceptor,
             r_inf_AD=r_inf_AD,
-            r_0 = r0
+            r_0=r0
         )
-        self.assertAlmostEqual(
+        self.assertTupleEqual(
             v,
-            1.4619883040935675
+            (0.4385964912280701, 0.6583029208008411)
         )
 
     def test_p_isotropic_orientation_factor(self):
@@ -37,12 +73,12 @@ class Tests(unittest.TestCase):
         )
         p_k2_ref = np.array(
             [0.17922824, 0.11927194, 0.09558154, 0.08202693, 0.07297372,
-               0.06637936, 0.06130055, 0.05723353, 0.04075886, 0.03302977,
-               0.0276794, 0.02359627, 0.02032998, 0.01763876, 0.01537433,
-               0.01343829, 0.01176177, 0.01029467, 0.00899941, 0.00784718,
-               0.00681541, 0.00588615, 0.00504489, 0.0042798, 0.0035811,
-               0.00294063, 0.00235153, 0.001808, 0.00130506, 0.00083845,
-               0.0004045, 0.]
+             0.06637936, 0.06130055, 0.05723353, 0.04075886, 0.03302977,
+             0.0276794, 0.02359627, 0.02032998, 0.01763876, 0.01537433,
+             0.01343829, 0.01176177, 0.01029467, 0.00899941, 0.00784718,
+             0.00681541, 0.00588615, 0.00504489, 0.0042798, 0.0035811,
+             0.00294063, 0.00235153, 0.001808, 0.00130506, 0.00083845,
+             0.0004045, 0.]
         )
         self.assertEqual(
             np.allclose(
@@ -91,6 +127,90 @@ class Tests(unittest.TestCase):
         self.assertAlmostEqual(
             kappa,
             kappa_reference,
+        )
+
+    def test_fluorescence_anisotropy_decay_calculcate_spectrum(self):
+        lifetime_spectrum = np.array([1.0, 4.0])
+        anisotropy_spectrum = np.array([1.0, 1.0])
+        g_factor = 1.5
+        a = calculcate_spectrum(
+            lifetime_spectrum=lifetime_spectrum,
+            anisotropy_spectrum=anisotropy_spectrum,
+            polarization_type='VV',
+            g_factor=g_factor,
+            l1=0.0,
+            l2=0.0
+        )
+        self.assertEqual(
+            np.allclose(
+                a,
+                np.array([1., 4., 2., 0.8, 0., 4., -0., 0.8])
+            ),
+            True
+        )
+
+        a = calculcate_spectrum(
+            lifetime_spectrum=lifetime_spectrum,
+            anisotropy_spectrum=anisotropy_spectrum,
+            polarization_type='VV',
+            g_factor=g_factor,
+            l1=0.1,
+            l2=0.0
+        )
+        self.assertEqual(
+            np.allclose(
+                a,
+                np.array([0.9, 4., 1.8, 0.8, 0.15, 4., -0.3, 0.8])
+            ),
+            True
+        )
+
+        a = calculcate_spectrum(
+            lifetime_spectrum=lifetime_spectrum,
+            anisotropy_spectrum=anisotropy_spectrum,
+            polarization_type='VH',
+            g_factor=g_factor,
+            l1=0.0,
+            l2=0.0
+        )
+        self.assertEqual(
+            np.allclose(
+                a,
+                np.array([0., 4., 0., 0.8, 1.5, 4., -3., 0.8])
+            ),
+            True
+        )
+
+        a = calculcate_spectrum(
+            lifetime_spectrum=lifetime_spectrum,
+            anisotropy_spectrum=anisotropy_spectrum,
+            polarization_type='VH',
+            g_factor=g_factor,
+            l1=0.0,
+            l2=0.1
+        )
+
+        self.assertEqual(
+            np.allclose(
+                a,
+                np.array([0.1, 4., 0.2, 0.8, 1.35, 4., -2.7, 0.8])
+            ),
+            True
+        )
+
+        self.assertEqual(
+            np.allclose(
+                calculcate_spectrum(
+                    lifetime_spectrum=lifetime_spectrum,
+                    anisotropy_spectrum=anisotropy_spectrum,
+                    polarization_type='AAA',
+                    g_factor=g_factor,
+                    l1=0.0,
+                    l2=0.1
+                ),
+                lifetime_spectrum
+            ),
+            True
         )
 
     def test_vm_vv_vh(self):
