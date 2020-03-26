@@ -6,168 +6,12 @@ import tables
 
 import chisurf.settings
 
+from chisurf import typing
+
 from chisurf.curve import Curve
 from chisurf.structure.av.dynamic import DiffusionSimulation
 from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 
-
-def simulate_decays(
-        dyes,
-        decay_parameter,
-        simulation_parameter,
-        quenching_parameter,
-        save_decays: bool = True,
-        directory: str = "./",
-        file_id: str = "",
-        get_qy: bool = False
-):
-    """
-    Function for batch procession of decays (use-case see notebooks: quenching_and_fret.ipynb)
-
-    :param dyes: a dictionary of dyes
-    :param decay_parameter: a instance of the `DecaySimulationParameter` class
-    :param simulation_parameter: a instance of the `DiffusionSimulationParameter` class
-    :param quenching_parameter: a instance of the `ProteinQuenching` class
-    :param save_decays: bool
-    :param directory: string pointing to directory in which the simulation results are saved
-
-    :return: dictionary containing the simulated decays
-
-    """
-    dye_decays = dict()
-    dye_qy = dict()
-
-    for dye_key in dyes:
-        print("Simulating decay: %s" % dye_key)
-        dye = dyes[dye_key]
-        diffusion_simulation = DiffusionSimulation(dye,
-                                                   quenching_parameter,
-                                                   simulation_parameter)
-        diffusion_simulation.run()
-
-        fd0_sim_curve = DyeDecay(decay_parameter, diffusion_simulation)
-        fd0_sim_curve.update()
-        decay = fd0_sim_curve.get_histogram()
-        print("QY: %s" % fd0_sim_curve.quantum_yield)
-        filename = directory+file_id+"_Donor-%s.txt" % dye_key
-        decay = np.vstack(decay)
-        if save_decays:
-            np.savetxt(filename, decay.T)
-        dye_decays[dye_key] = decay
-        dye_qy[dye_key] = fd0_sim_curve.quantum_yield
-    if not get_qy:
-        return dye_decays
-    else:
-        return dye_decays, dye_qy
-
-
-def simulate_fret_decays(
-        donors,
-        acceptors,
-        decay_parameter,
-        simulation_parameter,
-        donor_quenching,
-        acceptor_quenching,
-        fret_parameter,
-        save: bool = True,
-        directory: str = "./",
-        prefix: str = "",
-        get_number_of_av_points: bool = False
-):
-    """
-    Function for batch procession of decays (use-case see notebooks: quenching_and_fret.ipynb)
-
-    :param donors:
-    :param acceptors:
-    :param decay_parameter:
-    :param simulation_parameter:
-    :param donor_quenching:
-    :param acceptor_quenching:
-    :param fret_parameter:
-    :param save:
-    :param directory:
-    :param prefix:
-    :return:
-    """
-    donor_keys = donors.keys()
-    acceptor_keys = acceptors.keys()
-    fret_decays = dict(
-        (donor_key, dict()) for donor_key in donor_keys
-    )
-
-    distances = dict(
-        (donor_key, dict()) for donor_key in donor_keys
-    )
-    n_donor = dict()
-    n_acceptor = dict()
-
-    dye_combinations = itertools.product(donor_keys, acceptor_keys)
-    for donor_key, acceptor_key in dye_combinations:
-        print("Simulating: %sD-%sA" % (donor_key, acceptor_key))
-        donor = donors[donor_key]
-        acceptor = acceptors[acceptor_key]
-
-        donor_diffusion_simulation = DiffusionSimulation(
-            donor,
-            donor_quenching,
-            simulation_parameter)
-        donor_diffusion_simulation.run()
-        donor_diffusion_simulation.save(
-            directory + prefix + '_%sD_diffusion.xyz' % donor_key,
-            mode='xyz',
-            skip=5
-        )
-        donor_diffusion_simulation.av.save(
-            directory + prefix + '_%sD' % donor_key)
-        n_donor[donor_key] = len(donor_diffusion_simulation.av.points)
-
-        acceptor_diffusion_simulation = DiffusionSimulation(
-            acceptor,
-            acceptor_quenching,
-            simulation_parameter
-        )
-        acceptor_diffusion_simulation.run()
-        acceptor_diffusion_simulation.save(
-            directory + prefix + '_%sA_diffusion.xyz' % acceptor_key,
-            mode='xyz',
-            skip=5
-        )
-        acceptor_diffusion_simulation.av.save(
-            directory + prefix + '_%sA' % acceptor_key
-        )
-        n_acceptor[acceptor_key] = len(acceptor_diffusion_simulation.av.points)
-
-        fret_sim = FRETDecay(
-            donor_diffusion_simulation,
-            acceptor_diffusion_simulation,
-            fret_parameter, decay_parameter
-        )
-        fret_sim.update()
-        decay = fret_sim.get_histogram()
-        decay = np.vstack(decay)
-        if save:
-            np.savetxt(
-                directory + prefix + "_FRET-%sD-%sA-dRDA.txt" % (
-                donor_key, acceptor_key),
-                fret_sim.dRDA.T,
-                delimiter='\t'
-            )
-            np.savetxt(
-                directory + prefix + "_FRET-%sD-%sA.txt" % (
-                donor_key, acceptor_key),
-                decay.T,
-                delimiter='\t'
-            )
-        fret_decays[donor_key][acceptor_key] = decay
-        distances[donor_key][acceptor_key] = np.histogram(
-            fret_sim.dRDA,
-            bins=np.linspace(0, 150, 150),
-            density=True
-        )
-    if not get_number_of_av_points:
-        return fret_decays, distances
-    else:
-        return fret_decays, distances, n_donor, n_acceptor
 
 
 class DecaySimulationParameter(
@@ -592,3 +436,167 @@ class FRETDecay(
             self._donor_photons = self.get_donor_photons()
         elif decay_mode == 'curve':
             self._decays = self.get_donor_decay()
+
+
+def simulate_decays(
+        dyes: typing.Dict,
+        decay_parameter: DecaySimulationParameter,
+        simulation_parameter: typing.Dict,
+        quenching_parameter: typing.Dict,
+        save_decays: bool = True,
+        directory: str = "./",
+        file_id: str = "",
+        get_qy: bool = False
+):
+    """
+    Function for batch procession of decays (use-case see notebooks: quenching_and_fret.ipynb)
+
+    :param dyes: a dictionary of dyes
+    :param decay_parameter: a instance of the `DecaySimulationParameter` class
+    :param simulation_parameter: a instance of the `DiffusionSimulationParameter` class
+    :param quenching_parameter: a instance of the `ProteinQuenching` class
+    :param save_decays: bool
+    :param directory: string pointing to directory in which the simulation results are saved
+
+    :return: dictionary containing the simulated decays
+
+    """
+    dye_decays = dict()
+    dye_qy = dict()
+
+    for dye_key in dyes:
+        print("Simulating decay: %s" % dye_key)
+        dye = dyes[dye_key]
+        diffusion_simulation = DiffusionSimulation(
+            dye,
+            quenching_parameter,
+            simulation_parameter
+        )
+        diffusion_simulation.run()
+
+        fd0_sim_curve = DyeDecay(
+            decay_parameter,
+            diffusion_simulation
+        )
+        fd0_sim_curve.update()
+        decay = fd0_sim_curve.get_histogram()
+        print("QY: %s" % fd0_sim_curve.quantum_yield)
+        filename = directory+file_id+"_Donor-%s.txt" % dye_key
+        decay = np.vstack(decay)
+        if save_decays:
+            np.savetxt(filename, decay.T)
+        dye_decays[dye_key] = decay
+        dye_qy[dye_key] = fd0_sim_curve.quantum_yield
+    if not get_qy:
+        return dye_decays
+    else:
+        return dye_decays, dye_qy
+
+
+def simulate_fret_decays(
+        donors,
+        acceptors,
+        decay_parameter,
+        simulation_parameter,
+        donor_quenching,
+        acceptor_quenching,
+        fret_parameter,
+        save: bool = True,
+        directory: str = "./",
+        prefix: str = "",
+        get_number_of_av_points: bool = False
+):
+    """
+    Function for batch procession of decays (use-case see notebooks: quenching_and_fret.ipynb)
+
+    :param donors:
+    :param acceptors:
+    :param decay_parameter:
+    :param simulation_parameter:
+    :param donor_quenching:
+    :param acceptor_quenching:
+    :param fret_parameter:
+    :param save:
+    :param directory:
+    :param prefix:
+    :return:
+    """
+    donor_keys = donors.keys()
+    acceptor_keys = acceptors.keys()
+    fret_decays = dict(
+        (donor_key, dict()) for donor_key in donor_keys
+    )
+
+    distances = dict(
+        (donor_key, dict()) for donor_key in donor_keys
+    )
+    n_donor = dict()
+    n_acceptor = dict()
+
+    dye_combinations = itertools.product(donor_keys, acceptor_keys)
+    for donor_key, acceptor_key in dye_combinations:
+        print("Simulating: %sD-%sA" % (donor_key, acceptor_key))
+        donor = donors[donor_key]
+        acceptor = acceptors[acceptor_key]
+
+        donor_diffusion_simulation = DiffusionSimulation(
+            donor,
+            donor_quenching,
+            simulation_parameter)
+        donor_diffusion_simulation.run()
+        donor_diffusion_simulation.save(
+            directory + prefix + '_%sD_diffusion.xyz' % donor_key,
+            mode='xyz',
+            skip=5
+        )
+        donor_diffusion_simulation.av.save(
+            directory + prefix + '_%sD' % donor_key)
+        n_donor[donor_key] = len(donor_diffusion_simulation.av.points)
+
+        acceptor_diffusion_simulation = DiffusionSimulation(
+            acceptor,
+            acceptor_quenching,
+            simulation_parameter
+        )
+        acceptor_diffusion_simulation.run()
+        acceptor_diffusion_simulation.save(
+            directory + prefix + '_%sA_diffusion.xyz' % acceptor_key,
+            mode='xyz',
+            skip=5
+        )
+        acceptor_diffusion_simulation.av.save(
+            directory + prefix + '_%sA' % acceptor_key
+        )
+        n_acceptor[acceptor_key] = len(acceptor_diffusion_simulation.av.points)
+
+        fret_sim = FRETDecay(
+            donor_diffusion_simulation,
+            acceptor_diffusion_simulation,
+            fret_parameter, decay_parameter
+        )
+        fret_sim.update()
+        decay = fret_sim.get_histogram()
+        decay = np.vstack(decay)
+        if save:
+            np.savetxt(
+                directory + prefix + "_FRET-%sD-%sA-dRDA.txt" % (
+                donor_key, acceptor_key),
+                fret_sim.dRDA.T,
+                delimiter='\t'
+            )
+            np.savetxt(
+                directory + prefix + "_FRET-%sD-%sA.txt" % (
+                donor_key, acceptor_key),
+                decay.T,
+                delimiter='\t'
+            )
+        fret_decays[donor_key][acceptor_key] = decay
+        distances[donor_key][acceptor_key] = np.histogram(
+            fret_sim.dRDA,
+            bins=np.linspace(0, 150, 150),
+            density=True
+        )
+    if not get_number_of_av_points:
+        return fret_decays, distances
+    else:
+        return fret_decays, distances, n_donor, n_acceptor

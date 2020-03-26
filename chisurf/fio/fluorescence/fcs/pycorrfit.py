@@ -3,11 +3,14 @@
 import csv
 import pathlib
 import warnings
+import os
 
 import numpy as np
 
-import chisurf
+import chisurf.fluorescence.fcs
+
 from chisurf import typing
+from chisurf.fio.fluorescence.fcs.definitions import FCSDataset
 
 
 def openCSV(path, filename=None):
@@ -91,6 +94,8 @@ def openCSV(path, filename=None):
     traceA = None
     DataType = "AC"  # May be changed
     numtraces = 0
+    duration = 1.0
+    count_rates = list()
     prev_row = None
     for row in readdata:
         if len(row) == 0 or len(str(row[0]).strip()) == 0:
@@ -118,7 +123,13 @@ def openCSV(path, filename=None):
             traceA = np.array(data)
             data = list()
             numtraces = 2
+        elif "avg. signal" in row[0]:
+            count_rates.append(
+                float(row[0].split("\t")[1].strip())
+            )
         # Exclude commentaries
+        elif "#   duration [s]	" in row[0]:
+            duration = float(row[0].split("\t")[1].strip())
         elif str(row[0])[0:1] != '#':
             # Read the 1st section
             # On Windows we had problems importing nan values that
@@ -175,7 +186,9 @@ def openCSV(path, filename=None):
     dictionary["Correlation"] = [corr]
     dictionary["Trace"] = Traces
     dictionary["Type"] = [DataType]
-    dictionary["Filename"] = [filename]
+    dictionary["Filename"] = filename
+    dictionary["Duration"] = duration
+    dictionary["Count rates"] = count_rates
     if len(weights) != 0:
         dictionary["Weight"] = [np.array(weights)]
         dictionary["Weight Name"] = [weightname]
@@ -185,54 +198,47 @@ def openCSV(path, filename=None):
 def read_pycorrfit(
         filename: str,
         verbose: bool = False
-) -> typing.List[typing.Dict]:
+) -> typing.List[FCSDataset]:
     if verbose:
         print("Reading PyCorrFit from file: ", filename)
     d = openCSV(filename)
     correlations = list()
-
     for i, correlation in enumerate(d['Correlation']):
         r = dict()
         correlation_time = correlation[:, 0]
         correlation_amplitude = correlation[:, 1]
-        intenstiy_trace_time = (d['Trace'][i][0][:, 0] / 1000.0).tolist()
-        intensity_trace_ch1 = (d['Trace'][i][0][:, 1]).tolist()
-        aquisition_time = float(intenstiy_trace_time[-1])
-        mean_count_rate = float(d['Trace'][i][0][:, 0].sum()) / (aquisition_time * 1000.0)
+        if d['Trace'][i] is not None:
+            intenstiy_trace_time = (d['Trace'][i][0][:, 0] / 1000.0).tolist()
+            intensity_trace_ch1 = (d['Trace'][i][0][:, 1]).tolist()
+            r.update(
+                {
+                    'intensity_trace_time_ch1': intenstiy_trace_time,
+                    'intensity_trace_ch1': intensity_trace_ch1
+                }
+            )
+        aquisition_time = d["Duration"]
         r.update(
             {
                 'filename': filename,
-                'measurement_id': "%s_%s" % (d['Filename'], i),
+                'measurement_id': "%s_%s" % (
+                    os.path.splitext(os.path.basename(d['Filename']))[0], i
+                ),
                 'correlation_time': correlation_time,
                 'correlation_amplitude': correlation_amplitude,
-                'intensity_trace_time_ch1': intenstiy_trace_time,
-                'intensity_trace_ch1': intensity_trace_ch1,
                 'acquisition_time': aquisition_time,
-                'mean_count_rate': mean_count_rate,
+                'mean_count_rate': np.mean(d["Count rates"][i]),
             }
         )
-        r.update(
-            {
-                'weights': 1. / chisurf.fluorescence.fcs.noise(
+        w = 1. / chisurf.fluorescence.fcs.noise(
                     times=correlation_time,
                     correlation=correlation_amplitude,
                     measurement_duration=r['acquisition_time'],
                     mean_count_rate=r['mean_count_rate'],
-                ).tolist()
+                )
+        r.update(
+            {
+                'weights': w.tolist()
             }
         )
-        try:
-            intenstiy_trace_time = (d['Trace'][i][1][:, 0]).tolist()
-            intensity_trace_ch2 = (d['Trace'][i][1][:, 1]).tolist(),
-            r.update(
-                {
-                    'intensity_trace_time_ch2': intenstiy_trace_time,
-                    'intensity_trace_ch2': intensity_trace_ch2,
-                }
-            )
-        except KeyError:
-            chisurf.logging.warning("PyCorrFit loading no second intensity trace")
-
         correlations.append(r)
-
     return correlations

@@ -8,7 +8,7 @@ import tables
 import numexpr as ne
 
 import chisurf.fio
-import chisurf.fio.coordinates
+import chisurf.fio.structure.coordinates
 #import chisurf.models
 #import chisurf.fitting
 import chisurf.parameter
@@ -216,7 +216,7 @@ class DiffusionSimulation(object):
             coordinates = self.xyz[::skip]
             n_frames = coordinates.shape[0]
             coordinates = coordinates.reshape(n_frames, 3)
-            chisurf.fio.coordinates.write_xyz(filename, coordinates)
+            chisurf.fio.structure.coordinates.write_xyz(filename, coordinates)
         elif mode == 'npy':
             np.save(filename, self.xyz)
 

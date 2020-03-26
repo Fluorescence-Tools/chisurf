@@ -10,7 +10,7 @@ import pdb2pqr.main
 import numpy as np
 
 import chisurf.fio
-import chisurf.fio.coordinates
+import chisurf.fio.structure.coordinates
 import chisurf.base
 
 clusterCriteria = [
@@ -114,7 +114,7 @@ class Structure(chisurf.base.Base):
         self._potentials = list()
         self._sequence = None
         self.verbose = verbose
-        self.io = chisurf.fio.coordinates
+        self.io = chisurf.fio.structure.coordinates
         self.pdbid = None
 
         if isinstance(pdb_id, str):
@@ -180,8 +180,8 @@ class Structure(chisurf.base.Base):
             return np.zeros(
                 1,
                 dtype={
-                    'names': chisurf.fio.coordinates.keys,
-                    'formats': chisurf.fio.coordinates.formats
+                    'names': chisurf.fio.structure.coordinates.keys,
+                    'formats': chisurf.fio.structure.coordinates.formats
                 }
             )
 
@@ -386,7 +386,7 @@ class Structure(chisurf.base.Base):
                 outfile.write(line)
             outfile.close()
 
-        self._atoms = chisurf.fio.coordinates.read(
+        self._atoms = chisurf.fio.structure.coordinates.read(
             filename_pqr,
             assign_charge=False,
         )

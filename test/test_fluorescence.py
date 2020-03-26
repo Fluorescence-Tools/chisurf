@@ -4,6 +4,7 @@ import glob
 import scipy.stats
 
 import chisurf.fio
+import chisurf.fio.fluorescence
 import chisurf.fluorescence
 import chisurf.fluorescence.fret
 import chisurf.fluorescence.fcs

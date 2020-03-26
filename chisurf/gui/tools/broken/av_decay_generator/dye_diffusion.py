@@ -11,7 +11,7 @@ from guiqwt.builder import make
 from guiqwt.plot import CurveDialog
 
 import chisurf.math
-import chisurf.fio.coordinates
+import chisurf.fio.structure.coordinates
 import chisurf.gui.widgets.fluorescence.av
 
 from chisurf.fluorescence.simulation.dye_diffusion import DyeDecay
@@ -393,13 +393,13 @@ class TransientDecayGenerator(
         if verbose:
             print("\nSaving slow AV...")
             print("Trajectory filename: %s" % av_slow_file)
-        chisurf.fio.coordinates.write_xyz(av_slow_file, self.av.points_slow)
+        chisurf.fio.structure.coordinates.write_xyz(av_slow_file, self.av.points_slow)
 
         av_fast_file = os.path.join(directory, self.filename_prefix + '_av_fast.xyz')
         if verbose:
             print("\nSaving slow AV...")
             print("Trajectory filename: %s" % av_fast_file)
-        chisurf.fio.coordinates.write_xyz(av_fast_file, self.av.points_fast)
+        chisurf.fio.structure.coordinates.write_xyz(av_fast_file, self.av.points_fast)
         return diff_file, av_slow_file, av_fast_file
 
     def onSimulationDtChanged(self):

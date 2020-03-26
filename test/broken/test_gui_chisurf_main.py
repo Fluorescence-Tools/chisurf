@@ -118,7 +118,7 @@ class Tests(unittest.TestCase):
             setup_name="Seidel Kristine",
             setup_selector_combobox=cs.comboBox_setupSelect
         )
-        filename_fcs = "./test/data/fcs/Kristine/Kristine_with_error.cor"
+        filename_fcs = "./test/data/fcs/kristine/Kristine_with_error.cor"
         chisurf.macros.add_dataset(
             filename=filename_fcs
         )

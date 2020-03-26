@@ -6,9 +6,13 @@ import argparse
 import numpy as np
 
 
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(description='Process some integers.')
+def main():
+    print("Correlate TTTR data")
+    print("===================")
+    print("TODO TODO")
+    parser = argparse.ArgumentParser(
+        description='Process some integers.'
+    )
     parser.add_argument(
         'min_bin',
         metavar='lower',
@@ -44,8 +48,6 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    print("Make histogram")
-    print("==============")
     print("\tFilename: %s" % args.labeling_file)
     print("")
     print("\tLower :\t%s" % args.min_bin)
@@ -66,3 +68,8 @@ if __name__ == "__main__":
         ).T,
         delimiter='\t'
     )
+
+
+if __name__ == "__main__":
+    main()
+

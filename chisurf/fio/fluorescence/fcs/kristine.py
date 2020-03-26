@@ -3,7 +3,10 @@ import os
 import numpy as np
 
 import chisurf
+import chisurf.fluorescence
+
 from chisurf import typing
+from chisurf.fio.fluorescence.fcs.definitions import FCSDataset
 
 
 def write_kristine(
@@ -29,7 +32,7 @@ def write_kristine(
     :return:
     """
     if verbose:
-        print("Writing Kristine .cor to file: ", filename)
+        print("Writing kristine .cor to file: ", filename)
     col_1 = np.array(correlation_time)
     col_2 = np.array(correlation_amplitude)
     col_3 = np.zeros_like(correlation_amplitude)
@@ -64,7 +67,7 @@ def write_kristine(
 def read_kristine(
         filename: str,
         verbose: bool = False
-) -> typing.List[typing.Dict]:
+) -> typing.List[FCSDataset]:
     """
 
     :param filename:
@@ -72,13 +75,13 @@ def read_kristine(
     :return:
     """
     if verbose:
-        print("Reading Kristine .cor from file: ", filename)
+        print("Reading kristine .cor from file: ", filename)
 
     data = np.loadtxt(
         filename
     ).T
 
-    # In Kristine file-type
+    # In kristine file-type
     x, y = data[0], data[1]
     i = np.where(x > 0.0)
     x = x[i]
@@ -107,7 +110,7 @@ def read_kristine(
 
 def write_dict_to_kristine(
         filename: str,
-        ds: typing.List[typing.Dict],
+        ds: typing.List[FCSDataset],
         verbose: bool = True
 ) -> None:
     for i, d in enumerate(ds):

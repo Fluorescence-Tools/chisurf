@@ -231,7 +231,18 @@ class ProteinMCWorker(object):
             self.monteCarlo2U(**kwargs)
 
 
-if __name__ == "__main__":
+def parse_args():
+    parser = argparse.ArgumentParser(description='Monte Carlo simulation.')
+    parser.add_argument('pdb_file', metavar='file', type=str, help='The starting pdb-filename')
+    parser.add_argument('setting_file', metavar='file', type=str, help='Setting file (JSON-file).', default=None)
+    parser.add_argument('plist_output_file', metavar='plist_output_file', type=str, help='The output hdf-file.')
+    parser.add_argument("-v", "--verbose", type=bool, default=False, help='The program displays more output if True')
+    parser.add_argument("-s", "--scale", type=float, help='Scaling factor of ')
+    args = parser.parse_args()
+    return args
+
+
+def main():
     """
     Example for ChiSurf
 
@@ -240,14 +251,7 @@ if __name__ == "__main__":
     >>> subprocess.Popen("python -m tools.mcprot .\sample_data\modelling\pdb_files\eGFP-mCherry.pqr 50000 100 test.h5", creationflags=CREATE_NEW_CONSOLE)
     >>> o = subprocess.check_output("python -m tools.mcprot .\sample_data\modelling\pdb_files\eGFP-mCherry.pqr 1000 100 test.h5", shell=True)
     """
-    parser = argparse.ArgumentParser(description='Monte Carlo simulation.')
-    parser.add_argument('pdb_file', metavar='file', type=str, help='The starting pdb-filename')
-    parser.add_argument('setting_file', metavar='file', type=str, help='Setting file (JSON-file).', default=None)
-    parser.add_argument('plist_output_file', metavar='plist_output_file', type=str, help='The output hdf-file.')
-    parser.add_argument("-v", "--verbose", type=bool, default=False, help='The program displays more output if True')
-    parser.add_argument("-s", "--scale", type=float, help='Scaling factor of ')
-
-    args = parser.parse_args()
+    args = parse_args()
     kwargs = vars(args)
     verbose = args.verbose
     if verbose:
@@ -259,3 +263,6 @@ if __name__ == "__main__":
         mcw.load_config(args.setting_file)
     mcw.run()
 
+
+if __name__ == "__main__":
+    main()

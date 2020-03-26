@@ -8,7 +8,7 @@ import numpy as np
 import chisurf.structure
 import chisurf.settings
 import chisurf.base
-import chisurf.fio.density
+import chisurf.fio.structure.density
 
 from . import dynamic
 from . import static
@@ -85,7 +85,7 @@ class BasicAV(object):
 
         attachment_atom_index = kwargs.get(
             'attachment_atom_index',
-            chisurf.fio.coordinates.get_atom_index(
+            chisurf.fio.structure.coordinates.get_atom_index(
                 self.atoms,
                 chain_identifier,
                 self.attachment_residue,
@@ -195,7 +195,7 @@ class BasicAV(object):
             d = p[:, [3]].flatten()
             d /= max(d) * 50.0
             xyz = p[:, [0, 1, 2]]
-            chisurf.fio.coordinates.write_points(
+            chisurf.fio.structure.coordinates.write_points(
                 filename=filename + '.' + mode,
                 points=xyz,
                 mode=mode,

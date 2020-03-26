@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import chisurf.fio.fluorescence.tcspc
 from chisurf import typing
 
 import numpy as np
@@ -118,7 +120,7 @@ class TCSPCReader(
             **kwargs
     ) -> chisurf.data.DataCurveGroup:
         if self.reading_routine == 'csv':
-            data_group = chisurf.fio.fluorescence.read_tcspc_csv(
+            data_group = chisurf.fio.fluorescence.tcspc.read_tcspc_csv(
                 filename=filename,
                 skiprows=self.skiprows,
                 rebin=self.rebin,

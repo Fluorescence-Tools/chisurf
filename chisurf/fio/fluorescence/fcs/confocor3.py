@@ -10,7 +10,7 @@ import numpy as np
 
 from . import util
 from chisurf import typing
-
+from chisurf.fio.fluorescence.fcs.definitions import FCSDataset
 
 
 def openFCS(path, filename=None):
@@ -402,7 +402,7 @@ def openFCS_Single(path):
 def read_zeiss_fcs(
         filename: str,
         verbose: bool = False
-) -> typing.List[typing.Dict]:
+) -> typing.List[FCSDataset]:
     if verbose:
         print("Reading ALV .asc from file: ", filename)
     d = openFCS(filename)
@@ -446,7 +446,7 @@ def read_zeiss_fcs(
                     'measurement_id': "%s_%s" % (d['Filename'][i], i),
                     'correlation_time': correlation_time.tolist(),
                     'correlation_amplitude': correlation_amplitude.tolist(),
-                    'weights': w.tolist(),
+                    'correlation_amplitude_weights': w.tolist(),
                     'acquisition_time': aquisition_time,
                     'mean_count_rate': mean_count_rate,
                     'intensity_trace_time_ch1': intensity_time_ch1.tolist(),
@@ -476,7 +476,7 @@ def read_zeiss_fcs(
                     'measurement_id': "%s_%s" % (d['Filename'][i], i),
                     'correlation_time': correlation_time.tolist(),
                     'correlation_amplitude': correlation_amplitude.tolist(),
-                    'weights': w.tolist(),
+                    'correlation_amplitude_weights': w.tolist(),
                     'acquisition_time': aquisition_time,
                     'mean_count_rate': mean_count_rate,
                     'intensity_trace_time_ch1': intensity_time.tolist(),

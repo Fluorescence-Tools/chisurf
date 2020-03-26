@@ -175,7 +175,7 @@ def read(
 
     >>> import chisurf.fio
     >>> pdb_file = './test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb'
-    >>> pdb = chisurf.fio.coordinates.read(pdb_file, verbose=True)
+    >>> pdb = chisurf.fio.structure.coordinates.read(pdb_file, verbose=True)
     >>> pdb[:5]
     array([ (0, ' ', 7, 'MET', 1, 'N', 'N', [72.739, -17.501, 8.879], 0.0, 1.65, 0.0, 14.0067),
            (1, ' ', 7, 'MET', 2, 'CA', 'C', [73.841, -17.042, 9.747], 0.0, 1.76, 0.0, 12.0107),

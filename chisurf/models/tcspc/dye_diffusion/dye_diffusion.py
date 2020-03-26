@@ -9,7 +9,7 @@ import tempfile
 import numpy as np
 from qtpy import QtWidgets, uic
 
-import chisurf.fio.coordinates
+import chisurf.fio.structure.coordinates
 from chisurf.structure.av.dynamic import DiffusionSimulation, Dye, Sticking, \
     ProteinQuenching
 from chisurf.gui.widgets.fluorescence import ProteinQuenchingWidget, DyeWidget, StickingWidget
@@ -911,13 +911,13 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         if verbose:
             print("\nSaving slow AV...")
             print("Trajectory filename: %s" % av_slow_file)
-        chisurf.fio.coordinates.write_xyz(av_slow_file, self.av.points_acv)
+        chisurf.fio.structure.coordinates.write_xyz(av_slow_file, self.av.points_acv)
 
         av_fast_file = os.path.join(directory, self.filename_prefix + '_av_fast.xyz')
         if verbose:
             print("\nSaving slow AV...")
             print("Trajectory filename: %s" % av_fast_file)
-        chisurf.fio.coordinates.write_xyz(av_fast_file, self.av.points_fast)
+        chisurf.fio.structure.coordinates.write_xyz(av_fast_file, self.av.points_fast)
         return diff_file, av_slow_file, av_fast_file
 
     def onSimulationDtChanged(self):
