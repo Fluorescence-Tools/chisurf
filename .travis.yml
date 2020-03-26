@@ -11,8 +11,6 @@ matrix:
 env:
   # Build and test package on all supported python versions
   - BUILD_TARGET=3.7 MINICONDA_VERSION=latest
-  # Disable Numba JIT for correct coverage analysis
-  - NUMBA_DISABLE_JIT=1
   # To make sure it's still working with conda 4.6
   # - BUILD_TARGET=3.7 MINICONDA_VERSION=4.6.14
 
@@ -60,6 +58,8 @@ script:
   - |
     if [[ "$TRAVIS_OS_NAME" == "linux" ]];
     then
+      # Disable Numba JIT for correct coverage analysis
+      export NUMBA_DISABLE_JIT=1
       pip install codacy-coverage
       python setup.py build_ext --inplace --force
       xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test/test_*.py;
