@@ -48,7 +48,7 @@ def read_fcs(
     :return:
     """
     data_sets = list()
-    root, ext = os.path.splitext(
+    root, _ = os.path.splitext(
         os.path.basename(filename)
     )
 

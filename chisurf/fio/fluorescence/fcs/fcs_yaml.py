@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import yaml
-import numpy as np
 
 import chisurf.base
 import chisurf.fio.zipped
