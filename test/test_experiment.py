@@ -178,7 +178,7 @@ class Tests(unittest.TestCase):
 
     def test_FCS_Reader(self):
         import chisurf.experiments
-        filename = './test/data/fcs/Kristine/Kristine_with_error.cor'
+        filename = './test/data/fcs/kristine/Kristine_with_error.cor'
         root, ext = os.path.splitext(
             os.path.basename(
                 filename
@@ -189,7 +189,7 @@ class Tests(unittest.TestCase):
         )
         g1 = chisurf.experiments.fcs.FCS(
             experiment=ex,
-            experiment_reader='Kristine'
+            experiment_reader='kristine'
         )
         fcs_curve = g1.read(
             filename=filename
@@ -198,7 +198,7 @@ class Tests(unittest.TestCase):
             fcs_curve.name,
             root
         )
-        # there is one FCS curve in the Kristine file
+        # there is one FCS curve in the kristine file
         self.assertEqual(
             len(fcs_curve),
             1

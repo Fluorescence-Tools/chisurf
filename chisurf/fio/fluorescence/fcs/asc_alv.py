@@ -1,14 +1,49 @@
 """ALV .ASC files"""
+from __future__ import annotations
+
 import pathlib
 import warnings
 import numpy as np
 import csv
 
 import chisurf
-import chisurf.fluorescence
+import chisurf.fluorescence.fcs
 
 from chisurf import typing
-from chisurf.fio.fluorescence.fcs.conversion import avl_to_yaml
+from chisurf.fio.fluorescence.fcs.definitions import FCSDataset
+
+
+
+avl_to_yaml = {
+    'Temperature [K] :': {
+        'name': 'temperature',
+        'type': float
+    },
+    'Viscosity [cp]  :': {
+        'name': 'viscosity',
+        'type': float
+    },
+    'Duration [s]    :': {
+        'name': 'acquisition time',
+        'type': float
+    },
+    'MeanCR0 [kHz]   :': {
+        'name': 'mean count rate',
+        'type': float
+    },
+    'MeanCR1 [kHz]   :': {
+        'name': 'mean count rate',
+        'type': float
+    },
+    'MeanCR2 [kHz]   :': {
+        'name': 'mean count rate',
+        'type': float
+    },
+    'MeanCR3 [kHz]   :': {
+        'name': 'mean count rate',
+        'type': float
+    }
+}
 
 
 class LoadALVError(BaseException):
@@ -346,7 +381,9 @@ def openASC_old(path):
     return dictionary
 
 
-def openASC_ALV_7004(path):
+def openASC_ALV_7004(
+        path: pathlib.Path
+) -> typing.Dict:
     """
     Opens ALV file format with header information "ALV-7004/USB"
 
@@ -393,10 +430,11 @@ def openASC_ALV_7004(path):
     # trace array: "       "
     allcorr = []
     alltrac = []
+    count_rates = []
     i = 0
     intrace = False
     mode = False
-
+    duration_sec = None
 
     for item in Alldata:
         if item.lower().strip().strip('"') == "count rate":
@@ -404,6 +442,19 @@ def openASC_ALV_7004(path):
             continue
         elif item.count("Mode"):
             mode = item.split(":")[1].strip().strip('" ').lower()
+        elif "Duration" in item:
+            front, back = item.split(":")
+            if "[s]" in front:
+                mul = 1.0
+            elif "[ms]" in front:
+                mul = 1000.0
+            else:
+                mul = 1.0
+            duration_sec = mul * float(back.strip())
+        elif "MeanCR" in item:
+            count_rates.append(
+                float(item.split(":")[1].strip())
+            )
         i += 1
         if item.count("\t") == 4:
             if intrace:
@@ -530,10 +581,12 @@ def openASC_ALV_7004(path):
         raise NotImplementedError(msg)
 
     dictionary = dict()
-    dictionary["Correlation"] = corrlist
-    dictionary["Trace"] = tracelist
+    dictionary["Correlation"] = np.array(corrlist)
+    dictionary["Trace"] = np.array(tracelist)
     dictionary["Type"] = typelist
     dictionary["Filename"] = filelist
+    dictionary["Duration"] = duration_sec
+    dictionary["Count rates"] = count_rates
     return dictionary
 
 
@@ -584,7 +637,6 @@ def read_asc_header(
         for line in fp.readlines():
             lv = line.split("\t")
             try:
-                print(lv[0])
                 d[
                     avl_to_yaml[lv[0]]['name']
                 ] = avl_to_yaml[lv[0]]['type'].__call__(lv[1])
@@ -596,7 +648,7 @@ def read_asc_header(
 def read_asc(
         filename: str,
         verbose: bool = False
-) -> typing.List[typing.Dict]:
+) -> typing.List[FCSDataset]:
     if verbose:
         print("Reading ALV .asc from file: ", filename)
     d = openASC(filename)
@@ -605,30 +657,71 @@ def read_asc(
     for i, correlation in enumerate(d['Correlation']):
         correlation_time = correlation[:, 0]
         correlation_amplitude = correlation[:, 1] + 1.0
-        intensity_time = d['Trace'][i][:, 0]
-        intensity = d['Trace'][i][:, 1]
-        aquisition_time = intensity_time[-1]
-        mean_count_rate = np.sum(intensity) / aquisition_time
+        if isinstance(d['Trace'][i], list):
+            intensity_time = np.vstack(
+                [
+                    d['Trace'][i][0][:, 0],
+                    d['Trace'][i][1][:, 0]
+                ]
+            ).T
+            intensity = np.vstack(
+                [
+                    d['Trace'][i][0][:, 1],
+                    d['Trace'][i][1][:, 1]
+                ]
+            ).T
+        else:
+            intensity_time = d['Trace'][i][:, 0]
+            intensity = d['Trace'][i][:, 1]
+        try:
+            aquisition_time = d["Duration"]
+        except KeyError:
+            aquisition_time = intensity_time[-1]
+        try:
+            mean_count_rate = d["Count rates"][i]
+        except (KeyError, IndexError):
+            mean_count_rate = np.sum(intensity) / aquisition_time
 
+        # in cross correlations the count rate of the correlation
+        # channels are set to zero. In this case use the mean of the
+        # two intensity traces
+        if mean_count_rate == 0.0:
+            aquisition_time = np.mean(intensity_time[-1])
+            mean_count_rate = np.mean(intensity[-1])
         w = 1. / chisurf.fluorescence.fcs.noise(
             correlation_time,
             correlation_amplitude,
             aquisition_time,
             mean_count_rate=mean_count_rate
         )
-
-        correlations.append(
-            {
+        corr: FCSDataset = {
                 'filename': filename,
                 'measurement_id': "%s_%s" % (d['Filename'], i),
                 'correlation_time': correlation_time.tolist(),
                 'correlation_amplitude': correlation_amplitude.tolist(),
-                'weights': w.tolist(),
+                'correlation_amplitude_weights': w.tolist(),
                 'acquisition_time': aquisition_time,
                 'mean_count_rate': mean_count_rate,
                 'intensity_trace_time': intensity_time.tolist(),
                 'intensity_trace': intensity.tolist(),
+                'meta_data': read_asc_header(
+                    filename=filename
+                )
             }
+        correlations.append(
+            corr
         )
-
     return correlations
+
+
+def write_asc(
+        filename: str,
+        correlation_amplitudes: typing.Tuple[np.ndarray],
+        correlation_times: typing.Tuple[np.ndarray],
+        time_traces: typing.Tuple[np.ndarray],
+        mean_countrates: typing.Tuple[float],
+        meta_data: typing.Dict,
+        acquisition_time: float,
+        verbose: bool = True
+) -> None:
+    pass

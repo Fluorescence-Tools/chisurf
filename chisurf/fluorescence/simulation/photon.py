@@ -17,12 +17,13 @@ def simulate_photon_trace_rate(
         **kwargs
 ):
     """
-    This function generates a stream of photons considering quenching of the excited state
-    using a mix of a purely Poissonian process and the know solution of a Poissonian process
-    (a exponential decay).
+    This function generates a stream of photons considering quenching of the
+    excited state using a mix of a purely Poissonian process and the know
+    solution of a Poissonian process (a exponential decay).
 
-    In a first step a random number in the interval between [0, 1) is generated. Using this
-    random number the position on the exponential decay is looked-up. This position corresponds
+    In a first step a random number in the interval between [0, 1) is generated.
+    Using this random number the position on the exponential decay is looked-up.
+    This position corresponds
     to the waiting time of the emission of a photon.
 
     Given the time between the excitation and the photon emission the quenching trajectory

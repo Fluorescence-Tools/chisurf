@@ -2,7 +2,10 @@ import numpy as np
 import scipy.io
 
 import chisurf
+import chisurf.fluorescence.fcs
+
 from chisurf import typing
+from chisurf.fio.fluorescence.fcs.definitions import FCSDataset
 
 
 def write_china_mat(
@@ -24,7 +27,7 @@ def read_china_mat(
         filename: str,
         skip_points: int = 4,
         verbose: bool = False
-) -> typing.List[typing.Dict]:
+) -> typing.List[FCSDataset]:
     m = scipy.io.loadmat(filename)
     n_measurements = m['AA'].shape[1]
     # save intensity traces
@@ -80,7 +83,7 @@ def read_china_mat(
                     'measurement_id': "%s_%s" % (correlation_key, measurement_number),
                     'correlation_time': correlation_time.tolist(),
                     'correlation_amplitude': correlation_amplitude.tolist(),
-                    'weights': w.tolist(),
+                    'correlation_amplitude_weights': w.tolist(),
                     'acquisition_time': float(aquisition_time),
                     'mean_count_rate': float(mean_count_rate),
                     'intensity_trace_time_ch1': intensity_time.tolist(),

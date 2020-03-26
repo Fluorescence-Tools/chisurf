@@ -14,7 +14,7 @@ from .tcspc import rescale_w_bg
 def counting_noise(
         decay: np.ndarray,
         treat_zeros: bool = True,
-        zero_value: float = 1e12
+        zero_value: float = 1.0
 ) -> np.array:
     """Calculated Poisson noise (sqrt of counts) for TCSPC fluorescence decays
 
@@ -45,7 +45,9 @@ def counting_noise(
 def counting_noise_combined_parallel_perpendicular(
         parallel: np.ndarray,
         perpendicular: np.ndarray,
-        g_factor: float
+        g_factor: float,
+        treat_zeros: bool = True,
+        zero_value: float = 1.0
 ) -> np.ndarray:
     """Computes the combined counting weights (1/noise) for two counting
     channels that are added with a scale parameter.
@@ -74,6 +76,8 @@ def counting_noise_combined_parallel_perpendicular(
         perpendicular model_decay
     g_factor : float
         weight of perpendicular model_decay
+    zero_value : float
+    treat_zeros : True
 
     Returns
     -------
@@ -82,9 +86,19 @@ def counting_noise_combined_parallel_perpendicular(
 
     """
     scale_perpendicular = 2.0 * g_factor
-    vp = np.sqrt(parallel)
-    vs = np.sqrt(perpendicular)
-    vt = np.maximum(np.sqrt(vp ** 2 + scale_perpendicular ** 2 * vs ** 2), 1.0)
+    vp = counting_noise(
+        decay=parallel,
+        treat_zeros=treat_zeros,
+        zero_value=zero_value
+    )
+    vs = counting_noise(
+        decay=perpendicular,
+        treat_zeros=treat_zeros,
+        zero_value=zero_value
+    )
+    vt = np.sqrt(vp ** 2 + scale_perpendicular ** 2 * vs ** 2)
+    if treat_zeros:
+        vt = np.maximum(vt, zero_value)
     return vt
 
 
@@ -126,7 +140,7 @@ def combine_parallel_perpendicular(
     return parallel + perpendicular * scale_perpendicular
 
 
-def fitrange(
+def initial_fit_range(
         fluorescence_decay,
         threshold: float = 10.0,
         area: float = 0.999

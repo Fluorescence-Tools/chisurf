@@ -6,10 +6,12 @@ from __future__ import annotations
 from chisurf import typing
 import os.path
 import numpy as np
+import yaml
 
 import chisurf.base
 import chisurf.curve
 import chisurf.fio
+import chisurf.fio.ascii
 import chisurf.experiments
 
 
@@ -19,6 +21,8 @@ class ExperimentalData(
     """
 
     """
+
+    meta_data: typing.Dict = None
 
     @property
     def experiment(
@@ -141,7 +145,7 @@ class DataCurve(
                 **kwargs
             )
         if not isinstance(ex, np.ndarray):
-            ex = np.ones_like(self.x)
+            ex = np.zeros_like(self.x)
         if not isinstance(ey, np.ndarray):
             ey = np.ones_like(self.y)
         self.ex = np.copy(ex) if copy_array else ex
@@ -193,9 +197,8 @@ class DataCurve(
             self
     ) -> typing.Dict:
         d = super().to_dict()
-        d.update(ExperimentalData.to_dict(self))
-        d['ex'] = list(self.ex)
-        d['ey'] = list(self.ey)
+        d['ex'] = self.ex.tolist()
+        d['ey'] = self.ey.tolist()
         return d
 
     def from_dict(
@@ -345,6 +348,12 @@ class DataGroup(
             return self.__dict__['name']
         except KeyError:
             return self.names[0]
+
+    def to_yaml(self):
+        data = [d.to_dict() for d in self]
+        return yaml.dump(
+            data=data
+        )
 
     @name.setter
     def name(

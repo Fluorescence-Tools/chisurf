@@ -136,6 +136,7 @@ class Base(object):
 
         Returns
         -------
+        None
 
         """
         j = dict()
@@ -172,6 +173,7 @@ class Base(object):
 
         Returns
         -------
+        None
 
         Examples
         --------
@@ -259,7 +261,6 @@ class Base(object):
         auf
         """
         super().__init__()
-
         if len(args) > 0 and isinstance(args[0], dict):
             kwargs = args[0]
 
@@ -312,6 +313,7 @@ class Data(Base):
             name: object = None,
             verbose: bool = False,
             unique_identifier: str = None,
+            meta_data: typing.Dict = None,
             **kwargs
     ):
         super().__init__(
@@ -320,6 +322,9 @@ class Data(Base):
             unique_identifier=unique_identifier,
             **kwargs
         )
+        if meta_data is None:
+            meta_data = dict()
+        self.meta_data = meta_data
         self._data = data
         self._filename = None
 
@@ -470,7 +475,8 @@ def find_objects(
 
 
 def to_elementary(
-    obj: typing.Dict
+    obj: typing.Dict,
+    verbose: bool = True
 ) -> typing.Dict:
     """Creates a dictionary containing only elements of (basic) elementary types.
 
@@ -483,6 +489,8 @@ def to_elementary(
     ----------
     obj : dict
         The dictonary that is converted
+    verbose : bool
+        Display additional information during conversion
 
     Returns
     -------
@@ -499,10 +507,16 @@ def to_elementary(
         if isinstance(obj, (str, float, int, bool)) or obj is None:
             return obj
         elif isinstance(obj, np.ndarray):
+            if verbose:
+                print("Converting np.ndarray to list.")
             return obj.tolist()
         elif isinstance(obj, Iterable):
+            if verbose:
+                print("Converting Iterable list.")
             return [to_elementary(e) for e in obj]
         elif isinstance(obj, chisurf.base.Base):
+            if verbose:
+                print("Converting chisurf.base.Base.")
             return to_elementary(obj.to_dict())
         else:
             print("WARNING object was not converted to basic type")

@@ -42,8 +42,8 @@ __description__ = "ChiSurf is an interactive global analysis platform for " \
 __app_id__ = "F25DCFFA-1234-4643-BC4F-2C3A20495937"
 
 
-fits = list()
-imported_datasets = list()
+fits: typing.List[chisurf.fitting.fit.FitGroup] = list()
+imported_datasets: typing.List[chisurf.data.DataGroup] = list()
 run = lambda x: x   # This is replaced during initialization to execute commands via a command line interface
 cs = object         # The current instance of ChiSurf
 console = object

@@ -6,7 +6,7 @@ import numpy as np
 import numba as nb
 
 import chisurf
-import chisurf.fio
+import chisurf.fio.structure
 import chisurf.math.linalg
 from chisurf.structure.structure import Structure
 
@@ -519,8 +519,8 @@ class ProteinCentroid(
         atoms = np.empty(
             n_atoms,
             dtype={
-                'names': chisurf.fio.coordinates.keys,
-                'formats': chisurf.fio.coordinates.formats
+                'names': chisurf.fio.structure.coordinates.keys,
+                'formats': chisurf.fio.structure.coordinates.formats
             }
         )
 

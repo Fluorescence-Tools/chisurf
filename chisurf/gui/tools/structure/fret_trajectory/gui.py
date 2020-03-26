@@ -7,7 +7,7 @@ from qtpy import QtWidgets
 
 import chisurf.decorators
 import chisurf.gui.decorators
-from chisurf.fio import coordinates
+from chisurf.fio.structure import coordinates
 import chisurf.gui.widgets
 from .traj2fret import CalculateTransfer
 from chisurf.gui.widgets.pdb import PDBSelector

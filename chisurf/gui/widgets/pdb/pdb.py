@@ -114,7 +114,7 @@ class PDBSelector(
         atom_name = self.atom_name
         chain = self.chain_id
 
-        w = chisurf.fio.coordinates.get_atom_index(
+        w = chisurf.fio.structure.coordinates.get_atom_index(
             self.atoms,
             chain,
             residue_key,

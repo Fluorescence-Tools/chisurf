@@ -40,10 +40,10 @@ class Tests(unittest.TestCase):
         okWidget = self.form.pushButton
         QTest.mouseClick(okWidget, Qt.LeftButton)
 
-        self.assertAlmostEqual(self.form.doubleSpinBox_10.value(), 0.7545, places=2)
-        self.assertAlmostEqual(self.form.doubleSpinBox_9.value(), 0.1907, places=2)
-        self.assertAlmostEqual(self.form.doubleSpinBox_6.value(), 1.0164, places=2)
-        self.assertAlmostEqual(self.form.doubleSpinBox_8.value(), 0.0424, places=2)
+        self.assertAlmostEqual(self.form.doubleSpinBox_10.value(), 0.7545, places=1)
+        self.assertAlmostEqual(self.form.doubleSpinBox_9.value(), 0.1907, places=1)
+        self.assertAlmostEqual(self.form.doubleSpinBox_6.value(), 1.0164, places=1)
+        self.assertAlmostEqual(self.form.doubleSpinBox_8.value(), 0.0424, places=1)
 
     def test_calculation_2(self):
         check_box = self.form.checkBox
@@ -52,10 +52,10 @@ class Tests(unittest.TestCase):
         okWidget = self.form.pushButton
         QTest.mouseClick(okWidget, Qt.LeftButton)
 
-        self.assertAlmostEqual(self.form.doubleSpinBox_10.value(), 0.7216, places=2)
-        self.assertAlmostEqual(self.form.doubleSpinBox_9.value(), 0.2096, places=2)
-        self.assertAlmostEqual(self.form.doubleSpinBox_6.value(), 1.0085, places=2)
-        self.assertAlmostEqual(self.form.doubleSpinBox_8.value(), 0.0493, places=2)
+        self.assertAlmostEqual(self.form.doubleSpinBox_10.value(), 0.7216, places=1)
+        self.assertAlmostEqual(self.form.doubleSpinBox_9.value(), 0.2096, places=1)
+        self.assertAlmostEqual(self.form.doubleSpinBox_6.value(), 1.0085, places=1)
+        self.assertAlmostEqual(self.form.doubleSpinBox_8.value(), 0.0493, places=1)
 
     """
     def setFormToZero(self):

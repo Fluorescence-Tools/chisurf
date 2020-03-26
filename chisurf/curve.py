@@ -1,13 +1,17 @@
 from __future__ import annotations
 from chisurf import typing
-import abc
 
+import abc
+import yaml
 import numpy as np
 
 import chisurf.fio
 import chisurf.base
 import chisurf.decorators
 import chisurf.math
+
+from chisurf.base import to_elementary
+
 
 T = typing.TypeVar('T', bound='Curve')
 
@@ -86,6 +90,12 @@ class Curve(
             except IndexError:
                 self.x = csv.data[0]
                 self.y = csv.data[1]
+
+    def to_dict(self) -> typing.Dict:
+        d = super().to_dict()
+        d['x'] = self.x.tolist()
+        d['y'] = self.y.tolist()
+        return d
 
     def from_dict(
             self,

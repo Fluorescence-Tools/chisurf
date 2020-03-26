@@ -11,7 +11,7 @@ import chisurf.decorators
 import chisurf.fluorescence.anisotropy.kappa2
 import chisurf.gui.decorators
 from chisurf.fluorescence.anisotropy.kappa2 import s2delta
-from chisurf.fluorescence.anisotropy.kappa2 import kappasqAllDelta, kappasq_all
+from chisurf.fluorescence.anisotropy.kappa2 import kappasq_all_delta, kappasq_all, kappasq_dwt
 
 
 class Kappa2Dist(QtWidgets.QWidget):
@@ -57,15 +57,28 @@ class Kappa2Dist(QtWidgets.QWidget):
     ) -> None:
         if self.model == "cone":
             if self.rAD_known:
-                x, k2hist, self.k2 = kappasqAllDelta(
-                    self.delta, self.SD2, self.SA2, self.step, self.n_bins
+                x, k2hist, self.k2 = kappasq_all_delta(
+                    delta=self.delta,
+                    sD2=self.SD2,
+                    sA2=self.SA2,
+                    step=self.step,
+                    n_bins=self.n_bins
+                )
+                self.lineEdit.setText(
+                    "%.2f" % (self.delta * 180 / np.pi)
                 )
             else:
                 x, k2hist, self.k2 = kappasq_all(
-                    self.SD2, self.SA2, n=self.n_bins, m=self.n_bins
+                    self.SD2,
+                    self.SA2
                 )
         elif self.model == "diffusion":
-            pass
+            x, k2hist, self.k2 = kappasq_dwt(
+                sD2=self.SD2,
+                sA2=self.SA2,
+                fret_efficiency=self.fret_efficiency,
+                n_bins=self.n_bins
+            )
         self.k2scale = x
         self.k2hist = k2hist
         self.kappa2_curve.setData(x=x[1:], y=k2hist)
@@ -155,6 +168,10 @@ class Kappa2Dist(QtWidgets.QWidget):
         return float(self.doubleSpinBox_3.value())
 
     @property
+    def fret_efficiency(self):
+        return float(self.doubleSpinBox_11.value())
+
+    @property
     def SD2(self) -> float:
         return -np.sqrt(self.r_Dinf/self.r_0)
 
@@ -164,12 +181,13 @@ class Kappa2Dist(QtWidgets.QWidget):
 
     @property
     def delta(self) -> float:
-        return s2delta(
+        s2_delta, delta = s2delta(
             s2_donor=self.SD2,
             s2_acceptor=self.SA2,
             r_inf_AD=self.r_ADinf,
             r_0=self.r_0
         )
+        return delta
 
     @property
     def k2_true(self) -> float:

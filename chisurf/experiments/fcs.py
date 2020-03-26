@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import chisurf.fio.ascii
+import chisurf.fio.fluorescence.fcs
 import chisurf.fluorescence.fcs
 import chisurf.data
 import chisurf.fio.fluorescence
@@ -19,7 +20,7 @@ class FCS(
             self,
             name: str = 'FCS',
             use_header: bool = False,
-            experiment_reader='Kristine',
+            experiment_reader='kristine',
             skiprows: int = 0,
             *args,
             **kwargs
@@ -39,7 +40,7 @@ class FCS(
             verbose: bool = None,
             **kwargs
     ) -> chisurf.data.ExperimentDataCurveGroup:
-        r = chisurf.fio.fluorescence.read_fcs(
+        r = chisurf.fio.fluorescence.fcs.read_fcs(
             filename=filename,
             data_reader=self,
             skiprows=self.skiprows,
