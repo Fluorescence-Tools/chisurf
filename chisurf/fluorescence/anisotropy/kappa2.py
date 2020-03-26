@@ -1,7 +1,6 @@
 """
 
 """
-from math import sqrt, cos, sin, acos
 from chisurf import typing
 
 import numba as nb
@@ -452,7 +451,7 @@ def kappa_distance(
     d23 = d2[2]
 
     # distance between the two end points of the donor
-    dD21 = sqrt(
+    dD21 = np.sqrt(
         (d11 - d21) * (d11 - d21) +
         (d12 - d22) * (d12 - d22) +
         (d13 - d23) * (d13 - d23)
@@ -479,7 +478,7 @@ def kappa_distance(
     a23 = a2[2]
 
     # distance between the two end points of the acceptor
-    dA21 = sqrt(
+    dA21 = np.sqrt(
         (a11 - a21) * (a11 - a21) +
         (a12 - a22) * (a12 - a22) +
         (a13 - a23) * (a13 - a23)
@@ -501,7 +500,7 @@ def kappa_distance(
     RDA3 = dM3 - aM3
 
     # Length of the dipole-dipole vector (distance)
-    dRDA = sqrt(RDA1 * RDA1 + RDA2 * RDA2 + RDA3 * RDA3)
+    dRDA = np.sqrt(RDA1 * RDA1 + RDA2 * RDA2 + RDA3 * RDA3)
 
     # Normalized dipole-diple vector
     nRDA1 = RDA1 / dRDA

@@ -2,7 +2,6 @@ from __future__ import annotations
 from chisurf import typing
 
 import abc
-import yaml
 import numpy as np
 
 import chisurf.fio
@@ -10,7 +9,6 @@ import chisurf.base
 import chisurf.decorators
 import chisurf.math
 
-from chisurf.base import to_elementary
 
 
 T = typing.TypeVar('T', bound='Curve')

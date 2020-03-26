@@ -136,14 +136,6 @@ class Kappa2Dist(QtWidgets.QWidget):
         return min(k2), max(k2)
 
     @property
-    def k2_est(self):
-        return chisurf.fluorescence.anisotropy.kappa2.kappasq(
-            delta=self.delta,
-            sA2=self.SA2,
-            sD2=self.SD2
-        )
-
-    @property
     def n_bins(self) -> int:
         return int(self.spinBox.value())
 
