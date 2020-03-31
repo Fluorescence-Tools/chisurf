@@ -1,20 +1,11 @@
 #!/usr/bin/python
-
 import sys
-import numpy
 import platform
 from setuptools import setup, find_packages, Extension
-
 try:
     from Cython.Distutils import build_ext
 except ImportError:
-    build_ext = None
-    print(
-        "WARNING: could not import cython. "
-        "Will not build cython extenstions.",
-        file=sys.stderr
-    )
-
+    from setuptools.command.build_ext import build_ext
 
 import chisurf
 __name__ = chisurf.__name__
@@ -27,52 +18,63 @@ __email__ = chisurf.__email__
 __app_id__ = chisurf.__app_id__
 
 
-def make_extension(ext):
-    """generate an Extension object from its dotted name
-    """
-    name = (ext[0])[2:-4]
-    name = name.replace("/", ".")
-    name = name.replace("\\", ".")
-    sources = ext[0:]
+def get_extensions():
 
-    if platform.system() == "Darwin":
-        extra_compile_args = ["-O3", "-stdlib=libc++"]
-        extra_link_args = ["-stdlib=libc++"]
-    else:
-        extra_compile_args = []
-        extra_link_args = []
+    def make_extension(ext):
+        """generate an Extension object from its dotted name
+        """
+        # Prevent numpy from thinking it is still in its setup process:
+        import numpy
 
-    return Extension(
-        name,
-        sources=sources,
-        include_dirs=[numpy.get_include(), "."],
-        extra_compile_args=extra_compile_args,
-        extra_link_args=extra_link_args,
-        libraries=list(),
-        library_dirs=["."],
-        language="c++"
-    )
+        name = (ext[0])[2:-4]
+        name = name.replace("/", ".")
+        name = name.replace("\\", ".")
+        sources = ext[0:]
 
+        if platform.system() == "Darwin":
+            extra_compile_args = ["-O3", "-stdlib=libc++"]
+            extra_link_args = ["-stdlib=libc++"]
+        else:
+            extra_compile_args = []
+            extra_link_args = []
 
-# and build up the set of Extension objects
-eList = [
-    [
-        './chisurf/fluorescence/simulation/_simulation.pyx',
-        './chisurf/fluorescence/simulation/mt19937cok.cpp'
-    ],
-    [
-        './chisurf/structure/av/fps.pyx',
-        './chisurf/structure/av/mt19937cok.cpp'
-    ],
-    [
-        './chisurf/structure/potential/cPotentials.pyx'
-    ],
-    [
-        './chisurf/math/reaction/_reaction.pyx'
+        return Extension(
+            name,
+            sources=sources,
+            include_dirs=[numpy.get_include(), "."],
+            extra_compile_args=extra_compile_args,
+            extra_link_args=extra_link_args,
+            libraries=list(),
+            library_dirs=["."],
+            language="c++"
+        )
+
+    # and build up the set of Extension objects
+    eList = [
+        [
+            './chisurf/fluorescence/simulation/_simulation.pyx',
+            './chisurf/fluorescence/simulation/mt19937cok.cpp'
+        ],
+        [
+            './chisurf/structure/av/fps.pyx',
+            './chisurf/structure/av/mt19937cok.cpp'
+        ],
+        [
+            './chisurf/structure/potential/cPotentials.pyx'
+        ],
+        [
+            './chisurf/math/reaction/_reaction.pyx'
+        ]
     ]
-]
+    return [
+        make_extension(extension) for extension in eList
+    ]
 
-extensions = [make_extension(extension) for extension in eList]
+
+def readme():
+    with open('README.md') as f:
+        return f.read()
+
 
 gui_scripts = {
     "chisurf": "chisurf.__main__:main",
@@ -106,6 +108,7 @@ metadata = dict(
     version=__version__,
     license=__license__,
     description=__description__,
+    long_description=readme(),
     author=__author__,
     author_email=__email__,
     app_id=__app_id__,
@@ -145,9 +148,10 @@ metadata = dict(
     install_requires=[
         'PyQt5',
         'qtpy',
+        'cython',
         'sip',
         'pyqtgraph',
-        'slugify',
+        'python-slugify',
         'numba',
         'numpy',
         'numexpr',
@@ -165,15 +169,23 @@ metadata = dict(
         'ipython',
         'python-docx',
         'mdtraj',
-        'typing-extensions'
+        'typing-extensions',
+        'htmd-pdb2pqr',
+        'guiqwt',
+        'guidata',
+        'PyOpenGL',
+        'QScintilla'
     ],
     setup_requires=[
+        'sip',
+        'guiqwt',
+        'guidata',
         "cython",
         'numpy',
         'PyYAML',
         'setuptools'
     ],
-    ext_modules=extensions,
+    ext_modules=get_extensions(),
     cmdclass={
         'build_ext': build_ext
     },
