@@ -23,6 +23,7 @@ import cv2
 import tttrlib
 
 import chisurf.curve
+import chisurf.data
 import chisurf.fluorescence.tcspc
 import chisurf.experiments
 import chisurf.math.signal
@@ -189,8 +190,10 @@ class CLSMPixelSelect(
             if os.path.isfile(tentative_filename):
                 filename = tentative_filename
             else:
-                filename = chisurf.gui.widgets.get_filename(
-                    description='TTTR file'
+                filename = str(
+                    chisurf.gui.widgets.get_filename(
+                        description='TTTR file'
+                    )
                 )
                 self.lineEdit.setText(filename)
         if tttr_type is None:
