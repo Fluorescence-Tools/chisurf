@@ -15,7 +15,10 @@ CMakeLists.txt.user.*
 *.so
 .eggs
 *.app
-.dmypy.json
+
+#mypy caches
+.mypy*
+.*mypy*
 
 # JetBrains
 # User-specific stuff
