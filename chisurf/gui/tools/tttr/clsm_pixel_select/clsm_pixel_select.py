@@ -569,8 +569,8 @@ class CLSMPixelSelect(
                 # draw on the image
                 event.accept()
                 self.pixel_selection.drawAt(event.pos(), event)
-            if self.checkBox_4.isChecked():
-                self.plot_all_curves()
+                if self.checkBox_4.isChecked():
+                    self.update_plot()
         self.pixel_selection.mouseDragEvent = imageMouseDragEvent
         return win
 
