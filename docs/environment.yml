@@ -4,6 +4,7 @@ channels:
   - tpeulen
   - salilab
   - defaults
+  - conda-forge
 dependencies:
   - chisurf
   - pip:
