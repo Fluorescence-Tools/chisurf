@@ -100,4 +100,4 @@ notifications:
     recipients:
       - thomas.otavio.peulen@gmail.com
     on_success: change # default:
-    on_failure: always # default: always
+    on_failure: change # default: always
