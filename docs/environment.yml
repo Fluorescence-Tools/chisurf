@@ -7,9 +7,9 @@ channels:
   - conda-forge
 dependencies:
   - chisurf
-  - chinet
-  - tttrlib
-  - labellib
+  - chinet=0.0.5=py37_0
+  - tttrlib=0.0.13=np111py37_203_g13b2aa0
+  - labellib=2019.10.23=py37_1
   - appdirs=1.4.3=py37h28b3542_0
   - attrs=19.3.0=py_0
   - backcall=0.1.0=py37_0
