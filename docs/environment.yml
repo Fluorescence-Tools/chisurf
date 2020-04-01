@@ -2,7 +2,7 @@ name: docs_env
 channels:
   - tpeulen/label/nightly
   - tpeulen
-  - conda-forge
+  - defaults
 dependencies:
   - pip:
     - alabaster==0.7.12
@@ -33,3 +33,4 @@ dependencies:
     - sphinxcontrib-bibtex==1.0.0
     - sphinxcontrib-websupport==1.2.1
     - urllib3==1.25.8
+    - breathe
