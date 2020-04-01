@@ -4,7 +4,6 @@ channels:
   - tpeulen
   - salilab
   - defaults
-  - conda-forge
 dependencies:
   - pip:
     - alabaster==0.7.12
