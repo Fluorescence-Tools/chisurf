@@ -1,4 +1,5 @@
 #!/usr/bin/python
+
 import sys
 import platform
 from setuptools import setup, find_packages, Extension
@@ -108,7 +109,6 @@ metadata = dict(
     version=__version__,
     license=__license__,
     description=__description__,
-    long_description=readme(),
     author=__author__,
     author_email=__email__,
     app_id=__app_id__,
