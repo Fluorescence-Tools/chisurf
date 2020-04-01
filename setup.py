@@ -177,9 +177,6 @@ metadata = dict(
         'QScintilla'
     ],
     setup_requires=[
-        'sip',
-        'guiqwt',
-        'guidata',
         "cython",
         'numpy',
         'PyYAML',
