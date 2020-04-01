@@ -27,7 +27,7 @@ dependencies:
     # socket, self.session, self.ioloop
     # TypeError: ChannelABC() takes no arguments
     - jupyter_client 5.3.4.*
-    - matplotlib >=3.0.0
+    - matplotlib
     # the version 5.12.3 has an issue in combination with
     # python>=3.7.3. This is probably resolved in 5.13.1
     # (see: https://github.com/GNS3/gns3-gui/issues/2819)
@@ -35,7 +35,7 @@ dependencies:
     - pyqt >=5.13.0|5.9.2.*|5.6.0.*
     - qscintilla2 >=2.9.3
     - pyqtgraph >0.10.0|0.9.10
-    - guiqwt >=3.0.0
+    - guiqwt
     - pymol-open-source >=2.3.0
     - pyopengl
     - pyopencl
