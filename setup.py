@@ -169,12 +169,7 @@ metadata = dict(
         'ipython',
         'python-docx',
         'mdtraj',
-        'typing-extensions',
-        'htmd-pdb2pqr',
-        'guiqwt',
-        'guidata',
-        'PyOpenGL',
-        'QScintilla'
+        'typing-extensions'
     ],
     setup_requires=[
         "cython",
