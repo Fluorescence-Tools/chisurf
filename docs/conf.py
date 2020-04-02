@@ -24,6 +24,9 @@ import sphinx_rtd_theme
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(1, os.path.abspath(".."))
 
+autosummary_generate = True
+
+
 
 
 # -- General configuration ------------------------------------------------
@@ -37,7 +40,8 @@ sys.path.insert(1, os.path.abspath(".."))
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
-    'numpydoc',
+    'sphinx.ext.napoleon',  #The Napoleon extension enables Sphinx to understand docstrings written in two other popular formats: NumPy and Google.
+    # 'numpydoc', # numpydoc is commented out because we use napoleon
     'sphinx.ext.autosummary',
     'sphinx.ext.mathjax',
     'matplotlib.sphinxext.plot_directive',
@@ -125,6 +129,14 @@ pygments_style = 'sphinx'
 
 html_theme = 'sphinx_rtd_theme'
 
+autoapi_modules = {
+    'chisurf': {
+        'override': False,
+        'output': 'auto'
+    }
+}
+
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
@@ -155,7 +167,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -300,3 +312,22 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+
+def run_apidoc(_):
+    ignore_paths = []
+
+    argv = ["-f", "-T", "-e", "-M", "-o", "./api/", "../chisurf"] + ignore_paths
+    try:
+        # Sphinx 1.7+
+        from sphinx.ext import apidoc
+        apidoc.main(argv)
+    except ImportError:
+        # Sphinx 1.6 (and earlier)
+        from sphinx import apidoc
+        argv.insert(0, apidoc.__file__)
+        apidoc.main(argv)
+
+
+def setup(app):
+    app.connect('builder-inited', run_apidoc)
