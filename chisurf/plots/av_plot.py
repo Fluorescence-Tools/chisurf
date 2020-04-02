@@ -9,7 +9,7 @@ from matplotlib import cm
 import chisurf.math
 import chisurf.fitting
 import chisurf.fluorescence
-import chisurf.fluorescence.av
+import chisurf.structure.av
 from chisurf.plots import plotbase
 
 
@@ -95,7 +95,7 @@ class AvPlot(
         free_diffusion = 8.0
         atomic_slow_factor = 0.9
         contact_distance = 4.5
-        av = chisurf.fluorescence.av.ACV(
+        av = chisurf.structure.av.ACV(
             pdb_filename,
             radius1=5.0,
             linker_length=21.5,
