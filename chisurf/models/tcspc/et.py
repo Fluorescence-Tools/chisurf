@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
-from qtpy import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 import chisurf.decorators
 import chisurf.fluorescence
