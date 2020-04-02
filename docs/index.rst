@@ -11,6 +11,10 @@ open frame-work and API allows to extend its capabilities relatively easy.
 ChiSurf supports Windows, Linux and MacOS. Pre-assembled packages are available
 for Windows and MacOS. Currently, ChiSurf is developed for Windows.
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
 
 Installation
 ============
@@ -34,27 +38,9 @@ User-Documentation
 .. toctree::
     :maxdepth: 1
 
-    user_documentation/manual.rst
     user_documentation/tools.rst
     user_documentation/api.rst
     user_documentation/tutorials.rst
-    user_documentation/use_cases.rst
-
-
-API Reference
-=============
-
-.. toctree::
-    :maxdepth: 2
-
-    user_documentation/api/api.rst
-    api/experiments.rst
-    api/lib.rst
-    api/io.rst
-    api/tools.rst
-    api/structure.rst
-    api/fluorescence.rst
-    api/widgets.rst
 
 
 Indices and tables
