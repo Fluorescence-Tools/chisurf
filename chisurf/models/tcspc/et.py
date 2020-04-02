@@ -568,8 +568,7 @@ class EtModelFreeWidget(
              'e_scalex': 'log',
              'e_scaley': 'lin'
          }
-         ),
-        (plots.SurfacePlot, {})
+         )
     ]
 
     @chisurf.gui.decorators.init_with_ui(

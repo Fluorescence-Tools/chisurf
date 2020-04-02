@@ -1058,16 +1058,15 @@ class DiscreteDistanceWidget(
         self.append(1.0, 50.0, False)
 
     def onAddFRETrate(self):
-        t = """
-for f in cs.current_fit:
-    f.model.%s.append()
-            """ % self.name
+        t = """for f in cs.current_fit:
+                f.model.%s.append()
+        """ % self.name
         chisurf.run(t)
 
     def onRemoveFRETrate(self):
         t = """
-for f in cs.current_fit:
-    f.model.%s.pop()
+            for f in cs.current_fit:
+                f.model.%s.pop()
             """ % self.name
         chisurf.run(t)
 

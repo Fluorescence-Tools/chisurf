@@ -41,7 +41,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',  #The Napoleon extension enables Sphinx to understand docstrings written in two other popular formats: NumPy and Google.
-    # 'numpydoc', # numpydoc is commented out because we use napoleon
+    'numpydoc', # numpydoc is commented out because we use napoleon
     'sphinx.ext.autosummary',
     'sphinx.ext.mathjax',
     'matplotlib.sphinxext.plot_directive',
@@ -315,7 +315,12 @@ texinfo_documents = [
 
 
 def run_apidoc(_):
-    ignore_paths = []
+    ignore_paths = [
+        "../chisurf/gui/",
+        "../chisurf/cmd_tools/",
+        "../chisurf/macros/",
+        "../chisurf/settings/",
+    ]
 
     argv = ["-f", "-T", "-e", "-M", "-o", "./api/", "../chisurf"] + ignore_paths
     try:
