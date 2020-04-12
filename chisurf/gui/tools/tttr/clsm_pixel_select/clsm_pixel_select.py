@@ -30,6 +30,8 @@ import chisurf.math.signal
 import chisurf.settings
 import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments
+import chisurf.math.signal
+
 
 plot_settings = chisurf.settings.gui['plot']
 
@@ -44,18 +46,59 @@ class CLSMPixelSelect(
     QtWidgets.QWidget,
     chisurf.curve.CurveGroup
 ):
+    """
+    Attributes
+    ----------
+    current_image : numpy.array
+        The currently displayed image
+    current_image_subset_1 : numpy.array
+        A subset of frames different from the current image that is used to
+        estimate the resolution in the FRC. If the sum or the mean of the frames
+        is displayed the images that are averages are split in two sets that are
+        used to compute the FRC. Only the current image is displayed. The FRC is
+        computed using the neighboring images (for the first frame, the first frames
+        is current_image_subset_1)
+    current_image_subset_2 : numpy.array
+        A subset of frames different from the current image that is used to
+        estimate the resolution in the FRC
+    tttr_data : tttrlib.TTTR
+        The TTTR dataset used to generate the image
+    clsm_images : dict
+        A dictionary that contains the generated tttrlib.CLSMImage objects
+    clsm_representations : dict
+        A clsm image can have multiple representation, e.g., intensity images
+        mean arrival time images, etc. The clsm_representations dictionary stores
+        the different representations for clsm images
+    brush_kernel : numpy.ndarray
+        The kernel that is used to brush an selection. The brush kernel is a
+        Gaussian with a width defined by brush_width
+    brush_size : int
+        The size of the brush kernel
+    brush_width : float
+        Defines the v
+    masks : dict
+        The user can define a set of masks. The masks dictionary stores these
+        user defined masks
 
-    name: str = "pixel-model_decay"
+    """
+
     tttr_data: tttrlib.TTTR = None
+    current_image: np.ndarray = None
+    current_image_subset_1: np.ndarray = None
+    current_image_subset_2: np.ndarray = None
+
     clsm_images: typing.Dict[str, tttrlib.CLSMImage] = dict()
+    clsm_representations: typing.Dict[str, np.ndarray] = dict()
+
     brush_kernel: np.ndarray = None
     brush_size: int = 7
     brush_width: float = 3
-    img_plot: pyqtgraph.PlotWindow = None
+    masks: typing.Dict[str, np.ndarray] = dict()
+
+    img_plot: pyqtgraph.PlotWidget = None
+    frc_plot_window: pyqtgraph.PlotWidget = None
     current_decay: chisurf.curve.Curve = None
     current_setup: str = None
-    clsm_representations: typing.Dict[str, np.ndarray] = dict()
-    masks: typing.Dict[str, np.ndarray] = dict()
 
     @property
     def curve_name(
@@ -382,22 +425,28 @@ class CLSMPixelSelect(
                     self.hist.gradient.loadPreset(
                         self.comboBox_2.currentText()
                     )
-
                     if isinstance(image, np.ndarray):
                         # plot the sum of all frames
                         if self.radioButton_4.isChecked():
-                            data = image.sum(axis=0)
+                            self.current_image = image.sum(axis=0)
+                            self.current_image_subset_1 = image[::2].sum(axis=0)
+                            self.current_image_subset_2 = image[1::2].sum(axis=0)
                         # plot the mean of all frames
                         elif self.radioButton_5.isChecked():
-                            data = image.mean(axis=0)
+                            self.current_image = image.mean(axis=0)
+                            self.current_image_subset_1 = image[::2].mean(axis=0)
+                            self.current_image_subset_2 = image[1::2].mean(axis=0)
                         # plot only the currently selected frame
                         else:
                             frame_idx = self.spinBox_8.value()
-                            data = image[frame_idx]
-
+                            self.current_image = image[frame_idx]
+                            self.current_image_subset_1 = image[max(0, frame_idx-1)]
+                            self.current_image_subset_2 = image[frame_idx+1]
+                        data = self.current_image
+                        self.update_frc_plot()
                         # pyqtgraph is column major by default
-                        # transpose image (row, column) -> (column, row)
                         self.img.setImage(data.T)
+                        # transpose image (row, column) -> (column, row)
                         # self.pixel_selection.setImage(np.zeros_like(data))
                         self.hist.setLevels(data.min() + 1e-9, data.max())
                         self.brush_kernel *= max(data.flatten()) / max(self.brush_kernel.flatten())
@@ -713,6 +762,18 @@ class CLSMPixelSelect(
             list(self.clsm_images.keys())
         )
 
+    def update_frc_plot(self):
+        density, bins = chisurf.math.signal.compute_frc(
+            self.current_image_subset_1,
+            self.current_image_subset_2
+        )
+        self.frc_plot_window.plot(
+        )
+        self.frc_plot_window.clear()
+        self.frc_plot_window.plot(
+            x=bins, y=density,
+        )
+
     def remove_clsm(
             self,
             clsm_name: str = None
@@ -756,6 +817,10 @@ class CLSMPixelSelect(
         ##########################################################
         # self.tabifyDockWidget(self.dockWidget, self.dockWidget_4)
         # self.tabifyDockWidget(self.dockWidget_3, self.dockWidget_4)
+
+        # FRC plot
+        self.frc_plot_window = pyqtgraph.PlotWidget()
+        self.verticalLayout_15.addWidget(self.frc_plot_window)
 
         # Used reading routines
         self.current_setup = list(clsm_settings.keys())[0]
