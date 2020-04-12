@@ -1376,7 +1376,7 @@
                 <string>Show the image.</string>
                </property>
                <property name="text">
-                <string>Image</string>
+                <string/>
                </property>
                <property name="checked">
                 <bool>true</bool>
@@ -1395,7 +1395,7 @@
                 <string>Show the selection mask</string>
                </property>
                <property name="text">
-                <string>Mask</string>
+                <string/>
                </property>
                <property name="checked">
                 <bool>true</bool>
@@ -1441,8 +1441,8 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>106</width>
-           <height>69</height>
+           <width>157</width>
+           <height>87</height>
           </size>
          </property>
          <property name="floating">
@@ -1474,7 +1474,7 @@
            <item>
             <widget class="QTabWidget" name="tabWidget">
              <property name="currentIndex">
-              <number>0</number>
+              <number>1</number>
              </property>
              <widget class="QWidget" name="tab">
               <attribute name="title">
@@ -1499,6 +1499,16 @@
                   <number>0</number>
                  </property>
                 </layout>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QWidget" name="tab_3">
+              <attribute name="title">
+               <string>FRC</string>
+              </attribute>
+              <layout class="QVBoxLayout" name="verticalLayout_16">
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_15"/>
                </item>
               </layout>
              </widget>
