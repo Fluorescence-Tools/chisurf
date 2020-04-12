@@ -2,6 +2,7 @@ from __future__ import annotations
 from chisurf import typing
 
 import numpy as np
+import numba as nb
 import scipy.stats as st
 
 # import statements that are only for annotation
@@ -249,3 +250,94 @@ def gaussian_kernel(
     kernel_raw = np.sqrt(np.outer(kern1d, kern1d))
     kernel = kernel_raw/kernel_raw.sum()
     return kernel
+
+
+@nb.jit(nopython=True)
+def _frc_histogram(lx, rx, ly, ry, f1f2, f12, f22, n_bins, bin_width):
+    """Auxiliary function only intented to be used by compute_frc
+
+    Parameters
+    ----------
+    lx : int
+        left boundary of the x axis. For an image with 512 pixel this
+        would be -256
+    rx : int
+        right boundary of the x axis. For 512 pixel 255
+    ly : int
+        left boundary of the x axis. For an image with 512 pixel this
+        would be -256
+    ry : int
+        right boundary of the x axis. For 512 pixel 255
+    f1f2 : numpy.array
+        The product of the Fourier transformed images F(1)F(2)',
+        where F(2)' is the complex conjugate of F2
+    f12 : numpy.array
+        The squared absolute value of the F(1) Fourier transform, abs(F(1))**2
+    f22 : numpy.array
+        The squared absolute value of the F(2) Fourier transform, abs(F(2))**2
+    n_bins : int
+        The number of bins in the FRC
+    bin_width : float
+        The width of the Rings in the FRC
+
+    Returns
+    -------
+    numpy-array:
+        The FRC value
+
+    """
+    wf1f2 = np.zeros(n_bins, np.float64)
+    wf1 = np.zeros(n_bins, np.float64)
+    wf2 = np.zeros(n_bins, np.float64)
+    for xi in range(lx, rx):
+        for yi in range(ly, ry):
+            distance_bin = int(np.sqrt(xi ** 2 + yi ** 2) / bin_width)
+            if distance_bin < n_bins:
+                wf1f2[distance_bin] += f1f2[xi, yi]
+                wf1[distance_bin] += f12[xi, yi]
+                wf2[distance_bin] += f22[xi, yi]
+    return wf1f2 / np.sqrt(wf1 * wf2)
+
+
+def compute_frc(
+        image_1: np.ndarray,
+        image_2: np.ndarray,
+        bin_width: int = 2.0
+):
+    """
+
+    Parameters
+    ----------
+    image_1 : numpy.array
+        The first image
+    image_2 : numpy.array
+        The second image
+    bin_width : float
+        The bin width used in the computation of the FRC histogram
+
+    Returns
+    -------
+    Numpy array:
+        density of the FRC histogram
+    Numpy array:
+        bins of the FRC histogram
+
+    """
+    f1 = np.fft.fft2(image_1)
+    f2 = np.fft.fft2(image_2)
+    f1f2 = np.real(f1 * np.conjugate(f2))
+    f12, f22 = np.abs(f1) ** 2, np.abs(f2) ** 2
+    nx, ny = image_1.shape
+
+    bins = np.arange(0, np.sqrt((nx // 2) ** 2 + (ny // 2) ** 2), bin_width)
+    n_bins = int(bins.shape[0])
+    lx, rx = int(-(nx // 2)), int(nx // 2)
+    ly, ry = int(-(ny // 2)), int(ny // 2)
+    density = _frc_histogram(
+        lx, rx,
+        ly, ry,
+        f1f2, f12, f22,
+        n_bins, bin_width
+    )
+    return density, bins
+
