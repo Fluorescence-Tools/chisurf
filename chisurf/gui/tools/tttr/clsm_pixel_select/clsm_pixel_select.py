@@ -238,15 +238,15 @@ class CLSMPixelSelect(
                         description='TTTR file'
                     )
                 )
-                self.lineEdit.setText(filename)
         if tttr_type is None:
             tttr_type = str(self.comboBox_4.currentText())
-
-        # Load TTTR data
-        self.tttr_data = tttrlib.TTTR(
-            filename,
-            tttr_type
-        )
+        if os.path.isfile(filename):
+            self.lineEdit.setText(filename)
+            # Load TTTR data
+            self.tttr_data = tttrlib.TTTR(
+                filename,
+                tttr_type
+            )
 
     def add_representation(
             self,
@@ -447,9 +447,9 @@ class CLSMPixelSelect(
                         # pyqtgraph is column major by default
                         self.img.setImage(data.T)
                         # transpose image (row, column) -> (column, row)
-                        # self.pixel_selection.setImage(np.zeros_like(data))
+                        self.pixel_selection.setImage(np.zeros_like(data))
                         self.hist.setLevels(data.min() + 1e-9, data.max())
-                        self.brush_kernel *= max(data.flatten()) / max(self.brush_kernel.flatten())
+                        self.brush_kernel *= max(data.flatten()) / max(1, max(self.brush_kernel.flatten()))
                         # zoom to fit image
                         self.img_plot.autoRange()
 
@@ -521,7 +521,7 @@ class CLSMPixelSelect(
             )
             tac_coarsening = int(self.comboBox_6.currentText())
             stack_frames = self.radioButton_4.isChecked() or self.radioButton_5.isChecked()
-            decay = clsm_image_object.get_decays(
+            decay = clsm_image_object.get_pixel_decays(
                 tttr_data=self.tttr_data,
                 selection=selection,
                 tac_coarsening=tac_coarsening,
