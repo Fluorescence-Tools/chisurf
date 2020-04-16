@@ -201,7 +201,7 @@ class Photons(object):
                     for i, filename in enumerate(self._filenames):
                         t = tttrlib.TTTR(filename, 'SPC-130')
                         header = t.get_header()
-                        number_of_tac_channels = header.number_of_tac_channels
+                        number_of_tac_channels = header.number_of_micro_time_channels
                         if i > 0:
                             t.shift_macro_time(spcs[i-1]['photon']['MT'][-1])
                         spcs.append(

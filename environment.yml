@@ -44,5 +44,5 @@ dependencies:
     - opencv >=3.4.0
     - mrcfile >=1.1.2
     - labellib
-    - tttrlib >=0.0.12
+    - tttrlib >=0.0.14
     - chinet >=0.0.5
