@@ -521,7 +521,7 @@ class CLSMPixelSelect(
             )
             tac_coarsening = int(self.comboBox_6.currentText())
             stack_frames = self.radioButton_4.isChecked() or self.radioButton_5.isChecked()
-            decay = clsm_image_object.get_pixel_decays(
+            decay = clsm_image_object.get_average_decay_of_pixels(
                 tttr_data=self.tttr_data,
                 selection=selection,
                 tac_coarsening=tac_coarsening,
