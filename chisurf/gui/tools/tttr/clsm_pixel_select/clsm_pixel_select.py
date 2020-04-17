@@ -284,7 +284,7 @@ class CLSMPixelSelect(
 
         if image_type == "Mean micro time":
             n_ph_min = int(self.spinBox.value())
-            mean_micro_time = clsm_image.get_mean_tac_image(
+            mean_micro_time = clsm_image.get_mean_micro_time_image(
                 self.tttr_data,
                 n_ph_min,
                 False
@@ -294,7 +294,7 @@ class CLSMPixelSelect(
             intensity_image = clsm_image.get_intensity_image()
             data = intensity_image.astype(np.float64)
         else:
-            mean_micro_time = clsm_image.get_mean_tac_image(
+            mean_micro_time = clsm_image.get_mean_micro_time_image(
                 self.tttr_data,
                 n_ph_min,
                 False
