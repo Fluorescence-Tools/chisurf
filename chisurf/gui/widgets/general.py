@@ -187,7 +187,7 @@ class FileList(QtWidgets.QListWidget):
 def get_filename(
         description: str = '',
         file_type: str = 'All files (*.*)',
-        working_path: str = None
+        working_path: pathlib.Path = None
 ) -> pathlib.Path:
     """Open a file within a working path. If no path is specified the last
     path is used. After using this function the current working path of the
@@ -208,14 +208,14 @@ def get_filename(
         file_type
     )
     filename = pathlib.Path(filename_str)
-    chisurf.working_path = filename
+    chisurf.working_path = pathlib.Path(filename).home()
     return filename
 
 
 def open_files(
         description: str = '',
         file_type: str = 'All files (*.*)',
-        working_path: str = None
+        working_path: pathlib.Path = None
 ):
     """Open a file within a working path. If no path is specified the last
     path is used. After using this function the current working path of the
@@ -232,18 +232,18 @@ def open_files(
     filenames = QtWidgets.QFileDialog.getOpenFileNames(
         None,
         description,
-        working_path,
+        str(working_path.absolute()),
         file_type
     )[0]
-    chisurf.working_path = os.path.dirname(filenames[0])
+    chisurf.working_path = pathlib.Path(filenames[0]).home()
     return filenames
 
 
 def save_file(
         description: str = '',
         file_type: str = 'All files (*.*)',
-        working_path: str = None
-):
+        working_path: pathlib.Path = None
+) -> str:
     """Same as open see above a file within a working path. If no path is
     specified the last path is used. After using this function the current
     working path of the running program (ChiSurf) is updated according to the
@@ -261,18 +261,18 @@ def save_file(
         QtWidgets.QFileDialog.getSaveFileName(
             None,
             description,
-            working_path,
+            str(working_path.absolute()),
             file_type
         )[0]
     )
-    chisurf.working_path = os.path.dirname(filename)
+    chisurf.working_path = pathlib.Path(filename).home()
     return filename
 
 
 def get_directory(
         filename_ending: str = None,
         get_files: bool = False,
-        directory: str = None
+        directory: pathlib.Path = None
 ):
     """Opens a new window where you can choose a directory. The current
     working path is updated to this directory.
@@ -290,7 +290,8 @@ def get_directory(
         directory = str(
             QtWidgets.QFileDialog.getExistingDirectory(
                 None,
-                "Select Directory", directory
+                "Select Directory",
+                str(directory.absolute()),
             )
         )
     else:
@@ -300,7 +301,7 @@ def get_directory(
                 "Select Directory"
             )
         )
-    chisurf.working_path = directory
+    chisurf.working_path = pathlib.Path(directory)
     if not get_files:
         return directory
     else:
@@ -412,6 +413,9 @@ class Controller(
     QtWidgets.QWidget,
     chisurf.base.Base
 ):
+    """
+    Used by FittingControllerWidget
+    """
 
     def __init__(
             self,
@@ -421,18 +425,32 @@ class Controller(
         super().__init__()
 
     def to_dict(
-            self
+            self,
+            remove_protected: bool = False,
+            copy_values: bool = True,
+            convert_values_to_elementary: bool = False
     ):
-        return {
-            'type': 'controller',
-            'class': self.__class__.__name__
-        }
+        d = super().to_dict(
+            remove_protected=remove_protected,
+            copy_values=copy_values,
+            convert_values_to_elementary=convert_values_to_elementary
+        )
+        d.update(
+            {
+                'type': 'controller',
+                'class': self.__class__.__name__
+            }
+        )
+        return d
 
 
 class View(
     QtWidgets.QWidget,
     chisurf.base.Base
 ):
+    """
+    Used by Plot
+    """
 
     def __init__(
             self,
@@ -445,9 +463,20 @@ class View(
         super().update()
 
     def to_dict(
-            self
+            self,
+            remove_protected: bool = False,
+            copy_values: bool = True,
+            convert_values_to_elementary: bool = False
     ):
-        return {
-            'type': 'view',
-            'class': self.__class__.__name__
-        }
+        d = super().to_dict(
+            remove_protected=remove_protected,
+            copy_values=copy_values,
+            convert_values_to_elementary=convert_values_to_elementary
+        )
+        d.update(
+            {
+                'type': 'view',
+                'class': self.__class__.__name__
+            }
+        )
+        return d
