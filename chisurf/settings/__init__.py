@@ -31,7 +31,7 @@ if not chisurf_settings_file.is_file():
     )
 
 cs_settings = dict()
-with open(chisurf_settings_file) as fp:
+with open(str(chisurf_settings_file), 'r') as fp:
     cs_settings.update(
         yaml.safe_load(fp)
     )

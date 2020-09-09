@@ -18,11 +18,10 @@ import chisurf.experiments
 class ExperimentalData(
     chisurf.base.Data
 ):
-    """
-
-    """
 
     meta_data: typing.Dict = None
+    data_reader: chisurf.experiments.reader.ExperimentReader = None
+    _experiment: chisurf.experiments.experiment.Experiment = None
 
     @property
     def experiment(
@@ -77,14 +76,31 @@ class ExperimentalData(
         self._experiment = experiment
         self.data_reader = data_reader
 
-    def to_dict(self):
-        d = super().to_dict()
+    def to_dict(
+            self,
+            remove_protected: bool = True,
+            copy_values: bool = True,
+            convert_values_to_elementary: bool = False
+    ):
+        d = super().to_dict(
+            remove_protected=remove_protected,
+            copy_values=copy_values,
+            convert_values_to_elementary=convert_values_to_elementary
+        )
         try:
-            d['data_reader'] = self.data_reader.to_dict()
+            d['data_reader'] = self.data_reader.to_dict(
+                remove_protected=remove_protected,
+                copy_values=copy_values,
+                convert_values_to_elementary=convert_values_to_elementary
+            )
         except AttributeError:
             d['data_reader'] = None
         try:
-            d['experiment'] = self.experiment.to_dict()
+            d['experiment'] = self.experiment.to_dict(
+                remove_protected=remove_protected,
+                copy_values=copy_values,
+                convert_values_to_elementary=convert_values_to_elementary
+            )
         except AttributeError:
             d['experiment'] = None
         return d
@@ -94,6 +110,9 @@ class DataCurve(
     chisurf.curve.Curve,
     ExperimentalData
 ):
+
+    ex: np.ndarray = None
+    ey: np.ndarray = None
 
     @property
     def data(
@@ -127,6 +146,7 @@ class DataCurve(
             filename: str = '',
             data_reader: chisurf.experiments.reader.ExperimentReader = None,
             experiment: chisurf.experiments.experiment.Experiment = None,
+            load_filename_on_init: bool = True,
             *args,
             **kwargs
     ):
@@ -139,11 +159,12 @@ class DataCurve(
             *args,
             **kwargs
         )
-        if os.path.isfile(filename):
-            self.load(
-                filename,
-                **kwargs
-            )
+        if load_filename_on_init:
+            if os.path.isfile(filename):
+                self.load(
+                    filename,
+                    **kwargs
+                )
         if not isinstance(ex, np.ndarray):
             ex = np.zeros_like(self.x)
         if not isinstance(ey, np.ndarray):
@@ -194,9 +215,16 @@ class DataCurve(
         return s
 
     def to_dict(
-            self
+            self,
+            remove_protected: bool = False,
+            copy_values: bool = True,
+            convert_values_to_elementary: bool = False
     ) -> typing.Dict:
-        d = super().to_dict()
+        d = super().to_dict(
+            remove_protected=remove_protected,
+            copy_values=copy_values,
+            convert_values_to_elementary=convert_values_to_elementary
+        )
         d['ex'] = self.ex.tolist()
         d['ey'] = self.ey.tolist()
         return d
@@ -320,6 +348,7 @@ class DataGroup(
     list,
     chisurf.base.Base
 ):
+    _current_dataset: int = 0
 
     @property
     def names(
@@ -347,20 +376,27 @@ class DataGroup(
         try:
             return self.__dict__['name']
         except KeyError:
-            return self.names[0]
+            return self.names[self._current_dataset]
 
-    def to_yaml(self):
-        data = [d.to_dict() for d in self]
-        return yaml.dump(
-            data=data
-        )
-
-    @name.setter
-    def name(
+    def to_yaml(
             self,
-            v: str
-    ) -> None:
-        self._name = v
+            remove_protected: bool = False,
+            convert_values_to_elementary: bool = True
+    ):
+        d = self.to_dict(
+            remove_protected=remove_protected,
+            convert_values_to_elementary=convert_values_to_elementary
+        )
+        data = [
+            d.to_dict(
+                remove_protected=remove_protected,
+                convert_values_to_elementary=convert_values_to_elementary
+            ) for d in self
+        ]
+        d['data'] = data
+        return yaml.dump(
+            data=d
+        )
 
     def append(
             self,
@@ -380,7 +416,6 @@ class DataGroup(
             **kwargs
     ):
         super().__init__(seq)
-        self._current_dataset = 0
 
 
 class DataCurveGroup(DataGroup):
@@ -436,7 +471,7 @@ class ExperimentDataGroup(DataGroup):
 
     @property
     def setup(self):
-        return self[0].setup
+        return self[self._current_dataset].setup
 
     @setup.setter
     def setup(self, v):

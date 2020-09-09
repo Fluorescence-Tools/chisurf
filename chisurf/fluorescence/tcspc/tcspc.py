@@ -4,83 +4,56 @@ from math import sqrt
 
 import numba as nb
 import numpy as np
+import deprecation
+import scikit_fluorescence as skf
+import scikit_fluorescence.decay
 
 import chisurf.math
 import chisurf.math.datatools
 
 
-@nb.jit(nopython=True, nogil=True)
-def get_scale_bg(
-        fit: np.array,
-        data: np.array,
-        data_weight: np.array,
-        bg: float,
-        start: int,
-        stop: int
-) -> float:
-    """This function calculates a scaling factor for a given
-    experimental histogram and model function. The scaling-factor
-    scales the model function that the weighted photon counts
-    agree
+bin_lifetime_spectrum = skf.decay.rate_spectra.bin_lifetime_spectrum
+# def bin_lifetime_spectrum(
+#     lifetime_spectrum: np.array,
+#     n_lifetimes: int,
+#     discriminate: bool,
+#     discriminator=None
+# ) -> np.array:
+#     """Takes a interleaved lifetime spectrum
+#
+#     :param lifetime_spectrum: interleaved lifetime spectrum
+#     :param n_lifetimes:
+#     :param discriminate:
+#     :param discriminator:
+#     :return: lifetime_spectrum
+#     """
+#     amplitudes, lifetimes = chisurf.math.datatools.interleaved_to_two_columns(
+#         lifetime_spectrum,
+#         sort=False
+#     )
+#     lt, am = chisurf.math.datatools.histogram1D(
+#         values=lifetimes,
+#         weights=amplitudes,
+#         n_bins=n_lifetimes
+#     )
+#     if discriminate and discriminator is not None:
+#         lt, am = chisurf.math.datatools.discriminate(
+#             values=lt,
+#             weights=am,
+#             discriminator=discriminator
+#         )
+#     binned_lifetime_spectrum = chisurf.math.datatools.two_column_to_interleaved(
+#         x=am,
+#         t=lt
+#     )
+#     return binned_lifetime_spectrum
+#
 
-    :param fit:
-    :param data:
-    :param data_weight: 
-    :param bg:
-    :param start:
-    :param stop:
-    :return: scaling factor (float)
-    """
-    w = data_weight[start:stop]
-    f = fit[start:stop]
-    d = data[start:stop]
-
-    w2 = w**2
-    d_bg = np.maximum(d - bg, 0)
-
-    sumnom = np.dot(d_bg * f, w2)
-    sumdenom = np.dot(f * f, w2)
-    scale = sumnom / sumdenom
-
-    return scale
-
-
-def bin_lifetime_spectrum(
-        lifetime_spectrum: np.array,
-        n_lifetimes: int,
-        discriminate: bool,
-        discriminator=None
-) -> np.array:
-    """Takes a interleaved lifetime spectrum
-
-    :param lifetime_spectrum: interleaved lifetime spectrum
-    :param n_lifetimes:
-    :param discriminate:
-    :param discriminator:
-    :return: lifetime_spectrum
-    """
-    amplitudes, lifetimes = chisurf.math.datatools.interleaved_to_two_columns(
-        lifetime_spectrum,
-        sort=False
+@deprecation.deprecated(
+        deprecated_in="20.06.02",
+        current_version="19.08.23",
+        details="Moved to scikit-fluorescence"
     )
-    lt, am = chisurf.math.datatools.histogram1D(
-        lifetimes,
-        amplitudes,
-        n_lifetimes
-    )
-    if discriminate and discriminator is not None:
-        lt, am = chisurf.math.datatools.discriminate(
-            lt,
-            am,
-            discriminator
-        )
-    binned_lifetime_spectrum = chisurf.math.datatools.two_column_to_interleaved(
-        am,
-        lt
-    )
-    return binned_lifetime_spectrum
-
-
 @nb.jit(nopython=True, nogil=True)
 def rescale_w_bg(
         model_decay: np.array,

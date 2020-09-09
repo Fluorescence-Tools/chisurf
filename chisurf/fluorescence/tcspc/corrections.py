@@ -124,7 +124,7 @@ def add_pile_up_to_model(
     Parameters
     ----------
     data : numpy-array
-        The array containing the experimental model_decay
+        The array containing the experimental decay
     model : numpy-array
         The array containing the model function
     rep_rate : float

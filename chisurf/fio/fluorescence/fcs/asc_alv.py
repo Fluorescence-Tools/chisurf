@@ -14,38 +14,6 @@ from chisurf.fio.fluorescence.fcs.definitions import FCSDataset
 
 
 
-avl_to_yaml = {
-    'Temperature [K] :': {
-        'name': 'temperature',
-        'type': float
-    },
-    'Viscosity [cp]  :': {
-        'name': 'viscosity',
-        'type': float
-    },
-    'Duration [s]    :': {
-        'name': 'acquisition time',
-        'type': float
-    },
-    'MeanCR0 [kHz]   :': {
-        'name': 'mean count rate',
-        'type': float
-    },
-    'MeanCR1 [kHz]   :': {
-        'name': 'mean count rate',
-        'type': float
-    },
-    'MeanCR2 [kHz]   :': {
-        'name': 'mean count rate',
-        'type': float
-    },
-    'MeanCR3 [kHz]   :': {
-        'name': 'mean count rate',
-        'type': float
-    }
-}
-
-
 class LoadALVError(BaseException):
     pass
 
@@ -626,23 +594,31 @@ def mysplit(a, n):
 
 
 def read_asc_header(
-    filename: str
-):
-    path = pathlib.Path(filename)
-    d = dict()
-    with path.open(
-        mode='r',
-        encoding="iso8859_1"
-    ) as fp:
-        for line in fp.readlines():
-            lv = line.split("\t")
-            try:
-                d[
-                    avl_to_yaml[lv[0]]['name']
-                ] = avl_to_yaml[lv[0]]['type'].__call__(lv[1])
-            except:
-                pass
-    return d
+        filename: str
+) -> str:
+    """This returns the ASC header, i.e., the asc file content
+    till the first correlation curve
+
+
+    Parameters
+    ----------
+    filename : str
+        The filename of the asc file
+
+    Returns
+    -------
+    str
+        The header of the asc file
+
+    """
+    with open(filename, "r", encoding='iso-8859-1') as fp:
+        lines = fp.readlines()
+        header_end = 0
+        for i, line in enumerate(lines):
+            if "Correlation" in line:
+                header_end = i
+                break
+        return "".join(lines[:header_end])
 
 
 def read_asc(
@@ -673,6 +649,9 @@ def read_asc(
         else:
             intensity_time = d['Trace'][i][:, 0]
             intensity = d['Trace'][i][:, 1]
+
+        # We want the intensity trace in seconds
+        intensity_time /= 1000.0
         try:
             aquisition_time = d["Duration"]
         except KeyError:
@@ -696,17 +675,19 @@ def read_asc(
         )
         corr: FCSDataset = {
                 'filename': filename,
-                'measurement_id': "%s_%s" % (d['Filename'], i),
-                'correlation_time': correlation_time.tolist(),
-                'correlation_amplitude': correlation_amplitude.tolist(),
-                'correlation_amplitude_weights': w.tolist(),
+                'measurement_id': "%s_%s" % (filename, i),
                 'acquisition_time': aquisition_time,
                 'mean_count_rate': mean_count_rate,
-                'intensity_trace_time': intensity_time.tolist(),
+                'correlation_times': correlation_time.tolist(),
+                'correlation_amplitudes': correlation_amplitude.tolist(),
+                'correlation_amplitude_weights': w.tolist(),
+                'intensity_trace_times': intensity_time.tolist(),
                 'intensity_trace': intensity.tolist(),
-                'meta_data': read_asc_header(
-                    filename=filename
-                )
+                'meta_data': {
+                    'header': read_asc_header(
+                        filename=filename
+                    )
+                }
             }
         correlations.append(
             corr

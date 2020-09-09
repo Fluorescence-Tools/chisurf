@@ -13,62 +13,23 @@
     <height>795</height>
    </rect>
   </property>
-  <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-    <horstretch>0</horstretch>
-    <verstretch>0</verstretch>
-   </sizepolicy>
-  </property>
-  <property name="maximumSize">
-   <size>
-    <width>16777215</width>
-    <height>16777215</height>
-   </size>
-  </property>
-  <property name="focusPolicy">
-   <enum>Qt::ClickFocus</enum>
-  </property>
   <property name="windowTitle">
    <string>ChiSurf</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="widgets/ui/resource.qrc">
+   <iconset resource="resources/resource.qrc">
     <normaloff>:/icons/icons/cs_logo.png</normaloff>:/icons/icons/cs_logo.png</iconset>
   </property>
   <property name="windowOpacity">
    <double>1.000000000000000</double>
   </property>
-  <property name="animated">
-   <bool>true</bool>
-  </property>
-  <property name="documentMode">
-   <bool>false</bool>
-  </property>
-  <property name="tabShape">
-   <enum>QTabWidget::Rounded</enum>
-  </property>
   <property name="dockOptions">
    <set>QMainWindow::AllowNestedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks|QMainWindow::ForceTabbedDocks</set>
   </property>
-  <property name="unifiedTitleAndToolBarOnMac">
-   <bool>true</bool>
-  </property>
   <widget class="QWidget" name="centralwidget">
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
    <layout class="QGridLayout" name="gridLayout_2">
     <item row="1" column="1">
      <widget class="QMdiArea" name="mdiarea">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
       <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
       </property>
@@ -77,15 +38,6 @@
       </property>
       <property name="horizontalScrollBarPolicy">
        <enum>Qt::ScrollBarAsNeeded</enum>
-      </property>
-      <property name="background">
-       <brush brushstyle="SolidPattern">
-        <color alpha="255">
-         <red>128</red>
-         <green>128</green>
-         <blue>128</blue>
-        </color>
-       </brush>
       </property>
       <property name="viewMode">
        <enum>QMdiArea::SubWindowView</enum>
@@ -110,27 +62,6 @@
    </layout>
   </widget>
   <widget class="QDockWidget" name="dockWidgetAnalysis">
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="minimumSize">
-    <size>
-     <width>89</width>
-     <height>111</height>
-    </size>
-   </property>
-   <property name="maximumSize">
-    <size>
-     <width>524287</width>
-     <height>524287</height>
-    </size>
-   </property>
-   <property name="focusPolicy">
-    <enum>Qt::NoFocus</enum>
-   </property>
    <property name="floating">
     <bool>false</bool>
    </property>
@@ -149,12 +80,6 @@
       <horstretch>0</horstretch>
       <verstretch>0</verstretch>
      </sizepolicy>
-    </property>
-    <property name="font">
-     <font>
-      <family>MS Shell Dlg 2</family>
-      <pointsize>9</pointsize>
-     </font>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <property name="spacing">
@@ -200,7 +125,7 @@
           <x>0</x>
           <y>0</y>
           <width>254</width>
-          <height>145</height>
+          <height>133</height>
          </rect>
         </property>
         <property name="sizePolicy">
@@ -239,8 +164,8 @@
            </property>
            <property name="sizeHint" stdset="0">
             <size>
-             <width>20</width>
-             <height>40</height>
+             <width>0</width>
+             <height>0</height>
             </size>
            </property>
           </spacer>
@@ -261,12 +186,6 @@
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
-   </property>
-   <property name="minimumSize">
-    <size>
-     <width>80</width>
-     <height>38</height>
-    </size>
    </property>
    <property name="windowTitle">
     <string>Plot settings</string>
@@ -403,7 +322,7 @@
       <string>FRET</string>
      </property>
      <property name="icon">
-      <iconset resource="widgets/ui/resource.qrc">
+      <iconset resource="resources/resource.qrc">
        <normaloff>:/icons/icons/FRET.png</normaloff>:/icons/icons/FRET.png</iconset>
      </property>
      <addaction name="actionCalculator"/>
@@ -413,7 +332,7 @@
       <string>Anisotropy</string>
      </property>
      <property name="icon">
-      <iconset resource="widgets/ui/resource.qrc">
+      <iconset resource="resources/resource.qrc">
        <normaloff>:/icons/icons/Cone.png</normaloff>:/icons/icons/Cone.png</iconset>
      </property>
      <addaction name="actionAnisotropy_Lines"/>
@@ -424,7 +343,7 @@
       <string>Modelling</string>
      </property>
      <property name="icon">
-      <iconset resource="widgets/ui/resource.qrc">
+      <iconset resource="resources/resource.qrc">
        <normaloff>:/icons/icons/Peptide_FRET.png</normaloff>:/icons/icons/Peptide_FRET.png</iconset>
      </property>
      <widget class="QMenu" name="menuTrajectory_tools">
@@ -432,7 +351,7 @@
        <string>Trajectory tools</string>
       </property>
       <property name="icon">
-       <iconset resource="widgets/ui/resource.qrc">
+       <iconset resource="resources/resource.qrc">
         <normaloff>:/icons/icons/Peptide_FRET.png</normaloff>:/icons/icons/Peptide_FRET.png</iconset>
       </property>
       <addaction name="actionTrajectory_converter"/>
@@ -457,7 +376,7 @@
       <string>TTTR</string>
      </property>
      <property name="icon">
-      <iconset resource="widgets/ui/resource.qrc">
+      <iconset resource="resources/resource.qrc">
        <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
      </property>
      <addaction name="actionConvert"/>
@@ -612,7 +531,7 @@
     </size>
    </property>
    <property name="windowIcon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/kitesurf.svg</normaloff>:/icons/icons/kitesurf.svg</iconset>
    </property>
    <property name="floating">
@@ -683,9 +602,6 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
-       </property>
-       <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
        </property>
        <property name="toolTip">
         <string>This selection box is updated according to the selected dataset.</string>
@@ -838,9 +754,6 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
-       </property>
        <property name="toolTip">
         <string>After selecting a setup-type adjust the parameters of the setup used to open the experimental data.</string>
        </property>
@@ -853,9 +766,6 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
-       </property>
-       <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
        </property>
        <property name="toolTip">
         <string>Select a type of experiment. After selecting the experiment type you can select a setup-type</string>
@@ -1022,7 +932,7 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/cs_logo.png</normaloff>:/icons/icons/cs_logo.png</iconset>
    </property>
    <property name="text">
@@ -1055,7 +965,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/Document-print.svg</normaloff>:/icons/icons/Document-print.svg</iconset>
    </property>
    <property name="text">
@@ -1142,7 +1052,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/FCS-Filter.png</normaloff>:/icons/icons/FCS-Filter.png</iconset>
    </property>
    <property name="text">
@@ -1151,7 +1061,7 @@
   </action>
   <action name="actionCalculator">
    <property name="icon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/accessories-calculator.png</normaloff>:/icons/icons/accessories-calculator.png</iconset>
    </property>
    <property name="text">
@@ -1160,7 +1070,7 @@
   </action>
   <action name="actionKappa2_Distribution">
    <property name="icon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/Cone.png</normaloff>:/icons/icons/Cone.png</iconset>
    </property>
    <property name="text">
@@ -1182,7 +1092,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/Anisotropy-Lines.png</normaloff>:/icons/icons/Anisotropy-Lines.png</iconset>
    </property>
    <property name="text">
@@ -1215,7 +1125,7 @@
   </action>
   <action name="actionDye_Diffusion">
    <property name="icon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/dye-diffusion.png</normaloff>:/icons/icons/dye-diffusion.png</iconset>
    </property>
    <property name="text">
@@ -1242,7 +1152,7 @@
   </action>
   <action name="actionTrajectory_converter">
    <property name="icon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/hdf2pdb.png</normaloff>:/icons/icons/hdf2pdb.png</iconset>
    </property>
    <property name="text">
@@ -1251,7 +1161,7 @@
   </action>
   <action name="actionPDB2Label">
    <property name="icon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/pdb2label.png</normaloff>:/icons/icons/pdb2label.png</iconset>
    </property>
    <property name="text">
@@ -1260,7 +1170,7 @@
   </action>
   <action name="actionCalculate_Potential">
    <property name="icon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/potential.png</normaloff>:/icons/icons/potential.png</iconset>
    </property>
    <property name="text">
@@ -1389,7 +1299,7 @@
   </action>
   <action name="actionConvert">
    <property name="icon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
    </property>
    <property name="text">
@@ -1398,7 +1308,7 @@
   </action>
   <action name="actionGenerate_decay">
    <property name="icon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/TCSPC.png</normaloff>:/icons/icons/TCSPC.png</iconset>
    </property>
    <property name="text">
@@ -1407,7 +1317,7 @@
   </action>
   <action name="actionCorrelate">
    <property name="icon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/FCS.png</normaloff>:/icons/icons/FCS.png</iconset>
    </property>
    <property name="text">
@@ -1445,7 +1355,7 @@
   </action>
   <action name="actionF_Test">
    <property name="icon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/1462894045_chart02_64.png</normaloff>:/icons/icons/1462894045_chart02_64.png</iconset>
    </property>
    <property name="text">
@@ -1491,7 +1401,7 @@
   </action>
   <action name="actionTTTR_CLSM">
    <property name="icon">
-    <iconset resource="widgets/ui/resource.qrc">
+    <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
    </property>
    <property name="text">
@@ -1507,7 +1417,7 @@
   <zorder>dockWidgetReadData</zorder>
  </widget>
  <resources>
-  <include location="widgets/ui/resource.qrc"/>
+  <include location="resources/resource.qrc"/>
  </resources>
  <connections>
   <connection>

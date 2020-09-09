@@ -7,6 +7,7 @@ import pathlib
 import warnings
 
 import numpy as np
+import chisurf.fluorescence.fcs
 
 from . import util
 from chisurf import typing
@@ -444,15 +445,23 @@ def read_zeiss_fcs(
                 {
                     'filename': filename,
                     'measurement_id': "%s_%s" % (d['Filename'][i], i),
-                    'correlation_time': correlation_time.tolist(),
-                    'correlation_amplitude': correlation_amplitude.tolist(),
-                    'correlation_amplitude_weights': w.tolist(),
                     'acquisition_time': aquisition_time,
                     'mean_count_rate': mean_count_rate,
-                    'intensity_trace_time_ch1': intensity_time_ch1.tolist(),
-                    'intensity_trace_ch1': intensity_ch1.tolist(),
-                    'intensity_trace_time_ch2': intensity_time_ch2.tolist(),
-                    'intensity_trace_ch2': intensity_ch2.tolist(),
+                    'correlation_times': correlation_time.tolist(),
+                    'correlation_amplitudes': correlation_amplitude.tolist(),
+                    'correlation_amplitude_weights': w.tolist(),
+                    'intensity_trace_times': np.vstack(
+                        [
+                            intensity_time_ch1,
+                            intensity_time_ch2
+                        ]
+                    ).tolist(),
+                    'intensity_trace': np.vstack(
+                        [
+                            intensity_ch1,
+                            intensity_time_ch2
+                        ]
+                    ).tolist()
                 }
             )
         else:
@@ -474,13 +483,13 @@ def read_zeiss_fcs(
                 {
                     'filename': filename,
                     'measurement_id': "%s_%s" % (d['Filename'][i], i),
-                    'correlation_time': correlation_time.tolist(),
-                    'correlation_amplitude': correlation_amplitude.tolist(),
-                    'correlation_amplitude_weights': w.tolist(),
                     'acquisition_time': aquisition_time,
                     'mean_count_rate': mean_count_rate,
-                    'intensity_trace_time_ch1': intensity_time.tolist(),
-                    'intensity_trace_ch1': intensity.tolist(),
+                    'correlation_times': correlation_time.tolist(),
+                    'correlation_amplitudes': correlation_amplitude.tolist(),
+                    'correlation_amplitude_weights': w.tolist(),
+                    'intensity_trace_times': intensity_time.tolist(),
+                    'intensity_trace': intensity.tolist(),
                 }
             )
 

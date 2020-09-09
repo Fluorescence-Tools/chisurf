@@ -4,9 +4,8 @@
 from __future__ import annotations
 
 import numpy as np
-
 import chisurf.fluorescence.fcs.correlate
-import chisurf.fluorescence.fcs.filtered
+
 from chisurf import typing
 
 weightCalculations = ['Koppel', 'none']
@@ -68,7 +67,9 @@ def noise(
 
     correlation_offset = np.mean(correlation[-lb:-ub])
     mean_correlation_amplitude = np.mean(correlation[lb:ub]) - correlation_offset
-
+    if mean_correlation_amplitude == 0:
+        print("WARNING: the mean correlation amplitude seems to be zero!")
+        mean_correlation_amplitude = 1.0
     if diffusion_time is None:
         try:
             imaxhalf = np.min(np.nonzero(correlation < mean_correlation_amplitude / 2.0 + correlation_offset))

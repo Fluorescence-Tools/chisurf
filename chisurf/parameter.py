@@ -14,9 +14,6 @@ T = typing.TypeVar('T', bound='Parameter')
 class Parameter(
     chisurf.base.Base
 ):
-    """
-
-    """
 
     @property
     def name(self) -> str:

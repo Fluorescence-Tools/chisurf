@@ -201,8 +201,9 @@ def get_win(
 def get_app():
     app = QtWidgets.QApplication(sys.argv)
     app.processEvents()
-    get_win(
-        app=app
-    )
+    win = get_win(app=app)
+    win.raise_()
+    win.activateWindow()
+    win.setFocus()
     return app
 

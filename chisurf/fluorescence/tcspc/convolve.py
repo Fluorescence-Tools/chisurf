@@ -163,16 +163,12 @@ def convolve_lifetime_spectrum_periodic(
 
     # convolution
     for ne in range(n_exp):
-
         x_curr = lifetime_spectrum[2 * ne]
         lt_curr = lifetime_spectrum[2 * ne + 1]
-
         tail_a = 1./(1.-exp(-period/lt_curr))
         exp_curr = exp(-dt/lt_curr)
-
         fit_curr = 0.
         decay[0] += dt_2 * irf[0] * (exp_curr + 1.) * x_curr
-
         for i in range(conv_stop):
             fit_curr = (fit_curr + dt_2 * irf[i - 1]) * exp_curr + dt_2 * irf[i]
             decay[i] += fit_curr * x_curr
