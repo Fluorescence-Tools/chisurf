@@ -9,10 +9,7 @@ matrix:
       osx_image: xcode9.4
 
 env:
-  # Build and test package on all supported python versions
   - BUILD_TARGET=3.7 MINICONDA_VERSION=latest
-  # To make sure it's still working with conda 4.6
-  # - BUILD_TARGET=3.7 MINICONDA_VERSION=4.6.14
 
 addons:
   apt:
@@ -37,16 +34,13 @@ before_install:
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda config --set channel_priority flexible
-  - conda config --add channels conda-forge
-  - conda config --add channels tpeulen
-  - conda config --add channels tpeulen/label/nightly
-  - conda config --add channels salilab
+  # add conda channels
+  - conda config --append channels salilab && conda config --append channels conda-forge
+  - conda config --prepend channels tpeulen && conda config --prepend channels tpeulen/label/nightly
   - conda update -q conda
-  - export CONDA_LABEL=$(if [ "TRAVIS_PULL_REQUEST_BRANCH" == "master" ]; then echo main; else echo nightly; fi)
   - conda info -a
   - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git nose coverage numpy pyyaml pysftp
   - source activate build-environment
-  - git fetch --unshallow --tags --force
   - conda build conda-recipe --output-folder bld-dir
   - conda config --add channels "file://`pwd`/bld-dir"
 
@@ -57,6 +51,7 @@ script:
   # osx does not have xvfb server for unit tests of gui
   # therefore run unitests on linux and on osx the conda
   # installation and startup.
+  - export CONDA_LABEL=$(if [ "TRAVIS_PULL_REQUEST_BRANCH" == "master" ]; then echo main; else echo nightly; fi)
   - |
     if [[ "$TRAVIS_OS_NAME" == "linux" ]];
     then
