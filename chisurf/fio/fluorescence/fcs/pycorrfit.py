@@ -195,10 +195,27 @@ def openCSV(path, filename=None):
     return dictionary
 
 
+def read_pycorrfit_header(
+        filename: str
+) -> str:
+    header = ""
+    with open(filename, "r") as fp:
+        lines = fp.readlines()
+        for line in lines:
+            if line[0] == "#":
+                header += line
+            else:
+                break
+    return header
+
+
 def read_pycorrfit(
         filename: str,
         verbose: bool = False
 ) -> typing.List[FCSDataset]:
+    header = read_pycorrfit_header(
+        filename=filename
+    )
     if verbose:
         print("Reading PyCorrFit from file: ", filename)
     d = openCSV(filename)
@@ -217,27 +234,27 @@ def read_pycorrfit(
                 }
             )
         aquisition_time = d["Duration"]
+        mean_count_rate = np.mean(d["Count rates"][i])
+        w = 1. / chisurf.fluorescence.fcs.noise(
+                    times=correlation_time,
+                    correlation=correlation_amplitude,
+                    measurement_duration=aquisition_time,
+                    mean_count_rate=mean_count_rate,
+                )
         r.update(
             {
                 'filename': filename,
                 'measurement_id': "%s_%s" % (
                     os.path.splitext(os.path.basename(d['Filename']))[0], i
                 ),
-                'correlation_time': correlation_time,
-                'correlation_amplitude': correlation_amplitude,
                 'acquisition_time': aquisition_time,
-                'mean_count_rate': np.mean(d["Count rates"][i]),
-            }
-        )
-        w = 1. / chisurf.fluorescence.fcs.noise(
-                    times=correlation_time,
-                    correlation=correlation_amplitude,
-                    measurement_duration=r['acquisition_time'],
-                    mean_count_rate=r['mean_count_rate'],
-                )
-        r.update(
-            {
-                'weights': w.tolist()
+                'mean_count_rate': mean_count_rate,
+                'correlation_times': correlation_time,
+                'correlation_amplitudes': correlation_amplitude,
+                'correlation_amplitude_weights': w.tolist(),
+                'meta_data': {
+                    'header': header
+                }
             }
         )
         correlations.append(r)

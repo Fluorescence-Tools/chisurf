@@ -239,13 +239,24 @@ class FittingParameterGroup(
             ps[i].value = v
 
     def to_dict(
-            self
+            self,
+            remove_protected: bool = False,
+            copy_values: bool = True,
+            convert_values_to_elementary: bool = False
     ) -> typing.Dict:
-        s = dict()
+        s = super().to_dict(
+            remove_protected=remove_protected,
+            copy_values=copy_values,
+            convert_values_to_elementary=convert_values_to_elementary
+        )
         parameters = dict()
         s['parameter'] = parameters
         for parameter in self._parameters:
-            parameters[parameter.name] = parameter.to_dict()
+            parameters[parameter.name] = parameter.to_dict(
+                remove_protected=remove_protected,
+                copy_values=copy_values,
+                convert_values_to_elementary=convert_values_to_elementary
+            )
         return s
 
     def from_dict(

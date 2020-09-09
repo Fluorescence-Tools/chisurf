@@ -3,13 +3,12 @@ from __future__ import annotations
 import os
 
 import numpy as np
-import yaml
 
 import chisurf.base
 import chisurf.data
 import chisurf.fio
 import chisurf.fio.ascii
-import chisurf.fio.zipped
+import scikit_fluorescence.io.zipped
 import chisurf.fio.fluorescence.fcs.definitions
 import chisurf.fio.fluorescence.fcs.asc_alv
 import chisurf.fio.fluorescence.fcs.china
@@ -21,6 +20,52 @@ import chisurf.fio.fluorescence.fcs.fcs_yaml
 
 from chisurf import typing
 from chisurf.fio.fluorescence.fcs.definitions import FCSDataset
+
+
+def make_curve_kwargs(
+        r: FCSDataset
+):
+    """This function takes a *FCSDataset* and prepares a dictionary
+    that can be used to initialize a *DataCurve*
+
+    Parameters
+    ----------
+    r : FCSDataset
+
+    Returns
+    -------
+    dict
+        A dictionary that can be used to initialize a *DataCurve*.
+
+    """
+    # a set of main keys are used to define FCS curves
+    # with associated weights
+    main_keys = [
+        'measurement_id',
+        'correlation_times',
+        'correlation_amplitudes',
+        'correlation_amplitude_weights'
+    ]
+    filename = r.get('filename')
+    x = np.array(r.get('correlation_times'))
+    # all other keys are stored in the meta data dict
+    meta_data = r.pop('meta_data', dict())
+    for key in r.keys():
+        if key not in main_keys:
+            meta_data[key] = r.get(key, None)
+    meta_data["experiment_name"] = "FCS"
+    meta_data["filename"] = filename
+    curve_kwargs = {
+        "name": r.get('measurement_id'),
+        "x": x,
+        "y": np.array(r.get('correlation_amplitudes')),
+        "ex": np.ones_like(x),
+        "ey": 1. / np.array(r.get('correlation_amplitude_weights')),
+        "filename": filename,
+        "meta_data": meta_data,
+        "load_filename_on_init": False
+    }
+    return curve_kwargs
 
 
 def read_fcs(
@@ -47,103 +92,50 @@ def read_fcs(
     :param kwargs:
     :return:
     """
-    data_sets = list()
-    root, _ = os.path.splitext(
-        os.path.basename(filename)
-    )
 
-    # Files with single curve
-    meta_data: typing.Dict = dict()
-    ds: typing.List = list()
-    if reader_name in ['csv', 'kristine', 'pycorrfit']:
-        if reader_name == 'csv':
-            csv = chisurf.fio.ascii.Csv()
-            csv.load(
-                filename=filename,
-                verbose=chisurf.verbose,
-                **kwargs
-            )
-            x, y = csv.data[0], csv.data[1]
-            ey = csv.data[2]
-        elif reader_name == 'kristine':
-            r = chisurf.fio.fluorescence.fcs.kristine.read_kristine(
-                filename=filename,
-                verbose=verbose
-            )
-            x = np.array(r[0].pop('correlation_time'))
-            y = np.array(r[0].pop('correlation_amplitude'))
-            ey = 1. / np.array(r[0].pop('weights'))
-            ex = np.ones_like(x)
-            meta_data = r[0]
-        elif reader_name == 'pycorrfit':
-            r = chisurf.fio.fluorescence.fcs.pycorrfit.read_pycorrfit(
-                filename=filename,
-                verbose=verbose
-            )
-            x = np.array(r[0].pop('correlation_time'))
-            y = np.array(r[0].pop('correlation_amplitude'))
-            ey = 1. / np.array(r[0].pop('weights'))
-            ex = np.ones_like(x)
-            meta_data = r[0]
-        name = root
-        data_sets.append(
-            chisurf.data.DataCurve(
-                data_reader=data_reader,
-                name=name,
-                x=x, y=y, ey=ey, ex=ex,
-                experiment=experiment,
-                meta_data=meta_data
-            )
+    name_reader = {
+        'confocor3': chisurf.fio.fluorescence.fcs.confocor3.read_zeiss_fcs,
+        'china-mat': chisurf.fio.fluorescence.fcs.china.read_china_mat,
+        'alv': chisurf.fio.fluorescence.fcs.asc_alv.read_asc,
+        'pq.dat': chisurf.fio.fluorescence.fcs.pq_dat.read_dat,
+        'yaml': chisurf.fio.fluorescence.fcs.fcs_yaml.read_yaml,
+        'kristine': chisurf.fio.fluorescence.fcs.kristine.read_kristine,
+        'pycorrfit': chisurf.fio.fluorescence.fcs.pycorrfit.read_pycorrfit
+    }
+
+    data_sets: typing.List[chisurf.data.DataCurve] = list()
+    ds: typing.List[FCSDataset] = list()
+    # Files that contain single FCS curves
+    if reader_name == 'csv':
+        csv = chisurf.fio.ascii.Csv()
+        csv.load(
+            filename=filename,
+            verbose=chisurf.verbose,
+            **kwargs
         )
+        x, y = csv.data[0], csv.data[1]
+        ey = csv.data[2]
     # Files with multiple curves per file
     elif reader_name in [
         'china-mat',
         'confocor3',
         'alv',
         'pq.dat',
-        'yaml'
+        'yaml',
+        'kristine',
+        'pycorrfit'
     ]:
-        if reader_name == 'confocor3':
-            ds = chisurf.fio.fluorescence.fcs.confocor3.read_zeiss_fcs(
-                filename=filename,
-                verbose=verbose
+        reader = name_reader[reader_name]
+        ds: typing.List[FCSDataset] = reader(
+            filename=filename,
+            verbose=verbose
+        )
+    for r in ds:
+        data_sets.append(
+            chisurf.data.DataCurve(
+                **make_curve_kwargs(r)
             )
-        elif reader_name == 'china-mat':
-            ds = chisurf.fio.fluorescence.fcs.china.read_china_mat(
-                filename=filename,
-                verbose=verbose
-            )
-        elif reader_name == 'alv':
-            ds = chisurf.fio.fluorescence.fcs.asc_alv.read_asc(
-                filename=filename,
-                verbose=verbose
-            )
-        elif reader_name == 'pq.dat':
-            ds = chisurf.fio.fluorescence.fcs.pq_dat.read_dat(
-                filename=filename,
-                verbose=verbose
-            )
-        elif reader_name == 'yaml':
-            ds = chisurf.fio.fluorescence.fcs.fcs_yaml.read_yaml(
-                filename=filename,
-                verbose=verbose
-            )
-        for r in ds:
-            name = root + "_" + r.get('measurement_id')
-            x = np.array(r.pop('correlation_time'))
-            y = np.array(r.pop('correlation_amplitude'))
-            ey = 1. / np.array(r.pop('correlation_amplitude_weights'))
-            ex = np.ones_like(x)
-            meta_data = dict()
-            meta_data.update(r)
-            data_sets.append(
-                chisurf.data.DataCurve(
-                    name=name,
-                    data_reader=data_reader,
-                    x=x, y=y, ey=ey, ex=ex,
-                    meta_data=meta_data
-                )
-            )
+        )
     return chisurf.data.ExperimentDataCurveGroup(data_sets)
 
 
@@ -180,7 +172,8 @@ def write_fcs(
         data: chisurf.data.ExperimentDataCurveGroup,
         filename: str,
         file_type: str,
-        verbose: bool = True
+        verbose: bool = True,
+        mode: str = 'w'
 ):
     single_fcs_datatypes = ["kristine"]
     multi_fcs_datatypes = ["yaml"]
@@ -208,39 +201,16 @@ def write_fcs(
         if verbose:
             print("Writing file with multiple FCS curves per file")
         if file_type == "yaml":
-            txt = data.to_yaml()
-            with chisurf.fio.zipped.open_maybe_zipped(
+            txt = data.to_yaml(
+                remove_protected=True,
+                convert_values_to_elementary=True
+            )
+            with scikit_fluorescence.io.zipped.open_maybe_zipped(
                 filename=filename,
-                mode="w"
+                mode=mode
             ) as fp:
                 fp.write(
                     txt
                 )
 
-
-def write_intensity_trace(
-        filename: str,
-        time_axis: np.ndarray,
-        intensity: np.ndarray,
-        verbose: bool = True
-):
-    """
-
-    :param filename: the output filename
-    :param time_axis: the time axis
-    :param intensity: the intensity corresponding to the time axis
-    :return:
-    """
-    if verbose:
-        print("Saving intensity trace: %s" % filename)
-    data = np.vstack(
-        [
-            time_axis,
-            intensity
-        ]
-    ).T
-    np.savetxt(
-        filename,
-        data,
-    )
 

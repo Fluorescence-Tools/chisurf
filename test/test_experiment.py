@@ -195,8 +195,8 @@ class Tests(unittest.TestCase):
             filename=filename
         )
         self.assertEqual(
-            fcs_curve.name,
-            root
+            root,
+            fcs_curve.name
         )
         # there is one FCS curve in the kristine file
         self.assertEqual(

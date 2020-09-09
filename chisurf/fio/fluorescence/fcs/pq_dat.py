@@ -17,14 +17,19 @@ def read_dat(
     for i in range(n_corr):
         correlation_time = d[i * 3 + 0]
         correlation_amplitude = d[i * 3 + 1]
-        correlation_weight = 1. / d[i * 3 + 2]
+        err = d[i * 3 + 2]
+        # data points without error should
+        # not contribute to analysis. Hence, set err to
+        # large value
+        err[err == 0] = 1e12
+        correlation_weight = 1. / err
         corr = {
             'filename': filename,
             'measurement_id': "%s_%s" % (
                 os.path.splitext(os.path.basename(filename))[1], i
             ),
-            'correlation_time': correlation_time.tolist(),
-            'correlation_amplitude': correlation_amplitude.tolist(),
+            'correlation_times': correlation_time.tolist(),
+            'correlation_amplitudes': correlation_amplitude.tolist(),
             'correlation_amplitude_weights': correlation_weight.tolist(),
         }
         correlations.append(

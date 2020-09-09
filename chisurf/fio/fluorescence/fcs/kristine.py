@@ -95,14 +95,20 @@ def read_kristine(
         # In case everything fails
         # Use no errors at all but uniform weighting
         w = 1. / chisurf.fluorescence.fcs.noise(x, y, dur, cr)
+    measurement_id, _ = os.path.splitext(
+        os.path.basename(
+            filename
+        )
+    )
     return [
         {
             'filename': filename,
-            'correlation_time': x.tolist(),
-            'correlation_amplitude': y.tolist(),
-            'weights': w.tolist(),
+            'measurement_id': measurement_id,
             'acquisition_time': float(dur),
             'mean_count_rate': float(cr),
+            'correlation_times': x.tolist(),
+            'correlation_amplitudes': y.tolist(),
+            'correlation_amplitude_weights': w.tolist(),
             'intensity_trace': None
         }
     ]
@@ -121,9 +127,9 @@ def write_dict_to_kristine(
         write_kristine(
             filename=fn,
             verbose=verbose,
-            correlation_time=d['correlation_time'],
-            correlation_amplitude=d['correlation_amplitude'],
-            correlation_amplitude_uncertainty=1. / np.array(d['weights']),
+            correlation_time=d['correlation_times'],
+            correlation_amplitude=d['correlation_amplitudes'],
+            correlation_amplitude_uncertainty=1. / np.array(d['correlation_amplitude_weights']),
             acquisition_time=d['acquisition_time'],
             mean_countrate=d['mean_count_rate']
         )

@@ -81,13 +81,13 @@ def read_china_mat(
                 {
                     'filename': filename,
                     'measurement_id': "%s_%s" % (correlation_key, measurement_number),
-                    'correlation_time': correlation_time.tolist(),
-                    'correlation_amplitude': correlation_amplitude.tolist(),
-                    'correlation_amplitude_weights': w.tolist(),
                     'acquisition_time': float(aquisition_time),
                     'mean_count_rate': float(mean_count_rate),
-                    'intensity_trace_time_ch1': intensity_time.tolist(),
-                    'intensity_trace_ch1': intensity.tolist(),
+                    'correlation_times': correlation_time.tolist(),
+                    'correlation_amplitudes': correlation_amplitude.tolist(),
+                    'correlation_amplitude_weights': w.tolist(),
+                    'intensity_trace_times': intensity_time.tolist(),
+                    'intensity_trace': intensity.tolist(),
                 }
             )
     return correlations

@@ -43,6 +43,7 @@ clsm_settings = yaml.safe_load(
 
 
 class CLSMPixelSelect(
+    # QtWidgets.QMainWindow,
     QtWidgets.QWidget,
     chisurf.curve.CurveGroup
 ):
@@ -128,7 +129,8 @@ class CLSMPixelSelect(
         self.plot_all_curves()
 
     def clear_curves(
-            self
+            self,
+            *args
     ) -> None:
         super().clear_curves()
         # Update UI
@@ -193,7 +195,9 @@ class CLSMPixelSelect(
 
     def add_curve(
             self,
-            v: chisurf.curve.Curve = None
+            *args,
+            v: chisurf.curve.Curve = None,
+            **kwargs
     ) -> None:
         """Adds the current selected curve to the list of curves.
 
@@ -216,6 +220,7 @@ class CLSMPixelSelect(
 
     def open_tttr_file(
             self,
+            *args,
             filename: str = None,
             tttr_type: str = None
     ) -> None:
@@ -250,6 +255,7 @@ class CLSMPixelSelect(
 
     def add_representation(
             self,
+            *args,
             clsm_image: tttrlib.CLSMImage = None,
             image_type: str = None,
             clsm_name: str = None,
@@ -312,6 +318,7 @@ class CLSMPixelSelect(
 
     def add_mask(
             self,
+            *args,
             mask_name: str = None
     ) -> None:
         if mask_name is None:
@@ -324,7 +331,8 @@ class CLSMPixelSelect(
             self.listWidget.addItem(mn)
 
     def mask_changed(
-            self
+            self,
+            *args
     ) -> None:
         mask_name = self.listWidget.currentItem().text()
         d = self.masks[mask_name]
@@ -353,6 +361,7 @@ class CLSMPixelSelect(
 
     def remove_masks(
             self,
+            *args,
             mask_names: typing.List[str] = None
     ) -> None:
         """ Removes a list of masks
@@ -366,6 +375,7 @@ class CLSMPixelSelect(
 
     def save_pixel_mask(
             self,
+            event,
             filename: str = None
     ) -> None:
         if filename is None:
@@ -373,15 +383,15 @@ class CLSMPixelSelect(
                 description='Image file',
                 file_type='All files (*.png)'
             )
+        print("save_pixel_mask")
+        print(filename)
         image = self.pixel_selection.image
         image[image > 0] = 255
-        cv2.imwrite(
-            filename,
-            image
-        )
+        cv2.imwrite(filename, image)
 
     def clear_pixel_mask(
-            self
+            self,
+            *args
     ) -> None:
         self.pixel_selection.setImage(
             np.zeros_like(
@@ -391,6 +401,7 @@ class CLSMPixelSelect(
 
     def load_pixel_mask(
             self,
+            *args,
             filename: str = None
     ) -> None:
         if filename is None:
@@ -408,7 +419,8 @@ class CLSMPixelSelect(
         )
 
     def image_changed(
-            self
+            self,
+            *args
     ) -> None:
         # checkbox used to decide if the image should be plotted
         if self.checkBox_5.isChecked():
@@ -439,9 +451,12 @@ class CLSMPixelSelect(
                         # plot only the currently selected frame
                         else:
                             frame_idx = self.spinBox_8.value()
+                            ref_idx = max(0, frame_idx - 1)
+                            if (ref_idx == 0) and (frame_idx == 0):
+                                ref_idx += 1
                             self.current_image = image[frame_idx]
-                            self.current_image_subset_1 = image[max(0, frame_idx-1)]
-                            self.current_image_subset_2 = image[frame_idx+1]
+                            self.current_image_subset_1 = image[frame_idx]
+                            self.current_image_subset_2 = image[ref_idx]
                         data = self.current_image
                         self.update_frc_plot()
                         # pyqtgraph is column major by default
@@ -470,10 +485,10 @@ class CLSMPixelSelect(
 
     def save_image(
             self,
+            *args,
             image_name: str = None,
             filename: str = None
     ) -> None:
-        # Read from UI
         if not isinstance(image_name, str):
             image_name = self.comboBox_7.currentText()
         if not isinstance(filename, str):
@@ -485,18 +500,16 @@ class CLSMPixelSelect(
         if image_name in self.clsm_representations.keys():
             image = self.clsm_representations.get(image_name, None)
             if image is not None:
-                if self.checkBox_2.isChecked():
+                if self.radioButton_4.isChecked():
                     data = image.sum(axis=0)
                 else:
                     frame_idx = self.spinBox_8.value()
                     data = image[frame_idx]
-                cv2.imwrite(
-                    filename,
-                    data.T
-                )
+                cv2.imwrite(filename, data.T)
 
     def update_plot(
-            self
+            self,
+            *args
     ) -> None:
         if not isinstance(self.pixel_selection.image, np.ndarray):
             return
@@ -624,7 +637,8 @@ class CLSMPixelSelect(
         return win
 
     def update_brush(
-            self
+            self,
+            *args,
     ) -> None:
         self.brush_size = int(self.spinBox_2.value())
         self.brush_width = float(self.doubleSpinBox.value())
@@ -648,7 +662,8 @@ class CLSMPixelSelect(
             self.brush_kernel *= -1
 
     def setup_changed(
-            self
+            self,
+            *args
     ) -> None:
         current_setup = self.comboBox_5.currentText()
         tttr_type = clsm_settings[current_setup]['tttr_type']
@@ -679,7 +694,8 @@ class CLSMPixelSelect(
         )
 
     def clear_images(
-            self
+            self,
+            *args
     ) -> None:
         self.clsm_representations.clear()
         self.comboBox_7.clear()
@@ -687,6 +703,7 @@ class CLSMPixelSelect(
 
     def remove_image(
             self,
+            *args,
             image_name: str = None
     ) -> None:
         # Read from UI
@@ -703,6 +720,7 @@ class CLSMPixelSelect(
 
     def add_clsm(
             self,
+            *args,
             frame_marker: typing.List[int] = None,
             line_start_marker: int = None,
             line_stop_marker: int = None,
@@ -776,6 +794,7 @@ class CLSMPixelSelect(
 
     def remove_clsm(
             self,
+            *args,
             clsm_name: str = None
     ) -> None:
         chisurf.logging.info("CLSMPixelSelect::remove_clsm")
@@ -807,6 +826,7 @@ class CLSMPixelSelect(
                     os.path.abspath(__file__)
                 ),
                 "clsm_pixel_select.ui"
+                # "clsm_pixel_select_main.ui"
             ),
             self
         )

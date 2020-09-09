@@ -542,16 +542,14 @@ class FitGroup(
         :param kwargs:
         :return:
         """
-        fit = self
+        fit: FitGroup = self
         if local_first is None:
             local_first = chisurf.settings.fitting['global']['fit_local_first']
-
         if local_first:
             for f in fit:
                 f.run(**kwargs)
         for f in fit:
             f.model.find_parameters()
-
         fit._model.find_parameters()
         fitting_options = chisurf.settings.fitting['leastsq']
         bounds = [pi.bounds for pi in fit._model.parameters]
@@ -598,9 +596,24 @@ class FitGroup(
             fits=self.grouped_fits
         )
 
-    def to_dict(self) -> typing.Dict:
-        d = super().to_dict()
-        d['grouped_fits'] = [f.to_dict() for f in self.grouped_fits]
+    def to_dict(
+            self,
+            remove_protected: bool = False,
+            copy_values: bool = True,
+            convert_values_to_elementary: bool = False
+    ) -> typing.Dict:
+        d = super().to_dict(
+            remove_protected=remove_protected,
+            copy_values=copy_values,
+            convert_values_to_elementary=convert_values_to_elementary
+        )
+        d['grouped_fits'] = [
+            f.to_dict(
+                remove_protected=remove_protected,
+                copy_values=copy_values,
+                convert_values_to_elementary=convert_values_to_elementary
+            ) for f in self.grouped_fits
+        ]
         return d
 
     def __str__(self):

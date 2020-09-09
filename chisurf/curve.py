@@ -5,10 +5,10 @@ import abc
 import numpy as np
 
 import chisurf.fio
+import chisurf.fio.ascii
 import chisurf.base
 import chisurf.decorators
 import chisurf.math
-
 
 
 T = typing.TypeVar('T', bound='Curve')
@@ -18,11 +18,16 @@ class Curve(
     chisurf.base.Base
 ):
 
+    x: np.ndarray = None
+    y: np.ndarray = None
+
     @property
     def fwhm(self) -> float:
-        return chisurf.math.signal.calculate_fwhm(
-            self
-        )[0]
+        v, _, _ = chisurf.math.signal.calculate_fwhm(
+            x_values=self.x,
+            y_values=self.y
+        )
+        return v
 
     @property
     def cdf(
@@ -89,10 +94,27 @@ class Curve(
                 self.x = csv.data[0]
                 self.y = csv.data[1]
 
-    def to_dict(self) -> typing.Dict:
-        d = super().to_dict()
-        d['x'] = self.x.tolist()
-        d['y'] = self.y.tolist()
+    def to_dict(
+            self,
+            remove_protected: bool = True,
+            copy_values: bool = True,
+            convert_values_to_elementary: bool = False
+    ) -> typing.Dict:
+        d = super().to_dict(
+            remove_protected=remove_protected,
+            copy_values=copy_values,
+            convert_values_to_elementary=convert_values_to_elementary
+        )
+        if convert_values_to_elementary:
+            d['x'] = self.x.tolist()
+            d['y'] = self.y.tolist()
+        else:
+            if copy_values:
+                d['x'] = np.copy(self.x)
+                d['y'] = np.copy(self.y)
+            else:
+                d['x'] = self.x
+                d['y'] = self.y
         return d
 
     def from_dict(
@@ -136,9 +158,11 @@ class Curve(
             curve: chisurf.curve.Curve = None,
             inplace: bool = True
     ) -> float:
-        """Calculates a scaling parameter for the Curve object and (optionally) scales the Curve object.
+        """Calculates a scaling parameter for the Curve object and (optionally)
+        scales the Curve object.
 
-        :param mode: either 'max' to normalize the maximum to one, or 'sum' to normalize to sum to one
+        :param mode: either 'max' to normalize the maximum to one, or 'sum' to
+        normalize to sum to one
         :param curve:
         :param inplace: if True the Curve object is modified in place. Otherwise, only the scaling parameter
         is returned
@@ -246,10 +270,14 @@ class CurveGroup(
     object
 ):
 
+    _curves: typing.List[chisurf.curve.Curve]
+
     def __init__(
             self,
-            seq: typing.List = ()
+            seq: typing.List[chisurf.curve.Curve] = None
     ):
+        if seq is None:
+            seq = []
         self._curves = seq
 
     def clear_curves(self):
@@ -278,7 +306,9 @@ class CurveGroup(
     @abc.abstractmethod
     def add_curve(
             self,
-            v: chisurf.curve.Curve = None
+            *args,
+            v: chisurf.curve.Curve = None,
+            **kwargs
     ):
         if v is not None:
             self._curves.append(v)
