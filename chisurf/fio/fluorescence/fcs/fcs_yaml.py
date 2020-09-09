@@ -3,7 +3,7 @@ from __future__ import annotations
 import yaml
 
 import chisurf.base
-import chisurf.fio.zipped
+import scikit_fluorescence.io.zipped
 
 from chisurf import typing
 from chisurf.fio.fluorescence.fcs.definitions import FCSDataset
@@ -34,7 +34,7 @@ def write_yaml(
             obj=data
         )
     )
-    with chisurf.fio.zipped.open_maybe_zipped(
+    with scikit_fluorescence.io.zipped.open_maybe_zipped(
             filename=filename,
             mode='w'
     ) as fp:

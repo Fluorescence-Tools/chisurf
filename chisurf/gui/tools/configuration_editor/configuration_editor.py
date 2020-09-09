@@ -179,7 +179,7 @@ class ParameterEditor(QtWidgets.QWidget):
             self,
             v: str
     ):
-        with chisurf.fio.zipped.open_maybe_zipped(
+        with scikit_fluorescence.io.zipped.open_maybe_zipped(
                 filename=v,
                 mode='r'
         ) as fp:

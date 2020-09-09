@@ -33,13 +33,12 @@ requirements:
     - {{ pin_compatible('numpy') }}
   run:
     - python {{ python }}
+    - {{ pin_compatible('numpy') }}
     - typing_extensions
     - pyyaml >=5.0
     - deprecation
     - progressbar2
-    - imp >=2.12.0
     - python-slugify
-    - {{ pin_compatible('numpy') }}
     - cython >=0.25.0
     - numexpr >=2.6.0
     - numba >=0.48.0
@@ -62,8 +61,7 @@ requirements:
     - htmd-pdb2pqr 0.0.2.*
     - opencv >=3.4.0
     - mrcfile >=1.1.2
-    - labellib
-    - tttrlib >=0.0.14
+    - scikit-fluorescence >=0.0.1
     - chinet >=0.0.5
 
 about:

@@ -71,22 +71,3 @@ class Tests(unittest.TestCase):
             True
         )
 
-    def test_fwhm(self):
-        x = np.linspace(0, 10, 100)
-        y = scipy.stats.distributions.norm.pdf(
-            x,
-            loc=5,
-            scale=2
-        )
-        c2 = chisurf.curve.Curve(x, y)
-        fwhm, (i_lower, i_upper), (f_lower, f_upper) = chisurf.math.signal.calculate_fwhm(
-            c2,
-            background=0.0,
-            verbose=False
-        )
-        self.assertEqual(fwhm, 4.545454545454545)
-        self.assertEqual(i_lower, 27)
-        self.assertEqual(i_upper, 72)
-        self.assertEqual(f_lower, 2.727272727272727)
-        self.assertEqual(f_upper, 7.2727272727272725)
-

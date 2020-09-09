@@ -2,7 +2,6 @@
 
 """
 from chisurf.fluorescence.intensity import nusiance
-import chisurf.fluorescence.anisotropy.kappa2
 import chisurf.fluorescence.anisotropy.decay
 
 

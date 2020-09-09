@@ -334,7 +334,7 @@ class DiffusionIterator:
         self.queue = cl.CommandQueue(self.ctx)
         self.program = self.build_program()
 
-    def build_program(self, filename='./opencl/iterated.c'):
+    def build_program(self, filename='iterated.c'):
         ng = self.ng
         idg2 = self.idg2
         defines = '''
@@ -342,7 +342,7 @@ class DiffusionIterator:
             # define NG %s
             # define NG2 %s
             ''' % (idg2, ng, ng ** 2)
-        with chisurf.fio.zipped.open_maybe_zipped(
+        with scikit_fluorescence.io.zipped.open_maybe_zipped(
             filename, 'r'
         ) as f:
             kernel = defines + "".join(f.readlines())

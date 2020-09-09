@@ -60,7 +60,7 @@ class ParseFormulaWidget(
             self,
             filename: str
     ):
-        with chisurf.fio.zipped.open_maybe_zipped(
+        with scikit_fluorescence.io.zipped.open_maybe_zipped(
                 filename=filename,
                 mode='r'
         ) as fp:

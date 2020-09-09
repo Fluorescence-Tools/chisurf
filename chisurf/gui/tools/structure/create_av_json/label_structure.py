@@ -91,7 +91,7 @@ class LabelStructure(
         try:
             self.json_file = filename
             p = json.load(
-                chisurf.fio.zipped.open_maybe_zipped(
+                scikit_fluorescence.io.zipped.open_maybe_zipped(
                     filename=self.json_file,
                     mode='r'
                 )

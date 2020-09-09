@@ -11,13 +11,15 @@ import numpy as np
 import tables
 
 import chisurf
+import scikit_fluorescence as skf
+import scikit_fluorescence.io
 
 
 class Photon(tables.IsDescription):
-    ROUT = tables.Int16Col()
-    EVENT = tables.Int16Col()
-    TAC = tables.UInt32Col()
+    EVENT = tables.Int8Col()
     MT = tables.UInt64Col()
+    ROUT = tables.Int8Col()
+    TAC = tables.UInt16Col()
 
 
 class Header(tables.IsDescription):
@@ -491,7 +493,6 @@ def make_hdf(
     h5.create_group("/", title, 'Name of measurement: %s' % title)
     h5.create_table('/' + title, 'header', description=Header, filters=filters)
     h5.create_table('/' + title, 'photons', description=Photon, filters=filters)
-
     return h5
 
 
@@ -531,12 +532,13 @@ def make_tp_photon_hdf(
         spcs: list,
         **kwargs
 ) -> tables.File:
-    h5 = make_hdf(
+    h5: tables.File = make_hdf(
         title=title,
         filename=filename,
         verbose=verbose,
         **kwargs
     )
+    print(filename)
     headertable = h5.get_node('/'+title+'/header')
     header = headertable.row
     photontable = h5.get_node('/'+title+'/photons')
@@ -550,7 +552,6 @@ def make_tp_photon_hdf(
         header['routine'] = routine_name
         header['nTAC'] = number_of_tac_channels
         header.append()
-
         photonA = np.rec.array(
             (
                 spc['photon']['TYPE'],
@@ -560,7 +561,6 @@ def make_tp_photon_hdf(
             )
         )
         photontable.append(photonA)
-
     photontable.cols.ROUT.create_index()
     h5.flush()
     if verbose:
@@ -630,7 +630,7 @@ def spc2hdf(
     for i, spc_file in enumerate(
             fnmatch.filter(spc_files, "*" + fn_ending)
     ):
-        with chisurf.fio.zipped.open_maybe_zipped(
+        with skf.io.zipped.open_maybe_zipped(
                 filename=spc_file, mode='r'
         ) as fp:
             b = np.fromfile(fp, dtype=np.uint8)

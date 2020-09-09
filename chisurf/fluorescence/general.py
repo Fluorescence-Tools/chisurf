@@ -8,124 +8,17 @@ import scipy.optimize
 
 import chisurf.math.datatools
 
+import scikit_fluorescence as skf
+import scikit_fluorescence.decay
 
-@nb.jit(nopython=True)
-def rate2lifetime(
-        rate: float,
-        lifetime: float
-):
-    """
-
-    Parameters
-    ----------
-    rate : float
-    lifetime : float
-
-    Returns
-    -------
-
-    """
-    return 1. / (1. / lifetime + rate)
-
-
-@nb.jit(nopython=True)
-def et(
-        fd0: np.ndarray,
-        fda: np.ndarray
-) -> np.ndarray:
-    """Calculates the FRET induced donor decay
-
-    :param fd0: the fluorescence decay of the donor in the absence of FRET
-    :param fda: the fluorescence decay of the donor in the presence of FRET
-    :return:
-    """
-    return fda / fd0
-
-
-def fretrate_to_distance(fretrate, forster_radius, tau0, kappa2=2. / 3.):
-    """Calculates the distance given a FRET-rate
-
-    :param fretrate: FRET-rate
-    :param forster_radius: Forster radius
-    :param tau0: lifetime of the donor
-    :param kappa2: orientation factor
-    :return:
-    """
-    return forster_radius * (fretrate * tau0/kappa2 * 2./3.)**(-1./6)
-
-
-def species_averaged_lifetime(
-        fluorescence,
-        normalize: bool = True,
-        is_lifetime_spectrum: bool = True
-) -> float:
-    """
-    Calculates the species averaged lifetime given a lifetime spectrum
-
-    :param fluorescence: either a inter-leaved lifetime-spectrum (if is_lifetime_spectrum is True) or a 
-        fluorescence decay (times, fluorescence intensity)
-    :param normalize:
-    :param is_lifetime_spectrum:
-    :return:
-    """
-    if is_lifetime_spectrum:
-        x, t = chisurf.math.datatools.interleaved_to_two_columns(fluorescence)
-        if normalize:
-            x /= x.sum()
-        tau_x = np.dot(x, t)
-        return float(tau_x)
-    else:
-        time_axis = fluorescence[0]
-        intensity = fluorescence[1]
-
-        dt = (time_axis[1] - time_axis[0])
-        i2 = intensity / max(intensity)
-        return np.sum(i2) * dt
-
-
-def fluorescence_averaged_lifetime(
-        fluorescence,
-        taux: float = None,
-        normalize: bool = True,
-        is_lifetime_spectrum: bool = True
-) -> float:
-    """
-
-    :param fluorescence: interleaved lifetime spectrum
-    :param taux: float
-        The species averaged lifetime. If this value is not provided it is calculated based
-        on th lifetime spectrum
-    :return:
-    """
-    if is_lifetime_spectrum:
-        taux = species_averaged_lifetime(fluorescence) if taux is None else taux
-        x, t = chisurf.math.datatools.interleaved_to_two_columns(fluorescence)
-        if normalize:
-            x /= x.sum()
-        tau_f = np.dot(x, t**2) / taux
-        return tau_f
-    else:
-        time_axis = fluorescence[0]
-        intensity = fluorescence[1]
-        return np.sum(intensity * time_axis) / np.sum(intensity)
-
-
-@nb.jit
-def distance_to_fret_rate_constant(
-        r,
-        forster_radius: float,
-        tau0: float,
-        kappa2: float = 2./3.
-) -> float:
-    """ Converts the DA-distance to a FRET-rate
-
-    :param r: donor-acceptor distance
-    :param forster_radius: Forster-radius
-    :param tau0: lifetime
-    :param kappa2: orientation factor
-    :return:
-    """
-    return 3. / 2. * kappa2 * 1. / tau0 * (forster_radius / r) ** 6.0
+# Moved to scikit_fluorescence
+rate_constant_to_lifetime = skf.decay.rate_spectra.rate_constant_to_lifetime
+fretrate_to_distance = skf.decay.rate_spectra.fretrate_to_distance
+combine_lifetime_spectra = skf.decay.rate_spectra.combine_interleaved_spectra
+fret_induced_donor_decay = skf.decay.fret_induced_donor_decay
+species_averaged_lifetime = skf.decay.lifetime.species_averaged_lifetime
+fluorescence_averaged_lifetime = skf.decay.lifetime.fluorescence_averaged_lifetime
+distance_to_fret_rate_constant = skf.decay.rate_spectra.distance_to_fret_rate_constant
 
 
 @nb.jit
@@ -367,26 +260,27 @@ def et2pRDA(
     return r_DA, p_rDA
 
 
-def stack_lifetime_spectra(
-        lifetime_spectra,
-        fractions,
-        normalize_fractions: bool = True
-):
-    """
-    Takes an array of lifetime spectra and an array of fractions and returns an mixed array of lifetimes
-    whereas the amplitudes are multiplied by the fractions. `normalize_fractions` is True the fractions
-    are normalized to one.
-
-    :return: numpy-array
-
-    """
-    fn = np.array(fractions, dtype=np.float64) / sum(fractions) if normalize_fractions else fractions
-    re = list()
-    for i, ls in enumerate(lifetime_spectra):
-        ls = np.copy(ls)
-        ls[::2] = ls[::2] * fn[i]
-        re.append(ls)
-    return np.hstack(re)
+stack_lifetime_spectra = combine_lifetime_spectra
+# def stack_lifetime_spectra(
+#         lifetime_spectra,
+#         fractions,
+#         normalize_fractions: bool = True
+# ):
+#     """
+#     Takes an array of lifetime spectra and an array of fractions and returns an mixed array of lifetimes
+#     whereas the amplitudes are multiplied by the fractions. `normalize_fractions` is True the fractions
+#     are normalized to one.
+#
+#     :return: numpy-array
+#
+#     """
+#     fn = np.array(fractions, dtype=np.float64) / sum(fractions) if normalize_fractions else fractions
+#     re = list()
+#     for i, ls in enumerate(lifetime_spectra):
+#         ls = np.copy(ls)
+#         ls[::2] = ls[::2] * fn[i]
+#         re.append(ls)
+#     return np.hstack(re)
 
 
 def distribution2rates(
@@ -442,9 +336,9 @@ def distribution2rates(
 
 
 def gaussian2rates(
-        means: List[float],
-        sigmas: List[float],
-        amplitudes: List[float],
+        means: typing.List[float],
+        sigmas: typing.List[float],
+        amplitudes: typing.List[float],
         tau0: float = 4.0,
         kappa2: float = 0.667,
         R0: float = 52.0,
@@ -552,7 +446,7 @@ def rates2lifetimes_old(
     ## Quench donor ##
     for i in range(n_donors):
         ps[i] = pd[i] * pr * x_fret
-        ls[i] = rate2lifetime(r, ld[i])
+        ls[i] = rate_constant_to_lifetime(r, ld[i])
     ls = ls.ravel()
     ps = ps.ravel()
 

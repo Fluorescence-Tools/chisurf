@@ -70,7 +70,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         for p in self.universe.potentials:
             s += '%s\t' % p.name
         s += '\n'
-        chisurf.fio.zipped.open_maybe_zipped(
+        scikit_fluorescence.io.zipped.open_maybe_zipped(
             filename=energy_file,
             mode='w'
         ).write(s)
