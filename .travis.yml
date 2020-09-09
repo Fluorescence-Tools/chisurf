@@ -39,8 +39,10 @@ before_install:
   - conda config --set channel_priority flexible
   - conda config --add channels conda-forge
   - conda config --add channels tpeulen
+  - conda config --add channels tpeulen/label/nightly
   - conda config --add channels salilab
   - conda update -q conda
+  - export CONDA_LABEL=$(if [ "TRAVIS_PULL_REQUEST_BRANCH" == "master" ]; then echo main; else echo nightly; fi)
   - conda info -a
   - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git nose coverage numpy pyyaml pysftp
   - source activate build-environment
