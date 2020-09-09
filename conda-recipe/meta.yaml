@@ -9,7 +9,7 @@ source:
 
 build:
   number: 0
-  string: np{{ CONDA_NPY }}py{{ CONDA_PY }}_{{ GIT_BUILD_STR }}
+  string: np{{ CONDA_NPY }}py{{ CONDA_PY }}
   entry_points:
     {% for entry_point_type, entry_points in data.get("entry_points", dict()).items() -%}
     {% for entry_point in entry_points -%}
