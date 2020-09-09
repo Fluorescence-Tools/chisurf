@@ -1,9 +1,9 @@
 name: chisurf
 
 channels:
+  - defaults
   - tpeulen
   - salilab
-  - defaults
   - conda-forge
 
 dependencies:
@@ -44,5 +44,6 @@ dependencies:
     - opencv >=3.4.0
     - mrcfile >=1.1.2
     - labellib
-    - tttrlib >=0.0.14
+    - tttrlib >=0.0.19
     - chinet >=0.0.5
+    - scikit-fluorescence >=0.0.1
