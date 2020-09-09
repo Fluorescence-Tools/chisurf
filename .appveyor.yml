@@ -22,6 +22,7 @@ install:
   - conda config --set channel_priority flexible
   - conda config --add channels conda-forge
   - conda config --add channels tpeulen
+  - conda config --add channels tpeulen/label/nightly
   - conda config --add channels salilab
   - conda config --add channels defaults
   - conda update -q conda

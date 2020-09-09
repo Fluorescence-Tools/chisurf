@@ -92,7 +92,7 @@ APP_FOLDER="$(cd "$(dirname "$APP_FOLDER")" && pwd)/$(basename "$APP_FOLDER")"
 echo "App folder: $APP_FOLDER"
 mkdir "$APP_FOLDER"
 
-source ~/miniconda3/etc/profile.d/conda.sh
+source ~/miniconda/etc/profile.d/conda.sh
 conda env create -f $CONDA_ENVIRONMENT_YAML --prefix "$APP_FOLDER/Contents" --force
 conda activate "$APP_FOLDER/Contents"
 conda install -y nomkl jinja2
