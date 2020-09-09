@@ -226,7 +226,6 @@ class Photons(object):
                             number_of_routing_channels=255,
                             spcs=spcs
                         )
-
         self.verbose = verbose
         self._photon_array = None
         self.filetype = reading_routine

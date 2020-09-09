@@ -10,8 +10,8 @@ import chisurf.gui.widgets
 import chisurf.decorators
 import chisurf.structure
 from chisurf.structure.potential.potentials import HPotential, GoPotential, \
-    MJPotential, CEPotential, ClashPotential, \
-    AvPotential, ASA
+    MJPotential, CEPotential, ClashPotential, ASA
+from scikit_fluorescence.modeling.label.potential import AvPotential
 
 
 class HPotentialWidget(HPotential, QtWidgets.QWidget):

@@ -2,6 +2,8 @@ import numba as nb
 import numpy as np
 import scipy.stats
 
+from scikit_fluorescence.math.statistics import durbin_watson
+
 
 def chi2_max(
         chi2_value: float = 1.0,
@@ -19,24 +21,11 @@ def chi2_max(
     - number of models parameters)
     """
     return chi2_value * (
-            1.0 + float(number_of_parameters
-                        ) / nu * scipy.stats.f.isf(
-        1. - conf_level, number_of_parameters, nu)
+            1.0 + float(
+        number_of_parameters
+        ) / nu *
+            scipy.stats.f.isf(
+                1. - conf_level, number_of_parameters, nu
+            )
     )
 
-
-@nb.jit(nopython=True)
-def durbin_watson(
-        residuals: np.array
-) -> float:
-    """Durbin-Watson parameter (1950,1951)
-
-    :param residuals:  array
-    :return:
-    """
-    n_res = len(residuals)
-    nom = 0.0
-    denomminator = float(np.sum(residuals ** 2))
-    for i in range(1, n_res):
-        nom += (residuals[i] - residuals[i - 1]) ** 2
-    return nom / max(1.0, denomminator)

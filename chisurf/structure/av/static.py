@@ -3,6 +3,7 @@ import numba as nb
 
 import chisurf
 import LabelLib as ll
+from scikit_fluorescence.modeling.label.av import LabelDistributionAV
 
 
 def calculate_1_radius(
@@ -250,43 +251,43 @@ def calculate_3_radius(
     )
     return av1.grid, av1.grid.shape[0], dye_attachment_point
 
-
-@nb.jit(nopython=True)
-def atoms_in_reach(xyz, vdw, dmaxsq, atom_i):
-    """Return the xyz coordinates of atoms within reach (defined by dmaxsq) of a list of atoms
-
-    :param xyz:
-    :param vdw:
-    :param dmaxsq:
-    :param atom_i:
-    :return:
-
-    Example
-    -------
-    >>> pdb_filename = './test/data/modelling/pdb_files/hGBP1_open.pdb'
-    >>> import chisurf.structure
-    >>> structure = chisurf.structure.Structure(pdb_filename)
-    >>> xs, vs = atoms_in_reach(structure.xyz, structure.vdw, 10.0, 1)
-
-    """
-    # copy all atoms in proximity to the dye into a smaller array and move coordinate frame to attachment point
-    n_atoms = xyz.shape[0]
-    atomindex = np.empty(n_atoms, dtype=np.uint32)
-    r0 = xyz[atom_i]
-    natomsgrid = 0
-    for i in range(0, n_atoms):
-        dsq = ((xyz[i] - r0)**2.0).sum()
-        if (dsq < dmaxsq) and (i != atom_i):
-            atomindex[natomsgrid] = i
-            natomsgrid += 1
-
-    ra = np.empty((natomsgrid, 3), dtype=np.float64)
-    vdwr = np.empty(natomsgrid, dtype=np.float64)
-    for i in range(natomsgrid):
-        n = atomindex[i]
-        ra[i] = xyz[n]
-        vdwr[i] = vdw[n]
-    return ra, vdwr
+#
+# @nb.jit(nopython=True)
+# def atoms_in_reach(xyz, vdw, dmaxsq, atom_i):
+#     """Return the xyz coordinates of atoms within reach (defined by dmaxsq) of a list of atoms
+#
+#     :param xyz:
+#     :param vdw:
+#     :param dmaxsq:
+#     :param atom_i:
+#     :return:
+#
+#     Example
+#     -------
+#     >>> pdb_filename = './test/data/modelling/pdb_files/hGBP1_open.pdb'
+#     >>> import chisurf.structure
+#     >>> structure = chisurf.structure.Structure(pdb_filename)
+#     >>> xs, vs = atoms_in_reach(structure.xyz, structure.vdw, 10.0, 1)
+#
+#     """
+#     # copy all atoms in proximity to the dye into a smaller array and move coordinate frame to attachment point
+#     n_atoms = xyz.shape[0]
+#     atomindex = np.empty(n_atoms, dtype=np.uint32)
+#     r0 = xyz[atom_i]
+#     natomsgrid = 0
+#     for i in range(0, n_atoms):
+#         dsq = ((xyz[i] - r0)**2.0).sum()
+#         if (dsq < dmaxsq) and (i != atom_i):
+#             atomindex[natomsgrid] = i
+#             natomsgrid += 1
+#
+#     ra = np.empty((natomsgrid, 3), dtype=np.float64)
+#     vdwr = np.empty(natomsgrid, dtype=np.float64)
+#     for i in range(natomsgrid):
+#         n = atomindex[i]
+#         ra[i] = xyz[n]
+#         vdwr[i] = vdw[n]
+#     return ra, vdwr
 
 
 @nb.jit(nopython=True)
@@ -468,7 +469,7 @@ def calc_av1_py(l, w, r, atom_i, ng, xyz, vdw, vdw_max=3.5, linker_sphere=2.0, l
     density = np.ones((ng, ng, ng), dtype=np.uint32)
 
     # select a subset of the atoms (only the ones in reach of the dye linker)
-    xyz_a, vdw_a = atoms_in_reach(xyz=xyz, vdw=vdw, dmaxsq=(l + r + vdw_max)**2, atom_i=atom_i)
+    xyz_a, vdw_a = LabelDistributionAV.__atoms_in_reach(xyz=xyz, vdw=vdw, dmaxsq=(l + r + vdw_max)**2, atom_i=atom_i)
     # Move the coordinates of the atoms
     r0 = xyz[atom_i]
     xyz_a -= r0

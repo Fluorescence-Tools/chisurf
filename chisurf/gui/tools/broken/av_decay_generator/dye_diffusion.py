@@ -217,7 +217,7 @@ class TransientDecayGenerator(
                 "dye_parameters.json"
             )
         settings = json.load(
-            chisurf.fio.zipped.open_maybe_zipped(
+            scikit_fluorescence.io.zipped.open_maybe_zipped(
                 filename=dye_diffusion_settings_file,
                 mode='r'
             )

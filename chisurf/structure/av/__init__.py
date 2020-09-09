@@ -8,7 +8,7 @@ import numpy as np
 import chisurf.structure
 import chisurf.settings
 import chisurf.base
-import chisurf.fio.structure.density
+import scikit_fluorescence.io.density
 
 from . import dynamic
 from . import static
@@ -184,18 +184,19 @@ class BasicAV(object):
             ng = self.ng
             dg = self.dg
             offset = (ng - 1) / 2 * dg
-            chisurf.fio.density.write_open_dx(filename,
-                                         d,
-                                         self.x0 - offset,
-                                         ng, ng, ng,
-                                         dg, dg, dg
-                                         )
+            scikit_fluorescence.io.density.write_open_dx(
+                filename,
+                d,
+                self.x0 - offset,
+                ng, ng, ng,
+                dg, dg, dg
+            )
         else:
             p = kwargs.get('points', self.points)
             d = p[:, [3]].flatten()
             d /= max(d) * 50.0
             xyz = p[:, [0, 1, 2]]
-            chisurf.fio.structure.coordinates.write_points(
+            scikit_fluorescence.io.structure.write_points(
                 filename=filename + '.' + mode,
                 points=xyz,
                 mode=mode,

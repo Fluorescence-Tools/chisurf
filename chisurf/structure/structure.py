@@ -102,11 +102,7 @@ class Structure(chisurf.base.Base):
             protonate: bool = False,
             **kwargs
     ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
-
+        super().__init__(*args, **kwargs)
         self.auto_update = auto_update
         self._filename = filename
         self._atoms = None
@@ -122,23 +118,16 @@ class Structure(chisurf.base.Base):
             p_object = pdb_id
         if isinstance(filename, str):
             p_object = filename
-
         ####################################################
         #              Load ATOM COORDINATES               #
         ####################################################
-        if isinstance(
-                p_object,
-                Structure
-        ):
+        if isinstance(p_object, Structure):
             self.atoms = np.copy(p_object.atoms)
             self.filename = copy.copy(p_object.filename)
         elif p_object is None:
             self._atoms = None
             self._filename = None
-        elif isinstance(
-                p_object,
-                str
-        ):
+        elif isinstance(p_object, str):
             if os.path.isfile(p_object):
                 self._atoms = self.io.read(
                     p_object,

@@ -48,7 +48,7 @@ def read_tcspc_csv(
         mc = matrix_columns
         infer_delimiter = True
 
-    csvSetup =  chisurf.fio.ascii.Csv(
+    csvSetup = chisurf.fio.ascii.Csv(
         *args,
         **kwargs
     )
@@ -62,7 +62,6 @@ def read_tcspc_csv(
     data = csvSetup.data
 
     if is_jordi:
-
         if data.ndim == 1:
             data = data.reshape(1, len(data))
 

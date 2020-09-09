@@ -1,5 +1,5 @@
-/build
-/dist
+build
+dist
 cmake-build-*
 *.pro.user
 *.pro.user.*
@@ -9,6 +9,7 @@ CMakeLists.txt.user.*
 *.pyc
 *.pyo
 *.pyd
+chisurf.egg-info
 *~
 \.#*
 *.egg-info

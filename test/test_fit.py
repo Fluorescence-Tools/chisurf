@@ -11,6 +11,7 @@ import tempfile
 import numpy as np
 import copy
 
+import chisurf.data
 import chisurf.experiments
 import chisurf.models
 import chisurf.fitting
@@ -140,7 +141,6 @@ class FitTests(unittest.TestCase):
                 ),
                 True
             )
-
         fit.run()
         chi2 = fit.chi2
         chi2r = chi2 / float(model.n_points - model.n_free - 1.0)

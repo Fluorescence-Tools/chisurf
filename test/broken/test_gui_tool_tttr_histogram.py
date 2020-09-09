@@ -31,14 +31,12 @@ class Tests(unittest.TestCase):
     def test_load_data(self):
         import glob
         make_decay_button = self.form.tcspc_setup_widget.pushButton
-
         self.assertEqual(
             len(
                 self.form.curve_selector.get_data_sets()
             ),
             0
         )
-
         spcFileWidget = self.form.tcspc_setup_widget.spcFileWidget
         filenames = glob.glob("./test/data/tttr/BH/132/*.spc")
         file_type = "bh132"
@@ -59,5 +57,6 @@ class Tests(unittest.TestCase):
             self.form.curve_selector.get_data_sets()
         )
 
-if __name__ == "__main__":
-    unittest.main()
+#
+# if __name__ == "__main__":
+#     unittest.main()

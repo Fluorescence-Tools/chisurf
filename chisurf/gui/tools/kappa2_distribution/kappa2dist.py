@@ -8,10 +8,10 @@ import pyqtgraph as pg
 import pyqtgraph.dockarea
 
 import chisurf.decorators
-import chisurf.fluorescence.anisotropy.kappa2
 import chisurf.gui.decorators
-from chisurf.fluorescence.anisotropy.kappa2 import s2delta
-from chisurf.fluorescence.anisotropy.kappa2 import kappasq_all_delta, kappasq_all, kappasq_dwt
+
+from scikit_fluorescence.modeling.kappa2 import \
+    kappasq_all_delta, kappasq_all, kappasq_dwt, s2delta
 
 
 class Kappa2Dist(QtWidgets.QWidget):
