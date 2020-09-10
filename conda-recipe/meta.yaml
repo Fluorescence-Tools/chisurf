@@ -26,11 +26,13 @@ requirements:
     - cython
   build:
     - python {{ python }}
+    - {{ pin_compatible('numpy') }}
     - setuptools
     - typing_extensions
     - cython
     - pyyaml
-    - {{ pin_compatible('numpy') }}
+    # Needed for pyrcc5 (updated pyqt resource file)
+    - pyqt >=5.13.0|5.9.2.*|5.6.0.*
   run:
     - python {{ python }}
     - {{ pin_compatible('numpy') }}

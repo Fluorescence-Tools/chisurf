@@ -1,5 +1,6 @@
 #! /usr/bin/env bash
 
+cd ..
 # CLI tools
 ## fcs_convert
 ## Conversion to Kristine
