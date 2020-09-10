@@ -98,12 +98,14 @@ def get_win(
 
     pixmap = QtGui.QPixmap(":/images/icons/splashscreen.png")
     splash = QtWidgets.QSplashScreen(pixmap)
+    splash.setContentsMargins(64, 0, 0, 64)
     splash.show()
     app.processEvents()
-
+    align = QtCore.Qt.AlignTop
+    offset = "\n" * 25 + " " * 5
     splash.showMessage(
-        "Loading modules",
-        alignment=QtCore.Qt.AlignTop,
+        offset+"Loading modules",
+        alignment=align,
         color=QtCore.Qt.white
     )
     app.processEvents()
@@ -113,8 +115,8 @@ def get_win(
     )
 
     splash.showMessage(
-        "Setup ipython",
-        alignment=QtCore.Qt.AlignTop,
+        offset+"Setup ipython",
+        alignment=align,
         color=QtCore.Qt.white
     )
     app.processEvents()
@@ -124,8 +126,8 @@ def get_win(
     )
 
     splash.showMessage(
-        "Starting interface",
-        alignment=QtCore.Qt.AlignTop,
+        offset+"Starting interface",
+        alignment=align,
         color=QtCore.Qt.white
     )
     app.processEvents()
@@ -135,8 +137,8 @@ def get_win(
     )
 
     splash.showMessage(
-        "Initialize setups",
-        alignment=QtCore.Qt.AlignTop,
+        offset+"Initialize setups",
+        alignment=align,
         color=QtCore.Qt.white
     )
     app.processEvents()
@@ -147,8 +149,8 @@ def get_win(
     )
 
     splash.showMessage(
-        "Defining actions",
-        alignment=QtCore.Qt.AlignTop,
+        offset+"Defining actions",
+        alignment=align,
         color=QtCore.Qt.white
     )
     app.processEvents()
@@ -159,8 +161,8 @@ def get_win(
     )
 
     splash.showMessage(
-        "Arrange widgets",
-        alignment=QtCore.Qt.AlignTop,
+        offset+"Arrange widgets",
+        alignment=align,
         color=QtCore.Qt.white
     )
     app.processEvents()
@@ -171,8 +173,8 @@ def get_win(
     )
 
     splash.showMessage(
-        "Loading tools",
-        alignment=QtCore.Qt.AlignTop,
+        offset+"Loading tools",
+        alignment=align,
         color=QtCore.Qt.white
     )
     app.processEvents()
@@ -183,8 +185,8 @@ def get_win(
     )
 
     splash.showMessage(
-        "Styling up",
-        alignment=QtCore.Qt.AlignTop,
+        offset+"Styling up",
+        alignment=align,
         color=QtCore.Qt.white
     )
     app.processEvents()

@@ -33,6 +33,7 @@ import urllib.request
 import numpy as np
 
 import scikit_fluorescence as skf
+import scikit_fluorescence.io
 import scikit_fluorescence.io.zipped
 import scikit_fluorescence.io.structure
 
