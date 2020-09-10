@@ -1,5 +1,6 @@
 #! /usr/bin/env bash
 
+cd ..
 ### GUI tools
 # broken
 python -m chisurf.gui.tools.structure.fret_screening
