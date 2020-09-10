@@ -531,7 +531,7 @@
     </size>
    </property>
    <property name="windowIcon">
-    <iconset resource="resources/resource.qrc">
+    <iconset>
      <normaloff>:/icons/icons/kitesurf.svg</normaloff>:/icons/icons/kitesurf.svg</iconset>
    </property>
    <property name="floating">
@@ -870,6 +870,11 @@
    </widget>
   </widget>
   <action name="actionExit">
+   <property name="icon">
+    <iconset>
+     <normalon>:/icons/icons/System-log-out.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Exit</string>
    </property>
@@ -887,6 +892,10 @@
    </property>
   </action>
   <action name="actionLoad">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/document-open.svg</normaloff>:/icons/icons/document-open.svg</iconset>
+   </property>
    <property name="text">
     <string>Load</string>
    </property>
@@ -897,14 +906,18 @@
    </property>
   </action>
   <action name="actionHelp">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/help-browser.png</normaloff>:/icons/icons/help-browser.png</iconset>
+   </property>
    <property name="text">
     <string>Help</string>
    </property>
   </action>
   <action name="actionExit_2">
    <property name="icon">
-    <iconset>
-     <normaloff>:/icons/power-xxl.png</normaloff>:/icons/power-xxl.png</iconset>
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/System-log-out.png</normaloff>:/icons/icons/System-log-out.png</iconset>
    </property>
    <property name="text">
     <string>Quit</string>
@@ -915,8 +928,8 @@
   </action>
   <action name="actionClose_Fit">
    <property name="icon">
-    <iconset>
-     <normaloff>:/icons/x-mark-4-xxl.png</normaloff>:/icons/x-mark-4-xxl.png</iconset>
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Edit-delete.png</normaloff>:/icons/icons/Edit-delete.png</iconset>
    </property>
    <property name="text">
     <string>Close Fit</string>
@@ -925,6 +938,10 @@
   <action name="actionFitting">
    <property name="enabled">
     <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/fitting.svg</normaloff>:/icons/icons/fitting.svg</iconset>
    </property>
    <property name="text">
     <string>Fitting-parameters</string>
@@ -944,8 +961,8 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
-     <normaloff>:/icons/help-xxl.png</normaloff>:/icons/help-xxl.png</iconset>
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/help-browser.png</normaloff>:/icons/icons/help-browser.png</iconset>
    </property>
    <property name="text">
     <string>Help</string>
@@ -953,8 +970,8 @@
   </action>
   <action name="actionSave_All_Fit_results">
    <property name="icon">
-    <iconset>
-     <normaloff>:/icons/save-xxl.png</normaloff>:/icons/save-xxl.png</iconset>
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Document-save.png</normaloff>:/icons/icons/Document-save.png</iconset>
    </property>
    <property name="text">
     <string>Save All Fit-results</string>
@@ -978,6 +995,10 @@
    </property>
    <property name="checked">
     <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/document-open.svg</normaloff>:/icons/icons/document-open.svg</iconset>
    </property>
    <property name="text">
     <string>Loading</string>
@@ -1007,8 +1028,8 @@
   </action>
   <action name="actionSaveCurrentFit">
    <property name="icon">
-    <iconset>
-     <normaloff>:/icons/save-xxl.png</normaloff>:/icons/save-xxl.png</iconset>
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Document-save.png</normaloff>:/icons/icons/Document-save.png</iconset>
    </property>
    <property name="text">
     <string>Current Fit</string>
@@ -1019,8 +1040,8 @@
   </action>
   <action name="actionSaveAllFits">
    <property name="icon">
-    <iconset>
-     <normaloff>:/icons/save-xxl.png</normaloff>:/icons/save-xxl.png</iconset>
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Document-save.png</normaloff>:/icons/icons/Document-save.png</iconset>
    </property>
    <property name="text">
     <string>All Fits</string>
@@ -1078,6 +1099,10 @@
    </property>
   </action>
   <action name="actionSimple_Decay">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/TCSPC.png</normaloff>:/icons/icons/TCSPC.png</iconset>
+   </property>
    <property name="text">
     <string>Simple-Decay</string>
    </property>
@@ -1101,8 +1126,8 @@
   </action>
   <action name="actionDiffusion_Calculator">
    <property name="icon">
-    <iconset>
-     <normaloff>:/icons/icons/accessories-calculator.svg</normaloff>:/icons/icons/accessories-calculator.svg</iconset>
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/dye-diffusion.png</normaloff>:/icons/icons/dye-diffusion.png</iconset>
    </property>
    <property name="text">
     <string>Diffusion-Calculator</string>
@@ -1110,8 +1135,8 @@
   </action>
   <action name="actionLoad_Data">
    <property name="icon">
-    <iconset>
-     <normaloff>:/icons/open-in-browser-xxl.png</normaloff>:/icons/open-in-browser-xxl.png</iconset>
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/document-open.svg</normaloff>:/icons/icons/document-open.svg</iconset>
    </property>
    <property name="text">
     <string>Add dataset</string>
@@ -1179,8 +1204,8 @@
   </action>
   <action name="actionTile_windows">
    <property name="icon">
-    <iconset>
-     <normaloff>:/icons/window-layout-xxl.png</normaloff>:/icons/window-layout-xxl.png</iconset>
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/window-layout-xxl.png</normaloff>:/icons/icons/window-layout-xxl.png</iconset>
    </property>
    <property name="text">
     <string>Tile windows</string>
@@ -1188,8 +1213,8 @@
   </action>
   <action name="actionTab_windows">
    <property name="icon">
-    <iconset>
-     <normaloff>:/icons/window-multi-xxl.png</normaloff>:/icons/window-multi-xxl.png</iconset>
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/window-multi-xxl.png</normaloff>:/icons/icons/window-multi-xxl.png</iconset>
    </property>
    <property name="text">
     <string>Tab windows</string>
@@ -1200,8 +1225,8 @@
   </action>
   <action name="actionAdd_fit">
    <property name="icon">
-    <iconset>
-     <normaloff>:/icons/add-xxl.png</normaloff>:/icons/add-xxl.png</iconset>
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/list-add.png</normaloff>:/icons/icons/list-add.png</iconset>
    </property>
    <property name="text">
     <string>Add fit</string>
@@ -1222,6 +1247,10 @@
    </property>
   </action>
   <action name="actionDelete_dataset">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Edit-delete.png</normaloff>:/icons/icons/Edit-delete.png</iconset>
+   </property>
    <property name="text">
     <string>Delete dataset</string>
    </property>
@@ -1287,8 +1316,8 @@
   </action>
   <action name="actionLoad_result_in_current_fit">
    <property name="icon">
-    <iconset>
-     <normaloff>:/icons/open-in-browser-xxl.png</normaloff>:/icons/open-in-browser-xxl.png</iconset>
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/document-open.svg</normaloff>:/icons/icons/document-open.svg</iconset>
    </property>
    <property name="text">
     <string>Load result in current fit</string>
@@ -1330,6 +1359,10 @@
    </property>
   </action>
   <action name="actionSimulate_decay">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/TCSPC.png</normaloff>:/icons/icons/TCSPC.png</iconset>
+   </property>
    <property name="text">
     <string>Simulate decay</string>
    </property>
@@ -1369,8 +1402,8 @@
   </action>
   <action name="actionRecord">
    <property name="icon">
-    <iconset>
-     <normaloff>:/icons/record-xxl.png</normaloff>:/icons/record-xxl.png</iconset>
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Farm-Fresh_control_record.png</normaloff>:/icons/icons/Farm-Fresh_control_record.png</iconset>
    </property>
    <property name="text">
     <string>Record</string>
@@ -1378,8 +1411,8 @@
   </action>
   <action name="actionRun">
    <property name="icon">
-    <iconset>
-     <normaloff>:/icons/play-xxl.png</normaloff>:/icons/play-xxl.png</iconset>
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Farm-Fresh_control_play.png</normaloff>:/icons/icons/Farm-Fresh_control_play.png</iconset>
    </property>
    <property name="text">
     <string>Run</string>
@@ -1387,14 +1420,18 @@
   </action>
   <action name="actionStop">
    <property name="icon">
-    <iconset>
-     <normaloff>:/icons/stop-xxl.png</normaloff>:/icons/stop-xxl.png</iconset>
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Farm-Fresh_control_stop.png</normaloff>:/icons/icons/Farm-Fresh_control_stop.png</iconset>
    </property>
    <property name="text">
     <string>Stop recording</string>
    </property>
   </action>
   <action name="actionCascade">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/window-multi-xxl.png</normaloff>:/icons/icons/window-multi-xxl.png</iconset>
+   </property>
    <property name="text">
     <string>Cascade</string>
    </property>
