@@ -96,7 +96,7 @@ def get_win(
     import pyqtgraph
     import chisurf.gui.resources
 
-    pixmap = QtGui.QPixmap(":/icons/icons/cs_logo.png")
+    pixmap = QtGui.QPixmap(":/images/icons/splashscreen.png")
     splash = QtWidgets.QSplashScreen(pixmap)
     splash.show()
     app.processEvents()

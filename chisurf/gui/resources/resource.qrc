@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icons">
+    <file>icons/splashscreen.png</file>
     <file>icons/printer-3-xxl.png</file>
     <file>icons/available-updates-xxl.png</file>
     <file>icons/help-xxl.png</file>
@@ -54,7 +55,6 @@
     <file>icons/FRET-Lines.png</file>
     <file>icons/FRET.png</file>
     <file>icons/Cone.png</file>
-    <file>icons/BOINCManager.png</file>
     <file>icons/help-browser.png</file>
     <file>icons/document-open.svg</file>
     <file>icons/Document-print.svg</file>
@@ -63,10 +63,9 @@
     <file>icons/Edit-delete.png</file>
     <file>icons/Edit-delete-2.svg</file>
     <file>icons/System-log-out.png</file>
-    <file>icons/kitesurf.png</file>
-    <file>icons/kitesurf.svg</file>
   </qresource>
   <qresource prefix="images">
+    <file>icons/splashscreen.png</file>
     <file>icons/cs_logo.png</file>
   </qresource>
 </RCC>
