@@ -46,7 +46,7 @@ test_script:
   - conda install nose coverage chisurf python=3.7.3 -c local
   # move module folder so that the installed conda package is used
   - mv chisurf _chisurf
-  - nosetests .\test\
+  - nosetests .\test\test_*.py
 
 deploy_script:
   # The environment variable ANACONDA_API_TOKEN is defined in the AppVeyor web-interface

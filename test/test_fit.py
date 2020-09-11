@@ -265,7 +265,7 @@ class FitTests(unittest.TestCase):
         chisurf.fitting.fit.sample_fit(
             fit=fit,
             filename=filename,
-            steps=100,
+            steps=10,
             thin=1,
             n_runs=n_runs,
             method=sampling_method
@@ -275,9 +275,7 @@ class FitTests(unittest.TestCase):
         for i_run in range(n_runs):
             fn = os.path.splitext(filename)[0] + "_" + str(i_run) + '.er4'
             self.assertTrue(
-                os.path.isfile(
-                    fn
-                )
+                os.path.isfile(fn)
             )
 
         fit.run()
