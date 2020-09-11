@@ -43,7 +43,8 @@ before_install:
   # Install conda packages necessary in the host to build the recipe
   - source activate base
   # conda install git and conda-build to build the package
-  - conda install python=$BUILD_TARGET conda-build git
+  # TODO: fix for higher versions of conda-build
+  - conda install python=$BUILD_TARGET conda-build=3.17.7 git
   # Print the conda info to facilitate the debugging
   - conda info -a
   # add conda channels
