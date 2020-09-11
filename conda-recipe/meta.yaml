@@ -74,9 +74,8 @@ about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
   license: {{ data.get('license') }}
   license_file: LICENSE
-  summary: |
-    ChiSurf is an interactive global analysis software for time-resolved
-    fluorescence data.
+  summary:
+    {{ data.get('description') }}
   description: |
     {{ data.get('description') }}
 

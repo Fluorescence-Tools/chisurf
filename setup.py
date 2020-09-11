@@ -9,14 +9,16 @@ except ImportError:
     from setuptools.command.build_ext import build_ext
 
 import chisurf
-__name__ = chisurf.__name__
-__version__ = chisurf.__version__
-__author__ = chisurf.__author__
-__license__ = chisurf.__license__
-__description__ = chisurf.__description__
-__url__ = chisurf.__url__
-__email__ = chisurf.__email__
-__app_id__ = chisurf.__app_id__
+NAME = chisurf.__name__
+VERSION = chisurf.__version__
+AUTHOR = chisurf.__author__
+LICENSE = chisurf.__license__
+DESCRIPTION = chisurf.__description__
+LONG_DESCRIPTION = """ChiSurf: an interactive global analysis platform for fluorescence \
+data."""
+URL = chisurf.__url__
+EMAIL = chisurf.__email__
+APP_ID = chisurf.__app_id__
 
 
 def get_extensions():
@@ -105,14 +107,14 @@ console_scripts = {
 }
 
 metadata = dict(
-    name=__name__,
-    version=__version__,
-    license=__license__,
-    description=__description__,
-    author=__author__,
-    author_email=__email__,
-    app_id=__app_id__,
-    url=__url__,
+    name=NAME,
+    version=VERSION,
+    license=LICENSE,
+    description=DESCRIPTION,
+    author=AUTHOR,
+    author_email=EMAIL,
+    app_id=APP_ID,
+    url=URL,
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Win64 (MS Windows)',
@@ -127,10 +129,10 @@ metadata = dict(
     ],
     keywords='fluorescence single-molecule spectroscopy',
     packages=find_packages(
-        include=(__name__ + "*",)
+        include=(NAME + "*",)
     ),
     package_dir={
-        __name__: __name__
+        NAME: NAME
     },
     include_package_data=True,
     package_data={

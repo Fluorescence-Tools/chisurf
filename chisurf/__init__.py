@@ -40,8 +40,8 @@ __email__ = "thomas.otavio.peulen@gmail.com"
 __url__ = 'https://fluorescence-tools.github.io/chisurf/'
 __license__ = 'GPL2.1'
 __status__ = "Dev"
-__description__ = "ChiSurf is an interactive global analysis platform for " \
-                  "time-resolved fluorescence data."
+__description__ = """ChiSurf: an interactive global analysis platform for fluorescence \
+data."""
 __app_id__ = "F25DCFFA-1234-4643-BC4F-2C3A20495937"
 
 

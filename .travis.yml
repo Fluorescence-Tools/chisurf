@@ -49,6 +49,8 @@ before_install:
   - conda update -q conda
   - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git nose coverage numpy pyyaml pysftp
   - source activate build-environment
+  # Packages installed in base as meta.yaml reads info from setup.y
+  - conda install numpy pyyaml setuptools cython
   - conda build conda-recipe --output-folder bld-dir
   - conda config --add channels "file://`pwd`/bld-dir"
 
