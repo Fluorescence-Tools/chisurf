@@ -25,6 +25,7 @@ install:
   - conda config --add channels tpeulen/label/nightly
   - conda config --add channels salilab
   - conda config --add channels defaults
+  - activate base
   - conda update -q conda
   # conda-build is used to build the package
   # anaconda-client is needed to upload a conda package to anaconda cloud
@@ -32,8 +33,9 @@ install:
   # chisurf (20.03.18) is locked to python 3.7.3 due to a pyqt incompatability
   # The setup.py script reads information from chisurf that depends on pyyaml.
   # pysftp is used to upload a distribution to the sftp server
-  - conda install git conda-build anaconda-client numpy conda-verify python=3.7.3 pyyaml pysftp typing_extensions
-  - activate base
+  - conda install python=$BUILD_TARGET git conda-build anaconda-client numpy conda-verify python=3.7.3 pyyaml pysftp typing_extensions
+  # Print the conda info to facilitate the debugging
+  - conda info -a
   #- conda build conda-recipe --output-folder C:\projects\chisurf\bld-dir
   - conda build conda-recipe
   #- conda config --add channels C:\projects\chisurf\bld-dir

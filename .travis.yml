@@ -42,7 +42,10 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew unlink boost; fi
   # Install conda packages necessary in the host to build the recipe
   - source activate base
+  # conda install git and conda-build to build the package
   - conda install python=$BUILD_TARGET conda-build git
+  # Print the conda info to facilitate the debugging
+  - conda info -a
   # add conda channels
   - conda config --append channels salilab && conda config --append channels conda-forge
   - conda config --prepend channels tpeulen/label/nightly && conda config --prepend channels tpeulen
