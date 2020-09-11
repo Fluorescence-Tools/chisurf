@@ -34,7 +34,10 @@ requirements:
     # Needed for pyrcc5 (updated pyqt resource file)
     - pyqt >=5.13.0|5.9.2.*|5.6.0.*
   run:
-    - python {{ python }}
+    # There is an issue in versions >= 3.7.3
+    # https://www.riverbankcomputing.com/pipermail/pyqt/2019-August/042003.html
+    # https://github.com/conda/conda-build/issues/2571
+    - {{ pin_compatible('python', max_pin='3.7.3') }}
     - {{ pin_compatible('numpy') }}
     - pyyaml >=5.0.0
     - qtpy >=1.8.0
@@ -56,7 +59,8 @@ requirements:
     - qtconsole <=4.6.0
     - jupyter_client 5.3.4.*
     - qscintilla2 >=2.9.3
-    - guiqwt >=3.0.0
+    - guiqwt >=3.0.3
+    - guidata >=1.7.8
     - pymol-open-source >=2.3.0
     - pyopengl
     - pyopencl

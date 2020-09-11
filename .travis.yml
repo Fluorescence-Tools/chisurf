@@ -27,24 +27,24 @@ services:
   - xvfb
 
 before_install:
+  # Install miniconda
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MINICONDA_OS=Linux; else MINICONDA_OS=MacOSX; fi
   - wget https://repo.continuum.io/miniconda/Miniconda3-$MINICONDA_VERSION-$MINICONDA_OS-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
   - conda config --set always_yes yes --set changeps1 no
-  - conda config --set channel_priority flexible
+  - export PATH="$HOME/miniconda/bin:$PATH"
   # add conda channels
   - conda config --append channels salilab && conda config --append channels conda-forge
-  - conda config --prepend channels tpeulen && conda config --prepend channels tpeulen/label/nightly
+  - conda config --prepend channels tpeulen/label/nightly && conda config --prepend channels tpeulen
   - conda update -q conda
-  - conda info -a
   - conda create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git nose coverage numpy pyyaml pysftp
   - source activate build-environment
   - conda build conda-recipe --output-folder bld-dir
   - conda config --add channels "file://`pwd`/bld-dir"
 
 install:
+  # There is a problem for python >= 3.7.3
+  # https://www.riverbankcomputing.com/pipermail/pyqt/2019-August/042003.html
   - conda install chisurf python=3.7.3
 
 script:
