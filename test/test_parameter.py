@@ -69,7 +69,6 @@ class Tests(unittest.TestCase):
         p2 = chisurf.parameter.Parameter(value=3.0)
         self.assertEqual(p1.value, 2.0)
         self.assertEqual(p2.value, 3.0)
-
         self.assertEqual(p2.is_linked, False)
 
         p2.link = p1

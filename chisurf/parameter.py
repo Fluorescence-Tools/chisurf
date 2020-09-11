@@ -94,7 +94,7 @@ class Parameter(
     def is_linked(
             self
     ) -> bool:
-        return self._port.is_linked()
+        return self._port.is_linked
 
     def __add__(
             self,

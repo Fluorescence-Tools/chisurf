@@ -77,7 +77,7 @@ script:
       coverage xml
       python-codacy-coverage -r coverage.xml
     else
-      chisurf&
+      chisurf &
       sleep 120
       pgrep -f chisurf | awk '{print "kill -9 " $1}' | sh
     fi
