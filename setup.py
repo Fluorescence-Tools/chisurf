@@ -45,7 +45,7 @@ def get_extensions():
         return Extension(
             name,
             sources=sources,
-            include_dirs=[numpy.get_include(), "."],
+            include_dirs=[np.get_include(), "."],
             extra_compile_args=extra_compile_args,
             extra_link_args=extra_link_args,
             libraries=list(),
