@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+try:
+    import numpy as np
+except ImportError:
+    np = None
 import sys
 import platform
 from setuptools import setup, find_packages, Extension
@@ -26,9 +30,6 @@ def get_extensions():
     def make_extension(ext):
         """generate an Extension object from its dotted name
         """
-        # Prevent numpy from thinking it is still in its setup process:
-        import numpy
-
         name = (ext[0])[2:-4]
         name = name.replace("/", ".")
         name = name.replace("\\", ".")
@@ -69,9 +70,10 @@ def get_extensions():
             './chisurf/math/reaction/_reaction.pyx'
         ]
     ]
-    return [
-        make_extension(extension) for extension in eList
-    ]
+    if np:
+        return [make_extension(extension) for extension in eList]
+    else:
+        return []
 
 
 def readme():
