@@ -27,12 +27,22 @@ services:
   - xvfb
 
 before_install:
-  # Install miniconda
+  # export BRANCH environment variable to have unified names across different CI services
+  - export BRANCH=$TRAVIS_BRANCH
+  # Used to label the uploads
+  - export CONDA_LABEL=$(if [ "TRAVIS_PULL_REQUEST_BRANCH" == "master" ]; then echo main; else echo nightly; fi)
+  # Download and install miniconda
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then MINICONDA_OS=Linux; else MINICONDA_OS=MacOSX; fi
   - wget https://repo.continuum.io/miniconda/Miniconda3-$MINICONDA_VERSION-$MINICONDA_OS-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
-  - conda config --set always_yes yes --set changeps1 no
   - export PATH="$HOME/miniconda/bin:$PATH"
+  # setup conda to always accept commands
+  - conda config --set always_yes yes --set changeps1 no
+  # unlink homebrew's boost to interfere with conda boost
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew unlink boost; fi
+  # Install conda packages necessary in the host to build the recipe
+  - source activate base
+  - conda install python=$BUILD_TARGET conda-build git
   # add conda channels
   - conda config --append channels salilab && conda config --append channels conda-forge
   - conda config --prepend channels tpeulen/label/nightly && conda config --prepend channels tpeulen
