@@ -84,22 +84,26 @@ script:
 
 after_success:
   - OS=$TRAVIS_OS_NAME-64
+  # Deploy if in master branch
   - |
-    if [[ "$TRAVIS_OS_NAME" == "osx" ]];
+    if [[ "$TRAVIS_PULL_REQUEST_BRANCH" == "master" ]];
     then
-      mkdir $TRAVIS_BUILD_DIR/dist
-      cd build_tools/osx
-        ./build-osx-app.sh \
-        -f=$TRAVIS_BUILD_DIR/environment.yml \
-        -i=$TRAVIS_BUILD_DIR/chisurf/gui/resources/icons/cs_logo.png \
-        -n=ChiSurf \
-        -m=chisurf \
-        -p=$TRAVIS_BUILD_DIR \
-        -o=$TRAVIS_BUILD_DIR/dist/osx
-      cd ..
-      python upload_sftp \
-        -f "$TRAVIS_BUILD_DIR/dist/*.dmg" \
-        -r "./downloads/macos_nightly.dmg"
+      if [[ "$TRAVIS_OS_NAME" == "osx" ]];
+      then
+        mkdir $TRAVIS_BUILD_DIR/dist
+        cd build_tools/osx
+          ./build-osx-app.sh \
+          -f=$TRAVIS_BUILD_DIR/environment.yml \
+          -i=$TRAVIS_BUILD_DIR/chisurf/gui/resources/icons/cs_logo.png \
+          -n=ChiSurf \
+          -m=chisurf \
+          -p=$TRAVIS_BUILD_DIR \
+          -o=$TRAVIS_BUILD_DIR/dist/osx
+        cd ..
+        python upload_sftp \
+          -f "$TRAVIS_BUILD_DIR/dist/*.dmg" \
+          -r "./downloads/macos_nightly.dmg"
+      fi
     fi
 #    if [[ "$TRAVIS_BRANCH" == "master" ]];
 #    then
