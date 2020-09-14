@@ -389,7 +389,6 @@
     <addaction name="menuModelling"/>
     <addaction name="menuTTTR"/>
     <addaction name="actionF_Test"/>
-    <addaction name="actionSettings"/>
    </widget>
    <widget class="QMenu" name="menuWindows">
     <property name="title">
@@ -408,12 +407,21 @@
     <addaction name="separator"/>
     <addaction name="actionRun"/>
    </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="actionSettings"/>
+    <addaction name="separator"/>
+    <addaction name="actionClear_local_settings"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
    <addaction name="menuTools"/>
    <addaction name="menuWindows"/>
    <addaction name="menuHelp"/>
    <addaction name="menuMacro"/>
+   <addaction name="menuSettings"/>
   </widget>
   <widget class="QToolBar" name="toolBar_2">
    <property name="sizePolicy">
@@ -1397,7 +1405,7 @@
   </action>
   <action name="actionSettings">
    <property name="text">
-    <string>Settings</string>
+    <string>Edit</string>
    </property>
   </action>
   <action name="actionRecord">
@@ -1443,6 +1451,11 @@
    </property>
    <property name="text">
     <string>TTTR CLSM</string>
+   </property>
+  </action>
+  <action name="actionClear_local_settings">
+   <property name="text">
+    <string>Clear local settings</string>
    </property>
   </action>
   <zorder>dockWidgetDatasets</zorder>
