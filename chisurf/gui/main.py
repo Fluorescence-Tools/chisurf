@@ -366,7 +366,8 @@ class Main(QtWidgets.QMainWindow):
     def onOpenHelp(
             self
     ):
-        webbrowser.open_new(chisurf.settings.url)
+        help_url = 'https://github.com/Fluorescence-Tools/chisurf'
+        webbrowser.open_new(help_url)
 
     def init_console(self):
         self.verticalLayout_4.addWidget(chisurf.console)
@@ -666,10 +667,8 @@ class Main(QtWidgets.QMainWindow):
 
         # self.decay_generator = chisurf.tools.decay_generator.TransientDecayGenerator()
         # self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
-
         #self.fret_lines = chisurf.tools.fret_lines.FRETLineGeneratorWidget()
         #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.fret_lines.show)
-
         #self.decay_fret_generator = chisurf.fluorescence.dye_diffusion.TransientFRETDecayGenerator()
 
         ##########################################################
@@ -733,10 +732,19 @@ class Main(QtWidgets.QMainWindow):
         self.f_test = chisurf.gui.tools.f_test.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
 
+        ##########################################################
+        #      Settings                                          #
+        ##########################################################
+
+        # Configuration editor
         self.configuration = chisurf.gui.tools.code_editor.CodeEditor(
             filename=chisurf.settings.chisurf_settings_file,
             language='YAML',
             can_load=False
         )
         self.actionSettings.triggered.connect(self.configuration.show)
+
+        # Clear local settings, i.e., the settings file in the user folder
+        self.actionClear_local_settings.triggered.connect(chisurf.settings.clear_settings_folder)
+
 
