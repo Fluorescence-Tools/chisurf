@@ -76,11 +76,6 @@ def get_extensions():
         return []
 
 
-def readme():
-    with open('README.md') as f:
-        return f.read()
-
-
 gui_scripts = {
     "chisurf": "chisurf.__main__:main",
     "csg_kappa2distribution": "chisurf.gui.tools.kappa2_distribution.__main__:main",
@@ -119,8 +114,6 @@ metadata = dict(
     url=URL,
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
-        'Environment :: Win64 (MS Windows)',
-        'Environment :: X11 Applications :: Qt',
         'Intended Audience :: Science/Research',
         'Natural Language :: English',
         'Operating System :: Microsoft :: Windows',
@@ -139,12 +132,9 @@ metadata = dict(
     include_package_data=True,
     package_data={
         '': [
-            '*.json',
-            '*.yaml',
-            '*.ui',
-            '*.png',
-            '*.svg',
-            '*.css', '*.qss'
+            '*.json', '*.yaml',
+            '*.ui', '*.css', '*.qss'
+            '*.png', '*.svg',
             '*.csv', '*.npy', '*.dat'
             '*.dll', '*.so', '*.pyd'
         ]
