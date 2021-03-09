@@ -21,6 +21,10 @@ in a .dmg image that is placed in the ``dist`` folder.
 
 ## Windows
 
+The Windows installation of ChiSurf is effectively a conda environment with
+an installed ChiSurf conda package. The ChiSurf conda package is build with
+``conda build``.
+
 Windows versions are bundled in setup.exe files created using innosetup. The
 setup files will install a conda environment that is used to run the chisurf
 module. A setup file is created by calling
