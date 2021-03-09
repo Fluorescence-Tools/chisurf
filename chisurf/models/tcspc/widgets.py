@@ -35,7 +35,7 @@ class ConvolveWidget(
 ):
 
     @chisurf.gui.decorators.init_with_ui(
-        ui_filename="convolveWidget.ui"
+        ui_filename="tcspc_convolve.ui"
     )
     def __init__(
             self,

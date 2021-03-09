@@ -136,7 +136,7 @@ class TcspcSDTWidget(
         self.curve_number = curve_nbr
         self.textBrowser.setPlainText(str(self.sdt.info))
 
-    @chisurf.gui.decorators.init_with_ui(ui_filename="sdtfile.ui")
+    @chisurf.gui.decorators.init_with_ui(ui_filename="tcspc_sdt.ui")
     def __init__(
             self,
             *args,
