@@ -8,6 +8,9 @@ from chisurf import typing
 import numpy as np
 from qtpy import QtWidgets, QtGui, QtCore, uic
 
+import ndxplorer
+import clsmview.clsm_pixel_select
+
 import chisurf
 import chisurf.decorators
 import chisurf.base
@@ -342,9 +345,7 @@ class Main(QtWidgets.QMainWindow):
 
     def onAddDataset(self):
         filename = self.current_setup.controller.get_filename()
-        chisurf.run(
-            'chisurf.macros.add_dataset(filename="%s")' % filename
-        )
+        chisurf.run('chisurf.macros.add_dataset(filename="%s")' % str(filename))
 
     def onSaveFits(
             self,
@@ -363,11 +364,11 @@ class Main(QtWidgets.QMainWindow):
         chisurf.working_path = path
         chisurf.run('chisurf.macros.save_fit(target_path="%s")' % path)
 
-    def onOpenHelp(
-            self
-    ):
-        help_url = 'https://github.com/Fluorescence-Tools/chisurf'
-        webbrowser.open_new(help_url)
+    def onOpenHelp(self):
+        webbrowser.open_new(chisurf.info.help_url)
+
+    def onOpenUpdate(self):
+        webbrowser.open_new(chisurf.info.help_url)
 
     def init_console(self):
         self.verticalLayout_4.addWidget(chisurf.console)
@@ -377,8 +378,9 @@ class Main(QtWidgets.QMainWindow):
         chisurf.console.pushVariables({'os': os})
         chisurf.console.pushVariables({'QtCore': QtCore})
         chisurf.console.pushVariables({'QtGui': QtGui})
+        chisurf.console.set_default_style('linux')
         chisurf.run = chisurf.console.execute
-        chisurf.run(str(chisurf.settings.gui['console']['init']))
+        chisurf.run(str(chisurf.settings.gui['console_init']))
 
     def init_setups(self):
         ##########################################################
@@ -520,7 +522,10 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #       Global datasets                                  #
         ##########################################################
-        global_fit = chisurf.experiments.experiment.Experiment('Global')
+        global_fit = chisurf.experiments.experiment.Experiment(
+            name='Global',
+            hidden=True
+        )
         global_setup = chisurf.experiments.globalfit.GlobalFitSetup(
             name='Global-Fit',
             experiment=global_fit
@@ -542,7 +547,7 @@ class Main(QtWidgets.QMainWindow):
         #       Update UI                                        #
         ##########################################################
         self.experiment_names = [
-            b.name for b in list(chisurf.experiment.values()) if b.name is not 'Global'
+            b.name for b in list(chisurf.experiment.values()) if not b.hidden
         ]
         self.comboBox_experimentSelect.addItems(
             self.experiment_names
@@ -630,6 +635,7 @@ class Main(QtWidgets.QMainWindow):
         self.mdiarea.subWindowActivated.connect(self.subWindowActivated)
         self.actionAbout.triggered.connect(self.about.show)
         self.actionHelp_2.triggered.connect(self.onOpenHelp)
+        self.actionUpdate.triggered.connect(self.onOpenUpdate)
 
         ##########################################################
         #      Record and run recorded macros                    #
@@ -664,7 +670,6 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #      Init widgets                                      #
         ##########################################################
-
         # self.decay_generator = chisurf.tools.decay_generator.TransientDecayGenerator()
         # self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
         #self.fret_lines = chisurf.tools.fret_lines.FRETLineGeneratorWidget()
@@ -681,6 +686,10 @@ class Main(QtWidgets.QMainWindow):
         self.kappa2_dist = chisurf.gui.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
         self.actionKappa2_Distribution.triggered.connect(self.kappa2_dist.show)
 
+        self.ndxplorer = ndxplorer.NDXplorer()
+        self.ndxplorer.hide()
+        self.actionndXplorer.triggered.connect(self.ndxplorer.show)
+
         ##########################################################
         #      TTTR-widgets                                      #
         ##########################################################
@@ -693,7 +702,7 @@ class Main(QtWidgets.QMainWindow):
         self.tttr_histogram = chisurf.gui.tools.tttr.decay.HistogramTTTR()
         self.actionGenerate_decay.triggered.connect(self.tttr_histogram.show)
 
-        self.clsm_pixel_select = chisurf.gui.tools.tttr.clsm_pixel_select.CLSMPixelSelect()
+        self.clsm_pixel_select = clsmview.clsm_pixel_select.CLSMPixelSelect()
         self.actionTTTR_CLSM.triggered.connect(self.clsm_pixel_select.show)
 
         ##########################################################
@@ -726,16 +735,12 @@ class Main(QtWidgets.QMainWindow):
         self.align_trajectory = chisurf.gui.tools.structure.align_trajectory.AlignTrajectoryWidget()
         self.actionAlign_trajectory.triggered.connect(self.align_trajectory.show)
 
-        #self.update_widget = chisurf.widgets.downloader.UpdateDialog()
-        #self.connect(self.actionUpdate, QtCore.SIGNAL('triggered()'), self.update_widget.show)
-
         self.f_test = chisurf.gui.tools.f_test.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
 
         ##########################################################
         #      Settings                                          #
         ##########################################################
-
         # Configuration editor
         self.configuration = chisurf.gui.tools.code_editor.CodeEditor(
             filename=chisurf.settings.chisurf_settings_file,
@@ -743,7 +748,6 @@ class Main(QtWidgets.QMainWindow):
             can_load=False
         )
         self.actionSettings.triggered.connect(self.configuration.show)
-
         # Clear local settings, i.e., the settings file in the user folder
         self.actionClear_local_settings.triggered.connect(chisurf.settings.clear_settings_folder)
 
