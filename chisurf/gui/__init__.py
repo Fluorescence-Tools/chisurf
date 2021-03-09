@@ -4,7 +4,6 @@ import sys
 
 from qtpy import QtWidgets, QtGui, QtCore
 
-from chisurf import typing
 import chisurf.settings
 
 
@@ -12,8 +11,7 @@ def setup_gui(
         app: QtWidgets.QApplication,
         window: chisurf.gui.main.Main = None,
         stage: str = None
-) -> chisurf.gui.main.Main:
-
+):
     def gui_imports():
         import chisurf.settings
         import chisurf.gui.widgets.ipython
@@ -91,6 +89,7 @@ def setup_gui(
 def get_win(
         app: QtWidgets.QApplication
 ) -> chisurf.gui.main.Main:
+    # type: ()->chisurf.gui.
     # import pyqtgraph at this stage to fix
     # Warning: QApplication was created before pyqtgraph was imported;
     import pyqtgraph
@@ -98,11 +97,11 @@ def get_win(
 
     pixmap = QtGui.QPixmap(":/images/icons/splashscreen.png")
     splash = QtWidgets.QSplashScreen(pixmap)
-    splash.setContentsMargins(64, 0, 0, 64)
+    splash.setContentsMargins(0, 0, 0, 64)
     splash.show()
     app.processEvents()
     align = QtCore.Qt.AlignTop
-    offset = "\n" * 25 + " " * 5
+    offset = "\n" * 17 + " " * 0
     splash.showMessage(
         offset+"Loading modules",
         alignment=align,
