@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import inspect
-from chisurf import typing
 
+from chisurf import typing
 from qtpy import QtWidgets
 
 import qtconsole
@@ -11,6 +11,7 @@ import qtconsole.inprocess
 import qtconsole.styles
 import qtconsole.manager
 
+import scikit_fluorescence.io
 import chisurf.fio
 import chisurf.gui
 import chisurf.settings
@@ -63,7 +64,7 @@ class QIPythonWidget(
     def execute(
             self,
             *args,
-            hidden: bool = False,
+            hidden: bool = None,
             **kwargs
     ):
         """
@@ -76,6 +77,9 @@ class QIPythonWidget(
         :param kwargs:
         :return:
         """
+        if hidden is None:
+            hidden = chisurf.settings.cs_settings.get('hidden_execute', False)
+        kwargs['hidden'] = hidden
         if not hidden:
             try:
                 new_text = args[0] + '\n'
@@ -154,7 +158,7 @@ class QIPythonWidget(
         self.exit_requested.connect(stop)
         self.width = kwargs.get(
             'width',
-            chisurf.settings.gui['console']['width']
+            chisurf.settings.gui['console_width']
         )
         self._macro = ""
         self.recording = False
@@ -162,7 +166,7 @@ class QIPythonWidget(
         # save nevertheless every inputs into a session file
         self.session_file = chisurf.settings.session_file
         self.set_default_style(
-            chisurf.settings.gui['console']['style']
+            chisurf.settings.gui['console_style']
         )
         self.style_sheet = qtconsole.styles.default_light_style_sheet
 
@@ -185,12 +189,3 @@ class QIPythonWidget(
         """ Prints some plain name to the console """
         self._append_plain_text(text)
 
-    def executeCommand(
-            self,
-            command: str
-    ):
-        """ Execute a command in the frame of the console widget """
-        self._execute(
-            source=command,
-            hidden=chisurf.settings.cs_settings['show_commands']
-        )
