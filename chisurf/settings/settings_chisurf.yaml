@@ -2,11 +2,8 @@
 n_threads: 4
 verbose: false
 fitting_message: true
-experimental_models: false
-updates:
-  check_version_url: http://fret.at/downloads/CURRENT.txt
-  changes: http://fret.at/downloads/CHANGES
-  check_for_updates: true
+enable_experimental: false
+hidden_execute: true
 fps:
   vdw_max: 2
   simulation_grid_resolution: 1
@@ -58,10 +55,9 @@ fortune:
   max_length: 300
   attempts: 1000
   enabled: true
-fitting:
-  parallel_fit: false
-  global:
-    fit_local_first: false
+optimization:
+  global_threaded_model_update: false
+  global_optimize_local_first: false
   leastsq:
     ftol: 1.49012e-08
     xtol: 1.49012e-08
@@ -148,18 +144,17 @@ gui:
     font_size: 9
     font_family: Courier
     language: Python
-  style_sheet: dark.css
+  style_sheet: day.css
   show_console: true
   show_macro_edit: true
   confirm_close_fit: true
   confirm_close_program: true
   fit_windows_size: [350, 350]
-  console:
-    style: 'lightbg' # options are linux, lightbg, or nocolor
-    init: |
-      %matplotlib inline
-      import pylab as p
-    width: 80
+  console_style: 'linux' # options are linux, lightbg, or nocolor
+  console_init: |
+    %matplotlib inline
+    import pylab as p
+  console_width: 80
   fit_models:
     n_columns: 2
   plot:
