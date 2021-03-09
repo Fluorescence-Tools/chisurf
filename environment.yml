@@ -39,3 +39,5 @@ dependencies:
   - mrcfile >=1.1.2
   - chinet >=0.0.5
   - scikit-fluorescence
+  - ndxplorer
+  - clsmview
