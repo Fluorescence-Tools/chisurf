@@ -351,7 +351,7 @@ class GlobalFitModel(
             self,
             **kwargs
     ) -> None:
-        if chisurf.settings.cs_settings['fitting']['parallel_fit']:
+        if chisurf.settings.cs_settings['optimization']['global_threaded_model_update']:
             threads = [threading.Thread(target=f.model.update_model) for f in self.fits]
             for thread in threads:
                 thread.start()
