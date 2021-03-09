@@ -16,6 +16,8 @@ class Experiment(
     and loadable data-types respectively.
     """
 
+    hidden: bool = False
+
     @property
     def readers(
             self
@@ -120,13 +122,22 @@ class Experiment(
     def __init__(
             self,
             name: str,
+            hidden: bool = False,
             *args,
             **kwargs
     ):
+        """
+
+        :param name:
+        :param hidden: If set to True an Experiment is hidden in the GUI
+        :param args:
+        :param kwargs:
+        """
         super().__init__(
             name=name,
             *args,
             **kwargs
         )
+        self.hidden = hidden
         self._model_classes = list()
         self._readers = list()
