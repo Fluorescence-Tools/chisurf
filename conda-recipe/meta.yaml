@@ -69,6 +69,8 @@ requirements:
     - opencv >=3.4.0
     - mrcfile >=1.1.2
     - chinet >=0.0.5
+    - ndxplorer
+    - clsmview
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
