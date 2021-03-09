@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1201</width>
-    <height>795</height>
+    <width>1040</width>
+    <height>643</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -125,7 +125,7 @@
           <x>0</x>
           <y>0</y>
           <width>254</width>
-          <height>133</height>
+          <height>87</height>
          </rect>
         </property>
         <property name="sizePolicy">
@@ -238,8 +238,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1201</width>
-     <height>22</height>
+     <width>1040</width>
+     <height>21</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -389,6 +389,7 @@
     <addaction name="menuModelling"/>
     <addaction name="menuTTTR"/>
     <addaction name="actionF_Test"/>
+    <addaction name="actionndXplorer"/>
    </widget>
    <widget class="QMenu" name="menuWindows">
     <property name="title">
@@ -463,7 +464,7 @@
     <bool>true</bool>
    </property>
    <property name="sizePolicy">
-    <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+    <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
@@ -1198,7 +1199,7 @@
      <normaloff>:/icons/icons/pdb2label.png</normaloff>:/icons/icons/pdb2label.png</iconset>
    </property>
    <property name="text">
-    <string>Create fps.json</string>
+    <string>fps.json editor</string>
    </property>
   </action>
   <action name="actionCalculate_Potential">
@@ -1456,6 +1457,11 @@
   <action name="actionClear_local_settings">
    <property name="text">
     <string>Clear local settings</string>
+   </property>
+  </action>
+  <action name="actionndXplorer">
+   <property name="text">
+    <string>ndXplorer</string>
    </property>
   </action>
   <zorder>dockWidgetDatasets</zorder>
