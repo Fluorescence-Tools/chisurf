@@ -20,7 +20,6 @@ python -m chisurf.gui.tools.f_test
 python -m chisurf.gui.tools.fret.calculator
 python -m chisurf.gui.tools.kappa2_distribution
 
-python -m chisurf.gui.tools.tttr.clsm_pixel_select
 python -m chisurf.gui.tools.tttr.convert
 python -m chisurf.gui.tools.tttr.correlate
 python -m chisurf.gui.tools.tttr.decay
