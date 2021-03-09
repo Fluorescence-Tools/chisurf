@@ -9,7 +9,6 @@ import chisurf.models.tcspc.fret
 import chisurf.models.tcspc.pddem
 import chisurf.models.tcspc.widgets
 
-# import dye_diffusion
-# import et
-# import membrane
-# import fret_structure
+if chisurf.settings.cs_settings["enable_experimental"]:
+    import dye_diffusion
+    import et
