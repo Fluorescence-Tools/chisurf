@@ -128,7 +128,7 @@ class FittingControllerWidget(
 
     def onErrorEstimate(self):
         filename = chisurf.gui.widgets.save_file('Error estimate', '*.er4')
-        kw = chisurf.settings.cs_settings['fitting']['sampling']
+        kw = chisurf.settings.cs_settings['optimization']['sampling']
         chisurf.fitting.fit.sample_fit(
             self.fit,
             filename,
