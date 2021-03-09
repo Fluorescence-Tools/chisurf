@@ -433,7 +433,7 @@ def calc_linker_distance(density, linker_sphere, linknodes, dg, w, l):
     return density, linker_length
 
 
-def calc_av1_py(l, w, r, atom_i, ng, xyz, vdw, vdw_max=3.5, linker_sphere=2.0, linknodes=3):
+def calc_av1_py(l, w, r, atom_i, ng, xyz, vdw, vdw_max=None, linker_sphere=None, linknodes=None):
     """
 
     :param l: linker-length
@@ -465,6 +465,13 @@ def calc_av1_py(l, w, r, atom_i, ng, xyz, vdw, vdw_max=3.5, linker_sphere=2.0, l
     >>> vdw=structure.vdw
     >>> p.imshow(linker_length[:, 22,:], interpolation='none')
     """
+    if vdw_max is None:
+        vdw_max = chisurf.settings.cs_settings['fps']['vdw_max']
+    if linker_sphere is None:
+        linker_sphere = chisurf.settings.cs_settings['fps']['allowed_sphere_radius']
+    if linknodes is None:
+        linknodes = chisurf.settings.cs_settings['fps']['linknodes']
+
     dg = l / ((ng - 1.0) / 2.0)
     density = np.ones((ng, ng, ng), dtype=np.uint32)
 
