@@ -18,7 +18,7 @@ class CsvTCSPCWidget(
 ):
 
     @chisurf.gui.decorators.init_with_ui(
-        ui_filename="csvTCSPCWidget.ui"
+        ui_filename="tcspc_csv.ui"
     )
     def __init__(
             self,
@@ -119,7 +119,7 @@ class TCSPCSetupDummyWidget(
 ):
 
     @chisurf.gui.decorators.init_with_ui(
-        ui_filename="tcspcDummy.ui"
+        ui_filename="tcspc_dummy.ui"
     )
     def __init__(
             self,

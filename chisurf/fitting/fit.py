@@ -316,7 +316,7 @@ class Fit(
             *args,
             **kwargs
     ) -> None:
-        fitting_options = chisurf.settings.cs_settings['fitting']['leastsq']
+        fitting_options = chisurf.settings.cs_settings['optimization']['leastsq']
         self.model.find_parameters(
             parameter_type=chisurf.fitting.parameter.FittingParameter
         )
@@ -544,7 +544,7 @@ class FitGroup(
         """
         fit: FitGroup = self
         if local_first is None:
-            local_first = chisurf.settings.fitting['global']['fit_local_first']
+            local_first = chisurf.settings.fitting['global_optimize_local_first']
         if local_first:
             for f in fit:
                 f.run(**kwargs)
