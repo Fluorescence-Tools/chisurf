@@ -10,17 +10,18 @@ try:
 except ImportError:
     from setuptools.command.build_ext import build_ext
 
-import chisurf
-NAME = chisurf.__name__
-VERSION = chisurf.__version__
-AUTHOR = chisurf.__author__
-LICENSE = chisurf.__license__
-DESCRIPTION = chisurf.__description__
-LONG_DESCRIPTION = """ChiSurf: an interactive global analysis platform for fluorescence \
-data."""
-URL = chisurf.__url__
-EMAIL = chisurf.__email__
-APP_ID = chisurf.__app_id__
+from chisurf import info
+
+
+NAME = info.__name__
+VERSION = info.__version__
+AUTHOR = info.__author__
+LICENSE = info.__license__
+DESCRIPTION = info.__description__
+LONG_DESCRIPTION = info.LONG_DESCRIPTION
+URL = info.__url__
+EMAIL = info.__email__
+APP_ID = info.__app_id__
 
 
 def get_extensions():
@@ -117,9 +118,9 @@ metadata = dict(
     package_data={
         '': [
             '*.json', '*.yaml',
-            '*.ui', '*.css', '*.qss'
+            '*.ui', '*.css', '*.qss',
             '*.png', '*.svg',
-            '*.csv', '*.npy', '*.dat'
+            '*.csv', '*.npy', '*.dat',
             '*.dll', '*.so', '*.pyd'
         ]
     },
