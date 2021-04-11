@@ -14,14 +14,13 @@ build linux:
     # procps is used to grep the process by name to kill it when needed
     - apt update -y
     - |
-      apt install -y
-        libicu-dev libpng-dev
-        xorg-dev
-        libxinerama1 libxcursor1 libgl1-mesa-glx libglew-dev
-        libglu1-mesa libgl1-mesa-dev
-        libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev zlib1g-dev
-        xvfb
-        procps
+      apt install -y \
+        libicu-dev libpng-dev \
+        xorg-dev \
+        libxinerama1 libxcursor1 libgl1-mesa-glx libglew-dev \
+        libglu1-mesa libgl1-mesa-dev \
+        libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev zlib1g-dev \
+        xvfb procps
     - conda install mamba -n base -c conda-forge
     - mamba update -n base -c defaults conda
     # Print the conda info to facilitate the debugging
