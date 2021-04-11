@@ -41,3 +41,5 @@ dependencies:
   - scikit-fluorescence
   - ndxplorer
   - clsmview
+  - k2dist
+  - tttrconvert

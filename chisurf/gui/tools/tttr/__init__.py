@@ -1,3 +1,3 @@
-from chisurf.gui.tools.tttr import convert
-from chisurf.gui.tools.tttr import decay
+import tttrconvert as convert
+from chisurf.gui.tools.tttr import histogram
 from chisurf.gui.tools.tttr import correlate
