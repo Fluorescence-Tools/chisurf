@@ -1,5 +1,5 @@
 import sys
-from chisurf.gui.tools.tttr.decay import HistogramTTTR
+from chisurf.gui.tools.tttr.histogram import HistogramTTTR
 from qtpy.QtWidgets import QApplication
 
 

@@ -71,6 +71,8 @@ requirements:
     - chinet >=0.0.5
     - ndxplorer
     - clsmview
+    - k2dist
+    - tttrconvert
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
