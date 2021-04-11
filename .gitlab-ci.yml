@@ -32,7 +32,7 @@ build linux:
     - mamba create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git nose coverage numpy pyyaml pysftp
   script:
     - echo "I am a build stage job for debian, running on docker using continuumio/miniconda3:latest image"
-    - conda activate build-environment
+    - source activate build-environment
     - conda mambabuild conda-recipe --output-folder bld-dir
     - conda config --add channels "file://`pwd`/bld-dir"
     # Testing
