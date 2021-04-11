@@ -2,15 +2,39 @@ stages:
   - build
   - test
 
+# Change pip's cache directory to be inside the project directory since we can
+# only cache local items.
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
 build linux:
   stage: build
   tags:
     - linux
   image: continuumio/miniconda3:latest
-  # Change pip's cache directory to be inside the project directory since we can
-  # only cache local items.
-  variables:
-    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  script:
+    - echo "I am a build stage job for linux, running on docker using continuumio/miniconda3:latest image"
+    - source activate base
+    - |
+      conda config \
+        --add channels defaults \
+        --add channels salilab \
+        --add channels conda-forge \
+        --add channels tpeulen \
+        --add channels tpeulen/label/nightly
+    - conda install mamba boa -n base
+    - conda mambabuild conda-recipe --output-folder bld-dir
+  artifacts:
+    paths:
+    - bld-dir
+
+test linux:
+  stage: test
+  tags:
+    - linux
+  image: continuumio/miniconda3:latest
+  dependencies:
+    - build linux
   before_script:
     # Address issue with OpenGL and X11 display
     # See: https://stackoverflow.com/questions/65675765/is-it-possible-to-run-x11-on-gitlab-ci
@@ -25,28 +49,11 @@ build linux:
         libglu1-mesa libgl1-mesa-dev \
         libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev zlib1g-dev \
         xvfb procps
-    - conda install mamba -n base -c conda-forge
-    - mamba update -n base -c defaults conda
-    # Print the conda info to facilitate the debugging
-    - conda info -a
-    # add conda channels
-    - conda config --append channels salilab && conda config --append channels conda-forge
-    - conda config --prepend channels tpeulen/label/nightly && conda config --prepend channels tpeulen
-    # Create conda env to build conda packages
-    - mamba install conda-build anaconda-client jinja2 git nose coverage numpy pyyaml pysftp
   script:
+    - echo "I am a testing stage job for linux, running on docker using continuumio/miniconda3:latest image"
     - source activate base
-    - conda mambabuild conda-recipe --output-folder bld-dir
-
-test linux:
-  stage: test
-  tags:
-    - linux
-  image: continuumio/miniconda3:latest
-  script:
-    - source activate base
+    - conda install mamba -n base
     - conda config --add channels "file://`pwd`/bld-dir"
-    - echo "I am a testing stage job for debian, running on docker using continuumio/miniconda3:latest image"
     - mamba install install chisurf python=3.7.3
     - |
       # Disable Numba JIT for correct coverage analysis
