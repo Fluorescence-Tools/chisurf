@@ -1,3 +1,7 @@
+stages:
+  - build
+  - test
+
 build linux:
   stage: build
   tags:
@@ -29,15 +33,20 @@ build linux:
     - conda config --append channels salilab && conda config --append channels conda-forge
     - conda config --prepend channels tpeulen/label/nightly && conda config --prepend channels tpeulen
     # Create conda env to build conda packages
-    - mamba create -q -n build-environment python=$BUILD_TARGET conda-build anaconda-client jinja2 git nose coverage numpy pyyaml pysftp
+    - mamba install conda-build anaconda-client jinja2 git nose coverage numpy pyyaml pysftp
   script:
-    - echo "I am a build stage job for debian, running on docker using continuumio/miniconda3:latest image"
-    - source activate build-environment
+    - source activate base
     - conda mambabuild conda-recipe --output-folder bld-dir
+
+test linux:
+  stage: test
+  tags:
+    - linux
+  image: continuumio/miniconda3:latest
+  script:
+    - source activate base
     - conda config --add channels "file://`pwd`/bld-dir"
-    # Testing
-    - mamba create -q -n test
-    - conda activate test
+    - echo "I am a testing stage job for debian, running on docker using continuumio/miniconda3:latest image"
     - mamba install install chisurf python=3.7.3
     - |
       # Disable Numba JIT for correct coverage analysis
