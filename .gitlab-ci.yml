@@ -7,7 +7,7 @@ stages:
 # only cache local items.
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  CONDA_PACKAGE: "ndxplorer"
+  CONDA_PACKAGE: "chisurf"
   DEPLOY_VARIABLE: "nightly"
   MINICONDA_VERSION: "latest"
 
@@ -24,7 +24,7 @@ build:linux:
     - linux
   image: continuumio/miniconda3:latest
   script:
-    - echo "I am a build stage job for linux, running on docker using continuumio/miniconda3:latest image"
+    - echo "I am a build stage job for debian, running on docker using continuumio/miniconda3:latest image"
     - source activate
     - conda install mamba boa conda-verify -c conda-forge
     - mamba update -y -n base -c defaults --all
@@ -35,18 +35,17 @@ build:linux:
         conda config --add channels tpeulen/label/nightly
     - conda mambabuild conda-recipe --output-folder bld-dir
   artifacts:
+    expire_in: 7 days
     paths:
-    - bld-dir
+      - bld-dir/
 
 test:linux:
+  variables:
+    MINICONDA_OS: "Linux"
   stage: test
-  dependencies:
-    - build linux
   tags:
     - linux
   image: ubuntu:latest
-  variables:
-    MINICONDA_OS: "Linux"
   before_script:
     # Issue with OpenGL and X11 display
     # See: https://stackoverflow.com/questions/65675765/is-it-possible-to-run-x11-on-gitlab-ci
@@ -72,13 +71,13 @@ test:linux:
         conda config --add channels tpeulen
         conda config --add channels tpeulen/label/nightly
     - conda config --add channels "file://`pwd`/bld-dir"
-    - mamba create -n test python=3.7 ${CONDA_PACKAGE} nose
+    - mamba create -n test python=3.7 ${CONDA_PACKAGE}
     - conda activate test
     # Run GUI with xvfb - no X11 screen
     - |
       xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test/test_*.py;
 
-deploy:linux:
+deploy:
   stage: deploy
   image: continuumio/miniconda3:latest
   tags:
