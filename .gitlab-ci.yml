@@ -1,63 +1,92 @@
 stages:
   - build
   - test
+  - deploy
 
 # Change pip's cache directory to be inside the project directory since we can
 # only cache local items.
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  CONDA_PACKAGE: "ndxplorer"
+  DEPLOY_VARIABLE: "nightly"
+  MINICONDA_VERSION: "latest"
 
-build linux:
+workflow:
+  rules:
+    - if: $CI_COMMIT_REF_NAME =~ /master/
+      variables:
+        DEPLOY_VARIABLE: "main"  # Override globally-defined DEPLOY_VARIABLE
+    - when: always               # Run the pipeline in other cases
+
+build:linux:
   stage: build
   tags:
     - linux
   image: continuumio/miniconda3:latest
   script:
     - echo "I am a build stage job for linux, running on docker using continuumio/miniconda3:latest image"
-    - source activate base
+    - source activate
+    - conda install mamba boa conda-verify -c conda-forge
+    - mamba update -y -n base -c defaults --all
     - |
-      conda config \
-        --add channels defaults \
-        --add channels salilab \
-        --add channels conda-forge \
-        --add channels tpeulen \
-        --add channels tpeulen/label/nightly
-    - conda install mamba boa -n base
+        conda config --add channels salilab
+        conda config --add channels conda-forge
+        conda config --add channels tpeulen
+        conda config --add channels tpeulen/label/nightly
     - conda mambabuild conda-recipe --output-folder bld-dir
   artifacts:
     paths:
     - bld-dir
 
-test linux:
+test:linux:
   stage: test
-  tags:
-    - linux
-  image: continuumio/miniconda3:latest
   dependencies:
     - build linux
+  tags:
+    - linux
+  image: ubuntu:latest
+  variables:
+    MINICONDA_OS: "Linux"
   before_script:
-    # Address issue with OpenGL and X11 display
+    # Issue with OpenGL and X11 display
     # See: https://stackoverflow.com/questions/65675765/is-it-possible-to-run-x11-on-gitlab-ci
     # See: https://github.com/conda-forge/pygridgen-feedstock/issues/10
     # procps is used to grep the process by name to kill it when needed
-    - apt update -y
-    - |
-      apt install -y \
-        libicu-dev libpng-dev \
-        xorg-dev \
-        libxinerama1 libxcursor1 libgl1-mesa-glx libglew-dev \
-        libglu1-mesa libgl1-mesa-dev \
-        libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev zlib1g-dev \
-        xvfb procps
+    - export DEBIAN_FRONTEND=noninteractive
+    - apt update -yq
+    - apt install -yq xorg-dev libglu1-mesa libgl1-mesa-dev xvfb libxinerama1 libxcursor1 libgl1-mesa-glx procps wget
+    # Download and install miniconda
+    - wget https://repo.continuum.io/miniconda/Miniconda3-$MINICONDA_VERSION-$MINICONDA_OS-x86_64.sh -O miniconda.sh
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - export PATH="$HOME/miniconda/bin:$PATH"
+    # setup conda to always accept commands
+    - conda config --set always_yes yes --set changeps1 no
   script:
-    - echo "I am a testing stage job for linux, running on docker using continuumio/miniconda3:latest image"
+    - echo "I am a test stage job for debian, running on docker using continuumio/miniconda3:latest image"
     - source activate base
-    - conda install mamba -n base
-    - conda config --add channels "file://`pwd`/bld-dir"
-    - mamba install install chisurf python=3.7.3
+    - conda install mamba conda-verify -c conda-forge
+    - mamba update -y -n base -c defaults --all
     - |
-      # Disable Numba JIT for correct coverage analysis
-      export NUMBA_DISABLE_JIT=1
-      pip install codacy-coverage
-      python setup.py build_ext --inplace --force
+        conda config --add channels salilab
+        conda config --add channels conda-forge
+        conda config --add channels tpeulen
+        conda config --add channels tpeulen/label/nightly
+    - conda config --add channels "file://`pwd`/bld-dir"
+    - mamba create -n test python=3.7 ${CONDA_PACKAGE} nose
+    - conda activate test
+    # Run GUI with xvfb - no X11 screen
+    - |
       xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test/test_*.py;
+
+deploy:linux:
+  stage: deploy
+  image: continuumio/miniconda3:latest
+  tags:
+    - linux
+  dependencies:
+    - build:linux
+  script:
+    - echo "I am a depolyment stage job for debian, running on docker using continuumio/miniconda3:latest image"
+    - source activate
+    - conda install anaconda-client
+    - anaconda -t ${ANACONDA_API_TOKEN} upload -l ${DEPLOY_VARIABLE} -u ${CONDA_USER} --force bld-dir/linux-64/*.tar.bz2
