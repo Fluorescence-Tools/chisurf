@@ -1,74 +1,81 @@
 {% set data = load_setup_py_data(setup_file='../setup.py', from_recipe_dir=True) %}
+{% set PY_VER_MAJOR = PY_VER[0] %}
+{% set PY_VER_MINOR = PY_VER[2] %}
+
 
 package:
   name: {{ data.get('name')|lower }}
   version: {{ data.get('version')|lower }}
 
 source:
-  path: ..
+#  path: ..
+  git_url: ..
 
 build:
   number: 0
-  string: np{{ CONDA_NPY }}py{{ CONDA_PY }}
+  string: py{{ PY_VER_MAJOR }}{{ PY_VER_MINOR }}h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}
   entry_points:
     {% for entry_point_type, entry_points in data.get("entry_points", dict()).items() -%}
     {% for entry_point in entry_points -%}
     - {{ entry_point }}
     {% endfor %}
     {% endfor %}
+
 requirements:
-  host:
-    - python {{ python }}
-    - {{ pin_compatible('numpy') }}
-    - typing_extensions
-    - pyyaml
-    - setuptools
-    - cython
   build:
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
     - python {{ python }}
-    - {{ pin_compatible('numpy') }}
     - setuptools
+    - numpy
     - typing_extensions
     - cython
     - pyyaml
     # Needed for pyrcc5 (updated pyqt resource file)
-    - pyqt >=5.13.0|5.9.2.*|5.6.0.*
+    - pyqt
+  host:
+    - python {{ python }}
+    - setuptools
+    - numpy
+    - typing_extensions
+    - pyyaml
+    - cython
   run:
     # There is an issue in versions >= 3.7.3
     # https://www.riverbankcomputing.com/pipermail/pyqt/2019-August/042003.html
     # https://github.com/conda/conda-build/issues/2571
-    - {{ pin_compatible('python', max_pin='3.7.3') }}
-    - {{ pin_compatible('numpy') }}
+    - python {{ python }}
+    - numpy
     - pyyaml >=5.0.0
-    - qtpy >=1.8.0
-    - pyqt >=5.13.0|5.9.2.*|5.6.0.*
+    - qtpy
+    - pyqt
     - pyqtgraph >0.10.0|0.9.10
     - typing_extensions
     - matplotlib >=3.0.0
-    - scikit-fluorescence >=0.0.1
+    - scikit-fluorescence
     - deprecation
     - progressbar2
     - python-slugify
-    - cython >=0.25.0
-    - numexpr >=2.6.0
-    - numba >=0.48.0
-    - scipy >=1.4.0
-    - emcee >=3.0.0
-    - mdtraj >=1.9.0
-    - ipython <=7.12.0
-    - qtconsole <=4.6.0
+    - cython
+    - numexpr
+    - numba
+    - scipy
+    - emcee
+    - mdtraj 1.9.*
+    - ipython
+    - qtconsole
     - jupyter_client 5.3.4.*
-    - qscintilla2 >=2.9.3
-    - guiqwt >=3.0.3
-    - guidata >=1.7.6
-    - pymol-open-source >=2.3.0
+    - qscintilla2
+    - guiqwt
+    - guidata
+    - pymol-open-source
     - pyopengl
     - pyopencl
-    - python-docx 0.8.10.*
-    - htmd-pdb2pqr 0.0.2.*
-    - opencv >=3.4.0
-    - mrcfile >=1.1.2
-    - chinet >=0.0.5
+    - python-docx
+    - htmd-pdb2pqr
+    - opencv
+    - mrcfile
+    - chinet
     - ndxplorer
     - clsmview
     - k2dist
