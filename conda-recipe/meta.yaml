@@ -46,10 +46,10 @@ requirements:
     # https://github.com/conda/conda-build/issues/2571
     - python {{ python }}
     - numpy
-    - pyyaml >=5.0.0
+    - pyyaml
     - qtpy
     - pyqt
-    - pyqtgraph >0.10.0|0.9.10
+    - pyqtgraph
     - typing_extensions
     - matplotlib >=3.0.0
     - scikit-fluorescence
@@ -61,10 +61,10 @@ requirements:
     - numba
     - scipy
     - emcee
-    - mdtraj 1.9.*
+    - mdtraj
     - ipython
     - qtconsole
-    - jupyter_client 5.3.4.*
+    - jupyter_client
     - qscintilla2
     - guiqwt
     - guidata
