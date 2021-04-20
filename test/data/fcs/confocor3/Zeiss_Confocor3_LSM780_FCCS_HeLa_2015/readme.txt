@@ -1,0 +1,2 @@
+ZEN (2011): ZEISS LSM780 / Confocor3, FCCS measurements; Interaction of two proteins in the cytoplasm of HeLa cells. The interaction partners were tagged with EGFP and mStrawberry. The zip file also contains dual-color LSM images and evaluated data (PyCorrFit sessions). Data published in Tittel et al., 2015, J. Biol. Chem. 290: 6428-6444.
+http://doi.org/10.1074/jbc.M114.602672
