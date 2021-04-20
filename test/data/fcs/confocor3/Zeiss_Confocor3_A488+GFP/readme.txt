@@ -1,0 +1,1 @@
+AIM4.2: ZEISS LSM780 / Confocor3, single channel measurements
