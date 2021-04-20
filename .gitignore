@@ -28,7 +28,7 @@ __pycache__/
 ###########################
 # Test data -> TODO combine with tttr-data git
 #/test/data/
-/test/broken/
+#/test/broken/
 
 *.exe
 
