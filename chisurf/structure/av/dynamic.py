@@ -14,7 +14,7 @@ import chisurf.fio.structure.coordinates
 import chisurf.parameter
 import chisurf.structure
 
-from . import fps
+from . import fps_ as fps
 from chisurf.parameter import ParameterGroup
 
 

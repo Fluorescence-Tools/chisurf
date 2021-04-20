@@ -10,7 +10,7 @@ import numba as nb
 import chisurf.fluorescence
 import chisurf.structure.av
 import chisurf.structure
-import chisurf.structure.potential.cPotentials
+import chisurf.structure.potential.cPotentials_
 
 
 @nb.njit
@@ -312,7 +312,7 @@ class Ramachandran(object):
 
     def getEnergy(self) -> float:
         c = self.structure
-        Erama = chisurf.structure.potential.cPotentials.ramaEnergy(
+        Erama = chisurf.structure.potential.cPotentials_.ramaEnergy(
             c.residue_lookup_i,
             c.iAtoms,
             self.ramaPot
@@ -334,11 +334,11 @@ class Electrostatics(object):
         self.structure = structure
         self.name = 'ele'
         if type == 'gb':
-            self.p = chisurf.structure.potential.cPotentials.gb
+            self.p = chisurf.structure.potential.cPotentials_.gb
 
     def getEnergy(self) -> float:
         structure = self.structure
-        #Eel = mfm.structure.potential.cPotentials.gb(structure.xyz)
+        #Eel = mfm.structure.potential.cPotentials_.gb(structure.xyz)
         Eel = gb(structure.xyz)
         self.E = Eel
         return Eel
@@ -392,7 +392,7 @@ class HPotential(object):
         s1 = self.structure
         cca2 = self.cutoffCA ** 2
         ch2 = self.cutoffH ** 2
-        nHbond, Ehbond = chisurf.structure.potential.cPotentials.hBondLookUpAll(
+        nHbond, Ehbond = chisurf.structure.potential.cPotentials_.hBondLookUpAll(
             s1.l_res, s1.dist_ca, s1.xyz, self._hPot, cca2, ch2
         )
         self.E = Ehbond
@@ -442,14 +442,14 @@ class GoPotential(object):
         c = self.structure
         nnEFactor = self.nnEFactor if self.non_native_contact_on else 0.0
         cutoff = self.cutoff if self.native_cutoff_on else 1e6
-        self.eMatrix, self.sMatrix = chisurf.structure.potential.cPotentials.go_init(
+        self.eMatrix, self.sMatrix = chisurf.structure.potential.cPotentials_.go_init(
             c.residue_lookup_r, c.dist_ca,
             self.epsilon, nnEFactor, cutoff
         )
 
     def getEnergy(self):
         c = self.structure
-        Etot, nNa, Ena, nNN, Enn = chisurf.structure.potential.cPotentials.go(
+        Etot, nNa, Ena, nNN, Enn = chisurf.structure.potential.cPotentials_.go(
             c.residue_lookup_r, c.dist_ca, self.eMatrix, self.sMatrix
         )
         #Etot = go(c., c.dist_ca, self.eMatrix, self.sMatrix)
@@ -501,7 +501,7 @@ class MJPotential(object):
 
     def getEnergy(self):
         c = self.structure
-        nCont, Emj = chisurf.structure.potential.cPotentials.mj(
+        nCont, Emj = chisurf.structure.potential.cPotentials_.mj(
             c.l_res, c.residue_types, c.dist_ca, c.xyz, self.mjPot, cutoff=self.ca_cutoff
         )
         self.E = Emj
@@ -611,7 +611,7 @@ class ASA(object):
         self.structure = structure
         self.probe = probe
         self.n_sphere_point = n_sphere_point
-        self.sphere_points = chisurf.structure.potential.cPotentials.spherePoints(
+        self.sphere_points = chisurf.structure.potential.cPotentials_.spherePoints(
             n_sphere_point
         )
         self.radius = radius
@@ -620,7 +620,7 @@ class ASA(object):
         c = self.structure
         #def asa(double[:, :] xyz, int[:, :] resLookUp, double[:, :] caDist, double[:, :] sphere_points,
         #double probe=1.0, double radius = 2.5, char sum=1)
-        asa = chisurf.structure.potential.cPotentials.asa(
+        asa = chisurf.structure.potential.cPotentials_.asa(
             c.xyz,
             c.l_res,
             c.dist_ca,
@@ -662,7 +662,7 @@ class ClashPotential(object):
 
     def getEnergy(self) -> float:
         c = self.structure
-        return chisurf.structure.potential.cPotentials.clash_potential(
+        return chisurf.structure.potential.cPotentials_.clash_potential(
             c.xyz,
             c.vdw,
             self.clash_tolerance,

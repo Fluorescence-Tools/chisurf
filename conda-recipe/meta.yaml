@@ -60,7 +60,7 @@ requirements:
     - jupyter_client 5.3.4.*
     - qscintilla2 >=2.9.3
     - guiqwt >=3.0.3
-    - guidata >=1.7.8
+    - guidata >=1.7.6
     - pymol-open-source >=2.3.0
     - pyopengl
     - pyopencl

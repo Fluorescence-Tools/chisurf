@@ -21,7 +21,6 @@ DESCRIPTION = info.__description__
 LONG_DESCRIPTION = info.LONG_DESCRIPTION
 URL = info.__url__
 EMAIL = info.__email__
-APP_ID = info.__app_id__
 
 
 def get_extensions():
@@ -55,18 +54,18 @@ def get_extensions():
     # and build up the set of Extension objects
     eList = [
         [
-            './chisurf/fluorescence/simulation/_simulation.pyx',
+            './chisurf/fluorescence/simulation/simulation_.pyx',
             './chisurf/fluorescence/simulation/mt19937cok.cpp'
         ],
         [
-            './chisurf/structure/av/fps.pyx',
+            './chisurf/structure/av/fps_.pyx',
             './chisurf/structure/av/mt19937cok.cpp'
         ],
         [
-            './chisurf/structure/potential/cPotentials.pyx'
+            './chisurf/structure/potential/cPotentials_.pyx'
         ],
         [
-            './chisurf/math/reaction/_reaction.pyx'
+            './chisurf/math/reaction/reaction_.pyx'
         ]
     ]
     if np:
@@ -95,7 +94,6 @@ metadata = dict(
     description=DESCRIPTION,
     author=AUTHOR,
     author_email=EMAIL,
-    app_id=APP_ID,
     url=URL,
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
