@@ -284,9 +284,9 @@ class Tests(unittest.TestCase):
                 "routine": "bh132",
                 "files": glob.glob(directory + '/BH/132/*.spc'),
                 "n_tac": 4096,
-                "measurement_time": 62.328804237,
+                "measurement_time": 62.3288052934344,
                 "n_photons": 183657,
-                "mt_clk": 1.35e-05,
+                "mt_clk": 13.5e-09,
                 "dt": 3.2967032967032967e-09
             },
             # {

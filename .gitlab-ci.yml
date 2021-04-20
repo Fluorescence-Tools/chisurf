@@ -71,8 +71,10 @@ test:linux:
         conda config --add channels tpeulen
         conda config --add channels tpeulen/label/nightly
     - conda config --add channels "file://`pwd`/bld-dir"
-    - mamba create -n test python=3.7 ${CONDA_PACKAGE}
+    - mamba create -n test python ${CONDA_PACKAGE}
     - conda activate test
+    # Disable numba jit for tests
+    - export NUMBA_DISABLE_JIT=1
     # Run GUI with xvfb - no X11 screen
     - |
       xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test/test_*.py;
