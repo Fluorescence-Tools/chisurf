@@ -13,7 +13,7 @@ import scikit_fluorescence.io.density
 from . import dynamic
 from . import static
 from . import functions
-from . import fps
+from . import fps_ as fps
 from . static import calculate_1_radius, calculate_3_radius
 
 package_directory = os.path.dirname(__file__)

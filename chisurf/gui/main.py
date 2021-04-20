@@ -699,7 +699,7 @@ class Main(QtWidgets.QMainWindow):
         self.tttr_correlate = chisurf.gui.tools.tttr.correlate.CorrelateTTTR()
         self.actionCorrelate.triggered.connect(self.tttr_correlate.show)
 
-        self.tttr_histogram = chisurf.gui.tools.tttr.decay.HistogramTTTR()
+        self.tttr_histogram = chisurf.gui.tools.tttr.histogram.HistogramTTTR()
         self.actionGenerate_decay.triggered.connect(self.tttr_histogram.show)
 
         self.clsm_pixel_select = clsmview.clsm_pixel_select.CLSMPixelSelect()

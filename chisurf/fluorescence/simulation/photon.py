@@ -5,7 +5,7 @@ import numpy as np
 import numpy.random as random
 
 import chisurf
-from chisurf.fluorescence.simulation import _simulation
+from chisurf.fluorescence.simulation import simulation_
 
 
 def simulate_photon_trace_rate(

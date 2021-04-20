@@ -2,7 +2,7 @@ from __future__ import annotations
 from chisurf import typing
 
 import chisurf.fluorescence
-import chisurf.structure.av.fps
+import chisurf.structure.av.fps_
 import chisurf.settings
 import numpy as np
 import numba as nb
@@ -592,7 +592,7 @@ def reset_density_av(density):
     :return:
     """
     ng = density.shape[0]
-    chisurf.structure.av.fps.reset_density_av(density, ng)
+    chisurf.structure.av.fps_.reset_density_av(density, ng)
 
 
 @nb.jit
@@ -712,7 +712,7 @@ def modify_av(density, dg, radius, rs, r0, factor):
 
     density = np.copy(density)
 
-    chisurf.structure.av.fps.modify_av(
+    chisurf.structure.av.fps_.modify_av(
         density, ng, dg,
         radius, rs, r0, n_radii, factor
     )
