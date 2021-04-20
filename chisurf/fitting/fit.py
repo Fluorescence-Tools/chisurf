@@ -544,14 +544,14 @@ class FitGroup(
         """
         fit: FitGroup = self
         if local_first is None:
-            local_first = chisurf.settings.fitting['global_optimize_local_first']
+            local_first = chisurf.settings.optimization['global_optimize_local_first']
         if local_first:
             for f in fit:
                 f.run(**kwargs)
         for f in fit:
             f.model.find_parameters()
         fit._model.find_parameters()
-        fitting_options = chisurf.settings.fitting['leastsq']
+        fitting_options = chisurf.settings.optimization['leastsq']
         bounds = [pi.bounds for pi in fit._model.parameters]
         results = chisurf.math.optimization.leastsqbound(
             func=get_wres,

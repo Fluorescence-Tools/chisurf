@@ -277,7 +277,7 @@ class Photons(object):
         """
         Total measurement time in seconds?
         """
-        return self.macro_times[-1] * self.mt_clk / 1000.0
+        return self.macro_times[-1] * self.mt_clk
 
     @property
     def dt(
@@ -358,7 +358,7 @@ class Photons(object):
         in milli-seconds)
         """
         sample = self._h5.get_node('/' + self._sample_name_hdf_tp)
-        return sample.header[0]['MTCLK'] * 1e-6 if self._MTCLK is None else self._MTCLK
+        return sample.header[0]['MTCLK'] if self._MTCLK is None else self._MTCLK
 
     def read_where(
             self,
