@@ -1,6 +1,3 @@
-"""
-
-"""
 from chisurf.fluorescence.intensity import nusiance
 import chisurf.fluorescence.anisotropy.decay
 

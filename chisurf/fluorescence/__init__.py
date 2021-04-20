@@ -1,8 +1,3 @@
-"""
-Fluorescence
-
-"""
-
 import chisurf.fluorescence.general
 import chisurf.fluorescence.intensity
 import chisurf.fluorescence.anisotropy
