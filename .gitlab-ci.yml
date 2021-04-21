@@ -72,5 +72,5 @@ deploy:
   script:
     - source activate
     - conda install anaconda-client
-    - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then ANACONDA_LABEL=main; else ANACONDA_LABEL=nightly; fi
-    - anaconda -t ${ANACONDA_API_TOKEN} upload -l ${ANACONDA_LABEL} -u ${CONDA_USER} --force bld-dir/linux-64/*.tar.bz2
+    - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then DEPLOY_LABEL=main; else DEPLOY_LABEL=nightly; fi
+    - anaconda -t ${ANACONDA_API_TOKEN} upload -l ${DEPLOY_LABEL} -u ${CONDA_USER} --force bld-dir/linux-64/*.tar.bz2
