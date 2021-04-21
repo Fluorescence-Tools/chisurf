@@ -8,8 +8,6 @@ stages:
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   CONDA_PACKAGE: "chisurf"
-  MAMBA_VERSION: "0.10"
-  MINICONDA_VERSION: "latest"
 
 build:linux:
   stage: build
@@ -21,13 +19,9 @@ build:linux:
     # Make command
     - apt-get install -y build-essential
   script:
-    - echo "I am a build stage job for debian, running on docker using continuumio/miniconda3:latest image"
     - source activate
-    - conda install mamba=$MAMBA_VERSION boa conda-verify -c conda-forge
-    - |
-        conda config --add channels salilab
-        conda config --add channels conda-forge
-        conda config --add channels tpeulen
+    - cp .condarc ~/.condarc
+    - conda install mamba=$MAMBA_VERSION boa conda-verify
     - conda mambabuild conda-recipe --output-folder bld-dir
   artifacts:
     expire_in: 7 days
@@ -56,13 +50,9 @@ test:linux:
     # setup conda to always accept commands
     - conda config --set always_yes yes --set changeps1 no
   script:
-    - echo "I am a test stage job for debian, running on docker using continuumio/miniconda3:latest image"
     - source activate base
-    - conda install mamba=$MAMBA_VERSION conda-verify -c conda-forge
-    - |
-        conda config --add channels salilab
-        conda config --add channels conda-forge
-        conda config --add channels tpeulen
+    - cp .condarc ~/.condarc
+    - conda install mamba=$MAMBA_VERSION conda-verify
     - conda config --add channels "file://`pwd`/bld-dir"
     - mamba create -n test python ${CONDA_PACKAGE}
     - conda activate test
@@ -80,7 +70,6 @@ deploy:
   dependencies:
     - build:linux
   script:
-    - echo "I am a depolyment stage job for debian, running on docker using continuumio/miniconda3:latest image"
     - source activate
     - conda install anaconda-client
     - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then ANACONDA_LABEL=main; else ANACONDA_LABEL=nightly; fi
