@@ -12,6 +12,7 @@ source:
   git_url: ..
 
 build:
+
   number: 0
   string: py{{ PY_VER_MAJOR }}{{ PY_VER_MINOR }}h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}
   entry_points:
@@ -22,7 +23,7 @@ build:
     {% endfor %}
 
 requirements:
-  host:
+  build:
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
     - python {{ python }}
@@ -31,8 +32,15 @@ requirements:
     - typing_extensions
     - cython
     - pyyaml
+  host:
     # Needed for pyrcc5 (updated pyqt resource file)
-    - pyqt
+    - python {{ python }}
+    - setuptools
+    - numpy
+    - typing_extensions
+    - cython
+    - pyyaml
+    - pyqt 5.9.*
   run:
     - python {{ python }}
     - numpy
@@ -55,15 +63,15 @@ requirements:
     - qtconsole
     - jupyter_client
     - qscintilla2
-    - guiqwt
-    - guidata
+    #- guiqwt=3.0.4
+    - guidata >=1.7.6
     - pymol-open-source
     - pyopengl
     - pyopencl
     - python-docx
     - htmd-pdb2pqr
     - opencv
-    - chinet
+    - chinet >=0.0.8
     - ndxplorer
     - clsmview
     - k2dist
