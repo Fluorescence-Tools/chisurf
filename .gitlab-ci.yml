@@ -54,7 +54,7 @@ test:linux:
     - cp .condarc ~/.condarc
     - conda install mamba=$MAMBA_VERSION conda-verify
     - conda config --add channels "file://`pwd`/bld-dir"
-    - mamba create -n test python ${CONDA_PACKAGE}
+    - mamba create -n test python ${CONDA_PACKAGE} nose
     - conda activate test
     # Disable numba jit for tests
     - export NUMBA_DISABLE_JIT=1
