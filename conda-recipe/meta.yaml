@@ -41,9 +41,6 @@ requirements:
     - pyyaml
     - cython
   run:
-    # There is an issue in versions >= 3.7.3
-    # https://www.riverbankcomputing.com/pipermail/pyqt/2019-August/042003.html
-    # https://github.com/conda/conda-build/issues/2571
     - python {{ python }}
     - numpy
     - pyyaml
@@ -56,7 +53,6 @@ requirements:
     - deprecation
     - progressbar2
     - python-slugify
-    - cython
     - numexpr
     - numba
     - scipy
@@ -74,7 +70,6 @@ requirements:
     - python-docx
     - htmd-pdb2pqr
     - opencv
-    - mrcfile
     - chinet
     - ndxplorer
     - clsmview
@@ -85,7 +80,7 @@ about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
   license: {{ data.get('license') }}
   license_file: LICENSE
-  summary:
+  summary: |
     {{ data.get('description') }}
   description: |
     {{ data.get('description') }}

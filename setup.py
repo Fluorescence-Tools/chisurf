@@ -130,7 +130,7 @@ metadata = dict(
         'PyYAML', 'typing-extensions',
         'tables',
         'matplotlib', 'python-docx',
-        'mrcfile', 'mdtraj', 'opencv-python',
+        'mdtraj', 'opencv-python',
         'ipython'
     ],
     setup_requires=[
