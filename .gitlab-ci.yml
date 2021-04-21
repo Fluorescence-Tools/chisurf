@@ -8,15 +8,8 @@ stages:
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   CONDA_PACKAGE: "chisurf"
-  DEPLOY_VARIABLE: "nightly"
+  MAMBA_VERSION: "0.10"
   MINICONDA_VERSION: "latest"
-
-workflow:
-  rules:
-    - if: $CI_COMMIT_REF_NAME =~ /master/
-      variables:
-        DEPLOY_VARIABLE: "main"  # Override globally-defined DEPLOY_VARIABLE
-    - when: always               # Run the pipeline in other cases
 
 build:linux:
   stage: build
@@ -26,8 +19,7 @@ build:linux:
   script:
     - echo "I am a build stage job for debian, running on docker using continuumio/miniconda3:latest image"
     - source activate
-    - conda install mamba boa conda-verify -c conda-forge
-    - mamba update -y -n base -c defaults --all
+    - conda install mamba=$MAMBA_VERSION boa conda-verify -c conda-forge
     - |
         conda config --add channels salilab
         conda config --add channels conda-forge
@@ -62,8 +54,7 @@ test:linux:
   script:
     - echo "I am a test stage job for debian, running on docker using continuumio/miniconda3:latest image"
     - source activate base
-    - conda install mamba conda-verify -c conda-forge
-    - mamba update -y -n base -c defaults --all
+    - conda install mamba=$MAMBA_VERSION conda-verify -c conda-forge
     - |
         conda config --add channels salilab
         conda config --add channels conda-forge
@@ -88,4 +79,5 @@ deploy:
     - echo "I am a depolyment stage job for debian, running on docker using continuumio/miniconda3:latest image"
     - source activate
     - conda install anaconda-client
-    - anaconda -t ${ANACONDA_API_TOKEN} upload -l ${DEPLOY_VARIABLE} -u ${CONDA_USER} --force bld-dir/linux-64/*.tar.bz2
+    - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then ANACONDA_LABEL=main; else ANACONDA_LABEL=nightly; fi
+    - anaconda -t ${ANACONDA_API_TOKEN} upload -l ${ANACONDA_LABEL} -u ${CONDA_USER} --force bld-dir/linux-64/*.tar.bz2
