@@ -33,13 +33,6 @@ requirements:
     - pyyaml
     # Needed for pyrcc5 (updated pyqt resource file)
     - pyqt
-  host:
-    - python {{ python }}
-    - setuptools
-    - numpy
-    - typing_extensions
-    - pyyaml
-    - cython
   run:
     - python {{ python }}
     - numpy
@@ -48,7 +41,7 @@ requirements:
     - pyqt
     - pyqtgraph
     - typing_extensions
-    - matplotlib >=3.0.0
+    - matplotlib
     - scikit-fluorescence
     - deprecation
     - progressbar2
