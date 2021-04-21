@@ -1,0 +1,76 @@
+stages:
+  - build
+  - test
+  - deploy
+
+# Change pip's cache directory to be inside the project directory since we can
+# only cache local items.
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  CONDA_PACKAGE: "chisurf"
+
+build:linux:
+  stage: build
+  tags:
+    - linux
+  image: continuumio/miniconda3:latest
+  before_script:
+    - apt-get update -qy
+    # Make command
+    - apt-get install -y build-essential
+  script:
+    - source activate
+    - cp .condarc ~/.condarc
+    - conda install mamba=$MAMBA_VERSION boa conda-verify
+    - conda mambabuild conda-recipe --output-folder bld-dir
+  artifacts:
+    expire_in: 7 days
+    paths:
+      - bld-dir/
+
+test:linux:
+  variables:
+    MINICONDA_OS: "Linux"
+  stage: test
+  tags:
+    - linux
+  image: ubuntu:latest
+  before_script:
+    # Issue with OpenGL and X11 display
+    # See: https://stackoverflow.com/questions/65675765/is-it-possible-to-run-x11-on-gitlab-ci
+    # See: https://github.com/conda-forge/pygridgen-feedstock/issues/10
+    # procps is used to grep the process by name to kill it when needed
+    - export DEBIAN_FRONTEND=noninteractive
+    - apt update -yq
+    - apt install -yq xorg-dev libglu1-mesa libgl1-mesa-dev xvfb libxinerama1 libxcursor1 libgl1-mesa-glx procps wget
+    # Download and install miniconda
+    - wget https://repo.continuum.io/miniconda/Miniconda3-$MINICONDA_VERSION-$MINICONDA_OS-x86_64.sh -O miniconda.sh
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - export PATH="$HOME/miniconda/bin:$PATH"
+    # setup conda to always accept commands
+    - conda config --set always_yes yes --set changeps1 no
+  script:
+    - source activate base
+    - cp .condarc ~/.condarc
+    - conda install mamba=$MAMBA_VERSION conda-verify
+    - conda config --add channels "file://`pwd`/bld-dir"
+    - mamba create -n test python ${CONDA_PACKAGE} nose
+    - conda activate test
+    # Disable numba jit for tests
+    - export NUMBA_DISABLE_JIT=1
+    # Run GUI with xvfb - no X11 screen
+    - |
+      xvfb-run --server-args="-screen 0 1280x1024x24 +extension GLX" -a nosetests --with-coverage test/test_*.py;
+
+deploy:
+  stage: deploy
+  image: continuumio/miniconda3:latest
+  tags:
+    - linux
+  dependencies:
+    - build:linux
+  script:
+    - source activate
+    - conda install anaconda-client
+    - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then ANACONDA_LABEL=main; else ANACONDA_LABEL=nightly; fi
+    - anaconda -t ${ANACONDA_API_TOKEN} upload -l ${ANACONDA_LABEL} -u ${CONDA_USER} --force bld-dir/linux-64/*.tar.bz2

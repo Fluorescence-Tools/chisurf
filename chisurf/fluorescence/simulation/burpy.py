@@ -309,7 +309,7 @@ if (lambda > LOW_PROBABILITY) bg = 1;
 
 /* buffer for storing photon events: */
 
- /* estimating max. possible number of photons per tw */
+ /* estimating max. possible number of photons per time_window */
  for (i=0; i<N_species; i++)
   for (j=0; j<N_channels; j++)  lambda += 4.*q[i*N_channels+j]*M[i];
 
@@ -527,9 +527,9 @@ return N_ph;
 
 // everything -> burbulator.dll
 // f /TP /O2 /EHsc /MD /Feburbulator.dll data2spc_tac.cpp smdif_ov4.cpp smdif_ov3.cpp smdif_misc.cpp focus.cpp rotdiff.cpp mt19937cok.cpp /link /dll /def:burbulator.def
-// VC8: mt /manifest burbulator.dll.manifest /outputresource:"burbulator.dll;#2"
+// VC8: macro_times /manifest burbulator.dll.manifest /outputresource:"burbulator.dll;#2"
 
 // everything -> burbulator_x64.dll
 // f /TP /O2 /EHsc /MD /Feburbulator_x64.dll data2spc_tac.cpp smdif_ov4.cpp smdif_ov3.cpp smdif_misc.cpp focus.cpp rotdiff.cpp mt19937cok.cpp /link /dll /def:burbulator_x64.def
-// VC8: mt /manifest burbulator_x64.dll.manifest /outputresource:"burbulator_x64.dll;#2"
+// VC8: macro_times /manifest burbulator_x64.dll.manifest /outputresource:"burbulator_x64.dll;#2"
 """

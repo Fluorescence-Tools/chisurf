@@ -1,26 +1,22 @@
-"""
-
-"""
 from chisurf.fluorescence.intensity import nusiance
-from . import kappa2
-from . import decay
+import chisurf.fluorescence.anisotropy.decay
 
 
 @nusiance
 def r_scatter(
-        Ss,
-        Sp,
+        signal_vertical,
+        signal_parallel,
         **kwargs
 ):
-    Fp = (Sp - Bp) * Gfactor
-    Fs = Ss - Bs
+    Fp = (signal_parallel - Bp) * Gfactor
+    Fs = signal_vertical - Bs
     return (Fp-Fs)/(Fp*(1. - 3. * l2) + Fs*(2. - 3. * l1))
 
 
 @nusiance
 def r_exp(
-        Sp,
-        Ss,
+        signal_parallel,
+        signal_vertical,
         **kwargs
 ) -> float:
     """Experimental anisotropy
@@ -30,10 +26,10 @@ def r_exp(
         r_{exp} = (F_p-S_s) / (F_p * (1-3*l_2) + S_s * (2-3*l_1))
         F_p = S_p * Gfactor
 
-    :param Sp: Signal in the parallel detection channel
-    :param Ss: Signal in the perpendicular detection channel
+    :param signal_parallel: Signal in the parallel detection channel
+    :param signal_vertical: Signal in the perpendicular detection channel
     :param kwargs:
     :return:
     """
-    Fp = Sp * Gfactor
-    return (Fp-Ss)/(Fp*(1.-3.*l2) + Ss*(2.-3.*l1))
+    Fp = signal_parallel * Gfactor
+    return (Fp - signal_vertical) / (Fp * (1. - 3. * l2) + signal_vertical * (2. - 3. * l1))

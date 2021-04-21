@@ -1,19 +1,26 @@
-{% set name = "chisurf" %}
-{% set version = "latest" %}
+{% set data = load_setup_py_data(setup_file='../setup.py', from_recipe_dir=True) %}
+{% set PY_VER_MAJOR = PY_VER[0] %}
+{% set PY_VER_MINOR = PY_VER[2] %}
+
 
 package:
-  name: {{ name|lower }}
-  #version: {{ version|lower }}
-  version: {{ GIT_DESCRIBE_TAG }}
+  name: {{ data.get('name')|lower }}
+  version: {{ data.get('version')|lower }}
 
 source:
+#  path: ..
   git_url: ..
 
 build:
-  number: {{ GIT_DESCRIBE_NUMBER|int }}
-  string: np{{ CONDA_NPY }}py{{ CONDA_PY }}_{{ GIT_BUILD_STR }}
+
+  number: 0
+  string: py{{ PY_VER_MAJOR }}{{ PY_VER_MINOR }}h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}
   entry_points:
-    - chisurf=chisurf.gui:main
+    {% for entry_point_type, entry_points in data.get("entry_points", dict()).items() -%}
+    {% for entry_point in entry_points -%}
+    - {{ entry_point }}
+    {% endfor %}
+    {% endfor %}
 
 requirements:
   build:
@@ -21,56 +28,63 @@ requirements:
     - {{ compiler('cxx') }}
     - python {{ python }}
     - setuptools
-    - cmake
-    - git
+    - numpy
+    - typing_extensions
+    - cython
+    - pyyaml
   host:
+    # Needed for pyrcc5 (updated pyqt resource file)
     - python {{ python }}
     - setuptools
-    - cython
     - numpy
+    - typing_extensions
+    - cython
     - pyyaml
+    - pyqt 5.9.*
   run:
     - python {{ python }}
-    - python-slugify
-    - pyyaml
     - numpy
+    - pyyaml
+    - qtpy
+    - pyqt
+    - pyqtgraph
+    - typing_extensions
+    - matplotlib
+    - scikit-fluorescence
+    - deprecation
+    - progressbar2
+    - python-slugify
+    - numexpr
     - numba
     - scipy
     - emcee
-    - numexpr
-    - pytables
-    - hdf5
     - mdtraj
     - ipython
-    - matplotlib
-    - pyqt>=5.6.0
-    - pyqtgraph
-    - qscintilla2
-    - pyopengl
     - qtconsole
-    - python-docx
-    - labellib
-    - deprecation
-    - pyopencl
-    - guiqwt
-    - progressbar2
-    - qtpy
-    - qdarkstyle
-    - mrcfile
-    - htmd-pdb2pqr
+    - jupyter_client
+    - qscintilla2
+    #- guiqwt=3.0.4
+    - guidata >=1.7.6
     - pymol-open-source
-    - tttrlib
+    - pyopengl
+    - pyopencl
+    - python-docx
+    - htmd-pdb2pqr
+    - opencv
+    - chinet >=0.0.8
+    - ndxplorer
+    - clsmview
+    - k2dist
+    - tttrconvert
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
-  license: GPL2.1
+  license: {{ data.get('license') }}
   license_file: LICENSE
   summary: |
-    ChiSurf is an interactive global analysis software for time-resolved
-    fluorescence data
+    {{ data.get('description') }}
   description: |
-    ChiSurf is an interactive analysis software for time-resolved
-    fluorescence data.
+    {{ data.get('description') }}
 
 extra:
   recipe-maintainers:

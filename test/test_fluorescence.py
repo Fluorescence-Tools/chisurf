@@ -1,100 +1,105 @@
-import utils
-import os
 import unittest
 import numpy as np
 import glob
-
-TOPDIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')
-)
-utils.set_search_paths(TOPDIR)
+import scipy.stats
 
 import chisurf.fio
+import chisurf.fio.fluorescence
 import chisurf.fluorescence
 import chisurf.fluorescence.fret
 import chisurf.fluorescence.fcs
+import chisurf.fluorescence.tcspc
 import chisurf.fluorescence.general
 import chisurf.fluorescence.anisotropy
+
+from chisurf.fluorescence.anisotropy.decay import calculcate_spectrum
+from chisurf.fluorescence.tcspc.corrections import compute_linearization_table
 
 
 class Tests(unittest.TestCase):
 
-    def test_s2delta(self):
-        r0 = 0.38
-        s2donor = 0.3
-        s2acceptor = 0.3
-        r_inf_AD = 0.05
-        v = chisurf.fluorescence.anisotropy.kappa2.s2delta(
-            r_0=r0,
-            s2donor=s2donor,
-            s2acceptor=s2acceptor,
-            r_inf_AD=r_inf_AD)
-        self.assertAlmostEqual(
-            v,
-            1.4619883040935675
-        )
-
-    def test_p_isotropic_orientation_factor(self):
-        k2 = np.linspace(0.1, 4, 32)
-        p_k2 = chisurf.fluorescence.anisotropy.kappa2.p_isotropic_orientation_factor(
-            k2=k2
-        )
-        p_k2_ref = np.array(
-            [0.17922824, 0.11927194, 0.09558154, 0.08202693, 0.07297372,
-               0.06637936, 0.06130055, 0.05723353, 0.04075886, 0.03302977,
-               0.0276794, 0.02359627, 0.02032998, 0.01763876, 0.01537433,
-               0.01343829, 0.01176177, 0.01029467, 0.00899941, 0.00784718,
-               0.00681541, 0.00588615, 0.00504489, 0.0042798, 0.0035811,
-               0.00294063, 0.00235153, 0.001808, 0.00130506, 0.00083845,
-               0.0004045, 0.]
+    def test_fluorescence_anisotropy_decay_calculcate_spectrum(self):
+        lifetime_spectrum = np.array([1.0, 4.0])
+        anisotropy_spectrum = np.array([1.0, 1.0])
+        g_factor = 1.5
+        a = calculcate_spectrum(
+            lifetime_spectrum=lifetime_spectrum,
+            anisotropy_spectrum=anisotropy_spectrum,
+            polarization_type='VV',
+            g_factor=g_factor,
+            l1=0.0,
+            l2=0.0
         )
         self.assertEqual(
             np.allclose(
-                p_k2_ref, p_k2
+                a,
+                np.array([1., 4., 2., 0.8, 0., 4., -0., 0.8])
             ),
             True
         )
 
-    def test_kappa(self):
-        distance_reference, kappa_reference = 0.8660254037844386, 1.0000000000000002
-        donor_dipole = np.array(
-            [
-                [0.0, 0.0, 0.0],
-                [1.0, 0.0, 0.0]
-            ],
-            dtype=np.float64
+        a = calculcate_spectrum(
+            lifetime_spectrum=lifetime_spectrum,
+            anisotropy_spectrum=anisotropy_spectrum,
+            polarization_type='VV',
+            g_factor=g_factor,
+            l1=0.1,
+            l2=0.0
         )
-        acceptor_dipole = np.array(
-            [
-                [0.0, 0.5, 0.0],
-                [0.0, 0.5, 1.0]
-            ], dtype=np.float64
+        self.assertEqual(
+            np.allclose(
+                a,
+                np.array([0.9, 4., 1.8, 0.8, 0.15, 4., -0.3, 0.8])
+            ),
+            True
         )
-        distance, kappa = chisurf.fluorescence.anisotropy.kappa2.kappa(
-            donor_dipole,
-            acceptor_dipole
+
+        a = calculcate_spectrum(
+            lifetime_spectrum=lifetime_spectrum,
+            anisotropy_spectrum=anisotropy_spectrum,
+            polarization_type='VH',
+            g_factor=g_factor,
+            l1=0.0,
+            l2=0.0
         )
-        self.assertAlmostEqual(
-            distance,
-            distance_reference,
+        self.assertEqual(
+            np.allclose(
+                a,
+                np.array([0., 4., 0., 0.8, 1.5, 4., -3., 0.8])
+            ),
+            True
         )
-        self.assertAlmostEqual(
-            kappa,
-            kappa_reference,
+
+        a = calculcate_spectrum(
+            lifetime_spectrum=lifetime_spectrum,
+            anisotropy_spectrum=anisotropy_spectrum,
+            polarization_type='VH',
+            g_factor=g_factor,
+            l1=0.0,
+            l2=0.1
         )
-        distance, kappa = chisurf.fluorescence.anisotropy.kappa2.kappa_distance(
-            donor_dipole[0],
-            donor_dipole[1],
-            acceptor_dipole[0],
-            acceptor_dipole[1],
+
+        self.assertEqual(
+            np.allclose(
+                a,
+                np.array([0.1, 4., 0.2, 0.8, 1.35, 4., -2.7, 0.8])
+            ),
+            True
         )
-        self.assertAlmostEqual(
-            distance,
-            distance_reference,
-        )
-        self.assertAlmostEqual(
-            kappa,
-            kappa_reference,
+
+        self.assertEqual(
+            np.allclose(
+                calculcate_spectrum(
+                    lifetime_spectrum=lifetime_spectrum,
+                    anisotropy_spectrum=anisotropy_spectrum,
+                    polarization_type='AAA',
+                    g_factor=g_factor,
+                    l1=0.0,
+                    l2=0.1
+                ),
+                lifetime_spectrum
+            ),
+            True
         )
 
     def test_vm_vv_vh(self):
@@ -148,7 +153,7 @@ class Tests(unittest.TestCase):
     def test_fcs(self):
         directory = './test/data/tttr/BH/132/'
         spc_files = glob.glob(directory + '/BH_SPC132.spc')
-        photons = chisurf.fio.photons.Photons(spc_files, reading_routine="bh132")
+        photons = chisurf.fio.fluorescence.photons.Photons(spc_files, reading_routine="bh132")
         cr_filter = np.ones_like(photons.macro_times, dtype=np.float)
         w1 = np.ones_like(photons.macro_times, dtype=np.float)
         w2 = np.ones_like(photons.macro_times, dtype=np.float)
@@ -213,3 +218,83 @@ class Tests(unittest.TestCase):
                 eff,
                 target_value
             )
+
+    def convolve_lifetime_spectrum(self):
+        reference_decay = np.array(
+            [0.00000000e+00, 4.52643742e-06, 4.30136935e-05, 3.02142457e-04,
+             1.65108038e-03, 7.06796476e-03, 2.38186826e-02, 6.35639959e-02,
+             1.35361393e-01, 2.32352532e-01, 3.25883836e-01, 3.80450045e-01,
+             3.79182520e-01, 3.33586262e-01, 2.69710789e-01, 2.08975297e-01,
+             1.60624297e-01, 1.25068007e-01, 9.94465318e-02, 8.07767559e-02,
+             6.68428191e-02, 5.61578412e-02, 4.77471111e-02, 4.09691949e-02,
+             3.53963836e-02, 3.07383493e-02, 2.67937209e-02, 2.34193202e-02,
+             2.05105461e-02, 1.79888012e-02, 1.57933761e-02, 1.38761613e-02,
+             1.21981607e-02, 1.07271560e-02, 9.43611289e-03, 8.30206791e-03,
+             7.30533192e-03, 6.42890327e-03, 5.65802363e-03, 4.97983239e-03,
+             4.38309103e-03, 3.85795841e-03, 3.39580432e-03, 2.98905244e-03,
+             2.63104654e-03, 2.31593553e-03, 2.03857411e-03, 1.79443629e-03,
+             1.57954010e-03, 1.39038167e-03]
+        )
+        time_axis = np.linspace(0, 25, 50)
+        irf_position = 5.0
+        irf_width = 1.0
+        irf = scipy.stats.norm.pdf(time_axis, loc=irf_position, scale=irf_width)
+        lifetime_spectrum = np.array([0.8, 1.1, 0.2, 4.0])
+        model_decay = np.zeros_like(time_axis)
+        chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(
+            model_decay,
+            lifetime_spectrum=lifetime_spectrum,
+            instrument_response_function=irf,
+            time_axis=time_axis
+        )
+        self.assertEqual(
+            np.allclose(
+                model_decay,
+                reference_decay
+            ),
+            True
+        )
+
+    def test_fluorescence_tcspc_corrections_compute_linearization_table(self):
+        x = np.linspace(0, 40, 128)
+        dnl_fraction = 0.01
+        counts = 10000
+        mean = np.sin(x) * dnl_fraction * counts + (1 - dnl_fraction) * counts
+        np.random.seed(0)
+        data = np.random.poisson(mean).astype(np.float64)
+        lin_table = compute_linearization_table(data, 12, "hanning", 10, 90)
+        ref_lintable = np.array(
+            [1., 1., 1., 1., 1.,
+             1., 0.99980049, 0.99922759, 0.99823618, 0.99681489,
+             0.99518504, 0.99393009, 0.99341097, 0.99356403, 0.99429588,
+             0.99518651, 0.99570281, 0.99588077, 0.99593212, 0.99620644,
+             0.99725223, 0.99907418, 1.00121338, 1.00320785, 1.00486314,
+             1.00613769, 1.00711954, 1.00770543, 1.00739009, 1.00586985,
+             1.00286934, 0.99849134, 0.99377306, 0.98981455, 0.98744986,
+             0.98683355, 0.9874091, 0.98868764, 0.99063644, 0.99339915,
+             0.99669779, 1.00031741, 1.00394849, 1.00699941, 1.00914148,
+             1.01040307, 1.01119998, 1.01183167, 1.01202324, 1.01120659,
+             1.00905205, 1.0055979, 1.0012921, 0.99701193, 0.99370229,
+             0.99214721, 0.99253283, 0.99448162, 0.99720137, 0.99972508,
+             1.001355, 1.00164798, 1.00115969, 1.00083382, 1.00120239,
+             1.0025449, 1.00450071, 1.00633953, 1.00702856, 1.00606332,
+             1.00373424, 1.00058981, 0.99734557, 0.99442657, 0.9925278,
+             0.99219378, 0.99332066, 0.9954457, 0.99805603, 1.00079518,
+             1.00285328, 1.00367601, 1.00341471, 1.00277917, 1.00262715,
+             1.00308127, 1.00383407, 1.00447143, 1.00466959, 1.00415533,
+             1.00289327, 1.00144407, 1.00036365, 0.99984595, 0.99978234,
+             0.99991273, 1., 1., 1., 1.,
+             1., 1., 1., 1., 1.,
+             1., 1., 1., 1., 1.,
+             1., 1., 1., 1., 1.,
+             1., 1., 1., 1., 1.,
+             1., 1., 1., 1., 1.,
+             1., 1., 1.]
+        )
+        self.assertEqual(
+            np.allclose(
+                lin_table,
+                ref_lintable
+            ),
+            True
+        )

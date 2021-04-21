@@ -3,39 +3,43 @@ from __future__ import annotations
 from qtpy import QtWidgets
 
 import chisurf.fitting
-import chisurf.widgets
+import chisurf.gui
+import chisurf.gui.widgets
+
+from chisurf.gui.widgets import View
 
 
 class Plot(
-    chisurf.widgets.View
+    View
 ):
 
     def __init__(
             self,
-            fit: chisurf.fitting.fit,
+            fit: chisurf.fitting.fit.Fit,
             parent=None,
+            plot_controller: QtWidgets.QWidget = None,
             **kwargs
     ):
         super().__init__()
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
         self.parent = parent
         self.fit = fit
-        self.pltControl = QtWidgets.QWidget()
+        if plot_controller is None:
+            self.plot_controller = QtWidgets.QWidget()
+        else:
+            self.plot_controller = plot_controller
         self.widgets = list()
 
-    def update_widget(
-            self
-    ) -> None:
-        for w in self.widgets:
-            w.update()
-
-    def update_all(
+    def update(
             self,
             *args,
             **kwargs
     ) -> None:
-        pass
+        super().update(*args, **kwargs)
 
     def close(self):
         QtWidgets.QWidget.close(self)
-        if isinstance(self.pltControl, QtWidgets.QWidget):
-            self.pltControl.close()
+        if isinstance(self.plot_controller, QtWidgets.QWidget):
+            self.plot_controller.close()

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Tuple
+from chisurf import typing
 
 import numba as nb
 import numpy as np
@@ -8,113 +8,17 @@ import scipy.optimize
 
 import chisurf.math.datatools
 
+import scikit_fluorescence as skf
+import scikit_fluorescence.decay
 
-@nb.jit(nopython=True)
-def rate2lifetime(
-        rate: float,
-        lifetime: float
-):
-    return 1. / (1. / lifetime + rate)
-
-
-@nb.jit(nopython=True)
-def et(
-        fd0: np.ndarray,
-        fda: np.ndarray
-) -> np.ndarray:
-    """Calculates the FRET induced donor decay
-
-    :param fd0: the fluorescence decay of the donor in the absence of FRET
-    :param fda: the fluorescence decay of the donor in the presence of FRET
-    :return:
-    """
-    return fda / fd0
-
-
-def fretrate_to_distance(fretrate, forster_radius, tau0, kappa2=2. / 3.):
-    """Calculates the distance given a FRET-rate
-
-    :param fretrate: FRET-rate
-    :param forster_radius: Forster radius
-    :param tau0: lifetime of the donor
-    :param kappa2: orientation factor
-    :return:
-    """
-    return forster_radius * (fretrate * tau0/kappa2 * 2./3.)**(-1./6)
-
-
-def species_averaged_lifetime(
-        fluorescence,
-        normalize: bool = True,
-        is_lifetime_spectrum: bool = True
-) -> float:
-    """
-    Calculates the species averaged lifetime given a lifetime spectrum
-
-    :param fluorescence: either a inter-leaved lifetime-spectrum (if is_lifetime_spectrum is True) or a 
-        fluorescence decay (times, fluorescence intensity)
-    :param normalize:
-    :param is_lifetime_spectrum:
-    :return:
-    """
-    if is_lifetime_spectrum:
-        x, t = chisurf.math.datatools.interleaved_to_two_columns(fluorescence)
-        if normalize:
-            x /= x.sum()
-        tau_x = np.dot(x, t)
-        return float(tau_x)
-    else:
-        time_axis = fluorescence[0]
-        intensity = fluorescence[1]
-
-        dt = (time_axis[1] - time_axis[0])
-        i2 = intensity / max(intensity)
-        return np.sum(i2) * dt
-
-
-def fluorescence_averaged_lifetime(
-        fluorescence,
-        taux: float = None,
-        normalize: bool = True,
-        is_lifetime_spectrum: bool = True
-) -> float:
-    """
-
-    :param fluorescence: interleaved lifetime spectrum
-    :param taux: float
-        The species averaged lifetime. If this value is not provided it is calculated based
-        on th lifetime spectrum
-    :return:
-    """
-    if is_lifetime_spectrum:
-        taux = species_averaged_lifetime(fluorescence) if taux is None else taux
-        x, t = chisurf.math.datatools.interleaved_to_two_columns(fluorescence)
-        if normalize:
-            x /= x.sum()
-        tau_f = np.dot(x, t**2) / taux
-        return tau_f
-    else:
-        time_axis = fluorescence[0]
-        intensity = fluorescence[1]
-        return np.sum(intensity * time_axis) / np.sum(intensity)
-
-
-@nb.jit
-def distance_to_fret_rate_constant(
-        r,
-        forster_radius: float,
-        tau0: float,
-        kappa2: float = 2./3.
-) -> float:
-    """ Converts the DA-distance to a FRET-rate
-
-    :param r: donor-acceptor distance
-    :param forster_radius: Forster-radius
-    :param tau0: lifetime
-    :param kappa2: orientation factor
-    :return:
-    """
-    return 3. / 2. * kappa2 * 1. / tau0 * (forster_radius / r) ** 6.0
+# Moved to scikit_fluorescence
+rate_constant_to_lifetime = skf.decay.rate_spectra.rate_constant_to_lifetime
+fretrate_to_distance = skf.decay.rate_spectra.fretrate_to_distance
+combine_lifetime_spectra = skf.decay.rate_spectra.combine_interleaved_spectra
+fret_induced_donor_decay = skf.decay.fret_induced_donor_decay
+species_averaged_lifetime = skf.decay.lifetime.species_averaged_lifetime
+fluorescence_averaged_lifetime = skf.decay.lifetime.fluorescence_averaged_lifetime
+distance_to_fret_rate_constant = skf.decay.rate_spectra.distance_to_fret_rate_constant
 
 
 @nb.jit
@@ -224,7 +128,7 @@ def calc_transfer_matrix(
         **kwargs
 ):
     """
-    Calculates a matrix converting a distance distribution to an E(t)-decay
+    Calculates a matrix converting a distance distribution to an E(t)-model_decay
 
     :param times:
     :param rDA_min:
@@ -283,7 +187,7 @@ def calc_decay_matrix(
         space: str = 'lin'
 ):
     """
-    Calculates a fluorescence decay matrix converting probabilities of lifetimes to a time-resolved
+    Calculates a fluorescence model_decay matrix converting probabilities of lifetimes to a time-resolved
     fluorescence intensity
 
     :param t:
@@ -298,7 +202,7 @@ def calc_decay_matrix(
     >>> times = np.arange(0, 20, 0.0141)
     >>> m, r_da = calc_decay_matrix(times)
 
-    Now plot the decay matrix
+    Now plot the model_decay matrix
 
     >>> import pylab as p
     >>> p.imshow(m)
@@ -323,7 +227,7 @@ def et2pRDA(
         r_DA=None,
         **kwargs
 ):
-    """Calculates the distance distribution given an E(t) decay
+    """Calculates the distance distribution given an E(t) model_decay
     Here the amplitudes of E(t) are passed as well as the time-axis. If no transfer-matrix is provided it will
     be calculated in a range from 5 Ang to 200 Ang assuming a lifetime of 4 ns with a Forster-radius of 52 Ang.
     These parameters can be provided by *kwargs*
@@ -338,7 +242,7 @@ def et2pRDA(
     Examples
     --------
 
-    First calculate an E(t)-decay
+    First calculate an E(t)-model_decay
 
     >>> rda_mean = [45.1, 65.0]
     >>> rda_sigma = [8.0, 8.0]
@@ -356,26 +260,27 @@ def et2pRDA(
     return r_DA, p_rDA
 
 
-def stack_lifetime_spectra(
-        lifetime_spectra,
-        fractions,
-        normalize_fractions: bool = True
-):
-    """
-    Takes an array of lifetime spectra and an array of fractions and returns an mixed array of lifetimes
-    whereas the amplitudes are multiplied by the fractions. `normalize_fractions` is True the fractions
-    are normalized to one.
-
-    :return: numpy-array
-
-    """
-    fn = np.array(fractions, dtype=np.float64) / sum(fractions) if normalize_fractions else fractions
-    re = list()
-    for i, ls in enumerate(lifetime_spectra):
-        ls = np.copy(ls)
-        ls[::2] = ls[::2] * fn[i]
-        re.append(ls)
-    return np.hstack(re)
+stack_lifetime_spectra = combine_lifetime_spectra
+# def stack_lifetime_spectra(
+#         lifetime_spectra,
+#         fractions,
+#         normalize_fractions: bool = True
+# ):
+#     """
+#     Takes an array of lifetime spectra and an array of fractions and returns an mixed array of lifetimes
+#     whereas the amplitudes are multiplied by the fractions. `normalize_fractions` is True the fractions
+#     are normalized to one.
+#
+#     :return: numpy-array
+#
+#     """
+#     fn = np.array(fractions, dtype=np.float64) / sum(fractions) if normalize_fractions else fractions
+#     re = list()
+#     for i, ls in enumerate(lifetime_spectra):
+#         ls = np.copy(ls)
+#         ls[::2] = ls[::2] * fn[i]
+#         re.append(ls)
+#     return np.hstack(re)
 
 
 def distribution2rates(
@@ -431,9 +336,9 @@ def distribution2rates(
 
 
 def gaussian2rates(
-        means: List[float],
-        sigmas: List[float],
-        amplitudes: List[float],
+        means: typing.List[float],
+        sigmas: typing.List[float],
+        amplitudes: typing.List[float],
         tau0: float = 4.0,
         kappa2: float = 0.667,
         R0: float = 52.0,
@@ -541,7 +446,7 @@ def rates2lifetimes_old(
     ## Quench donor ##
     for i in range(n_donors):
         ps[i] = pd[i] * pr * x_fret
-        ls[i] = rate2lifetime(r, ld[i])
+        ls[i] = rate_constant_to_lifetime(r, ld[i])
     ls = ls.ravel()
     ps = ps.ravel()
 
@@ -593,8 +498,8 @@ def calculate_fluorescence_decay(
         lifetime_spectrum: np.ndarray,
         time_axis: np.ndarray,
         normalize: bool = True
-) -> Tuple[np.ndarray, np.ndarray]:
-    """Converts a interleaved lifetime spectrum into a intensity decay
+) -> typing.Tuple[np.ndarray, np.ndarray]:
+    """Converts a interleaved lifetime spectrum into a intensity model_decay
 
     :param lifetime_spectrum: interleaved lifetime spectrum
     :param time_axis: time-axis
@@ -604,14 +509,14 @@ def calculate_fluorescence_decay(
     Examples
     --------
 
-    >>> import chisurf.mfm.structure.structure
+    >>> import chisurf.structure.structure
     >>> time_axis = np.linspace(0, 20, num=100)
-    >>> structure = mfm.structure.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
+    >>> structure = chisurf.structure.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
     >>> donor_description = {'residue_seq_number': 344, 'atom_name': 'CB'}
     >>> acceptor_description = {'residue_seq_number': 496, 'atom_name': 'CB'}
     >>> donor_lifetime_spectrum = np.array([1., 4.])
     >>> lifetime_spectrum = structure.av_lifetime_spectrum(donor_lifetime_spectrum, donor_description, acceptor_description)
-    >>> time_axis, decay = calculate_fluorescence_decay(lifetime_spectrum, time_axis)
+    >>> time_axis, model_decay = calculate_fluorescence_decay(lifetime_spectrum, time_axis)
     """
     decay = np.zeros_like(time_axis)
     am = lifetime_spectrum[0::2]

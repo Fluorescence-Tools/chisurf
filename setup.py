@@ -1,94 +1,103 @@
 #!/usr/bin/python
-import sys
-import numpy
-import yaml
-import os
+try:
+    import numpy as np
+except ImportError:
+    np = None
 import platform
-
-from Cython.Distutils import build_ext
 from setuptools import setup, find_packages, Extension
+try:
+    from Cython.Distutils import build_ext
+except ImportError:
+    from setuptools.command.build_ext import build_ext
+
+from chisurf import info
 
 
-name = 'chisurf'
-settings = {
-    'version': 'NA'
-}
-
-settings_file = os.path.join(
-    './chisurf/settings/',
-    'settings_chisurf.yaml'
-)
-with open(settings_file) as fp:
-    settings.update(yaml.safe_load(fp))
+NAME = info.__name__
+VERSION = info.__version__
+AUTHOR = info.__author__
+LICENSE = info.__license__
+DESCRIPTION = info.__description__
+LONG_DESCRIPTION = info.LONG_DESCRIPTION
+URL = info.__url__
+EMAIL = info.__email__
 
 
-args = sys.argv[1:]
-# Always use build_ext --inplace
-if args.count("build_ext") > 0 and args.count("--inplace") == 0:
-    sys.argv.insert(sys.argv.index("build_ext")+1, "--inplace")
+def get_extensions():
 
+    def make_extension(ext):
+        """generate an Extension object from its dotted name
+        """
+        name = (ext[0])[2:-4]
+        name = name.replace("/", ".")
+        name = name.replace("\\", ".")
+        sources = ext[0:]
 
-def make_extension(ext):
-    """generate an Extension object from its dotted name
-    """
-    name = (ext[0])[2:-4]
-    name = name.replace("/", ".")
-    name = name.replace("\\", ".")
-    sources = ext[0:]
+        if platform.system() == "Darwin":
+            extra_compile_args = ["-O3", "-stdlib=libc++"]
+            extra_link_args = ["-stdlib=libc++"]
+        else:
+            extra_compile_args = []
+            extra_link_args = []
 
-    if platform.system() == "Darwin":
-        extra_compile_args = ["-O3", "-stdlib=libc++"]
-        extra_link_args = ["-stdlib=libc++"]
-    else:
-        extra_compile_args = []
-        extra_link_args = []
+        return Extension(
+            name,
+            sources=sources,
+            include_dirs=[np.get_include(), "."],
+            extra_compile_args=extra_compile_args,
+            extra_link_args=extra_link_args,
+            libraries=list(),
+            library_dirs=["."],
+            language="c++"
+        )
 
-    return Extension(
-        name,
-        sources=sources,
-        include_dirs=[numpy.get_include(), "."],
-        extra_compile_args=extra_compile_args,
-        extra_link_args=extra_link_args,
-        libraries=list(),
-        library_dirs=["."],
-        language="c++"
-    )
-
-
-# and build up the set of Extension objects
-eList = [
-    [
-        './chisurf/fluorescence/simulation/_simulation.pyx',
-        './chisurf/math/rand/mt19937cok.cpp'
-    ],
-    [
-        './chisurf/fluorescence/av/fps.pyx',
-        './chisurf/fluorescence/av/mt19937cok.cpp'
-    ],
-    [
-        './chisurf/structure/potential/cPotentials.pyx'
-    ],
-    [
-        './chisurf/math/reaction/_reaction.pyx'
+    # and build up the set of Extension objects
+    eList = [
+        [
+            './chisurf/fluorescence/simulation/simulation_.pyx',
+            './chisurf/fluorescence/simulation/mt19937cok.cpp'
+        ],
+        [
+            './chisurf/structure/av/fps_.pyx',
+            './chisurf/structure/av/mt19937cok.cpp'
+        ],
+        [
+            './chisurf/structure/potential/cPotentials_.pyx'
+        ],
+        [
+            './chisurf/math/reaction/reaction_.pyx'
+        ]
     ]
-]
+    if np:
+        return [make_extension(extension) for extension in eList]
+    else:
+        return []
 
-extensions = [make_extension(extension) for extension in eList]
+
+def dict_from_txt(fn):
+    d = {}
+    with open(fn) as f:
+        for line in f:
+            (key, val) = line.split()
+            d[str(key)] = val
+    return d
 
 
-setup(
-    name=name,
-    version=settings['version'],
-    description="Fluorescence-Fitting",
-    author="Thomas-Otavio Peulen",
-    author_email='thomas.otavio.peulen@gmail.com',
-    url='https://fluorescence-tools.github.io/chisurf/',
+gui_scripts = dict_from_txt("./chisurf/entry_points/gui.txt")
+console_scripts = dict_from_txt("./chisurf/entry_points/cmd.txt")
+
+
+metadata = dict(
+    name=NAME,
+    version=VERSION,
+    license=LICENSE,
+    description=DESCRIPTION,
+    author=AUTHOR,
+    author_email=EMAIL,
+    url=URL,
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
-        'Environment :: Win64 (MS Windows)',
-        'Environment :: X11 Applications :: Qt',
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: MacOS :: MacOS X',
@@ -98,48 +107,31 @@ setup(
     ],
     keywords='fluorescence single-molecule spectroscopy',
     packages=find_packages(
-        include=(name + "*",)
+        include=(NAME + "*",)
     ),
     package_dir={
-        name: name
+        NAME: NAME
     },
     include_package_data=True,
     package_data={
         '': [
-            '*.json',
-            '*.yaml',
-            '*.ui',
-            '*.png',
-            '*.svg',
-            '*.css', '*.qss'
-            '*.csv', '*.npy', '*.dat'
-            '*.dll',
-            '*.so'
+            '*.json', '*.yaml',
+            '*.ui', '*.css', '*.qss',
+            '*.png', '*.svg',
+            '*.csv', '*.npy', '*.dat',
+            '*.dll', '*.so', '*.pyd'
         ]
     },
     install_requires=[
-        'numpy',
-        'slugify',
-        'sip',
-        'PyQt5',
+        'PyQt5', 'qtpy', 'sip', 'pyqtgraph', 'qtconsole',
+        'numba', 'numpy', 'numexpr', 'scipy', 'pyopencl',
+        'cython', 'python-slugify', 'deprecation',
         'emcee',
-        'numba',
-        'scipy',
-        'pyqtgraph',
-        'PyYAML',
+        'PyYAML', 'typing-extensions',
         'tables',
-        'numexpr',
-        'matplotlib',
-        'python-docx',
-        'deprecation',
-        'pyopencl',
-        'qdarkstyle',
-        'qtpy',
-        'mrcfile',
-        'qtconsole',
-        'ipython',
-        'docx',
-        'mdtraj'
+        'matplotlib', 'python-docx',
+        'mdtraj', 'opencv-python',
+        'ipython'
     ],
     setup_requires=[
         "cython",
@@ -147,13 +139,18 @@ setup(
         'PyYAML',
         'setuptools'
     ],
-    ext_modules=extensions,
+    ext_modules=get_extensions(),
     cmdclass={
         'build_ext': build_ext
     },
     entry_points={
+        "console_scripts": [
+            "%s=%s" % (key, console_scripts[key]) for key in console_scripts
+        ],
         "gui_scripts": [
-            "chisurf=chisurf.gui:gui"
+            "%s=%s" % (key, gui_scripts[key]) for key in gui_scripts
         ]
     }
 )
+
+setup(**metadata)

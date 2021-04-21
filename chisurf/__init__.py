@@ -1,52 +1,50 @@
-from typing import List, Iterable
-import chisurf.settings as settings
+"""ChiSurf is sth.
+
+"""
+from __future__ import annotations
+
+import sys
 import logging
+import pathlib
 
-__version__ = settings.cs_settings['version']
-__name__ = settings.cs_settings['name']
-
-def c(
-        t,
-        st: str,
-        parameters: List
-):
-    """This function facilitates the connection of qt-events to the mfm-command
-    line. Whenever the qt-event is called the string passed as argument is
-    executed at the mfm-commandline with the provided parameters.
-    Here the parameters are either callable functions of strings.
-
-    Example
-    -------
-    >>> import chisurf
-    >>> chisurf.c(self.checkBox.stateChanged, models, self.checkBox.isChecked)
-    >>> cs.current_fit.model.update_rmsd=True
-
-    :param t: The signal of the qt-widget
-    :param st: The string passed to the mfm-commandline
-    :param parameters: the parameters passed to the commandline string
-    """
-    if isinstance(parameters, Iterable):
-        t.connect(
-            lambda: run(
-                st % [p if isinstance(p, str) else p() for p in parameters]
-            )
-        )
+try:
+    if sys.version_info >= (3, 8):
+        import typing
+    elif sys.version_info >= (3, 7):
+        # monkey patch the 3.7 typing system as
+        # TypedDict etc. is missing
+        import typing_extensions
+        import typing
+        for key in typing_extensions.__dict__.keys():
+            f = typing_extensions.__dict__[key]
+            if callable(f):
+                typing.__dict__[key] = f
     else:
-        t.connect(lambda: run(st % parameters()))
+        import typing_extensions as typing
+except ModuleNotFoundError:
+    print(
+        "WARNING typing_extensions not found",
+        file=sys.stderr
+    )
+    typing = None
 
+import chisurf.settings
+import chisurf.info
 
-fits = list()
-imported_datasets = list()
+fits: typing.List[chisurf.fitting.fit.FitGroup] = list()
+imported_datasets: typing.List[chisurf.data.DataGroup] = list()
 run = lambda x: x   # This is replaced during initialization to execute commands via a command line interface
 cs = object         # The current instance of ChiSurf
 console = object
-experiment = list()
+experiment: typing.Dict[str, chisurf.experiments.experiment.Experiment] = dict()
 fit_windows = list()
-working_path = ''
-verbose = settings.cs_settings['verbose']
+working_path = pathlib.Path().home()
+verbose = chisurf.settings.verbose
+
 
 logging.basicConfig(
     filename=settings.session_log,
     level=logging.DEBUG
 )
+
 

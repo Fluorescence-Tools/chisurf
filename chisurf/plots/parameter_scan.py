@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple
+from chisurf import typing
 
 import numpy as np
 import pyqtgraph as pg
@@ -7,6 +7,7 @@ from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
 import chisurf
+import chisurf.gui.decorators
 import chisurf.settings
 import chisurf.fitting
 import chisurf.parameter
@@ -24,7 +25,7 @@ class ParameterScanWidget(
     QtWidgets.QWidget
 ):
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="parameter_scan.ui"
     )
     def __init__(
@@ -45,7 +46,7 @@ class ParameterScanWidget(
         self.update()
 
     def onParameterChanged(self):
-        self.parent.update_all()
+        self.parent.update()
 
     def update(
             self
@@ -78,12 +79,12 @@ class ParameterScanWidget(
                 n_steps
             )
         )
-        self.parent.update_all()
+        self.parent.update()
 
     @property
     def selected_parameter(
             self
-    ) -> Tuple[int, str]:
+    ) -> typing.Tuple[int, str]:
         idx = self.comboBox.currentIndex()
         name = self.comboBox.currentText()
         return idx, str(name)
@@ -113,13 +114,9 @@ class ParameterScanPlot(
     ):
         super(ParameterScanPlot, self).__init__(fit)
 
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(0)
-
         self.data_x, self.data_y = None, None
 
-        self.pltControl = ParameterScanWidget(
+        self.plot_controller = ParameterScanWidget(
            model=fit.model,
            parent=self
         )
@@ -146,13 +143,10 @@ class ParameterScanPlot(
             name='Data'
         )
 
-    def update_all(
-            self,
-            *args,
-            **kwargs
-    ) -> None:
+    def update(self, *args, **kwargs) -> None:
+        super().update(*args, **kwargs)
         try:
-            p = self.pltControl.parameter
+            p = self.plot_controller.parameter
             x, y = p.parameter_scan
             if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
                 self.distribution_curve.setData(x=x, y=y)

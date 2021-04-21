@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import math
-from copy import deepcopy
+import copy
 import numpy as np
 import numba as nb
 
 import chisurf
-import chisurf.fio
-import chisurf.math.linalg as la
-from chisurf.structure import Structure
+import chisurf.fio.structure
+import chisurf.math.linalg
+from chisurf.structure.structure import Structure
 
 
 internal_formats = ['i4', 'i4', 'i4', 'i4', 'f8', 'f8', 'f8']
@@ -68,9 +68,9 @@ def r2i(coord_i, a1, a2, a3, a4, ai):
     v1 = a1['xyz']
     v2 = a2['xyz']
     v3 = a3['xyz']
-    b = la.norm3(v3 - vn)
-    a = la.angle(v2, v3, vn)
-    d = la.dihedral(v1, v2, v3, vn)
+    b = chisurf.math.linalg.norm3(v3 - vn)
+    a = chisurf.math.linalg.angle(v2, v3, vn)
+    d = chisurf.math.linalg.dihedral(v1, v2, v3, vn)
     coord_i[ai] = a4['i'], a3['i'], a2['i'], a1['i'], b, a, d
     return ai + 1
 
@@ -263,11 +263,11 @@ def calc_internal_coordinates_bb(
             structure.coord_i[ai] = rn['N']['i'], 0, 0, 0, 0.0, 0.0, 0.0
             ai += 1
             structure.coord_i[ai] = rn['CA']['i'], rn['N']['i'], 0, 0, \
-                                    la.norm3(rn['N']['xyz'] - rn['CA']['xyz']), 0.0, 0.0
+                                    chisurf.math.linalg.norm3(rn['N']['xyz'] - rn['CA']['xyz']), 0.0, 0.0
             ai += 1
             structure.coord_i[ai] = rn['C']['i'], rn['CA']['i'], rn['N']['i'], 0, \
-                                    la.norm3(rn['CA']['xyz'] - rn['C']['xyz']), \
-                                    la.angle(rn['C']['xyz'], rn['CA']['xyz'], rn['N']['xyz']), \
+                                    chisurf.math.linalg.norm3(rn['CA']['xyz'] - rn['C']['xyz']), \
+                                    chisurf.math.linalg.angle(rn['C']['xyz'], rn['CA']['xyz'], rn['N']['xyz']), \
                                     0.0
             ai += 1
         else:
@@ -295,7 +295,9 @@ def calc_internal_coordinates_bb(
     structure._chi_indices = [list(structure.coord_i['i']).index(x) for x in structure.l_cb if x >= 0]
 
 
-class ProteinCentroid(Structure):
+class ProteinCentroid(
+    Structure
+):
     """
     A coarse grained representation for proteins, where the backbone
     is atomistic and the side-chains are represented by a single atom.
@@ -388,12 +390,12 @@ class ProteinCentroid(Structure):
         new.dist_ca = np.copy(self.dist_ca)
         new.coord_i = np.copy(self.internal_coordinates)
 
-        new.l_ca = deepcopy(self.l_ca)
-        new.l_cb = deepcopy(self.l_cb)
-        new.l_c = deepcopy(self.l_c)
-        new.l_n = deepcopy(self.l_n)
-        new.l_h = deepcopy(self.l_h)
-        new.l_res = deepcopy(self.l_res)
+        new.l_ca = copy.deepcopy(self.l_ca)
+        new.l_cb = copy.deepcopy(self.l_cb)
+        new.l_c = copy.deepcopy(self.l_c)
+        new.l_n = copy.deepcopy(self.l_n)
+        new.l_h = copy.deepcopy(self.l_h)
+        new.l_res = copy.deepcopy(self.l_res)
 
         return new
 
@@ -517,8 +519,8 @@ class ProteinCentroid(Structure):
         atoms = np.empty(
             n_atoms,
             dtype={
-                'names': chisurf.fio.coordinates.keys,
-                'formats': chisurf.fio.coordinates.formats
+                'names': chisurf.fio.structure.coordinates.keys,
+                'formats': chisurf.fio.structure.coordinates.formats
             }
         )
 

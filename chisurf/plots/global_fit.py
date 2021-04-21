@@ -17,10 +17,11 @@ class GlobalFitPlot(Plot):
     ):
         super(GlobalFitPlot, self).__init__(fit)
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.pltControl = QtWidgets.QWidget()
+        self.plot_controller = QtWidgets.QWidget()
         self.fit = fit
 
-    def update_all(self, **kwargs):
+    def update(self, *args, **kwargs) -> None:
+        super().update(*args, **kwargs)
         fit = self.fit
         layout = self.layout
         for i in reversed(list(range(layout.count()))):

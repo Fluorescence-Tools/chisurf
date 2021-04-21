@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
@@ -5,9 +7,9 @@ import pyqtgraph.opengl as gl
 from matplotlib import cm
 
 import chisurf.math
-import chisurf.fitting.fit
+import chisurf.fitting
 import chisurf.fluorescence
-import chisurf.fluorescence.av
+import chisurf.structure.av
 from chisurf.plots import plotbase
 
 
@@ -58,7 +60,7 @@ class AvPlot(
             **kwargs
         )
         # plot control dialog
-        self.pltControl = AvPlotControl(self, **kwargs)
+        self.plot_controller = AvPlotControl(self, **kwargs)
         self.layout = QtWidgets.QVBoxLayout(self)
 
         area = DockArea()
@@ -78,12 +80,13 @@ class AvPlot(
 
         d1.addWidget(self.quenching_widget)
 
-    def update_all(
+    def update(
             self,
             only_fit_range: bool = False,
             *args,
             **kwargs
     ):
+        super().update(*args, **kwargs)
         fit = self.fit
 
         pdb_filename = './test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb'
@@ -92,7 +95,7 @@ class AvPlot(
         free_diffusion = 8.0
         atomic_slow_factor = 0.9
         contact_distance = 4.5
-        av = chisurf.fluorescence.av.ACV(
+        av = chisurf.structure.av.ACV(
             pdb_filename,
             radius1=5.0,
             linker_length=21.5,

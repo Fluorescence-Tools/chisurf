@@ -9,7 +9,7 @@ def set_linearization(
     cs = chisurf.cs
     lin_table = cs.current_fit.model.corrections.lin_select.datasets[idx]
     for f in cs.current_fit[cs.current_fit.selected_fit_index:]:
-        f.model.corrections.lintable = chisurf.experiments.data.DataCurve(
+        f.model.corrections.lintable = chisurf.data.DataCurve(
             x=lin_table.x,
             y=lin_table.y
         )
@@ -46,7 +46,7 @@ def change_irf(
     cs = chisurf.cs
     irf = cs.current_fit.model.convolve.irf_select.datasets[dataset_idx]
     for f in cs.current_fit[cs.current_fit.selected_fit_index:]:
-        f.model.convolve._irf = chisurf.experiments.data.DataCurve(
+        f.model.convolve._irf = chisurf.data.DataCurve(
             x=irf.x,
             y=irf.y
         )

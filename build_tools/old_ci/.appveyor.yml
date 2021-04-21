@@ -1,0 +1,68 @@
+platform:
+  - amd64
+image: Visual Studio 2017
+
+services:
+  - mongodb
+
+environment:
+  matrix:
+    - PYTHON: "C:\\Miniconda3-x64"
+    # SET PYTHON=C:\Miniconda3-x64
+    # SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
+
+## For debugging uncomment the lines below
+#init:
+#  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+##  Use conda-build
+install:
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - conda config --set always_yes yes --set changeps1 no
+  - conda config --set channel_priority flexible
+  - conda config --add channels conda-forge
+  - conda config --add channels tpeulen
+  - conda config --add channels tpeulen/label/nightly
+  - conda config --add channels salilab
+  - conda config --add channels defaults
+  - activate base
+  - conda update -q conda
+  # conda-build is used to build the package
+  # anaconda-client is needed to upload a conda package to anaconda cloud
+  # numpy is needed by the setup.py script
+  # chisurf (20.03.18) is locked to python 3.7.3 due to a pyqt incompatability
+  # The setup.py script reads information from chisurf that depends on pyyaml.
+  # pysftp is used to upload a distribution to the sftp server
+  # TODO: fix for higher versions of conda-build
+  - conda install git conda-build=3.17.7 anaconda-client numpy conda-verify python=3.7.3 pyyaml pysftp typing_extensions
+  # Print the conda info to facilitate the debugging
+  - conda info -a
+  #- conda build conda-recipe --output-folder C:\projects\chisurf\bld-dir
+  - conda build conda-recipe
+  #- conda config --add channels C:\projects\chisurf\bld-dir
+
+test_script:
+  # use conda base to install the conda package as a test
+  - conda install nose coverage chisurf python=3.7.3 -c local
+  # move module folder so that the installed conda package is used
+  - mv chisurf _chisurf
+  - nosetests .\test\test_*.py
+
+deploy_script:
+  # The environment variable ANACONDA_API_TOKEN is defined in the AppVeyor web-interface
+  # - if not "%APPVEYOR_REPO_BRANCH%" == "master" anaconda -t %ANACONDA_API_TOKEN% -u tpeulen -l nightly upload C:\Miniconda3-x64\conda-bld\win-64\chisurf-*.tar.bz2
+  - if DEFINED APPVEYOR_SCHEDULED_BUILD (activate base && cd C:\projects\chisurf\build_tools\win && build-setup.bat && cd C:\projects\chisurf\build_tools && python upload_sftp.py -f "../dist/*.exe" -r "./downloads/windows_nightly.exe")
+
+build: off
+
+## For debugging uncomment the lines below
+#on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+notifications:
+  - provider: Email
+    to:
+      - thomas.otavio.peulen@gmail.com
+    on_build_success: false
+    on_build_failure: true
+    on_build_status_changed: true

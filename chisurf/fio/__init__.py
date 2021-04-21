@@ -10,11 +10,3 @@ In particular three kinds of file-types are handled:
 6. SDT-files containing time-resolved fluorescence decays :py:mod:`chisurf.fio.sdtfile`
 
 """
-
-import chisurf.fio.ascii
-import chisurf.fio.coordinates
-import chisurf.fio.tttr
-import chisurf.fio.photons
-import chisurf.fio.sdtfile
-import chisurf.fio.zipped
-#import chisurf.fio.widgets

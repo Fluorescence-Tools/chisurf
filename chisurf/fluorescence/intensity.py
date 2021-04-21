@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def nusiance(
         f,
         *args,
@@ -23,6 +26,7 @@ def nusiance(
         f.func_globals['Bs'] = kwargs.get('Bs', 0.0)
         f.func_globals['l1'] = kwargs.get('l1', 0.0)
         f.func_globals['l2'] = kwargs.get('l2', 0.0)
+
         # Intensities
         f.func_globals['Bg'] = kwargs.get('Bg', 0.0)
         f.func_globals['Br'] = kwargs.get('Br', 0.0)

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple
+import typing
 
 import gc
 import json
@@ -9,16 +9,16 @@ import tempfile
 import numpy as np
 from qtpy import QtWidgets, uic
 
-import chisurf.fio.coordinates
-from chisurf.fluorescence.av.dynamic import DiffusionSimulation, Dye, Sticking, \
+import chisurf.fio.structure.coordinates
+from chisurf.structure.av.dynamic import DiffusionSimulation, Dye, Sticking, \
     ProteinQuenching
-from chisurf.fluorescence.av.widgets import ProteinQuenchingWidget, DyeWidget, StickingWidget
+from chisurf.gui.widgets.fluorescence import ProteinQuenchingWidget, DyeWidget, StickingWidget
 
-import chisurf.settings as mfm
+import chisurf.settings
 import chisurf.fitting.fit
 import chisurf.models.tcspc.nusiance
-import chisurf.fitting.widgets
-import chisurf.fluorescence.av as fps
+import chisurf.gui.widgets.fitting.widgets
+import chisurf.structure.av as fps
 import chisurf.fluorescence.tcspc.convolve
 import chisurf.fio
 import chisurf.math
@@ -27,10 +27,10 @@ import chisurf.structure
 import chisurf.plots
 from chisurf.curve import Curve
 from chisurf.models.model import Model
-from chisurf.fluorescence.av import ACV
+from chisurf.structure.av import ACV
 from chisurf.fluorescence.simulation import photon
 from chisurf.structure import Structure, get_coordinates_of_residues
-from chisurf.widgets.pdb import PDBSelector
+from chisurf.gui.widgets.pdb import PDBSelector
 
 
 class DyeDecay(Model, Curve):
@@ -423,7 +423,7 @@ class DyeDecay(Model, Curve):
             irf = None,
             decay_mode: str = None,
             **kwargs
-    ) -> Tuple[
+    ) -> typing.Tuple[
         np.array,
         np.array
     ]:
@@ -459,7 +459,7 @@ class DyeDecay(Model, Curve):
             filename: str = 'hist.txt',
             verbose: bool = False,
             nbins:int = 4096,
-            tac_range: Tuple[int, int] = (0, 50)
+            tac_range: typing.Tuple[int, int] = (0, 50)
     ):
         """
         Used to save the current histogram to a file.
@@ -773,7 +773,9 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
             **kwargs
         )
 
-        fn = os.path.join(mfm.package_directory, 'settings/sample.json')
+        fn = os.path.join(
+            chisurf.settings.package_directory, 'settings/sample.json'
+        )
         settings_file = kwargs.get('dye_diffusion_settings_file', fn)
         settings = json.load(open(settings_file))
         DyeDecay.__init__(
@@ -786,7 +788,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         )
 
         if not kwargs.get('disable_fit', False):
-            fitting_widget = chisurf.fitting.widgets.FittingControllerWidget(fit, **kwargs)
+            fitting_widget = chisurf.gui.widgets.fitting.widgets.FittingControllerWidget(fit, **kwargs)
         else:
             fitting_widget = QtWidgets.QLabel()
 
@@ -838,7 +840,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.diff_file = None
         self.av_slow_file = None
         self.av_fast_file = None
-        self.fitting_widget = chisurf.fitting.widgets.FittingWidget(fit=self.fit)
+        self.fitting_widget = chisurf.gui.widgets.fitting.widgets.FittingWidget(fit=self.fit)
 
         self.hide()
 
@@ -909,13 +911,13 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         if verbose:
             print("\nSaving slow AV...")
             print("Trajectory filename: %s" % av_slow_file)
-        chisurf.fio.coordinates.write_xyz(av_slow_file, self.av.points_acv)
+        chisurf.fio.structure.coordinates.write_xyz(av_slow_file, self.av.points_acv)
 
         av_fast_file = os.path.join(directory, self.filename_prefix + '_av_fast.xyz')
         if verbose:
             print("\nSaving slow AV...")
             print("Trajectory filename: %s" % av_fast_file)
-        chisurf.fio.coordinates.write_xyz(av_fast_file, self.av.points_fast)
+        chisurf.fio.structure.coordinates.write_xyz(av_fast_file, self.av.points_fast)
         return diff_file, av_slow_file, av_fast_file
 
     def onSimulationDtChanged(self):
@@ -928,7 +930,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
 
     def onLoadPDB(self):
         #pdb_filename = str(QtGui.QFileDialog.getOpenFileName(None, 'Open PDB-File', '', 'PDB-files (*.pdb)'))
-        filename = chisurf.widgets.get_filename('Open PDB-File', 'PDB-files (*.pdb)')
+        filename = chisurf.gui.widgets.get_filename('Open PDB-File', 'PDB-files (*.pdb)')
         self.lineEdit.setText(filename)
         self.structure = filename
         self.pdb_selector.atoms = self.structure.atoms

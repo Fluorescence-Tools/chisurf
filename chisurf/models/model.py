@@ -1,11 +1,11 @@
 from __future__ import annotations
-from typing import List, Tuple
+from chisurf import typing
 
 import numpy as np
 
 import chisurf.parameter
 import chisurf.curve
-import chisurf.fitting.widgets
+import chisurf.gui.widgets.fitting.widgets
 import chisurf.plots
 
 from qtpy import QtWidgets, QtGui
@@ -40,7 +40,7 @@ class Model(
     @property
     def weighted_residuals(
             self
-    ) -> np.array:
+    ) -> np.ndarray:
         return self.get_wres(
             self.fit,
             xmin=self.fit.xmin,
@@ -51,9 +51,8 @@ class Model(
             self,
             fit: chisurf.fitting.fit.Fit,
             xmin: int = None,
-            xmax: int = None,
-            **kwargs
-    ) -> np.array:
+            xmax: int = None
+    ) -> np.ndarray:
         if xmin is None:
             xmin = fit.xmin
         if xmax is None:
@@ -90,7 +89,7 @@ class Model(
         for k in keylist:
             p = pd[k]
             if isinstance(p, chisurf.fitting.parameter.FittingParameter):
-                s += "%s\t%.4e\t%s\t%s\t%s\n" % (p[k].name, p[k].value, p[k].bounds, p[k].fixed, p[k].is_linked)
+                s += "%s\t%.4e\t%s\t%s\t%s\n" % (p.name, p.value, p.bounds, p.fixed, p.is_linked)
             else:
                 chisurf.logging.warning(
                     "The object is of type %s and is not a FittingParameter" % p.__class__.__name__
@@ -110,14 +109,11 @@ class ModelCurve(
         return self.fit.xmax - self.fit.xmin
 
     @property
-    def x(self) -> np.array:
+    def x(self) -> np.ndarray:
         return self.__dict__['_x']
 
     @x.setter
-    def x(
-            self,
-            v: np.array
-    ):
+    def x(self,v: np.ndarray):
         self.__dict__['_x'] = v
 
     @property
@@ -125,10 +121,7 @@ class ModelCurve(
         return self.__dict__['_y']
 
     @y.setter
-    def y(
-            self,
-            v: np.array
-    ):
+    def y(self, v: np.ndarray):
         self.__dict__['_y'] = v
 
     def __init__(
@@ -149,20 +142,24 @@ class ModelCurve(
             **kwargs
         )
 
-    def get_curves(self):
+    def get_curves(
+            self,
+            copy_curves: bool = False
+    ) -> typing.Dict[str, chisurf.curve.Curve]:
         xmin = self.fit.xmin
         xmax = self.fit.xmax
         return {
             'model': chisurf.curve.Curve(
                 x=self.x[xmin:xmax],
-                y=self.y[xmin:xmax]
+                y=self.y[xmin:xmax],
+                copy_array=copy_curves
             )
         }
 
     def __getitem__(
             self,
             key
-    ) -> Tuple[
+    ) -> typing.Tuple[
         np.ndarray,
         np.ndarray
     ]:
@@ -200,11 +197,7 @@ class ModelWidget(
             **kwargs
     ) -> None:
         for p in self.fit.plots:
-            p.update_all(
-                *args,
-                **kwargs
-            )
-            p.update()
+            p.update(*args, **kwargs)
 
     def update_widgets(
             self
@@ -212,7 +205,7 @@ class ModelWidget(
         for parameter in self.parameters:
             if isinstance(
                     parameter,
-                    chisurf.fitting.widgets.FittingParameterWidget
+                    chisurf.gui.widgets.fitting.widgets.FittingParameterWidget
             ):
                 parameter.update()
 
@@ -223,8 +216,11 @@ class ModelWidget(
         self.update_widgets()
         self.update_plots()
 
-    def __getattr__(self, item):
-        pass
+    # def __getattr__(self, item):
+    #     try:
+    #         return super().__getattr__(item)
+    #     except KeyError:
+    #         return self.model.__getattr__(item)
 
     def __init__(
             self,
@@ -233,11 +229,7 @@ class ModelWidget(
             *args,
             **kwargs
     ):
-        super().__init__(
-            fit,
-            *args,
-            **kwargs
-        )
+        super().__init__(fit, *args, **kwargs)
         self.plots = list()
         if icon is None:
             icon = QtGui.QIcon(":/icons/document-open.png")

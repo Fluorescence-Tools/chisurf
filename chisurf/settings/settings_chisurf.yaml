@@ -1,15 +1,9 @@
 ---
-name: ChiSurf
-version: 19.9.22
 n_threads: 4
 verbose: false
 fitting_message: true
-email-contact: thomas.otavio.peulen@gmail.com
-experimental_models: false
-updates:
-  check_version_url: http://fret.at/downloads/CURRENT.txt
-  changes: http://fret.at/downloads/CHANGES
-  check_for_updates: true
+enable_experimental: false
+hidden_execute: true
 fps:
   vdw_max: 2
   simulation_grid_resolution: 1
@@ -61,10 +55,9 @@ fortune:
   max_length: 300
   attempts: 1000
   enabled: true
-fitting:
-  parallel_fit: false
-  global:
-    fit_local_first: false
+optimization:
+  global_threaded_model_update: false
+  global_optimize_local_first: false
   leastsq:
     ftol: 1.49012e-08
     xtol: 1.49012e-08
@@ -90,9 +83,9 @@ fret:
   forster_radius: 52
   tau0: 4
   kappa2: 0.667
-  rda_resolution: 256
+  rda_resolution: 512
   rda_min: 1
-  rda_max: 256
+  rda_max: 512
   lifetime_bins: 101
   bin_lifetime: false
   discriminate: true
@@ -151,18 +144,17 @@ gui:
     font_size: 9
     font_family: Courier
     language: Python
-  style_sheet: ./settings/gui_styles/dark.css
+  style_sheet: day.css
   show_console: true
   show_macro_edit: true
   confirm_close_fit: true
   confirm_close_program: true
   fit_windows_size: [350, 350]
-  console:
-    style: 'lightbg' # options are linux, lightbg, or nocolor
-    init: |
-      %matplotlib inline
-      import pylab as p
-    width: 80
+  console_style: 'linux' # options are linux, lightbg, or nocolor
+  console_init: |
+    %matplotlib inline
+    import pylab as p
+  console_width: 80
   fit_models:
     n_columns: 2
   plot:
@@ -170,23 +162,24 @@ gui:
     show_data_grid: true
     show_residual_grid: true
     show_acorr_grid: true
-    line_width: 2.0
+    line_width: 0.5
     hideTitle: true
     enable_region_selector: true
     show_legend: false
     label_axis: false
+    pyqtgraph_config:
+      background: k
+      foreground: d
+      antialias: false
+      useWeave: true
+      leftButtonPan: true
     colors:
       region_selector: "#26a298"
       region_selector_alpha: 100
       data: "#ffa629"
-      data_inactive: "#ffa629"
-      irf: "#0040ff"
-      irf_inactive: "#0040ff"
       model: "#d400cd"
-      model_inactive: "#d400cd"
       residuals: "#df0101"
-      residuals_inactive: "#df0101"
       auto_corr: "#ff00ff"
-      auto_corr_inactive: "#ff00ff"
       inactive_transparency: 0.2
       active_transparency: 1
+exceptions_on_gui: true # if True exceptions are displayed on the GUI a MessageBox

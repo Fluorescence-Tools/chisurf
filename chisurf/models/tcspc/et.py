@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import numpy as np
-from qtpy import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-import chisurf.settings as mfm
 import chisurf.decorators
 import chisurf.fluorescence
 import chisurf.fluorescence.general
+import chisurf.gui.decorators
+import chisurf.fitting
 import chisurf.math
-from mfm import plots
+from chisurf import plots
 from chisurf.fluorescence.tcspc.phasor import Phasor
-from chisurf.fluorescence.tcspc.widgets import PhasorWidget
+from chisurf.gui.widgets.fluorescence.tcspc import PhasorWidget
 from chisurf.models.model import Model
 from chisurf.math.optimization import solve_richardson_lucy, maxent
 from chisurf.math.optimization.nnls import solve_nnls
@@ -264,7 +265,7 @@ class EtModelFree(
 
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             verbose: bool = chisurf.verbose,
             **kwargs
     ):
@@ -567,14 +568,15 @@ class EtModelFreeWidget(
              'e_scalex': 'log',
              'e_scaley': 'lin'
          }
-         ),
-        (plots.SurfacePlot, {})
+         )
     ]
 
-    @chisurf.decorators.init_with_ui(ui_filename="et_model_free.ui")
+    @chisurf.gui.decorators.init_with_ui(
+        ui_filename="et_model_free.ui"
+    )
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             icon: QtGui.QIcon = None,
             *args,
             **kwargs
