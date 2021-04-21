@@ -1,10 +1,9 @@
-
 from datetime import date
 today = date.today()
 
 __name__ = "chisurf"
 __author__ = "Thomas-Otavio Peulen"
-__version__ = today.strftime("%y.%m.%d")
+__version__ = str(today.strftime("%y.%m.%d"))
 __copyright__ = "Copyright (C) 2020 Thomas-Otavio Peulen"
 __credits__ = ["Thomas-Otavio Peulen"]
 __maintainer__ = "Thomas-Otavio Peulen"
